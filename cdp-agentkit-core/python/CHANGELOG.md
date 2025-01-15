@@ -2,11 +2,6 @@
 
 ## Unreleased
 
-### Added
-
-- Added `morpho_deposit` action to deposit to Morpho Vault.
-- Added `morpho_withdrawal` action to withdraw from Morpho Vault.
-
 ## [0.0.8] - 2025-01-13
 
 ### Added
