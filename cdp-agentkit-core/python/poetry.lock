@@ -144,15 +144,15 @@ files = [
 
 [[package]]
 name = "allora-sdk"
-version = "0.1.0"
+version = "0.2.0"
 description = "Allora Network SDK"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 markers = "python_version == \"3.10\" or python_version == \"3.11\" or python_version >= \"3.12\""
 files = [
-    {file = "allora_sdk-0.1.0-py3-none-any.whl", hash = "sha256:0e5b644918e35e097f23f16e280318ad5c23d911efc66633b18af961552faecb"},
-    {file = "allora_sdk-0.1.0.tar.gz", hash = "sha256:642777629473120d5f20b4e2fc62490bfe35b4552e28a083866d121ec4623589"},
+    {file = "allora_sdk-0.2.0-py3-none-any.whl", hash = "sha256:9935a6e1693e347c8f73fccda831c3ff817ff90ba644e32f1aa3534869ebacf5"},
+    {file = "allora_sdk-0.2.0.tar.gz", hash = "sha256:849e6da659fce3b5c401e3b58a219165bc222f7b79273b6dcf0e8e3c4b7334e5"},
 ]
 
 [package.dependencies]
@@ -4019,4 +4019,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "d9aad4e49947b0d040baafccbae10618a7a8f3ecdb1fac0ec67b2656060cfd66"
+content-hash = "a57b1b781faade4bf15a8ecb615641f7d583666b988b10cefc8a246a49610dfb"

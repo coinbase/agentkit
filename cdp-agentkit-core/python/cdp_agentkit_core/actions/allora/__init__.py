@@ -1,6 +1,6 @@
 from cdp_agentkit_core.actions.allora.action import AlloraAction
 from cdp_agentkit_core.actions.allora.get_all_topics import GetAllTopicsAction
-from cdp_agentkit_core.actions.allora.get_price_prediction import GetPricePredictionAction
+from cdp_agentkit_core.actions.allora.get_price_inference import GetPriceInferenceAction
 
 
 def get_all_allora_actions() -> list[type[AlloraAction]]:
@@ -15,6 +15,6 @@ ALLORA_ACTIONS = get_all_allora_actions()
 
 __all__ = [
     "ALLORA_ACTIONS",
-    "GetPricePredictionAction",
+    "GetPriceInferenceAction",
     "GetAllTopicsAction",
 ]

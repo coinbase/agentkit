@@ -33,7 +33,7 @@
 ### Added
 
 - Added `wrap_eth` action to wrap ETH to WETH on Base.
-- Added support for Allora Chain machine learning (`get_price_prediction` and `get_all_topics` actions).
+- Added support for Allora Chain machine learning (`get_price_inference` and `get_all_topics` actions).
 
 ## [0.0.7] - 2025-01-08
 
