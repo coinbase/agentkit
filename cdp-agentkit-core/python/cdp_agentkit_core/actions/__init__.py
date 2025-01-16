@@ -2,12 +2,14 @@ from cdp_agentkit_core.actions.cdp_action import CdpAction
 from cdp_agentkit_core.actions.deploy_nft import DeployNftAction
 from cdp_agentkit_core.actions.deploy_token import DeployTokenAction
 from cdp_agentkit_core.actions.get_balance import GetBalanceAction
+from cdp_agentkit_core.actions.get_balance_nft import GetBalanceNftAction
 from cdp_agentkit_core.actions.get_wallet_details import GetWalletDetailsAction
 from cdp_agentkit_core.actions.mint_nft import MintNftAction
 from cdp_agentkit_core.actions.register_basename import RegisterBasenameAction
 from cdp_agentkit_core.actions.request_faucet_funds import RequestFaucetFundsAction
 from cdp_agentkit_core.actions.trade import TradeAction
 from cdp_agentkit_core.actions.transfer import TransferAction
+from cdp_agentkit_core.actions.transfer_nft import TransferNftAction
 from cdp_agentkit_core.actions.wow.buy_token import WowBuyTokenAction
 from cdp_agentkit_core.actions.wow.create_token import WowCreateTokenAction
 from cdp_agentkit_core.actions.wow.sell_token import WowSellTokenAction
@@ -32,12 +34,14 @@ __all__ = [
     "DeployNftAction",
     "DeployTokenAction",
     "GetBalanceAction",
+    "GetBalanceNftAction",
     "GetWalletDetailsAction",
     "MintNftAction",
     "RegisterBasenameAction",
     "RequestFaucetFundsAction",
     "TradeAction",
     "TransferAction",
+    "TransferNftAction",
     "WowBuyTokenAction",
     "WowCreateTokenAction",
     "WowSellTokenAction",

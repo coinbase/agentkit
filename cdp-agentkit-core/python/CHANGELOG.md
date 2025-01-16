@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Added
+
+- Added `get_balance_nft` action.
+- Added `transfer_nft` action.
+
 ## [0.0.8] - 2025-01-13
 
 ### Added
