@@ -2,12 +2,14 @@ import { CdpAction, CdpActionSchemaAny } from "./cdp_action";
 import { DeployNftAction } from "./deploy_nft";
 import { DeployTokenAction } from "./deploy_token";
 import { GetBalanceAction } from "./get_balance";
+import { GetBalanceNftAction } from "./get_balance_nft";
 import { GetWalletDetailsAction } from "./get_wallet_details";
 import { MintNftAction } from "./mint_nft";
 import { RegisterBasenameAction } from "./register_basename";
 import { RequestFaucetFundsAction } from "./request_faucet_funds";
 import { TradeAction } from "./trade";
 import { TransferAction } from "./transfer";
+import { TransferNftAction } from "./transfer_nft";
 import { WrapEthAction } from "./wrap_eth";
 import { WOW_ACTIONS } from "./defi/wow";
 
@@ -23,11 +25,13 @@ export function getAllCdpActions(): CdpAction<CdpActionSchemaAny>[] {
     new DeployNftAction(),
     new DeployTokenAction(),
     new GetBalanceAction(),
+    new GetBalanceNftAction(),
     new MintNftAction(),
     new RegisterBasenameAction(),
     new RequestFaucetFundsAction(),
     new TradeAction(),
     new TransferAction(),
+    new TransferNftAction(),
     new WrapEthAction(),
   ];
 }
@@ -41,10 +45,12 @@ export {
   DeployNftAction,
   DeployTokenAction,
   GetBalanceAction,
+  GetBalanceNftAction,
   MintNftAction,
   RegisterBasenameAction,
   RequestFaucetFundsAction,
   TradeAction,
   TransferAction,
+  TransferNftAction,
   WrapEthAction,
 };
