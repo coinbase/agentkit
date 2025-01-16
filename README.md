@@ -1,12 +1,18 @@
-# CDP Agentkit
+<div align="center">
+  <h1 style="font-size: 3em; margin-bottom: 20px;">
+    AgentKit
+  </h1>
+
+  <p style="font-size: 1.2em; max-width: 600px; margin: 0 auto 20px;">
+    Simplify bringing your AI Agents onchain. Every AI Agent deserves a crypto wallet!
+  </p>
 
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/cdp-agentkit-core?style=flat-square)](https://pypistats.org/packages/cdp-agentkit-core)
 [![npm downloads](https://img.shields.io/npm/dm/@coinbase/cdp-agentkit-core?style=flat-square)](https://www.npmjs.com/package/@coinbase/cdp-agentkit-core)
 [![GitHub star chart](https://img.shields.io/github/stars/coinbase/cdp-agentkit?style=flat-square)](https://star-history.com/#coinbase/cdp-agentkit)
 [![Open Issues](https://img.shields.io/github/issues-raw/coinbase/cdp-agentkit?style=flat-square)](https://github.com/coinbase/cdp-agentkit/issues)
 
-The **Coinbase Developer Platform (CDP) AgentKit** simplifies bringing your AI Agents onchain. Every AI Agent deserves a crypto wallet!
-
+</div>
 
 ## Key Features
 
@@ -36,7 +42,7 @@ Check out [cdp-langchain/examples](./cdp-langchain/examples) for inspiration and
 
 ## Repository Structure
 
-CDP Agentkit is organized as a [monorepo](https://en.wikipedia.org/wiki/Monorepo) that contains multiple packages.
+AgentKit is organized as a [monorepo](https://en.wikipedia.org/wiki/Monorepo) that contains multiple packages.
 
 ```
 ./
@@ -55,12 +61,12 @@ CDP Agentkit is organized as a [monorepo](https://en.wikipedia.org/wiki/Monorepo
 
 ### cdp-agentkit-core
 
-Core primitives and framework-agnostic tools that are meant to be composable and used via CDP Agentkit framework extensions (ie, `cdp-langchain`).
+Core primitives and framework-agnostic tools that are meant to be composable and used via AgentKit framework extensions (ie, `cdp-langchain`).
 See [CDP Agentkit Core](./cdp-agentkit-core/README.md) to get started!
 
 ### cdp-langchain
 
-Langchain Toolkit extension of CDP Agentkit. Enables agentic workflows to interact with onchain actions.
+Langchain Toolkit extension of AgentKit. Enables agentic workflows to interact with onchain actions.
 See [CDP Langchain](./cdp-langchain/README.md) to get started!
 
 ### twitter-langchain
@@ -70,20 +76,20 @@ See [Twitter Langchain](./twitter-langchain/README.md) to get started!
 
 ## Contributing
 
-CDP Agentkit welcomes community contributions.
+AgentKit welcomes community contributions.
 See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
 
 ## Documentation
 
-- [CDP Agentkit Documentation](https://docs.cdp.coinbase.com/agentkit/docs/welcome)
-- [API Reference: CDP Agentkit Core Python](https://coinbase.github.io/agentkit/cdp-agentkit-core/python/index.html)
-- [API Reference: CDP Agentkit LangChain Extension Python](https://coinbase.github.io/agentkit/cdp-langchain/python/index.html)
-- [API Reference: CDP Agentkit Core Node.js](https://coinbase.github.io/agentkit/cdp-agentkit-core/typescript/index.html)
-- [API Reference: CDP Agentkit LangChain Extension Node.js](https://coinbase.github.io/agentkit/cdp-langchain/typescript/index.html)
+- [AgentKit Documentation](https://docs.cdp.coinbase.com/agentkit/docs/welcome)
+- [API Reference: AgentKit Core Python](https://coinbase.github.io/agentkit/cdp-agentkit-core/python/index.html)
+- [API Reference: AgentKit LangChain Extension Python](https://coinbase.github.io/agentkit/cdp-langchain/python/index.html)
+- [API Reference: AgentKit Core Node.js](https://coinbase.github.io/agentkit/cdp-agentkit-core/typescript/index.html)
+- [API Reference: AgentKit LangChain Extension Node.js](https://coinbase.github.io/agentkit/cdp-langchain/typescript/index.html)
 
 ## Security and bug reports
 
-The CDP AgentKit team takes security seriously.
+The AgentKit team takes security seriously.
 See [SECURITY.md](../SECURITY.md) for more information.
 
 ## License
