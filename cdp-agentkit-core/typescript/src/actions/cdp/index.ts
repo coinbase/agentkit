@@ -12,6 +12,7 @@ import { TransferAction } from "./transfer";
 import { TransferNftAction } from "./transfer_nft";
 import { WrapEthAction } from "./wrap_eth";
 import { WOW_ACTIONS } from "./defi/wow";
+import { PYTH_ACTIONS } from "./data/pyth";
 
 /**
  * Retrieves all CDP action instances.
@@ -36,7 +37,7 @@ export function getAllCdpActions(): CdpAction<CdpActionSchemaAny>[] {
   ];
 }
 
-export const CDP_ACTIONS = getAllCdpActions().concat(WOW_ACTIONS);
+export const CDP_ACTIONS = getAllCdpActions().concat(WOW_ACTIONS).concat(PYTH_ACTIONS);
 
 export {
   CdpAction,

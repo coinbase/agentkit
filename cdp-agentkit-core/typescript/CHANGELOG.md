@@ -6,6 +6,8 @@
 
 - Added `get_balance_nft` action.
 - Added `transfer_nft` action.
+- Added `pyth_fetch_price_feed_id` action to fetch the price feed ID for a given token symbol from Pyth.
+- Added `pyth_fetch_price` action to fetch the price of a given price feed from Pyth.
 
 ## [0.0.11] - 2025-01-13
 
