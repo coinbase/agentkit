@@ -1,4 +1,5 @@
 # CDP Agentkit Extension - Langchain Toolkit
+
 CDP integration with Langchain to enable agentic workflows using the core primitives defined in `cdp-agentkit-core`.
 
 This toolkit contains tools that enable an LLM agent to interact with the [Coinbase Developer Platform](https://docs.cdp.coinbase.com/). The toolkit provides a wrapper around the CDP SDK, allowing agents to perform onchain operations like transfers, trades, and smart contract interactions.
@@ -17,24 +18,12 @@ This toolkit contains tools that enable an LLM agent to interact with the [Coinb
 
 #### Python
 
-- Python 3.10 or higher 
-
-#### Typescript
-
-- Node.js 18 or higher
+- Python 3.10 or higher
 
 ### Installation
 
-#### Python
-
 ```bash
 pip install cdp-langchain
-```
-
-#### Typescript
-
-```bash
-npm install @coinbase/cdp-langchain
 ```
 
 ### Environment Setup
@@ -52,8 +41,6 @@ export NETWORK_ID=base-sepolia  # Optional: Defaults to base-sepolia
 
 ### Basic Setup
 
-#### Python
-
 ```python
 from cdp_langchain.agent_toolkits import CdpToolkit
 from cdp_langchain.utils import CdpAgentkitWrapper
@@ -68,23 +55,6 @@ toolkit = CdpToolkit.from_cdp_agentkit_wrapper(cdp)
 tools = toolkit.get_tools()
 for tool in tools:
     print(tool.name)
-```
-
-#### Typescript
-
-```typescript
-```typescript
-import { CdpToolkit } from "@coinbase/cdp-langchain";
-import { CdpAgentkit } from "@coinbase/cdp-agentkit-core";
-
-// Initialize CDP AgentKit
-const agentkit = await CdpAgentkit.configureWithWallet();
-
-// Create toolkit
-const toolkit = new CdpToolkit(agentkit);
-
-// Get available tools
-const tools = toolkit.getTools();
 ```
 
 The toolkit provides the following tools:
@@ -103,13 +73,11 @@ The toolkit provides the following tools:
 12. **wow_sell_token** - Sell Zora Wow ERC20 memecoin for ETH
 13. **wrap_eth** - Wrap ETH to WETH
 14. **pyth_fetch_price_feed_id** Fetch the price feed ID for a given token symbol from Pyth Network
-15. **pyth_fetch_price** Fetch the price of a given price feed from Pyth Network
+15. **pyth_fetch_price** fetch the price of a given price feed from Pyth Network
 16. **get_balance_nft** Get balance for specific NFTs (ERC-721)
 17. **transfer_nft** Transfer an NFT (ERC-721)
 
 ### Using with an Agent
-
-#### Python
 
 ```python
 from langchain_openai import ChatOpenAI
@@ -138,45 +106,11 @@ Transaction hash for the transfer: 0x78c7c2878659a0de216d0764fc87eff0d38b47f3315
 Transaction link for the transfer: https://sepolia.basescan.org/tx/0x78c7c2878659a0de216d0764fc87eff0d38b47f3315fa02ba493a83d8e782d1
 ```
 
-#### Typescript
-
-##### Additional Installations
-
-```bash
-npm install @langchain/langgraph @langchain/openai
-```
-
-```typescript
-import { ChatOpenAI } from "@langchain/openai";
-import { HumanMessage } from "@langchain/core/messages";
-import { createReactAgent } from "@langchain/langgraph/prebuilt";
-
-// Initialize LLM
-const model = new ChatOpenAI({
-  model: "gpt-4o-mini",
-});
-
-// Create agent executor
-const agent = createReactAgent({
-  llm: model,
-  tools,
-});
-
-// Example usage
-const result = await agent.invoke({
-  messages: [new HumanMessage("Send 0.005 ETH to john2879.base.eth")],
-});
-
-console.log(result.messages[result.messages.length - 1].content);
-```
-
 ## CDP Tookit Specific Features
 
 ### Wallet Management
 
 The toolkit maintains an MPC wallet that persists between sessions:
-
-#### Python
 
 ```python
 # Export wallet data
@@ -185,16 +119,6 @@ wallet_data = cdp.export_wallet()
 # Import wallet data
 values = {"cdp_wallet_data": wallet_data}
 cdp = CdpAgentkitWrapper(**values)
-```
-
-#### Typescript
-
-```typescript
-// Export wallet data
-const walletData = await agentkit.exportWallet();
-
-// Import wallet data
-const importedAgentkit = await CdpAgentkit.configureWithWallet({ cdpWalletData: walletData });
 ```
 
 ### Network Support
@@ -210,10 +134,9 @@ The following operations support gasless transactions on Base Mainnet:
 
 ## Examples
 
-Check out [cdp-langchain/examples](./examples) for inspiration and help getting started!
-- [Chatbot Python](./examples/chatbot-python/README.md): Simple example of a Python Chatbot that can perform complex onchain interactions, using OpenAI.
-- [Chatbot Typescript](./examples/chatbot-typescript/README.md): Simple example of a Node.js Chatbot that can perform complex onchain interactions, using OpenAI.
+Check out [cdp-langchain/examples](../examples) for inspiration and help getting started!
+- [Chatbot Python](../examples/chatbot-python/README.md): Simple example of a Python Chatbot that can perform complex onchain interactions, using OpenAI.
 
 ## Contributing
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for detailed setup instructions and contribution guidelines.
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for detailed setup instructions and contribution guidelines.

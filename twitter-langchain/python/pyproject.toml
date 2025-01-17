@@ -4,7 +4,7 @@ version = "0.0.9"
 description = "Twitter Langchain Toolkit"
 authors = ["John Peterson <john.peterson@coinbase.com>"]
 license = "Apache-2.0"
-readme = "../README.md"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"

@@ -3,7 +3,7 @@ name = "cdp-langchain"
 version = "0.0.11"
 description = "CDP Agentkit Langchain Extension"
 authors = ["John Peterson <john.peterson@coinbase.com>"]
-readme = "../README.md"
+readme = "README.md"
 license = "Apache-2.0"
 keywords = ["coinbase", "sdk", "crypto", "cdp", "agentkit", "ai", "agent", "langchain", "toolkit"]
 packages = [{ include = "cdp_langchain" }]
