@@ -25,7 +25,7 @@
 - **Python and Node.js Support**
 - **LangChain integration**: Seamless integration with [LangChain](https://python.langchain.com/docs/introduction/) for easy agentic workflows. More frameworks coming soon!
 - **Twitter integration**: Seamless integration of Langchain with [Twitter](https://developer.twitter.com/en/docs/twitter-api) for easy agentic workflows.
-- **Support for various on-chain actions**:
+- **Support for various onchain actions**:
 
   - Faucet for testnet funds
   - Getting wallet details and balances
