@@ -2,12 +2,15 @@
 
 ## Unreleased
 
+## [0.0.9] - 2025-01-17
+
 ### Added
 
 - Added `get_balance_nft` action.
 - Added `transfer_nft` action.
 - Added `pyth_fetch_price_feed_id` action to fetch the price feed ID for a given token symbol from Pyth.
 - Added `pyth_fetch_price` action to fetch the price of a given price feed from Pyth.
+- Bump `cdp-sdk` dependency to `0.14.1`.
 
 ## [0.0.8] - 2025-01-13
 

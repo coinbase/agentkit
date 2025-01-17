@@ -45,7 +45,13 @@ export async function trade(wallet: Wallet, args: z.infer<typeof TradeInput>): P
 
     const result = await tradeResult.wait();
 
-    return `Traded ${args.amount} of ${args.fromAssetId} for ${result.getToAmount()} of ${args.toAssetId}.\nTransaction hash for the trade: ${result.getTransaction().getTransactionHash()}\nTransaction link for the trade: ${result.getTransaction().getTransactionLink()}`;
+    return `Traded ${args.amount} of ${args.fromAssetId} for ${result.getToAmount()} of ${
+      args.toAssetId
+    }.\nTransaction hash for the trade: ${result
+      .getTransaction()
+      .getTransactionHash()}\nTransaction link for the trade: ${result
+      .getTransaction()
+      .getTransactionLink()}`;
   } catch (error) {
     return `Error trading assets: ${error}`;
   }

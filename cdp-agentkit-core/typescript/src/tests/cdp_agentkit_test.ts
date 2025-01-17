@@ -66,6 +66,8 @@ describe("CdpAgentkit", () => {
     });
 
     it("should successfully init with mnemonic Phrase ", async () => {
+      const networkId = Coinbase.networks.BaseSepolia;
+
       const options = {
         mnemonicPhrase: MOCK_MNEMONIC_PHRASE,
       };
@@ -75,7 +77,29 @@ describe("CdpAgentkit", () => {
       const result = await CdpAgentkit.configureWithWallet(options);
 
       expect(result).toBeDefined();
-      expect(Wallet.import).toHaveBeenCalledWith(options);
+      expect(Wallet.import).toHaveBeenCalledWith(
+        { mnemonicPhrase: MOCK_MNEMONIC_PHRASE },
+        networkId,
+      );
+    });
+
+    it("should successfully init with mnemonic Phrase ", async () => {
+      const networkId = Coinbase.networks.BaseMainnet;
+
+      const options = {
+        mnemonicPhrase: MOCK_MNEMONIC_PHRASE,
+        networkId,
+      };
+
+      jest.spyOn(Wallet, "import").mockResolvedValue(mockWallet);
+
+      const result = await CdpAgentkit.configureWithWallet(options);
+
+      expect(result).toBeDefined();
+      expect(Wallet.import).toHaveBeenCalledWith(
+        { mnemonicPhrase: MOCK_MNEMONIC_PHRASE },
+        networkId,
+      );
     });
 
     it("should fail init without env", async () => {

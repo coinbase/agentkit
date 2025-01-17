@@ -37,7 +37,9 @@ export async function requestFaucetFunds(
     // Wait for the faucet transaction to be confirmed
     const result = await faucetTx.wait();
 
-    return `Received ${args.assetId || "ETH"} from the faucet. Transaction: ${result.getTransactionLink()}`;
+    return `Received ${
+      args.assetId || "ETH"
+    } from the faucet. Transaction: ${result.getTransactionLink()}`;
   } catch (error) {
     return `Error requesting faucet funds: ${error}`;
   }

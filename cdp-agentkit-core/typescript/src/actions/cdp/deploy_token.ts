@@ -39,7 +39,11 @@ export async function deployToken(
 
     const result = await tokenContract.wait();
 
-    return `Deployed ERC20 token contract ${args.name} (${args.symbol}) with total supply of ${args.totalSupply} tokens at address ${result.getContractAddress()}. Transaction link: ${result.getTransaction()!.getTransactionLink()}`;
+    return `Deployed ERC20 token contract ${args.name} (${args.symbol}) with total supply of ${
+      args.totalSupply
+    } tokens at address ${result.getContractAddress()}. Transaction link: ${result
+      .getTransaction()!
+      .getTransactionLink()}`;
   } catch (error) {
     return `Error deploying token: ${error}`;
   }

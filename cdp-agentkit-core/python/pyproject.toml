@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cdp-agentkit-core"
-version = "0.0.8"
+version = "0.0.9"
 description = "CDP Agentkit core primitives"
 authors = ["John Peterson <john.peterson@coinbase.com>"]
 readme = "../README.md"
@@ -10,7 +10,7 @@ packages = [{ include = "cdp_agentkit_core" }]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-cdp-sdk = "^0.13.0"
+cdp-sdk = "^0.14.1"
 pydantic = "^2.0"
 web3 = "^7.6.0"
 

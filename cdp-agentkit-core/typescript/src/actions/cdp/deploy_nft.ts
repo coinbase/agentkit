@@ -39,7 +39,13 @@ export async function deployNft(
 
     const result = await nftContract.wait();
 
-    return `Deployed NFT Collection ${args.name} to address ${result.getContractAddress()} on network ${wallet.getNetworkId()}.\nTransaction hash for the deployment: ${result.getTransaction()!.getTransactionHash()}\nTransaction link for the deployment: ${result.getTransaction()!.getTransactionLink()}`;
+    return `Deployed NFT Collection ${
+      args.name
+    } to address ${result.getContractAddress()} on network ${wallet.getNetworkId()}.\nTransaction hash for the deployment: ${result
+      .getTransaction()!
+      .getTransactionHash()}\nTransaction link for the deployment: ${result
+      .getTransaction()!
+      .getTransactionLink()}`;
   } catch (error) {
     return `Error deploying NFT: ${error}`;
   }

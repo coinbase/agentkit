@@ -41,7 +41,13 @@ export async function mintNft(wallet: Wallet, args: z.infer<typeof MintNftInput>
 
     const result = await mintInvocation.wait();
 
-    return `Minted NFT from contract ${args.contractAddress} to address ${args.destination} on network ${wallet.getNetworkId()}.\nTransaction hash for the mint: ${result.getTransaction().getTransactionHash()}\nTransaction link for the mint: ${result.getTransaction().getTransactionLink()}`;
+    return `Minted NFT from contract ${args.contractAddress} to address ${
+      args.destination
+    } on network ${wallet.getNetworkId()}.\nTransaction hash for the mint: ${result
+      .getTransaction()
+      .getTransactionHash()}\nTransaction link for the mint: ${result
+      .getTransaction()
+      .getTransactionLink()}`;
   } catch (error) {
     return `Error minting NFT: ${error}`;
   }

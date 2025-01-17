@@ -52,7 +52,7 @@ class CdpAgentkitWrapper(BaseModel):
             wallet = Wallet.import_data(wallet_data)
         elif mnemonic_phrase:
             phrase = MnemonicSeedPhrase(mnemonic_phrase)
-            wallet = Wallet.import_wallet(phrase)
+            wallet = Wallet.import_wallet(phrase, network_id)
         else:
             wallet = Wallet.create(network_id=network_id)
 

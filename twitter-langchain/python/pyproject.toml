@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "twitter-langchain"
-version = "0.0.8"
+version = "0.0.9"
 description = "Twitter Langchain Toolkit"
 authors = ["John Peterson <john.peterson@coinbase.com>"]
 license = "Apache-2.0"
@@ -11,7 +11,7 @@ python = "^3.10"
 pydantic = "^2.9.2"
 langchain = "^0.3.7"
 tweepy = "^4.14.0"
-cdp-agentkit-core = "^0.0.8"
+cdp-agentkit-core = "^0.0.9"
 standard-imghdr = "^3.13.0"
 
 [tool.poetry.group.dev.dependencies]

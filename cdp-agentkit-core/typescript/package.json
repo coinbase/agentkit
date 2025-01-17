@@ -2,7 +2,7 @@
   "name": "@coinbase/cdp-agentkit-core",
   "description": "CDP Agentkit core primitives",
   "repository": "https://github.com/coinbase/cdp-agentkit-nodejs",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "author": "Coinbase Inc.",
   "license": "Apache-2.0",
   "main": "dist/index.js",
@@ -39,7 +39,7 @@
     "typescript"
   ],
   "dependencies": {
-    "@coinbase/coinbase-sdk": "^0.13.0",
+    "@coinbase/coinbase-sdk": "^0.14.1",
     "twitter-api-v2": "^1.18.2",
     "viem": "^2.21.51",
     "zod": "^3.23.8"

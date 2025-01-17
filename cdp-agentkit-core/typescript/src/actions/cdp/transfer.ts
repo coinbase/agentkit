@@ -53,7 +53,9 @@ export async function transfer(
 
     const result = await transferResult.wait();
 
-    return `Transferred ${args.amount} of ${args.assetId} to ${args.destination}.\nTransaction hash for the transfer: ${result.getTransactionHash()}\nTransaction link for the transfer: ${result.getTransactionLink()}`;
+    return `Transferred ${args.amount} of ${args.assetId} to ${
+      args.destination
+    }.\nTransaction hash for the transfer: ${result.getTransactionHash()}\nTransaction link for the transfer: ${result.getTransactionLink()}`;
   } catch (error) {
     return `Error transferring the asset: ${error}`;
   }

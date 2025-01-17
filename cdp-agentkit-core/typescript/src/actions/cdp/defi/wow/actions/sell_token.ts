@@ -80,7 +80,9 @@ export async function wowSellToken(
     });
 
     const result = await invocation.wait();
-    return `Sold WoW ERC20 memecoin with transaction hash: ${result.getTransaction().getTransactionHash()}`;
+    return `Sold WoW ERC20 memecoin with transaction hash: ${result
+      .getTransaction()
+      .getTransactionHash()}`;
   } catch (error) {
     return `Error selling Zora Wow ERC20 memecoin: ${error}`;
   }

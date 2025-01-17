@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## [0.0.11] - 2025-01-17
+
+### Added
+
+- Bump dependency `cdp-agentkit-core` to version `0.0.9`.
+
+### Fixed
+
+- Allow wallet mnemonic seed import to optionally accept `network_id` input argument.
+
 ## [0.0.10] - 2025-01-13
 
 ### Added

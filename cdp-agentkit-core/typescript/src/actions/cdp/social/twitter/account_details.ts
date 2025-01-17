@@ -43,7 +43,9 @@ export async function accountDetails(
   try {
     const response = await client.v2.me();
     response.data.url = `https://x.com/${response.data.username}`;
-    return `Successfully retrieved authenticated user account details:\n${JSON.stringify(response)}`;
+    return `Successfully retrieved authenticated user account details:\n${JSON.stringify(
+      response,
+    )}`;
   } catch (error) {
     return `Error retrieving authenticated user account details: ${error}`;
   }

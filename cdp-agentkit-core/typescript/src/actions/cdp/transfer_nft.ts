@@ -70,9 +70,7 @@ export async function transferNft(
       args.destination
     }.\nTransaction hash: ${transaction.getTransactionHash()}\nTransaction link: ${transaction.getTransactionLink()}`;
   } catch (error) {
-    return `Error transferring the NFT (contract: ${args.contractAddress}, ID: ${
-      args.tokenId
-    }) from ${from} to ${args.destination}): ${error}`;
+    return `Error transferring the NFT (contract: ${args.contractAddress}, ID: ${args.tokenId}) from ${from} to ${args.destination}): ${error}`;
   }
 }
 

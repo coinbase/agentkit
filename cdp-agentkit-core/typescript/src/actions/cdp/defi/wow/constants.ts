@@ -841,7 +841,9 @@ export function getFactoryAddress(network: string): string {
   const normalizedNetwork = network.toLowerCase();
   if (!(normalizedNetwork in WOW_FACTORY_CONTRACT_ADDRESSES)) {
     throw new Error(
-      `Invalid network: ${network}. Valid networks are: ${Object.keys(WOW_FACTORY_CONTRACT_ADDRESSES).join(", ")}`,
+      `Invalid network: ${network}. Valid networks are: ${Object.keys(
+        WOW_FACTORY_CONTRACT_ADDRESSES,
+      ).join(", ")}`,
     );
   }
   return WOW_FACTORY_CONTRACT_ADDRESSES[normalizedNetwork];
