@@ -95,7 +95,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
 ## Security and bug reports
 
 The AgentKit team takes security seriously.
-See [SECURITY.md](../SECURITY.md) for more information.
+See [SECURITY.md](SECURITY.md) for more information.
 
 ## License
 
