@@ -3,6 +3,7 @@
   "private": true,
   "workspaces": [
     "cdp-agentkit-core/typescript",
+    "cdp-langchain/examples/chatbot-typescript",
     "cdp-langchain/typescript",
     "twitter-langchain/typescript"
   ],
