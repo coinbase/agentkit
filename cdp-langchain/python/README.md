@@ -8,16 +8,8 @@ This toolkit contains tools that enable an LLM agent to interact with the [Coinb
 
 ### Prerequisites
 
-#### CDP
-
 - [CDP API Key](https://portal.cdp.coinbase.com/access/api)
-
-#### OpenAI
-
 - [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
-
-#### Python
-
 - Python 3.10 or higher
 
 ### Installation

@@ -1,4 +1,5 @@
 # Twitter (X) Langchain Toolkit
+
 Twitter integration with Langchain to enable agentic workflows using the core primitives defined in `cdp-agentkit-core`.
 
 This toolkit contains tools that enable an LLM agent to interact with [Twitter](https://developer.x.com/en/docs/x-api). The toolkit provides a wrapper around the Twitter (X) API, allowing agents to perform social operations like posting text.
@@ -7,31 +8,11 @@ This toolkit contains tools that enable an LLM agent to interact with [Twitter](
 
 ### Prerequisites
 
-#### OpenAI
-
 - [OpenAI API Key](https://platform.openai.com/api-keys)
-
-#### Twitter (X)
-
 - [Twitter (X) App Developer Keys](https://developer.x.com/en/portal/dashboard)
-
-#### Python
-
-- Python 3.10 or higher 
-
-#### Typescript
-
 - Node.js 18 or higher
 
 ### Installation
-
-#### Python
-
-```bash
-pip install twitter-langchain
-```
-
-#### Typescript
 
 ```bash
 npm install @coinbase/twitter-langchain
@@ -53,30 +34,6 @@ export TWITTER_BEARER_TOKEN=<your-bearer-token>
 ## Usage
 
 ### Basic Setup
-
-#### Python
-
-```python
-from twitter_langchain import (
-    TwitterApiWrapper,
-    TwitterToolkit
-)
-
-# Initialize TwitterApiwrapper
-twitter_api_wrapper = TwitterApiWrapper()
-
-# Create TwitterToolkit from the api wrapper
-twitter_toolkit = TwitterToolkit.from_twitter_api_wrapper(twitter_api_wrapper)
-```
-
-View available tools:
-```python
-tools = twitter_toolkit.get_tools()
-for tool in tools:
-    print(tool.name)
-```
-
-#### Typescript
 
 ```typescript
 import { TwitterAgentkit } from "@coinbase/cdp-agentkit-core";
@@ -102,53 +59,6 @@ The toolkit provides the following tools:
 3. **post_tweet_reply** - Post a reply to a tweet on Twitter
 
 ### Using with an Agent
-
-#### Python
-
-```python
-import uuid
-
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage
-from langgraph.prebuilt import create_react_agent
-
-llm = ChatOpenAI(model="gpt-4o-mini")
-
-# Create agent
-agent_executor = create_react_agent(llm, tools)
-
-# Example - post tweet
-events = agent_executor.stream(
-    {
-        "messages": [
-            HumanMessage(content=f"Please post 'hello, world! {uuid.uuid4().hex}' to twitter"),
-        ],
-    },
-    stream_mode="values",
-)
-
-for event in events:
-    event["messages"][-1].pretty_print()
-```
-
-Expected output:
-```
-================================ Human Message =================================
-Please post 'hello, world! c4b8e3744c2e4345be9e0622b4c0a8aa' to twitter
-================================== Ai Message ==================================
-Tool Calls:
-    post_tweet (call_xVx4BMCSlCmCcbEQG1yyebbq)
-    Call ID: call_xVx4BMCSlCmCcbEQG1yyebbq
-    Args:
-        tweet: hello, world! c4b8e3744c2e4345be9e0622b4c0a8aa
-================================= Tool Message =================================
-Name: post_tweet
-Successfully posted!
-================================== Ai Message ==================================
-The message "hello, world! c4b8e3744c2e4345be9e0622b4c0a8aa" has been successfully posted to Twitter!
-```
-
-#### Typescript
 
 #### Additional Installations
 
@@ -182,7 +92,6 @@ console.log(result.messages[result.messages.length - 1].content);
 ## Examples
 
 Check out [twitter-langchain/examples](./examples) for inspiration and help getting started!
-- [Chatbot Python](./examples/chatbot-python/README.md): Simple example of a Python Chatbot that can interact on Twitter (X), using OpenAI.
 - [Chatbot Typescript](./examples/chatbot-typescript/README.md): Simple example of a Node.js Chatbot that can interact on Twitter (X), using OpenAI.
 
 ## Contributing
