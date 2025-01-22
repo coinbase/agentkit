@@ -5,6 +5,8 @@ from cdp_agentkit_core.actions.get_balance import GetBalanceAction
 from cdp_agentkit_core.actions.get_balance_nft import GetBalanceNftAction
 from cdp_agentkit_core.actions.get_wallet_details import GetWalletDetailsAction
 from cdp_agentkit_core.actions.mint_nft import MintNftAction
+from cdp_agentkit_core.actions.morpho.deposit import MorphoDepositAction
+from cdp_agentkit_core.actions.morpho.withdraw import MorphoWithdrawAction
 from cdp_agentkit_core.actions.pyth.fetch_price import PythFetchPriceAction
 from cdp_agentkit_core.actions.pyth.fetch_price_feed_id import PythFetchPriceFeedIDAction
 from cdp_agentkit_core.actions.register_basename import RegisterBasenameAction
@@ -48,6 +50,8 @@ __all__ = [
     "WowCreateTokenAction",
     "WowSellTokenAction",
     "WrapEthAction",
+    "MorphoDepositAction",
+    "MorphoWithdrawAction",
     "PythFetchPriceFeedIDAction",
     "PythFetchPriceAction",
 ]
