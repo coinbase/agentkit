@@ -40,6 +40,7 @@
   ],
   "dependencies": {
     "@coinbase/coinbase-sdk": "^0.14.1",
+    "@ensofinance/sdk": "^1.0.9",
     "twitter-api-v2": "^1.18.2",
     "viem": "^2.21.51",
     "zod": "^3.23.8"
