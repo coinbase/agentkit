@@ -2,7 +2,7 @@ import { CdpAction } from "../../cdp_action";
 import { Wallet } from "@coinbase/coinbase-sdk";
 import { EnsoClient, RouteParams } from "@ensofinance/sdk";
 import { z } from "zod";
-import { ENSO_API_KEY } from "../constants";
+import { ENSO_API_KEY, ENSO_ETH, MIN_ERC20_ABI } from "../constants";
 import { Address } from "viem";
 
 // TODO: Write a proper Enso Route prompt
@@ -67,15 +67,20 @@ export async function ensoRoute(
   args: z.infer<typeof EnsoRouteInput>,
 ): Promise<string> {
   try {
+    // Need to verify if the network id is supported
+    // NOTE: Supported networks:
+    // Ethereum, Arbitrum, Base, Polygon
+    const dd = wallet.getNetworkId();
+
     const fromAddress = (args.fromAddress ||
       (await wallet.getDefaultAddress()).toString()) as Address;
 
     const params: RouteParams = {
-      // NOTE: What networks are supported?
       chainId: 8453,
       tokenIn: args.tokenIn as Address,
       tokenOut: args.tokenOut as Address,
       amountIn: args.amountIn,
+      routingStrategy: "router",
       fromAddress,
       receiver: fromAddress,
       spender: fromAddress,
@@ -86,31 +91,37 @@ export async function ensoRoute(
     }
 
     const ensoClient = new EnsoClient({ apiKey: ENSO_API_KEY });
-
     const routeData = await ensoClient.getRouterData(params);
 
     // NOTE: The plan:
     // 1. Approve
     // 2. Execute the route
-    // The only way to run it is through wallet.invokeContract
-    // Example:
-    // const invocation = await wallet.invokeContract({
-    //  contractAddress: args.contractAddress,
-    //  method: "buy",
-    //  abi: WOW_ABI,
-    //  args: {
-    //    recipient: (await wallet.getDefaultAddress()).getId(),
-    //    refundRecipient: (await wallet.getDefaultAddress()).getId(),
-    //    orderReferrer: "0x0000000000000000000000000000000000000000",
-    //    expectedMarketType: hasGraduated ? "1" : "0",
-    //    minOrderSize: minTokens,
-    //    sqrtPriceLimitX96: "0",
-    //    comment: "",
-    //  },
-    //  amount: BigInt(args.amountEthInWei),
-    //  assetId: "wei",
-    //});
-    // So we need to decode the routeData to call this
+
+    // If the tokenIn is ERC20, do approve
+    if (args.tokenIn.toLowerCase() !== ENSO_ETH) {
+      // NOTE: What about ERC721?
+      const tx = await wallet.invokeContract({
+        contractAddress: args.tokenIn,
+        method: "approve",
+        abi: MIN_ERC20_ABI,
+        args: {
+          spender: routeData.tx.to,
+          value: args.amountIn,
+        },
+      });
+
+      tx.wait();
+    }
+
+    // TODO: Setup router call
+    const tx = await wallet.invokeContract({
+      contractAddress: routeData.tx.to,
+      method: "...",
+      abi: [],
+      args: {},
+      amount: BigInt(routeData.tx.value),
+      assetId: "wei",
+    });
 
     return "";
   } catch (error) {
