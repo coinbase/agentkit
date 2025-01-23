@@ -11,6 +11,9 @@ from cdp_agentkit_core.actions.pyth.fetch_price import PythFetchPriceAction
 from cdp_agentkit_core.actions.pyth.fetch_price_feed_id import PythFetchPriceFeedIDAction
 from cdp_agentkit_core.actions.register_basename import RegisterBasenameAction
 from cdp_agentkit_core.actions.request_faucet_funds import RequestFaucetFundsAction
+from cdp_agentkit_core.actions.superfluid.create_flow import SuperfluidCreateFlowAction
+from cdp_agentkit_core.actions.superfluid.delete_flow import SuperfluidDeleteFlowAction
+from cdp_agentkit_core.actions.superfluid.update_flow import SuperfluidUpdateFlowAction
 from cdp_agentkit_core.actions.trade import TradeAction
 from cdp_agentkit_core.actions.transfer import TransferAction
 from cdp_agentkit_core.actions.transfer_nft import TransferNftAction
@@ -54,4 +57,7 @@ __all__ = [
     "MorphoWithdrawAction",
     "PythFetchPriceFeedIDAction",
     "PythFetchPriceAction",
+    "SuperfluidCreateFlowAction",
+    "SuperfluidUpdateFlowAction",
+    "SuperfluidDeleteFlowAction",
 ]
