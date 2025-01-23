@@ -12,22 +12,15 @@ from cdp_agentkit_core.actions.utils import approve
 class MorphoDepositInput(BaseModel):
     """Input schema for Morpho Vault deposit action."""
 
-    assets: str = Field(
-        ...,
-        description="The quantity of assets to deposit, in whole units"
-    )
+    assets: str = Field(..., description="The quantity of assets to deposit, in whole units")
     receiver: str = Field(
         ...,
-        description="The address that will own the position on the vault which will receive the shares"
+        description="The address that will own the position on the vault which will receive the shares",
     )
     token_address: str = Field(
-        ...,
-        description="The address of the assets token to approve for deposit"
+        ..., description="The address of the assets token to approve for deposit"
     )
-    vault_address: str = Field(
-        ...,
-        description="The address of the Morpho Vault to deposit to"
-    )
+    vault_address: str = Field(..., description="The address of the Morpho Vault to deposit to")
 
 
 DEPOSIT_PROMPT = """

@@ -10,18 +10,9 @@ from cdp_agentkit_core.actions.morpho.constants import METAMORPHO_ABI
 class MorphoWithdrawInput(BaseModel):
     """Input schema for Morpho Vault withdraw action."""
 
-    vault_address: str = Field(
-        ...,
-        description="The address of the Morpho Vault to withdraw from"
-    )
-    assets: str = Field(
-        ...,
-        description="The amount of assets to withdraw in atomic units"
-    )
-    receiver: str = Field(
-        ...,
-        description="The address to receive the withdrawn assets"
-    )
+    vault_address: str = Field(..., description="The address of the Morpho Vault to withdraw from")
+    assets: str = Field(..., description="The amount of assets to withdraw in atomic units")
+    receiver: str = Field(..., description="The address to receive the withdrawn assets")
 
 
 WITHDRAW_PROMPT = """

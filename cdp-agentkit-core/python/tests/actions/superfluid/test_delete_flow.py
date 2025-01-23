@@ -42,9 +42,7 @@ def test_delete_flow_success(wallet_factory, contract_invocation_factory):
             mock_contract_invocation, "wait", return_value=mock_contract_invocation
         ) as mock_contract_invocation_wait,
     ):
-        action_response = superfluid_delete_flow(
-            mock_wallet, MOCK_RECIPIENT, MOCK_TOKEN_ADDRESS
-        )
+        action_response = superfluid_delete_flow(mock_wallet, MOCK_RECIPIENT, MOCK_TOKEN_ADDRESS)
 
         expected_response = f"Flow deleted successfully. Result: {mock_contract_invocation}"
         assert action_response == expected_response
@@ -66,10 +64,10 @@ def test_delete_flow_api_error(wallet_factory):
     """Test flow deletion when API error occurs."""
     mock_wallet = wallet_factory()
 
-    with patch.object(mock_wallet, "invoke_contract", side_effect=Exception("API error")) as mock_invoke_contract:
-        action_response = superfluid_delete_flow(
-            mock_wallet, MOCK_RECIPIENT, MOCK_TOKEN_ADDRESS
-        )
+    with patch.object(
+        mock_wallet, "invoke_contract", side_effect=Exception("API error")
+    ) as mock_invoke_contract:
+        action_response = superfluid_delete_flow(mock_wallet, MOCK_RECIPIENT, MOCK_TOKEN_ADDRESS)
 
         expected_response = "Error deleting flow: API error"
         assert action_response == expected_response

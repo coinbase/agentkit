@@ -20,34 +20,22 @@ Important notes:
 - The flowrate cannot have any decimal points, since the unit of measurement is wei per second.
 - Make sure to use the exact amount provided, and if there's any doubt, check by getting more information before continuing with the action.
 - 1 wei = 0.000000000000000001 ETH
-- This is supported on the following networks:
-  - Base Sepolia (ie, 'base-sepolia')
-  - Base Mainnet (ie, 'base', 'base-mainnet')
-  - Ethereum Mainnet (ie, 'ethereum', 'ethereum-mainnet')
-  - Polygon Mainnet (ie, 'polygon', 'polygon-mainnet')
-  - Arbitrum Mainnet (ie, 'arbitrum', 'arbitrum-mainnet')
-  - Optimism, Celo, Scroll, Avalanche, Gnosis, BNB Smart Chain, Degen Chain, Avalance Fuji, Optimism Sepolia and Scroll Sepolia
 """
+
 
 class SuperfluidCreateFlowInput(BaseModel):
     """Input argument schema for creating a flow."""
 
-    recipient: str = Field(
-        ...,
-        description="The wallet address of the recipient"
-    )
+    recipient: str = Field(..., description="The wallet address of the recipient")
 
-    token_address: str = Field(
-        ...,
-        description="The address of the token that will be streamed"
-    )
+    token_address: str = Field(..., description="The address of the token that will be streamed")
 
-    flow_rate: str = Field(
-        ...,
-        description="The flow rate of tokens in wei per second"
-    )
+    flow_rate: str = Field(..., description="The flow rate of tokens in wei per second")
 
-def superfluid_create_flow(wallet: Wallet, recipient: str, token_address: str, flow_rate: str) -> str:
+
+def superfluid_create_flow(
+    wallet: Wallet, recipient: str, token_address: str, flow_rate: str
+) -> str:
     """Create a money flow using Superfluid.
 
     Args:
@@ -70,8 +58,9 @@ def superfluid_create_flow(wallet: Wallet, recipient: str, token_address: str, f
                 "sender": wallet.default_address.address_id,
                 "receiver": recipient,
                 "flowrate": flow_rate,
-                "userData": "0x"
-            })
+                "userData": "0x",
+            },
+        )
 
         invocation.wait()
 
@@ -79,6 +68,7 @@ def superfluid_create_flow(wallet: Wallet, recipient: str, token_address: str, f
 
     except Exception as e:
         return f"Error creating flow: {e!s}"
+
 
 class SuperfluidCreateFlowAction(CdpAction):
     """Create flow action."""

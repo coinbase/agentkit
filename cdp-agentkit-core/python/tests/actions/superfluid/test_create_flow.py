@@ -70,7 +70,9 @@ def test_create_flow_api_error(wallet_factory):
     """Test flow creation when API error occurs."""
     mock_wallet = wallet_factory()
 
-    with patch.object(mock_wallet, "invoke_contract", side_effect=Exception("API error")) as mock_invoke_contract:
+    with patch.object(
+        mock_wallet, "invoke_contract", side_effect=Exception("API error")
+    ) as mock_invoke_contract:
         action_response = superfluid_create_flow(
             mock_wallet, MOCK_RECIPIENT, MOCK_TOKEN_ADDRESS, MOCK_FLOW_RATE
         )

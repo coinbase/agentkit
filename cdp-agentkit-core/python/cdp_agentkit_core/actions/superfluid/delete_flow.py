@@ -14,29 +14,16 @@ This tool will delete an existing money flow to a token recipient using Superflu
 Inputs:
 - Wallet address that the tokens are being streamed to or being streamed from
 - Super token contract address
-
-Important Notes:
-- This is supported on the following networks:
-  - Base Sepolia (ie, 'base-sepolia')
-  - Base Mainnet (ie, 'base', 'base-mainnet')
-  - Ethereum Mainnet (ie, 'ethereum', 'ethereum-mainnet')
-  - Polygon Mainnet (ie, 'polygon', 'polygon-mainnet')
-  - Arbitrum Mainnet (ie, 'arbitrum', 'arbitrum-mainnet')
-  - Optimism, Celo, Scroll, Avalanche, Gnosis, BNB Smart Chain, Degen Chain, Avalance Fuji, Optimism Sepolia and Scroll Sepolia
 """
+
 
 class SuperfluidDeleteFlowInput(BaseModel):
     """Input argument schema for deleting a flow."""
 
-    recipient: str = Field(
-        ...,
-        description="The wallet address of the recipient"
-    )
+    recipient: str = Field(..., description="The wallet address of the recipient")
 
-    token_address: str = Field(
-        ...,
-        description="The address of the token being flowed"
-    )
+    token_address: str = Field(..., description="The address of the token being flowed")
+
 
 def superfluid_delete_flow(wallet: Wallet, recipient: str, token_address: str) -> str:
     """Delete an existing money flow using Superfluid.
@@ -59,14 +46,16 @@ def superfluid_delete_flow(wallet: Wallet, recipient: str, token_address: str) -
                 "token": token_address,
                 "sender": wallet.default_address.address_id,
                 "receiver": recipient,
-                "userData": "0x"
-            })
+                "userData": "0x",
+            },
+        )
 
         invocation.wait()
 
         return f"Flow deleted successfully. Result: {invocation}"
     except Exception as e:
         return f"Error deleting flow: {e!s}"
+
 
 class SuperfluidDeleteFlowAction(CdpAction):
     """Delete flow action."""
