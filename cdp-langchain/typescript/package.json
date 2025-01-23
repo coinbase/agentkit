@@ -1,15 +1,13 @@
 {
   "name": "@coinbase/cdp-langchain",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Langchain Toolkit extension of CDP Agentkit",
   "repository": "https://github.com/coinbase/agentkit",
   "author": "Coinbase Inc.",
   "license": "Apache-2.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "tsc",
     "lint": "npx --yes eslint -c .eslintrc.json src/**/*.ts",
@@ -40,7 +38,7 @@
     "langchain"
   ],
   "dependencies": {
-    "@coinbase/cdp-agentkit-core": "^0.0.12",
+    "@coinbase/cdp-agentkit-core": "^0.0.13",
     "@coinbase/coinbase-sdk": "^0.14.1",
     "@langchain/core": "^0.3.19",
     "zod": "^3.22.4"

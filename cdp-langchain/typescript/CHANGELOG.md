@@ -2,12 +2,17 @@
 
 ## Unreleased
 
+## [0.0.14] - 2025-01-22
+
+### Added
+
+- Bump dependency `@coinbase/cdp-agentkit-core` to version `0.0.13`.
+
 ## [0.0.13] - 2025-01-17
 
 ### Added
 
 - Bump `@coinbase/cdp-agentkit-core` dependency to `0.0.12`
-
 
 ## [0.0.12] - 2025-01-13
 
