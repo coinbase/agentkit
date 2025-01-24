@@ -5,9 +5,7 @@
   "repository": "https://github.com/coinbase/agentkit",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "tsc",
     "lint": "npx --yes eslint -c .eslintrc.json src/**/*.ts",
@@ -37,7 +35,7 @@
     "langchain"
   ],
   "dependencies": {
-    "@coinbase/cdp-agentkit-core": "^0.0.13",
+    "@coinbase/cdp-agentkit-core": "^0.0.14",
     "@langchain/core": "0.3.30",
     "zod": "^3.22.4"
   },

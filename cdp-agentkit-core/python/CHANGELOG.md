@@ -2,12 +2,15 @@
 
 ## Unreleased
 
+## [0.0.11] - 2025-01-24
+
 ### Added
 
-- Add action `superfluid_create_flow` to create a flow using Superfluid
-- Add action `superfluid_update_flow` to update a flow using Superfluid
-- Add action `superfluid_delete_flow` to delete a flow using Superfluid
-- Add action `deploy_contract` to deploy a contract using the Solidity compiler
+- Added `address_reputation` to retrieve the reputation score for an address
+- Added `deploy_contract` to deploy a contract using the Solidity compiler
+- Added `superfluid_create_flow` to create a flow using Superfluid
+- Added `superfluid_update_flow` to update a flow using Superfluid
+- Added `superfluid_delete_flow` to delete a flow using Superfluid
 
 ## [0.0.10] - 2025-01-22
 
@@ -24,7 +27,6 @@
 - Added `transfer_nft` action.
 - Added `pyth_fetch_price_feed_id` action to fetch the price feed ID for a given token symbol from Pyth.
 - Added `pyth_fetch_price` action to fetch the price of a given price feed from Pyth.
-- Bump `cdp-sdk` dependency to `0.14.1`.
 
 ## [0.0.8] - 2025-01-13
 
@@ -34,15 +36,10 @@
 
 ## [0.0.7] - 2025-01-08
 
-### Added
-
-- Bump `cdp-sdk` dependency to `0.13.0`.
-
 ## [0.0.6] - 2024-12-06
 
 ### Added
 
-- Bump `cdp-sdk` dependency to `0.12.0`.
 - Improved prompts for all actions.
 
 ## [0.0.5] - 2024-11-15

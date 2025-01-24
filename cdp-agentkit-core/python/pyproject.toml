@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cdp-agentkit-core"
-version = "0.0.10"
+version = "0.0.11"
 description = "CDP Agentkit core primitives"
 authors = ["John Peterson <john.peterson@coinbase.com>"]
 readme = "README.md"
