@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## [0.0.11] - 2025-01-24
+
+### Added
+
+- Bump dependency `cdp-agentkit-core` to version `0.0.11`.
+
 ## [0.0.10] - 2025-01-22
 
 ### Added

@@ -488,7 +488,7 @@ test = ["coverage (>=7)", "hypothesis", "pytest"]
 
 [[package]]
 name = "cdp-agentkit-core"
-version = "0.0.10"
+version = "0.0.11"
 description = "CDP Agentkit core primitives"
 optional = false
 python-versions = "^3.10"
@@ -496,7 +496,7 @@ files = []
 develop = true
 
 [package.dependencies]
-cdp-sdk = "^0.14.1"
+cdp-sdk = "^0.15.0"
 pydantic = "^2.0"
 web3 = "^7.6.0"
 
@@ -506,13 +506,13 @@ url = "../../cdp-agentkit-core/python"
 
 [[package]]
 name = "cdp-sdk"
-version = "0.14.1"
+version = "0.15.0"
 description = "CDP Python SDK"
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "cdp_sdk-0.14.1-py3-none-any.whl", hash = "sha256:a39712a0d608c20018012c765aec68520b632d2e511c4503408cf9eb32890aaf"},
-    {file = "cdp_sdk-0.14.1.tar.gz", hash = "sha256:8acffd3dc5bc77789064fd69d9850a3ade6ac105fde0fadec487c04c7d8b8bfe"},
+    {file = "cdp_sdk-0.15.0-py3-none-any.whl", hash = "sha256:f640c1cad0aee829ad24ee1b41dc3f40f74472a1da4d53e257ba996527a64f95"},
+    {file = "cdp_sdk-0.15.0.tar.gz", hash = "sha256:f7b015b2d3811d69db4ea5cb29cefc33fb47e7d2ce587f70222742ab602f610c"},
 ]
 
 [package.dependencies]
@@ -2727,13 +2727,13 @@ files = [
 
 [[package]]
 name = "pydantic"
-version = "2.10.5"
+version = "2.10.6"
 description = "Data validation using Python type hints"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pydantic-2.10.5-py3-none-any.whl", hash = "sha256:4dd4e322dbe55472cb7ca7e73f4b63574eecccf2835ffa2af9021ce113c83c53"},
-    {file = "pydantic-2.10.5.tar.gz", hash = "sha256:278b38dbbaec562011d659ee05f63346951b3a248a6f3642e1bc68894ea2b4ff"},
+    {file = "pydantic-2.10.6-py3-none-any.whl", hash = "sha256:427d664bf0b8a2b34ff5dd0f5a18df00591adcee7198fbd71981054cef37b584"},
+    {file = "pydantic-2.10.6.tar.gz", hash = "sha256:ca5daa827cce33de7a42be142548b0096bf05a7e7b365aebfa5f8eeec7128236"},
 ]
 
 [package.dependencies]
@@ -3685,13 +3685,13 @@ files = [
 
 [[package]]
 name = "starlette"
-version = "0.45.2"
+version = "0.45.3"
 description = "The little ASGI library that shines."
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "starlette-0.45.2-py3-none-any.whl", hash = "sha256:4daec3356fb0cb1e723a5235e5beaf375d2259af27532958e2d79df549dad9da"},
-    {file = "starlette-0.45.2.tar.gz", hash = "sha256:bba1831d15ae5212b22feab2f218bab6ed3cd0fc2dc1d4442443bb1ee52260e0"},
+    {file = "starlette-0.45.3-py3-none-any.whl", hash = "sha256:dfb6d332576f136ec740296c7e8bb8c8a7125044e7c6da30744718880cdd059d"},
+    {file = "starlette-0.45.3.tar.gz", hash = "sha256:2cbcba2a75806f8a41c722141486f37c28e30a0921c5f6fe4346cb0dcee1302f"},
 ]
 
 [package.dependencies]
@@ -4360,4 +4360,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "5793474f84327e631d958f8577540b7782a54c91565b1ec8e637a31602c6432c"
+content-hash = "7f377fe36df17a75ea0ee324d9b75cb3eca5d07423c2c296bc6191a5c1e54144"
