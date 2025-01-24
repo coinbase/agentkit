@@ -16,7 +16,7 @@ Important notes:
 - Uses a bonding curve - no upfront liquidity needed
 - Only supported on the following networks:
   - Base Sepolia (ie, 'base-sepolia')
-  - Base Mainnet (ie, 'base', 'base-mainnnet')
+  - Base Mainnet (ie, 'base', 'base-mainnet')
 `;
 
 /**
