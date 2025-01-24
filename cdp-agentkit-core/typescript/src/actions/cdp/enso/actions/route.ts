@@ -12,7 +12,6 @@ import {
 } from "../constants";
 import { Address, decodeFunctionData, Hex } from "viem";
 
-// TODO: Make sure the prompt is descriptive
 const ENSO_ROUTE_PROMPT = `
 This tool can be used to route from ERC-20 token to ERC-20 token. The following actions are supported by Enso Route:
 - swap
@@ -82,7 +81,7 @@ export async function ensoRoute(
       tokenIn: args.tokenIn as Address,
       tokenOut: args.tokenOut as Address,
       amountIn: args.amountIn,
-      routingStrategy: "router", // I think we are limited to use router
+      routingStrategy: "router",
       fromAddress,
       receiver: fromAddress,
       spender: fromAddress,
@@ -94,6 +93,10 @@ export async function ensoRoute(
 
     const ensoClient = new EnsoClient({ apiKey: ENSO_API_KEY });
     const routeData = await ensoClient.getRouterData(params);
+
+    if (!routeData.tx.data.startsWith(ENSO_ROUTE_SINGLE_SIG)) {
+      return `Unsupported calldata returned from Enso API`;
+    }
 
     // If the tokenIn is ERC20, do approve
     if (args.tokenIn.toLowerCase() !== ENSO_ETH.toLowerCase()) {
@@ -110,12 +113,7 @@ export async function ensoRoute(
       tx.wait();
     }
 
-    if (!routeData.tx.data.startsWith(ENSO_ROUTE_SINGLE_SIG)) {
-      return `Unsupported calldata returned from Enso API`;
-    }
-
     // Need to decode the transaction (we know it is routeSingle at this point)
-    // TODO: Support all functions, now only routeSingle is supported
     const { args: routeArgs } = decodeFunctionData({
       abi: ENSO_ROUTER_ABI,
       data: routeData.tx.data as Hex,
