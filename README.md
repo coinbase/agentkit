@@ -82,7 +82,7 @@ See [Twitter Langchain](./twitter-langchain/README.md) to get started!
 ## Contributing
 
 AgentKit welcomes community contributions.
-See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
+See [CONTRIBUTING.md](./.github/CONTRIBUTING.md) for more information.
 
 ## Documentation
 
