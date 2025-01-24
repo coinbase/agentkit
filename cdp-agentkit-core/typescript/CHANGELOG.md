@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Added `enso_route` action
+
 ## [0.0.13] - 2025-01-22
 
 ### Added
