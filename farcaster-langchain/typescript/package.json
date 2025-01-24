@@ -1,7 +1,7 @@
 {
-  "name": "@coinbase/twitter-langchain",
-  "version": "0.0.11",
-  "description": "Twitter (X) langchain Toolkit extension of CDP Agentkit",
+  "name": "@coinbase/farcaster-langchain",
+  "version": "0.0.1",
+  "description": "Farcaster langchain Toolkit extension of CDP Agentkit",
   "repository": "https://github.com/coinbase/agentkit",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -31,15 +31,14 @@
     "agentkit",
     "ai",
     "agent",
+    "farcaster",
     "nodejs",
     "typescript",
-    "twitter",
     "langchain"
   ],
   "dependencies": {
     "@coinbase/cdp-agentkit-core": "^0.0.13",
-    "@langchain/core": "^0.3.19",
-    "twitter-api-v2": "^1.18.2",
+    "@langchain/core": "0.3.30",
     "zod": "^3.22.4"
   },
   "peerDependencies": {
