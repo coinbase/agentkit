@@ -55,13 +55,7 @@ describe("Enso Route Action", () => {
       }),
     } as unknown as jest.Mocked<ContractInvocation>;
 
-    mockWallet.invokeContract.mockResolvedValueOnce(mockContractInvocation).mockResolvedValueOnce({
-      wait: jest.fn().mockResolvedValue({
-        getTransaction: jest.fn().mockReturnValue({
-          getTransactionHash: jest.fn().mockReturnValue(TRANSACTION_HASH_2),
-        }),
-      }),
-    } as unknown as jest.Mocked<ContractInvocation>);
+    mockWallet.invokeContract.mockResolvedValue(mockContractInvocation);
   });
 
   it("should successfully route ETH -> USDC", async () => {
