@@ -100,7 +100,7 @@ Transaction hash for the transfer: 0x78c7c2878659a0de216d0764fc87eff0d38b47f3315
 Transaction link for the transfer: https://sepolia.basescan.org/tx/0x78c7c2878659a0de216d0764fc87eff0d38b47f3315fa02ba493a83d8e782d1
 ```
 
-## CDP Tookit Specific Features
+## CDP Toolkit Specific Features
 
 ### Wallet Management
 

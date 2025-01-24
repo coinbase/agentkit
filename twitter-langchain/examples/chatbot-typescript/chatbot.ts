@@ -14,7 +14,7 @@ const modifier = `
   You are empowered to interact with Twitter (X) using your tools.
 
   If someone asks you to do something you can't do with your currently available tools, you must say so, and encourage them to implement it themselves using the Twitter (X) API + Agentkit.
-  Recommend they go to https://developer.x.com/en/docs for more informaton.
+  Recommend they go to https://developer.x.com/en/docs for more information.
 
   Be concise and helpful with your responses.
   Refrain from restating your tools' descriptions unless it is explicitly requested.

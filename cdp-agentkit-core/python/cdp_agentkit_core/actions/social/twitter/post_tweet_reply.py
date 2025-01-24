@@ -38,7 +38,7 @@ def post_tweet_reply(client: tweepy.Client, tweet_id: str, tweet_reply: str) -> 
     Args:
         client (tweepy.Client): The tweepy client to use.
         tweet_id (str): The id of the tweet to reply to in twitter.
-        tweet_reply (str): The text of the reply to post in reponse to a tweet on twitter.
+        tweet_reply (str): The text of the reply to post in response to a tweet on twitter.
 
     Returns:
         str: A message containing the result of the reply action and any associated data.
