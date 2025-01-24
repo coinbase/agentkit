@@ -1,12 +1,12 @@
 import {
-  farcasterAccountDetails,
-  FarcasterAccountDetailsInput,
+  accountDetails,
+  AccountDetailsInput,
 } from "../actions/cdp/social/farcaster/account_details";
 
 describe("Farcaster Account Details Input", () => {
   it("should successfully parse empty input", () => {
     const emptyInput = {};
-    const result = FarcasterAccountDetailsInput.safeParse(emptyInput);
+    const result = AccountDetailsInput.safeParse(emptyInput);
 
     expect(result.success).toBe(true);
     expect(result.data).toEqual(emptyInput);
@@ -43,7 +43,7 @@ describe("Farcaster Account Details Action", () => {
     ) as jest.Mock;
 
     const args = {};
-    const response = await farcasterAccountDetails(args);
+    const response = await accountDetails(args);
     expect(response).toContain("Successfully retrieved Farcaster account details:");
   });
 
@@ -51,7 +51,7 @@ describe("Farcaster Account Details Action", () => {
     global.fetch = jest.fn(() => Promise.reject(new Error("An error has occurred"))) as jest.Mock;
 
     const args = {};
-    const response = await farcasterAccountDetails(args);
+    const response = await accountDetails(args);
     expect(response).toContain("Error retrieving Farcaster account details:");
   });
 });

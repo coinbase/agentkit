@@ -9,7 +9,7 @@ import { FarcasterTool } from "./farcaster_tool";
  * the state of a service; e.g., by creating, deleting, or updating,
  * reading underlying data.
  *
- * For example, this toolkit can be used to retrieve account details, publish casts,
+ * For example, this toolkit can be used to retrieve account details, post casts,
  * and anything else you can implement with the Farcaster API!
  *
  * Setup:
@@ -35,8 +35,8 @@ import { FarcasterTool } from "./farcaster_tool";
  * const tools = toolkit.getTools();
  *
  * // Available tools include:
- * // - account details
- * // - publish cast
+ * // - farcaster_account_details
+ * // - farcaster_post_cast
  * ```
  */
 export class FarcasterToolkit extends Toolkit {

@@ -1,42 +1,42 @@
 /**
- * This module provides functionality to publish a cast on Farcaster.
+ * This module provides functionality to post a cast on Farcaster.
  */
 
 import { z } from "zod";
 import { FarcasterAction } from "./farcaster_action";
 
 /**
- * Prompt message describing the publish cast tool.
+ * Prompt message describing the post cast tool.
  * A successful response will return a message with the API response in JSON format,
  * while a failure response will indicate an error from the Farcaster API.
  */
-const PUBLISH_CAST_PROMPT = `
-This tool will publish a cast to Farcaster. The tool takes the text of the cast as input. Casts can be maximum 280 characters.
+const POST_CAST_PROMPT = `
+This tool will post a cast to Farcaster. The tool takes the text of the cast as input. Casts can be maximum 280 characters.
 
 A successful response will return a message with the API response as a JSON payload:
     {}
 
 A failure response will return a message with the Farcaster API request error:
-    You are not allowed to publish a cast with duplicate content.
+    You are not allowed to post a cast with duplicate content.
 `;
 
 /**
- * Input argument schema for the publish cast action.
+ * Input argument schema for the post cast action.
  */
-export const PublishCastInput = z
+export const PostCastInput = z
   .object({
     castText: z.string().max(280, "Cast text must be a maximum of 280 characters."),
   })
   .strip()
-  .describe("Input schema for publishing a text-based cast");
+  .describe("Input schema for posting a text-based cast");
 
 /**
- * Publishes a cast on Farcaster.
+ * Posts a cast on Farcaster.
  *
  * @param args - The input arguments for the action.
- * @returns A message indicating the success or failure of the cast publishing.
+ * @returns A message indicating the success or failure of the cast posting.
  */
-export async function publishCast(args: z.infer<typeof PublishCastInput>): Promise<string> {
+export async function postCast(args: z.infer<typeof PostCastInput>): Promise<string> {
   try {
     const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY;
     const SIGNER_UUID = process.env.NEYNAR_MANAGED_SIGNER;
@@ -55,18 +55,18 @@ export async function publishCast(args: z.infer<typeof PublishCastInput>): Promi
       }),
     });
     const data = await response.json();
-    return `Successfully published cast to Farcaster:\n${JSON.stringify(data)}`;
+    return `Successfully posted cast to Farcaster:\n${JSON.stringify(data)}`;
   } catch (error) {
-    return `Error publishing to Farcaster:\n${error}`;
+    return `Error posting to Farcaster:\n${error}`;
   }
 }
 
 /**
- * Publish Cast Action
+ * Post Cast Action
  */
-export class PublishCastAction implements FarcasterAction<typeof PublishCastInput> {
-  public name = "publish_cast";
-  public description = PUBLISH_CAST_PROMPT;
-  public argsSchema = PublishCastInput;
-  public func = publishCast;
+export class FarcasterPostCastAction implements FarcasterAction<typeof PostCastInput> {
+  public name = "farcaster_post_cast";
+  public description = POST_CAST_PROMPT;
+  public argsSchema = PostCastInput;
+  public func = postCast;
 }

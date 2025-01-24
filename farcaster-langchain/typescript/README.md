@@ -1,6 +1,6 @@
 # CDP Agentkit Extension - Farcaster Langchain Toolkit
 
-This toolkit contains tools that enable an LLM agent to interact with Farcaster using Neynar's API. The toolkit provides a wrapper around the Neynar API, allowing agents to interact with Farcaster and perform actions like publishing casts.
+This toolkit contains tools that enable an LLM agent to interact with Farcaster using Neynar's API. The toolkit provides a wrapper around the Neynar API, allowing agents to interact with Farcaster and perform actions like posting casts.
 
 ## Setup
 
@@ -55,11 +55,11 @@ const tools = farcasterToolkit.getTools();
 
 The toolkit provides the following tools:
 
-1.  **account_details**          - Retrieve account details for the agent's Farcaster account
-2.  **publish_cast**             - Publish a cast to Farcaster
+1.  **farcaster_account_details** - Retrieve account details for the agent's Farcaster account
+2.  **farcaster_post_cast**       - Post a cast to Farcaster
 
 
 ## Examples
 
 Check out [farcaster-langchain/examples](./examples) for sample implementations!
-- [Chatbot Typescript](./examples/chatbot-typescript/README.md): Simple example of a Node.js Chatbot that can publish casts to Farcaster.
+- [Chatbot Typescript](./examples/chatbot-typescript/README.md): Simple example of a Node.js Chatbot that can post casts to Farcaster.

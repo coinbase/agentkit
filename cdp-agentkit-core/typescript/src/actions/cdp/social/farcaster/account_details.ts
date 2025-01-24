@@ -10,7 +10,7 @@ import { FarcasterAction } from "./farcaster_action";
  * A successful response will return a message with the API response in JSON format,
  * while a failure response will indicate an error from the Farcaster API.
  */
-const FARCASTER_ACCOUNT_DETAILS_PROMPT = `
+const ACCOUNT_DETAILS_PROMPT = `
 This tool will retrieve the account details for the agent's Farcaster account.
 The tool takes the FID of the agent's account.
 
@@ -24,7 +24,7 @@ A failure response will return a message with the Farcaster API request error:
 /**
  * Input argument schema for the account_details action.
  */
-export const FarcasterAccountDetailsInput = z
+export const AccountDetailsInput = z
   .object({})
   .strip()
   .describe("Input schema for retrieving account details");
@@ -35,9 +35,7 @@ export const FarcasterAccountDetailsInput = z
  * @param _ The input arguments for the action.
  * @returns A message containing account details for the agent's Farcaster account.
  */
-export async function farcasterAccountDetails(
-  _: z.infer<typeof FarcasterAccountDetailsInput>,
-): Promise<string> {
+export async function accountDetails(_: z.infer<typeof AccountDetailsInput>): Promise<string> {
   try {
     const AGENT_FID = process.env.AGENT_FID;
     const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY;
@@ -65,11 +63,9 @@ export async function farcasterAccountDetails(
 /**
  * Account Details Action
  */
-export class FarcasterAccountDetailsAction
-  implements FarcasterAction<typeof FarcasterAccountDetailsInput>
-{
+export class FarcasterAccountDetailsAction implements FarcasterAction<typeof AccountDetailsInput> {
   public name = "farcaster_account_details";
-  public description = FARCASTER_ACCOUNT_DETAILS_PROMPT;
-  public argsSchema = FarcasterAccountDetailsInput;
-  public func = farcasterAccountDetails;
+  public description = ACCOUNT_DETAILS_PROMPT;
+  public argsSchema = AccountDetailsInput;
+  public func = accountDetails;
 }

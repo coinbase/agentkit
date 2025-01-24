@@ -25,10 +25,10 @@ describe("FarcasterToolkit", () => {
         func: jest.fn().mockResolvedValue("Successfully retrieved Farcaster account details"),
       },
       {
-        name: "publish_cast",
-        description: "Publish a new cast",
+        name: "farcaster_post_cast",
+        description: "Post a new cast",
         argsSchema: z.object({ castText: z.string() }),
-        func: jest.fn().mockResolvedValue("Cast published successfully"),
+        func: jest.fn().mockResolvedValue("Cast posted successfully"),
       },
     ];
 
@@ -39,7 +39,7 @@ describe("FarcasterToolkit", () => {
   it("should initialize with correct tools", () => {
     expect(farcasterToolkit.tools).toHaveLength(mockActions.length);
     expect(farcasterToolkit.tools[0].name).toBe("farcaster_account_details");
-    expect(farcasterToolkit.tools[1].name).toBe("publish_cast");
+    expect(farcasterToolkit.tools[1].name).toBe("farcaster_post_cast");
   });
 
   it("should execute action from toolkit", async () => {
@@ -48,18 +48,18 @@ describe("FarcasterToolkit", () => {
     const response = await tool.call(args);
 
     expect(mockActions[1].func).toHaveBeenCalledWith(mockAgentkit, args);
-    expect(response).toBe("Cast published successfully");
+    expect(response).toBe("Cast posted successfully");
   });
 
   it("should handle action execution failure", async () => {
-    const error = new Error("Failed to publish cast");
+    const error = new Error("Failed to post cast");
     mockActions[1].func.mockRejectedValue(error);
 
     const tool = farcasterToolkit.tools[1];
     const args = { castText: "Hello world" };
     const response = await tool.call(args);
 
-    expect(response).toContain(`Error executing publish_cast: ${error.message}`);
+    expect(response).toContain(`Error executing farcaster_post_cast: ${error.message}`);
   });
 
   it("should return all available tools", () => {
@@ -67,6 +67,6 @@ describe("FarcasterToolkit", () => {
 
     expect(tools).toHaveLength(mockActions.length);
     expect(tools[0].name).toBe("farcaster_account_details");
-    expect(tools[1].name).toBe("publish_cast");
+    expect(tools[1].name).toBe("farcaster_post_cast");
   });
 });
