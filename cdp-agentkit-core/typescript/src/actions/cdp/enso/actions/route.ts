@@ -1,32 +1,41 @@
 import { CdpAction } from "../../cdp_action";
-import { Wallet } from "@coinbase/coinbase-sdk";
+import { Coinbase, Wallet } from "@coinbase/coinbase-sdk";
 import { EnsoClient, RouteParams } from "@ensofinance/sdk";
 import { z } from "zod";
-import { ENSO_API_KEY, ENSO_ETH, MIN_ERC20_ABI } from "../constants";
-import { Address } from "viem";
+import {
+  ENSO_API_KEY,
+  ENSO_ETH,
+  ENSO_ROUTE_SINGLE_SIG,
+  ENSO_ROUTER_ABI,
+  ENSO_SUPPORTED_NETWORKS,
+  MIN_ERC20_ABI,
+} from "../constants";
+import { Address, decodeFunctionData, Hex } from "viem";
 
-// TODO: Write a proper Enso Route prompt
+// TODO: Make sure the prompt is descriptive
 const ENSO_ROUTE_PROMPT = `
-`;
+This tool can be used to route from ERC-20 token to ERC-20 token. The following actions are supported by Enso Route:
+- swap
+- deposit
+- borrow
+- lend
 
-//const ENSO_ROUTE_PROMPT = `
-//This tool can only be used to buy a Zora Wow ERC20 memecoin (also can be referred to as a bonding curve token) with ETH.
-//Do not use this tool for any other purpose, or trading other assets.
-//
-//Inputs:
-//- WOW token contract address
-//- Address to receive the tokens
-//- Amount of ETH to spend (in wei)
-//
-//Important notes:
-//- The amount is a string and cannot have any decimal points, since the unit of measurement is wei.
-//- Make sure to use the exact amount provided, and if there's any doubt, check by getting more information before continuing with the action.
-//- 1 wei = 0.000000000000000001 ETH
-//- Minimum purchase amount is 100000000000000 wei (0.0000001 ETH)
-//- Only supported on the following networks:
-//  - Base Sepolia (ie, 'base-sepolia')
-//  - Base Mainnet (ie, 'base', 'base-mainnnet')
-//`;
+Inputs:
+- ERC20 token address to route from
+- ERC20 token address to route to
+- Amount of token to route from (in wei)
+- Slippage in basis points (optional)
+
+Important notes:
+- The amount is a string and cannot have any decimals points, the unit of measurement is wei.
+- Make sure to use correct decimal precision for the amountIn, each token has different decimal precision.
+- Only supported on the following networks:
+  - Base Mainnet (ie, 'base', 'base-mainnet')
+  - Ethereum Mainnet (ie, 'ethereum-mainnet')
+  - Arbitrum Mainnet (ie, 'arbitrum-mainnet')
+  - Polygon Mainnet (ie, 'polygon-mainnet')
+  - Base Sepolia (ie, 'base-sepolia')
+`;
 
 /**
  * Input schema for route action.
@@ -45,12 +54,6 @@ export const EnsoRouteInput = z
       ),
     amountIn: z.string().describe("Amount of tokenIn to swap in wei"),
     slippage: z.number().optional().describe("Slippage in basis points (1/10000). Default - 300"),
-    fromAddress: z
-      .string()
-      .optional()
-      .describe(
-        "Address of the wallet to send the transaction from. Default - Wallet's default address",
-      ),
   })
   .strip()
   .describe("Instructions for routing through Enso API");
@@ -67,20 +70,19 @@ export async function ensoRoute(
   args: z.infer<typeof EnsoRouteInput>,
 ): Promise<string> {
   try {
-    // Need to verify if the network id is supported
-    // NOTE: Supported networks:
-    // Ethereum, Arbitrum, Base, Polygon
-    const dd = wallet.getNetworkId();
+    const chainId = ENSO_SUPPORTED_NETWORKS.get(wallet.getNetworkId());
+    if (!chainId) {
+      return `Network ${wallet.getNetworkId()} is not supported by Enso`;
+    }
 
-    const fromAddress = (args.fromAddress ||
-      (await wallet.getDefaultAddress()).toString()) as Address;
+    const fromAddress = (await wallet.getDefaultAddress()).toString() as Address;
 
     const params: RouteParams = {
-      chainId: 8453,
+      chainId,
       tokenIn: args.tokenIn as Address,
       tokenOut: args.tokenOut as Address,
       amountIn: args.amountIn,
-      routingStrategy: "router",
+      routingStrategy: "router", // I think we are limited to use router
       fromAddress,
       receiver: fromAddress,
       spender: fromAddress,
@@ -92,10 +94,6 @@ export async function ensoRoute(
 
     const ensoClient = new EnsoClient({ apiKey: ENSO_API_KEY });
     const routeData = await ensoClient.getRouterData(params);
-
-    // NOTE: The plan:
-    // 1. Approve
-    // 2. Execute the route
 
     // If the tokenIn is ERC20, do approve
     if (args.tokenIn.toLowerCase() !== ENSO_ETH) {
@@ -113,17 +111,33 @@ export async function ensoRoute(
       tx.wait();
     }
 
-    // TODO: Setup router call
+    if (!routeData.tx.data.startsWith(ENSO_ROUTE_SINGLE_SIG)) {
+      return `Unsupported calldata returned from Enso API`;
+    }
+
+    // Need to decode the transaction (we know it is routeSingle at this point)
+    // TODO: Support all functions, now only routeSingle is supported
+    const { args: routeArgs } = decodeFunctionData({
+      abi: ENSO_ROUTER_ABI,
+      data: routeData.tx.data as Hex,
+    });
+
     const tx = await wallet.invokeContract({
       contractAddress: routeData.tx.to,
-      method: "...",
-      abi: [],
-      args: {},
+      method: "routeSingle",
+      abi: ENSO_ROUTER_ABI,
+      args: {
+        tokenIn: routeArgs[0],
+        amountIn: routeArgs[1],
+        commands: routeArgs[2],
+        state: routeArgs[3],
+      },
       amount: BigInt(routeData.tx.value),
       assetId: "wei",
     });
 
-    return "";
+    const result = await tx.wait();
+    return `Route executed successfully, transaction hash: ${result.getTransaction().getTransactionHash()}`;
   } catch (error) {
     return `Error routing token through Enso API: ${error}`;
   }
