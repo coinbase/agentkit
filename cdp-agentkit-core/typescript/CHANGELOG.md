@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Added `enso_route` action
+
 ## [0.0.12] - 2025-01-17
 
 ### Added
@@ -25,6 +29,7 @@
 ## [0.0.10] - 2025-01-09
 
 ### Removed
+
 - rogue console.log
 
 ## [0.0.9] - 2025-01-08
