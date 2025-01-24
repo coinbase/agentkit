@@ -51,25 +51,30 @@ for tool in tools:
 
 The toolkit provides the following tools:
 
-1.  **deploy_nft**               - Deploy new NFT contracts
-2.  **deploy_token**             - Deploy ERC-20 token contracts
-3.  **get_balance**              - Get balance for specific assets
-4.  **get_balance_nft**          - Get balance for specific NFTs (ERC-721)
-5.  **get_wallet_details**       - Get details about the MPC Wallet
-6.  **mint_nft**                 - Mint NFTs from existing contracts
-7.  **morpho_deposit**           - Deposit into a morpho vault
-8.  **morpho_withdraw**          - Withdraw from a morpho vault
-9.  **pyth_fetch_price**         - Fetch the price of a given price feed from Pyth Network
-10. **pyth_fetch_price_feed_id** - Fetch the price feed ID for a given token symbol from Pyth Network
-11. **register_basename**        - Register a basename for the wallet
-12. **request_faucet_funds**     - Request test tokens from faucet
-13. **trade**                    - Trade assets (Mainnet only)
-14. **transfer**                 - Transfer assets between addresses
-15. **transfer_nft**             - Transfer an NFT (ERC-721)
-16. **wow_buy_token**            - Buy Zora Wow ERC20 memecoin with ETH
-17. **wow_create_token**         - Deploy a token using Zora's Wow Launcher (Bonding Curve)
-18. **wow_sell_token**           - Sell Zora Wow ERC20 memecoin for ETH
-19. **wrap_eth**                 - Wrap ETH to WETH
+1.  **address_reputation**       - Retrieve the address's reputation on a given network
+2.  **deploy_contract**          - Deploy an arbitrary contract using the Solidity compiler
+3.  **deploy_nft**               - Deploy new NFT contracts
+4.  **deploy_token**             - Deploy ERC-20 token contracts
+5.  **get_balance**              - Get balance for specific assets
+6.  **get_balance_nft**          - Get balance for specific NFTs (ERC-721)
+7.  **get_wallet_details**       - Get details about the MPC Wallet
+8.  **mint_nft**                 - Mint NFTs from existing contracts
+9.  **morpho_deposit**           - Deposit into a morpho vault
+10. **morpho_withdraw**          - Withdraw from a morpho vault
+11. **pyth_fetch_price**         - Fetch the price of a given price feed from Pyth Network
+12. **pyth_fetch_price_feed_id** - Fetch the price feed ID for a given token symbol from Pyth Network
+13. **register_basename**        - Register a basename for the wallet
+14. **request_faucet_funds**     - Request test tokens from faucet
+15. **superfluid_create_flow**   - Create a flow using Superfluid
+16. **superfluid_update_flow**   - Update a flow using Superfluid
+17. **superfluid_delete_flow**   - Delete a flow using Superfluid
+18. **trade**                    - Trade assets (Mainnet only)
+19. **transfer**                 - Transfer assets between addresses
+20. **transfer_nft**             - Transfer an NFT (ERC-721)
+21. **wow_buy_token**            - Buy Zora Wow ERC20 memecoin with ETH
+22. **wow_create_token**         - Deploy a token using Zora's Wow Launcher (Bonding Curve)
+23. **wow_sell_token**           - Sell Zora Wow ERC20 memecoin for ETH
+24. **wrap_eth**                 - Wrap ETH to WETH
 
 ### Using with an Agent
 

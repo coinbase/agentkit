@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.abspath(".."))
 
 project = 'CDP Agentkit - LangChain'
 author = 'Coinbase Developer Platform'
-release = '0.0.12'
+release = '0.0.13'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
