@@ -12,7 +12,7 @@ This guide covers TypeScript-specific setup and development for AgentKit.
 
 ## Development Setup
 
-AgentKit uses Node.js v23.4.0 or higher and npm 10.9.2 or higher.
+AgentKit uses Node.js v18.x or higher and npm 8.x or higher.
 
 You can run the following commands in your terminal to check your local Node.js and npm versions:
 
@@ -23,18 +23,18 @@ npm --version
 
 If the versions are not correct or you don't have Node.js or npm installed, download through [nvm](https://github.com/nvm-sh/nvm).
 
+Once you have these installed, make sure you install the project dependencies by running `npm install` from the root of the repository.
+
 ## Adding an Agentic Action
 
 One of the most common ways to contribute to AgentKit is by adding a new agentic action. Here are the high level steps:
 
-**Note: It is recommended to point your editor to the specific package that you are working in. This will help ensure things like package imports are working correctly**
-
 1. Create a new file in `cdp-agentkit-core/typescript/src/actions/cdp`
 2. Implement your new action inside your newly created file
-    - For an example of an action, see [mint_nft.py](./cdp-agentkit-core/typescript/src/actions/cdp/mint_nft.ts)
-3. Add your action to [index.ts](./cdp-agentkit-core/typescript/src/actions/cdp/index.ts)
+    - For an example of an action, see [mint_nft.ts](https://github.com/coinbase/agentkit/blob/master/cdp-agentkit-core/typescript/src/actions/cdp/mint_nft.ts)
+3. Add your action to [cdp-agentkit-core/typescript/src/actions/cdp/index.ts`](https://github.com/coinbase/agentkit/blob/master/cdp-agentkit-core/typescript/src/actions/cdp/index.ts)
 4. Add a test for your action in `cdp-agentkit-core/typescript/src/tests`
-    - For an example, see [mint_nft_test.ts](./cdp-agentkit-core/typescript/src/tests/mint_nft_test.ts)
+    - For an example, see [mint_nft_test.ts](https://github.com/coinbase/agentkit/blob/master/cdp-agentkit-core/typescript/src/tests/mint_nft_test.ts)
 
 Actions are created by implementing the `CdpAction` interface:
 
@@ -117,15 +117,12 @@ The action will be included automatically, all you need to do is add the action 
 
 ### Local Testing
 
-A good way to test new actions locally is by using the chatbot example in `cdp-langchain`. This requires a couple API keys:
-
-- Get a Coinbase Developer Platform API Key from the [CDP Portal](https://portal.cdp.coinbase.com/access/api)
-- Get an [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
+A good way to test new actions locally is by using the chatbot example in `cdp-langchain`. See the [chatbot README](https://github.com/coinbase/agentkit/blob/master/cdp-langchain/examples/chatbot-typescript/README.md) for instructions on setting up and running the chatbot.
 
 The flow is:
 
 1. Make your change as described in the [Adding an Agentic Action](#adding-an-agentic-action) section
-2. Re-build the package by running `npm run build` (either from root, or from the package folder will do)
+2. From root, run  `npm run build`
 3. In `cdp-langchain/examples/chatbot-typescript`, run `npm run start`
 4. You can now interact with your new action via the chatbot!
 

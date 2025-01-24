@@ -32,14 +32,12 @@ If the versions are not correct or you don't have Python or Poetry installed, do
 
 One of the most common ways to contribute to AgentKit is by adding a new agentic action. Here are the high level steps:
 
-**Note: It is recommended to point your editor to the specific package that you are working in. This will help ensure things like package imports are working correctly**
-
 1. Create a new file in `cdp-agentkit-core/python/cdp_agentkit_core/actions`
 2. Implement your new action inside your newly created file
-    - For an example of an action, see [mint_nft.py](./cdp-agentkit-core/python/cdp_agentkit_core/actions/mint_nft.py)
-3. Add your action to [__init__.py](./cdp-agentkit-core/python/cdp_agentkit_core/actions/__init__.py)
+    - For an example of an action, see [mint_nft.py](https://github.com/coinbase/agentkit/blob/master/cdp-agentkit-core/python/cdp_agentkit_core/actions/mint_nft.py)
+3. Add your action to [`cdp_agentkit_core/actions/__init__.py`](https://github.com/coinbase/agentkit/blob/master/cdp-agentkit-core/python/cdp_agentkit_core/actions/__init__.py)
 4. Add a test for your action in `cdp-agentkit-core/python/tests/actions`
-    - For an example, see [test_mint_nft.py](./cdp-agentkit-core/python/tests/actions/test_mint_nft.py)
+    - For an example, see [test_mint_nft.py](https://github.com/coinbase/agentkit/blob/master/cdp-agentkit-core/python/tests/actions/test_mint_nft.py)
 
 Actions are created by implementing the `CdpAction` interface:
 
@@ -168,10 +166,7 @@ The action will be included automatically, all you need to do is add the action 
 
 ### Local Testing
 
-A good way to test new actions locally is by using the chatbot example in `cdp-langchain`. This requires a couple API keys:
-
-- Get a Coinbase Developer Platform API Key from the [CDP Portal](https://portal.cdp.coinbase.com/access/api)
-- Get an [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
+A good way to test new actions locally is by using the chatbot example in `cdp-langchain`. See the [chatbot README](https://github.com/coinbase/agentkit/blob/master/cdp-langchain/examples/chatbot-python/README.md) for instructions on setting up and running the chatbot.
 
 The flow is:
 
