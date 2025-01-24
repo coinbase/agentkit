@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### Added
+
+- Add action `superfluid_create_flow` to create a flow using Superfluid
+- Add action `superfluid_update_flow` to update a flow using Superfluid
+- Add action `superfluid_delete_flow` to delete a flow using Superfluid
+
+## [0.0.10] - 2025-01-22
+
+### Added
+
+- Added `morpho_deposit` action to deposit to Morpho Vault.
+- Added `morpho_withdrawal` action to withdraw from Morpho Vault.
+
 ## [0.0.9] - 2025-01-17
 
 ### Added

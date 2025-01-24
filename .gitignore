@@ -128,5 +128,5 @@ pids
 **/*_local*
 api.json
 
-# JSDoc
-docs/
+# TS Docs
+**/typescript/docs/

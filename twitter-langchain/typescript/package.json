@@ -1,6 +1,6 @@
 {
   "name": "@coinbase/twitter-langchain",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Twitter (X) langchain Toolkit extension of CDP Agentkit",
   "repository": "https://github.com/coinbase/agentkit",
   "main": "dist/index.js",
@@ -35,7 +35,7 @@
     "langchain"
   ],
   "dependencies": {
-    "@coinbase/cdp-agentkit-core": "^0.0.12",
+    "@coinbase/cdp-agentkit-core": "^0.0.13",
     "@langchain/core": "^0.3.19",
     "twitter-api-v2": "^1.18.2",
     "zod": "^3.22.4"

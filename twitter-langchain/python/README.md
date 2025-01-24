@@ -7,16 +7,8 @@ This toolkit contains tools that enable an LLM agent to interact with [Twitter](
 
 ### Prerequisites
 
-#### OpenAI
-
 - [OpenAI API Key](https://platform.openai.com/api-keys)
-
-#### Twitter (X)
-
 - [Twitter (X) App Developer Keys](https://developer.x.com/en/portal/dashboard)
-
-#### Python
-
 - Python 3.10 or higher
 
 ### Installation

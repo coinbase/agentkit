@@ -8,10 +8,9 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
-twitter-langchain = "^0.0.9"
+twitter-langchain = "^0.0.10"
 langchain-openai = "^0.3.0"
 langgraph = "^0.2.62"
-
 
 [build-system]
 requires = ["poetry-core"]
