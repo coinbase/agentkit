@@ -96,8 +96,7 @@ export async function ensoRoute(
     const routeData = await ensoClient.getRouterData(params);
 
     // If the tokenIn is ERC20, do approve
-    if (args.tokenIn.toLowerCase() !== ENSO_ETH) {
-      // NOTE: What about ERC721?
+    if (args.tokenIn.toLowerCase() !== ENSO_ETH.toLowerCase()) {
       const tx = await wallet.invokeContract({
         contractAddress: args.tokenIn,
         method: "approve",
