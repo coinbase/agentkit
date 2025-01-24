@@ -32,7 +32,6 @@ describe("Enso Route Input", () => {
 describe("Enso Route Action", () => {
   const NETWORK_ID = Coinbase.networks.EthereumMainnet;
   const TRANSACTION_HASH = "0xghijkl987654321";
-  const TRANSACTION_HASH_2 = "0x22ghijkl987654321";
 
   let mockContractInvocation: jest.Mocked<ContractInvocation>;
   let mockWallet: jest.Mocked<Wallet>;
