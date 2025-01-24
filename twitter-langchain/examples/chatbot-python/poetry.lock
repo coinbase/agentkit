@@ -437,29 +437,29 @@ test = ["coverage (>=7)", "hypothesis", "pytest"]
 
 [[package]]
 name = "cdp-agentkit-core"
-version = "0.0.10"
+version = "0.0.11"
 description = "CDP Agentkit core primitives"
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "cdp_agentkit_core-0.0.10-py3-none-any.whl", hash = "sha256:2f99ff552cfb6e50f8ce9ee621a0bfb9900b73e2704cc6414c711563a7c54d7d"},
-    {file = "cdp_agentkit_core-0.0.10.tar.gz", hash = "sha256:7d69eae91a325b69a4f4e882427d3bfcf6e455fcc27582876300e1902a749c14"},
+    {file = "cdp_agentkit_core-0.0.11-py3-none-any.whl", hash = "sha256:103259f7780e690da0aa13a00e6c40f95d0f1ea568d340adc40f309621a8f2c0"},
+    {file = "cdp_agentkit_core-0.0.11.tar.gz", hash = "sha256:00e30358877f01f8d0c2018b27c3cfa900e6e9a62fa766859321202abe3f9bea"},
 ]
 
 [package.dependencies]
-cdp-sdk = ">=0.14.1,<0.15.0"
+cdp-sdk = ">=0.15.0,<0.16.0"
 pydantic = ">=2.0,<3.0"
 web3 = ">=7.6.0,<8.0.0"
 
 [[package]]
 name = "cdp-sdk"
-version = "0.14.1"
+version = "0.15.0"
 description = "CDP Python SDK"
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "cdp_sdk-0.14.1-py3-none-any.whl", hash = "sha256:a39712a0d608c20018012c765aec68520b632d2e511c4503408cf9eb32890aaf"},
-    {file = "cdp_sdk-0.14.1.tar.gz", hash = "sha256:8acffd3dc5bc77789064fd69d9850a3ade6ac105fde0fadec487c04c7d8b8bfe"},
+    {file = "cdp_sdk-0.15.0-py3-none-any.whl", hash = "sha256:f640c1cad0aee829ad24ee1b41dc3f40f74472a1da4d53e257ba996527a64f95"},
+    {file = "cdp_sdk-0.15.0.tar.gz", hash = "sha256:f7b015b2d3811d69db4ea5cb29cefc33fb47e7d2ce587f70222742ab602f610c"},
 ]
 
 [package.dependencies]
@@ -1681,17 +1681,17 @@ typing-extensions = ">=4.7"
 
 [[package]]
 name = "langchain-openai"
-version = "0.3.1"
+version = "0.3.2"
 description = "An integration package connecting OpenAI and LangChain"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain_openai-0.3.1-py3-none-any.whl", hash = "sha256:5cf2a1e115b12570158d89c22832fa381803c3e1e11d1eb781195c8d9e454bd5"},
-    {file = "langchain_openai-0.3.1.tar.gz", hash = "sha256:cce314f1437b2cad73e0ed2b55e74dc399bc1bbc43594c4448912fb51c5e4447"},
+    {file = "langchain_openai-0.3.2-py3-none-any.whl", hash = "sha256:8674183805e26d3ae3f78cc44f79fe0b2066f61e2de0e7e18be3b86f0d3b2759"},
+    {file = "langchain_openai-0.3.2.tar.gz", hash = "sha256:c2c80ac0208eb7cefdef96f6353b00fa217979ffe83f0a21cc8666001df828c1"},
 ]
 
 [package.dependencies]
-langchain-core = ">=0.3.30,<0.4.0"
+langchain-core = ">=0.3.31,<0.4.0"
 openai = ">=1.58.1,<2.0.0"
 tiktoken = ">=0.7,<1"
 
@@ -1711,13 +1711,13 @@ langchain-core = ">=0.3.29,<0.4.0"
 
 [[package]]
 name = "langgraph"
-version = "0.2.66"
+version = "0.2.67"
 description = "Building stateful, multi-actor applications with LLMs"
 optional = false
 python-versions = "<4.0,>=3.9.0"
 files = [
-    {file = "langgraph-0.2.66-py3-none-any.whl", hash = "sha256:3b839e63b106161a8b4e0914a5041ca6ce8449623506f15b8b575d49e4f35ee7"},
-    {file = "langgraph-0.2.66.tar.gz", hash = "sha256:97d3b36cfeab188c5e67019d959bed2f2d5d627b1548b3588709aa9759d2b5e7"},
+    {file = "langgraph-0.2.67-py3-none-any.whl", hash = "sha256:79a76d8fd7581bf117aaa90453d780df2c96a49ed6f5e25086d9adadef8e945f"},
+    {file = "langgraph-0.2.67.tar.gz", hash = "sha256:80d034b612d998ec5f6a77362ba8ebe697b5e7b25f8ebbc4333b82bbd9bca8f6"},
 ]
 
 [package.dependencies]
@@ -2085,13 +2085,13 @@ signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 
 [[package]]
 name = "openai"
-version = "1.60.0"
+version = "1.60.1"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "openai-1.60.0-py3-none-any.whl", hash = "sha256:df06c43be8018274980ac363da07d4b417bd835ead1c66e14396f6f15a0d5dda"},
-    {file = "openai-1.60.0.tar.gz", hash = "sha256:7fa536cd4b644718645b874d2706e36dbbef38b327e42ca0623275da347ee1a9"},
+    {file = "openai-1.60.1-py3-none-any.whl", hash = "sha256:714181ec1c452353d456f143c22db892de7b373e3165063d02a2b798ed575ba1"},
+    {file = "openai-1.60.1.tar.gz", hash = "sha256:beb1541dfc38b002bd629ab68b0d6fe35b870c5f4311d9bc4404d85af3214d5e"},
 ]
 
 [package.dependencies]
@@ -2480,13 +2480,13 @@ files = [
 
 [[package]]
 name = "pydantic"
-version = "2.10.5"
+version = "2.10.6"
 description = "Data validation using Python type hints"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pydantic-2.10.5-py3-none-any.whl", hash = "sha256:4dd4e322dbe55472cb7ca7e73f4b63574eecccf2835ffa2af9021ce113c83c53"},
-    {file = "pydantic-2.10.5.tar.gz", hash = "sha256:278b38dbbaec562011d659ee05f63346951b3a248a6f3642e1bc68894ea2b4ff"},
+    {file = "pydantic-2.10.6-py3-none-any.whl", hash = "sha256:427d664bf0b8a2b34ff5dd0f5a18df00591adcee7198fbd71981054cef37b584"},
+    {file = "pydantic-2.10.6.tar.gz", hash = "sha256:ca5daa827cce33de7a42be142548b0096bf05a7e7b365aebfa5f8eeec7128236"},
 ]
 
 [package.dependencies]
@@ -3190,17 +3190,17 @@ test = ["urllib3 (<2)", "vcrpy (>=1.10.3)"]
 
 [[package]]
 name = "twitter-langchain"
-version = "0.0.10"
+version = "0.0.11"
 description = "Twitter Langchain Toolkit"
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "twitter_langchain-0.0.10-py3-none-any.whl", hash = "sha256:2a1a310951b6d4d9a01e8cbe81823b6f2d458bb4d5acd524db60d79d0700a216"},
-    {file = "twitter_langchain-0.0.10.tar.gz", hash = "sha256:ed84fc3d69c29aa62a0bf93f962ff003704a7322baea92ab011752c001d6c449"},
+    {file = "twitter_langchain-0.0.11-py3-none-any.whl", hash = "sha256:42657011c4752066862bf4de2bd36e69913654ea02bab6d9f995ce40793db461"},
+    {file = "twitter_langchain-0.0.11.tar.gz", hash = "sha256:34445bbc0bcd2684197b917aff8e5e5f3db164d38e754fb67f6dc2359ca194c3"},
 ]
 
 [package.dependencies]
-cdp-agentkit-core = ">=0.0.10,<0.0.11"
+cdp-agentkit-core = ">=0.0.11,<0.0.12"
 langchain = ">=0.3.7,<0.4.0"
 pydantic = ">=2.9.2,<3.0.0"
 standard-imghdr = ">=3.13.0,<4.0.0"
@@ -3587,4 +3587,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "0e9c0b1ebba9833e3a0bb4a10bef4568e4906e729318eba3bb92e2522ff06287"
+content-hash = "92276e8e4c27a9770c62956b1e2fd8856c28e62f7baae6eec2fe7c29b74be69f"

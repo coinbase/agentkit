@@ -6,6 +6,7 @@
     "cdp-langchain/examples/chatbot-typescript",
     "cdp-langchain/typescript",
     "twitter-langchain/typescript",
+    "twitter-langchain/examples/chatbot-typescript",
     "farcaster-langchain/typescript",
     "farcaster-langchain/examples/chatbot-typescript"
   ],
