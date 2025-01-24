@@ -45,10 +45,7 @@ def test_address_reputation_input_model_missing_params():
 def test_address_reputation_input_model_invalid_address():
     """Test AddressReputationInput raises error with invalid address format."""
     with pytest.raises(ValueError, match="Invalid Ethereum address format"):
-        AddressReputationInput(
-            network=MOCK_NETWORK,
-            address="not_an_address"
-        )
+        AddressReputationInput(network=MOCK_NETWORK, address="not_an_address")
 
 
 def test_address_reputation_success():
@@ -65,12 +62,12 @@ def test_address_reputation_success():
             bridge_transactions_performed=5,
             lend_borrow_stake_transactions=10,
             ens_contract_interactions=2,
-            smart_contract_deployments=1
-        )
+            smart_contract_deployments=1,
+        ),
     )
     mock_reputation = AddressReputation(model=mock_model)
 
-    with patch('cdp_agentkit_core.actions.address_reputation.Address') as mock_address:
+    with patch("cdp_agentkit_core.actions.address_reputation.Address") as mock_address:
         mock_address_instance = mock_address.return_value
         mock_address_instance.reputation.return_value = mock_reputation
 
@@ -84,7 +81,7 @@ def test_address_reputation_success():
 
 def test_address_reputation_failure():
     """Test address reputation check failure."""
-    with patch('cdp_agentkit_core.actions.address_reputation.Address') as mock_address:
+    with patch("cdp_agentkit_core.actions.address_reputation.Address") as mock_address:
         mock_address_instance = mock_address.return_value
         mock_address_instance.reputation.side_effect = Exception("API error")
 

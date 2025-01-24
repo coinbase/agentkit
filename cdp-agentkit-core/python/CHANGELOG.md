@@ -7,6 +7,7 @@
 - Add action `superfluid_create_flow` to create a flow using Superfluid
 - Add action `superfluid_update_flow` to update a flow using Superfluid
 - Add action `superfluid_delete_flow` to delete a flow using Superfluid
+- Add action `deploy_contract` to deploy a contract using the Solidity compiler
 
 ## [0.0.10] - 2025-01-22
 

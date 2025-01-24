@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Added `deploy_contract` action to deploy a contract using the Solidity compiler
+
 ## [0.0.13] - 2025-01-22
 
 ### Added

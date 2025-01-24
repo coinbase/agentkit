@@ -10,7 +10,7 @@ packages = [{ include = "cdp_agentkit_core" }]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-cdp-sdk = "^0.14.1"
+cdp-sdk = "^0.15.0"
 pydantic = "^2.0"
 web3 = "^7.6.0"
 

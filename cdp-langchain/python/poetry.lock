@@ -496,7 +496,7 @@ files = []
 develop = true
 
 [package.dependencies]
-cdp-sdk = "^0.14.1"
+cdp-sdk = "^0.15.0"
 pydantic = "^2.0"
 web3 = "^7.6.0"
 
@@ -506,13 +506,13 @@ url = "../../cdp-agentkit-core/python"
 
 [[package]]
 name = "cdp-sdk"
-version = "0.14.1"
+version = "0.15.0"
 description = "CDP Python SDK"
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "cdp_sdk-0.14.1-py3-none-any.whl", hash = "sha256:a39712a0d608c20018012c765aec68520b632d2e511c4503408cf9eb32890aaf"},
-    {file = "cdp_sdk-0.14.1.tar.gz", hash = "sha256:8acffd3dc5bc77789064fd69d9850a3ade6ac105fde0fadec487c04c7d8b8bfe"},
+    {file = "cdp_sdk-0.15.0-py3-none-any.whl", hash = "sha256:f640c1cad0aee829ad24ee1b41dc3f40f74472a1da4d53e257ba996527a64f95"},
+    {file = "cdp_sdk-0.15.0.tar.gz", hash = "sha256:f7b015b2d3811d69db4ea5cb29cefc33fb47e7d2ce587f70222742ab602f610c"},
 ]
 
 [package.dependencies]
@@ -4616,4 +4616,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "670d04e092ba43cca7c8ccf040058e73d8317f00cc26ab3391c05735d3a73dd1"
+content-hash = "e115d16331c2976305216d2815cfcdd6bdae3937412334c45592921679c46df5"

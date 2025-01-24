@@ -61,6 +61,7 @@ class CdpToolkit(BaseToolkit):
             deploy_token
             mint_nft
             deploy_nft
+            deploy_contract
             register_basename
             wow_create_token
             wow_buy_token

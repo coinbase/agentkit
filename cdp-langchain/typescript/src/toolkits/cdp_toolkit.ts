@@ -35,6 +35,7 @@ import { CdpTool } from "../tools/cdp_tool";
  * // - transfer_nft
  * // - trade
  * // - deploy_token
+ * // - deploy_contract
  * // - mint_nft
  * // - deploy_nft
  * // - register_basename

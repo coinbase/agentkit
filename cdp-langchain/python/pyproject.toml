@@ -13,7 +13,7 @@ python = "^3.10"
 langchain = "^0.3.4"
 langchain-openai = "^0.2.4"
 langgraph = "^0.2.39"
-cdp-sdk = "^0.14.1"
+cdp-sdk = "^0.15.0"
 pydantic = "^2.0"
 cdp-agentkit-core = "^0.0.10"
 

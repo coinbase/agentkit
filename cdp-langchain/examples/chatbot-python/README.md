@@ -38,5 +38,5 @@ poetry install
   - "NETWORK_ID" (Defaults to `base-sepolia`)
 
 ```bash
-poetry run python chatbot.py
+make run
 ```

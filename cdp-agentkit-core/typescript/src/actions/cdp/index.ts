@@ -2,6 +2,7 @@ import { CdpAction, CdpActionSchemaAny } from "./cdp_action";
 import { AddressReputationAction } from "./address_reputation";
 import { DeployNftAction } from "./deploy_nft";
 import { DeployTokenAction } from "./deploy_token";
+import { DeployContractAction } from "./deploy_contract";
 import { GetBalanceAction } from "./get_balance";
 import { GetBalanceNftAction } from "./get_balance_nft";
 import { GetWalletDetailsAction } from "./get_wallet_details";
@@ -29,6 +30,7 @@ export function getAllCdpActions(): CdpAction<CdpActionSchemaAny>[] {
     new GetWalletDetailsAction(),
     new DeployNftAction(),
     new DeployTokenAction(),
+    new DeployContractAction(),
     new GetBalanceAction(),
     new GetBalanceNftAction(),
     new MintNftAction(),
@@ -53,6 +55,7 @@ export {
   GetWalletDetailsAction,
   DeployNftAction,
   DeployTokenAction,
+  DeployContractAction,
   GetBalanceAction,
   GetBalanceNftAction,
   MintNftAction,
