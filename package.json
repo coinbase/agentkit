@@ -5,7 +5,8 @@
     "cdp-agentkit-core/typescript",
     "cdp-langchain/examples/chatbot-typescript",
     "cdp-langchain/typescript",
-    "twitter-langchain/typescript"
+    "twitter-langchain/typescript",
+    "twitter-langchain/examples/chatbot-typescript"
   ],
   "packageManager": "npm@8.9.0",
   "scripts": {

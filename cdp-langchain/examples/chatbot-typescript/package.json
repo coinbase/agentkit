@@ -13,8 +13,8 @@
     "format-check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\""
   },
   "dependencies": {
-    "@coinbase/cdp-agentkit-core": "^0.0.13",
-    "@coinbase/cdp-langchain": "^0.0.14",
+    "@coinbase/cdp-agentkit-core": "*",
+    "@coinbase/cdp-langchain": "*",
     "@langchain/langgraph": "^0.2.21",
     "@langchain/openai": "^0.3.14",
     "@langchain/core": "^0.3.19",

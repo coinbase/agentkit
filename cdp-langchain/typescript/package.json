@@ -38,8 +38,7 @@
     "langchain"
   ],
   "dependencies": {
-    "@coinbase/cdp-agentkit-core": "^0.0.13",
-    "@coinbase/coinbase-sdk": "^0.14.1",
+    "@coinbase/cdp-agentkit-core": "*",
     "@langchain/core": "^0.3.19",
     "zod": "^3.22.4"
   },
