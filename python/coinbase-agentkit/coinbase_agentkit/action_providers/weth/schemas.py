@@ -1,25 +1,39 @@
 """Schemas for WETH action provider."""
 
-import re
-
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from .constants import MIN_WRAP_AMOUNT
+from .validators import eth_amount_validator
+
+# Calculate the minimum amount in ETH (or WETH) as a float.
+MINIMUM_AMOUNT = MIN_WRAP_AMOUNT / 10**18
 
 
-class WrapEthSchema(BaseModel):
-    """Input schema for wrapping ETH to WETH."""
+class WrapEthInput(BaseModel):
+    """Input argument schema for wrapping ETH to WETH."""
 
-    amount_to_wrap: str = Field(..., description="Amount of ETH to wrap in wei")
+    amount_to_wrap: str = Field(
+        ...,
+        description="Amount of ETH to wrap as whole amounts (e.g., 1.5 for 1.5 ETH)",
+    )
 
-    @validator("amount_to_wrap")
+    @field_validator("amount_to_wrap")
     @classmethod
-    def validate_amount(cls, v: str) -> str:
-        """Validate that amount is a valid wei value (whole number as string)."""
-        if not re.match(r"^[0-9]+$", v):
-            raise ValueError("Amount must be a whole number as a string")
+    def validate_eth_amount(cls, v: str) -> str:
+        """Validate ETH amount."""
+        return eth_amount_validator(v)
 
-        if int(v) < MIN_WRAP_AMOUNT:
-            raise ValueError(f"Amount must be at least {MIN_WRAP_AMOUNT} wei (0.0001 WETH)")
 
-        return v
+class UnwrapWethInput(BaseModel):
+    """Input argument schema for unwrapping WETH back to ETH."""
+
+    amount_to_unwrap: str = Field(
+        ...,
+        description="Amount of WETH to unwrap as whole amounts (e.g., 1.5 for 1.5 WETH)",
+    )
+
+    @field_validator("amount_to_unwrap")
+    @classmethod
+    def validate_eth_amount(cls, v: str) -> str:
+        """Validate ETH amount."""
+        return eth_amount_validator(v)
