@@ -38,7 +38,7 @@ jobs:
         run: poetry install --with dev
 
       - name: Run tests
-        run: poetry run make test
+        run: poetry run make test -m "not integration"
 
   test-cdp-langchain-python:
     runs-on: ubuntu-latest

@@ -53,3 +53,8 @@ line-ending = "auto"
 
 [tool.ruff.lint.isort]
 known-first-party = ["cdp_agentkit_core, cdp"]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: marks tests as integration tests"
+]
