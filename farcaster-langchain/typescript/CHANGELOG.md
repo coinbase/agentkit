@@ -1,6 +1,7 @@
-# CDP Agentkit Extension - Farcaster Toolkit Changelog
+# AgentKit.js Farcaster Langchain Extension Changelog
 
-### Unreleased
+## [0.0.1] - 2025-01-27
 
-- Initial release of the CDP AgentKit.js Farcaster Extension.
-- Added Farcaster toolkit, tool framework, and example chatbot.
+### Added
+
+- Initial release of `@coinbase/farcaster-langchain`.
