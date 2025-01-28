@@ -38,6 +38,7 @@
 - Bump dependency `cdp-agentkit-core` to version `0.0.7`.
 - Bump dependency `cdp-sdk` to version `0.13.0`.
 - Wallet mnemonic phrase import
+- Wallet mnemonic phrase import example
 
 ## [0.0.8] - 2024-12-06
 
