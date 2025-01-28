@@ -81,7 +81,7 @@ describe("Deploy NFT Action", () => {
       symbol: MOCK_NFT_SYMBOL,
     };
 
-    const error = new Error("An error has occured");
+    const error = new Error("An error has occurred");
     mockWallet.deployNFT.mockRejectedValue(error);
 
     const response = await deployNft(mockWallet, args);

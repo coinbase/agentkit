@@ -86,7 +86,7 @@ describe("Deploy Contract Action", () => {
       constructorArgs: MOCK_CONSTRUCTOR_ARGS,
     };
 
-    const error = new Error("An error has occured");
+    const error = new Error("An error has occurred");
     mockWallet.deployContract.mockRejectedValue(error);
 
     const response = await deployContract(mockWallet, args);

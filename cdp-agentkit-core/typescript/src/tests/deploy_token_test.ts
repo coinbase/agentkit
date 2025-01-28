@@ -79,7 +79,7 @@ describe("Deploy Token Action", () => {
       totalSupply: MOCK_TOKEN_SUPPLY,
     };
 
-    const error = new Error("An error has occured");
+    const error = new Error("An error has occurred");
     mockWallet.deployToken.mockRejectedValue(error);
 
     const response = await deployToken(mockWallet, args);

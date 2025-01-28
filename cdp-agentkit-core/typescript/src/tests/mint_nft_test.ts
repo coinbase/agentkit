@@ -82,7 +82,7 @@ describe("Mint NFT Action", () => {
       destination: MOCK_CONTRACT_DESTINATION,
     };
 
-    const error = new Error("An error has occured");
+    const error = new Error("An error has occurred");
     mockWallet.invokeContract.mockRejectedValue(error);
 
     const response = await mintNft(mockWallet, args);

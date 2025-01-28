@@ -51,7 +51,7 @@ describe("Account Details Action", () => {
   it("should handle errors when retrieving account details", async () => {
     const args = {};
 
-    const error = new Error("An error has occured");
+    const error = new Error("An error has occurred");
     mockApi.v2.me = jest.fn().mockRejectedValue(error);
 
     const response = await accountDetails(mockApi, args);

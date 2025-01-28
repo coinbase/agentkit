@@ -74,7 +74,7 @@ describe("Get Balance Action", () => {
       assetId: MOCK_ASSET_ID,
     };
 
-    const error = new Error("An error has occured");
+    const error = new Error("An error has occurred");
     mockWallet.listAddresses.mockRejectedValue(error);
 
     const response = await getBalance(mockWallet, args);

@@ -77,7 +77,7 @@ describe("Post Tweet Reply Action", () => {
       tweetReply: MOCK_TWEET_REPLY,
     };
 
-    const error = new Error("An error has occured");
+    const error = new Error("An error has occurred");
     mockClient.tweet.mockRejectedValue(error);
 
     const response = await postTweet(mockApi, args);

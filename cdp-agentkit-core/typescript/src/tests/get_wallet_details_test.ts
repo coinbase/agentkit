@@ -47,7 +47,7 @@ describe("Wallet Details Action", () => {
   it("should fail with an error", async () => {
     const args = {};
 
-    const error = new Error("An error has occured");
+    const error = new Error("An error has occurred");
     mockWallet.getDefaultAddress.mockRejectedValue(error);
 
     const response = await getWalletDetails(mockWallet, args);

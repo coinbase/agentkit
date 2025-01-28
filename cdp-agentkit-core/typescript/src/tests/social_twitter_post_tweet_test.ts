@@ -70,7 +70,7 @@ describe("Post Tweet Action", () => {
       tweet: "Hello, world!",
     };
 
-    const error = new Error("An error has occured");
+    const error = new Error("An error has occurred");
     mockClient.tweet.mockRejectedValue(error);
 
     const response = await postTweet(mockApi, { tweet: "Hello, world!" });
