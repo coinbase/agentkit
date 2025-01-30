@@ -67,6 +67,7 @@ Current list of maintainers:
 - [@stat](https://github.com/stat)
 - [@rohan-agarwal-coinbase](https://github.com/rohan-agarwal-coinbase)
 - [@0xRAG](https://github.com/0xRAG)
+- [@yuga-cb](https://github.com/yuga-cb)
 
 ## Getting Help
 

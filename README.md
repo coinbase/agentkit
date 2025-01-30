@@ -8,8 +8,12 @@
     AgentKit
   </h1>
 
+  <p>
+    <img src="./agent_k.webp" width="300"/>
+  </p>
+
   <p style="font-size: 1.2em; max-width: 600px; margin: 0 auto 20px;">
-    Every agent deserves a wallet!
+    Every agent deserves a wallet.
   </p>
 
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/cdp-agentkit-core?style=flat-square)](https://pypistats.org/packages/cdp-agentkit-core)
@@ -19,9 +23,21 @@
 
 </div>
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Quickstart](#quickstart)
+- [Repository Structure](#repository-structure)
+- [Contributing](#contributing)
+- [Documentation](#documentation)
+- [Security and bug reports](#security-and-bug-reports)
+- [Contact](#contact)
+- [License](#license)
+- [Legal and Privacy](#legal-and-privacy)
+
 ## Overview
 
-AgentKit is [Coinbase Developer Platform's](https://docs.cdp.coinbase.com) framework for easily enabling AI agents to take actions onchain. It is designed to be framework-agnostic, so you can use it with any AI framework, and wallet-agnostic, so you can use it with any wallet. AgentKit is actively being built out, and welcomes community contributions!
+AgentKit is [Coinbase Developer Platform's](https://docs.cdp.coinbase.com) framework for easily enabling AI agents to take actions onchain. It is designed to be framework-agnostic, so you can use it with any AI framework, and wallet-agnostic, so you can use it with any wallet. AgentKit is actively being built out, and [welcomes community contributions!](#contributing)
 
 <div align="center">
   <a href="https://www.youtube.com/watch?v=-R_mKpdepRE">
@@ -118,7 +134,7 @@ Your wallet has been successfully funded with testnet ETH. You can view the tran
 
 ## Repository Structure
 
-AgentKit is organized as a [monorepo](https://en.wikipedia.org/wiki/Monorepo) that contains multiple packages.
+AgentKit is organized as a monorepo that contains multiple packages.
 
 ```
 ./
@@ -160,8 +176,10 @@ See [Twitter Langchain](./twitter-langchain/README.md) to get started!
 
 ## Contributing
 
-AgentKit welcomes community contributions.
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for more information.
+**AgentKit is actively looking for community contributions!**
+
+- To see a list of actions and frameworks we'd love to see open-source contributions for, see [WISHLIST.md](./WISHLIST.md).
+- To understand the process for contributing to AgentKit, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Documentation
 
@@ -171,11 +189,36 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for more information.
 - [API Reference: AgentKit Core Node.js](https://coinbase.github.io/agentkit/cdp-agentkit-core/typescript/index.html)
 - [API Reference: AgentKit LangChain Extension Node.js](https://coinbase.github.io/agentkit/cdp-langchain/typescript/index.html)
 
-## Security and bug reports
+## Security and Bug Reports
 
 The AgentKit team takes security seriously.
 See [SECURITY.md](SECURITY.md) for more information.
 
+## Contact
+
+For feature requests, feedback, or questions, please reach out to us via the 
+[Coinbase Developer Platform Discord](https://discord.com/channels/1220414409550336183/1304126107876069376).
+
 ## License
 
-Apache-2.0
+AgentKit is licensed under the [Apache-2.0](LICENSE.md) license.
+
+## Legal and Privacy
+
+The AgentKit software is novel and experimental, and is therefore provided on an AS-IS basis.
+ The software is intended to be used only for the purposes of assisting with designing 
+ blockchain transactions and enabling other API integrations using natural language inputs, 
+ and is not intended to provide (i) an offer, or solicitation of an offer, to invest in, or to 
+ buy or sell, any interests or shares, or to participate in any investment or trading 
+ strategy, (ii) accounting, legal, tax advice, investment recommendations or other 
+ professional advice or (iii) an official statement of Coinbase. Acts proposed or performed by 
+ an agent through AgentKit software are NOT acts of Coinbase. You should consult with a 
+ professional advisor before making any decisions based on the information provided by the 
+ software. No representation or warranty is made, expressed or implied, with respect to the 
+ accuracy, completeness, reliability, security, or suitability of the software or to any 
+ information provided in connection with the software. The risk of loss through use of the 
+ software can be substantial, and you assume any and all risks of loss and liability. The 
+ software may produce output that is inaccurate, incorrect, unpredictable or undesirable, and 
+ it is the user's exclusive responsibility to evaluate the output and the use-case and 
+ determine whether it is appropriate. The right to use the software is contingent on your 
+ agreement to the [CDP Terms of Service](https://www.coinbase.com/legal/developer-platform/terms-of-service) (except to the extent it conflicts with the Apache-2.0 license).
