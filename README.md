@@ -38,7 +38,7 @@
   - Deploying tokens on [Zora's Wow Launcher](https://wow.xyz/mechanics) (Bonding Curve)
   - Wrapping ETH to WETH on Base
 
-  Or [add your own](./CONTRIBUTING.md#adding-an-action-to-agentkit-core)!
+  Or [add your own](./CONTRIBUTING.md)!
 
 ## Examples
 
@@ -91,7 +91,7 @@ See [Twitter Langchain](./twitter-langchain/README.md) to get started!
 ## Contributing
 
 AgentKit welcomes community contributions.
-See [CONTRIBUTING.md](./.github/CONTRIBUTING.md) for more information.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for more information.
 
 ## Documentation
 
