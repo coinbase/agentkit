@@ -2,6 +2,8 @@ import os
 import sys
 import time
 
+from dotenv import load_dotenv
+
 from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
@@ -14,6 +16,7 @@ from cdp_langchain.utils import CdpAgentkitWrapper
 # Configure a file to persist the agent's CDP MPC Wallet Data.
 wallet_data_file = "wallet_data.txt"
 
+load_dotenv()
 
 def initialize_agent():
     """Initialize the agent with CDP Agentkit."""

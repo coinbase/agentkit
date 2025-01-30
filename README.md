@@ -9,7 +9,7 @@
   </h1>
 
   <p style="font-size: 1.2em; max-width: 600px; margin: 0 auto 20px;">
-    Simplify bringing your AI Agents onchain. Every AI Agent deserves a crypto wallet!
+    Every agent deserves a wallet!
   </p>
 
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/cdp-agentkit-core?style=flat-square)](https://pypistats.org/packages/cdp-agentkit-core)
@@ -19,32 +19,102 @@
 
 </div>
 
-## Key Features
+## Overview
 
-- **Framework-agnostic**: Common AI Agent primitives that can be used with any AI framework.
-- **Python and Node.js Support**
-- **LangChain integration**: Seamless integration with [LangChain](https://python.langchain.com/docs/introduction/) for easy agentic workflows. More frameworks coming soon!
-- **Farcaster integration**: Seamless integration of Langchain with [Farcaster](https://docs.farcaster.xyz/) via [Neynar](https://docs.neynar.com) for easy agentic workflows.
-- **Twitter integration**: Seamless integration of Langchain with [Twitter](https://developer.twitter.com/en/docs/twitter-api) for easy agentic workflows.
-- **Support for various onchain actions**:
+AgentKit is [Coinbase Developer Platform's](https://docs.cdp.coinbase.com) framework for easily enabling AI agents to take actions onchain. It is designed to be framework-agnostic, so you can use it with any AI framework, and wallet-agnostic, so you can use it with any wallet. AgentKit is actively being built out, and welcomes community contributions!
 
-  - Faucet for testnet funds
-  - Getting wallet details and balances
-  - Transferring and trading tokens
-  - Registering [Basenames](https://www.base.org/names)
-  - Deploying [ERC-20](https://www.coinbase.com/learn/crypto-glossary/what-is-erc-20) tokens
-  - Deploying [ERC-721](https://www.coinbase.com/learn/crypto-glossary/what-is-erc-721) tokens and minting NFTs
-  - Buying and selling [Zora Wow](https://wow.xyz/) ERC-20 coins
-  - Deploying tokens on [Zora's Wow Launcher](https://wow.xyz/mechanics) (Bonding Curve)
-  - Wrapping ETH to WETH on Base
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=-R_mKpdepRE">
+    <img src="https://img.youtube.com/vi/-R_mKpdepRE/maxresdefault.jpg" alt="Video Title" style="max-width: 600px;">
+  </a>
+</div>
 
-  Or [add your own](./CONTRIBUTING.md)!
+## Quickstart
 
-## Examples
+### Python
 
-Check out [cdp-langchain/examples](./cdp-langchain/examples) for inspiration and help getting started!
-- [Chatbot Python](./cdp-langchain/examples/chatbot-python/README.md): Simple example of a Python Chatbot that can perform complex onchain interactions, using OpenAI.
-- [Chatbot Typescript](./cdp-langchain/examples/chatbot-typescript/README.md): Simple example of a Node.js Chatbot that can perform complex onchain interactions, using OpenAI.
+*Prerequisites*:
+- [Python 3.10+](https://www.python.org/downloads/)
+- [Poetry](https://python-poetry.org/docs/)
+- [CDP Secret API Key](https://docs.cdp.coinbase.com/get-started/docs/cdp-api-keys#creating-secret-api-keys)
+- [OpenAI API Key](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key)
+
+1. Get your agent running:
+
+```bash
+# Clone the repository
+git clone https://github.com/coinbase/agentkit.git
+
+# Navigate to the chatbot-python example
+cd agentkit/cdp-langchain/examples/chatbot-python
+
+# At this point, fill in your CDP API key name, private key, and OpenAI API key in the
+# .env.example file.
+# Then, rename the .env.example file to .env
+mv .env.example .env
+
+# Install dependencies
+poetry install
+
+# Run the chatbot
+make run
+```
+2. Select "1. chat mode" and start telling your Agent to do things onchain!
+
+```bash
+Prompt: Fund my wallet with some testnet ETH.
+-------------------
+Wallet: ccaf1dbf-3a90-4e52-ad34-89a07aad9e8b on network: base-sepolia with default address: 0xD9b990c7b0079c1c3733D2918Ee50b68f29FCFD5
+-------------------
+
+-------------------
+Received eth from the faucet. Transaction: https://sepolia.basescan.org/tx/0x03e82934cd04be5b725927729b517c606f6f744611f0f36e834f21ad742ad7ca
+-------------------
+Your wallet has been successfully funded with testnet ETH. You can view the transaction [here](https://sepolia.basescan.org/tx/0x03e82934cd04be5b725927729b517c606f6f744611f0f36e834f21ad742ad7ca).
+-------------------
+```
+
+### Node.js
+
+*Prerequisites*:
+- [Node.js 18+](https://nodejs.org/en/download/)
+- [CDP Secret API Key](https://docs.cdp.coinbase.com/get-started/docs/cdp-api-keys#creating-secret-api-keys)
+- [OpenAI API Key](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key)
+
+1. Get your agent running:
+
+```bash
+# Clone the repository
+git clone https://github.com/coinbase/agentkit.git
+
+# Navigate to the chatbot-typescript example
+cd agentkit/cdp-langchain/examples/chatbot-typescript
+
+# At this point, fill in your CDP API key name, private key, and OpenAI API key in
+# the .env.example file.
+# Then, rename the .env.example file to .env
+mv .env.example .env
+
+# Install dependencies
+npm install
+
+# Run the chatbot
+npm run start
+```
+2. Select "1. chat mode" and start telling your Agent to do things onchain!
+
+```bash
+Prompt: Fund my wallet with some testnet ETH.
+-------------------
+Wallet: ccaf1dbf-3a90-4e52-ad34-89a07aad9e8b on network: base-sepolia with default address: 0xD9b990c7b0079c1c3733D2918Ee50b68f29FCFD5
+-------------------
+
+-------------------
+Received eth from the faucet. Transaction: https://sepolia.basescan.org/tx/0x03e82934cd04be5b725927729b517c606f6f744611f0f36e834f21ad742ad7ca
+-------------------
+Your wallet has been successfully funded with testnet ETH. You can view the transaction [here](https://sepolia.basescan.org/tx/0x03e82934cd04be5b725927729b517c606f6f744611f0f36e834f21ad742ad7ca).
+-------------------
+```
 
 ## Repository Structure
 
