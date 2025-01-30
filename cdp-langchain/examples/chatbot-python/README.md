@@ -31,7 +31,10 @@ poetry install
 ## Run the Chatbot
 
 ### Set ENV Vars
-- Ensure the following ENV Vars are set:
+
+- Copy [.env.example](.env.example) and rename to `.env`
+
+- Ensure the following ENV Vars are set on :
   - "CDP_API_KEY_NAME"
   - "CDP_API_KEY_PRIVATE_KEY"
   - "OPENAI_API_KEY"
