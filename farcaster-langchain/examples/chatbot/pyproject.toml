@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "chat"
+version = "0.0.1"
+description = "CDP Agentkit Langchain Chat Example for Farcaster"
+authors = ["John Peterson <john.peterson@coinbase.com>"]
+readme = "README.md"
+license = "Apache-2.0"
+keywords = ["coinbase", "sdk", "crypto", "cdp", "agentkit", "ai", "agent", "langchain", "toolkit", "farcaster"]
+packages = []
+
+[tool.poetry.dependencies]
+cdp-sdk = "^0.12.0"
+cdp-agentkit-core = {path = "../../../cdp-agentkit-core", develop = true}
+cdp-langchain = {path = "../../../cdp-langchain", develop = true}
+farcaster-langchain = {path = "../../../farcaster-langchain", develop = true}
+langchain = "^0.3.4"
+langchain-openai = "^0.2.4"
+langgraph = "^0.2.39"
+python = "^3.10"
+
+[tool.poetry.group.dev.dependencies]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api" 
