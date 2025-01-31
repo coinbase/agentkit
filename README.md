@@ -25,17 +25,19 @@
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Quickstart](#quickstart)
-- [Repository Structure](#repository-structure)
-- [Contributing](#contributing)
-- [Documentation](#documentation)
-- [Security and bug reports](#security-and-bug-reports)
-- [Contact](#contact)
-- [License](#license)
-- [Legal and Privacy](#legal-and-privacy)
+- [📖 Overview](#-overview)
+- [🚀 Quickstart](#-quickstart)
+  - [Python](#-python)
+  - [Node.js](#-nodejs)
+- [🗂 Repository Structure](#-repository-structure)
+- [🤝 Contributing](#-contributing)
+- [📜 Documentation](#-documentation)
+- [🚨 Security and bug reports](#-security-and-bug-reports)
+- [📧 Contact](#-contact)
+- [📝 License](#-license)
+- [🔒 Legal and Privacy](#-legal-and-privacy)
 
-## Overview
+## 📖 Overview
 
 AgentKit is [Coinbase Developer Platform's](https://docs.cdp.coinbase.com) framework for easily enabling AI agents to take actions onchain. It is designed to be framework-agnostic, so you can use it with any AI framework, and wallet-agnostic, so you can use it with any wallet. AgentKit is actively being built out, and [welcomes community contributions!](#contributing)
 
@@ -45,7 +47,7 @@ AgentKit is [Coinbase Developer Platform's](https://docs.cdp.coinbase.com) frame
   </a>
 </div>
 
-## Quickstart
+## 🚀 Quickstart
 
 ### Python
 
@@ -132,7 +134,7 @@ Your wallet has been successfully funded with testnet ETH. You can view the tran
 -------------------
 ```
 
-## Repository Structure
+## 🗂 Repository Structure
 
 AgentKit is organized as a monorepo that contains multiple packages.
 
@@ -174,36 +176,38 @@ See [Farcaster Langchain](./farcaster-langchain/typescript/README.md) to get sta
 Langchain Toolkit extension for Twitter. Enables agentic workflows to interact with Twitter, such as to post a tweet.
 See [Twitter Langchain](./twitter-langchain/README.md) to get started!
 
-## Contributing
+## 🤝 Contributing
 
 **AgentKit is actively looking for community contributions!**
 
 - To see a list of actions and frameworks we'd love to see open-source contributions for, see [WISHLIST.md](./WISHLIST.md).
 - To understand the process for contributing to AgentKit, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-## Documentation
+## 📜 Documentation
 
 - [AgentKit Documentation](https://docs.cdp.coinbase.com/agentkit/docs/welcome)
-- [API Reference: AgentKit Core Python](https://coinbase.github.io/agentkit/cdp-agentkit-core/python/index.html)
-- [API Reference: AgentKit LangChain Extension Python](https://coinbase.github.io/agentkit/cdp-langchain/python/index.html)
-- [API Reference: AgentKit Core Node.js](https://coinbase.github.io/agentkit/cdp-agentkit-core/typescript/index.html)
-- [API Reference: AgentKit LangChain Extension Node.js](https://coinbase.github.io/agentkit/cdp-langchain/typescript/index.html)
+- Python API References
+  - [AgentKit Core](https://coinbase.github.io/agentkit/cdp-agentkit-core/python/index.html)
+  - [AgentKit Langchain Extension](https://coinbase.github.io/agentkit/cdp-langchain/python/index.html)
+- Node.js API References
+  - [AgentKit Core](https://coinbase.github.io/agentkit/cdp-agentkit-core/typescript/index.html)
+  - [AgentKit Langchain Extension](https://coinbase.github.io/agentkit/cdp-langchain/typescript/index.html)
 
-## Security and Bug Reports
+## 🚨 Security and Bug Reports
 
 The AgentKit team takes security seriously.
 See [SECURITY.md](SECURITY.md) for more information.
 
-## Contact
+## 📧 Contact
 
 For feature requests, feedback, or questions, please reach out to us via the 
 [Coinbase Developer Platform Discord](https://discord.com/channels/1220414409550336183/1304126107876069376).
 
-## License
+## 📝 License
 
 AgentKit is licensed under the [Apache-2.0](LICENSE.md) license.
 
-## Legal and Privacy
+## 🔒 Legal and Privacy
 
 The AgentKit software is novel and experimental, and is therefore provided on an AS-IS basis.
  The software is intended to be used only for the purposes of assisting with designing 
