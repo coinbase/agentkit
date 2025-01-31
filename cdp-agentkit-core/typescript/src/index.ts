@@ -21,3 +21,6 @@ export { FarcasterAgentkit } from "./farcaster_agentkit";
 
 // Export Twitter AgentKit
 export { TwitterAgentkit } from "./twitter_agentkit";
+
+// Export Allora AgentKit
+export { AlloraAgentkit } from "./allora_agentkit";

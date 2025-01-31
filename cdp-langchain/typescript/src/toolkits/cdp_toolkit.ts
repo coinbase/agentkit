@@ -43,6 +43,8 @@ import { CdpTool } from "../tools/cdp_tool";
  * // - wow_buy_token
  * // - wow_sell_token
  * // - wrap_eth
+ * // - get_price_inference
+ * // - get_all_topics
  * ```
  */
 export class CdpToolkit extends Toolkit {
