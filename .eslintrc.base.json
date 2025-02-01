@@ -6,7 +6,7 @@
     "plugin:prettier/recommended",
     "plugin:jsdoc/recommended"
   ],
-  "plugins": ["@typescript-eslint", "prettier"],
+  "plugins": ["@typescript-eslint", "prettier", "import"],
   "env": {
     "node": true,
     "es6": true
@@ -16,6 +16,7 @@
     "sourceType": "module"
   },
   "rules": {
+    "import/first": "error",
     "multiline-comment-style": ["error", "starred-block"],
     "prettier/prettier": "error",
     "@typescript-eslint/member-ordering": "error",

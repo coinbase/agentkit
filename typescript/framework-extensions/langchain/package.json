@@ -1,0 +1,49 @@
+{
+  "name": "@coinbase/agentkit-langchain",
+  "version": "0.1.0",
+  "description": "Langchain Toolkit extension of CDP Agentkit",
+  "repository": "https://github.com/coinbase/agentkit",
+  "author": "Coinbase Inc.",
+  "license": "Apache-2.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint -c .eslintrc.json \"src/**/*.ts\"",
+    "lint:fix": "eslint -c .eslintrc.json \"src/**/*.ts\" --fix",
+    "format": "prettier -c .prettierrc --write \"**/*.{ts,js,cjs,json,md}\"",
+    "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\"",
+    "check": "tsc --noEmit",
+    "test": "npx jest --no-cache --testMatch='**/*.test.ts'",
+    "test:dry-run": "npm install && npm ci && npm publish --dry-run",
+    "test:e2e": "npx jest --no-cache --testMatch=**/e2e.ts --coverageThreshold '{}'",
+    "test:types": "tsd --files src/tests/types.test-d.ts",
+    "clean": "rm -rf dist/*",
+    "prepack": "tsc",
+    "docs": "typedoc --entryPoints ./src --entryPointStrategy expand --exclude ./src/tests/**/*.ts",
+    "docs:serve": "http-server ./docs",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "coinbase",
+    "sdk",
+    "crypto",
+    "cdp",
+    "agentkit",
+    "ai",
+    "agent",
+    "nodejs",
+    "typescript",
+    "langchain"
+  ],
+  "dependencies": {
+    "@coinbase/agentkit": "^0.1.0",
+    "@coinbase/coinbase-sdk": "^0.15.0",
+    "@langchain/core": "^0.3.19",
+    "zod": "^3.22.4"
+  },
+  "peerDependencies": {
+    "@coinbase/coinbase-sdk": "^0.15.0"
+  }
+}

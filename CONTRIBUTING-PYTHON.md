@@ -6,7 +6,7 @@ This guide covers Python-specific setup and development for AgentKit.
 
 - [Development Setup](#development-setup)
 - [Adding an Agentic Action](#adding-an-agentic-action)
-- [Adding an Agentic Action to Langchain Toolkit](#adding-an-agentic-action-to-langchain-toolkit)
+- [Adding an Agentic Action to LangChain Toolkit](#adding-an-agentic-action-to-langchain-toolkit)
 - [Adding an Agentic Action to the Twitter Toolkit](#adding-an-agentic-action-to-the-twitter-toolkit)
 - [Integrating into an AI Agent Framework](#integrating-into-an-ai-agent-framework)
 - [Testing](#testing)
@@ -37,12 +37,12 @@ An Action is an interface for an AI Agent to interact with the real world: any P
 2. **Input Schema**: Define the input parameters using [Pydantic](https://docs.pydantic.dev/latest/) schemas. Pydantic is used to validate the inputs to the action and to generate a JSON schema that can be used by the LLM to understand the inputs.
 3. **Implementation Function**: The actual logic that executes the action. This function receives as input the wallet that the Agent has access to, and as you'll see in the walkthrough below, we can use this wallet to invoke an onchain contract! For more information on contract invocations using a CDP wallet, see [here](https://docs.cdp.coinbase.com/cdp-sdk/docs/onchain-interactions#smart-contract-interactions).
 
-In practice, Actions are housed in `cdp-agentkit-core/python/cdp_agentkit_core/actions` and generally grouped by the type of action they are. For example, actions related to interacting with social platforms such as X (Twitter) are housed in `cdp-agentkit-core/python/cdp_agentkit_core/actions/social/twitter`. When adding a new action, check if there is an existing folder for the type of action you are adding and add your new action to the appropriate folder.
+In practice, Actions are housed in `python/cdp-agentkit-core/cdp_agentkit_core/actions` and generally grouped by the type of action they are. For example, actions related to interacting with social platforms such as X (Twitter) are housed in `python/cdp-agentkit-core/cdp_agentkit_core/actions/social/twitter`. When adding a new action, check if there is an existing folder for the type of action you are adding and add your new action to the appropriate folder.
 
 Here's the structure of the actions directory:
 
 ```
-./cdp-agentkit-core/python
+./python/cdp-agentkit-core
 └── cdp_agentkit_core
     └── actions
        ├── defi
@@ -53,7 +53,7 @@ Here's the structure of the actions directory:
        └── wow
 ```
 
-Once you decide which folder to add your action to, go ahead and create a new file there to house your action, then read through the following sections to learn how to implement your action. For a complete example of an action, see [mint_nft.py](https://github.com/coinbase/agentkit/blob/master/cdp-agentkit-core/python/cdp_agentkit_core/actions/mint_nft.py).
+Once you decide which folder to add your action to, go ahead and create a new file there to house your action, then read through the following sections to learn how to implement your action. For a complete example of an action, see [mint_nft.py](https://github.com/coinbase/agentkit/blob/master/python/cdp-agentkit-core/cdp_agentkit_core/actions/mint_nft.py).
 
 ### Crafting a good prompt
 
@@ -136,30 +136,30 @@ class MintNftAction(CdpAction):
     func: Callable[..., str] = mint_nft
 ```
 
-This class is then exported out of [`cdp_agentkit_core/actions/__init__.py`](https://github.com/coinbase/agentkit/blob/master/cdp-agentkit-core/python/cdp_agentkit_core/actions/__init__.py) so that is is consumable by users of the `cdp-agentkit-core` package.
+This class is then exported out of [`cdp_agentkit_core/actions/__init__.py`](https://github.com/coinbase/agentkit/blob/master/python/cdp-agentkit-core/cdp_agentkit_core/actions/__init__.py) so that is is consumable by users of the `cdp-agentkit-core` package.
 
 ### Testing the action
 
 There are two forms of testing you should do: unit testing and manual end-to-end testing.
 
-To add a unit test for your action, add a file to the folder in `cdp-agentkit-core/python/tests/actions` that corresponds to the same folder that you are adding your action to. For an example, see [test_mint_nft.py](https://github.com/coinbase/agentkit/blob/master/cdp-agentkit-core/python/tests/actions/test_mint_nft.py).
+To add a unit test for your action, add a file to the folder in `python/cdp-agentkit-core/tests/actions` that corresponds to the same folder that you are adding your action to. For an example, see [test_mint_nft.py](https://github.com/coinbase/agentkit/blob/master/python/cdp-agentkit-core/tests/actions/test_mint_nft.py).
 
 You can then run the unit tests with the following command:
 ```bash
-cd cdp-agentkit-core/python
+cd python/cdp-agentkit-core
 make test
 ```
 
 For instructions on manual end-to-end testing, see the [Testing](#testing) section.
 
-## Adding an Agentic Action to Langchain Toolkit
+## Adding an Agentic Action to LangChain Toolkit
 
-The action will be included automatically, all you need to do is add the action to the list of tools in the `CdpToolkit` class documentation in `cdp-langchain/python/cdp_langchain/agent_toolkits/cdp_toolkit.py`.
+The action will be included automatically, all you need to do is add the action to the list of tools in the `CdpToolkit` class documentation in `python/cdp-langchain/cdp_langchain/agent_toolkits/cdp_toolkit.py`.
 
 ## Adding an Agentic Action to the Twitter Toolkit
 
 1. Ensure the action is implemented in `cdp-agentkit-core/actions/social/twitter`.
-2. Add a wrapper method to `TwitterApiWrapper` in `./twitter_langchain/twitter_api_wrapper.py`
+2. Add a wrapper method to `TwitterApiWrapper` in `python/twitter-langchain/twitter_langchain/twitter_api_wrapper.py`
    - E.g.
 ```python
     def post_tweet_wrapper(self, tweet: str) -> str:
@@ -176,14 +176,14 @@ The action will be included automatically, all you need to do is add the action 
 
         return post_tweet(client=self.client, tweet=tweet)
 ```
-3. Add call to the wrapper in `TwitterApiWrapper.run` in `./twitter_langchain/twitter_api_wrapper.py`
+3. Add call to the wrapper in `TwitterApiWrapper.run` in `python/twitter-langchain/twitter_langchain/twitter_api_wrapper.py`
    - E.g.
 ```python
         if mode == "post_tweet":
             return self.post_tweet_wrapper(**kwargs)
 
 ```
-4. Add the action to the list of available tools in the `TwitterToolkit` in `./twitter_langchain/twitter_toolkit.py`
+4. Add the action to the list of available tools in the `TwitterToolkit` in `python/twitter-langchain/twitter_langchain/twitter_toolkit.py`
    - E.g.
 ```python
         actions: List[Dict] = [
@@ -205,21 +205,21 @@ Actions are necessary building blocks powering onchain AI applications, but they
 
 Integrations into AI Agent frameworks are specific to the framework itself, so we can't go into specific implementation details here, but we can offer up some examples and tips.
 - To automatically get access to new actions as they are released, make sure to import the `CDP_ACTIONS` constant from `cdp-agentkit-core`. This will make it so that all you / the framework authors have to do to get new actions is bump the version of AgentKit the framework is using.
-- Check out how [AgentKit Actions are mapped into LangChain Tools](https://github.com/coinbase/agentkit/blob/master/cdp-langchain/python/cdp_langchain/agent_toolkits/cdp_toolkit.py#L132-L141)
+- Check out how [AgentKit Actions are mapped into LangChain Tools](https://github.com/coinbase/agentkit/blob/master/python/cdp-langchain/cdp_langchain/agent_toolkits/cdp_toolkit.py#L132-L141)
 
 ## Testing
 
 ### Local Testing
 
-A good way to test new actions locally is by using the chatbot example in `cdp-langchain`. See the [chatbot README](https://github.com/coinbase/agentkit/blob/master/cdp-langchain/examples/chatbot-python/README.md) for instructions on setting up and running the chatbot.
+A good way to test new actions locally is by using the chatbot example in `cdp-langchain`. See the [chatbot README](https://github.com/coinbase/agentkit/blob/master/python/examples/cdp-langchain-chatbot/README.md) for instructions on setting up and running the chatbot.
 
 The flow is:
 
 1. Make your change as described in the [Adding an Agentic Action](#adding-an-agentic-action) section
-2. Update `cdp-langchain/examples/chatbot-python/pyproject.toml` to point to the local package
+2. Update `python/examples/cdp-langchain-chatbot/pyproject.toml` to point to the local package
 ```diff
 [tool.poetry]
-name = "chatbot-python"
+name = "cdp-langchain-chatbot"
 version = "0.0.1"
 description = "CDP AgentKit Example Chatbot"
 authors = ["John Peterson <john.peterson@coinbase.com>"]
@@ -229,13 +229,13 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.10"
 - cdp-langchain = "^0.0.11"
-+ cdp-langchain = { path: "../../cdp-agentkit-core/python", develop: true }
++ cdp-langchain = { path: "../cdp-agentkit-core", develop: true }
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 ```
-3. In `cdp-langchain/examples/chatbot-python`, run `python chatbot.py`
+3. In `python/examples/cdp-langchain-chatbot`, run `python chatbot.py`
 4. You can now interact with your new action via the chatbot!
 
 ### Running Unit Tests
@@ -246,9 +246,9 @@ From the package you are working in, you can run:
 make test
 ```
 
-For example, to run all tests in the `cdp_agentkit_core` package, you can run:
+For example, to run all tests in the `cdp-agentkit-core` package, you can run:
 ```bash
-cd cdp-agentkit-core/python
+cd python/cdp-agentkit-core
 make test
 ```
 

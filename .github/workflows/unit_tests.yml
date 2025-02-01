@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./cdp-agentkit-core/python
+        working-directory: ./python/cdp-agentkit-core
     strategy:
       matrix:
         python: ['3.10', '3.11', '3.12']
@@ -30,8 +30,8 @@ jobs:
         id: cached-poetry-dependencies
         uses: actions/cache@v3
         with:
-          path: ./cdp-agentkit-core/python/.venv
-          key: venv-agentkit-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('cdp-agentkit-core/python/poetry.lock') }}
+          path: ./python/cdp-agentkit-core/.venv
+          key: venv-agentkit-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('python/cdp-agentkit-core/poetry.lock') }}
 
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./cdp-langchain/python
+        working-directory: ./python/cdp-langchain
     strategy:
       matrix:
         python: ['3.10', '3.11', '3.12']
@@ -68,8 +68,8 @@ jobs:
         id: cached-poetry-dependencies
         uses: actions/cache@v3
         with:
-          path: ./cdp-langchain/python/.venv
-          key: venv-langchain-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('cdp-langchain/python/poetry.lock') }}
+          path: ./python/cdp-langchain/.venv
+          key: venv-langchain-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('python/cdp-langchain/poetry.lock') }}
 
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
@@ -82,7 +82,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./twitter-langchain/python
+        working-directory: ./python/twitter-langchain
     strategy:
       matrix:
         python: ['3.10', '3.11', '3.12']
@@ -106,8 +106,8 @@ jobs:
         id: cached-poetry-dependencies
         uses: actions/cache@v3
         with:
-          path: ./twitter-langchain/python/.venv
-          key: venv-twitter-langchain-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('cdp-twitter-langchain/python/poetry.lock') }}
+          path: ./python/twitter-langchain/.venv
+          key: venv-twitter-langchain-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('python/twitter-langchain/poetry.lock') }}
 
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'

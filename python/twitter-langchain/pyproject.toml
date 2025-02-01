@@ -1,0 +1,56 @@
+[tool.poetry]
+name = "twitter-langchain"
+version = "0.0.11"
+description = "Twitter Langchain Toolkit"
+authors = ["John Peterson <john.peterson@coinbase.com>"]
+license = "Apache-2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pydantic = "^2.9.2"
+langchain = "^0.3.7"
+tweepy = "^4.14.0"
+cdp-agentkit-core = "^0.0.11"
+standard-imghdr = "^3.13.0"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.7.2"
+python-lsp-server = "^1.12.0"
+ruff-lsp = "^0.0.58"
+pytest = "^8.3.3"
+pytest-cov = "^6.0.0"
+mypy = "^1.13.0"
+myst-parser = "^4.0.0"
+sphinx = "^8.0.2"
+sphinx-autobuild = "^2024.9.19"
+sphinxcontrib-napoleon = "^0.7"
+sphinx-autodoc-typehints = "^2.4.4"
+cdp-agentkit-core = { path = "../cdp-agentkit-core", develop = true }
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = ["./build/**", "./dist/**", "./docs/**"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "D", "UP", "B", "C4", "SIM", "RUF"]
+ignore = ["D213", "D203", "D100", "D104", "D107", "E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+known-first-party = ["twitter_langchain"]

@@ -1,0 +1,24 @@
+name: Publish AgentKit LangChain to NPM
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-npm-agentkit-langchain:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          registry-url: "https://registry.npmjs.org"
+      - run: npm i && npm run build
+      - name: Install, build and publish @coinbase/agentkit-langchain
+        working-directory: ./typescript/framework-extensions/langchain
+        run: |
+          npm publish --ignore-scripts --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

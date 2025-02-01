@@ -12,7 +12,9 @@
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
     "noImplicitAny": false,
-    "removeComments": false
+    "removeComments": false,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "**/tests/**/**"]

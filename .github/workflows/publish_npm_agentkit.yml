@@ -1,0 +1,26 @@
+name: Release AgentKit to NPM
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-npm-agentkit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          registry-url: "https://registry.npmjs.org"
+      - run: npm ci
+      - name: Install, build and publish @coinbase/agentkit
+        working-directory: ./typescript/agentkit
+        run: |
+          npm ci
+          npm run build
+          npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

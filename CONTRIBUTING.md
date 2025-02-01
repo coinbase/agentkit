@@ -4,7 +4,7 @@ Thank you for your interest in contributing to AgentKit! We welcome all contribu
 
 ## Repository Structure
 
-The AgentKit repository is organized as a [multi-package workspace](https://vercel.com/docs/vercel-platform/glossary#multi-package-workspace) (otherwise known as a [monorepo](https://vercel.com/docs/vercel-platform/glossary#monorepo)) and managed with [Turborepo](https://turbo.build/repo/docs). The repo contains multiple packages for Python and TypeScript, where a [package](https://vercel.com/docs/vercel-platform/glossary#package) is a single subfolder with either a `package.json` (if it's a TypeScript package) or a `pyproject.toml` (if it's a Python package),and related code that is published to either NPM or PyPI. For example, the `cdp-agentkit-core/typescript` subfolder is one package, and the `cdp-agentkit-core/python` subfolder is another package.
+The AgentKit repository is organized as a [multi-package workspace](https://vercel.com/docs/vercel-platform/glossary#multi-package-workspace) (otherwise known as a [monorepo](https://vercel.com/docs/vercel-platform/glossary#monorepo)) and managed with [Turborepo](https://turbo.build/repo/docs). The repo contains multiple packages for Python and TypeScript, where a [package](https://vercel.com/docs/vercel-platform/glossary#package) is a single subfolder with either a `package.json` (if it's a TypeScript package) or a `pyproject.toml` (if it's a Python package),and related code that is published to either NPM or PyPI. For example, the `typescript/agentkit` subfolder is one package, and the `python/cdp-agentkit-core` subfolder is another package.
 
 Note that not all AgentKit packages have both Python and TypeScript implementations. This is okay, and we expect some level of drift between the languages. If you'd like to add a TypeScript variant of a package that only has a Python variant (or vice versa), that would be a great and welcome contribution!
 
@@ -12,18 +12,22 @@ See this section for tips on developing in our monorepo: [Monorepo Development T
 
 Here's a high-level overview of the repository structure:
 ```
-./agentkit
-├── cdp-agentkit-core/
-│   ├── python/
-│   └── typescript/
-├── cdp-langchain/
-│   ├── python/
-│   └── typescript/
-├── farcaster-langchain/
-│   └── typescript/
-└── twitter-langchain/
-    ├── python/
-    └── typescript/
+./
+├── typescript/
+│   ├── agentkit/
+│   ├── framework-extensions/
+│   |   └── langchain/
+│   └── examples/
+│       ├── langchain-cdp-chatbot/
+│       ├── langchain-farcaster-chatbot/
+│       └── langchain-twitter-chatbot/
+├── python/
+│   ├── cdp-agentkit-core/
+│   ├── cdp-langchain/
+│   ├── twitter-langchain/
+│   └── examples/
+│       ├── cdp-langchain-chatbot/
+│       └── twitter-langchain-chatbot/
 ```
 
 ## Language-Specific Guides
@@ -85,4 +89,4 @@ Here are some common issues you might run into when developing in our monorepo a
 
 | Issue | Resolution |
 | ----- | ---------- |
-| Python imports are not resolving in VSCode / Cursor | Try opening the package folder in a new window. For example, `cd cdp-agentkit-core/python` and then `code .` or `cursor .` |
+| Python imports are not resolving in VSCode / Cursor | Try opening the package folder in a new window. For example, `cd python/cdp-agentkit-core` and then `code .` or `cursor .` |

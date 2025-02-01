@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./cdp-langchain/python
+        working-directory: ./python/cdp-langchain
     environment:
       name: pypi
       url: https://pypi.org/p/cdp-langchain
@@ -41,4 +41,4 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}
-        packages-dir: cdp-langchain/python/dist/
+        packages-dir: python/cdp-langchain/dist/

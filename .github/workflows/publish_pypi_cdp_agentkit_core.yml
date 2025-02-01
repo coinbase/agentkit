@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./cdp-agentkit-core/python
+        working-directory: ./python/cdp-agentkit-core
     environment:
       name: pypi
       url: https://pypi.org/p/cdp-agentkit-core
@@ -41,4 +41,4 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}
-        packages-dir: cdp-agentkit-core/python/dist/
+        packages-dir: python/cdp-agentkit-core/dist/

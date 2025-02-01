@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./cdp-agentkit-core/python
+        working-directory: ./python/cdp-agentkit-core
     steps:
       - uses: actions/checkout@v3
 
@@ -26,8 +26,8 @@ jobs:
         id: cached-poetry-dependencies
         uses: actions/cache@v3
         with:
-          path: ./cdp-agentkit-core/python/.venv
-          key: venv-agentkit-${{ runner.os }}-${{ hashFiles('cdp-agentkit-core/python/poetry.lock') }}
+          path: ./python/cdp-agentkit-core/.venv
+          key: venv-agentkit-${{ runner.os }}-${{ hashFiles('python/cdp-agentkit-core/poetry.lock') }}
 
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./cdp-langchain/python
+        working-directory: ./python/cdp-langchain
     steps:
       - uses: actions/checkout@v3
 
@@ -60,8 +60,8 @@ jobs:
         id: cached-poetry-dependencies
         uses: actions/cache@v3
         with:
-          path: ./cdp-langchain/python/.venv
-          key: venv-langchain-${{ runner.os }}-${{ hashFiles('cdp-langchain/python/poetry.lock') }}
+          path: ./python/cdp-langchain/.venv
+          key: venv-langchain-${{ runner.os }}-${{ hashFiles('python/cdp-langchain/poetry.lock') }}
 
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
@@ -74,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./twitter-langchain/python
+        working-directory: ./python/twitter-langchain
     steps:
       - uses: actions/checkout@v3
 
@@ -94,8 +94,8 @@ jobs:
         id: cached-poetry-dependencies
         uses: actions/cache@v3
         with:
-          path: ./twitter-langchain/python/.venv
-          key: venv-twitter-langchain-${{ runner.os }}-${{ hashFiles('twitter-langchain/python/poetry.lock') }}
+          path: ./python/twitter-langchain/.venv
+          key: venv-twitter-langchain-${{ runner.os }}-${{ hashFiles('python/twitter-langchain/poetry.lock') }}
 
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
@@ -104,7 +104,7 @@ jobs:
       - name: Run linters
         run: poetry run make lint
 
-  lint-cdp-agentkit-core-typescript:
+  lint-agentkit-typescript:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -115,40 +115,7 @@ jobs:
       # Install dependencies in parent directory first
       - run: npm install
       # Then install and lint in working directory
-      - name: Install and lint @coinbase/cdp-agentkit-core
-        working-directory: ./cdp-agentkit-core/typescript
-        run: |
-          npm install
-          npm run lint
-          npm run format
-
-  lint-cdp-langchain-typescript:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-          cache: "npm"
-      - run: npm install
-      - name: Install and lint @coinbase/cdp-langchain
-        working-directory: ./cdp-langchain/typescript
-        run: |
-          npm install
-          npm run lint
-          npm run format
-
-  lint-twitter-langchain-typescript:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-          cache: "npm"
-      - run: npm install
-      - name: Install and lint @coinbase/twitter-langchain
-        working-directory: ./twitter-langchain/typescript
+      - name: Install and lint AgentKit
         run: |
           npm install
           npm run lint

@@ -21,20 +21,15 @@ jobs:
           npm run build
           npm run docs
 
-      - name: Build CDP AgentKit Core JSDocs
+      - name: Build AgentKit JSDocs
         run: |
-          mkdir -p docs/cdp-agentkit-core/typescript
-          cp -r cdp-agentkit-core/typescript/docs/* docs/cdp-agentkit-core/typescript
+          mkdir -p docs/agentkit/typescript
+          cp -r typescript/agentkit/docs/* docs/agentkit/typescript
 
-      - name: Build CDP LangChain JSDocs
+      - name: Build AgentKit LangChain JSDocs
         run: |
-          mkdir -p docs/cdp-langchain/typescript
-          cp -r cdp-langchain/typescript/docs/* docs/cdp-langchain/typescript
-
-      - name: Build Twitter LangChain JSDocs
-        run: |
-          mkdir -p docs/twitter-langchain/typescript
-          cp -r twitter-langchain/typescript/docs/* docs/twitter-langchain/typescript
+          mkdir -p docs/agentkit-langchain/typescript
+          cp -r typescript/framework-extensions/langchain/docs/* docs/agentkit-langchain/typescript
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
@@ -52,73 +47,73 @@ jobs:
         id: cached-poetry-dependencies-core
         uses: actions/cache@v3
         with:
-          path: ./cdp-agentkit-core/python/.venv
-          key: venv-agentkit-${{ runner.os }}-3.10-${{ hashFiles('cdp-agentkit-core/python/poetry.lock') }}
+          path: ./python/cdp-agentkit-core/.venv
+          key: venv-agentkit-${{ runner.os }}-3.10-${{ hashFiles('python/cdp-agentkit-core/poetry.lock') }}
 
       - name: Install dependencies for CDP AgentKit Core Python
         if: steps.cached-poetry-dependencies-core.outputs.cache-hit != 'true'
         run: |
-          cd cdp-agentkit-core/python
+          cd python/cdp-agentkit-core
           poetry install --with dev
           cd ..
 
       - name: Build Sphinx Documentation for CDP AgentKit Core Python
         run: |
-          cd cdp-agentkit-core/python
+          cd python/cdp-agentkit-core
           poetry run make docs
           cd docs
           poetry run make html
           cd ../../..
           mkdir -p docs/cdp-agentkit-core/python
-          cp -r cdp-agentkit-core/python/docs/_build/html/* docs/cdp-agentkit-core/python
+          cp -r python/cdp-agentkit-core/docs/_build/html/* docs/cdp-agentkit-core/python
 
       - name: Load cached venv for CDP LangChain Python
         id: cached-poetry-dependencies-langchain
         uses: actions/cache@v3
         with:
-          path: ./cdp-langchain/python/.venv
-          key: venv-langchain-${{ runner.os }}-3.10-${{ hashFiles('cdp-langchain/python/poetry.lock') }}
+          path: ./python/cdp-langchain/.venv
+          key: venv-langchain-${{ runner.os }}-3.10-${{ hashFiles('python/cdp-langchain/poetry.lock') }}
 
       - name: Install dependencies for CDP LangChain Python
         if: steps.cached-poetry-dependencies-langchain.outputs.cache-hit != 'true'
         run: |
-          cd cdp-langchain/python
+          cd python/cdp-langchain
           poetry install --with dev
           cd ..
 
       - name: Build Sphinx Documentation for CDP LangChain Python
         run: |
-          cd cdp-langchain/python
+          cd python/cdp-langchain
           poetry run make docs
           cd docs
           poetry run make html
           cd ../../..
           mkdir -p docs/cdp-langchain/python
-          cp -r cdp-langchain/python/docs/_build/html/* docs/cdp-langchain/python
+          cp -r python/cdp-langchain/docs/_build/html/* docs/cdp-langchain/python
 
       - name: Load cached venv for Twitter LangChain Python
         id: cached-poetry-dependencies-twitter-langchain
         uses: actions/cache@v3
         with:
-          path: ./twitter-langchain/python/.venv
-          key: venv-twitter-langchain-${{ runner.os }}-3.10-${{ hashFiles('twitter-langchain/python/poetry.lock') }}
+          path: ./python/twitter-langchain/.venv
+          key: venv-twitter-langchain-${{ runner.os }}-3.10-${{ hashFiles('python/twitter-langchain/poetry.lock') }}
 
       - name: Install dependencies for Twitter LangChain Python
         if: steps.cached-poetry-dependencies-twitter-langchain.outputs.cache-hit != 'true'
         run: |
-          cd twitter-langchain/python
+          cd python/twitter-langchain
           poetry install --with dev
           cd ..
 
       - name: Build Sphinx Documentation for Twitter LangChain Python
         run: |
-          cd twitter-langchain/python
+          cd python/twitter-langchain
           poetry run make docs
           cd docs
           poetry run make html
           cd ../../..
           mkdir -p docs/twitter-langchain/python
-          cp -r twitter-langchain/python/docs/_build/html/* docs/twitter-langchain/python
+          cp -r python/twitter-langchain/docs/_build/html/* docs/twitter-langchain/python
 
       - name: Deploy to Github Pages
         uses: peaceiris/actions-gh-pages@v4
