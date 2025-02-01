@@ -172,7 +172,7 @@ AgentKit is organized as a monorepo that contains multiple packages.
   - [AgentKit Langchain Extension](https://coinbase.github.io/agentkit/cdp-langchain/python/index.html)
 - Node.js API References
   - [AgentKit](https://coinbase.github.io/agentkit/agentkit/typescript/index.html)
-  - [AgentKit Langchain Extension](https://coinbase.github.io/agentkit-langchain/typescript/index.html)
+  - [AgentKit Langchain Extension](https://coinbase.github.io/agentkit/agentkit-langchain/typescript/index.html)
 
 ## 🚨 Security and Bug Reports
 
