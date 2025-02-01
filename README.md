@@ -27,8 +27,8 @@
 
 - [📖 Overview](#-overview)
 - [🚀 Quickstart](#-quickstart)
-  - [Python](#-python)
   - [Node.js](#-nodejs)
+  - [Python](#-python)
 - [🗂 Repository Structure](#-repository-structure)
 - [🤝 Contributing](#-contributing)
 - [📜 Documentation](#-documentation)
