@@ -46,6 +46,14 @@ Since we support any network by bringing your own RPC, we'd love to have network
 - NFTs
 - LP Management
 
+## Wallet Provider Support
+We support any wallet that can be connected via the EIP-1193 standard:
+- [ ] Turnkey
+- [ ] Privy Server Wallets
+- [ ] Privy Embedded Wallets (this would be better for a demo-app with a frontend component since you need that for signing)
+- [ ] Lit Protocol
+- [ ] Solana wallets
+
 ## AI Framework Support
 Currently aiming to support [all frameworks supported by Virtuals](https://whitepaper.virtuals.io/developer-documents/release-notes/terminal-api#supported-frameworks):
 
@@ -57,7 +65,7 @@ Currently aiming to support [all frameworks supported by Virtuals](https://white
 - [ ] AutoGPT
 
 ### Additional Frameworks
-- [ ] AISDK (Vercel)
+- [ ] AISDK (Vercel) (in progress...)
 - [ ] Mastra
 - [ ] AgentForce
 - [ ] AWS Multi-agent
