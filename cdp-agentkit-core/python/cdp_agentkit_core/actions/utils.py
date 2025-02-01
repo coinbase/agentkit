@@ -33,3 +33,23 @@ def approve(wallet: Wallet, token_address: str, spender: str, amount: int) -> st
 
     except Exception as e:
         return f"Error approving tokens: {e!s}"
+
+
+def network_id_to_hex(network_id: str) -> str:
+    """Convert the wallet's network ID to a hex string."""
+    if network_id == "base-sepolia":
+        return hex(84532)
+    elif network_id == "base-mainnet":
+        return hex(8453)
+    elif network_id == "eth-mainnet":
+        return hex(1)
+    elif network_id == "eth-sepolia":
+        return hex(11155111)
+    elif network_id == "ethereum-holesky":
+        return hex(17000)
+    elif network_id == "arbitrum-mainnet":
+        return hex(42161)
+    elif network_id == "polygon-mainnet":
+        return hex(137)
+    else:
+        raise ValueError(f"Unsupported network ID: {network_id}")
