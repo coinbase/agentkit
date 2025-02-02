@@ -8,9 +8,10 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
 - [Getting Started](#getting-started)
 - [Installation](#installation)
 - [Usage](#usage)
-  - [Create an AgentKit instance](#1-create-an-agentkit-instance)
-  - [Create an AgentKit instance with a specified wallet provider](#2-create-an-agentkit-instance-with-a-specified-wallet-provider)
-  - [Create an AgentKit instance with a specified action providers](#3-create-an-agentkit-instance-with-a-specified-action-providers)
+  - [Create an AgentKit instance](##create-an-agentkit-instance-if-no-wallet-or-action-providers-are-specified-the-agent-will-use-the-cdpwalletprovider-and-walletprovider-action-provider)
+  - [Create an AgentKit instance with a specified wallet provider](#create-an-agentkit-instance-with-a-specified-wallet-provider)
+  - [Create an AgentKit instance with a specified action providers](#create-an-agentkit-instance-with-a-specified-action-providers)
+  - [Use the agent's actions with a framework extension. For example, using LangChain + OpenAI](#use-the-agents-actions-with-a-framework-extension-for-example-using-langchain--openai)
 - [Wallet Providers](#wallet-providers)
   - [CdpWalletProvider](#cdpwalletprovider)
     - [Network Configuration](#network-configuration)
@@ -35,7 +36,7 @@ npm install @coinbase/agentkit
 
 ## Usage
 
-1. Create an AgentKit instance. If no wallet or action providers are specified, the agent will use the `CdpWalletProvider` and `WalletProvider` action provider.
+### Create an AgentKit instance. If no wallet or action providers are specified, the agent will use the `CdpWalletProvider` and `WalletProvider` action provider.
 
 ```typescript
 const agentKit = await AgentKit.from({
@@ -44,7 +45,7 @@ const agentKit = await AgentKit.from({
 });
 ```
 
-2. Create an AgentKit instance with a specified wallet provider.
+### Create an AgentKit instance with a specified wallet provider.
 
 ```typescript
 import { CdpWalletProvider } from "@coinbase/agentkit";
@@ -60,7 +61,7 @@ const agentKit = await AgentKit.from({
 });
 ```
 
-3. Create an AgentKit instance with a specified action providers.
+### Create an AgentKit instance with a specified action providers.
 
 ```typescript
 import { cdpApiActionProvider, pythActionProvider } from "@coinbase/agentkit";
@@ -77,7 +78,7 @@ const agentKit = await AgentKit.from({
 });
 ```
 
-4. Use the agent's actions with a framework extension. For example, using LangChain + OpenAI.
+### Use the agent's actions with a framework extension. For example, using LangChain + OpenAI.
 
 *Prerequisites*:
 - [OpenAI API Key](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key)
