@@ -4,3 +4,4 @@ export * from "./viemWalletProvider";
 export * from "./cdpWalletProvider";
 export * from "./svmWalletProvider";
 export * from "./solanaKeypairWalletProvider";
+export * from "./privyWalletProvider";
