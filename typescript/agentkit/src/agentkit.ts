@@ -4,7 +4,7 @@ import { Action, ActionProvider, walletActionProvider } from "./action-providers
 /**
  * Configuration options for AgentKit
  */
-type AgentKitOptions = {
+export type AgentKitOptions = {
   cdpApiKeyName?: string;
   cdpApiKeyPrivateKey?: string;
   walletProvider?: WalletProvider;

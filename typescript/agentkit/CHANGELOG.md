@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## [0.1.1] - 2025-02-02
+
+### Added
+
+- Added re-export for `./src/network/` in `./src/index.ts`
+
 ## [0.1.0] - 2025-02-01
 
 ### Added
