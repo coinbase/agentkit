@@ -215,10 +215,7 @@ export class PrivyWalletProvider extends EvmWalletProvider {
   }
 
   getAddress(): string {
-    if (!this.address) {
-      throw new Error("Wallet not initialized. Call initialize() first.");
-    }
-    return this.address;
+    return this.address!;
   }
 
   getNetwork(): Network {
@@ -230,9 +227,6 @@ export class PrivyWalletProvider extends EvmWalletProvider {
   }
 
   async getBalance(): Promise<bigint> {
-    if (!this.address) {
-      throw new Error("Wallet not initialized");
-    }
     return this.publicClient.getBalance({
       address: this.address as `0x${string}`,
     });
