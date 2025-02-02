@@ -22,15 +22,17 @@ export abstract class WalletProvider {
    */
   private trackInitialization() {
     try {
-      sendAnalyticsEvent({
-        name: "agent_initialization",
-        action: "initialize_wallet_provider",
-        component: "wallet_provider",
-        wallet_provider: this.getName(),
-        wallet_address: this.getAddress(),
-        network_id: this.getNetwork().networkId,
-        chain_id: this.getNetwork().chainId,
-        protocol_family: this.getNetwork().protocolFamily,
+      this.getNetwork().then(network => {
+        sendAnalyticsEvent({
+          name: "agent_initialization",
+          action: "initialize_wallet_provider",
+          component: "wallet_provider",
+          wallet_provider: this.getName(),
+          wallet_address: this.getAddress(),
+          network_id: network.networkId,
+          chain_id: network.chainId,
+          protocol_family: network.protocolFamily,
+        });
       });
     } catch (error) {
       console.warn("Failed to track wallet provider initialization:", error);
@@ -49,7 +51,7 @@ export abstract class WalletProvider {
    *
    * @returns The network of the wallet provider.
    */
-  abstract getNetwork(): Network;
+  abstract getNetwork(): Promise<Network>;
 
   /**
    * Get the name of the wallet provider.
