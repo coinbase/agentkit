@@ -12,6 +12,10 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
   - [Create an AgentKit instance with a specified wallet provider](#create-an-agentkit-instance-with-a-specified-wallet-provider)
   - [Create an AgentKit instance with a specified action providers](#create-an-agentkit-instance-with-a-specified-action-providers)
   - [Use the agent's actions with a framework extension. For example, using LangChain + OpenAI](#use-the-agents-actions-with-a-framework-extension-for-example-using-langchain--openai)
+- [Creating an Action Provider](#creating-an-action-provider)
+  - [Adding Actions to your Action Provider](#adding-actions-to-your-action-provider)
+  - [Adding Actions to your Action Provider that use a Wallet Provider](#adding-actions-to-your-action-provider-that-use-a-wallet-provider)
+  - [Adding an Action Provider to your AgentKit instance](#adding-an-action-provider-to-your-agentkit-instance)
 - [Wallet Providers](#wallet-providers)
   - [CdpWalletProvider](#cdpwalletprovider)
     - [Network Configuration](#network-configuration)
@@ -126,6 +130,21 @@ class MyActionProvider extends ActionProvider<WalletProvider> {
 ### Adding Actions to your Action Provider
 
 Actions are defined as instance methods on the action provider class with the `@CreateAction` decorator. Actions can use a wallet provider or not and always return a Promise that resolves to a string.
+
+#### Required Typescript Compiler Options
+
+Creating actions with the `@CreateAction` decorator requires the following compilerOptions to be included in your project's `tsconfig.json`.
+
+```json
+{
+    "compilerOptions": {
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true
+    }
+} 
+```
+
+#### Steps to create an action
 
 1. Define the action schema. Action schemas are defined using the `zod` library.
 
