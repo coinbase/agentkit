@@ -7,6 +7,7 @@ import { SOLANA_MAINNET_CHAIN_ID, SOLANA_MAINNET_NETWORK_ID, SOLANA_PROTOCOL_FAM
 export class SvmKeypairWalletProvider extends SvmWalletProvider {
     #keypair: Keypair;
     #connection: Connection;
+    #genesisHash: string;
 
     /**
      * Creates a new SvmKeypairWalletProvider
@@ -16,42 +17,44 @@ export class SvmKeypairWalletProvider extends SvmWalletProvider {
     constructor({
         keypair,
         rpcUrl,
+        genesisHash,
     }: {
         keypair: Uint8Array | string,
         rpcUrl: string,
+        genesisHash: string,
     }) {
         super();
 
         this.#keypair = typeof keypair === "string" ? Keypair.fromSecretKey(bs58.decode(keypair)) : Keypair.fromSecretKey(keypair);
         this.#connection = new Connection(rpcUrl);
+        this.#genesisHash = genesisHash;
     }
 
     getAddress(): string {
         return this.#keypair.publicKey.toBase58();
     }
 
-    async getNetwork(): Promise<Network> {
-        const hash = await this.#connection.getGenesisHash();
-        if (hash === SOLANA_MAINNET_GENESIS_BLOCK_HASH) {
+    getNetwork(): Network {
+        if (this.#genesisHash === SOLANA_MAINNET_GENESIS_BLOCK_HASH) {
             return {
                 protocolFamily: SOLANA_PROTOCOL_FAMILY,
                 chainId: String(SOLANA_MAINNET_CHAIN_ID),
                 networkId: SOLANA_MAINNET_NETWORK_ID,
             };
-        } else if (hash === SOLANA_TESTNET_GENESIS_BLOCK_HASH) {
+        } else if (this.#genesisHash === SOLANA_TESTNET_GENESIS_BLOCK_HASH) {
             return {
                 protocolFamily: SOLANA_PROTOCOL_FAMILY,
                 chainId: String(SOLANA_TESTNET_CHAIN_ID),
                 networkId: SOLANA_TESTNET_NETWORK_ID,
             };
-        } else if (hash === SOLANA_DEVNET_GENESIS_BLOCK_HASH) {
+        } else if (this.#genesisHash === SOLANA_DEVNET_GENESIS_BLOCK_HASH) {
             return {
                 protocolFamily: SOLANA_PROTOCOL_FAMILY,
                 chainId: String(SOLANA_DEVNET_CHAIN_ID),
                 networkId: SOLANA_DEVNET_NETWORK_ID,
             };
         } else {
-            throw new Error(`Unknown network with genesis hash: ${hash}`);
+            throw new Error(`Unknown network with genesis hash: ${this.#genesisHash}`);
         }
     }
 
