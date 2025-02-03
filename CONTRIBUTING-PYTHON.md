@@ -67,7 +67,7 @@ Do not use the contract address as the destination address. If you are unsure of
 """
 ```
 
-* The prompt disambuguates the type of NFT by specifying "ERC-721"
+* The prompt disambiguates the type of NFT by specifying "ERC-721"
 * The prompt specifies that the destination address should not be the contract address
 * The prompt specifies that the LLM should ask the user for the destination address if it is unsure
 * Think about the best UX: if a contract address from a known list of addresses is required, you can instruct the LLM to use another action to get the list of addresses and prompt the user to choose an address from that list. For example, consider a DeFi action that allows a user to withdraw funds from a liquidity provider position. This action would take a contract address, so it would be valuable to have another action that can pull a list of addresses representing the user's positions. You can then instruct the LLM via the prompt to use that action in the case that no contract address is provided.
