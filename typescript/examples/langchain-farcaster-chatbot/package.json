@@ -7,9 +7,9 @@
     "start": "NODE_OPTIONS='--no-warnings' ts-node ./chatbot.ts",
     "dev": "nodemon ./chatbot.ts",
     "lint": "eslint -c .eslintrc.json *.ts",
-    "lint-fix": "eslint -c .eslintrc.json *.ts --fix",
+    "lint:fix": "eslint -c .eslintrc.json *.ts --fix",
     "format": "prettier -c .prettierrc --write \"**/*.{ts,js,cjs,json,md}\"",
-    "format-check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\""
+    "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\""
   },
   "dependencies": {
     "@coinbase/agentkit": "^0.1.0",
