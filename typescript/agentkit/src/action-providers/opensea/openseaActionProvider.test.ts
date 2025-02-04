@@ -51,7 +51,7 @@ describe("OpenSea Action Provider", () => {
       );
 
       expect(response).toBe(
-        `Successfully listed NFT ${MOCK_CONTRACT} token ${MOCK_TOKEN_ID} for ${MOCK_PRICE} ETH, expiring in ${MOCK_EXPIRATION_DAYS} days`,
+        `Successfully listed NFT ${MOCK_CONTRACT} token ${MOCK_TOKEN_ID} for ${MOCK_PRICE} ETH, expiring in ${MOCK_EXPIRATION_DAYS} days. Listing on OpenSea: https://testnets.opensea.io/assets/base_sepolia/${MOCK_CONTRACT}/${MOCK_TOKEN_ID}.`,
       );
     });
 

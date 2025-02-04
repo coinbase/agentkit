@@ -27,12 +27,23 @@ export interface OpenseaActionProviderConfig {
 }
 
 /**
+ * NetworkConfig is the configuration for network-specific settings.
+ */
+interface NetworkConfig {
+  rpcUrl: string;
+  openseaUrl: string;
+  chain: Chain;
+}
+
+/**
  * OpenseaActionProvider is an action provider for OpenSea marketplace interactions.
  */
 export class OpenseaActionProvider extends ActionProvider {
   private readonly apiKey: string;
   private openseaSDK: OpenSeaSDK;
   private walletWithProvider: Wallet;
+  private readonly networkConfig: NetworkConfig;
+
   /**
    * Constructor for the OpenseaActionProvider class.
    *
@@ -47,23 +58,30 @@ export class OpenseaActionProvider extends ActionProvider {
     }
     this.apiKey = apiKey;
 
-    const rpcUrl =
+    this.networkConfig =
       config.networkId === "base-sepolia"
-        ? "https://sepolia.base.org"
-        : config.networkId === "base-mainnet"
-          ? "https://main.base.org"
-          : null;
+        ? {
+            rpcUrl: "https://sepolia.base.org",
+            openseaUrl: "https://testnets.opensea.io/assets/base_sepolia",
+            chain: Chain.BaseSepolia,
+          }
+        : {
+            rpcUrl: "https://main.base.org",
+            openseaUrl: "https://opensea.io/assets/base",
+            chain: Chain.Mainnet,
+          };
 
-    if (!rpcUrl) {
+    if (config.networkId !== "base-sepolia" && config.networkId !== "base-mainnet") {
       throw new Error("Unsupported network. Only base-sepolia and base-mainnet are supported.");
     }
 
-    const provider = new JsonRpcProvider(rpcUrl);
+    // Initialize ethers signer required for OpenSea SDK
+    const provider = new JsonRpcProvider(this.networkConfig.rpcUrl);
     const walletWithProvider = new Wallet(config.privateKey!, provider);
     this.walletWithProvider = walletWithProvider;
 
     const openseaSDK = new OpenSeaSDK(walletWithProvider, {
-      chain: config.networkId === "base-mainnet" ? Chain.Mainnet : Chain.BaseSepolia,
+      chain: this.networkConfig.chain,
       apiKey: this.apiKey,
     });
     this.openseaSDK = openseaSDK;
@@ -78,25 +96,30 @@ export class OpenseaActionProvider extends ActionProvider {
   @CreateAction({
     name: "list_nft",
     description: `
-This tool will list an NFT for sale on OpenSea marketplace. Currently only base-sepolia and base-mainnet are supported.
+This tool will list an NFT for sale on OpenSea. 
+Currently only base-sepolia and base-mainnet are supported.
 
 It takes the following inputs:
 - contractAddress: The NFT contract address to list
 - tokenId: The ID of the NFT to list
-- price: The price in ETH to list the NFT for
+- price: The price in ETH for which the NFT will be listed
 - expirationDays: (Optional) Number of days the listing should be active for (default: 90)
 
 Important notes:
-- Ensure you have approved OpenSea to manage this NFT before listing
 - The wallet must own the NFT to list it
-- Price is in ETH (e.g. 1.5 for 1.5 ETH)
-`,
+- Price is in ETH (e.g. 1.5 for 1.5 ETH) - this is what you will receive if the NFT is sold, it is not required to have this amount in your wallet
+- This is a gasless action - no ETH balance is required for listing the NFT
+- This will approve the whole NFT collection to be managed by OpenSea
+- Only supported on the following networks:
+  - Base Sepolia (ie, 'base-sepolia')
+  - Base Mainnet (ie, 'base', 'base-mainnet')
+  `,
     schema: ListNftSchema,
   })
   async listNft(args: z.infer<typeof ListNftSchema>): Promise<string> {
     try {
       const expirationTime = Math.round(Date.now() / 1000 + args.expirationDays * 24 * 60 * 60);
-      const listing = await this.openseaSDK.createListing({
+      await this.openseaSDK.createListing({
         asset: {
           tokenId: args.tokenId,
           tokenAddress: args.contractAddress,
@@ -108,14 +131,9 @@ Important notes:
         accountAddress: this.walletWithProvider.address,
       });
 
-      const listingStr = JSON.stringify(
-        listing,
-        (key, value) => (typeof value === "bigint" ? value.toString() : value),
-        2,
-      );
-      console.log("Listing details:", listingStr);
+      const listingLink = `${this.networkConfig.openseaUrl}/${args.contractAddress}/${args.tokenId}`;
 
-      return `Successfully listed NFT ${args.contractAddress} token ${args.tokenId} for ${args.price} ETH, expiring in ${args.expirationDays} days`;
+      return `Successfully listed NFT ${args.contractAddress} token ${args.tokenId} for ${args.price} ETH, expiring in ${args.expirationDays} days. Listing on OpenSea: ${listingLink}.`;
     } catch (error) {
       return `Error listing NFT ${args.contractAddress} token ${args.tokenId} for ${args.price} ETH using account ${this.walletWithProvider.address}: ${error}`;
     }

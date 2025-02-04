@@ -111,13 +111,15 @@ async function initializeAgent() {
           apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY?.replace(/\\n/g, "\n"),
         }),
         // Only add OpenSea provider if API key is configured
-        ...(process.env.OPENSEA_API_KEY ? [
-          openseaActionProvider({
-            apiKey: process.env.OPENSEA_API_KEY,
-            networkId: walletProvider.getNetwork().networkId,
-            privateKey: (await (await walletProvider.getWallet().getDefaultAddress()).export()),
-          })
-        ] : []),
+        ...(process.env.OPENSEA_API_KEY
+          ? [
+              openseaActionProvider({
+                apiKey: process.env.OPENSEA_API_KEY,
+                networkId: walletProvider.getNetwork().networkId,
+                privateKey: await (await walletProvider.getWallet().getDefaultAddress()).export(),
+              }),
+            ]
+          : []),
       ],
     });
 
