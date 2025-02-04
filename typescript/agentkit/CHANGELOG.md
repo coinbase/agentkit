@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Added
+
+- Added `alchemyTokenPricesActionProvider` to fetch token prices from Alchemy.
+- Added `token_prices_by_symbol` action to fetch token prices by symbol.
+- Added `token_prices_by_address` action to fetch token prices by network and address pairs.
+
 ## [0.1.1] - 2025-02-02
 
 ### Added
