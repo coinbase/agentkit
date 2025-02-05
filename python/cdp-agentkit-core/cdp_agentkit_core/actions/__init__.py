@@ -6,12 +6,16 @@ from cdp_agentkit_core.actions.deploy_nft import DeployNftAction
 from cdp_agentkit_core.actions.deploy_token import DeployTokenAction
 from cdp_agentkit_core.actions.get_balance import GetBalanceAction
 from cdp_agentkit_core.actions.get_balance_nft import GetBalanceNftAction
+from cdp_agentkit_core.actions.get_abi import GetABIAction
+from cdp_agentkit_core.actions.get_all_balances import GetAllBalancesAction
 from cdp_agentkit_core.actions.get_wallet_details import GetWalletDetailsAction
+from cdp_agentkit_core.actions.invoke_contract import InvokeContractAction
 from cdp_agentkit_core.actions.mint_nft import MintNftAction
 from cdp_agentkit_core.actions.morpho.deposit import MorphoDepositAction
 from cdp_agentkit_core.actions.morpho.withdraw import MorphoWithdrawAction
 from cdp_agentkit_core.actions.pyth.fetch_price import PythFetchPriceAction
 from cdp_agentkit_core.actions.pyth.fetch_price_feed_id import PythFetchPriceFeedIDAction
+from cdp_agentkit_core.actions.read_contract import ReadContractAction
 from cdp_agentkit_core.actions.register_basename import RegisterBasenameAction
 from cdp_agentkit_core.actions.request_faucet_funds import RequestFaucetFundsAction
 from cdp_agentkit_core.actions.superfluid.create_flow import SuperfluidCreateFlowAction
@@ -47,8 +51,12 @@ __all__ = [
     "DeployContractAction",
     "GetBalanceAction",
     "GetBalanceNftAction",
+    "GetABIAction",
+    "GetAllBalancesAction",
     "GetWalletDetailsAction",
+    "InvokeContractAction",
     "MintNftAction",
+    "ReadContractAction",
     "RegisterBasenameAction",
     "RequestFaucetFundsAction",
     "TradeAction",
