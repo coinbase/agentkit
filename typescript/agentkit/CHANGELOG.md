@@ -11,6 +11,7 @@
 ### Fixed
 
 - Added account argument in call to estimateGas in CdpWalletProvider
+- Added explicit template type arguments for `ActionProvider` extensions
 
 ## [0.1.1] - 2025-02-02
 

@@ -10,7 +10,7 @@ import { Network } from "../../network";
 /**
  * Erc721ActionProvider is an action provider for Erc721 contract interactions.
  */
-export class Erc721ActionProvider extends ActionProvider {
+export class Erc721ActionProvider extends ActionProvider<EvmWalletProvider> {
   /**
    * Constructor for the Erc721ActionProvider class.
    */

@@ -10,7 +10,7 @@ import { EvmWalletProvider } from "../../wallet-providers";
 /**
  * ERC20ActionProvider is an action provider for ERC20 tokens.
  */
-export class ERC20ActionProvider extends ActionProvider {
+export class ERC20ActionProvider extends ActionProvider<EvmWalletProvider> {
   /**
    * Constructor for the ERC20ActionProvider.
    */

@@ -18,7 +18,7 @@ import { WowBuyTokenInput, WowCreateTokenInput, WowSellTokenInput } from "./sche
 /**
  * WowActionProvider is an action provider for Wow protocol interactions.
  */
-export class WowActionProvider extends ActionProvider {
+export class WowActionProvider extends ActionProvider<EvmWalletProvider> {
   /**
    * Constructor for the WowActionProvider class.
    */
