@@ -14,6 +14,13 @@ class GetWalletDetailsSchema(BaseModel):
 
     pass
 
+
+class GetBalanceSchema(BaseModel):
+    """Input schema for getting native currency balance."""
+
+    pass
+
+
 class WalletActionProvider(ActionProvider[WalletProvider]):
     """Provides actions for interacting with wallet functionality."""
 
@@ -52,6 +59,24 @@ class WalletActionProvider(ActionProvider[WalletProvider]):
 - Native Balance: {balance}"""
         except Exception as e:
             return f"Error getting wallet details: {e}"
+
+    @CreateAction(
+        name="get_balance",
+        description="This tool will get the native currency balance of the connected wallet.",
+        schema=GetBalanceSchema
+    )
+    def get_balance(
+        self,
+        args: dict[str, Any]
+    ) -> str:
+        """Get native currency balance for the wallet."""
+        try:
+            balance = self.wallet_provider.get_balance()
+            wallet_address = self.wallet_provider.get_address()
+            
+            return f"Native balance at address {wallet_address}: {balance}"
+        except Exception as e:
+            return f"Error getting balance: {e}"
 
     def supports_network(self, network: Network) -> bool:
         """Check if network is supported by wallet actions."""
