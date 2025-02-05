@@ -4,22 +4,53 @@ import { ViemWalletProvider } from "./viemWalletProvider";
 import { createWalletClient, http, WalletClient } from "viem";
 import { NETWORK_ID_TO_VIEM_CHAIN } from "../network/network";
 
+/**
+ * Configuration options for the Privy wallet provider.
+ * @interface
+ */
 interface PrivyWalletConfig {
+  /** The Privy application ID */
   appId: string;
+  /** The Privy application secret */
   appSecret: string;
+  /** The ID of the wallet to use */
   walletId: string;
+  /** Optional network ID to connect to */
   networkId?: string;
+  /** Optional authorization key for the wallet API */
   authorizationKey?: string;
 }
 
 /**
  * A wallet provider that uses Privy's server wallet API.
+ * This provider extends the ViemWalletProvider to provide Privy-specific wallet functionality
+ * while maintaining compatibility with the base wallet provider interface.
  */
 export class PrivyWalletProvider extends ViemWalletProvider {
+  /**
+   * Private constructor to enforce use of factory method.
+   * @param walletClient - The Viem wallet client instance
+   */
   private constructor(walletClient: WalletClient) {
     super(walletClient);
   }
 
+  /**
+   * Creates and configures a new PrivyWalletProvider instance.
+   *
+   * @param config - The configuration options for the Privy wallet
+   * @returns A configured PrivyWalletProvider instance
+   *
+   * @example
+   * ```typescript
+   * const provider = await PrivyWalletProvider.configureWithWallet({
+   *   appId: "your-app-id",
+   *   appSecret: "your-app-secret",
+   *   walletId: "wallet-id",
+   *   networkId: "base-sepolia"
+   * });
+   * ```
+   */
   public static async configureWithWallet(config: PrivyWalletConfig): Promise<PrivyWalletProvider> {
     const privy = new PrivyClient(config.appId, config.appSecret, {
       walletApi: config.authorizationKey
@@ -40,8 +71,7 @@ export class PrivyWalletProvider extends ViemWalletProvider {
 
     const network = {
       protocolFamily: "evm" as const,
-      networkId: config.networkId || "84532",
-      chainId: "84532",
+      networkId: config.networkId || "base-sepolia",
     };
 
     const chain = NETWORK_ID_TO_VIEM_CHAIN[network.networkId!];
@@ -53,6 +83,11 @@ export class PrivyWalletProvider extends ViemWalletProvider {
     return new PrivyWalletProvider(walletClient);
   }
 
+  /**
+   * Gets the name of the wallet provider.
+   *
+   * @returns The string identifier for this wallet provider
+   */
   getName(): string {
     return "privy_wallet_provider";
   }
