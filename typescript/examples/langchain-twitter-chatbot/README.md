@@ -8,14 +8,24 @@ This example demonstrates an agent setup as a terminal style chatbot with access
 - "Please get my mentions"
 - "Please post responses to my mentions"
 
-## Requirements
+## Prerequisites
 
-- Node.js 18+
-- [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
-- [Twitter (X) API Keys](https://developer.x.com/en/portal/dashboard)
-- [CDP API Key](https://portal.cdp.coinbase.com/access/api)
+### Checking Node Version
+
+Before using the example, ensure that you have the correct version of Node.js installed. The example requires Node.js 18 or higher. You can check your Node version by running:
+
+```bash
+node --version
+```
+
+If you don't have the correct version, you can install it using [nvm](https://github.com/nvm-sh/nvm):
+
+```bash
+nvm install node
+```
 
 ### Twitter Application Setup
+
 1. Visit the Twitter (X) [Developer Portal](https://developer.x.com/en/portal/dashboard)
 2. Navigate to your project
 3. Navigate to your application
@@ -27,32 +37,40 @@ This example demonstrates an agent setup as a terminal style chatbot with access
 9. Navigate to "Keys and tokens"
 10. Regenerate all keys and tokens
 
-### Checking Node Version
 
-Before using the example, ensure that you have the correct version of Node.js installed. The example requires Node.js 18 or higher. You can check your Node version by running:
+### API Keys
 
-```bash
-node --version
-npm --version
-```
+You'll need the following API keys:
+- [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
+- [Twitter (X) API Keys](https://developer.x.com/en/portal/dashboard)
 
-## Installation
+Once you have them, rename the `.env-local` file to `.env` and make sure you set the API keys to their corresponding environment variables:
 
-```bash
-npm install
-```
-
-## Run the Chatbot
-
-Ensure the following vars are set in .env:
 - "OPENAI_API_KEY"
 - "TWITTER_ACCESS_TOKEN"
 - "TWITTER_ACCESS_TOKEN_SECRET"
 - "TWITTER_API_KEY"
 - "TWITTER_API_SECRET"
-- "CDP_API_KEY_NAME"
-- "CDP_API_KEY_PRIVATE_KEY"
+
+## Running the example
+
+From the root directory, run:
+
+```bash
+npm install
+npm run build
+```
+
+This will install the dependencies and build the packages locally. The chatbot example uses the local `@coinbase/agentkit-langchain` and `@coinbase/agentkit` packages. If you make changes to the packages, you can run `npm run build` from root again to rebuild the packages, and your changes will be reflected in the chatbot example.
+
+Now from the `typescript/examples/langchain-twitter-chatbot` directory, run:
 
 ```bash
 npm start
 ```
+
+Select "1. chat mode" and start telling your Agent to do things onchain!
+
+## License
+
+Apache-2.0

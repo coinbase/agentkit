@@ -9,11 +9,7 @@ This example demonstrates an agent setup as a terminal style chatbot with access
 - "Deploy an NFT that will go super viral!"
 - "Deploy an ERC-20 token with total supply 1 billion"
 
-## Requirements
-
-- Node.js 18+
-- [CDP API Key](https://portal.cdp.coinbase.com/access/api)
-- [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
+## Prerequisites
 
 ### Checking Node Version
 
@@ -21,28 +17,46 @@ Before using the example, ensure that you have the correct version of Node.js in
 
 ```bash
 node --version
-npm --version
 ```
 
-## Installation
+If you don't have the correct version, you can install it using [nvm](https://github.com/nvm-sh/nvm):
+
+```bash
+nvm install node
+```
+
+This will automatically install and use the latest version of Node.
+
+### API Keys
+
+You'll need the following API keys:
+- [CDP API Key](https://portal.cdp.coinbase.com/access/api)
+- [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
+
+Once you have them, rename the `.env-local` file to `.env` and make sure you set the API keys to their corresponding environment variables:
+
+- "CDP_API_KEY_NAME"
+- "CDP_API_KEY_PRIVATE_KEY"
+- "OPENAI_API_KEY"
+
+## Running the example
+
+From the root directory, run:
 
 ```bash
 npm install
+npm run build
 ```
 
-## Run the Chatbot
+This will install the dependencies and build the packages locally. The chatbot example uses the local `@coinbase/agentkit-langchain` and `@coinbase/agentkit` packages. If you make changes to the packages, you can run `npm run build` from root again to rebuild the packages, and your changes will be reflected in the chatbot example.
 
-### Set ENV Vars
-
-- Ensure the following ENV Vars are set in `.env`:
-  - "CDP_API_KEY_NAME"
-  - "CDP_API_KEY_PRIVATE_KEY"
-  - "OPENAI_API_KEY"
-  - "NETWORK_ID" (Defaults to `base-sepolia`)
+Now from the `typescript/examples/langchain-cdp-chatbot` directory, run:
 
 ```bash
 npm start
 ```
+
+Select "1. chat mode" and start telling your Agent to do things onchain!
 
 ## License
 

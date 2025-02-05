@@ -62,16 +62,22 @@ AgentKit is [Coinbase Developer Platform's](https://docs.cdp.coinbase.com) frame
 # Clone the repository
 git clone https://github.com/coinbase/agentkit.git
 
-# Navigate to the langchain-cdp-chatbot example
-cd agentkit/typescript/examples/langchain-cdp-chatbot
-
-# At this point, fill in your CDP API key name, private key, and OpenAI API key in
-# the .env.example file.
-# Then, rename the .env.example file to .env
-mv .env.example .env
+# Navigate to the root of the repo
+cd agentkit
 
 # Install dependencies
 npm install
+
+# Build the packages locally
+npm run build
+
+# Navigate to the langchain-cdp-chatbot example
+cd typescript/examples/langchain-cdp-chatbot
+
+# At this point, fill in your CDP API key name, private key, and OpenAI API key in
+# the .env.local file.
+# Then, rename the .env.local file to .env
+mv .env.local .env
 
 # Run the chatbot
 npm run start
