@@ -1,0 +1,38 @@
+<svg id="logo" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <foreignObject width="100%" height="100%">
+        <div xmlns="http://www.w3.org/1999/xhtml">
+            <style>
+                #container {
+                    box-sizing: border-box;
+                    border: 1px solid #404040;
+                    border-radius: 8px;
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                #logo:hover {
+                    border-color: #2470FF;
+                }
+
+                div {
+                    width: 100%;
+                    height: 100%;
+                }
+            </style>
+            <div id="container">
+                <svg width="99" height="98" viewBox="0 0 99 98" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g clip-path="url(#clip-path-0)">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M58.4842 32.341C58.4842 37.4999 54.2477 41.682 49.0217 41.682C43.7957 41.682 39.5593 37.4999 39.5593 32.341C39.5593 27.1821 43.7957 23 49.0217 23C54.2477 23 58.4842 27.1821 58.4842 32.341ZM64.049 75.3092L50.5798 46.1944C50.4431 45.9007 50.2239 45.652 49.9483 45.4776C49.6726 45.3032 49.3521 45.2105 49.0247 45.2105C48.6974 45.2105 48.3769 45.3032 48.1012 45.4776C47.8256 45.652 47.6064 45.9007 47.4697 46.1944L34.0005 75.3092H64.049Z" fill="#eeeeee"></path>
+                    </g>
+                    <defs>
+                        <clipPath id="clip-path-0">
+                            <rect width="99" height="98" fill="white"/>
+                        </clipPath>
+                    </defs>
+                </svg>
+            </div>
+        </div>
+    </foreignObject>
+</svg>

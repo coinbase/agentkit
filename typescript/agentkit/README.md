@@ -16,6 +16,17 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
   - [Adding Actions to your Action Provider](#adding-actions-to-your-action-provider)
   - [Adding Actions to your Action Provider that use a Wallet Provider](#adding-actions-to-your-action-provider-that-use-a-wallet-provider)
   - [Adding an Action Provider to your AgentKit instance](#adding-an-action-provider-to-your-agentkit-instance)
+- [Action Providers](#action-providers)
+  - [CDP Wallet](#cdp-wallet)
+  - [ERC20](#erc20)
+  - [ERC721](#erc721)
+  - [Farcaster](#farcaster)
+  - [Morpho](#morpho)
+  - [Pyth](#pyth)
+  - [Twitter](#twitter)
+  - [Wallet](#wallet)
+  - [WETH](#weth)
+  - [WOW](#wow)
 - [Wallet Providers](#wallet-providers)
   - [CdpWalletProvider](#cdpwalletprovider)
     - [Network Configuration](#network-configuration)
@@ -25,6 +36,7 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
     - [Importing a wallet from WalletData JSON string](#importing-a-wallet-from-walletdata-json-string)
   - [ViemWalletProvider](#viemwalletprovider)
 - [Contributing](#contributing)
+- [Supported Protocols](#supported-protocols)
 
 ## Getting Started
 
@@ -216,6 +228,178 @@ const agentKit = new AgentKit({
 });
 ```
 
+## Action Providers
+
+<details>
+<summary><strong>Basename</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>register_basename</code></td>
+    <td width="768">Registers a Basename for the agent. Must end with .base.eth on mainnet or .basetest.eth on testnet.</td>
+</tr>
+</table>
+</details>
+
+<details>
+<summary><strong>CDP Wallet</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>deploy_contract</code></td>
+    <td width="768">Deploys smart contract with required args: solidity version, solidity input json, contract name, and optional constructor args.</td>
+</tr>
+<tr>
+    <td width="200"><code>deploy_nft</code></td>
+    <td width="768">Deploys an NFT (ERC-721) contract onchain with name, symbol, and base URI for token metadata.</td>
+</tr>
+<tr>
+    <td width="200"><code>deploy_token</code></td>
+    <td width="768">Deploys an ERC20 token smart contract with token name, symbol, and total supply.</td>
+</tr>
+<tr>
+    <td width="200"><code>trade</code></td>
+    <td width="768">Trades a specified amount of a 'from asset' to a 'to asset'. Only supported on mainnet networks.</td>
+</tr>
+</table>
+</details>
+
+<details>
+<summary><strong>ERC20</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_balance</code></td>
+    <td width="768">Gets the token balance for a specified address and contract.</td>
+</tr>
+<tr>
+    <td width="200"><code>transfer</code></td>
+    <td width="768">Transfers ERC20 tokens to a specified address.</td>
+</tr>
+</table>
+</details>
+
+<details>
+<summary><strong>ERC721</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_balance</code></td>
+    <td width="768">Gets the NFT balance for a specified address and contract.</td>
+</tr>
+<tr>
+    <td width="200"><code>mint</code></td>
+    <td width="768">Mints an NFT (ERC-721) to a specified destination address.</td>
+</tr>
+<tr>
+    <td width="200"><code>transfer</code></td>
+    <td width="768">Transfers an NFT to a specified destination address.</td>
+</tr>
+</table>
+</details>
+
+<details>
+<summary><strong>Farcaster</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>account_details</code></td>
+    <td width="768">Retrieves account details for the agent's Farcaster account.</td>
+</tr>
+<tr>
+    <td width="200"><code>post_cast</code></td>
+    <td width="768">Posts a cast to Farcaster (max 280 characters).</td>
+</tr>
+</table>
+</details>
+
+<details>
+<summary><strong>Morpho</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>deposit</code></td>
+    <td width="768">Deposits assets into a Morpho Vault.</td>
+</tr>
+<tr>
+    <td width="200"><code>withdraw</code></td>
+    <td width="768">Withdraws assets from a Morpho Vault.</td>
+</tr>
+</table>
+</details>
+
+<details>
+<summary><strong>Pyth</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>fetch_price</code></td>
+    <td width="768">Fetches the current price for a given price feed from Pyth.</td>
+</tr>
+<tr>
+    <td width="200"><code>fetch_price_feed_id</code></td>
+    <td width="768">Fetches the price feed ID for a given token symbol from Pyth.</td>
+</tr>
+</table>
+</details>
+
+<details>
+<summary><strong>Twitter</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>account_details</code></td>
+    <td width="768">Retrieves account details for the authenticated Twitter user.</td>
+</tr>
+<tr>
+    <td width="200"><code>account_mentions</code></td>
+    <td width="768">Retrieves recent mentions for the authenticated user.</td>
+</tr>
+<tr>
+    <td width="200"><code>post_tweet</code></td>
+    <td width="768">Posts a new tweet to Twitter.</td>
+</tr>
+<tr>
+    <td width="200"><code>post_tweet_reply</code></td>
+    <td width="768">Posts a reply to an existing tweet.</td>
+</tr>
+</table>
+</details>
+
+<details>
+<summary><strong>Wallet</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_wallet_details</code></td>
+    <td width="768">Returns details of connected wallet including address, network info, ETH balance, native balance, and provider name.</td>
+</tr>
+<tr>
+    <td width="200"><code>native_transfer</code></td>
+    <td width="768">Transfers native tokens (e.g., ETH) to a specified address.</td>
+</tr>
+</table>
+</details>
+
+<details>
+<summary><strong>WETH</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>wrap_eth</code></td>
+    <td width="768">Wraps ETH to WETH. Only supported on Base Sepolia and Base Mainnet.</td>
+</tr>
+</table>
+</details>
+
+<details>
+<summary><strong>WOW</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>buy_token</code></td>
+    <td width="768">Purchases tokens from a WOW contract using ETH.</td>
+</tr>
+<tr>
+    <td width="200"><code>create_token</code></td>
+    <td width="768">Creates a Zora Wow ERC20 memecoin using the WoW factory with bonding curve functionality.</td>
+</tr>
+<tr>
+    <td width="200"><code>sell_token</code></td>
+    <td width="768">Sells WOW tokens for ETH.</td>
+</tr>
+</table>
+</details>
+
 ## Wallet Providers
 
 Wallet providers give an agent access to a wallet. AgentKit currently supports the following wallet providers:
@@ -323,3 +507,18 @@ const walletProvider = new ViemWalletProvider(client);
 ## Contributing
 
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for more information.
+
+## Supported Protocols
+
+AgentKit is proud to have support for the following protocols, frameworks, and wallet providers:
+
+<a href="https://aerodrome.finance" target="_blank"><img src="../../assets/protocols/aerodrome.svg" width="auto" height="auto" alt="Aerodrome"></a>
+<a href="https://www.alchemy.com/" target="_blank"><img src="../../assets/protocols/alchemy.svg" width="auto" height="auto" alt="Alchemy"></a>
+<a href="https://base.org" target="_blank"><img src="../../assets/protocols/base.svg" width="auto" height="auto" alt="Base"></a>
+<a href="https://compound.finance" target="_blank"><img src="../../assets/protocols/compound.svg" width="auto" height="auto" alt="Compound"></a>
+<a href="https://farcaster.xyz" target="_blank"><img src="../../assets/protocols/farcaster.svg" width="auto" height="auto" alt="Farcaster"></a>
+<a href="https://hyperbolic.xyz" target="_blank"><img src="../../assets/protocols/hyperbolic.svg" width="auto" height="auto" alt="Hyperbolic"></a>
+<a href="https://moonwell.fi" target="_blank"><img src="../../assets/protocols/moonwell.svg" width="auto" height="auto" alt="Moonwell"></a>
+<a href="https://app.morpho.org" target="_blank"><img src="../../assets/protocols/morpho.svg" width="auto" height="auto" alt="Morpho"></a>
+<a href="https://pyth.network" target="_blank"><img src="../../assets/protocols/pyth.svg" width="auto" height="auto" alt="Pyth"></a>
+<a href="https://turnkey.com" target="_blank"><img src="../../assets/protocols/turnkey.svg" width="auto" height="auto" alt="Turnkey"></a>
