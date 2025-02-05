@@ -96,7 +96,7 @@ export class OpenseaActionProvider extends ActionProvider {
   @CreateAction({
     name: "list_nft",
     description: `
-This tool will list an NFT for sale on OpenSea. 
+This tool will list an NFT for sale on the OpenSea marketplace. 
 Currently only base-sepolia and base-mainnet are supported.
 
 It takes the following inputs:
@@ -106,13 +106,14 @@ It takes the following inputs:
 - expirationDays: (Optional) Number of days the listing should be active for (default: 90)
 
 Important notes:
-- The wallet must own the NFT to list it
-- Price is in ETH (e.g. 1.5 for 1.5 ETH) - this is what you will receive if the NFT is sold, it is not required to have this amount in your wallet
-- This is a gasless action - no ETH balance is required for listing the NFT
-- This will approve the whole NFT collection to be managed by OpenSea
-- Only supported on the following networks:
-  - Base Sepolia (ie, 'base-sepolia')
-  - Base Mainnet (ie, 'base', 'base-mainnet')
+- The wallet must own the NFT
+- Price is in ETH (e.g., 1.5 for 1.5 ETH). This is the amount the seller will receive if the NFT is sold. It is not required to have this amount in the wallet.
+- Listing the NFT requires approval for OpenSea to manage the entire NFT collection:  
+  - If the collection is not already approved, an onchain transaction is required, which will incur gas fees.  
+  - If already approved, listing is gasless and does not require any onchain transaction.  
+- Only the following networks are supported:
+  - Base Sepolia (base-sepolia)
+  - Base Mainnet (base, base-mainnet)
   `,
     schema: ListNftSchema,
   })
