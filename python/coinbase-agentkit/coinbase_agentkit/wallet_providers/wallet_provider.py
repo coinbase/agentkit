@@ -18,12 +18,12 @@ class WalletProvider(ABC):
         pass
     
     @abstractmethod
-    async def get_balance(self) -> Decimal:
+    def get_balance(self) -> Decimal:
         """Get the wallet balance in native currency."""
         pass
     
     @abstractmethod
-    async def sign_message(self, message: str) -> str:
+    def sign_message(self, message: str) -> str:
         """Sign a message with the wallet."""
         pass
     
