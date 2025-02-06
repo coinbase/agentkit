@@ -6,6 +6,7 @@ export * from "./cdp";
 export * from "./weth";
 export * from "./erc20";
 export * from "./erc721";
+export * from "./magicEden";
 export * from "./morpho";
 export * from "./basename";
 export * from "./farcaster";
