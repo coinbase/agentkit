@@ -274,7 +274,7 @@ export class CdpWalletProvider extends EvmWalletProvider {
     const feeData = await this.#publicClient!.estimateFeesPerGas();
 
     const gas = await this.#publicClient!.estimateGas({
-      account: this.#publicClient.account,
+      account: this.#address! as `0x${string}`,
       to,
       value,
       data,
