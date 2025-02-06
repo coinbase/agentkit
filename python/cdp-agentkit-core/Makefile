@@ -20,4 +20,8 @@ local-docs: docs
 
 .PHONY: test
 test:
-	poetry run pytest
+	poetry run pytest -m "not integration"
+
+.PHONY: test-integration
+test-integration:
+	poetry run pytest -m "integration"
