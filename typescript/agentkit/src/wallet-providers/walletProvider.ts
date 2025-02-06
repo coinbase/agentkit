@@ -22,6 +22,7 @@ export abstract class WalletProvider {
    */
   private trackInitialization() {
     try {
+
       sendAnalyticsEvent({
         name: "agent_initialization",
         action: "initialize_wallet_provider",
