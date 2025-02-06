@@ -20,6 +20,8 @@ class CdpAgentkitWrapper(BaseModel):
     cdp_api_key_name: str | None = None
     cdp_api_key_private_key: str | None = None
     network_id: str | None = None
+    model_name: str = "gpt-4o-mini"
+    provider: str = "openai"
 
     @model_validator(mode="before")
     @classmethod
@@ -29,6 +31,8 @@ class CdpAgentkitWrapper(BaseModel):
         cdp_api_key_private_key = get_from_dict_or_env(
             values, "cdp_api_key_private_key", "CDP_API_KEY_PRIVATE_KEY"
         ).replace("\\n", "\n")
+        model_name = get_from_dict_or_env(values, "model_name", "CDP_MODEL_NAME", "gpt-4o-mini")
+        provider = get_from_dict_or_env(values, "provider", "CDP_MODEL_PROVIDER", "openai")
         mnemonic_phrase = get_from_dict_or_env(values, "mnemonic_phrase", "MNEMONIC_PHRASE", "")
         network_id = get_from_dict_or_env(values, "network_id", "NETWORK_ID", "base-sepolia")
         wallet_data_json = values.get("cdp_wallet_data")

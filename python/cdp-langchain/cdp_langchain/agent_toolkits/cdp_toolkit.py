@@ -30,8 +30,13 @@ class CdpToolkit(BaseToolkit):
         .. code-block:: bash
 
             export CDP_API_KEY_NAME="cdp-api-key-name"
-            export CDP_API_KEY_PRIVATE_KEY="cdp-api-key-private-key"
+            export CDP_API_KEY_PRIVATE_KEY="cdp-api-key-private-key" 
             export NETWORK_ID="network-id"
+            export CDP_MODEL_NAME="gpt-4o-mini"       # Optional
+            export CDP_MODEL_PROVIDER="openai"         # Optional
+            export OPENAI_API_KEY="your-api-key"       # Required for OpenAI
+            export ANTHROPIC_API_KEY="your-api-key"    # Required for Anthropic  
+            export CEREBRAS_API_KEY="your-api-key"     # Required for Cerebras
 
     Instantiate:
         .. code-block:: python
@@ -39,7 +44,11 @@ class CdpToolkit(BaseToolkit):
             from cdp_langchain.agent_toolkits import CdpToolkit
             from cdp_langchain.utils import CdpAgentkitWrapper
 
-            cdp = CdpAgentkitWrapper()
+            # Custom model configuration
+            cdp = CdpAgentkitWrapper(
+                model_name="claude-3-sonnet",
+                provider="anthropic"
+            )
             cdp_toolkit = CdpToolkit.from_cdp_agentkit_wrapper(cdp)
 
     Tools:
@@ -77,7 +86,27 @@ class CdpToolkit(BaseToolkit):
             tools = [tool for tool in toolkit.get_tools() if tool.name == "get_wallet_details"]
             assert len(tools) == 1
 
-            llm = ChatOpenAI(model="gpt-4o-mini")
+            # Dynamic LLM initialization based on provider
+            if cdp_agentkit_wrapper.provider == "openai":
+                from langchain_openai import ChatOpenAI
+                llm = ChatOpenAI(
+                    model=cdp_agentkit_wrapper.model_name,
+                    openai_api_key=os.getenv("OPENAI_API_KEY")
+                )
+            elif cdp_agentkit_wrapper.provider == "anthropic":
+                from langchain_anthropic import ChatAnthropic
+                llm = ChatAnthropic(
+                    model=cdp_agentkit_wrapper.model_name,
+                    anthropic_api_key=os.getenv("ANTHROPIC_API_KEY")
+                )
+            elif cdp_agentkit_wrapper.provider == "cerebras":
+                from langchain_cerebras import ChatCerebras
+                llm = ChatCerebras(
+                    model=cdp_agentkit_wrapper.model_name,
+                    cerebras_api_key=os.getenv("CEREBRAS_API_KEY")
+                )
+            else:
+                raise ValueError(f"Unsupported provider: {cdp_agentkit_wrapper.provider}")
             agent_executor = create_react_agent(llm, tools)
 
             example_query = "Tell me about your wallet"
