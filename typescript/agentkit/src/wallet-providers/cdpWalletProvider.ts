@@ -274,7 +274,7 @@ export class CdpWalletProvider extends EvmWalletProvider {
     const feeData = await this.#publicClient!.estimateFeesPerGas();
 
     const gas = await this.#publicClient!.estimateGas({
-      account: this.#publicClient.account,
+      account: this.#address as `0x${string}`,
       to,
       value,
       data,
@@ -502,5 +502,17 @@ export class CdpWalletProvider extends EvmWalletProvider {
     }
 
     return this.#cdpWallet.export();
+  }
+
+  /**
+   * Gets the wallet.
+   *
+   * @returns The wallet.
+   */
+  getWallet(): Wallet {
+    if (!this.#cdpWallet) {
+      throw new Error("Wallet not initialized");
+    }
+    return this.#cdpWallet;
   }
 }

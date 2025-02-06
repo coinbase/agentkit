@@ -40,7 +40,7 @@ describe("ERC721 Action Provider", () => {
         data: encodeFunctionData({
           abi: ERC721_ABI,
           functionName: "mint",
-          args: [MOCK_DESTINATION, 1n],
+          args: [MOCK_DESTINATION],
         }),
       });
 
