@@ -7,11 +7,12 @@ import pytest
 from langchain_core.callbacks import CallbackManager
 from pydantic import BaseModel
 
+from cdp_agentkit_core.actions import CdpAction
 from cdp_langchain.tools import CdpTool
 from cdp_langchain.utils import CdpAgentkitWrapper
 
 
-class TestArgsSchema(BaseModel):
+class EmptyArgsSchema(BaseModel):
     """Test schema for validating input arguments."""
 
     test_param: str
@@ -44,7 +45,7 @@ def cdp_tool_with_schema(mock_cdp_agentkit_wrapper):
         cdp_agentkit_wrapper=mock_cdp_agentkit_wrapper,
         name="test_action_with_schema",
         description="Test CDP Tool",
-        args_schema=TestArgsSchema,
+        args_schema=EmptyArgsSchema,
         func=lambda x: x,
     )
 
@@ -58,6 +59,25 @@ def test_initialization(mock_cdp_agentkit_wrapper):
         func=lambda x: x,
     )
     assert tool.name == "test_action"
+    assert tool.description == "Test CDP Tool"
+    assert tool.func("test") == "test"
+
+
+def test_from_action(mock_cdp_agentkit_wrapper):
+    """Test basic creation of CDP Tool from an action."""
+    cdp_action = CdpAction(
+        name="test_action",
+        description="Test CDP Tool",
+        args_schema=None,
+        func=lambda x: x,
+    )
+    tool = CdpTool.from_cdp_action(
+        cdp_action=cdp_action,
+        cdp_agentkit_wrapper=mock_cdp_agentkit_wrapper,
+    )
+    assert tool.name == "test_action"
+    assert tool.description == "Test CDP Tool"
+    assert tool.func("test") == "test"
 
 
 def test_run_with_instructions(cdp_tool):

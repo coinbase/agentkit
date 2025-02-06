@@ -14,6 +14,7 @@ from langchain_core.callbacks import CallbackManagerForToolRun
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel
 
+from cdp_agentkit_core.actions import CdpAction
 from cdp_langchain.utils.cdp_agentkit_wrapper import CdpAgentkitWrapper
 
 
@@ -25,6 +26,17 @@ class CdpTool(BaseTool):  # type: ignore[override]
     description: str = ""
     args_schema: type[BaseModel] | None = None
     func: Callable[..., str]
+
+    @classmethod
+    def from_cdp_action(cls, cdp_action: CdpAction, cdp_agentkit_wrapper: CdpAgentkitWrapper) -> "CdpTool":
+        """Create a CdpTool from a CdpAction."""
+        return cls(
+            name=cdp_action.name,
+            description=cdp_action.description,
+            cdp_agentkit_wrapper=cdp_agentkit_wrapper,
+            args_schema=cdp_action.args_schema,
+            func=cdp_action.func,
+        )
 
     def _run(
         self,

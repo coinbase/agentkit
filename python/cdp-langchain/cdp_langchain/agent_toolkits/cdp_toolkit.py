@@ -130,12 +130,9 @@ class CdpToolkit(BaseToolkit):
         actions = CDP_ACTIONS
 
         tools = [
-            CdpTool(
-                name=action.name,
-                description=action.description,
+            CdpTool.from_cdp_action(
+                cdp_action=action,
                 cdp_agentkit_wrapper=cdp_agentkit_wrapper,
-                args_schema=action.args_schema,
-                func=action.func,
             )
             for action in actions
         ]
