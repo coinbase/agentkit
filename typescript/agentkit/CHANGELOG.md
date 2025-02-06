@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## [0.1.2] - 2025-02-06
+
+### Added
+
+- Added `superfluidPoolActionProvider` to start, stop, and update superfluid pools
+- Added `superfluidStreamActionProvider` to start, stop, and update superfluid streams
+- Added `superfluidQueryActionProvider` to use The Graph to find active streams
+
 ### Added
 
 - Added `alchemyTokenPricesActionProvider` to fetch token prices from Alchemy.
