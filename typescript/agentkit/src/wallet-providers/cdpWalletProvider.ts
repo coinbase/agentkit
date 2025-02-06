@@ -175,6 +175,10 @@ export class CdpWalletProvider extends EvmWalletProvider {
     const messageHash = hashMessage(message);
     const payload = await this.#cdpWallet.createPayloadSignature(messageHash);
 
+    if (payload.getStatus() === "pending" && payload?.wait) {
+      await payload.wait(); // needed for Server-Signers
+    }
+
     return payload.getSignature() as `0x${string}`;
   }
 
@@ -198,6 +202,10 @@ export class CdpWalletProvider extends EvmWalletProvider {
 
     const payload = await this.#cdpWallet.createPayloadSignature(messageHash);
 
+    if (payload.getStatus() === "pending" && payload?.wait) {
+      await payload.wait(); // needed for Server-Signers
+    }
+
     return payload.getSignature() as `0x${string}`;
   }
 
@@ -216,6 +224,10 @@ export class CdpWalletProvider extends EvmWalletProvider {
     const transactionHash = keccak256(serializedTx);
 
     const payload = await this.#cdpWallet.createPayloadSignature(transactionHash);
+
+    if (payload.getStatus() === "pending" && payload?.wait) {
+      await payload.wait(); // needed for Server-Signers
+    }
 
     return payload.getSignature() as `0x${string}`;
   }
