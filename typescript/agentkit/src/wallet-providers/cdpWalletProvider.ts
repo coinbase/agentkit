@@ -1,3 +1,4 @@
+import { version } from "../../package.json";
 import { Decimal } from "decimal.js";
 import {
   createPublicClient,
@@ -119,7 +120,12 @@ export class CdpWalletProvider extends EvmWalletProvider {
     config: ConfigureCdpAgentkitWithWalletOptions = {},
   ): Promise<CdpWalletProvider> {
     if (config.apiKeyName && config.apiKeyPrivateKey) {
-      Coinbase.configure({ apiKeyName: config.apiKeyName, privateKey: config.apiKeyPrivateKey });
+      Coinbase.configure({
+        apiKeyName: config.apiKeyName,
+        privateKey: config.apiKeyPrivateKey,
+        source: "agentkit",
+        sourceVersion: version,
+      });
     } else {
       Coinbase.configureFromJson();
     }

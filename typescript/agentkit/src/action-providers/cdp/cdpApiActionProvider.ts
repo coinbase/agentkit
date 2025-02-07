@@ -1,11 +1,10 @@
+import { version } from "../../../package.json";
 import { Coinbase, ExternalAddress } from "@coinbase/coinbase-sdk";
 import { z } from "zod";
-
 import { CreateAction } from "../actionDecorator";
 import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { CdpProviderConfig, EvmWalletProvider } from "../../wallet-providers";
-
 import { AddressReputationSchema, RequestFaucetFundsSchema } from "./schemas";
 
 /**
@@ -23,7 +22,12 @@ export class CdpApiActionProvider extends ActionProvider<EvmWalletProvider> {
     super("cdp_api", []);
 
     if (config.apiKeyName && config.apiKeyPrivateKey) {
-      Coinbase.configure({ apiKeyName: config.apiKeyName, privateKey: config.apiKeyPrivateKey });
+      Coinbase.configure({
+        apiKeyName: config.apiKeyName,
+        privateKey: config.apiKeyPrivateKey,
+        source: "agentkit",
+        sourceVersion: version,
+      });
     } else {
       Coinbase.configureFromJson();
     }

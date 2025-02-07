@@ -7,6 +7,8 @@
 - Added `alchemyTokenPricesActionProvider` to fetch token prices from Alchemy.
 - Added `token_prices_by_symbol` action to fetch token prices by symbol.
 - Added `token_prices_by_address` action to fetch token prices by network and address pairs.
+- Added `moonwellActionProvider` to interact with Moonwell protocol on Base
+- Added `agentkit` source + source version tag to CDP API correlation header
 
 ### Fixed
 

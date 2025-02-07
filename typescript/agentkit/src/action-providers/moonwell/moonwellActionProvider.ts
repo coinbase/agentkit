@@ -63,6 +63,7 @@ It takes:
 Important notes:
 - Make sure to use the exact amount provided. Do not convert units for assets for this action.
 - Please use a token address (example 0x4200000000000000000000000000000000000006) for the tokenAddress field.
+- This tool handles token approval. If requested to mint on Moonwell, do not use any other actions to approve tokens.
 `,
     schema: MintSchema,
   })
