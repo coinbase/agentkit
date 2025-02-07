@@ -78,7 +78,7 @@ class EthAccountWalletProvider(EvmWalletProvider):
         """Send a signed transaction to the network."""
         # TODO: Update to use the new send_transaction method
         signed = self.sign_transaction(transaction)
-        tx_hash = self.web3.eth.send_raw_transaction(signed.rawTransaction)
+        tx_hash = self.web3.eth.send_raw_transaction(signed.raw_transaction)
         return HexStr(tx_hash.hex())
 
     def wait_for_transaction_receipt(
@@ -103,3 +103,7 @@ class EthAccountWalletProvider(EvmWalletProvider):
         if args is None:
             args = []
         return func(*args).call(block_identifier=block_identifier)
+
+    def provider(self) -> Web3:
+        """Get the web3 provider."""
+        return self.web3
