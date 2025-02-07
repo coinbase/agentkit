@@ -1,10 +1,10 @@
 import { SvmWalletProvider } from "./svmWalletProvider";
 import { Network } from "../network";
-import { Connection, Keypair, PublicKey, VersionedTransaction, LAMPORTS_PER_SOL, SystemProgram, MessageV0, ComputeBudgetProgram } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, VersionedTransaction, LAMPORTS_PER_SOL, SystemProgram, MessageV0, ComputeBudgetProgram, clusterApiUrl } from "@solana/web3.js";
 import bs58 from "bs58";
-import { SOLANA_NETWORKS } from "../network/svm";
+import { SOLANA_CLUSTER, SOLANA_DEVNET_GENESIS_BLOCK_HASH, SOLANA_MAINNET_GENESIS_BLOCK_HASH, SOLANA_NETWORKS, SOLANA_TESTNET_GENESIS_BLOCK_HASH } from "../network/svm";
 
-export class SvmKeypairWalletProvider extends SvmWalletProvider {
+export class SolanaKeypairWalletProvider extends SvmWalletProvider {
     #keypair: Keypair;
     #connection: Connection;
     #genesisHash: string;
@@ -27,7 +27,42 @@ export class SvmKeypairWalletProvider extends SvmWalletProvider {
 
         this.#keypair = typeof keypair === "string" ? Keypair.fromSecretKey(bs58.decode(keypair)) : Keypair.fromSecretKey(keypair);
         this.#connection = new Connection(rpcUrl);
-        this.#genesisHash = genesisHash;
+        if (genesisHash in SOLANA_NETWORKS) {
+            this.#genesisHash = genesisHash;
+        } else {
+            throw new Error(`Unknown network with genesis hash: ${genesisHash}`);
+        }
+    }
+
+    static urlForCluster(cluster: SOLANA_CLUSTER): string {
+        if (cluster in SOLANA_NETWORKS) {
+            switch (cluster) {
+                case SOLANA_MAINNET_GENESIS_BLOCK_HASH:
+                    return clusterApiUrl('mainnet-beta');
+                case SOLANA_TESTNET_GENESIS_BLOCK_HASH:
+                    return clusterApiUrl('testnet');
+                case SOLANA_DEVNET_GENESIS_BLOCK_HASH:
+                    return clusterApiUrl('devnet');
+                default:
+                    throw new Error(`Unknown cluster: ${cluster}`);
+            }
+        } else {
+            throw new Error(`Unknown cluster: ${cluster}`);
+        }
+    }
+
+    static async fromRpcUrl<T extends SolanaKeypairWalletProvider>(rpcUrl: string, keypair: Uint8Array | string): Promise<T> {
+        const connection = new Connection(rpcUrl);
+        return await this.fromConnection(connection, keypair);
+    }
+
+    static async fromConnection<T extends SolanaKeypairWalletProvider>(connection: Connection, keypair: Uint8Array | string): Promise<T> {
+        const genesisHash = await connection.getGenesisHash();
+        return new SolanaKeypairWalletProvider({
+            keypair,
+            rpcUrl: connection.rpcEndpoint,
+            genesisHash: genesisHash,
+        }) as T;
     }
 
     getAddress(): string {
@@ -35,11 +70,7 @@ export class SvmKeypairWalletProvider extends SvmWalletProvider {
     }
 
     getNetwork(): Network {
-        if (this.#genesisHash in SOLANA_NETWORKS) {
-            return SOLANA_NETWORKS[this.#genesisHash];
-        } else {
-            throw new Error(`Unknown network with genesis hash: ${this.#genesisHash}`);
-        }
+        return SOLANA_NETWORKS[this.#genesisHash];
     }
 
     signTransaction(transaction: VersionedTransaction): VersionedTransaction {
