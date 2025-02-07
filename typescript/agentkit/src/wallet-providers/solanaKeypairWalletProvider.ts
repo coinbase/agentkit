@@ -10,7 +10,7 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
     #genesisHash: string;
 
     /**
-     * Creates a new SvmKeypairWalletProvider
+     * Creates a new SolanaKeypairWalletProvider
      * @param keypair - Either a Uint8Array or a base58 encoded string representing a 32-byte secret key
      * @param rpcUrl - URL of the Solana RPC endpoint
      */
@@ -87,7 +87,7 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
     }
 
     getName(): string {
-        return "svm_keypair_wallet_provider";
+        return "solana_keypair_wallet_provider";
     }
 
     getBalance(): Promise<bigint> {
@@ -95,8 +95,8 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
     }
 
     // Assumes `to` is a hex encoded address that we'll convert to a Solana PublicKey
-    async nativeTransfer(to: `0x${string}`, value: string): Promise<`0x${string}`> {
-        const toPubkey = new PublicKey(Buffer.from(to.slice(2), "hex"));
+    async nativeTransfer(to: string, value: string): Promise<string> {
+        const toPubkey = new PublicKey(to);
         const lamports = BigInt(LAMPORTS_PER_SOL) * BigInt(value)
 
         const instructions = [
@@ -120,6 +120,6 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
         }));
 
         const txHash = await this.#connection.sendTransaction(tx);
-        return `0x${Buffer.from(bs58.decode(txHash)).toString("hex")}`;
+        return txHash;
     }
 }
