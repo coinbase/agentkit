@@ -2,7 +2,7 @@ import { SvmWalletProvider } from "./svmWalletProvider";
 import { Network } from "../network";
 import { Connection, Keypair, PublicKey, VersionedTransaction, LAMPORTS_PER_SOL, SystemProgram, MessageV0, ComputeBudgetProgram } from "@solana/web3.js";
 import bs58 from "bs58";
-import { SOLANA_MAINNET_CHAIN_ID, SOLANA_MAINNET_NETWORK_ID, SOLANA_PROTOCOL_FAMILY, SOLANA_MAINNET_GENESIS_BLOCK_HASH, SOLANA_TESTNET_CHAIN_ID, SOLANA_TESTNET_NETWORK_ID, SOLANA_DEVNET_GENESIS_BLOCK_HASH, SOLANA_DEVNET_CHAIN_ID, SOLANA_DEVNET_NETWORK_ID, SOLANA_TESTNET_GENESIS_BLOCK_HASH } from "../network/svm";
+import { SOLANA_NETWORKS } from "../network/svm";
 
 export class SvmKeypairWalletProvider extends SvmWalletProvider {
     #keypair: Keypair;
@@ -35,24 +35,8 @@ export class SvmKeypairWalletProvider extends SvmWalletProvider {
     }
 
     getNetwork(): Network {
-        if (this.#genesisHash === SOLANA_MAINNET_GENESIS_BLOCK_HASH) {
-            return {
-                protocolFamily: SOLANA_PROTOCOL_FAMILY,
-                chainId: String(SOLANA_MAINNET_CHAIN_ID),
-                networkId: SOLANA_MAINNET_NETWORK_ID,
-            };
-        } else if (this.#genesisHash === SOLANA_TESTNET_GENESIS_BLOCK_HASH) {
-            return {
-                protocolFamily: SOLANA_PROTOCOL_FAMILY,
-                chainId: String(SOLANA_TESTNET_CHAIN_ID),
-                networkId: SOLANA_TESTNET_NETWORK_ID,
-            };
-        } else if (this.#genesisHash === SOLANA_DEVNET_GENESIS_BLOCK_HASH) {
-            return {
-                protocolFamily: SOLANA_PROTOCOL_FAMILY,
-                chainId: String(SOLANA_DEVNET_CHAIN_ID),
-                networkId: SOLANA_DEVNET_NETWORK_ID,
-            };
+        if (this.#genesisHash in SOLANA_NETWORKS) {
+            return SOLANA_NETWORKS[this.#genesisHash];
         } else {
             throw new Error(`Unknown network with genesis hash: ${this.#genesisHash}`);
         }
