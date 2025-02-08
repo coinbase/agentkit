@@ -5,6 +5,7 @@ from cdp_agentkit_core.actions.deploy_contract import DeployContractAction
 from cdp_agentkit_core.actions.deploy_nft import DeployNftAction
 from cdp_agentkit_core.actions.deploy_token import DeployTokenAction
 from cdp_agentkit_core.actions.get_balance import GetBalanceAction
+from cdp_agentkit_core.actions.get_transactions import GetTransactionsAction
 from cdp_agentkit_core.actions.get_balance_nft import GetBalanceNftAction
 from cdp_agentkit_core.actions.get_wallet_details import GetWalletDetailsAction
 from cdp_agentkit_core.actions.mint_nft import MintNftAction
@@ -47,6 +48,7 @@ __all__ = [
     "DeployContractAction",
     "GetBalanceAction",
     "GetBalanceNftAction",
+    "GetTransactionsAction",
     "GetWalletDetailsAction",
     "MintNftAction",
     "RegisterBasenameAction",
