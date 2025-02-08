@@ -44,7 +44,7 @@ You'll need the following API keys:
 - [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
 - [Twitter (X) API Keys](https://developer.x.com/en/portal/dashboard)
 
-Once you have them, rename the `.env-local` file to `.env` and make sure you set the API keys to their corresponding environment variables:
+Once you have them, rename the `.env.local` file to `.env` and make sure you set the API keys to their corresponding environment variables:
 
 - "OPENAI_API_KEY"
 - "TWITTER_ACCESS_TOKEN"

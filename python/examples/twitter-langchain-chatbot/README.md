@@ -37,7 +37,7 @@ poetry --version
 ## Run the Chatbot
 
 ### Env
-Ensure the following vars are set in .env-local:
+Ensure the following vars are set in .env.local:
 - "OPENAI_API_KEY"
 - "TWITTER_ACCESS_TOKEN"
 - "TWITTER_ACCESS_TOKEN_SECRET"
@@ -45,7 +45,7 @@ Ensure the following vars are set in .env-local:
 - "TWITTER_API_SECRET"
 - "TWITTER_BEARER_TOKEN"
 
-Rename .env-local to .env
+Rename .env.local to .env
 
 ```bash
 make run
