@@ -24,6 +24,7 @@ from cdp_agentkit_core.actions.wow.buy_token import WowBuyTokenAction
 from cdp_agentkit_core.actions.wow.create_token import WowCreateTokenAction
 from cdp_agentkit_core.actions.wow.sell_token import WowSellTokenAction
 from cdp_agentkit_core.actions.wrap_eth import WrapEthAction
+from cdp_agentkit_core.actions.thegraph.call_uniswap import CallSubgraphAction
 
 
 # WARNING: All new CdpAction subclasses must be imported above, otherwise they will not be discovered
@@ -47,6 +48,7 @@ __all__ = [
     "DeployContractAction",
     "GetBalanceAction",
     "GetBalanceNftAction",
+    "CallSubgraphAction",
     "GetWalletDetailsAction",
     "MintNftAction",
     "RegisterBasenameAction",
