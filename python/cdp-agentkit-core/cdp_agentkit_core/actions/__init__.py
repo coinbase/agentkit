@@ -1,6 +1,11 @@
 from cdp_agentkit_core.actions.cdp_action import CdpAction  # noqa: I001
 
 from cdp_agentkit_core.actions.address_reputation import AddressReputationAction
+from cdp_agentkit_core.actions.compound.borrow import CompoundBorrowAction
+from cdp_agentkit_core.actions.compound.portfolio_details import CompoundPortfolioDetailsAction
+from cdp_agentkit_core.actions.compound.repay import CompoundRepayAction
+from cdp_agentkit_core.actions.compound.supply import CompoundSupplyAction
+from cdp_agentkit_core.actions.compound.withdraw import CompoundWithdrawAction
 from cdp_agentkit_core.actions.deploy_contract import DeployContractAction
 from cdp_agentkit_core.actions.deploy_nft import DeployNftAction
 from cdp_agentkit_core.actions.deploy_token import DeployTokenAction
@@ -20,10 +25,12 @@ from cdp_agentkit_core.actions.superfluid.update_flow import SuperfluidUpdateFlo
 from cdp_agentkit_core.actions.trade import TradeAction
 from cdp_agentkit_core.actions.transfer import TransferAction
 from cdp_agentkit_core.actions.transfer_nft import TransferNftAction
+from cdp_agentkit_core.actions.weth.wrap_eth import WrapEthAction
+from cdp_agentkit_core.actions.weth.unwrap_eth import UnwrapWethAction
 from cdp_agentkit_core.actions.wow.buy_token import WowBuyTokenAction
 from cdp_agentkit_core.actions.wow.create_token import WowCreateTokenAction
 from cdp_agentkit_core.actions.wow.sell_token import WowSellTokenAction
-from cdp_agentkit_core.actions.wrap_eth import WrapEthAction
+
 
 
 # WARNING: All new CdpAction subclasses must be imported above, otherwise they will not be discovered
@@ -42,6 +49,11 @@ __all__ = [
     "CDP_ACTIONS",
     "CdpAction",
     "AddressReputationAction",
+    "CompoundBorrowAction",
+    "CompoundPortfolioDetailsAction",
+    "CompoundRepayAction",
+    "CompoundSupplyAction",
+    "CompoundWithdrawAction",
     "DeployNftAction",
     "DeployTokenAction",
     "DeployContractAction",
@@ -54,6 +66,7 @@ __all__ = [
     "TradeAction",
     "TransferAction",
     "TransferNftAction",
+    "UnwrapWethAction",
     "WowBuyTokenAction",
     "WowCreateTokenAction",
     "WowSellTokenAction",
