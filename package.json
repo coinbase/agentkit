@@ -4,9 +4,11 @@
   "workspaces": [
     "typescript/agentkit",
     "typescript/framework-extensions/langchain",
+    "typescript/framework-extensions/vercel-ai-sdk",
     "typescript/examples/langchain-cdp-chatbot",
     "typescript/examples/langchain-twitter-chatbot",
-    "typescript/examples/langchain-farcaster-chatbot"
+    "typescript/examples/langchain-farcaster-chatbot",
+    "typescript/examples/vercel-ai-sdk-cdp-chatbot"
   ],
   "packageManager": "npm@8.9.0",
   "scripts": {
