@@ -23,7 +23,7 @@ export const SUPPORTED_NETWORKS = ["base-mainnet", "base-sepolia"];
 /**
  * MoonwellActionProvider is an action provider for Moonwell MToken interactions.
  */
-export class MoonwellActionProvider extends ActionProvider {
+export class MoonwellActionProvider extends ActionProvider<EvmWalletProvider> {
   /**
    * Constructor for the MoonwellActionProvider class.
    */
@@ -74,7 +74,7 @@ Important notes:
       return "Error: Assets amount must be greater than 0";
     }
 
-    const network = await wallet.getNetwork();
+    const network = wallet.getNetwork();
     const networkObject =
       network.networkId === "base-mainnet"
         ? MOONWELL_BASE_ADDRESSES
@@ -86,8 +86,8 @@ Important notes:
 
     try {
       // Handle different token decimals
-      let atomicAssets;
-      const userAddress = await wallet.getAddress();
+      let atomicAssets: bigint;
+      const userAddress = wallet.getAddress();
 
       if (
         network.networkId === "base-mainnet" &&
@@ -218,7 +218,7 @@ Important notes:
       return "Error: Assets amount must be greater than 0";
     }
 
-    const network = await wallet.getNetwork();
+    const network = wallet.getNetwork();
     const networkObject =
       network.networkId === "base-mainnet"
         ? MOONWELL_BASE_ADDRESSES

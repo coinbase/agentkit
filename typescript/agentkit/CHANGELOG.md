@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## [0.1.2] - 2025-02-07
+
 ### Added
 
 - Added `alchemyTokenPricesActionProvider` to fetch token prices from Alchemy.
