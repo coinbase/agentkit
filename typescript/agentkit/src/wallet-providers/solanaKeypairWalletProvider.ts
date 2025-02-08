@@ -94,7 +94,6 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
         return this.#connection.getBalance(this.#keypair.publicKey).then(balance => BigInt(balance))
     }
 
-    // Assumes `to` is a hex encoded address that we'll convert to a Solana PublicKey
     async nativeTransfer(to: string, value: string): Promise<string> {
         const toPubkey = new PublicKey(to);
         const lamports = BigInt(LAMPORTS_PER_SOL) * BigInt(value)
