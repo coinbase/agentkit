@@ -1,7 +1,39 @@
-### What changed? Why?
+### What changed?
+- [ ] Documentation
+- [ ] Bug fix
+- [ ] New Action
+- [ ] New Action Provider
+- [ ] Other
+<!-- please specify -->
 
+### Why was this change implemented?
+<!-- please provide a summary of the changes -->
 
-#### Qualified Impact
-<!-- Please evaluate what components could be affected and what the impact would be if there was an
-error. How would this error be resolved, e.g. rollback a deploy, push a new fix, disable a feature
-flag, etc... -->
+### Network support
+- [ ] All EVM
+- [ ] Base
+- [ ] Base Sepolia
+- [ ] Other
+<!-- please specify -->
+
+### Wallet support
+- [ ] CDP Wallet
+- [ ] Viem Wallet
+- [ ] Other
+<!-- please specify -->
+
+### Checklist
+- [ ] Changelog updated
+- [ ] Commits are signed. See [instructions](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification)
+- [ ] Doc strings
+- [ ] Readme updates
+- [ ] Rebased against master
+
+### How has it been tested?
+- [ ] Agent tested
+- [ ] Unit tests
+<!-- please include the agent LLM -->
+<!-- please include the agent prompt -->
+<!-- please include the agent output -->
+
+### Notes to reviewers
