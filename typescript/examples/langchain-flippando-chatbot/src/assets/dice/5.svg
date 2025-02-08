@@ -1,0 +1,9 @@
+<svg id="dice5" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 25 25" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+<rect width="25" height="25" fill="white"/>
+<circle cx="6.25" cy="6.25" r="2.5" fill="black"/>
+<circle cx="18.75" cy="6.25" r="2.5" fill="black"/>
+<circle cx="12.5" cy="12.5" r="2.5" fill="black"/>
+<circle cx="6.25" cy="18.75" r="2.5" fill="black"/>
+<circle cx="18.75" cy="18.75" r="2.5" fill="black"/>
+</svg>
+

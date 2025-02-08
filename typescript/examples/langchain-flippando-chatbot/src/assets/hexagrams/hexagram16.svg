@@ -1,0 +1,17 @@
+<svg viewBox="0 0 25 25">
+  <rect width="25" height="25" fill="white"/>
+  {/* first line */}
+  <line x1="4" y1="6" x2="21" y2="6" stroke="black" strokeWidth="2" />
+  {/* second line */}
+  <line x1="4" y1="9" x2="10" y2="9" stroke="black" strokeWidth="2" />
+  <line x1="15" y1="9" x2="21" y2="9" stroke="black" strokeWidth="2" />
+  {/* third line */}
+  <line x1="4" y1="12" x2="21" y2="12" stroke="black" strokeWidth="2" />
+  {/* fourth line */}
+  <line x1="4" y1="15" x2="21" y2="15" stroke="black" strokeWidth="2" />
+  {/* fifth line */}
+  <line x1="4" y1="18" x2="10" y2="18" stroke="black" strokeWidth="2" />
+  <line x1="15" y1="18" x2="21" y2="18" stroke="black" strokeWidth="2" />
+  {/* sixth line */}
+  <line x1="4" y1="21" x2="21" y2="21" stroke="black" strokeWidth="2" />
+</svg>
