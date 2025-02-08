@@ -6,6 +6,7 @@ from eth_account.datastructures import SignedTransaction
 from eth_account.messages import encode_defunct
 from pydantic import BaseModel
 from web3 import Web3
+from web3.middleware import SignAndSendRawMiddlewareBuilder
 from web3.types import BlockIdentifier, ChecksumAddress, HexStr, TxParams
 
 from ..network import Network
@@ -28,6 +29,9 @@ class EthAccountWalletProvider(EvmWalletProvider):
         self.config = config
         self.web3 = Web3(Web3.HTTPProvider(config.rpc_url))
         self.account = Account.from_key(config.private_key)
+        self.web3.middleware_onion.inject(
+            SignAndSendRawMiddlewareBuilder.build(self.account), layer=0
+        )
 
     def get_address(self) -> str:
         """Get the wallet address."""
@@ -74,12 +78,38 @@ class EthAccountWalletProvider(EvmWalletProvider):
 
         return self.account.sign_transaction(transaction)
 
+    def estimate_fees(self, multiplier=1.2):
+        """Esimate fees."""
+
+        def get_base_fee():
+            latest_block = self.web3.eth.get_block("latest")
+            base_fee = latest_block["baseFeePerGas"]
+            # Multiply by 1.2 to give some buffer
+            return int(base_fee * multiplier)
+
+        base_fee_per_gas = get_base_fee()
+        max_priority_fee_per_gas = Web3.to_wei(0.1, "gwei")
+        max_fee_per_gas = base_fee_per_gas + max_priority_fee_per_gas
+
+        return (max_priority_fee_per_gas, max_fee_per_gas)
+
     def send_transaction(self, transaction: TxParams) -> HexStr:
         """Send a signed transaction to the network."""
-        # TODO: Update to use the new send_transaction method
-        signed = self.sign_transaction(transaction)
-        tx_hash = self.web3.eth.send_raw_transaction(signed.rawTransaction)
-        return HexStr(tx_hash.hex())
+        max_priority_fee_per_gas, max_fee_per_gas = self.estimate_fees()
+
+        transaction["maxFeePerGas"] = max_fee_per_gas
+        transaction["maxPriorityFeePerGas"] = max_priority_fee_per_gas
+
+        gas = self.web3.eth.estimate_gas(transaction)
+        transaction["gas"] = gas
+
+        nonce = self.web3.eth.get_transaction_count(self.account.address)
+        transaction["nonce"] = nonce
+
+        transaction["chainId"] = self.config.chain_id
+
+        tx_hash = self.web3.eth.send_transaction(transaction)
+        return Web3.to_hex(tx_hash)
 
     def wait_for_transaction_receipt(
         self, tx_hash: HexStr, timeout: float = 120, poll_latency: float = 0.1
