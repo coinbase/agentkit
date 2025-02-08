@@ -10,6 +10,7 @@ package-mode = false
 python = "^3.10"
 python-dotenv = "^1.0.1"
 cdp-langchain = "^0.0.13"
+langchain-groq = "^0.0.3"
 
 [build-system]
 requires = ["poetry-core"]
