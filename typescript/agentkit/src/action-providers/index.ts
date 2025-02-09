@@ -37,3 +37,4 @@ export * from "./zerodev";
 export * from "./zeroX";
 export * from "./zora";
 export * from "./clanker";
+export * from "./sushi";

@@ -224,6 +224,12 @@
 - Added Solana chatbot example.
 - Added Privy EVM chatbot example.
 
+- Added `sushiRouterActionProvider` to provide swap and quote functionality using the Sushi Router API.
+- Added `swap` action for swaps.
+- Added `quote` action for fetching quotes for swaps.
+- Added `sushiDataActionProvider` to provide token finding functionality using the Sushi Data API.
+- Added `find-tokens` action for fetching tokens by symbols or addresses.
+
 ## [0.1.2] - 2025-02-07
 
 ### Added
