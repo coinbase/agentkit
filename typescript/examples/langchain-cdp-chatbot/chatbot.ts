@@ -8,7 +8,6 @@ import {
   cdpWalletActionProvider,
   pythActionProvider,
   safeActionProvider,
-  ViemWalletProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -18,12 +17,6 @@ import { ChatOpenAI } from "@langchain/openai";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as readline from "readline";
-
-import {
-  WalletClient as ViemWalletClient,
-} from "viem";
-import { createWalletClient, http } from 'viem';
-import { sepolia } from 'viem/chains';
 
 dotenv.config();
 
@@ -98,14 +91,6 @@ async function initializeAgent() {
     };
 
     const walletProvider = await CdpWalletProvider.configureWithWallet(config);
-    // console.log("getPublicClient: ", walletProvider.getPublicClient());
-    
-    // const walletClient = createWalletClient({
-    //   account: await (await walletProvider.getWallet().getDefaultAddress()).export() as `0x${string}`, 
-    //   chain: sepolia,
-    //   transport: http(),
-    // });
-    // const viemWalletProvider = new ViemWalletProvider(walletClient);
 
     // Initialize AgentKit
     const agentkit = await AgentKit.from({
@@ -123,12 +108,10 @@ async function initializeAgent() {
           apiKeyName: process.env.CDP_API_KEY_NAME,
           apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY?.replace(/\\n/g, "\n"),
         }),
-        safeActionProvider(
-          {
-            networkId: walletProvider.getNetwork().networkId,
-            privateKey: await (await walletProvider.getWallet().getDefaultAddress()).export(),
-          }
-        ),
+        safeActionProvider({
+          networkId: walletProvider.getNetwork().networkId,
+          privateKey: await (await walletProvider.getWallet().getDefaultAddress()).export(),
+        }),
       ],
     });
 
@@ -295,13 +278,13 @@ async function chooseMode(): Promise<"chat" | "auto"> {
 async function main() {
   try {
     const { agent, config } = await initializeAgent();
-    // const mode = await chooseMode();
+    const mode = await chooseMode();
 
-    // if (mode === "chat") {
+    if (mode === "chat") {
       await runChatMode(agent, config);
-    // } else {
-      // await runAutonomousMode(agent, config);
-    // }
+    } else {
+      await runAutonomousMode(agent, config);
+    }
   } catch (error) {
     if (error instanceof Error) {
       console.error("Error:", error.message);

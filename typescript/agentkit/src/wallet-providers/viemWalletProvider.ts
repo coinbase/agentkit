@@ -241,4 +241,13 @@ export class ViemWalletProvider extends EvmWalletProvider {
 
     return receipt.transactionHash;
   }
+
+  /**
+   * Gets the public client.
+   *
+   * @returns The public client.
+   */
+  getPublicClient(): ViemPublicClient {
+    return this.#publicClient;
+  }
 }
