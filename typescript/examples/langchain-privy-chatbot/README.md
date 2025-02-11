@@ -2,6 +2,8 @@
 
 This example demonstrates an agent setup as a self-aware terminal style chatbot with a [Privy server wallet](https://docs.privy.io/guide/server-wallets/).
 
+Privy wallets are embedded wallets - learn more at https://docs.privy.io/guide/server-wallets/. The Agentkit integration assumes you have a Privy server wallet ID which you want to use for your agent - creation and management of Privy wallets can be done via the Privy dashboard or API.
+
 ## Ask the chatbot to engage in the Web3 ecosystem!
 
 - "Transfer a portion of your ETH to a random address"
@@ -11,8 +13,7 @@ This example demonstrates an agent setup as a self-aware terminal style chatbot 
 ## Requirements
 
 - Node.js 18+
-- [CDP API Key](https://portal.cdp.coinbase.com/access/api)
-- [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
+- [Privy](https://dashboard.privy.io/apps) (see ENV Vars below for details)
 
 ### Checking Node Version
 

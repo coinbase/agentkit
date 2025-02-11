@@ -28,13 +28,23 @@ interface PrivyWalletConfig {
  * while maintaining compatibility with the base wallet provider interface.
  */
 export class PrivyWalletProvider extends ViemWalletProvider {
+  #appId: string;
+  #appSecret: string;
+  #walletId: string;
+  #authorizationKey: string | undefined;
+
   /**
    * Private constructor to enforce use of factory method.
    *
    * @param walletClient - The Viem wallet client instance
+   * @param config - The configuration options for the Privy wallet
    */
-  private constructor(walletClient: WalletClient) {
+  private constructor(walletClient: WalletClient, config: PrivyWalletConfig) {
     super(walletClient);
+    this.#appId = config.appId;
+    this.#appSecret = config.appSecret;
+    this.#walletId = config.walletId;
+    this.#authorizationKey = config.authorizationKey;
   }
 
   /**
@@ -82,7 +92,7 @@ export class PrivyWalletProvider extends ViemWalletProvider {
       chain,
       transport: http(),
     });
-    return new PrivyWalletProvider(walletClient);
+    return new PrivyWalletProvider(walletClient, config);
   }
 
   /**
@@ -92,5 +102,19 @@ export class PrivyWalletProvider extends ViemWalletProvider {
    */
   getName(): string {
     return "privy_wallet_provider";
+  }
+
+  /**
+   * Exports the wallet data.
+   *
+   * @returns The wallet data
+   */
+  exportWallet(): PrivyWalletConfig {
+    return {
+      appId: this.#appId,
+      appSecret: this.#appSecret,
+      walletId: this.#walletId,
+      authorizationKey: this.#authorizationKey,
+    };
   }
 }

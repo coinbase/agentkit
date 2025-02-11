@@ -13,8 +13,11 @@ import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 import * as dotenv from "dotenv";
 import * as readline from "readline";
+import fs from "fs";
 
 dotenv.config();
+
+const WALLET_DATA_FILE = "wallet_data.txt";
 
 /**
  * Validates that required environment variables are set
@@ -52,7 +55,7 @@ function validateEnvironment(): void {
 validateEnvironment();
 
 /**
- * Initialize the agent with CDP Agentkit
+ * Initialize the agent with Privy Agentkit
  *
  * @returns Agent executor and config
  */
@@ -63,7 +66,7 @@ async function initializeAgent() {
       model: "gpt-4o-mini",
     });
 
-    // Configure CDP Wallet Provider
+    // Configure Wallet Provider
     const config = {
       appId: process.env.PRIVY_APP_ID as string,
       appSecret: process.env.PRIVY_APP_SECRET as string,
@@ -93,7 +96,7 @@ async function initializeAgent() {
     const memory = new MemorySaver();
     const agentConfig = { configurable: { thread_id: "Privy AgentKit Chatbot Example!" } };
 
-    // Create React Agent using the LLM and CDP AgentKit tools
+    // Create React Agent using the LLM and Privy AgentKit tools
     const agent = createReactAgent({
       llm,
       tools,
@@ -111,11 +114,9 @@ async function initializeAgent() {
         `,
     });
 
-    /*
-     * Save wallet data
-     * Privy wallets are embedded wallets, manageable via the Privy dashboard or API
-     * Learn more: https://docs.privy.io/guide/server-wallets/
-     */
+    // Save wallet data
+    const exportedWallet = walletProvider.exportWallet();
+    fs.writeFileSync(WALLET_DATA_FILE, JSON.stringify(exportedWallet));
 
     return { agent, config: agentConfig };
   } catch (error) {
