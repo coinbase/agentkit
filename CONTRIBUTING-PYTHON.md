@@ -229,7 +229,7 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.10"
 - cdp-langchain = "^0.0.11"
-+ cdp-langchain = { path: "../cdp-agentkit-core", develop: true }
++ cdp-langchain = { path: "../../cdp-langchain", develop: true }
 
 [build-system]
 requires = ["poetry-core"]
