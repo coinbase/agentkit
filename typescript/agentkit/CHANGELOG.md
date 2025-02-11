@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Added
+
+- Added `svmWalletProvider` abstract class for interacting with Solana.
+- Added `solanaKeypairWalletProvider` to concretely implement `svmWalletProvider` with a local keypair.
+
 ## [0.1.2] - 2025-02-07
 
 ### Added
