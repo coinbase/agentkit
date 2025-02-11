@@ -11,6 +11,7 @@
 - Added gas configuration parameters (`gasLimitMultiplier`, `feePerGasMultiplier`) to `CdpWalletProvider` and `ViemWalletProvider`.
 - Added Solana chatbot example.
 - Added Privy EVM chatbot exmaple.
+- Added `alloraActionProvider` to fetch inferences from Allora Network.
 
 ## [0.1.2] - 2025-02-07
 
