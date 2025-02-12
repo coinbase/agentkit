@@ -109,12 +109,15 @@ export class PrivyWalletProvider extends ViemWalletProvider {
    *
    * @returns The wallet data
    */
-  exportWallet(): PrivyWalletConfig {
+  exportWallet(): {
+    walletId: string;
+    authorizationKey: string | undefined;
+    networkId?: string;
+  } {
     return {
-      appId: this.#appId,
-      appSecret: this.#appSecret,
       walletId: this.#walletId,
       authorizationKey: this.#authorizationKey,
+      networkId: this.getNetwork().networkId,
     };
   }
 }
