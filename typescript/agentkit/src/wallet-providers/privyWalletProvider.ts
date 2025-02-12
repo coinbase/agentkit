@@ -15,7 +15,7 @@ interface PrivyWalletConfig {
   /** The Privy application secret */
   appSecret: string;
   /** The ID of the wallet to use */
-  walletId: string;
+  walletId?: string;
   /** Optional network ID to connect to */
   networkId?: string;
   /** Optional authorization key for the wallet API */
@@ -28,8 +28,6 @@ interface PrivyWalletConfig {
  * while maintaining compatibility with the base wallet provider interface.
  */
 export class PrivyWalletProvider extends ViemWalletProvider {
-  #appId: string;
-  #appSecret: string;
   #walletId: string;
   #authorizationKey: string | undefined;
 
@@ -39,11 +37,12 @@ export class PrivyWalletProvider extends ViemWalletProvider {
    * @param walletClient - The Viem wallet client instance
    * @param config - The configuration options for the Privy wallet
    */
-  private constructor(walletClient: WalletClient, config: PrivyWalletConfig) {
+  private constructor(
+    walletClient: WalletClient,
+    config: PrivyWalletConfig & { walletId: string }, // Require walletId in constructor
+  ) {
     super(walletClient);
-    this.#appId = config.appId;
-    this.#appSecret = config.appSecret;
-    this.#walletId = config.walletId;
+    this.#walletId = config.walletId; // Now guaranteed to exist
     this.#authorizationKey = config.authorizationKey;
   }
 
@@ -73,10 +72,19 @@ export class PrivyWalletProvider extends ViemWalletProvider {
     });
 
     // Get wallet details to get the address
-    const wallet = await privy.walletApi.getWallet({ id: config.walletId });
+    const walletId =
+      config.walletId ??
+      (
+        await privy.walletApi.create({
+          chaintype: "ethereum",
+          authorizationKeyIds: config.authorizationKey ? [config.authorizationKey] : undefined,
+        })
+      ).id;
+
+    const wallet = await privy.walletApi.getWallet({ id: walletId });
 
     const account = await createViemAccount({
-      walletId: config.walletId,
+      walletId,
       address: wallet.address as `0x${string}`,
       privy,
     });
@@ -92,7 +100,7 @@ export class PrivyWalletProvider extends ViemWalletProvider {
       chain,
       transport: http(),
     });
-    return new PrivyWalletProvider(walletClient, config);
+    return new PrivyWalletProvider(walletClient, { ...config, walletId });
   }
 
   /**
