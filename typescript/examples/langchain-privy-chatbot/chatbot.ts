@@ -29,7 +29,7 @@ function validateEnvironment(): void {
   const missingVars: string[] = [];
 
   // Check required variables
-  const requiredVars = ["OPENAI_API_KEY", "PRIVY_APP_ID", "PRIVY_APP_SECRET", "PRIVY_WALLET_ID"];
+  const requiredVars = ["OPENAI_API_KEY", "PRIVY_APP_ID", "PRIVY_APP_SECRET"];
   requiredVars.forEach(varName => {
     if (!process.env[varName]) {
       missingVars.push(varName);

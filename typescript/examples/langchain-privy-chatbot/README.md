@@ -37,7 +37,7 @@ npm install
 - Ensure the following ENV Vars from your Privy dashboard are set in `.env`:
   - PRIVY_APP_ID=
   - PRIVY_APP_SECRET=
-  - PRIVY_WALLET_ID=
+  - PRIVY_WALLET_ID=[optional, otherwise a new wallet will be created]
   - PRIVY_WALLET_AUTHORIZATION_KEY=[optional, only if you are using authorization keys for your server wallets]
 
 ```bash
