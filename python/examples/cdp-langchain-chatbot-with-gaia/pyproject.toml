@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "chatbot-python"
+version = "0.0.1"
+description = "CDP AgentKit Example Chatbot"
+authors = ["John Peterson <john.peterson@coinbase.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.10"
+python-dotenv = "^1.0.1"
+cdp-langchain = "^0.0.13"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
