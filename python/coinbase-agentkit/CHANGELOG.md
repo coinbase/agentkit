@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added gas configuration parameters (`gas_limit_multiplier`, `fee_per_gas_multiplier`) to `CdpWalletProvider`.
+
 ## [0.1.0] - 2025-02-12
 
 ### Added
