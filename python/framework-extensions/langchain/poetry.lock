@@ -825,20 +825,18 @@ name = "coinbase-agentkit"
 version = "0.1.0"
 description = "Coinbase AgentKit"
 optional = false
-python-versions = "^3.10"
-files = []
-develop = true
+python-versions = "<4.0,>=3.10"
+files = [
+    {file = "coinbase_agentkit-0.1.0-py3-none-any.whl", hash = "sha256:0e00c45ef06bcf5624356a7a546cc4e390ffcf0a402380c3deeb308d38e06898"},
+    {file = "coinbase_agentkit-0.1.0.tar.gz", hash = "sha256:fc6bee62ffe78cfe7143b643a6db6f732e426d41da67d1b972eaaefa40a30a4a"},
+]
 
 [package.dependencies]
 cdp-sdk = "0.17.0"
-pydantic = "^2.0"
-python-dotenv = "^1.0.1"
-requests = "^2.31.0"
-web3 = "^7.6.0"
-
-[package.source]
-type = "directory"
-url = "../../coinbase-agentkit"
+pydantic = ">=2.0,<3.0"
+python-dotenv = ">=1.0.1,<2.0.0"
+requests = ">=2.31.0,<3.0.0"
+web3 = ">=7.6.0,<8.0.0"
 
 [[package]]
 name = "coincurve"
@@ -4328,4 +4326,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "1b8df1a8b9bbf70a15b3838cd44dedb4e26e2391699ca6aed96e7a71542268fd"
+content-hash = "0cead2d651fad5db361407caeeac788ac4ce962d7ecd3fae79e2de13f7a44959"
