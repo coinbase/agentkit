@@ -36,9 +36,10 @@ class CdpWalletProviderConfig(CdpProviderConfig):
     network_id: str | None = Field("base-sepolia", description="The network id")
     mnemonic_phrase: str | None = Field(None, description="The mnemonic phrase of the wallet")
     wallet_data: str | None = Field(None, description="The data of the CDP Wallet as a JSON string")
-    
+
     class GasConfig(BaseModel):
         """Configuration for gas multipliers."""
+
         gas_limit_multiplier: float | None = Field(None, description="An internal multiplier on gas limit estimation")
         fee_per_gas_multiplier: float | None = Field(None, description="An internal multiplier on fee per gas estimation")
 
