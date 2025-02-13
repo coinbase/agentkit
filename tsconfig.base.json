@@ -8,6 +8,7 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
+    "sourceMap": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
