@@ -27,6 +27,7 @@ import {
   hashMessage,
 } from "@coinbase/coinbase-sdk";
 import { NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_VIEM_CHAIN } from "../network/network";
+import { applyGasMultiplier } from "../utils";
 
 /**
  * Configuration options for the CDP Providers.
@@ -66,6 +67,21 @@ export interface CdpWalletProviderConfig extends CdpProviderConfig {
    * The network ID of the wallet.
    */
   networkId?: string;
+
+  /**
+   * Configuration for gas multipliers.
+   */
+  gas?: {
+    /**
+     * An internal multiplier on gas limit estimation.
+     */
+    gasLimitMultiplier?: number;
+
+    /**
+     * An internal multiplier on fee per gas estimation.
+     */
+    feePerGasMultiplier?: number;
+  };
 }
 
 /**
@@ -91,6 +107,8 @@ export class CdpWalletProvider extends EvmWalletProvider {
   #address?: string;
   #network?: Network;
   #publicClient: PublicClient;
+  #gasLimitMultiplier: number;
+  #feePerGasMultiplier: number;
 
   /**
    * Constructs a new CdpWalletProvider.
@@ -107,6 +125,8 @@ export class CdpWalletProvider extends EvmWalletProvider {
       chain: NETWORK_ID_TO_VIEM_CHAIN[config.network!.networkId!],
       transport: http(),
     });
+    this.#gasLimitMultiplier = Math.max(config.gas?.gasLimitMultiplier ?? 1.2, 1);
+    this.#feePerGasMultiplier = Math.max(config.gas?.feePerGasMultiplier ?? 1, 1);
   }
 
   /**
@@ -162,6 +182,7 @@ export class CdpWalletProvider extends EvmWalletProvider {
       wallet,
       address,
       network,
+      gas: config.gas,
     });
 
     return cdpWalletProvider;
@@ -289,16 +310,20 @@ export class CdpWalletProvider extends EvmWalletProvider {
       address: this.#address! as `0x${string}`,
     });
 
-    const feeData = await this.#publicClient!.estimateFeesPerGas();
+    const feeData = await this.#publicClient.estimateFeesPerGas();
+    const maxFeePerGas = applyGasMultiplier(feeData.maxFeePerGas, this.#feePerGasMultiplier);
+    const maxPriorityFeePerGas = applyGasMultiplier(
+      feeData.maxPriorityFeePerGas,
+      this.#feePerGasMultiplier,
+    );
 
-    const gas = await this.#publicClient!.estimateGas({
+    const gasLimit = await this.#publicClient.estimateGas({
       account: this.#address! as `0x${string}`,
       to,
       value,
       data,
-      maxFeePerGas: feeData.maxFeePerGas,
-      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
     });
+    const gas = BigInt(Math.round(Number(gasLimit) * this.#gasLimitMultiplier));
 
     const chainId = parseInt(this.#network!.chainId!, 10);
 
@@ -307,8 +332,8 @@ export class CdpWalletProvider extends EvmWalletProvider {
       value,
       data,
       nonce,
-      maxFeePerGas: feeData.maxFeePerGas,
-      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
+      maxFeePerGas,
+      maxPriorityFeePerGas,
       gas,
       chainId,
       type: "eip1559",
@@ -492,7 +517,6 @@ export class CdpWalletProvider extends EvmWalletProvider {
     if (!this.#cdpWallet) {
       throw new Error("Wallet not initialized");
     }
-
     const transferResult = await this.#cdpWallet.createTransfer({
       amount: new Decimal(value),
       assetId: Coinbase.assets.Eth,
