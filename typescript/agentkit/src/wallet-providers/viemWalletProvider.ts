@@ -201,4 +201,13 @@ export class ViemWalletProvider extends EvmWalletProvider {
 
     return receipt.transactionHash;
   }
+
+  /**
+   * Gets the provider for interacting with the blockchain
+   *
+   * @returns The provider instance
+   */
+  async getProvider(): Promise<unknown> {
+    return this.#publicClient;
+  }
 }

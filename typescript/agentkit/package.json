@@ -39,6 +39,8 @@
     "typescript"
   ],
   "dependencies": {
+    "@aave/contract-helpers": "^1.30.5",
+    "@bgd-labs/aave-address-book": "^4.7.4",
     "@coinbase/coinbase-sdk": "^0.17.0",
     "@solana/web3.js": "^1.98.0",
     "md5": "^2.3.0",

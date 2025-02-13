@@ -521,4 +521,16 @@ export class CdpWalletProvider extends EvmWalletProvider {
 
     return this.#cdpWallet.export();
   }
+
+  /**
+   * Gets the provider for interacting with the blockchain
+   *
+   * @returns The provider instance
+   */
+  async getProvider(): Promise<unknown> {
+    if (!this.#cdpWallet) {
+      throw new Error("Wallet not initialized");
+    }
+    return http(); // Using viem's http transport
+  }
 }
