@@ -89,9 +89,7 @@ Important notes:
 
       await walletProvider.waitForTransactionReceipt(hash);
 
-      return `Transferred ${args.amount} of ${args.contractAddress} to ${
-        args.destination
-      }.\nTransaction hash for the transfer: ${hash}`;
+      return `Transferred ${args.amount} of ${args.contractAddress} to ${args.destination}.\nTransaction hash for the transfer: ${hash}`;
     } catch (error) {
       return `Error transferring the asset: ${error}`;
     }
