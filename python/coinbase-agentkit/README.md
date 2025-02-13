@@ -280,6 +280,26 @@ wallet_provider = CdpWalletProvider(CdpWalletProviderConfig(
 ))
 ```
 
+#### Configuring `CdpWalletProvider` Gas Parameters
+
+The `CdpWalletProvider` also exposes parameters for effecting the gas calculations.
+
+```python
+from coinbase_agentkit import CdpWalletProvider, CdpWalletProviderConfig
+
+wallet_provider = CdpWalletProvider(CdpWalletProviderConfig(
+    wallet_data="WALLET DATA JSON STRING",
+    api_key_name="CDP API KEY NAME",
+    api_key_private="CDP API KEY PRIVATE KEY",
+    gas={
+        "gas_limit_multiplier": 2.0,   # Adjusts gas limit estimation
+        "fee_per_gas_multiplier": 2.0  # Adjusts max fee per gas
+    }
+))
+```
+
+**Note**: Gas parameters only impact the `wallet_provider.send_transaction` behavior. Actions that do not rely on direct transaction calls, such as `deploy_token`, `deploy_contract`, and `native_transfer`, remain unaffected.
+
 ### EthAccountWalletProvider
 
 Example usage with a private key:
