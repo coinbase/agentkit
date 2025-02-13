@@ -45,7 +45,8 @@
     "reflect-metadata": "^0.2.2",
     "twitter-api-v2": "^1.18.2",
     "viem": "^2.22.16",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "graphql-request": "^7.1.2"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
