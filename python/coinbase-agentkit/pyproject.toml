@@ -55,4 +55,9 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 
 [tool.ruff.lint.isort]
-known-first-party = ["coinbase_agentkit, cdp"]
+known-first-party = ["cdp_agentkit_core, cdp"]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: marks tests as integration tests"
+]

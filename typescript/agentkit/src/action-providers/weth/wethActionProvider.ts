@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
-import { WrapEthSchema } from "./schemas";
+import { WrapEthInput } from "./schemas";
 import { WETH_ABI, WETH_ADDRESS } from "./constants";
 import { encodeFunctionData, Hex } from "viem";
 import { EvmWalletProvider } from "../../wallet-providers";
@@ -43,11 +43,11 @@ Important notes:
   - Base Sepolia (ie, 'base-sepolia')
   - Base Mainnet (ie, 'base', 'base-mainnet')
 `,
-    schema: WrapEthSchema,
+    schema: WrapEthInput,
   })
   async wrapEth(
     walletProvider: EvmWalletProvider,
-    args: z.infer<typeof WrapEthSchema>,
+    args: z.infer<typeof WrapEthInput>,
   ): Promise<string> {
     try {
       const hash = await walletProvider.sendTransaction({

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const WrapEthSchema = z
+export const WrapEthInput = z
   .object({
     amountToWrap: z.string().describe("Amount of ETH to wrap in wei"),
   })

@@ -1,4 +1,4 @@
-import { WrapEthSchema } from "./schemas";
+import { WrapEthInput } from "./schemas";
 import { EvmWalletProvider } from "../../wallet-providers";
 import { encodeFunctionData } from "viem";
 import { WETH_ABI, WETH_ADDRESS } from "./constants";
@@ -13,7 +13,7 @@ describe("Wrap Eth Schema", () => {
       amountToWrap: MOCK_AMOUNT,
     };
 
-    const result = WrapEthSchema.safeParse(validInput);
+    const result = WrapEthInput.safeParse(validInput);
 
     expect(result.success).toBe(true);
     expect(result.data).toEqual(validInput);
@@ -21,7 +21,7 @@ describe("Wrap Eth Schema", () => {
 
   it("should fail parsing empty input", () => {
     const emptyInput = {};
-    const result = WrapEthSchema.safeParse(emptyInput);
+    const result = WrapEthInput.safeParse(emptyInput);
 
     expect(result.success).toBe(false);
   });
