@@ -24,7 +24,9 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
     - [Configuring from a mnemonic phrase](#configuring-from-a-mnemonic-phrase)
     - [Exporting a wallet](#exporting-a-wallet)
     - [Importing a wallet from WalletData JSON string](#importing-a-wallet-from-walletdata-json-string)
+    - [Configuring gas parameters](#configuring-cdpwalletprovider-gas-parameters)
   - [ViemWalletProvider](#viemwalletprovider)
+    - [Configuring gas parameters](#configuring-viemwalletprovider-gas-parameters)
 - [Contributing](#contributing)
 
 ## Getting Started
@@ -469,6 +471,27 @@ const walletProvider = await CdpWalletProvider.configureWithWallet({
 });
 ```
 
+#### Configuring CdpWalletProvider gas parameters
+
+The `CdpWalletProvider` also exposes parameters for effecting the gas calculations.
+
+```typescript
+import { CdpWalletProvider } from "@coinbase/agentkit";
+
+const walletProvider = await CdpWalletProvider.configureWithWallet({
+    cdpWalletData: "WALLET DATA JSON STRING",
+    apiKeyName: "CDP API KEY NAME",
+    apiKeyPrivate: "CDP API KEY PRIVATE KEY",
+    gas: {
+        gasLimitMultiplier: 2.0,  // Adjusts gas limit estimation
+        feePerGasMultiplier: 2.0, // Adjusts max fee per gas
+    }
+});
+```
+
+**Note**: Gas parameters only impact the `walletProvider.sendTransaction` behavior. Actions that do not rely on direct transaction calls, such as `deploy_token`, `deploy_contract`, and `native_transfer`, remain unaffected.
+
+
 ### ViemWalletProvider
 
 The `ViemWalletProvider` is a wallet provider that uses the [Viem library](https://viem.sh/docs/getting-started). It is useful for interacting with any EVM-compatible chain.
@@ -492,6 +515,34 @@ const client = createWalletClient({
 
 const walletProvider = new ViemWalletProvider(client);
 ```
+
+#### Configuring ViemWalletProvider gas parameters
+
+The `ViemWalletProvider` also exposes parameters for effecting the gas calculations.
+
+```typescript
+import { ViemWalletProvider } from "@coinbase/agentkit";
+import { privateKeyToAccount } from "viem/accounts";
+import { baseSepolia } from "viem/chains";
+import { http } from "viem/transports";
+import { createWalletClient } from "viem";
+
+const account = privateKeyToAccount(
+  "0x4c0883a69102937d6231471b5dbb6208ffd70c02a813d7f2da1c54f2e3be9f38",
+);
+
+const client = createWalletClient({
+  account,
+  chain: baseSepolia,
+  transport: http(),
+});
+
+const walletProvider = new ViemWalletProvider(client, {
+    gasLimitMultiplier: 2.0,  // Adjusts gas limit estimation
+    feePerGasMultiplier: 2.0, // Adjusts max fee per gas
+});
+```
+
 
 ## Contributing
 
