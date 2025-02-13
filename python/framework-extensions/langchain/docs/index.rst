@@ -1,4 +1,4 @@
-CDP Agentkit - LangChain Documentation
+Coinbase Agentkit LangChain Documentation
 ======================================
 
 .. include:: ../README.md

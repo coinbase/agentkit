@@ -1,4 +1,4 @@
-CDP Agentkit - Core Documentation
+Coinbase Agentkit Documentation
 =================================
 
 .. include:: ../README.md

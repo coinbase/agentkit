@@ -175,7 +175,7 @@ agentkit/
 - [AgentKit Documentation](https://docs.cdp.coinbase.com/agentkit/docs/welcome)
 - Python API References
   - [AgentKit](https://coinbase.github.io/agentkit/coinbase-agentkit/python/index.html)
-  - [AgentKit Langchain Extension](https://coinbase.github.io/agentkit/framework-extensions/langchain/python/index.html)
+  - [AgentKit Langchain Extension](https://coinbase.github.io/agentkit/coinbase-agentkit-langchain/python/index.html)
 - Node.js API References
   - [AgentKit](https://coinbase.github.io/agentkit/agentkit/typescript/index.html)
   - [AgentKit Langchain Extension](https://coinbase.github.io/agentkit/agentkit-langchain/typescript/index.html)
