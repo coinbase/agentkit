@@ -131,3 +131,5 @@ api.json
 # TS Docs
 **/typescript/docs/
 docs/
+!python/coinbase-agentkit/docs/
+!python/framework-extensions/langchain/docs/

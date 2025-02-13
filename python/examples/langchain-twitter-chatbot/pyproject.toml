@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "chatbot-python"
+version = "0.0.1"
+description = "CDP AgentKit Twitter Langchain Chatbot Example"
+authors = ["John Peterson <john.peterson@coinbase.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.10"
+python-dotenv = "^1.0.1"
+langchain-openai = "^0.2.4"
+langgraph = "^0.2.39"
+tweepy = "^4.15.0"
+coinbase-agentkit = { path = "../../../python/coinbase-agentkit", develop = true }
+coinbase-agentkit-langchain = { path = "../../../python/framework-extensions/langchain", develop = true }
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

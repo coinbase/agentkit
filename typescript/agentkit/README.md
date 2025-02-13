@@ -8,7 +8,7 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
 - [Getting Started](#getting-started)
 - [Installation](#installation)
 - [Usage](#usage)
-  - [Create an AgentKit instance](##create-an-agentkit-instance-if-no-wallet-or-action-providers-are-specified-the-agent-will-use-the-cdpwalletprovider-and-walletprovider-action-provider)
+  - [Create an AgentKit instance](#create-an-agentkit-instance)
   - [Create an AgentKit instance with a specified wallet provider](#create-an-agentkit-instance-with-a-specified-wallet-provider)
   - [Create an AgentKit instance with a specified action providers](#create-an-agentkit-instance-with-a-specified-action-providers)
   - [Use the agent's actions with a framework extension. For example, using LangChain + OpenAI](#use-the-agents-actions-with-a-framework-extension-for-example-using-langchain--openai)
@@ -42,6 +42,17 @@ npm install @coinbase/agentkit
 ## Usage
 
 ### Create an AgentKit instance. If no wallet or action providers are specified, the agent will use the `CdpWalletProvider` and `WalletProvider` action provider.
+
+```typescript
+const agentKit = await AgentKit.from({
+  cdpApiKeyName: "CDP API KEY NAME",
+  cdpApiKeyPrivate: "CDP API KEY PRIVATE KEY",
+});
+```
+
+### Create an AgentKit instance
+
+If no wallet or action provider are specified, the agent will use the `CdpWalletProvider` and `WalletActionProvider` action provider by default.
 
 ```typescript
 const agentKit = await AgentKit.from({

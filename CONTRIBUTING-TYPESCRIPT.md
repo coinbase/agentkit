@@ -176,8 +176,6 @@ cd typescript/agentkit
 npm test
 ```
 
-For instructions on manual end-to-end testing, see the [Testing](#testing) section.
-
 Check out the [Testing](#testing) section to learn how to manually test your new action provider.
 
 ## Adding a Wallet Provider

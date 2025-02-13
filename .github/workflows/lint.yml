@@ -2,11 +2,11 @@ name: Lint
 on: [pull_request]
 
 jobs:
-  lint-cdp-agentkit-core-python:
+  lint-coinbase-agentkit-python:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./python/cdp-agentkit-core
+        working-directory: ./python/coinbase-agentkit
     steps:
       - uses: actions/checkout@v3
 
@@ -26,8 +26,8 @@ jobs:
         id: cached-poetry-dependencies
         uses: actions/cache@v3
         with:
-          path: ./python/cdp-agentkit-core/.venv
-          key: venv-agentkit-${{ runner.os }}-${{ hashFiles('python/cdp-agentkit-core/poetry.lock') }}
+          path: ./python/coinbase-agentkit/.venv
+          key: venv-agentkit-${{ runner.os }}-${{ hashFiles('python/coinbase-agentkit/poetry.lock') }}
 
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
@@ -36,73 +36,73 @@ jobs:
       - name: Run linters
         run: poetry run make lint
 
-  lint-cdp-langchain-python:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./python/cdp-langchain
-    steps:
-      - uses: actions/checkout@v3
+  # lint-cdp-langchain-python:
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: ./python/cdp-langchain
+  #   steps:
+  #     - uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v4
+  #       with:
+  #         python-version: '3.10'
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: true
+  #     - name: Install Poetry
+  #       uses: snok/install-poetry@v1
+  #       with:
+  #         version: latest
+  #         virtualenvs-create: true
+  #         virtualenvs-in-project: true
 
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
-        with:
-          path: ./python/cdp-langchain/.venv
-          key: venv-langchain-${{ runner.os }}-${{ hashFiles('python/cdp-langchain/poetry.lock') }}
+  #     - name: Load cached venv
+  #       id: cached-poetry-dependencies
+  #       uses: actions/cache@v3
+  #       with:
+  #         path: ./python/cdp-langchain/.venv
+  #         key: venv-langchain-${{ runner.os }}-${{ hashFiles('python/cdp-langchain/poetry.lock') }}
 
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --with dev
+  #     - name: Install dependencies
+  #       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+  #       run: poetry install --with dev
 
-      - name: Run linters
-        run: poetry run make lint
+  #     - name: Run linters
+  #       run: poetry run make lint
 
-  lint-twitter-langchain-python:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./python/twitter-langchain
-    steps:
-      - uses: actions/checkout@v3
+  # lint-twitter-langchain-python:
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: ./python/twitter-langchain
+  #   steps:
+  #     - uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v4
+  #       with:
+  #         python-version: '3.10'
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: true
+  #     - name: Install Poetry
+  #       uses: snok/install-poetry@v1
+  #       with:
+  #         version: latest
+  #         virtualenvs-create: true
+  #         virtualenvs-in-project: true
 
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
-        with:
-          path: ./python/twitter-langchain/.venv
-          key: venv-twitter-langchain-${{ runner.os }}-${{ hashFiles('python/twitter-langchain/poetry.lock') }}
+  #     - name: Load cached venv
+  #       id: cached-poetry-dependencies
+  #       uses: actions/cache@v3
+  #       with:
+  #         path: ./python/twitter-langchain/.venv
+  #         key: venv-twitter-langchain-${{ runner.os }}-${{ hashFiles('python/twitter-langchain/poetry.lock') }}
 
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --with dev
+  #     - name: Install dependencies
+  #       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+  #       run: poetry install --with dev
 
-      - name: Run linters
-        run: poetry run make lint
+  #     - name: Run linters
+  #       run: poetry run make lint
 
   lint-typescript:
     runs-on: ubuntu-latest
