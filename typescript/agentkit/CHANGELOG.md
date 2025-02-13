@@ -4,6 +4,15 @@
 
 ### Added
 
+- Added `defillamaActionProvider` to fetch DeFi protocol information and token prices from DefiLlama
+- Added `get_token_prices` action to fetch current token prices with chain prefixes
+- Added `get_protocol` action to retrieve detailed protocol information
+- Added `search_protocols` action to search through DeFi protocols
+
+## [0.1.3] - 2025-02-12
+
+### Added
+
 - Added `svmWalletProvider` abstract class for interacting with Solana.
 - Added `solanaKeypairWalletProvider` to concretely implement `svmWalletProvider` with a local keypair.
 
