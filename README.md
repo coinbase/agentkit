@@ -199,6 +199,7 @@ AgentKit is proud to have support for the following protocols, frameworks, and w
 <a href="https://www.moonwell.fi" target="_blank"><img src="./assets/protocols/moonwell.svg" width="100" height="auto" alt="Moonwell"></a>
 <a href="https://app.morpho.org" target="_blank"><img src="./assets/protocols/morpho.svg" width="100" height="auto" alt="Morpho"></a>
 <a href="https://pyth.network" target="_blank"><img src="./assets/protocols/pyth.svg" width="100" height="auto" alt="Pyth"></a>
+<a href="https://allora.network" target="_blank"><img src="./assets/protocols/allora.svg" width="100" height="auto" alt="Allora"></a>
 
 ## 📝 License
 
