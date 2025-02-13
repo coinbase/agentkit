@@ -139,6 +139,80 @@ Your wallet has been successfully funded with testnet ETH. You can view the tran
 -------------------
 ```
 
+# API Integration
+
+To integrate AgentKit with your frontend application, follow these steps:
+
+
+## Backend Setup
+
+1. Navigate to the `langchain-cdp-chatbot-with-Api` directory and refer to the `README.md` file for setup instructions.
+2. Install dependencies and start the backend by running:
+   
+   ```sh
+   cd typescript/examples/langchain-cdp-chatbot-with-Api
+   npm install  # or yarn install
+   npm start  # or yarn start
+   ```
+3.Ensure the backend is running on `http://localhost:<YOUR_PORT>`
+
+## Frontend Integration
+
+You can interact with the AgentKit API using any frontend framework. Here's an example using fetch:
+
+```javascript
+//Make sure to set port Numbe insted of YOUR_PORT
+async function sendMessage(message) {
+    try {
+        const response = await fetch('http://localhost:{YOUR_PORT}/api/data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message: message })
+        });
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error:', error);
+        throw error;
+    }
+}
+
+// Usage example
+sendMessage("Fund my wallet with some testnet ETH")
+    .then(response => {
+        console.log(response.data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+```
+
+## API Endpoints
+
+### POST /api/data
+
+- **Endpoint**: `http://localhost:3000/api/data`
+- **Method**: `POST`
+- **Body**:
+```json
+{
+    "message": "YOUR_MESSAGE_HERE"
+}
+```
+
+- **Response**:
+```json
+{
+    "success": true,
+    "message": "Data received successfully",
+    "data": {
+        // Agent response data
+    }
+}
+```
+
 ## 🗂 Repository Structure
 
 AgentKit is organized as a monorepo that contains multiple packages.
@@ -152,7 +226,8 @@ agentkit/
 │   └── examples/
 │       ├── langchain-cdp-chatbot/
 │       ├── langchain-farcaster-chatbot/
-│       └── langchain-twitter-chatbot/
+│       ├── langchain-twitter-chatbot/
+|       └── langchain-cdp-chatbot-with-Api/
 ├── python/
 │   ├── coinbase-agentkit/
 │   ├── framework-extensions/
