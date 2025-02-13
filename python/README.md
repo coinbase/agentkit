@@ -2,20 +2,19 @@
 
 ## 📦 Packages
 
-### cdp-agentkit-core
+### `coinbase-agentkit`
 
-Core primitives and framework-agnostic actions that are meant to be composable and used via AgentKit framework extensions (ie, `cdp-langchain`).
-See [CDP Agentkit Core](./cdp-agentkit-core/README.md) to get started!
+Core primitives and framework-agnostic actions that are meant to be composable and used via AgentKit framework extensions (ie, `coinbase-agentkit-langchain`).
 
-### cdp-langchain
+See [Coinbase Agentkit](./coinbase-agentkit/README.md) to get started!
+
+### Framework Extensions
+
+#### `coinbase-agentkit-langchain`
 
 LangChain extension of AgentKit. Enables agentic workflows to interact with onchain actions.
-See [CDP LangChain](./cdp-langchain/README.md) to get started!
 
-### twitter-langchain
-
-LangChain extension for Twitter. Enables agentic workflows to interact with Twitter, such as to post a tweet.
-See [Twitter LangChain](./twitter-langchain/README.md) to get started!
+See [AgentKit LangChain](./framework-extensions/langchain/README.md) to get started!
 
 ## 🤝 Contributing
 
