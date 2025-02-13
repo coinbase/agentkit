@@ -1,7 +1,6 @@
 import { Coinbase } from "@coinbase/coinbase-sdk";
 
-//export const ENSO_API_KEY = "1e02632d-6feb-4a75-a157-documentation" as const;
-export const ENSO_API_KEY = "978bd47a-f1e8-47cb-8d0e-3ecf9c5dd2fd" as const;
+export const ENSO_API_KEY = "1e02632d-6feb-4a75-a157-documentation" as const;
 export const ENSO_ETH = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" as const;
 export const ENSO_ROUTE_SINGLE_SIG = "0xb35d7e73" as const;
 
