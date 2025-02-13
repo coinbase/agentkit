@@ -4,6 +4,7 @@ import {
   wethActionProvider,
   walletActionProvider,
   erc20ActionProvider,
+  magicEdenActionProvider,
   cdpApiActionProvider,
   cdpWalletActionProvider,
   pythActionProvider,
@@ -99,6 +100,7 @@ async function initializeAgent() {
         pythActionProvider(),
         walletActionProvider(),
         erc20ActionProvider(),
+        magicEdenActionProvider(),
         cdpApiActionProvider({
           apiKeyName: process.env.CDP_API_KEY_NAME,
           apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY?.replace(/\\n/g, "\n"),
