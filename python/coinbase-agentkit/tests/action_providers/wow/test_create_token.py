@@ -16,7 +16,7 @@ from coinbase_agentkit.action_providers.wow.wow_action_provider import WowAction
 MOCK_NAME = "Test Token"
 MOCK_SYMBOL = "TEST"
 MOCK_NETWORK_ID = "base-sepolia"
-MOCK_CHAIN_ID = 84532
+MOCK_CHAIN_ID = "84532"
 MOCK_WALLET_ADDRESS = "0x1234567890123456789012345678901234567890"
 MOCK_TOKEN_URI = "ipfs://QmY1GqprFYvojCcUEKgqHeDj9uhZD9jmYGrQTfA9vAE78J"
 MOCK_TX_HASH = "0xabcdef1234567890"

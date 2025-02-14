@@ -51,7 +51,7 @@ def create_action(name: str, description: str, schema: type[BaseModel] | None = 
                     wallet_provider=args[1].get_name(),
                     wallet_address=args[1].get_address(),
                     network_id=network.network_id or "",
-                    chain_id=str(network.chain_id or ""),
+                    chain_id=network.chain_id or "",
                     protocol_family=network.protocol_family,
                 )
 

@@ -351,12 +351,12 @@ def test_supports_network():
     provider = SuperfluidActionProvider()
 
     test_cases = [
-        ("base-mainnet", 8453, "evm", True),
-        ("base-sepolia", 84532, "evm", True),
-        ("ethereum-mainnet", 1, "evm", True),
-        ("arbitrum-one", 42161, "evm", True),
-        ("optimism", 10, "evm", True),
-        ("base-goerli", 84531, "evm", True),
+        ("base-mainnet", "8453", "evm", True),
+        ("base-sepolia", "84532", "evm", True),
+        ("ethereum-mainnet", "1", "evm", True),
+        ("arbitrum-one", "42161", "evm", True),
+        ("optimism", "10", "evm", True),
+        ("base-goerli", "84531", "evm", True),
         ("mainnet", None, "bitcoin", False),
         ("mainnet", None, "solana", False),
     ]

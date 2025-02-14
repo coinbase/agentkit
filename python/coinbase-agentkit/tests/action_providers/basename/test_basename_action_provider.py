@@ -40,7 +40,7 @@ def test_register_basename_mainnet_success(provider, mock_wallet_provider):
 def test_register_basename_testnet_success(provider, mock_wallet_provider):
     """Test successful basename registration on testnet."""
     mock_wallet_provider.get_network.return_value = Network(
-        protocol_family="evm", chain_id=84532, network_id="base-sepolia"
+        protocol_family="evm", chain_id="84532", network_id="base-sepolia"
     )
 
     args = {
@@ -95,11 +95,11 @@ def test_register_basename_error(provider, mock_wallet_provider):
 def test_supports_network(provider):
     """Test network support check."""
     test_cases = [
-        ("base-mainnet", 8453, True),
-        ("base-sepolia", 84532, True),
-        ("ethereum-mainnet", 1, False),
-        ("optimism", 10, False),
-        ("arbitrum", 42161, False),
+        ("base-mainnet", "8453", True),
+        ("base-sepolia", "84532", True),
+        ("ethereum-mainnet", "1", False),
+        ("optimism", "10", False),
+        ("arbitrum", "42161", False),
     ]
 
     for network_id, chain_id, expected in test_cases:

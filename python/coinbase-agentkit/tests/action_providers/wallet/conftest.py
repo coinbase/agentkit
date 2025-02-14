@@ -11,7 +11,7 @@ from coinbase_agentkit.wallet_providers import WalletProvider
 
 MOCK_ADDRESS = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
 MOCK_BALANCE = Decimal("1000000000000000000")  # 1 ETH in wei
-MOCK_NETWORK = Network(protocol_family="evm", chain_id=84532, network_id="base-sepolia")
+MOCK_NETWORK = Network(protocol_family="evm", chain_id="84532", network_id="base-sepolia")
 MOCK_PROVIDER_NAME = "TestWallet"
 
 

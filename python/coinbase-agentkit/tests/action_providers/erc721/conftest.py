@@ -13,7 +13,7 @@ MOCK_DESTINATION = "0x9876543210987654321098765432109876543210"
 MOCK_ADDRESS = "0x5555555555555555555555555555555555555555"
 MOCK_TOKEN_ID = "123"
 MOCK_TX_HASH = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
-MOCK_NETWORK = Network(protocol_family="evm", chain_id=1, network_id="ethereum-mainnet")
+MOCK_NETWORK = Network(protocol_family="evm", chain_id="1", network_id="ethereum-mainnet")
 MOCK_RECEIPT = {"status": 1}
 
 

@@ -349,7 +349,7 @@ class CdpWalletProvider(EvmWalletProvider):
         transaction["from"] = self._address
         transaction["value"] = int(transaction.get("value", 0))
         transaction["type"] = 2
-        transaction["chainId"] = self._network.chain_id
+        transaction["chainId"] = int(self._network.chain_id)
 
         nonce = self._web3.eth.get_transaction_count(self._address)
         transaction["nonce"] = nonce

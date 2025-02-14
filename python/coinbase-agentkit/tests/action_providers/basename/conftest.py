@@ -27,7 +27,7 @@ def mock_wallet_provider():
     mock.wait_for_transaction_receipt.return_value = MOCK_RECEIPT
 
     mock.get_network.return_value = Network(
-        protocol_family="evm", chain_id=8453, network_id="base-mainnet"
+        protocol_family="evm", chain_id="8453", network_id="base-mainnet"
     )
 
     return mock

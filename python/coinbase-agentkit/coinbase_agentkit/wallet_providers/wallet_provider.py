@@ -32,7 +32,7 @@ class WalletProvider(ABC, metaclass=WalletProviderMeta):
                 wallet_provider=self.get_name(),
                 wallet_address=self.get_address(),
                 network_id=network.network_id or "",
-                chain_id=str(network.chain_id or ""),
+                chain_id=network.chain_id or "",
                 protocol_family=network.protocol_family,
             )
 

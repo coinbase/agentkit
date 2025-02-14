@@ -9,7 +9,7 @@ from ..action_provider import ActionProvider
 from .constants import WETH_ABI, WETH_ADDRESS
 from .schemas import WrapEthSchema
 
-SUPPORTED_CHAINS = [8453, 84532]
+SUPPORTED_CHAINS = ["8453", "84532"]
 
 
 class WethActionProvider(ActionProvider[EvmWalletProvider]):
