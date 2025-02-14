@@ -6,13 +6,13 @@ from typing import Any
 from eth_account.account import LocalAccount
 from eth_account.datastructures import SignedTransaction
 from eth_account.messages import encode_defunct
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from web3 import Web3
 from web3.middleware import SignAndSendRawMiddlewareBuilder
 from web3.types import BlockIdentifier, ChecksumAddress, HexStr, TxParams
 
 from ..network import CHAIN_ID_TO_NETWORK_ID, NETWORK_ID_TO_CHAIN, Network
-from .evm_wallet_provider import EvmWalletProvider
+from .evm_wallet_provider import EvmGasConfig, EvmWalletProvider
 
 
 class EthAccountWalletProviderConfig(BaseModel):
@@ -20,6 +20,7 @@ class EthAccountWalletProviderConfig(BaseModel):
 
     account: LocalAccount
     chain_id: str
+    gas: EvmGasConfig | None = Field(None, description="Gas configuration settings")
 
     class Config:
         """Configuration for EthAccountWalletProvider."""
@@ -52,6 +53,18 @@ class EthAccountWalletProvider(EvmWalletProvider):
             protocol_family="evm",
             chain_id=self.config.chain_id,
             network_id=CHAIN_ID_TO_NETWORK_ID[self.config.chain_id],
+        )
+
+        self._gas_limit_multiplier = (
+            max(config.gas.gas_limit_multiplier, 1)
+            if config and config.gas and config.gas.gas_limit_multiplier is not None
+            else 1.2
+        )
+
+        self._fee_per_gas_multiplier = (
+            max(config.gas.fee_per_gas_multiplier, 1)
+            if config and config.gas and config.gas.fee_per_gas_multiplier is not None
+            else 1
         )
 
     def get_address(self) -> str:
@@ -137,11 +150,8 @@ class EthAccountWalletProvider(EvmWalletProvider):
 
         return self.account.sign_transaction(transaction)
 
-    def estimate_fees(self, multiplier=1.2):
-        """Estimate gas fees for a transaction.
-
-        Args:
-            multiplier (float): Buffer multiplier for base fee, defaults to 1.2
+    def estimate_fees(self):
+        """Estimate gas fees for a transaction, applying the configured fee multipliers.
 
         Returns:
             tuple[int, int]: Tuple of (max_priority_fee_per_gas, max_fee_per_gas) in wei
@@ -157,11 +167,16 @@ class EthAccountWalletProvider(EvmWalletProvider):
             """
             latest_block = self.web3.eth.get_block("latest")
             base_fee = latest_block["baseFeePerGas"]
-            # Multiply by 1.2 to give some buffer
-            return int(base_fee * multiplier)
+            # Multiply the configured fee multiplier to give some buffer
+            return int(base_fee * self._fee_per_gas_multiplier)
+
+        def get_max_priority_fee():
+            max_priority_fee_per_gas = Web3.to_wei(0.1, "gwei")
+            # Multiply the configured fee multiplier to give some buffer
+            return int(max_priority_fee_per_gas * self._fee_per_gas_multiplier)
 
         base_fee_per_gas = get_base_fee()
-        max_priority_fee_per_gas = Web3.to_wei(0.1, "gwei")
+        max_priority_fee_per_gas = get_max_priority_fee()
         max_fee_per_gas = base_fee_per_gas + max_priority_fee_per_gas
 
         return (max_priority_fee_per_gas, max_fee_per_gas)
@@ -189,7 +204,8 @@ class EthAccountWalletProvider(EvmWalletProvider):
         transaction["maxPriorityFeePerGas"] = max_priority_fee_per_gas
         transaction["maxFeePerGas"] = max_fee_per_gas
 
-        gas = self.web3.eth.estimate_gas(transaction)
+
+        gas = int(self.web3.eth.estimate_gas(transaction) * self._gas_limit_multiplier)
         transaction["gas"] = gas
 
         hash = self.web3.eth.send_transaction(transaction)
