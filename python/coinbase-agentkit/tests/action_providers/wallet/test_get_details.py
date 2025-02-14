@@ -62,7 +62,7 @@ def test_get_wallet_details_error(wallet_action_provider, mock_wallet_provider):
 def test_supports_network(wallet_action_provider):
     """Test that the wallet action provider supports all networks."""
     networks = [
-        Network(protocol_family="evm", chain_id=1, network_id="1"),
+        Network(protocol_family="evm", chain_id="1", network_id="1"),
         Network(protocol_family="solana", chain_id=None, network_id="mainnet"),
         Network(protocol_family="bitcoin", chain_id=None, network_id="mainnet"),
     ]

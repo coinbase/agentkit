@@ -62,5 +62,5 @@ def test_provider_init_missing_credentials(mock_cdp_imports):
 def test_supports_network():
     """Test network support."""
     provider = cdp_api_action_provider()
-    assert provider.supports_network(Network(protocol_family="evm", chain_id=1)) is True
+    assert provider.supports_network(Network(protocol_family="evm", chain_id="1")) is True
     assert provider.supports_network(Network(protocol_family="solana")) is True

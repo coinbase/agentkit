@@ -145,12 +145,12 @@ def test_supports_network():
     provider = WethActionProvider()
 
     test_cases = [
-        ("base-mainnet", 8453, "evm", True),
-        ("base-sepolia", 84532, "evm", True),
-        ("ethereum-mainnet", 1, "evm", False),
-        ("arbitrum-one", 42161, "evm", False),
-        ("optimism", 10, "evm", False),
-        ("base-goerli", 84531, "evm", False),
+        ("base-mainnet", "8453", "evm", True),
+        ("base-sepolia", "84532", "evm", True),
+        ("ethereum-mainnet", "1", "evm", False),
+        ("arbitrum-one", "42161", "evm", False),
+        ("optimism", "10", "evm", False),
+        ("base-goerli", "84531", "evm", False),
         ("mainnet", None, "bitcoin", False),
         ("mainnet", None, "solana", False),
     ]

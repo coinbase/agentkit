@@ -137,5 +137,5 @@ def test_get_balance_error(provider, mock_wallet_provider):
 
 def test_supports_network(provider):
     """Test network support check."""
-    assert provider.supports_network(Network(protocol_family="evm", chain_id=1))
+    assert provider.supports_network(Network(protocol_family="evm", chain_id="1"))
     assert not provider.supports_network(Network(protocol_family="solana"))

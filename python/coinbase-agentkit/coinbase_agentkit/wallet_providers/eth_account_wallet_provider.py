@@ -40,7 +40,7 @@ class EthAccountWalletProvider(EvmWalletProvider):
         self.config = config
         self.account = config.account
 
-        chain = NETWORK_ID_TO_CHAIN[config.chain_id]
+        chain = NETWORK_ID_TO_CHAIN[CHAIN_ID_TO_NETWORK_ID[config.chain_id]]
         rpc_url = chain.rpc_urls["default"].http[0]
 
         self.web3 = Web3(Web3.HTTPProvider(rpc_url))
@@ -131,7 +131,7 @@ class EthAccountWalletProvider(EvmWalletProvider):
 
         """
         if "chainId" not in transaction:
-            transaction["chainId"] = self._network.chain_id
+            transaction["chainId"] = int(self._network.chain_id)
         if "from" not in transaction:
             transaction["from"] = self.account.address
 
@@ -180,7 +180,7 @@ class EthAccountWalletProvider(EvmWalletProvider):
 
         """
         transaction["from"] = self.account.address
-        transaction["chainId"] = self._network.chain_id
+        transaction["chainId"] = int(self._network.chain_id)
 
         nonce = self.web3.eth.get_transaction_count(self.account.address)
         transaction["nonce"] = nonce

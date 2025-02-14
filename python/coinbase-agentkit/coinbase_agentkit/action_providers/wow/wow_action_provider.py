@@ -22,7 +22,7 @@ from .utils import (
     get_sell_quote,
 )
 
-SUPPORTED_CHAINS = [8453, 84532]
+SUPPORTED_CHAINS = ["8453", "84532"]
 
 
 class WowActionProvider(ActionProvider[EvmWalletProvider]):

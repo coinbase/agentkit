@@ -49,7 +49,7 @@ class WalletActionProvider(ActionProvider[WalletProvider]):
 - Network:
   * Protocol Family: {network.protocol_family}
   * Network ID: {network.network_id or "N/A"}
-  * Chain ID: {str(network.chain_id) if network.chain_id else "N/A"}
+  * Chain ID: {network.chain_id if network.chain_id else "N/A"}
 - Native Balance: {balance}"""
         except Exception as e:
             return f"Error getting wallet details: {e}"

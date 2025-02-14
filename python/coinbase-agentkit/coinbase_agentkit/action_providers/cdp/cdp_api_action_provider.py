@@ -13,7 +13,7 @@ from ..action_provider import ActionProvider
 from .schemas import AddressReputationSchema, RequestFaucetFundsSchema
 
 BASE_SEPOLIA_NETWORK_ID = "base-sepolia"
-BASE_SEPOLIA_CHAIN_ID = 84532
+BASE_SEPOLIA_CHAIN_ID = "84532"
 
 
 class CdpApiActionProvider(ActionProvider[EvmWalletProvider]):

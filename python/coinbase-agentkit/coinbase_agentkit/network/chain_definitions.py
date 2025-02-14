@@ -33,7 +33,7 @@ class Contract(BaseModel):
 class Chain(BaseModel):
     """Represents a blockchain network."""
 
-    id: int
+    id: str
     name: str
     network: str | None = None
     native_currency: NativeCurrency
@@ -45,7 +45,7 @@ class Chain(BaseModel):
 
 # Convert existing dictionaries to Chain instances
 mainnet = Chain(
-    id=1,
+    id="1",
     name="Ethereum",
     native_currency={"name": "Ether", "symbol": "ETH", "decimals": 18},
     rpc_urls={
@@ -76,7 +76,7 @@ mainnet = Chain(
 )
 
 sepolia = Chain(
-    id=11_155_111,
+    id="11155111",
     name="Sepolia",
     native_currency={"name": "Sepolia Ether", "symbol": "ETH", "decimals": 18},
     rpc_urls={
@@ -106,7 +106,7 @@ sepolia = Chain(
 )
 
 base_sepolia = Chain(
-    id=84532,
+    id="84532",
     network="base-sepolia",
     name="Base Sepolia",
     native_currency={"name": "Sepolia Ether", "symbol": "ETH", "decimals": 18},
@@ -146,7 +146,7 @@ base_sepolia = Chain(
 )
 
 arbitrum_sepolia = Chain(
-    id=421_614,
+    id="421614",
     name="Arbitrum Sepolia",
     native_currency={
         "name": "Arbitrum Sepolia Ether",
@@ -175,7 +175,7 @@ arbitrum_sepolia = Chain(
 )
 
 optimism_sepolia = Chain(
-    id=11155420,
+    id="11155420",
     name="OP Sepolia",
     native_currency={"name": "Sepolia Ether", "symbol": "ETH", "decimals": 18},
     rpc_urls={
@@ -212,7 +212,7 @@ optimism_sepolia = Chain(
 )
 
 base = Chain(
-    id=8453,
+    id="8453",
     name="Base",
     native_currency={"name": "Ether", "symbol": "ETH", "decimals": 18},
     rpc_urls={
@@ -250,7 +250,7 @@ base = Chain(
 )
 
 arbitrum = Chain(
-    id=42_161,
+    id="42161",
     name="Arbitrum One",
     native_currency={"name": "Ether", "symbol": "ETH", "decimals": 18},
     rpc_urls={
@@ -274,7 +274,7 @@ arbitrum = Chain(
 )
 
 optimism = Chain(
-    id=10,
+    id="10",
     name="OP Mainnet",
     native_currency={"name": "Ether", "symbol": "ETH", "decimals": 18},
     rpc_urls={
@@ -310,7 +310,7 @@ optimism = Chain(
 )
 
 polygon_mumbai = Chain(
-    id=80_001,
+    id="80001",
     name="Polygon Mumbai",
     native_currency={"name": "MATIC", "symbol": "MATIC", "decimals": 18},
     rpc_urls={
@@ -335,7 +335,7 @@ polygon_mumbai = Chain(
 )
 
 polygon = Chain(
-    id=137,
+    id="137",
     name="Polygon",
     native_currency={"name": "POL", "symbol": "POL", "decimals": 18},
     rpc_urls={

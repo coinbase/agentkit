@@ -8,4 +8,4 @@ class Network(BaseModel):
 
     protocol_family: str
     network_id: str | None = None
-    chain_id: int | None = None
+    chain_id: str | None = None

@@ -145,5 +145,5 @@ def test_supports_network():
 
     provider = erc20_action_provider()
     for protocol_family, expected in test_cases:
-        network = Network(chain_id=1, protocol_family=protocol_family)
+        network = Network(chain_id="1", protocol_family=protocol_family)
         assert provider.supports_network(network) is expected
