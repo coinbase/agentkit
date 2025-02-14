@@ -13,6 +13,8 @@ import {
   Abi,
   ContractFunctionName,
   ContractFunctionArgs,
+  isHex,
+  toHex,
 } from "viem";
 import { EvmWalletProvider } from "./evmWalletProvider";
 import { Network } from "../network";
@@ -67,13 +69,19 @@ export class ViemWalletProvider extends EvmWalletProvider {
    * @param message - The message to sign.
    * @returns The signed message.
    */
-  async signMessage(message: string): Promise<`0x${string}`> {
+  async signMessage(message: string | Uint8Array): Promise<`0x${string}`> {
     const account = this.#walletClient.account;
     if (!account) {
       throw new Error("Account not found");
     }
 
-    return this.#walletClient.signMessage({ account, message });
+    const hexMessage =
+      typeof message === "string" ? (isHex(message) ? message : toHex(message)) : message;
+
+    return this.#walletClient.signMessage({
+      account,
+      message: { raw: hexMessage },
+    });
   }
 
   /**
