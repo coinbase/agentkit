@@ -11,6 +11,7 @@ import {
   polygonMumbai,
   polygon,
 } from "viem/chains";
+import * as chains from "viem/chains";
 
 /**
  * Maps EVM chain IDs to Coinbase network IDs
@@ -55,4 +56,15 @@ export const NETWORK_ID_TO_VIEM_CHAIN: Record<string, Chain> = {
   "arbitrum-sepolia": arbitrumSepolia,
   "optimism-mainnet": optimism,
   "optimism-sepolia": optimismSepolia,
+};
+
+/**
+ * Get a chain from the viem chains object
+ *
+ * @param id - The chain ID
+ * @returns The chain
+ */
+export const getChain = (id: string): Chain => {
+  const chainList = Object.values(chains);
+  return chainList.find(chain => chain.id === parseInt(id)) as Chain;
 };
