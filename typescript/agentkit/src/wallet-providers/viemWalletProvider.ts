@@ -75,12 +75,12 @@ export class ViemWalletProvider extends EvmWalletProvider {
       throw new Error("Account not found");
     }
 
-    const hexMessage =
+    const _message =
       typeof message === "string" ? (isHex(message) ? message : toHex(message)) : message;
 
     return this.#walletClient.signMessage({
       account,
-      message: { raw: hexMessage },
+      message: { raw: _message },
     });
   }
 
