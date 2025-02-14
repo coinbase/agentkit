@@ -27,6 +27,9 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
     - [Configuring gas parameters](#configuring-cdpwalletprovider-gas-parameters)
   - [ViemWalletProvider](#viemwalletprovider)
     - [Configuring gas parameters](#configuring-viemwalletprovider-gas-parameters)
+  - [PrivyWalletProvider](#privywalletprovider)
+    - [Authorization Keys](#authorization-keys)
+    - [Exporting Privy Wallet information](#exporting-privy-wallet-information)
 - [Contributing](#contributing)
 
 ## Getting Started
@@ -398,6 +401,7 @@ Wallet providers give an agent access to a wallet. AgentKit currently supports t
 EVM:
 - [CdpWalletProvider](./src/wallet-providers/cdpWalletProvider.ts)
 - [ViemWalletProvider](./src/wallet-providers/viemWalletProvider.ts)
+- [PrivyWalletProvider](./src/wallet-providers/privyWalletProvider.ts)
 
 ### CdpWalletProvider
 
@@ -541,6 +545,49 @@ const walletProvider = new ViemWalletProvider(client, {
     gasLimitMultiplier: 2.0,  // Adjusts gas limit estimation
     feePerGasMultiplier: 2.0, // Adjusts max fee per gas
 });
+```
+
+### PrivyWalletProvider
+
+The `PrivyWalletProvider` is a wallet provider that uses [Privy Server Wallets](https://docs.privy.io/guide/server-wallets/). This implementation extends the `ViemWalletProvider`.
+
+```typescript
+import { PrivyWalletProvider } from "@coinbase/agentkit";
+
+// Configure Wallet Provider
+const config = {
+    appId: "PRIVY_APP_ID",
+    appSecret: "PRIVY_APP_SECRET",
+    chainId: "84532", // base-sepolia
+    walletId: "PRIVY_WALLET_ID", // optional, otherwise a new wallet will be created
+    authorizationPrivateKey: PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY, // optional, required if your account is using authorization keys
+    authorizationKeyId: PRIVY_WALLET_AUTHORIZATION_KEY_ID, // optional, only required to create a new wallet if walletId is not provided
+};
+
+const walletProvider = await PrivyWalletProvider.configureWithWallet(config);
+```
+
+#### Authorization Keys
+
+Privy offers the option to use authorization keys to secure your server wallets.
+
+You can manage authorization keys from your [Privy dashboard](https://dashboard.privy.io/account) or programmatically [using the API](https://docs.privy.io/guide/server-wallets/authorization/signatures).
+
+When using authorization keys, you must provide the `authorizationPrivateKey` and `authorizationKeyId` parameters to the `configureWithWallet` method if you are creating a new wallet. Please note that when creating a key, if you enable "Create and modify wallets", you will be required to use that key when creating new wallets via the PrivyWalletProvider.
+
+#### Exporting Privy Wallet information
+
+The `PrivyWalletProvider` can export wallet information by calling the `exportWallet` method. 
+
+```typescript
+const walletData = await walletProvider.exportWallet();
+
+// walletData will be in the following format:
+{
+    walletId: string;
+    authorizationKey: string | undefined;
+    chainId: string | undefined;
+}
 ```
 
 
