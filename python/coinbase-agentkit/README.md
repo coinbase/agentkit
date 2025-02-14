@@ -22,9 +22,10 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
     - [Configuring from a mnemonic phrase](#configuring-from-a-mnemonic-phrase)
     - [Exporting a wallet](#exporting-a-wallet)
     - [Importing a wallet from WalletData JSON string](#importing-a-wallet-from-walletdata-json-string)
+    - [Configuring gas parameters](#configuring-cdpwalletprovider-gas-parameters)
   - [EthAccountWalletProvider](#ethaccountwalletprovider)
+    - [Configuring gas parameters](#configuring-ethaccountwalletprovider-gas-parameters)
 - [Contributing](#contributing)
-
 ## Getting Started
 
 *Prerequisites*:
@@ -280,11 +281,32 @@ wallet_provider = CdpWalletProvider(CdpWalletProviderConfig(
 ))
 ```
 
+#### Configuring `CdpWalletProvider` gas parameters
+
+The `CdpWalletProvider` also exposes parameters for effecting the gas calculations.
+
+```python
+from coinbase_agentkit import CdpWalletProvider, CdpWalletProviderConfig
+
+wallet_provider = CdpWalletProvider(CdpWalletProviderConfig(
+    wallet_data="WALLET DATA JSON STRING",
+    api_key_name="CDP API KEY NAME",
+    api_key_private="CDP API KEY PRIVATE KEY",
+    gas={
+        "gas_limit_multiplier": 2.0,   # Adjusts gas limit estimation
+        "fee_per_gas_multiplier": 2.0  # Adjusts max fee per gas
+    }
+))
+```
+
+**Note**: Gas parameters only impact the `wallet_provider.send_transaction` behavior. Actions that do not rely on direct transaction calls, such as `deploy_token`, `deploy_contract`, and `native_transfer`, remain unaffected.
+
 ### EthAccountWalletProvider
 
 Example usage with a private key:
 
 ```python
+import os
 from eth_account import Account
 
 from coinbase_agentkit import (
@@ -306,6 +328,43 @@ wallet_provider = EthAccountWalletProvider(
     config=EthAccountWalletProviderConfig(
         account=account,
         chain_id="84532",
+    )
+)
+
+agent_kit = AgentKit(AgentKitConfig(
+    wallet_provider=wallet_provider
+))
+```
+
+#### Configuring `EthAccountWalletProvider` gas parameters
+
+The `EthAccountWalletProvider` also exposes parameters for effecting the gas calculations.
+
+```python
+import os
+from eth_account import Account
+
+from coinbase_agentkit import (
+    AgentKit, 
+    AgentKitConfig, 
+    EthAccountWalletProvider, 
+    EthAccountWalletProviderConfig
+)
+
+private_key = os.environ.get("PRIVATE_KEY")
+assert private_key is not None, "You must set PRIVATE_KEY environment variable"
+assert private_key.startswith("0x"), "Private key must start with 0x hex prefix"
+
+account = Account.from_key(private_key)
+
+wallet_provider = EthAccountWalletProvider(
+    config=EthAccountWalletProviderConfig(
+        account=account,
+        chain_id="84532",
+        gas={
+            "gas_limit_multiplier": 2,
+            "fee_per_gas_multiplier": 2
+        }
     )
 )
 

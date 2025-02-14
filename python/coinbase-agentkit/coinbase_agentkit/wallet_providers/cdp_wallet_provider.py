@@ -20,7 +20,7 @@ from web3 import Web3
 from web3.types import BlockIdentifier, ChecksumAddress, HexStr, TxParams
 
 from ..network import NETWORK_ID_TO_CHAIN, Network
-from .evm_wallet_provider import EvmWalletProvider
+from .evm_wallet_provider import EvmGasConfig, EvmWalletProvider
 
 
 class CdpProviderConfig(BaseModel):
@@ -36,6 +36,7 @@ class CdpWalletProviderConfig(CdpProviderConfig):
     network_id: str | None = Field("base-sepolia", description="The network id")
     mnemonic_phrase: str | None = Field(None, description="The mnemonic phrase of the wallet")
     wallet_data: str | None = Field(None, description="The data of the CDP Wallet as a JSON string")
+    gas: EvmGasConfig | None = Field(None, description="Gas configuration settings")
 
 
 class CdpWalletProvider(EvmWalletProvider):
@@ -90,6 +91,19 @@ class CdpWalletProvider(EvmWalletProvider):
                 chain_id=chain.id,
             )
             self._web3 = Web3(Web3.HTTPProvider(rpc_url))
+
+            self._gas_limit_multiplier = (
+                max(config.gas.gas_limit_multiplier, 1)
+                if config and config.gas and config.gas.gas_limit_multiplier is not None
+                else 1.2
+            )
+
+            self._fee_per_gas_multiplier = (
+                max(config.gas.fee_per_gas_multiplier, 1)
+                if config and config.gas and config.gas.fee_per_gas_multiplier is not None
+                else 1
+            )
+
 
         except ImportError as e:
             raise ImportError(
@@ -364,18 +378,15 @@ class CdpWalletProvider(EvmWalletProvider):
         transaction["maxPriorityFeePerGas"] = max_priority_fee_per_gas
         transaction["maxFeePerGas"] = max_fee_per_gas
 
-        gas = self._web3.eth.estimate_gas(transaction)
+        gas = int(self._web3.eth.estimate_gas(transaction) * self._gas_limit_multiplier)
         transaction["gas"] = gas
 
         del transaction["from"]
 
         return transaction
 
-    def _estimate_fees(self, multiplier=1.2):
-        """Estimate gas fees for a transaction.
-
-        Args:
-            multiplier (float): Buffer multiplier for base fee, defaults to 1.2
+    def _estimate_fees(self):
+        """Estimate gas fees for a transaction, applying the configured fee multipliers.
 
         Returns:
             tuple[int, int]: Tuple of (max_priority_fee_per_gas, max_fee_per_gas) in wei
@@ -385,11 +396,16 @@ class CdpWalletProvider(EvmWalletProvider):
         def get_base_fee():
             latest_block = self._web3.eth.get_block("latest")
             base_fee = latest_block["baseFeePerGas"]
-            # Multiply by 1.2 to give some buffer
-            return int(base_fee * multiplier)
+            # Multiply the configured fee multiplier to give some buffer
+            return int(base_fee * self._fee_per_gas_multiplier)
+
+        def get_max_priority_fee():
+            max_priority_fee_per_gas = Web3.to_wei(0.1, "gwei")
+            # Multiply the configured fee multiplier to give some buffer
+            return int(max_priority_fee_per_gas * self._fee_per_gas_multiplier)
 
         base_fee_per_gas = get_base_fee()
-        max_priority_fee_per_gas = Web3.to_wei(0.1, "gwei")
+        max_priority_fee_per_gas = get_max_priority_fee()
         max_fee_per_gas = base_fee_per_gas + max_priority_fee_per_gas
 
         return (max_priority_fee_per_gas, max_fee_per_gas)
