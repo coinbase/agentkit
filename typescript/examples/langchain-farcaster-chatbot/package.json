@@ -12,7 +12,7 @@
     "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\""
   },
   "dependencies": {
-    "@coinbase/agentkit": "^0.1.0",
+    "@coinbase/agentkit": "^0.2.0",
     "@coinbase/agentkit-langchain": "^0.1.0",
     "@langchain/core": "0.3.30",
     "@langchain/langgraph": "^0.2.39",
