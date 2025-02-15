@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## [0.2.0] - 2025-02-15
+
 - Added gas configuration parameters (`gasLimitMultiplier`, `feePerGasMultiplier`) to `CdpWalletProvider` and `ViemWalletProvider`.
 - Added `svmWalletProvider` with `solanaKeypairWalletProvider` implementation to create a Solana wallet with a local keypair.
 - Added SPL action provider with `transfer` action.
