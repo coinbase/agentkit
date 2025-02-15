@@ -1,7 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { WalletProvider } from "./walletProvider";
-import { VersionedTransaction } from "@solana/web3.js";
+import {
+  Connection,
+  PublicKey,
+  RpcResponseAndContext,
+  SignatureStatus,
+  SignatureStatusConfig,
+  VersionedTransaction,
+  SignatureResult,
+} from "@solana/web3.js";
 
 /**
  * SvmWalletProvider is the abstract base class for all Solana wallet providers (non browsers).
@@ -9,6 +17,20 @@ import { VersionedTransaction } from "@solana/web3.js";
  * @abstract
  */
 export abstract class SvmWalletProvider extends WalletProvider {
+  /**
+   * Get the connection instance.
+   *
+   * @returns The Solana connection instance.
+   */
+  abstract getConnection(): Connection;
+
+  /**
+   * Get the public key of the wallet.
+   *
+   * @returns The wallet's public key.
+   */
+  abstract getPublicKey(): PublicKey;
+
   /**
    * Sign a transaction.
    *
@@ -21,15 +43,36 @@ export abstract class SvmWalletProvider extends WalletProvider {
    * Send a transaction.
    *
    * @param transaction - The transaction to send.
-   * @returns The transaction hash.
+   * @returns The signature.
    */
   abstract sendTransaction(transaction: VersionedTransaction): Promise<string>;
 
   /**
-   * Wait for a transaction receipt.
+   * Sign and send a transaction.
    *
-   * @param txHash - The transaction hash.
-   * @returns The transaction receipt.
+   * @param transaction - The transaction to sign and send.
+   * @returns The signature.
    */
-  abstract waitForTransactionReceipt(txHash: string): Promise<any>;
+  abstract signAndSendTransaction(transaction: VersionedTransaction): Promise<string>;
+
+  /**
+   * Get the status of a transaction.
+   *
+   * @param signature - The signature.
+   * @returns The status.
+   */
+  abstract getSignatureStatus(
+    signature: string,
+    options?: SignatureStatusConfig,
+  ): Promise<RpcResponseAndContext<SignatureStatus | null>>;
+
+  /**
+   * Wait for signature receipt.
+   *
+   * @param signature - The signature
+   * @returns The confirmation response
+   */
+  abstract waitForSignatureResult(
+    signature: string,
+  ): Promise<RpcResponseAndContext<SignatureResult>>;
 }

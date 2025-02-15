@@ -40,8 +40,9 @@
   ],
   "dependencies": {
     "@coinbase/coinbase-sdk": "^0.17.0",
-    "@solana/web3.js": "^1.98.0",
     "@privy-io/server-auth": "^1.18.4",
+    "@solana/spl-token": "^0.4.12",
+    "@solana/web3.js": "^1.98.0",
     "md5": "^2.3.0",
     "reflect-metadata": "^0.2.2",
     "twitter-api-v2": "^1.18.2",
