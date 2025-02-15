@@ -4,6 +4,10 @@ import { Network } from "./types";
 export const SOLANA_MAINNET_NETWORK_ID = "solana-mainnet";
 export const SOLANA_TESTNET_NETWORK_ID = "solana-testnet";
 export const SOLANA_DEVNET_NETWORK_ID = "solana-devnet";
+export type SOLANA_NETWORK_ID =
+  | typeof SOLANA_MAINNET_NETWORK_ID
+  | typeof SOLANA_TESTNET_NETWORK_ID
+  | typeof SOLANA_DEVNET_NETWORK_ID;
 
 // AgentKit Protocol Family
 export const SOLANA_PROTOCOL_FAMILY = "svm";

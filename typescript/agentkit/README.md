@@ -17,7 +17,7 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
   - [Adding Actions to your Action Provider](#adding-actions-to-your-action-provider)
   - [Adding Actions to your Action Provider that use a Wallet Provider](#adding-actions-to-your-action-provider-that-use-a-wallet-provider)
   - [Adding an Action Provider to your AgentKit instance](#adding-an-action-provider-to-your-agentkit-instance)
-- [Wallet Providers](#wallet-providers)
+- [EVM Wallet Providers](#evm-wallet-providers)
   - [CdpWalletProvider](#cdpwalletprovider)
     - [Network Configuration](#network-configuration)
     - [Configuring from an existing CDP API Wallet](#configuring-from-an-existing-cdp-api-wallet)
@@ -30,6 +30,10 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
   - [PrivyWalletProvider](#privywalletprovider)
     - [Authorization Keys](#authorization-keys)
     - [Exporting Privy Wallet information](#exporting-privy-wallet-information)
+- [SVM Wallet Providers](#svm-wallet-providers)
+  - [SolanaKeypairWalletProvider](#solanakeypairwalletprovider)
+    - [Network Configuration](#solana-network-configuration)
+    - [RPC URL Configuration](#rpc-url-configuration)
 - [Contributing](#contributing)
 
 ## Getting Started
@@ -394,14 +398,14 @@ const agentKit = new AgentKit({
 });
 ```
 
-## Wallet Providers
+## EVM Wallet Providers
 
 Wallet providers give an agent access to a wallet. AgentKit currently supports the following wallet providers:
 
 EVM:
-- [CdpWalletProvider](./src/wallet-providers/cdpWalletProvider.ts)
-- [ViemWalletProvider](./src/wallet-providers/viemWalletProvider.ts)
-- [PrivyWalletProvider](./src/wallet-providers/privyWalletProvider.ts)
+- [CdpWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/cdpWalletProvider.ts)
+- [ViemWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/viemWalletProvider.ts)
+- [PrivyWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/privyWalletProvider.ts)
 
 ### CdpWalletProvider
 
@@ -567,7 +571,7 @@ const config = {
 const walletProvider = await PrivyWalletProvider.configureWithWallet(config);
 ```
 
-#### Authorization Keys
+#### Authorization Keys
 
 Privy offers the option to use authorization keys to secure your server wallets.
 
@@ -590,6 +594,45 @@ const walletData = await walletProvider.exportWallet();
 }
 ```
 
+## SVM Wallet Providers
+
+SVM:
+- [SolanaKeypairWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/solanaKeypairWalletProvider.ts)
+
+### SolanaKeypairWalletProvider
+
+The `SolanaKeypairWalletProvider` is a wallet provider that uses the API [Solana web3.js](https://solana-labs.github.io/solana-web3.js/).
+
+#### Solana Network Configuration
+
+The `SolanaKeypairWalletProvider` can be configured to use a specific network by passing the `networkId` parameter to the `fromNetwork` method. The `networkId` is the ID of the Solana network you want to use. Valid values are `solana-mainnet`, `solana-devnet` and `solana-testnet`.
+
+The default RPC endpoints for each network are as follows:
+- `solana-mainnet`: `https://api.mainnet-beta.solana.com`
+- `solana-devnet`: `https://api.devnet.solana.com`
+- `solana-testnet`: `https://api.testnet.solana.com`
+
+```typescript
+import { SOLANA_NETWORK_ID, SolanaKeypairWalletProvider } from "@coinbase/agentkit";
+
+// Configure Solana Keypair Wallet Provider
+const privateKey = process.env.SOLANA_PRIVATE_KEY;
+const network = process.env.NETWORK_ID as SOLANA_NETWORK_ID;
+const walletProvider = await SolanaKeypairWalletProvider.fromNetwork(network, privateKey);
+```
+
+#### RPC URL Configuration
+
+The `SolanaKeypairWalletProvider` can be configured to use a specific RPC url by passing the `rpcUrl` parameter to the `fromRpcUrl` method. The `rpcUrl` will determine the network you are using.
+
+```typescript
+import { SOLANA_NETWORK_ID, SolanaKeypairWalletProvider } from "@coinbase/agentkit";
+
+// Configure Solana Keypair Wallet Provider
+const privateKey = process.env.SOLANA_PRIVATE_KEY;
+const rpcUrl = process.env.SOLANA_RPC_URL;
+const walletProvider = await SolanaKeypairWalletProvider.fromRpcUrl(network, privateKey);
+```
 
 ## Contributing
 

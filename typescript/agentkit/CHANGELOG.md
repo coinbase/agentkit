@@ -2,12 +2,13 @@
 
 ## Unreleased
 
-### Added
-
-- Added `svmWalletProvider` abstract class for interacting with Solana.
-- Added `solanaKeypairWalletProvider` to concretely implement `svmWalletProvider` with a local keypair.
 - Added gas configuration parameters (`gasLimitMultiplier`, `feePerGasMultiplier`) to `CdpWalletProvider` and `ViemWalletProvider`.
+- Added `svmWalletProvider` with `solanaKeypairWalletProvider` implementation to create a Solana wallet with a local keypair.
+- Added SPL action provider with `transfer` action.
 - Added `privyWalletProvider` to use a Privy server wallet for agent actions.
+- Added gas configuration parameters (`gasLimitMultiplier`, `feePerGasMultiplier`) to `CdpWalletProvider` and `ViemWalletProvider`.
+- Added Solana chatbot example.
+- Added Privy EVM chatbot exmaple.
 
 ## [0.1.2] - 2025-02-07
 
