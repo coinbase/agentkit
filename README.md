@@ -196,6 +196,7 @@ For feature requests, feedback, or questions, please reach out to us via the
 AgentKit is proud to have support for the following protocols, frameworks, and wallet providers:
 
 <a href="https://www.alchemy.com/" target="_blank"><img src="./assets/protocols/alchemy.svg" width="100" height="auto" alt="Alchemy"></a>
+<a href="https://compound.finance/" target="_blank"><img src="./assets/protocols/compound.svg" width="100" height="auto" alt="Compound"></a>
 <a href="https://base.org" target="_blank"><img src="./assets/protocols/base.svg" width="100" height="auto" alt="Base"></a>
 <a href="https://farcaster.xyz" target="_blank"><img src="./assets/protocols/farcaster.svg" width="100" height="auto" alt="Farcaster"></a>
 <a href="https://www.moonwell.fi" target="_blank"><img src="./assets/protocols/moonwell.svg" width="100" height="auto" alt="Moonwell"></a>
