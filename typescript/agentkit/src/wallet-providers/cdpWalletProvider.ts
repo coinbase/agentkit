@@ -69,6 +69,11 @@ export interface CdpWalletProviderConfig extends CdpProviderConfig {
   networkId?: string;
 
   /**
+   * The RPC URL for the network.
+   */
+  rpcUrl?: string;
+
+  /**
    * Configuration for gas multipliers.
    */
   gas?: {
@@ -97,6 +102,11 @@ interface ConfigureCdpAgentkitWithWalletOptions extends CdpWalletProviderConfig 
    * The mnemonic phrase of the wallet.
    */
   mnemonicPhrase?: string;
+
+  /**
+   * The RPC URL for the network. If not provided, it will use the default public RPC.
+   */
+  rpcUrl?: string;
 }
 
 /**
@@ -123,7 +133,7 @@ export class CdpWalletProvider extends EvmWalletProvider {
     this.#network = config.network;
     this.#publicClient = createPublicClient({
       chain: NETWORK_ID_TO_VIEM_CHAIN[config.network!.networkId!],
-      transport: http(),
+      transport: http(config.rpcUrl),
     });
     this.#gasLimitMultiplier = Math.max(config.gas?.gasLimitMultiplier ?? 1.2, 1);
     this.#feePerGasMultiplier = Math.max(config.gas?.feePerGasMultiplier ?? 1, 1);
@@ -183,6 +193,7 @@ export class CdpWalletProvider extends EvmWalletProvider {
       address,
       network,
       gas: config.gas,
+      rpcUrl: config.rpcUrl,
     });
 
     return cdpWalletProvider;
@@ -383,6 +394,15 @@ export class CdpWalletProvider extends EvmWalletProvider {
     }
 
     return this.#network;
+  }
+
+  /**
+   * Gets the RPC URL for the network.
+   *
+   * @returns The RPC URL for the network.
+   */
+  getRpcUrl(): string {
+    return this.#publicClient.transport.url;
   }
 
   /**
