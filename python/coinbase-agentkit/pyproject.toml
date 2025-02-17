@@ -15,12 +15,13 @@ pydantic = "^2.0"
 web3 = "^7.6.0"
 python-dotenv = "^1.0.1"
 requests = "^2.31.0"
-
+allora-sdk = "^0.2.0"
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.7.1"
 mypy = "^1.13.0"
 pytest = "^8.3.3"
 pytest-cov = "^6.0.0"
+pytest-asyncio = "^0.23.5"
 sphinx = "^8.0.2"
 sphinx-autobuild = "^2024.9.19"
 sphinxcontrib-napoleon = "^0.7"
@@ -56,3 +57,4 @@ line-ending = "auto"
 
 [tool.ruff.lint.isort]
 known-first-party = ["coinbase_agentkit, cdp"]
+combine-as-imports = true
