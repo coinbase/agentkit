@@ -36,74 +36,6 @@ jobs:
       - name: Run linters
         run: poetry run make lint
 
-  # lint-cdp-langchain-python:
-  #   runs-on: ubuntu-latest
-  #   defaults:
-  #     run:
-  #       working-directory: ./python/cdp-langchain
-  #   steps:
-  #     - uses: actions/checkout@v3
-
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v4
-  #       with:
-  #         python-version: '3.10'
-
-  #     - name: Install Poetry
-  #       uses: snok/install-poetry@v1
-  #       with:
-  #         version: latest
-  #         virtualenvs-create: true
-  #         virtualenvs-in-project: true
-
-  #     - name: Load cached venv
-  #       id: cached-poetry-dependencies
-  #       uses: actions/cache@v3
-  #       with:
-  #         path: ./python/cdp-langchain/.venv
-  #         key: venv-langchain-${{ runner.os }}-${{ hashFiles('python/cdp-langchain/poetry.lock') }}
-
-  #     - name: Install dependencies
-  #       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-  #       run: poetry install --with dev
-
-  #     - name: Run linters
-  #       run: poetry run make lint
-
-  # lint-twitter-langchain-python:
-  #   runs-on: ubuntu-latest
-  #   defaults:
-  #     run:
-  #       working-directory: ./python/twitter-langchain
-  #   steps:
-  #     - uses: actions/checkout@v3
-
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v4
-  #       with:
-  #         python-version: '3.10'
-
-  #     - name: Install Poetry
-  #       uses: snok/install-poetry@v1
-  #       with:
-  #         version: latest
-  #         virtualenvs-create: true
-  #         virtualenvs-in-project: true
-
-  #     - name: Load cached venv
-  #       id: cached-poetry-dependencies
-  #       uses: actions/cache@v3
-  #       with:
-  #         path: ./python/twitter-langchain/.venv
-  #         key: venv-twitter-langchain-${{ runner.os }}-${{ hashFiles('python/twitter-langchain/poetry.lock') }}
-
-  #     - name: Install dependencies
-  #       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-  #       run: poetry install --with dev
-
-  #     - name: Run linters
-  #       run: poetry run make lint
-
   lint-typescript:
     runs-on: ubuntu-latest
     steps:
@@ -119,3 +51,55 @@ jobs:
         run: |
           npm run format:check
           npm run lint
+
+  check-package-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+      
+      - name: Run npm install
+        run: npm install
+      
+      - name: Check if package-lock.json changed
+        run: |
+          if [ -n "$(git diff package-lock.json)" ]; then
+            echo "Error: package-lock.json was modified after running npm install. Please commit the updated package-lock.json file."
+            git diff package-lock.json
+            exit 1
+          fi
+
+  check-poetry-locks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Check poetry.lock files
+        run: |
+          for dir in $(find . -name pyproject.toml -exec dirname {} \;); do
+            echo "Checking $dir..."
+            cd $dir
+            poetry install
+            if [ -n "$(git diff poetry.lock)" ]; then
+              echo "Error: poetry.lock in $dir was modified after running poetry install. Please commit the updated poetry.lock file."
+              git diff poetry.lock
+              exit 1
+            fi
+            cd - > /dev/null
+          done
