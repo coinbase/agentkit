@@ -44,6 +44,7 @@
     "@solana/spl-token": "^0.4.12",
     "@solana/web3.js": "^1.98.0",
     "md5": "^2.3.0",
+    "opensea-js": "^7.1.16",
     "reflect-metadata": "^0.2.2",
     "twitter-api-v2": "^1.18.2",
     "viem": "^2.22.16",
