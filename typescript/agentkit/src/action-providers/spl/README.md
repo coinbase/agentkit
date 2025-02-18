@@ -20,6 +20,11 @@ spl/
   - Validates token balances before transfer
   - Returns transaction signature
 
+- `get_balance`: Get SPL token balance for an address
+  - Retrieves token balance in human-readable format
+  - Supports checking balance for any address (defaults to connected wallet)
+  - Returns 0 for non-existent token accounts
+
 ## Adding New Actions
 
 To add new SPL actions:

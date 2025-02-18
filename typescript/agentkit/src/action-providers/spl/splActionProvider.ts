@@ -3,7 +3,7 @@ import { Network } from "../../network";
 import { SvmWalletProvider } from "../../wallet-providers/svmWalletProvider";
 import { z } from "zod";
 import { CreateAction } from "../actionDecorator";
-import { TransferTokenSchema } from "./schemas";
+import { TransferTokenSchema, GetBalanceSchema } from "./schemas";
 import {
   PublicKey,
   VersionedTransaction,
@@ -21,6 +21,54 @@ export class SplActionProvider extends ActionProvider<SvmWalletProvider> {
    */
   constructor() {
     super("spl", []);
+  }
+
+  /**
+   * Get the balance of SPL tokens for an address.
+   *
+   * @param walletProvider - The wallet provider to use
+   * @param args - Parameters including mint address and optional target address
+   * @returns A message indicating the token balance
+   */
+  @CreateAction({
+    name: "get_balance",
+    description: `
+    This tool will get the balance of SPL tokens for an address.
+    - Mint address must be a valid SPL token mint
+    - If no address is provided, uses the connected wallet's address
+    - Returns the token balance in token units (not raw)
+    `,
+    schema: GetBalanceSchema,
+  })
+  async getBalance(
+    walletProvider: SvmWalletProvider,
+    args: z.infer<typeof GetBalanceSchema>,
+  ): Promise<string> {
+    try {
+      const connection = walletProvider.getConnection();
+      const mintPubkey = new PublicKey(args.mintAddress);
+      const ownerPubkey = args.address
+        ? new PublicKey(args.address)
+        : walletProvider.getPublicKey();
+
+      const { getMint, getAssociatedTokenAddress, getAccount } = await import("@solana/spl-token");
+
+      const mintInfo = await getMint(connection, mintPubkey);
+      const ata = await getAssociatedTokenAddress(mintPubkey, ownerPubkey);
+
+      try {
+        const account = await getAccount(connection, ata);
+        const balance = Number(account.amount) / Math.pow(10, mintInfo.decimals);
+        return `Balance for ${args.address || "connected wallet"} is ${balance} tokens`;
+      } catch (error) {
+        if ((error as Error).message.includes("could not find account")) {
+          return `Balance for ${args.address || "connected wallet"} is 0 tokens`;
+        }
+        throw error;
+      }
+    } catch (error) {
+      return `Error getting SPL token balance: ${error}`;
+    }
   }
 
   /**
