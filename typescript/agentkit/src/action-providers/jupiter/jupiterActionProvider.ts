@@ -1,24 +1,21 @@
 import { ActionProvider } from "../actionProvider";
-import { Network } from "../../network";
+import { Network, SOLANA_NETWORK_ID } from "../../network";
 import { SvmWalletProvider } from "../../wallet-providers/svmWalletProvider";
 import { z } from "zod";
 import { CreateAction } from "../actionDecorator";
 import { SwapTokenSchema } from "./schemas";
 import { PublicKey, VersionedTransaction } from "@solana/web3.js";
-import { createJupiterApiClient, DefaultApi, SwapRequest } from "@jup-ag/api";
+import { createJupiterApiClient, SwapRequest } from "@jup-ag/api";
 
 /**
  * JupiterActionProvider handles token swaps using Jupiter's API.
  */
 export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
-  private jupiterApi: DefaultApi;
-
   /**
    * Initializes Jupiter API client.
    */
   constructor() {
     super("jupiter", []);
-    this.jupiterApi = createJupiterApiClient({});
   }
 
   /**
@@ -43,6 +40,9 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
     args: z.infer<typeof SwapTokenSchema>,
   ): Promise<string> {
     try {
+      const jupiterApi = createJupiterApiClient({
+        basePath: this.#getJupiterApiUrl(walletProvider),
+      });
       const connection = walletProvider.getConnection();
       const userPublicKey = walletProvider.getPublicKey();
       const inputMint = new PublicKey(args.inputMint);
@@ -50,7 +50,7 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
       const amount = args.amount;
 
       // Step 1: Get the best swap route
-      const quoteResponse = await this.jupiterApi.quoteGet({
+      const quoteResponse = await jupiterApi.quoteGet({
         inputMint: inputMint.toBase58(),
         outputMint: outputMint.toBase58(),
         amount: amount,
@@ -70,7 +70,7 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
       };
 
       // Step 3: Request the swap transaction
-      const swapResponse = await this.jupiterApi.swapPost({ swapRequest });
+      const swapResponse = await jupiterApi.swapPost({ swapRequest });
       if (!swapResponse || !swapResponse.swapTransaction) {
         throw new Error("Failed to generate swap transaction.");
       }
@@ -96,6 +96,20 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
    */
   supportsNetwork(network: Network): boolean {
     return network.protocolFamily === "svm";
+  }
+
+  #getJupiterApiUrl(walletProvider: SvmWalletProvider): string {
+    const network = walletProvider.getNetwork().networkId as SOLANA_NETWORK_ID;
+    switch (network) {
+      case "solana-mainnet":
+        return "https://quote-api.jup.ag/v6";
+      case "solana-devnet":
+        return "https://devnet-quote-api.jup.ag/v6";
+      case "solana-testnet":
+        return "https://testnet-quote-api.jup.ag/v6";
+      default:
+        throw new Error(`Unsupported network: ${network}`);
+    }
   }
 }
 
