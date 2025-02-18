@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fixed Morpho `deposit` and `withdraw` function headers to conform to the Action Provider Paradigm.
+
 ## [0.1.2] - 2025-02-14
 
 - Added gas configuration parameters (`gas_limit_multiplier`, `fee_per_gas_multiplier`) to `CdpWalletProvider` and `EthAccountWalletProvider`.
