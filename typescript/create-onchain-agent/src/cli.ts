@@ -12,6 +12,7 @@ import {
   toValidPackageName,
   optimizedCopy,
 } from "./utils.js";
+import { WalletOption, WalletOptions, WalletOptionsLookup } from "./walletProviders.js";
 
 const sourceDir = path.resolve(
   fileURLToPath(import.meta.url),
@@ -49,22 +50,17 @@ async function copyDir(src: string, dest: string) {
 async function init() {
   console.log(
     `${pc.greenBright(`
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                                                                                          //
-    //         ::::::::  ::::    :::  ::::::::  :::    :::     :::     ::::::::::: ::::    ::: :::::::::::       //
-    //       :+:    :+: :+:+:   :+: :+:    :+: :+:    :+:   :+: :+:       :+:     :+:+:   :+: :+:               //
-    //      +:+    +:+ :+:+:+  +:+ +:+        +:+    +:+  +:+   +:+      +:+     :+:+:+  +:+ +:+               //
-    //     +#+    +:+ +#+ +:+ +#+ +#+        +#++:++#++ +#++:++#++:     +#+     +#+ +:+ +#+ +#++:++            //
-    //    +#+    +#+ +#+  +#+#+# +#+        +#+    +#+ +#+     +#+     +#+     +#+  +#+#+# +#+                 //
-    //   #+#    #+# #+#   #+#+# #+#    #+# #+#    #+# #+#     #+#     #+#     #+#   #+#+# #+#                  //
-    //   ########  ###    ####  ########  ###    ### ###     ### ########### ###    #### ###########           //
-    //                                                                                                          //
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////`)}\n\n`
+ █████   ██████  ███████ ███    ██ ████████ ██   ██ ██ ████████ 
+██   ██ ██       ██      ████   ██    ██    ██  ██  ██    ██    
+███████ ██   ███ █████   ██ ██  ██    ██    █████   ██    ██    
+██   ██ ██    ██ ██      ██  ██ ██    ██    ██  ██  ██    ██    
+██   ██  ██████  ███████ ██   ████    ██    ██   ██ ██    ██    
+`)}\n\n`
   );
 
   const defaultProjectName = "my-onchain-agent-app";
 
-  let result: prompts.Answers<"projectName" | "packageName" | "clientKey" | "smartWallet">;
+  let result: prompts.Answers<"projectName" | "packageName" | 'walletProvider'>;
 
   try {
     result = await prompts(
@@ -96,22 +92,10 @@ async function init() {
             isValidPackageName(dir) || "Invalid package.json name",
         },
         {
-          type: "password",
-          name: "clientKey",
-          message: pc.reset(
-            `Enter your ${createClickableLink(
-              "Coinbase Developer Platform Client API Key:",
-              "https://portal.cdp.coinbase.com/products/onchain-agent"
-            )} (optional)`
-          ),
-        },
-        {
-          type: "toggle",
-          name: "smartWallet",
-          message: pc.reset("Use Coinbase Smart Wallet? (recommended)"),
-          initial: true,
-          active: "yes",
-          inactive: "no",
+          type: "select",
+          name: "walletProvider",
+          message: pc.reset("Choose a wallet provider:"),
+          choices: WalletOptions.map((option) => ({ title: option, value: option })),
         },
       ],
       {
@@ -126,7 +110,8 @@ async function init() {
     process.exit(1);
   }
 
-  const { projectName, packageName, clientKey, smartWallet } = result;
+  const { projectName, packageName, walletProvider } = result;
+  const walletProviderOptions = WalletOptionsLookup[walletProvider as WalletOption]
   const root = path.join(process.cwd(), projectName);
 
   const spinner = ora(`Creating ${projectName}...`).start();
@@ -142,26 +127,13 @@ async function init() {
   const envPath = path.join(root, ".env");
   await fs.promises.writeFile(
     envPath,
-    `NEXT_PUBLIC_AGENTKIT_PROJECT_NAME=${projectName}\nNEXT_PUBLIC_AGENTKIT_API_KEY=${clientKey}\nNEXT_PUBLIC_AGENTKIT_WALLET_CONFIG=${
-      smartWallet ? "smartWalletOnly" : "all"
-    }`
+    `NETWORK_ID=\nOPENAI_API_KEY=\n${walletProviderOptions.env.map(envVar => `${envVar}=`).join('=\n')}`
   );
 
   spinner.succeed();
   console.log(`\n${pc.magenta(`Created new AgentKit project in ${root}`)}`);
 
-  console.log(`\nIntegrations:`);
-  if (smartWallet) {
-    console.log(`${pc.greenBright("\u2713")} ${pc.blueBright(`Smart Wallet`)}`);
-  }
-  console.log(`${pc.greenBright("\u2713")} ${pc.blueBright(`Base`)}`);
-  if (clientKey) {
-    console.log(`${pc.greenBright("\u2713")} ${pc.blueBright(`Coinbase Developer Platform`)}`);
-    console.log(`${pc.greenBright("\u2713")} ${pc.blueBright(`Paymaster`)}`);
-  }
-
   console.log(`\nFrameworks:`);
-  console.log(`${pc.cyan("- Wagmi")}`);
   console.log(`${pc.cyan("- React")}`);
   console.log(`${pc.cyan("- Next.js")}`);
   console.log(`${pc.cyan("- Tailwind CSS")}`);
