@@ -1,22 +1,21 @@
 #!/usr/bin/env node
 import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-import prompts from "prompts";
-import pc from "picocolors";
 import ora from "ora";
+import path from "path";
+import pc from "picocolors";
+import prompts from "prompts";
+import { fileURLToPath } from "url";
 import {
-  createClickableLink,
-  detectPackageManager,
+  handleWalletProviderSelection,
   isValidPackageName,
-  toValidPackageName,
   optimizedCopy,
+  toValidPackageName,
+  WalletProviderChoices
 } from "./utils.js";
-import { WalletProviderChoice, WalletProviderChoices, WalletProviderRouteConfigurations } from "./walletProviders.js";
 
 const sourceDir = path.resolve(
   fileURLToPath(import.meta.url),
-  "../../../templates/agent"
+  "../../../templates/next"
 );
 
 const renameFiles: Record<string, string | undefined> = {
@@ -50,11 +49,11 @@ async function copyDir(src: string, dest: string) {
 async function init() {
   console.log(
     `${pc.greenBright(`
- █████   ██████  ███████ ███    ██ ████████ ██   ██ ██ ████████ 
-██   ██ ██       ██      ████   ██    ██    ██  ██  ██    ██    
-███████ ██   ███ █████   ██ ██  ██    ██    █████   ██    ██    
-██   ██ ██    ██ ██      ██  ██ ██    ██    ██  ██  ██    ██    
-██   ██  ██████  ███████ ██   ████    ██    ██   ██ ██    ██    
+ █████   ██████  ███████ ███    ██ ████████    ██   ██ ██ ████████ 
+██   ██ ██       ██      ████   ██    ██       ██  ██  ██    ██    
+███████ ██   ███ █████   ██ ██  ██    ██       █████   ██    ██    
+██   ██ ██    ██ ██      ██  ██ ██    ██       ██  ██  ██    ██    
+██   ██  ██████  ███████ ██   ████    ██       ██   ██ ██    ██    
 `)}\n\n`
   );
 
@@ -111,7 +110,6 @@ async function init() {
   }
 
   const { projectName, packageName, walletProvider } = result;
-  const walletProviderOptions = WalletProviderRouteConfigurations[walletProvider as WalletProviderChoice]
   const root = path.join(process.cwd(), projectName);
 
   const spinner = ora(`Creating ${projectName}...`).start();
@@ -123,12 +121,7 @@ async function init() {
   pkg.name = packageName || toValidPackageName(projectName);
   await fs.promises.writeFile(pkgPath, JSON.stringify(pkg, null, 2));
 
-  // Create .env file
-  const envPath = path.join(root, ".env");
-  await fs.promises.writeFile(
-    envPath,
-    `NETWORK_ID=\nOPENAI_API_KEY=\n${walletProviderOptions.env.map(envVar => `${envVar}=`).join('=\n')}`
-  );
+  await handleWalletProviderSelection(root, walletProvider)
 
   spinner.succeed();
   console.log(`\n${pc.magenta(`Created new AgentKit project in ${root}`)}`);

@@ -4,11 +4,11 @@
   "version": "0.0.1",
   "license": "MIT",
   "scripts": {
-    "build": "bun run clean && bun run build:esm+types",
+    "build": "npm run clean && npm run build:esm+types",
     "build:esm+types": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationMap --declarationDir ./dist/types",
     "check:types": "tsc --noEmit",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
-    "dev": "bun src/cli.ts"
+    "dev": "node --loader ts-node/esm src/cli.ts"
   },
   "files": [
     "dist/**",
@@ -19,7 +19,7 @@
     "templates/**"
   ],
   "bin": {
-    "create-onchain": "./dist/esm/cli.js"
+    "create-onchain-agent": "./dist/esm/cli.js"
   },
   "sideEffects": false,
   "type": "module",

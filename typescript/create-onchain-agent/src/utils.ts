@@ -1,6 +1,13 @@
 import fs from 'fs/promises';
 import path from 'path';
 
+export type WalletProviderChoice = 'CDP' | 'Viem' | 'Privy' | 'SolanaKeypair'
+export const WalletProviderChoices: WalletProviderChoice[] = ['CDP', 'Viem', 'Privy', 'SolanaKeypair']
+type WalletProviderRouteConfiguration = {
+    env: string[];
+    apiRoute: string
+}
+
 async function copyFile(src: string, dest: string) {
   await fs.copyFile(src, dest);
 }
@@ -67,4 +74,59 @@ export function detectPackageManager(): string {
     }
   }
   return 'npm'; // default to npm if unable to detect
+}
+
+export const WalletProviderRouteConfigurations: Record<WalletProviderChoice, WalletProviderRouteConfiguration> = {
+    CDP: {
+        env: ['NETWORK_ID', 'CDP_API_KEY_NAME', 'CDP_API_KEY_PRIVATE_KEY'],
+        apiRoute: 'cdp/route.ts'
+    },
+    Viem: {
+        env: ['NETWORK_ID', 'PRIVATE_KEY'],
+        apiRoute: 'viem/route.ts'
+    },
+    Privy: {
+        env: ['PRIVY_APP_ID', 'PRIVY_APP_SECRET', 'PRIVY_WALLET_ID', 'CHAIN_ID', 'PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY', 'PRIVY_WALLET_AUTHORIZATION_KEY_ID'],
+        apiRoute: 'privy/route.ts'
+    },
+    SolanaKeypair: {
+        env: ['NETWORK_ID', 'SOLANA_RPC_URL', 'SOLANA_PRIVATE_KEY'],
+        apiRoute: 'solanaKeypair/route.ts'
+    },
+}
+
+export async function handleWalletProviderSelection(root: string, walletProvider: WalletProviderChoice) {
+  const agentDir = path.join(root, "app", "api", "agent");
+  const selectedRouteConfig = WalletProviderRouteConfigurations[walletProvider];
+
+  // Create .env file
+  const envPath = path.join(root, ".env");
+  await fs.writeFile(
+    envPath,
+    `OPENAI_API_KEY=\n${selectedRouteConfig.env.map(envVar => `${envVar}=`).join('\n')}`
+  );
+
+  // Promote selected route (move `apiRoute` to `api/agent/route.ts`)
+  const selectedRoutePath = path.join(agentDir, selectedRouteConfig.apiRoute);
+  const newRoutePath = path.join(agentDir, "route.ts");
+
+  await fs.rename(selectedRoutePath, newRoutePath);
+
+  // Delete all unselected routes
+  const providerRoutes = Object.values(WalletProviderRouteConfigurations).map((config) => path.join(agentDir, config.apiRoute));
+  for (const routePath of providerRoutes) {
+    // Remove file
+    await fs.rm(routePath, { recursive: true, force: true });
+
+    // If directory is empty, remove directory
+    try {
+      const parentFolder = path.dirname(routePath);
+      const files = await fs.readdir(parentFolder);
+      if (files.length === 0) {
+        await fs.rm(parentFolder, { recursive: true, force: true });
+      }
+    } catch (error) {
+      // Skip removing directory
+    }
+  }
 }
