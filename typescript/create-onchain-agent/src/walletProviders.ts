@@ -1,15 +1,14 @@
 
 
-export type WalletOption = 'CDP' | 'Viem' | 'Privy' | 'SolanaKeypair'
+export type WalletProviderChoice = 'CDP' | 'Viem' | 'Privy' | 'SolanaKeypair'
 
-export const WalletOptions: WalletOption[] = ['CDP', 'Viem', 'Privy', 'SolanaKeypair']
+export const WalletProviderChoices: WalletProviderChoice[] = ['CDP', 'Viem', 'Privy', 'SolanaKeypair']
 
-type WalletProviderConfiguration = {
+type WalletProviderRouteConfiguration = {
     env: string[];
     apiRoute: string
 }
-
-export const WalletOptionsLookup: Record<WalletOption, WalletProviderConfiguration> = {
+export const WalletProviderRouteConfigurations: Record<WalletProviderChoice, WalletProviderRouteConfiguration> = {
     CDP: {
         env: ['NETWORK_ID', 'CDP_API_KEY_NAME', 'CDP_API_KEY_PRIVATE_KEY'],
         apiRoute: 'agent/cdp/route.ts'
