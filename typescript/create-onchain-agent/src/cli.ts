@@ -12,7 +12,7 @@ import {
   toValidPackageName,
   optimizedCopy,
 } from "./utils.js";
-import { WalletOption, WalletOptions, WalletOptionsLookup } from "./walletProviders.js";
+import { WalletProviderChoice, WalletProviderChoices, WalletProviderRouteConfigurations } from "./walletProviders.js";
 
 const sourceDir = path.resolve(
   fileURLToPath(import.meta.url),
@@ -95,7 +95,7 @@ async function init() {
           type: "select",
           name: "walletProvider",
           message: pc.reset("Choose a wallet provider:"),
-          choices: WalletOptions.map((option) => ({ title: option, value: option })),
+          choices: WalletProviderChoices.map((option) => ({ title: option, value: option })),
         },
       ],
       {
@@ -111,7 +111,7 @@ async function init() {
   }
 
   const { projectName, packageName, walletProvider } = result;
-  const walletProviderOptions = WalletOptionsLookup[walletProvider as WalletOption]
+  const walletProviderOptions = WalletProviderRouteConfigurations[walletProvider as WalletProviderChoice]
   const root = path.join(process.cwd(), projectName);
 
   const spinner = ora(`Creating ${projectName}...`).start();
