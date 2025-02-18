@@ -7,6 +7,7 @@ import {
   cdpApiActionProvider,
   cdpWalletActionProvider,
   pythActionProvider,
+  safeActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -93,7 +94,7 @@ async function initializeAgent() {
 
     // Initialize AgentKit
     const agentkit = await AgentKit.from({
-      walletProvider,
+      walletProvider: walletProvider,
       actionProviders: [
         wethActionProvider(),
         pythActionProvider(),
@@ -106,6 +107,10 @@ async function initializeAgent() {
         cdpWalletActionProvider({
           apiKeyName: process.env.CDP_API_KEY_NAME,
           apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+        }),
+        safeActionProvider({
+          networkId: walletProvider.getNetwork().networkId,
+          privateKey: await (await walletProvider.getWallet().getDefaultAddress()).export(),
         }),
       ],
     });

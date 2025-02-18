@@ -12,6 +12,7 @@ export * from "./farcaster";
 export * from "./pyth";
 export * from "./moonwell";
 export * from "./morpho";
+export * from "./safe";
 export * from "./spl";
 export * from "./twitter";
 export * from "./wallet";
