@@ -40,6 +40,7 @@ npm install
   - PRIVY_WALLET_ID=[optional, otherwise a new wallet will be created]
   - PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY=[optional, only if you are using authorization keys for your server wallets]
   - PRIVY_WALLET_AUTHORIZATION_KEY_ID=[optional, only if walletId is not provided in order to create a new wallet, this can be found in your Privy Dashboard]
+  - NETWORK_ID=optional. If you'd like to use a Privy Solana wallet, set to "solana-devnet". Otherwise, defaults to "base-sepolia" and will use a Privy EVM wallet
 
 You can manage authorization keys from your [Privy dashboard](https://dashboard.privy.io/account) or programmatically [using the API](https://docs.privy.io/guide/server-wallets/authorization/signatures).
 
