@@ -20,7 +20,7 @@ export abstract class WalletProvider {
   /**
    * Tracks the initialization of the wallet provider.
    */
-  private trackInitialization() {
+  protected trackInitialization() {
     try {
       sendAnalyticsEvent({
         name: "agent_initialization",
