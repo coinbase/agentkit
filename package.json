@@ -55,5 +55,8 @@
     "turbo": "^2.3.3",
     "typedoc": "^0.27.2",
     "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "@jup-ag/api": "^6.0.39"
   }
 }
