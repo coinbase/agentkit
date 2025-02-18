@@ -3,32 +3,17 @@ import { createViemAccount } from "@privy-io/server-auth/viem";
 import { ViemWalletProvider } from "./viemWalletProvider";
 import { createWalletClient, http, WalletClient } from "viem";
 import { getChain } from "../network/network";
+import { PrivyWalletConfig, PrivyWalletExport } from "./privyShared";
 
 /**
  * Configuration options for the Privy wallet provider.
  *
  * @interface
  */
-export interface PrivyEvmWalletConfig {
-  /** The Privy application ID */
-  appId: string;
-  /** The Privy application secret */
-  appSecret: string;
-  /** The ID of the wallet to use, if not provided a new wallet will be created */
-  walletId?: string;
+export interface PrivyEvmWalletConfig extends PrivyWalletConfig {
   /** Optional chain ID to connect to */
   chainId?: string;
-  /** Optional authorization key for the wallet API */
-  authorizationPrivateKey?: string;
-  /** Optional authorization key ID for creating new wallets */
-  authorizationKeyId?: string;
 }
-
-type PrivyWalletExport = {
-  walletId: string;
-  authorizationPrivateKey: string | undefined;
-  chainId: string | undefined;
-};
 
 /**
  * A wallet provider that uses Privy's server wallet API.
@@ -47,7 +32,7 @@ export class PrivyEvmWalletProvider extends ViemWalletProvider {
    */
   private constructor(
     walletClient: WalletClient,
-    config: PrivyEvmWalletConfig & { walletId: string }, // Require walletId in constructor
+    config: PrivyWalletConfig & { walletId: string }, // Require walletId in constructor
   ) {
     super(walletClient);
     this.#walletId = config.walletId; // Now guaranteed to exist
@@ -167,6 +152,7 @@ export class PrivyEvmWalletProvider extends ViemWalletProvider {
       walletId: this.#walletId,
       authorizationPrivateKey: this.#authorizationPrivateKey,
       chainId: this.getNetwork().chainId,
+      networkId: this.getNetwork().networkId,
     };
   }
 }
