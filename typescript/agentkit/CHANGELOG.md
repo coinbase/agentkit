@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Added `get_balance` to `splActionProvider`
+- Added support for Privy Server Wallets on Solana.
 
 ## [0.2.0] - 2025-02-15
 
