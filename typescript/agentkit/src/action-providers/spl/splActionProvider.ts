@@ -47,13 +47,11 @@ export class SplActionProvider extends ActionProvider<SvmWalletProvider> {
     try {
       const connection = walletProvider.getConnection();
       const mintPubkey = new PublicKey(args.mintAddress);
-      const ownerPubkey = args.address ? new PublicKey(args.address) : walletProvider.getPublicKey();
+      const ownerPubkey = args.address
+        ? new PublicKey(args.address)
+        : walletProvider.getPublicKey();
 
-      const {
-        getMint,
-        getAssociatedTokenAddress,
-        getAccount,
-      } = await import("@solana/spl-token");
+      const { getMint, getAssociatedTokenAddress, getAccount } = await import("@solana/spl-token");
 
       const mintInfo = await getMint(connection, mintPubkey);
       const ata = await getAssociatedTokenAddress(mintPubkey, ownerPubkey);
