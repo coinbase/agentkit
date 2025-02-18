@@ -275,4 +275,92 @@ describe("SplActionProvider", () => {
       expect(result).toContain(`Successfully transferred ${transferArgs.amount} tokens`);
     });
   });
+
+  describe("getBalance", () => {
+    const MINT_ADDRESS = "So11111111111111111111111111111111111111112";
+    const TARGET_ADDRESS = "DjXsn34uz8yCBQ8bevLrEPYYC1RvhHvjzuVF8opNc4K2";
+    const SENDER_ADDRESS = "11111111111111111111111111111111";
+
+    const balanceArgs = {
+      mintAddress: MINT_ADDRESS,
+    };
+
+    const balanceWithAddressArgs = {
+      mintAddress: MINT_ADDRESS,
+      address: TARGET_ADDRESS,
+    };
+
+    const mockTokenAccount = {
+      amount: BigInt(1000000000),
+      address: new PublicKey(MINT_ADDRESS),
+      mint: new PublicKey(MINT_ADDRESS),
+      owner: new PublicKey(TARGET_ADDRESS),
+      delegate: null,
+      delegatedAmount: BigInt(0),
+      closeAuthority: null,
+      isFrozen: false,
+      isNative: false,
+      rentExemptReserve: null,
+      isInitialized: true,
+      tlvData: new Map(),
+    } as unknown as Account;
+
+    beforeEach(() => {
+      mockWallet.getPublicKey.mockReturnValue(new PublicKey(SENDER_ADDRESS));
+      mockWallet.getAddress.mockReturnValue(SENDER_ADDRESS);
+    });
+
+    it("should get balance for connected wallet", async () => {
+      mockGetAccount.mockResolvedValue(mockTokenAccount);
+
+      const result = await actionProvider.getBalance(mockWallet, balanceArgs);
+
+      expect(mockGetAssociatedTokenAddress).toHaveBeenCalledWith(
+        new PublicKey(balanceArgs.mintAddress),
+        new PublicKey(SENDER_ADDRESS),
+      );
+
+      expect(mockGetMint).toHaveBeenCalledWith(
+        mockConnection,
+        new PublicKey(balanceArgs.mintAddress),
+      );
+      expect(mockGetAccount).toHaveBeenCalled();
+
+      expect(result).toBe("Balance for connected wallet is 1000 tokens");
+    });
+
+    it("should get balance for specified address", async () => {
+      mockGetAccount.mockResolvedValue(mockTokenAccount);
+
+      const result = await actionProvider.getBalance(mockWallet, balanceWithAddressArgs);
+
+      expect(mockGetAssociatedTokenAddress).toHaveBeenCalledWith(
+        new PublicKey(balanceWithAddressArgs.mintAddress),
+        new PublicKey(balanceWithAddressArgs.address),
+      );
+
+      expect(mockGetMint).toHaveBeenCalledWith(
+        mockConnection,
+        new PublicKey(balanceWithAddressArgs.mintAddress),
+      );
+      expect(mockGetAccount).toHaveBeenCalled();
+
+      expect(result).toBe(`Balance for ${TARGET_ADDRESS} is 1000 tokens`);
+    });
+
+    it("should handle non-existent token account", async () => {
+      mockGetAccount.mockRejectedValue(new Error("could not find account"));
+
+      const result = await actionProvider.getBalance(mockWallet, balanceArgs);
+      expect(result).toBe("Balance for connected wallet is 0 tokens");
+    });
+
+    it("should handle errors", async () => {
+      const error = new Error("Test error");
+      mockGetAccount.mockRejectedValue(error);
+
+      const result = await actionProvider.getBalance(mockWallet, balanceArgs);
+      expect(result).toBe("Error getting SPL token balance: Error: Test error");
+    });
+  });
 });

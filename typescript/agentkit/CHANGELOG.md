@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added `get_balance` to `splActionProvider`
+
 ## [0.2.0] - 2025-02-15
 
 - Added gas configuration parameters (`gasLimitMultiplier`, `feePerGasMultiplier`) to `CdpWalletProvider` and `ViemWalletProvider`.
