@@ -276,7 +276,7 @@ describe("SplActionProvider", () => {
     });
   });
 
-  describe("balance", () => {
+  describe("getBalance", () => {
     const MINT_ADDRESS = "So11111111111111111111111111111111111111112";
     const TARGET_ADDRESS = "DjXsn34uz8yCBQ8bevLrEPYYC1RvhHvjzuVF8opNc4K2";
     const SENDER_ADDRESS = "11111111111111111111111111111111";
@@ -313,7 +313,7 @@ describe("SplActionProvider", () => {
     it("should get balance for connected wallet", async () => {
       mockGetAccount.mockResolvedValue(mockTokenAccount);
 
-      const result = await actionProvider.balance(mockWallet, balanceArgs);
+      const result = await actionProvider.getBalance(mockWallet, balanceArgs);
 
       expect(mockGetAssociatedTokenAddress).toHaveBeenCalledWith(
         new PublicKey(balanceArgs.mintAddress),
@@ -332,7 +332,7 @@ describe("SplActionProvider", () => {
     it("should get balance for specified address", async () => {
       mockGetAccount.mockResolvedValue(mockTokenAccount);
 
-      const result = await actionProvider.balance(mockWallet, balanceWithAddressArgs);
+      const result = await actionProvider.getBalance(mockWallet, balanceWithAddressArgs);
 
       expect(mockGetAssociatedTokenAddress).toHaveBeenCalledWith(
         new PublicKey(balanceWithAddressArgs.mintAddress),
@@ -351,7 +351,7 @@ describe("SplActionProvider", () => {
     it("should handle non-existent token account", async () => {
       mockGetAccount.mockRejectedValue(new Error("could not find account"));
 
-      const result = await actionProvider.balance(mockWallet, balanceArgs);
+      const result = await actionProvider.getBalance(mockWallet, balanceArgs);
       expect(result).toBe("Balance for connected wallet is 0 tokens");
     });
 
@@ -359,7 +359,7 @@ describe("SplActionProvider", () => {
       const error = new Error("Test error");
       mockGetAccount.mockRejectedValue(error);
 
-      const result = await actionProvider.balance(mockWallet, balanceArgs);
+      const result = await actionProvider.getBalance(mockWallet, balanceArgs);
       expect(result).toBe("Error getting SPL token balance: Error: Test error");
     });
   });

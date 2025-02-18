@@ -31,7 +31,7 @@ export class SplActionProvider extends ActionProvider<SvmWalletProvider> {
    * @returns A message indicating the token balance
    */
   @CreateAction({
-    name: "balance",
+    name: "get_balance",
     description: `
     This tool will get the balance of SPL tokens for an address.
     - Mint address must be a valid SPL token mint
@@ -40,7 +40,7 @@ export class SplActionProvider extends ActionProvider<SvmWalletProvider> {
     `,
     schema: GetBalanceSchema,
   })
-  async balance(
+  async getBalance(
     walletProvider: SvmWalletProvider,
     args: z.infer<typeof GetBalanceSchema>,
   ): Promise<string> {
