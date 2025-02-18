@@ -5,6 +5,9 @@ import {
   walletActionProvider,
   erc20ActionProvider,
   pythActionProvider,
+  PrivyWalletConfig,
+  PrivyEvmWalletProvider,
+  PrivySvmWalletProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -66,25 +69,41 @@ async function initializeAgent() {
       model: "gpt-4o-mini",
     });
 
-    // Configure Wallet Provider
-    const config = {
-      appId: process.env.PRIVY_APP_ID as string,
-      appSecret: process.env.PRIVY_APP_SECRET as string,
-      chainId: process.env.CHAIN_ID || "84532",
-      walletId: process.env.PRIVY_WALLET_ID as string,
-      authorizationPrivateKey: process.env.PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY,
-      authorizationKeyId: process.env.PRIVY_WALLET_AUTHORIZATION_KEY_ID,
-    };
+    let walletProvider: PrivyEvmWalletProvider | PrivySvmWalletProvider;
 
-    // Try to load saved wallet data
-    if (fs.existsSync(WALLET_DATA_FILE)) {
-      const savedWallet = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8"));
-      config.walletId = savedWallet.walletId;
-      config.authorizationPrivateKey = savedWallet.authorizationPrivateKey;
-      config.chainId = savedWallet.chainId;
+    const networkId = process.env.NETWORK_ID;
+
+    if (networkId?.includes("solana")) {
+      walletProvider = await PrivyWalletProvider.configureWithWallet({
+        appId: process.env.PRIVY_APP_ID as string,
+        appSecret: process.env.PRIVY_APP_SECRET as string,
+        walletId: process.env.PRIVY_WALLET_ID as string,
+        authorizationPrivateKey: process.env.PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY,
+        authorizationKeyId: process.env.PRIVY_WALLET_AUTHORIZATION_KEY_ID,
+        chainType: "solana",
+        networkId,
+      });
+    } else {
+      const config: PrivyWalletConfig = {
+        appId: process.env.PRIVY_APP_ID as string,
+        appSecret: process.env.PRIVY_APP_SECRET as string,
+        chainId: process.env.CHAIN_ID || "84532",
+        walletId: process.env.PRIVY_WALLET_ID as string,
+        authorizationPrivateKey: process.env.PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY,
+        authorizationKeyId: process.env.PRIVY_WALLET_AUTHORIZATION_KEY_ID,
+        chainType: "ethereum",
+      };
+
+      // Try to load saved wallet data
+      if (fs.existsSync(WALLET_DATA_FILE)) {
+        const savedWallet = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8"));
+        config.walletId = savedWallet.walletId;
+        config.authorizationPrivateKey = savedWallet.authorizationPrivateKey;
+        config.chainId = savedWallet.chainId;
+      }
+
+      walletProvider = await PrivyWalletProvider.configureWithWallet(config);
     }
-
-    const walletProvider = await PrivyWalletProvider.configureWithWallet(config);
 
     // Initialize AgentKit
     const agentkit = await AgentKit.from({
