@@ -43,13 +43,12 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
       const jupiterApi = createJupiterApiClient({
         basePath: this.#getJupiterApiUrl(walletProvider),
       });
-      const connection = walletProvider.getConnection();
       const userPublicKey = walletProvider.getPublicKey();
       const inputMint = new PublicKey(args.inputMint);
       const outputMint = new PublicKey(args.outputMint);
       const amount = args.amount;
 
-      // Step 1: Get the best swap route
+      // Get the best swap route
       const quoteResponse = await jupiterApi.quoteGet({
         inputMint: inputMint.toBase58(),
         outputMint: outputMint.toBase58(),
@@ -61,21 +60,21 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
         throw new Error("Failed to get a swap quote.");
       }
 
-      // Step 2: Request the swap transaction
+      // Request the swap transaction
       const swapRequest: SwapRequest = {
         userPublicKey: userPublicKey.toBase58(),
         wrapAndUnwrapSol: true, // Defaults to true for SOL swaps
         useSharedAccounts: true, // Optimize for low transaction costs
-        quoteResponse, // Pass full quote response
+        quoteResponse,
       };
 
-      // Step 3: Request the swap transaction
+      // Request the swap transaction
       const swapResponse = await jupiterApi.swapPost({ swapRequest });
       if (!swapResponse || !swapResponse.swapTransaction) {
         throw new Error("Failed to generate swap transaction.");
       }
 
-      // Step 4: Deserialize, sign, and send transaction
+      // Deserialize, sign, and send transaction
       const transactionBuffer = Buffer.from(swapResponse.swapTransaction, "base64");
       const tx = VersionedTransaction.deserialize(transactionBuffer);
       const signature = await walletProvider.signAndSendTransaction(tx);
