@@ -4,6 +4,7 @@ import {
   SolanaKeypairWalletProvider,
   splActionProvider,
   walletActionProvider,
+  cdpApiActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -89,7 +90,14 @@ async function initializeAgent() {
     // Initialize AgentKit
     const agentkit = await AgentKit.from({
       walletProvider,
-      actionProviders: [splActionProvider(), walletActionProvider()],
+      actionProviders: [
+        splActionProvider(),
+        walletActionProvider(),
+        cdpApiActionProvider({
+          apiKeyName: process.env.CDP_API_KEY_NAME,
+          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
+        }),
+      ],
     });
 
     const tools = await getLangChainTools(agentkit);
