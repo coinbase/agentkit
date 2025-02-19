@@ -56,10 +56,15 @@ export class SplActionProvider extends ActionProvider<SvmWalletProvider> {
       const { getMint, getAssociatedTokenAddress, getAccount, TokenAccountNotFoundError } =
         await import("@solana/spl-token");
 
-      const mintInfo = await getMint(connection, mintPubkey);
-      const ata = await getAssociatedTokenAddress(mintPubkey, ownerPubkey);
+      let mintInfo: Awaited<ReturnType<typeof getMint>>;
+      try {
+        mintInfo = await getMint(connection, mintPubkey);
+      } catch (error) {
+        return `Failed to fetch mint info for mint address ${args.mintAddress}. Error: ${error}`;
+      }
 
       try {
+        const ata = await getAssociatedTokenAddress(mintPubkey, ownerPubkey);
         const account = await getAccount(connection, ata);
         const balance = Number(account.amount) / Math.pow(10, mintInfo.decimals);
 
@@ -112,7 +117,12 @@ export class SplActionProvider extends ActionProvider<SvmWalletProvider> {
         createTransferCheckedInstruction,
       } = await import("@solana/spl-token");
 
-      const mintInfo = await getMint(connection, mintPubkey);
+      let mintInfo: Awaited<ReturnType<typeof getMint>>;
+      try {
+        mintInfo = await getMint(connection, mintPubkey);
+      } catch (error) {
+        return `Failed to fetch mint info for mint address ${args.mintAddress}. Error: ${error}`;
+      }
       const adjustedAmount = args.amount * Math.pow(10, mintInfo.decimals);
 
       const sourceAta = await getAssociatedTokenAddress(mintPubkey, fromPubkey);
