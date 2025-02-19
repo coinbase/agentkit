@@ -56,10 +56,9 @@ export class SplActionProvider extends ActionProvider<SvmWalletProvider> {
       const { getMint, getAssociatedTokenAddress, getAccount, TokenAccountNotFoundError } =
         await import("@solana/spl-token");
 
-      const mintInfo = await getMint(connection, mintPubkey);
-      const ata = await getAssociatedTokenAddress(mintPubkey, ownerPubkey);
-
       try {
+        const mintInfo = await getMint(connection, mintPubkey);
+        const ata = await getAssociatedTokenAddress(mintPubkey, ownerPubkey);
         const account = await getAccount(connection, ata);
         const balance = Number(account.amount) / Math.pow(10, mintInfo.decimals);
 
