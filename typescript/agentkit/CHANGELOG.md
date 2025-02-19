@@ -11,7 +11,6 @@
 
 - Fixed handling of `CDP_API_KEY_PRIVATE_KEY` by moving parsing into CDP classes.
 - Fixed handling of `TokenAccountNotFoundError` within `splActionProvider` `getBalance`.
-- Fixed `jupiterActionProvider` supported networks.
 - Fixed `wowActionProvider` exports, supported networks, and ensuring response parity with python.
 
 ## [0.2.1] - 2025-02-18
