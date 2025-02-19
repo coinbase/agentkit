@@ -44,7 +44,12 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
       const userPublicKey = walletProvider.getPublicKey();
       const inputMint = new PublicKey(args.inputMint);
       const outputMint = new PublicKey(args.outputMint);
-      const amount = args.amount;
+
+      const {
+        getMint,
+      } = await import("@solana/spl-token");
+      const { decimals } = await getMint(walletProvider.getConnection(), inputMint);
+      const amount = args.amount * 10 ** decimals;
 
       // Get the best swap route
       const quoteResponse = await jupiterApi.quoteGet({
