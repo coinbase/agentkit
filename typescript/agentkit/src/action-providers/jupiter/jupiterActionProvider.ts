@@ -31,6 +31,7 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
     Swaps tokens using Jupiter's DEX aggregator.
     - Input and output tokens must be valid SPL token mints.
     - Ensures sufficient balance before executing swap.
+    - If says "SOL" as the input or output, use the mint address So11111111111111111111111111111111111111112
     NOTE: Only available on Solana mainnet.
     `,
     schema: SwapTokenSchema,
