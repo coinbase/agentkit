@@ -31,7 +31,7 @@ async function initialize() {
 
   const agentkit = await AgentKit.from({
     cdpApiKeyName: process.env.CDP_API_KEY_NAME,
-    cdpApiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+    cdpApiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
     actionProviders: [farcasterActionProvider()],
   });
 

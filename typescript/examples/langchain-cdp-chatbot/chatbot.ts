@@ -7,7 +7,7 @@ import {
   cdpApiActionProvider,
   cdpWalletActionProvider,
   pythActionProvider,
-} from "@coinbase/agentkit";
+} from "../../agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
 import { MemorySaver } from "@langchain/langgraph";
@@ -84,7 +84,7 @@ async function initializeAgent() {
     // Configure CDP Wallet Provider
     const config = {
       apiKeyName: process.env.CDP_API_KEY_NAME,
-      apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+      apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
       cdpWalletData: walletDataStr || undefined,
       networkId: process.env.NETWORK_ID || "base-sepolia",
     };
@@ -101,11 +101,11 @@ async function initializeAgent() {
         erc20ActionProvider(),
         cdpApiActionProvider({
           apiKeyName: process.env.CDP_API_KEY_NAME,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
         }),
         cdpWalletActionProvider({
           apiKeyName: process.env.CDP_API_KEY_NAME,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
         }),
       ],
     });
