@@ -44,10 +44,6 @@ jest.mock("@solana/web3.js", () => ({
   },
 }));
 
-/**
- * Mock for @solana/spl-token module.
- * Provides mock implementations for token-related functionality and a custom error class.
- */
 jest.mock("@solana/spl-token", () => {
   /**
    * Custom error class for token account not found scenarios.
