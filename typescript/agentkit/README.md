@@ -568,10 +568,10 @@ const walletProvider = new ViemWalletProvider(client, {
 The `PrivyWalletProvider` is a wallet provider that uses [Privy Server Wallets](https://docs.privy.io/guide/server-wallets/). This implementation extends the `ViemWalletProvider`.
 
 ```typescript
-import { PrivyWalletProvider } from "@coinbase/agentkit";
+import { PrivyWalletProvider, PrivyWalletConfig } from "@coinbase/agentkit";
 
 // Configure Wallet Provider
-const config = {
+const config: PrivyWalletConfig = {
     appId: "PRIVY_APP_ID",
     appSecret: "PRIVY_APP_SECRET",
     chainId: "84532", // base-sepolia
@@ -652,10 +652,10 @@ const walletProvider = await SolanaKeypairWalletProvider.fromRpcUrl(network, pri
 The `PrivyWalletProvider` is a wallet provider that uses [Privy Server Wallets](https://docs.privy.io/guide/server-wallets/).
 
 ```typescript
-import { PrivyWalletProvider } from "@coinbase/agentkit";
+import { PrivyWalletProvider, PrivyWalletConfig } from "@coinbase/agentkit";
 
 // Configure Wallet Provider
-const config = {
+const config: PrivyWalletConfig = {
     appId: "PRIVY_APP_ID",
     appSecret: "PRIVY_APP_SECRET",
     chainType: "solana", // optional, defaults to "evm". Make sure to set this to "solana" if you want to use Solana!
@@ -671,12 +671,12 @@ const walletProvider = await PrivyWalletProvider.configureWithWallet(config);
 Optionally, you can configure your own `@solana/web3.js` connection by passing the `connection` parameter to the `configureWithWallet` method.
 
 ```typescript
-import { PrivyWalletProvider } from "@coinbase/agentkit";
+import { PrivyWalletProvider, PrivyWalletConfig } from "@coinbase/agentkit";
 
 const connection = new Connection("YOUR_RPC_URL");
 
 // Configure Wallet Provider
-const config = {
+const config: PrivyWalletConfig = {
     appId: "PRIVY_APP_ID",
     appSecret: "PRIVY_APP_SECRET",
     connection,
