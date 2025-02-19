@@ -1,10 +1,7 @@
-import {
-  Connection
-} from "@solana/web3.js";
+import { Connection } from "@solana/web3.js";
 
 import { SvmWalletProvider } from "../../wallet-providers/svmWalletProvider";
 import { JupiterActionProvider } from "./jupiterActionProvider";
-
 
 jest.mock("@solana/web3.js", () => ({
   ...jest.requireActual("@solana/web3.js"),
@@ -36,5 +33,5 @@ describe("JupiterActionProvider", () => {
   let mockWallet: jest.Mocked<SvmWalletProvider>;
   let mockConnection: jest.Mocked<Connection>;
 
-  it.todo("Implement Swap Tests")
+  it.todo("Implement Swap Tests");
 });
