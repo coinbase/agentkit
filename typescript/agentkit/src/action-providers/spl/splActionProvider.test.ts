@@ -29,14 +29,6 @@ type Account = {
   tlvData: Map<unknown, unknown>;
 };
 
-/**
- * Mock for @solana/web3.js module.
- * Provides mock implementations for:
- * - Connection class
- * - SendTransactionError with standard error message
- * - VersionedTransaction with mock sign method
- * - MessageV0 with mock compile method
- */
 jest.mock("@solana/web3.js", () => ({
   ...jest.requireActual("@solana/web3.js"),
   Connection: jest.fn(),
