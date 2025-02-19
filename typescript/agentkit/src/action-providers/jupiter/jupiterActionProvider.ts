@@ -80,7 +80,6 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
 
       await walletProvider.waitForSignatureResult(signature);
 
-
       return `Successfully swapped ${args.amount} tokens! Signature: ${signature}`;
     } catch (error) {
       return `Error swapping tokens: ${error}`;
@@ -95,7 +94,7 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
    * @returns True if the network is a Solana network
    */
   supportsNetwork(network: Network): boolean {
-    return network.networkId == 'solana-mainnet';
+    return network.networkId == "solana-mainnet";
   }
 }
 
