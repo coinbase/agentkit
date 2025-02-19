@@ -51,6 +51,7 @@ export class SafeWalletProvider extends WalletProvider {
   #publicClient: PublicClient;
   #safeClient: Safe | null = null;
   #apiKit: SafeApiKit;
+  #initializationPromise: Promise<void>;
 
   /**
    * Creates a new SafeWalletProvider instance.
@@ -79,16 +80,25 @@ export class SafeWalletProvider extends WalletProvider {
     this.#privateKey = config.privateKey;
     this.#account = privateKeyToAccount(this.#privateKey as `0x${string}`);
 
-    this.initializeSafe(config.safeAddress).then(
+    this.#initializationPromise = this.initializeSafe(config.safeAddress).then(
       address => {
         this.#safeAddress = address;
         this.#isInitialized = true;
         this.trackInitialization();
       },
       error => {
-        console.error("Error initializing Safe wallet:", error);
+        throw new Error("Error initializing Safe wallet: " + error);
       },
     );
+  }
+
+  /**
+   * Returns a promise that resolves when the wallet is initialized
+   * 
+   * @returns Promise that resolves when initialization is complete
+   */
+  async waitForInitialization(): Promise<void> {
+    return this.#initializationPromise;
   }
 
   /**
@@ -301,6 +311,107 @@ export class SafeWalletProvider extends WalletProvider {
   }
 
   /**
+   * Removes an owner from the Safe.
+   *
+   * @param signerToRemove - The address of the owner to remove.
+   * @param newThreshold - Optional new threshold after removing the owner.
+   * @returns Transaction hash
+   */
+  async removeOwnerWithThreshold(signerToRemove: string, newThreshold?: number): Promise<string> {
+    if (!this.#safeClient) throw new Error("Safe client is not set.");
+
+    // Get current Safe settings
+    const currentOwners = await this.getOwners();
+    const currentThreshold = await this.getThreshold();
+
+    // Validate we're not removing the last owner
+    if (currentOwners.length <= 1) {
+      throw new Error("Cannot remove the last owner");
+    }
+
+    // Determine new threshold (keep current if valid, otherwise reduce)
+    newThreshold = newThreshold || 
+      (currentThreshold > currentOwners.length - 1 ? currentOwners.length - 1 : currentThreshold);
+
+    // Validate threshold
+    if (newThreshold > currentOwners.length - 1) {
+      throw new Error(
+        `Invalid threshold: ${newThreshold} cannot be greater than number of remaining owners (${currentOwners.length - 1})`
+      );
+    }
+    if (newThreshold < 1) throw new Error("Threshold must be at least 1");
+
+    // Create transaction to remove owner
+    const safeTransaction = await this.#safeClient.createRemoveOwnerTx({
+      ownerAddress: signerToRemove,
+      threshold: newThreshold,
+    });
+
+    if (currentThreshold > 1) {
+      // Multi-sig flow: propose transaction
+      const safeTxHash = await this.#safeClient.getTransactionHash(safeTransaction);
+      const signature = await this.#safeClient.signHash(safeTxHash);
+
+      await this.#apiKit.proposeTransaction({
+        safeAddress: this.getAddress(),
+        safeTransactionData: safeTransaction.data,
+        safeTxHash,
+        senderSignature: signature.data,
+        senderAddress: this.#account.address,
+      });
+      return `Successfully proposed removing signer ${signerToRemove} from Safe ${this.#safeAddress}. Safe transaction hash: ${safeTxHash}. The other signers will need to confirm the transaction before it can be executed.`;
+    } else {
+      // Single-sig flow: execute immediately
+      const tx = await this.#safeClient.executeTransaction(safeTransaction);
+      return `Successfully removed signer ${signerToRemove} from Safe ${this.#safeAddress}. Transaction hash: ${tx.hash}.`;
+    }
+  }
+
+  /**
+   * Changes the threshold of the Safe.
+   *
+   * @param newThreshold - The new threshold value.
+   * @returns Transaction hash
+   */
+  async changeThreshold(newThreshold: number): Promise<string> {
+    if (!this.#safeClient) throw new Error("Safe client is not set.");
+
+    // Get current Safe settings
+    const currentOwners = await this.getOwners();
+    const currentThreshold = await this.getThreshold();
+
+    // Validate new threshold
+    if (newThreshold > currentOwners.length) {
+      throw new Error(
+        `Invalid threshold: ${newThreshold} cannot be greater than number of owners (${currentOwners.length})`
+      );
+    }
+    if (newThreshold < 1) throw new Error("Threshold must be at least 1");
+
+    // Create transaction to change threshold
+    const safeTransaction = await this.#safeClient.createChangeThresholdTx(newThreshold);
+
+    if (currentThreshold > 1) {
+      // Multi-sig flow: propose transaction
+      const safeTxHash = await this.#safeClient.getTransactionHash(safeTransaction);
+      const signature = await this.#safeClient.signHash(safeTxHash);
+
+      await this.#apiKit.proposeTransaction({
+        safeAddress: this.getAddress(),
+        safeTransactionData: safeTransaction.data,
+        safeTxHash,
+        senderSignature: signature.data,
+        senderAddress: this.#account.address,
+      });
+      return `Successfully proposed changing threshold to ${newThreshold} for Safe ${this.#safeAddress}. Safe transaction hash: ${safeTxHash}. The other signers will need to confirm the transaction before it can be executed.`;
+    } else {
+      // Single-sig flow: execute immediately
+      const tx = await this.#safeClient.executeTransaction(safeTransaction);
+      return `Successfully changed threshold to ${newThreshold} for Safe ${this.#safeAddress}. Transaction hash: ${tx.hash}.`;
+    }
+  }
+
+  /**
    * Gets the public client instance.
    *
    * @returns The Viem PublicClient instance.
@@ -383,5 +494,17 @@ export class SafeWalletProvider extends WalletProvider {
 
       return existingAddress;
     }
+  }
+
+  /**
+   * Returns the Safe client instance
+   * 
+   * @returns The Safe client
+   */
+  getSafeClient(): Safe {
+    if (!this.#safeClient) {
+      throw new Error("Safe client not initialized");
+    }
+    return this.#safeClient;
   }
 }

@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { CreateAction } from "../actionDecorator";
 import { ActionProvider } from "../actionProvider";
-import { SafeWalletProvider } from "../../wallet-providers";
-import { AddSignerSchema } from "./schemas";
+import { SafeWalletProvider } from "../../wallet-providers/safeWalletProvider";
+import { AddSignerSchema, RemoveSignerSchema, ChangeThresholdSchema } from "./schemas";
 import { Network } from "../../network";
 
 /**
@@ -46,6 +46,54 @@ export class SafeWalletActionProvider extends ActionProvider<SafeWalletProvider>
         `Failed to add signer: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
+  }
+
+  /**
+   * Removes a signer from the Safe.
+   */
+  @CreateAction({
+    name: "remove_signer",
+    description: `
+Removes a signer from the Safe.
+Takes the following inputs:
+- signerToRemove: Address of the signer to remove
+- newThreshold: (Optional) New threshold after removing signer
+
+Important notes:
+- Cannot remove the last signer
+- If newThreshold not provided, keeps existing threshold if valid, otherwise reduces it
+- Requires confirmation from other signers if current threshold > 1
+    `,
+    schema: RemoveSignerSchema,
+  })
+  async removeSigner(
+    walletProvider: SafeWalletProvider,
+    args: z.infer<typeof RemoveSignerSchema>,
+  ): Promise<string> {
+    return await walletProvider.removeOwnerWithThreshold(args.signerToRemove, args.newThreshold);
+  }
+
+  /**
+   * Changes the threshold of the Safe.
+   */
+  @CreateAction({
+    name: "change_threshold",
+    description: `
+Changes the confirmation threshold of the Safe.
+Takes the following input:
+- newThreshold: New threshold value (must be >= 1 and <= number of signers)
+
+Important notes:
+- Requires confirmation from other signers if current threshold > 1
+- New threshold cannot exceed number of signers
+    `,
+    schema: ChangeThresholdSchema,
+  })
+  async changeThreshold(
+    walletProvider: SafeWalletProvider,
+    args: z.infer<typeof ChangeThresholdSchema>,
+  ): Promise<string> {
+    return await walletProvider.changeThreshold(args.newThreshold);
   }
 
   /**
