@@ -90,7 +90,8 @@ async function initializeAgent() {
     networkId,
     safeAddress,
   });
-
+  await safeWallet.waitForInitialization();
+  
   // 3) Initialize AgentKit with the Safe wallet and some typical action providers
   const agentkit = await AgentKit.from({
     walletProvider: safeWallet,
