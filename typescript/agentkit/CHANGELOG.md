@@ -6,7 +6,6 @@
 
 - Added support for fauceting SOL on `solana-devnet`.
 - Added `JupiterActionProvider` with `swap` for Solana.
-- Added `agentkit_language` to analytics events.
 
 ### Fixed
 
