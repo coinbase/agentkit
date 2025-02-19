@@ -7,7 +7,7 @@
 - Added support for fauceting SOL on `solana-devnet`.
 - Added `get_balance` to `splActionProvider`
 - Added support for Privy Server Wallets on Solana.
-- Added `JupiterActionProvider` with `swap` for Solana.
+- Added `JupiterActionProvider` with `swap` and `generate_blink` for Solana.
 
 ### Fixed
 
