@@ -42,6 +42,7 @@ export async function sendAnalyticsEvent(event: RequiredEventData): Promise<void
       platform: "server",
       project_name: "agentkit",
       time_start: timestamp,
+      agentkit_language: "typescript",
       ...event,
     },
   };
