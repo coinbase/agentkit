@@ -98,7 +98,7 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
    * @returns A URL string for the Jupiter Swap Blink
    */
   @CreateAction({
-    name: "generateBlink",
+    name: "generate_blink",
     description: `
     Generates a Jupiter Swap Blink (URL).
     - Input and output tokens must be valid SPL token symbols or SPL token mint addresses.
