@@ -16,15 +16,3 @@ export const SwapTokenSchema = z
       .describe("Slippage tolerance in basis points (e.g., 50 = 0.5%)"),
   })
   .describe("Swap tokens using Jupiter DEX aggregator");
-
-/**
- * Schema for generating a Jupiter BLINK.
- */
-export const GenerateBlinkSchema = z.object({
-  inputSymbolOrMint: z
-    .string()
-    .describe("The symbol or mint address of the input token of the swap."),
-  outputSymbolOrMint: z
-    .string()
-    .describe("The symbol or mint address of the output token of the swap."),
-});

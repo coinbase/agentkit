@@ -158,28 +158,4 @@ describe("JupiterActionProvider", () => {
       expect(result).toBe("Error swapping tokens: Error: Swap transaction error");
     });
   });
-
-  /**
-   * Test cases for the generateBlink function
-   */
-  describe("generateBlink", () => {
-    const INPUT_SYMBOL_OR_MINT = "So11111111111111111111111111111111111111112"; // SOL mint address
-    const OUTPUT_SYMBOL_OR_MINT = "BXXkv6FbfHZmKbMmy6KvaakKt6bYjhbjmhvJ92kp92Mw"; // Another token mint address
-
-    // Mock arguments for Blink URL generation
-    const blinkArgs = {
-      inputSymbolOrMint: INPUT_SYMBOL_OR_MINT,
-      outputSymbolOrMint: OUTPUT_SYMBOL_OR_MINT,
-    };
-
-    /**
-     * Test successful generation of a valid Jupiter Blink URL
-     */
-    it("should generate a valid Jupiter Blink URL", async () => {
-      const result = await actionProvider.generateBlink(mockWallet, blinkArgs);
-      const expectedUrl = `https://jup.ag/swap/${INPUT_SYMBOL_OR_MINT}-${OUTPUT_SYMBOL_OR_MINT}`;
-
-      expect(result).toBe(`Jupiter Swap Blink URL: ${expectedUrl}`);
-    });
-  });
 });
