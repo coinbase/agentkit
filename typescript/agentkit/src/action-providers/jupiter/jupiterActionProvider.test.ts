@@ -159,9 +159,6 @@ describe("JupiterActionProvider", () => {
     });
   });
 
-  /**
-   *    Test cases for network support
-   */
   describe("supportsNetwork", () => {
     test.each([
       [{ protocolFamily: "svm", networkId: "solana-mainnet" }, true, "solana mainnet"],
