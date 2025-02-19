@@ -61,7 +61,7 @@ async function init() {
 
   const defaultProjectName = "my-onchain-agent-app";
 
-  let result: prompts.Answers<"projectName" | "packageName" | 'walletProvider'>;
+  let result: prompts.Answers<"projectName" | "packageName" | 'walletProvider' | 'network'>;
 
   try {
     result = await prompts(
@@ -96,14 +96,18 @@ async function init() {
           type: "select",
           name: "network",
           message: pc.reset("Choose a network:"),
-          choices: [...Networks].map((network) => ({ title: network, value: network })),
+          choices: Networks.map((network) => ({ title: network == 'base-sepolia' ? `${network} (default)` : network, value: network })),
+          initial: Networks.indexOf("base-sepolia"),
         },
         {
           type: (prev, { network }) => NetworkToWalletProviders[network as Network].length > 1 ? "select" : null,
           name: "walletProvider",
           message: pc.reset("Choose a wallet provider:"),
-          choices: (prev, { network }) =>
-            NetworkToWalletProviders[network as Network].map((provider) => ({ title: provider, value: provider })),
+          choices: (prev, { network }) => NetworkToWalletProviders[network as Network].map((provider) => ({
+            title: provider === NetworkToWalletProviders[network as Network][0] ? `${provider} (default)` : provider,
+            value: provider,
+          })),
+          initial: 0,
         },
       ],
       {

@@ -122,7 +122,7 @@ export async function handleWalletProviderSelection(root: string, walletProvider
   const selectedRouteConfig = WalletProviderRouteConfigurations[walletProvider];
 
   // Create .env file
-  const envPath = path.join(root, ".env");
+  const envPath = path.join(root, ".env-local");
   await fs.writeFile(
     envPath,
     `NETWORK_ID=${network}\nOPENAI_API_KEY=\n${selectedRouteConfig.env.map(envVar => `${envVar}=`).join('\n')}`
