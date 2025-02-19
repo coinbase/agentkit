@@ -13,6 +13,9 @@
 - Added `get_balance` to `splActionProvider` to fetch balance of an SPL token.
 - Added support for Privy Server Wallets on Solana. See [here](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/README.md#privywalletprovider-solana) for more details.
 
+### Fixed
+- Fixed `CDP_API_KEY_PRIVATE_KEY` by moving parsing into CDB classes.
+
 ## [0.2.0] - 2025-02-15
 
 ### Added
