@@ -35,6 +35,7 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
     - [Network Configuration](#solana-network-configuration)
     - [RPC URL Configuration](#rpc-url-configuration)
   - [PrivyWalletProvider](#privywalletprovider-solana)
+    - [Connection Configuration](#connection-configuration)
     - [Authorization Keys](#authorization-keys)
     - [Exporting Privy Wallet information](#exporting-privy-wallet-information)
 - [Contributing](#contributing)
@@ -616,6 +617,8 @@ SVM:
 
 The `SolanaKeypairWalletProvider` is a wallet provider that uses the API [Solana web3.js](https://solana-labs.github.io/solana-web3.js/).
 
+NOTE: It is highly recommended to use a dedicated RPC provider. See [here](https://solana.com/rpc) for more info on Solana RPC infrastructure, and see [here](#rpc-url-configuration) for instructions on configuring `SolanaKeypairWalletProvider` with a custom RPC URL.
+
 #### Solana Network Configuration
 
 The `SolanaKeypairWalletProvider` can be configured to use a specific network by passing the `networkId` parameter to the `fromNetwork` method. The `networkId` is the ID of the Solana network you want to use. Valid values are `solana-mainnet`, `solana-devnet` and `solana-testnet`.
@@ -651,6 +654,8 @@ const walletProvider = await SolanaKeypairWalletProvider.fromRpcUrl(network, pri
 
 The `PrivyWalletProvider` is a wallet provider that uses [Privy Server Wallets](https://docs.privy.io/guide/server-wallets/).
 
+NOTE: It is highly recommended to use a dedicated RPC provider. See [here](https://solana.com/rpc) for more info on Solana RPC infrastructure, and see [here](#connection-configuration) for instructions on configuring `PrivyWalletProvider` with a custom RPC URL.
+
 ```typescript
 import { PrivyWalletProvider, PrivyWalletConfig } from "@coinbase/agentkit";
 
@@ -667,6 +672,8 @@ const config: PrivyWalletConfig = {
 
 const walletProvider = await PrivyWalletProvider.configureWithWallet(config);
 ```
+
+#### Connection Configuration
 
 Optionally, you can configure your own `@solana/web3.js` connection by passing the `connection` parameter to the `configureWithWallet` method.
 
