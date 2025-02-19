@@ -24,7 +24,7 @@ export class CdpApiActionProvider extends ActionProvider<WalletProvider> {
     if (config.apiKeyName && config.apiKeyPrivateKey) {
       Coinbase.configure({
         apiKeyName: config.apiKeyName,
-        privateKey: config.apiKeyPrivateKey,
+        privateKey: config.apiKeyPrivateKey?.replace(/\\n/g, "\n"),
         source: "agentkit",
         sourceVersion: version,
       });
