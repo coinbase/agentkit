@@ -601,6 +601,7 @@ const walletData = await walletProvider.exportWallet();
 
 SVM:
 - [SolanaKeypairWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/solanaKeypairWalletProvider.ts)
+- [PrivyWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/privySvmWalletProvider.ts)
 
 ### SolanaKeypairWalletProvider
 
