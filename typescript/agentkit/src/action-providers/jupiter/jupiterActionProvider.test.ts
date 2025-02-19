@@ -158,4 +158,16 @@ describe("JupiterActionProvider", () => {
       expect(result).toBe("Error swapping tokens: Error: Swap transaction error");
     });
   });
+
+  describe("supportsNetwork", () => {
+    test.each([
+      [{ protocolFamily: "svm", networkId: "solana-mainnet" }, true, "solana mainnet"],
+      [{ protocolFamily: "svm", networkId: "solana-devnet" }, false, "solana devnet"],
+      [{ protocolFamily: "evm", networkId: "ethereum-mainnet" }, false, "ethereum mainnet"],
+      [{ protocolFamily: "evm", networkId: "solana-mainnet" }, false, "wrong protocol family"],
+      [{ protocolFamily: "svm", networkId: "ethereum-mainnet" }, false, "wrong network id"],
+    ])("should return %p for %s", (network, expected) => {
+      expect(actionProvider.supportsNetwork(network)).toBe(expected);
+    });
+  });
 });
