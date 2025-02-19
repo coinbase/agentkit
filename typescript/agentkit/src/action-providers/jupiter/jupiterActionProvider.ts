@@ -3,7 +3,7 @@ import { Network } from "../../network";
 import { SvmWalletProvider } from "../../wallet-providers/svmWalletProvider";
 import { z } from "zod";
 import { CreateAction } from "../actionDecorator";
-import { SwapTokenSchema } from "./schemas";
+import { GenerateBlinkSchema, SwapTokenSchema } from "./schemas";
 import { PublicKey, VersionedTransaction } from "@solana/web3.js";
 import { createJupiterApiClient, SwapRequest } from "@jup-ag/api";
 
@@ -88,6 +88,31 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
     } catch (error) {
       return `Error swapping tokens: ${error}`;
     }
+  }
+
+  /**
+   * Generates a Jupiter Swap Blink URL.
+   *
+   * @param walletProvider - The wallet provider (not used in this action)
+   * @param args - Contains input and output mint addresses
+   * @returns A URL string for the Jupiter Swap Blink
+   */
+  @CreateAction({
+    name: "generateBlink",
+    description: `
+    Generates a Jupiter Swap Blink (URL).
+    - Input and output tokens must be valid SPL token symbols or SPL token mint addresses.
+    - The returned URL can be shared to facilitate token swaps.
+    `,
+    schema: GenerateBlinkSchema,
+  })
+  async generateBlink(
+    _: SvmWalletProvider,
+    args: z.infer<typeof GenerateBlinkSchema>,
+  ): Promise<string> {
+    const { inputSymbolOrMint, outputSymbolOrMint } = args;
+    const blinkUrl = `https://jup.ag/swap/${inputSymbolOrMint}-${outputSymbolOrMint}`;
+    return `Jupiter Swap Blink URL: ${blinkUrl}`;
   }
 
   /**
