@@ -7,7 +7,7 @@
 - Add support for fauceting SOL on `solana-devnet`.
 
 ### Fixed
-- Fixed `CDP_API_KEY_PRIVATE_KEY` by moving parsing into CDB classes.
+- Fixed handling of `CDP_API_KEY_PRIVATE_KEY` by moving parsing into CDP classes.
 
 ## [0.2.1] - 2025-02-18
 
