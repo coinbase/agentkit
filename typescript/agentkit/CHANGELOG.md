@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Add support for fauceting SOL on `solana-devnet`.
+
 ## [0.2.1] - 2025-02-18
 
 ### Added

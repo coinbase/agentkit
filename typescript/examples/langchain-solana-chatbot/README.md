@@ -36,6 +36,9 @@ Once you have them, rename the `.env-local` file to `.env` and make sure you set
 - "SOLANA_PRIVATE_KEY" *(optional)*
 - "SOLANA_RPC_URL" *(optional)*
 - "NETWORK_ID" *(optional)*
+- CDP_API_KEY_NAME=[optional. If you'd like to use the CDP API, for example to faucet funds, set this to the name of the CDP API key]
+- CDP_API_KEY_PRIVATE_KEY=[optional. If you'd like to use the CDP API, for example to faucet funds, set this to the private key of the CDP API key]
+
 
 #### Network Selection
 
