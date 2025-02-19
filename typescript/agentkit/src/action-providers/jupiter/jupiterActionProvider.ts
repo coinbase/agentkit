@@ -1,5 +1,5 @@
 import { ActionProvider } from "../actionProvider";
-import { Network, SOLANA_NETWORK_ID } from "../../network";
+import { Network } from "../../network";
 import { SvmWalletProvider } from "../../wallet-providers/svmWalletProvider";
 import { z } from "zod";
 import { CreateAction } from "../actionDecorator";
@@ -68,6 +68,7 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
 
       // Request the swap transaction
       const swapResponse = await jupiterApi.swapPost({ swapRequest });
+
       if (!swapResponse || !swapResponse.swapTransaction) {
         throw new Error("Failed to generate swap transaction.");
       }
