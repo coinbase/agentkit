@@ -29,6 +29,14 @@ type Account = {
   tlvData: Map<unknown, unknown>;
 };
 
+/**
+ * Mock for @solana/web3.js module.
+ * Provides mock implementations for:
+ * - Connection class
+ * - SendTransactionError with standard error message
+ * - VersionedTransaction with mock sign method
+ * - MessageV0 with mock compile method
+ */
 jest.mock("@solana/web3.js", () => ({
   ...jest.requireActual("@solana/web3.js"),
   Connection: jest.fn(),
@@ -44,13 +52,35 @@ jest.mock("@solana/web3.js", () => ({
   },
 }));
 
-jest.mock("@solana/spl-token", () => ({
-  getAssociatedTokenAddress: jest.fn(),
-  getMint: jest.fn(),
-  getAccount: jest.fn(),
-  createAssociatedTokenAccountInstruction: jest.fn(),
-  createTransferCheckedInstruction: jest.fn(),
-}));
+/**
+ * Mock for @solana/spl-token module.
+ * Provides mock implementations for token-related functionality and a custom error class.
+ */
+jest.mock("@solana/spl-token", () => {
+  /**
+   * Custom error class for token account not found scenarios.
+   * Used to simulate cases where a token account doesn't exist.
+   */
+  class TokenAccountNotFoundError extends Error {
+    /**
+     * Creates a new TokenAccountNotFoundError instance.
+     * Sets the error message and name to identify token account not found scenarios.
+     */
+    constructor() {
+      super("Token account not found");
+      this.name = "TokenAccountNotFoundError";
+    }
+  }
+
+  return {
+    getAssociatedTokenAddress: jest.fn(),
+    getMint: jest.fn(),
+    getAccount: jest.fn(),
+    createAssociatedTokenAccountInstruction: jest.fn(),
+    createTransferCheckedInstruction: jest.fn(),
+    TokenAccountNotFoundError,
+  };
+});
 
 jest.mock("../../wallet-providers/svmWalletProvider");
 
@@ -276,6 +306,9 @@ describe("SplActionProvider", () => {
     });
   });
 
+  /**
+   * Tests for the getBalance method
+   */
   describe("getBalance", () => {
     const MINT_ADDRESS = "So11111111111111111111111111111111111111112";
     const TARGET_ADDRESS = "DjXsn34uz8yCBQ8bevLrEPYYC1RvhHvjzuVF8opNc4K2";
@@ -310,6 +343,10 @@ describe("SplActionProvider", () => {
       mockWallet.getAddress.mockReturnValue(SENDER_ADDRESS);
     });
 
+    /**
+     * Tests that getBalance returns the correct balance for the connected wallet
+     * when no specific address is provided.
+     */
     it("should get balance for connected wallet", async () => {
       mockGetAccount.mockResolvedValue(mockTokenAccount);
 
@@ -326,9 +363,13 @@ describe("SplActionProvider", () => {
       );
       expect(mockGetAccount).toHaveBeenCalled();
 
-      expect(result).toBe("Balance for connected wallet is 1000 tokens");
+      expect(result).toBe(`Balance for ${SENDER_ADDRESS} is 1000 tokens`);
     });
 
+    /**
+     * Tests that getBalance returns the correct balance when a specific
+     * address is provided in the arguments.
+     */
     it("should get balance for specified address", async () => {
       mockGetAccount.mockResolvedValue(mockTokenAccount);
 
@@ -348,13 +389,22 @@ describe("SplActionProvider", () => {
       expect(result).toBe(`Balance for ${TARGET_ADDRESS} is 1000 tokens`);
     });
 
+    /**
+     * Tests that getBalance correctly handles the case where a token account
+     * does not exist, returning a zero balance instead of an error.
+     */
     it("should handle non-existent token account", async () => {
-      mockGetAccount.mockRejectedValue(new Error("could not find account"));
+      const { TokenAccountNotFoundError } = jest.requireMock("@solana/spl-token");
+      mockGetAccount.mockRejectedValue(new TokenAccountNotFoundError());
 
       const result = await actionProvider.getBalance(mockWallet, balanceArgs);
-      expect(result).toBe("Balance for connected wallet is 0 tokens");
+      expect(result).toBe(`Balance for ${SENDER_ADDRESS} is 0 tokens`);
     });
 
+    /**
+     * Tests that getBalance properly handles and reports unexpected errors
+     * that occur during the balance check.
+     */
     it("should handle errors", async () => {
       const error = new Error("Test error");
       mockGetAccount.mockRejectedValue(error);

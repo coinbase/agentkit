@@ -4,10 +4,12 @@
 
 ### Added
 
-- Add support for fauceting SOL on `solana-devnet`.
+- Added support for fauceting SOL on `solana-devnet`.
 
 ### Fixed
+
 - Fixed handling of `CDP_API_KEY_PRIVATE_KEY` by moving parsing into CDP classes.
+- Fixed for `splActionProvider` `get_balance` `TokenAccountNotFoundError`
 
 ## [0.2.1] - 2025-02-18
 
