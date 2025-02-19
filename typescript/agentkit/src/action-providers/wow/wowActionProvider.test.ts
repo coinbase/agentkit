@@ -159,22 +159,18 @@ describe("WowActionProvider", () => {
   });
 
   describe("supportsNetwork", () => {
-    it("should return true for supported networks", () => {
-      expect(provider.supportsNetwork({ protocolFamily: "evm", networkId: "base-mainnet" })).toBe(
-        true,
-      );
-    });
+    const testCases = [
+      { network: { protocolFamily: "evm", networkId: "base-mainnet" }, expected: true },
+      { network: { protocolFamily: "evm", networkId: "base-sepolia" }, expected: true },
+      { network: { protocolFamily: "evm", networkId: "ethereum" }, expected: false },
+      { network: { protocolFamily: "evm", networkId: "optimism" }, expected: false },
+      { network: { protocolFamily: "bitcoin", networkId: "base-mainnet" }, expected: false },
+    ];
 
-    it("should return false for unsupported networks", () => {
-      expect(provider.supportsNetwork({ protocolFamily: "evm", networkId: "base-sepolia" })).toBe(
-        false,
-      );
-      expect(provider.supportsNetwork({ protocolFamily: "evm", networkId: "ethereum" })).toBe(
-        false,
-      );
-      expect(
-        provider.supportsNetwork({ protocolFamily: "bitcoin", networkId: "base-mainnet" }),
-      ).toBe(false);
+    testCases.forEach(({ network, expected }) => {
+      it(`should ${expected ? "support" : "not support"} ${network.protocolFamily}/${network.networkId}`, () => {
+        expect(provider.supportsNetwork(network)).toBe(expected);
+      });
     });
   });
 
@@ -219,7 +215,7 @@ describe("WowActionProvider", () => {
       mockWallet.sendTransaction.mockRejectedValue(error);
 
       const response = await provider.buyToken(mockWallet, args);
-      expect(response).toContain(`Error buying Zora Wow ERC20 memecoin: ${error}`);
+      expect(response).toBe(`Error buying Zora Wow ERC20 memecoin: ${error}`);
     });
   });
 
@@ -287,7 +283,7 @@ describe("WowActionProvider", () => {
       mockWallet.sendTransaction.mockRejectedValue(error);
 
       const response = await provider.createToken(mockWallet, args);
-      expect(response).toContain(`Error creating Zora Wow ERC20 memecoin: ${error}`);
+      expect(response).toBe(`Error creating Zora Wow ERC20 memecoin: ${error}`);
     });
   });
 
@@ -331,7 +327,7 @@ describe("WowActionProvider", () => {
       mockWallet.sendTransaction.mockRejectedValue(error);
 
       const response = await provider.sellToken(mockWallet, args);
-      expect(response).toContain(`Error selling Zora Wow ERC20 memecoin: ${error}`);
+      expect(response).toBe(`Error selling Zora Wow ERC20 memecoin: ${error}`);
     });
   });
 });
