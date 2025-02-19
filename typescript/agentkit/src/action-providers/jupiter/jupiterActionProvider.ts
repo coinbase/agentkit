@@ -47,8 +47,14 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
       const outputMint = new PublicKey(args.outputMint);
 
       const { getMint } = await import("@solana/spl-token");
-      const { decimals } = await getMint(walletProvider.getConnection(), inputMint);
-      const amount = args.amount * 10 ** decimals;
+
+      let mintInfo: Awaited<ReturnType<typeof getMint>>;
+      try {
+        mintInfo = await getMint(walletProvider.getConnection(), inputMint);
+      } catch (error) {
+        return `Failed to fetch mint info for mint address ${args.inputMint}. Error: ${error}`;
+      }
+      const amount = args.amount * 10 ** mintInfo.decimals;
 
       const quoteResponse = await jupiterApi.quoteGet({
         inputMint: inputMint.toBase58(),
