@@ -108,7 +108,7 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
     schema: GenerateBlinkSchema,
   })
   async generateBlink(
-    _: SvmWalletProvider,
+    walletProvider: SvmWalletProvider,
     args: z.infer<typeof GenerateBlinkSchema>,
   ): Promise<string> {
     const { inputSymbolOrMint, outputSymbolOrMint } = args;

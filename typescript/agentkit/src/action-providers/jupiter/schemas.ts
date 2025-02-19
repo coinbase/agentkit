@@ -20,7 +20,11 @@ export const SwapTokenSchema = z
 /**
  * Schema for generating a Jupiter BLINK.
  */
-  export const GenerateBlinkSchema = z.object({
-    inputSymbolOrMint: z.string().describe("The symbol or mint address of the input token of the swap."),
-    outputSymbolOrMint: z.string().describe("The symbol or mint address of the output token of the swap."),
-  });
+export const GenerateBlinkSchema = z.object({
+  inputSymbolOrMint: z
+    .string()
+    .describe("The symbol or mint address of the input token of the swap."),
+  outputSymbolOrMint: z
+    .string()
+    .describe("The symbol or mint address of the output token of the swap."),
+});
