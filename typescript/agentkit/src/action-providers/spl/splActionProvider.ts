@@ -66,7 +66,7 @@ export class SplActionProvider extends ActionProvider<SvmWalletProvider> {
       try {
         const ata = await getAssociatedTokenAddress(mintPubkey, ownerPubkey);
         const account = await getAccount(connection, ata);
-        const balance = Number(account.amount) / Math.pow(10, mintInfo!.decimals);
+        const balance = Number(account.amount) / Math.pow(10, mintInfo.decimals);
 
         return `Balance for ${args.address} is ${balance} tokens`;
       } catch (error) {
