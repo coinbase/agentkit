@@ -5,6 +5,7 @@
 ### Added
 
 - Added support for fauceting SOL on `solana-devnet`.
+- Added `JupiterActionProvider` with `swap` for Solana.
 
 ### Fixed
 

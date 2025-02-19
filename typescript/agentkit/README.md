@@ -293,6 +293,15 @@ const agent = createReactAgent({
 </tr>
 </table>
 </details>
+<details>
+<summary><strong>Jupiter</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>swap</code></td>
+    <td width="768">Swap tokens on Solana using the Jupiter DEX aggregator.</td>
+</tr>
+</table>
+</details>
 
 ## Creating an Action Provider
 
