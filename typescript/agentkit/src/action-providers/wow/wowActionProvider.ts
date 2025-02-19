@@ -29,7 +29,7 @@ export class WowActionProvider extends ActionProvider<EvmWalletProvider> {
   /**
    * Buys a Zora Wow ERC20 memecoin with ETH.
    *
-   * @param wallet - The wallet to create the token from.
+   * @param walletProvider - The wallet to create the token from.
    * @param args - The input arguments for the action.
    * @returns A message containing the token purchase details.
    */
@@ -55,23 +55,27 @@ Important notes:
     schema: WowBuyTokenInput,
   })
   async buyToken(
-    wallet: EvmWalletProvider,
+    walletProvider: EvmWalletProvider,
     args: z.infer<typeof WowBuyTokenInput>,
   ): Promise<string> {
     try {
-      const tokenQuote = await getBuyQuote(wallet, args.contractAddress, args.amountEthInWei);
+      const tokenQuote = await getBuyQuote(
+        walletProvider,
+        args.contractAddress,
+        args.amountEthInWei,
+      );
 
       // Multiply by 99/100 and floor to get 99% of quote as minimum
       const minTokens = BigInt(Math.floor(Number(tokenQuote) * 99)) / BigInt(100);
 
-      const hasGraduated = await getHasGraduated(wallet, args.contractAddress);
+      const hasGraduated = await getHasGraduated(walletProvider, args.contractAddress);
 
       const data = encodeFunctionData({
         abi: WOW_ABI,
         functionName: "buy",
         args: [
-          wallet.getAddress(),
-          wallet.getAddress(),
+          walletProvider.getAddress(),
+          walletProvider.getAddress(),
           "0x0000000000000000000000000000000000000000",
           "",
           hasGraduated ? 1n : 0n,
@@ -80,15 +84,15 @@ Important notes:
         ],
       });
 
-      const txHash = await wallet.sendTransaction({
+      const txHash = await walletProvider.sendTransaction({
         to: args.contractAddress as `0x${string}`,
         data,
         value: BigInt(args.amountEthInWei),
       });
 
-      const receipt = await wallet.waitForTransactionReceipt(txHash);
+      await walletProvider.waitForTransactionReceipt(txHash);
 
-      return `Purchased WoW ERC20 memecoin with transaction hash: ${txHash}, and receipt:\n${JSON.stringify(receipt)}`;
+      return `Purchased WoW ERC20 memecoin with transaction hash: ${txHash}`;
     } catch (error) {
       return `Error buying Zora Wow ERC20 memecoin: ${error}`;
     }
@@ -143,11 +147,11 @@ Important notes:
         data,
       });
 
-      const receipt = await wallet.waitForTransactionReceipt(txHash);
+      await wallet.waitForTransactionReceipt(txHash);
 
       return `Created WoW ERC20 memecoin ${args.name} with symbol ${
         args.symbol
-      } on network ${wallet.getNetwork().networkId}.\nTransaction hash for the token creation: ${txHash}, and receipt:\n${JSON.stringify(receipt)}`;
+      } on network ${wallet.getNetwork().networkId}.\nTransaction hash: ${txHash}`;
     } catch (error) {
       return `Error creating Zora Wow ERC20 memecoin: ${error}`;
     }
@@ -156,7 +160,7 @@ Important notes:
   /**
    * Sells WOW tokens for ETH.
    *
-   * @param wallet - The wallet to sell the tokens from.
+   * @param walletProvider - The wallet to sell the tokens from.
    * @param args - The input arguments for the action.
    * @returns A message confirming the sale with the transaction hash.
    */
@@ -181,12 +185,16 @@ Important notes:
     schema: WowSellTokenInput,
   })
   async sellToken(
-    wallet: EvmWalletProvider,
+    walletProvider: EvmWalletProvider,
     args: z.infer<typeof WowSellTokenInput>,
   ): Promise<string> {
     try {
-      const ethQuote = await getSellQuote(wallet, args.contractAddress, args.amountTokensInWei);
-      const hasGraduated = await getHasGraduated(wallet, args.contractAddress);
+      const ethQuote = await getSellQuote(
+        walletProvider,
+        args.contractAddress,
+        args.amountTokensInWei,
+      );
+      const hasGraduated = await getHasGraduated(walletProvider, args.contractAddress);
 
       // Multiply by 98/100 and floor to get 98% of quote as minimum
       const minEth = BigInt(Math.floor(Number(ethQuote) * 98)) / BigInt(100);
@@ -196,7 +204,7 @@ Important notes:
         functionName: "sell",
         args: [
           BigInt(args.amountTokensInWei),
-          wallet.getAddress(),
+          walletProvider.getAddress(),
           "0x0000000000000000000000000000000000000000",
           "",
           hasGraduated ? 1n : 0n,
@@ -205,14 +213,14 @@ Important notes:
         ],
       });
 
-      const txHash = await wallet.sendTransaction({
+      const txHash = await walletProvider.sendTransaction({
         to: args.contractAddress as `0x${string}`,
         data,
       });
 
-      const receipt = await wallet.waitForTransactionReceipt(txHash);
+      await walletProvider.waitForTransactionReceipt(txHash);
 
-      return `Sold WoW ERC20 memecoin with transaction hash: ${txHash}, and receipt:\n${JSON.stringify(receipt)}`;
+      return `Sold WoW ERC20 memecoin with transaction hash: ${txHash}`;
     } catch (error) {
       return `Error selling Zora Wow ERC20 memecoin: ${error}`;
     }
