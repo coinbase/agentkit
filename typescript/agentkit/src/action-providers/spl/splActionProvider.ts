@@ -10,7 +10,6 @@ import {
   MessageV0,
   TransactionInstruction,
 } from "@solana/web3.js";
-import { Mint } from "@solana/spl-token";
 
 /**
  * SplActionProvider serves as a provider for SPL token actions.
@@ -57,7 +56,7 @@ export class SplActionProvider extends ActionProvider<SvmWalletProvider> {
       const { getMint, getAssociatedTokenAddress, getAccount, TokenAccountNotFoundError } =
         await import("@solana/spl-token");
 
-      let mintInfo: Mint;
+      let mintInfo: Awaited<ReturnType<typeof getMint>>;
       try {
         mintInfo = await getMint(connection, mintPubkey);
       } catch (error) {
