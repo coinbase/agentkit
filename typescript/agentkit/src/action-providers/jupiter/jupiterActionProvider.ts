@@ -40,9 +40,7 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
     args: z.infer<typeof SwapTokenSchema>,
   ): Promise<string> {
     try {
-      const jupiterApi = createJupiterApiClient({
-        basePath: this.#getJupiterApiUrl(walletProvider),
-      });
+      const jupiterApi = createJupiterApiClient();
       const userPublicKey = walletProvider.getPublicKey();
       const inputMint = new PublicKey(args.inputMint);
       const outputMint = new PublicKey(args.outputMint);
@@ -77,8 +75,11 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
       // Deserialize, sign, and send transaction
       const transactionBuffer = Buffer.from(swapResponse.swapTransaction, "base64");
       const tx = VersionedTransaction.deserialize(transactionBuffer);
+
       const signature = await walletProvider.signAndSendTransaction(tx);
+
       await walletProvider.waitForSignatureResult(signature);
+
 
       return `Successfully swapped ${args.amount} tokens! Signature: ${signature}`;
     } catch (error) {
@@ -94,21 +95,7 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
    * @returns True if the network is a Solana network
    */
   supportsNetwork(network: Network): boolean {
-    return network.protocolFamily === "svm";
-  }
-
-  #getJupiterApiUrl(walletProvider: SvmWalletProvider): string {
-    const network = walletProvider.getNetwork().networkId as SOLANA_NETWORK_ID;
-    switch (network) {
-      case "solana-mainnet":
-        return "https://quote-api.jup.ag/v6";
-      case "solana-devnet":
-        return "https://devnet-quote-api.jup.ag/v6";
-      case "solana-testnet":
-        return "https://testnet-quote-api.jup.ag/v6";
-      default:
-        throw new Error(`Unsupported network: ${network}`);
-    }
+    return network.networkId == 'solana-mainnet';
   }
 }
 

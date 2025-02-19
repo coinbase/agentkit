@@ -7,7 +7,7 @@ export const SwapTokenSchema = z
   .object({
     inputMint: z.string().describe("The mint address of the token to swap from"),
     outputMint: z.string().describe("The mint address of the token to swap to"),
-    amount: z.number().positive().describe("Amount of tokens to swap"),
+    amount: z.number().min(1).describe("Amount of tokens to swap"),
     slippageBps: z
       .number()
       .int()
