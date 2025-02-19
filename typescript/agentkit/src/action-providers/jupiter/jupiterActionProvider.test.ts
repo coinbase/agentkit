@@ -75,7 +75,9 @@ describe("JupiterActionProvider", () => {
 
     it("should successfully swap tokens", async () => {
       mockQuoteGet.mockResolvedValue({ route: "mock-route" });
-      mockSwapPost.mockResolvedValue({ swapTransaction: Buffer.from("mock-transaction").toString("base64") });
+      mockSwapPost.mockResolvedValue({
+        swapTransaction: Buffer.from("mock-transaction").toString("base64"),
+      });
 
       const result = await actionProvider.swap(mockWallet, swapArgs);
 
