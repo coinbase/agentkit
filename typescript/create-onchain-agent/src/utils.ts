@@ -1,6 +1,28 @@
 import fs from 'fs/promises';
 import path from 'path';
 
+export type EVMNetwork =  "ethereum-mainnet" | "ethereum-sepolia" | "polygon-mainnet" | "polygon-mumbai" | "base-mainnet" |  "base-sepolia" | "arbitrum-mainnet" | "arbitrum-sepolia" | "optimism-mainnet" | "optimism-sepolia";
+export type SVMNetwork = "solana-mainnet" | "solana-devnet" | "solana-testnet";
+export type Network = EVMNetwork | SVMNetwork;
+
+export const NetworkToWalletProviders: Record<Network, WalletProviderChoice[]> = {
+  "arbitrum-mainnet": ["CDP", "Viem", "Privy"],
+  "arbitrum-sepolia": ["Viem", "Privy"],
+  "base-mainnet": ["CDP","Viem", "Privy" ],
+  "base-sepolia": ["CDP", "Viem", "Privy"],
+  "ethereum-mainnet": ["CDP", "Viem", "Privy"],
+  "ethereum-sepolia": ["Viem", "Privy"],
+  "optimism-mainnet": ["Viem", "Privy"],
+  "optimism-sepolia": ["Viem", "Privy"],
+  "polygon-mainnet": ["CDP", "Viem", "Privy"],
+  "polygon-mumbai": ["Viem", "Privy"],
+  "solana-mainnet": ["SolanaKeypair", "Privy"],
+  "solana-devnet": ["SolanaKeypair", "Privy"],
+  "solana-testnet": ["SolanaKeypair", "Privy"]
+}
+
+export const Networks: Network[] = ["ethereum-mainnet", "ethereum-sepolia", "base-mainnet", "base-sepolia", "arbitrum-mainnet", "arbitrum-sepolia", "optimism-mainnet", "optimism-sepolia", "polygon-mainnet", "polygon-mumbai", "solana-mainnet", "solana-devnet", "solana-testnet" ]
+
 export type WalletProviderChoice = 'CDP' | 'Viem' | 'Privy' | 'SolanaKeypair'
 export const WalletProviderChoices: WalletProviderChoice[] = ['CDP', 'Viem', 'Privy', 'SolanaKeypair']
 type WalletProviderRouteConfiguration = {
@@ -95,7 +117,7 @@ export const WalletProviderRouteConfigurations: Record<WalletProviderChoice, Wal
     },
 }
 
-export async function handleWalletProviderSelection(root: string, walletProvider: WalletProviderChoice) {
+export async function handleWalletProviderSelection(root: string, walletProvider: WalletProviderChoice, network: Network) {
   const agentDir = path.join(root, "app", "api", "agent");
   const selectedRouteConfig = WalletProviderRouteConfigurations[walletProvider];
 
@@ -103,7 +125,7 @@ export async function handleWalletProviderSelection(root: string, walletProvider
   const envPath = path.join(root, ".env");
   await fs.writeFile(
     envPath,
-    `OPENAI_API_KEY=\n${selectedRouteConfig.env.map(envVar => `${envVar}=`).join('\n')}`
+    `NETWORK_ID=${network}\nOPENAI_API_KEY=\n${selectedRouteConfig.env.map(envVar => `${envVar}=`).join('\n')}`
   );
 
   // Promote selected route (move `apiRoute` to `api/agent/route.ts`)
