@@ -1,33 +1,10 @@
 import {
-  RpcResponseAndContext,
-  SignatureResult,
-  SendTransactionError,
-  Connection,
-  PublicKey,
+  Connection
 } from "@solana/web3.js";
 
-import { JupiterActionProvider } from "./jupiterActionProvider";
 import { SvmWalletProvider } from "../../wallet-providers/svmWalletProvider";
-import { Network } from "../../network";
+import { JupiterActionProvider } from "./jupiterActionProvider";
 
-type Mint = {
-  decimals: number;
-};
-
-type Account = {
-  amount: bigint;
-  address: PublicKey;
-  mint: PublicKey;
-  owner: PublicKey;
-  delegate: null;
-  delegatedAmount: bigint;
-  closeAuthority: null;
-  isFrozen: boolean;
-  isNative: boolean;
-  rentExemptReserve: null;
-  isInitialized: boolean;
-  tlvData: Map<unknown, unknown>;
-};
 
 jest.mock("@solana/web3.js", () => ({
   ...jest.requireActual("@solana/web3.js"),
@@ -58,4 +35,6 @@ describe("JupiterActionProvider", () => {
   let actionProvider: JupiterActionProvider;
   let mockWallet: jest.Mocked<SvmWalletProvider>;
   let mockConnection: jest.Mocked<Connection>;
+
+  it.todo("Implement Swap Tests")
 });
