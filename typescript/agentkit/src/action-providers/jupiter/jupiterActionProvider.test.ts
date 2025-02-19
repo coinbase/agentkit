@@ -3,6 +3,8 @@ import { SvmWalletProvider } from "../../wallet-providers/svmWalletProvider";
 import { JupiterActionProvider } from "./jupiterActionProvider";
 import { createJupiterApiClient } from "@jup-ag/api";
 
+const DECIMALS = 6;
+
 jest.mock("@solana/web3.js", () => ({
   ...jest.requireActual("@solana/web3.js"),
   Connection: jest.fn(),
@@ -14,6 +16,11 @@ jest.mock("@solana/web3.js", () => ({
   MessageV0: {
     compile: jest.fn().mockReturnValue({}),
   },
+}));
+
+jest.mock("@solana/spl-token", () => ({
+  ...jest.requireActual("@solana/spl-token"),
+  getMint: jest.fn().mockReturnValue({ decimals: DECIMALS }),
 }));
 
 jest.mock("@jup-ag/api", () => ({
@@ -69,7 +76,7 @@ describe("JupiterActionProvider", () => {
     const swapArgs = {
       inputMint: INPUT_MINT,
       outputMint: OUTPUT_MINT,
-      amount: 1000000,
+      amount: 1000,
       slippageBps: 50,
     };
 
@@ -84,7 +91,7 @@ describe("JupiterActionProvider", () => {
       expect(mockQuoteGet).toHaveBeenCalledWith({
         inputMint: INPUT_MINT,
         outputMint: OUTPUT_MINT,
-        amount: swapArgs.amount,
+        amount: swapArgs.amount * 10 ** DECIMALS,
         slippageBps: swapArgs.slippageBps,
       });
 
