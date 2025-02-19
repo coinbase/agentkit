@@ -117,7 +117,12 @@ export class SplActionProvider extends ActionProvider<SvmWalletProvider> {
         createTransferCheckedInstruction,
       } = await import("@solana/spl-token");
 
-      const mintInfo = await getMint(connection, mintPubkey);
+      let mintInfo: Awaited<ReturnType<typeof getMint>>;
+      try {
+        mintInfo = await getMint(connection, mintPubkey);
+      } catch (error) {
+        return `Failed to fetch mint info for mint address ${args.mintAddress}. Error: ${error}`;
+      }
       const adjustedAmount = args.amount * Math.pow(10, mintInfo.decimals);
 
       const sourceAta = await getAssociatedTokenAddress(mintPubkey, fromPubkey);
