@@ -36,7 +36,7 @@ The Jupiter Action Provider currently supports:
 
 ## Notes
 - The swap operation **automatically wraps and unwraps SOL** when needed.
-- Ensure **valid token mint addresses** are used for **Devnet vs Mainnet**.
+- Ensure **valid token mint addresses** are used.
 - Transactions are **signed and executed automatically** within the provider.
 
 For more information on the **Jupiter DEX API**, visit [Jupiter Aggregator Docs](https://api.jup.ag/).
