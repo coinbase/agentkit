@@ -2,10 +2,16 @@
 
 ## Unreleased
 
-- Added `get_balance` to `splActionProvider`
-- Added support for Privy Server Wallets on Solana.
+## [0.2.1] - 2025-02-18
+
+### Added
+
+- Added `get_balance` to `splActionProvider` to fetch balance of an SPL token.
+- Added support for Privy Server Wallets on Solana. See [here](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/README.md#privywalletprovider-solana) for more details.
 
 ## [0.2.0] - 2025-02-15
+
+### Added
 
 - Added gas configuration parameters (`gasLimitMultiplier`, `feePerGasMultiplier`) to `CdpWalletProvider` and `ViemWalletProvider`.
 - Added `svmWalletProvider` with `solanaKeypairWalletProvider` implementation to create a Solana wallet with a local keypair.
