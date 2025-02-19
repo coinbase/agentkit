@@ -8,9 +8,11 @@ import { fileURLToPath } from "url";
 import {
   handleWalletProviderSelection,
   isValidPackageName,
+  Network,
+  Networks,
+  NetworkToWalletProviders,
   optimizedCopy,
   toValidPackageName,
-  WalletProviderChoices
 } from "./utils.js";
 
 const sourceDir = path.resolve(
@@ -92,9 +94,16 @@ async function init() {
         },
         {
           type: "select",
+          name: "network",
+          message: pc.reset("Choose a network:"),
+          choices: [...Networks].map((network) => ({ title: network, value: network })),
+        },
+        {
+          type: (prev, { network }) => NetworkToWalletProviders[network as Network].length > 1 ? "select" : null,
           name: "walletProvider",
           message: pc.reset("Choose a wallet provider:"),
-          choices: WalletProviderChoices.map((option) => ({ title: option, value: option })),
+          choices: (prev, { network }) =>
+            NetworkToWalletProviders[network as Network].map((provider) => ({ title: provider, value: provider })),
         },
       ],
       {
@@ -109,7 +118,7 @@ async function init() {
     process.exit(1);
   }
 
-  const { projectName, packageName, walletProvider } = result;
+  const { projectName, packageName, network, walletProvider } = result;
   const root = path.join(process.cwd(), projectName);
 
   const spinner = ora(`Creating ${projectName}...`).start();
@@ -121,7 +130,7 @@ async function init() {
   pkg.name = packageName || toValidPackageName(projectName);
   await fs.promises.writeFile(pkgPath, JSON.stringify(pkg, null, 2));
 
-  await handleWalletProviderSelection(root, walletProvider)
+  await handleWalletProviderSelection(root, walletProvider, network)
 
   spinner.succeed();
   console.log(`\n${pc.magenta(`Created new AgentKit project in ${root}`)}`);
