@@ -50,7 +50,6 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
       const { decimals } = await getMint(walletProvider.getConnection(), inputMint);
       const amount = args.amount * 10 ** decimals;
 
-      // Get the best swap route
       const quoteResponse = await jupiterApi.quoteGet({
         inputMint: inputMint.toBase58(),
         outputMint: outputMint.toBase58(),
@@ -62,22 +61,19 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
         throw new Error("Failed to get a swap quote.");
       }
 
-      // Request the swap transaction
       const swapRequest: SwapRequest = {
         userPublicKey: userPublicKey.toBase58(),
-        wrapAndUnwrapSol: true, // Defaults to true for SOL swaps
+        wrapAndUnwrapSol: true,
         useSharedAccounts: true, // Optimize for low transaction costs
         quoteResponse,
       };
 
-      // Request the swap transaction
       const swapResponse = await jupiterApi.swapPost({ swapRequest });
 
       if (!swapResponse || !swapResponse.swapTransaction) {
         throw new Error("Failed to generate swap transaction.");
       }
 
-      // Deserialize, sign, and send transaction
       const transactionBuffer = Buffer.from(swapResponse.swapTransaction, "base64");
       const tx = VersionedTransaction.deserialize(transactionBuffer);
 
