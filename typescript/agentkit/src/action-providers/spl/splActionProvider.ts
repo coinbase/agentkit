@@ -45,13 +45,16 @@ export class SplActionProvider extends ActionProvider<SvmWalletProvider> {
     args: z.infer<typeof GetBalanceSchema>,
   ): Promise<string> {
     try {
+      if (!args.address) {
+        args.address = walletProvider.getAddress();
+      }
+
       const connection = walletProvider.getConnection();
       const mintPubkey = new PublicKey(args.mintAddress);
-      const ownerPubkey = args.address
-        ? new PublicKey(args.address)
-        : walletProvider.getPublicKey();
+      const ownerPubkey = new PublicKey(args.address);
 
-      const { getMint, getAssociatedTokenAddress, getAccount } = await import("@solana/spl-token");
+      const { getMint, getAssociatedTokenAddress, getAccount, TokenAccountNotFoundError } =
+        await import("@solana/spl-token");
 
       const mintInfo = await getMint(connection, mintPubkey);
       const ata = await getAssociatedTokenAddress(mintPubkey, ownerPubkey);
@@ -59,10 +62,11 @@ export class SplActionProvider extends ActionProvider<SvmWalletProvider> {
       try {
         const account = await getAccount(connection, ata);
         const balance = Number(account.amount) / Math.pow(10, mintInfo.decimals);
-        return `Balance for ${args.address || "connected wallet"} is ${balance} tokens`;
+
+        return `Balance for ${args.address} is ${balance} tokens`;
       } catch (error) {
-        if ((error as Error).message.includes("could not find account")) {
-          return `Balance for ${args.address || "connected wallet"} is 0 tokens`;
+        if (error instanceof TokenAccountNotFoundError) {
+          return `Balance for ${args.address} is 0 tokens`;
         }
         throw error;
       }
