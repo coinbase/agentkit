@@ -45,9 +45,7 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
       const inputMint = new PublicKey(args.inputMint);
       const outputMint = new PublicKey(args.outputMint);
 
-      const {
-        getMint,
-      } = await import("@solana/spl-token");
+      const { getMint } = await import("@solana/spl-token");
       const { decimals } = await getMint(walletProvider.getConnection(), inputMint);
       const amount = args.amount * 10 ** decimals;
 
