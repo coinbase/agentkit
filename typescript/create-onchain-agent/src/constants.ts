@@ -43,25 +43,45 @@ export const WalletProviderChoices: WalletProviderChoice[] = [...new Set([
 export const WalletProviderRouteConfigurations: Record<"EVM" | "SVM", Partial<Record<WalletProviderChoice, WalletProviderRouteConfiguration>>> = {
   EVM: {
     CDP: {
-      env: ["CDP_API_KEY_NAME", "CDP_API_KEY_PRIVATE_KEY"],
+      env: {
+        topComments: ["Get keys from CDP Portal: https://portal.cdp.coinbase.com/"],
+        required: ["CDP_API_KEY_NAME=", "CDP_API_KEY_PRIVATE_KEY="],
+        optional: []
+      },
       apiRoute: "evm/cdp/route.ts"
     },
     Viem: {
-      env: ["PRIVATE_KEY"],
+      env: {
+        topComments: ["Export private key from your Ethereum wallet and save"],
+        required: ["PRIVATE_KEY="],
+        optional: [],
+      },
       apiRoute: "evm/viem/route.ts"
     },
     Privy: {
-      env: ["PRIVY_APP_ID", "PRIVY_APP_SECRET", "PRIVY_WALLET_ID", "CHAIN_ID", "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY", "PRIVY_WALLET_AUTHORIZATION_KEY_ID"],
+      env: {
+        topComments: ["Get keys from Privy Dashboard: https://dashboard.privy.io/"],
+        required: ["PRIVY_APP_ID=", "PRIVY_APP_SECRET="],
+        optional: ["CHAIN_ID=", "PRIVY_WALLET_ID=", "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY=", "PRIVY_WALLET_AUTHORIZATION_KEY_ID="]
+      },
       apiRoute: "evm/privy/route.ts"
     }
   },
   SVM: {
     SolanaKeypair: {
-      env: ["SOLANA_RPC_URL", "SOLANA_PRIVATE_KEY"],
+      env: {
+        topComments: ["Export private key from your Solana wallet and save"],
+        required: ["SOLANA_PRIVATE_KEY="],
+        optional: ["SOLANA_RPC_URL="]
+      },
       apiRoute: "svm/solanaKeypair/route.ts"
     },
     Privy: {
-      env: ["PRIVY_APP_ID", "PRIVY_APP_SECRET", "PRIVY_WALLET_ID", "CHAIN_ID", "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY", "PRIVY_WALLET_AUTHORIZATION_KEY_ID"],
+      env: {
+        topComments: ["Get keys from Privy Dashboard: https://dashboard.privy.io/"],
+        required: ["PRIVY_APP_ID=", "PRIVY_APP_SECRET="],
+        optional: ["PRIVY_WALLET_ID=", "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY=", "PRIVY_WALLET_AUTHORIZATION_KEY_ID="]
+      },
       apiRoute: "svm/privy/route.ts"
     }
   }
