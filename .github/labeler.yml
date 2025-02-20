@@ -9,18 +9,18 @@ python:
 'action provider':
 - changed-files:
   - any-glob-to-any-file:
-    - 'action-providers/**'
-    - 'action_providers/**'
+    - '**/action-providers/**'
+    - '**/action_providers/**'
 
 'wallet provider':
 - changed-files:
   - any-glob-to-any-file:
-    - 'wallet-providers/**'
-    - 'wallet_providers/**'
+    - '**/wallet-providers/**'
+    - '**/wallet_providers/**'
 
 'framework extension':
 - changed-files:
-  - any-glob-to-any-file: 'framework-extensions/**'
+  - any-glob-to-any-file: '**/framework-extensions/**'
 
 documentation:
 - changed-files:
@@ -28,7 +28,7 @@ documentation:
 
 example:
 - changed-files:
-  - any-glob-to-any-file: 'examples/**'
+  - any-glob-to-any-file: '**/examples/**'
 
 'needs triage':
 - changed-files:
