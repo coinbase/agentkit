@@ -1,10 +1,10 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { EVMNetwork, Network, SVMNetwork, WalletProviderChoice } from './types';
-import { EVM_NETWORKS, SVM_NETWORKS, WalletProviderRouteConfigurations } from './constants';
+import { EVM_NETWORKS, SVM_NETWORKS, WalletProviderRouteConfigurations } from './constants.js';
 
 export function getNetworkFamily(network: EVMNetwork | SVMNetwork) {
-  return EVM_NETWORKS.has(network) ? 'EVM' : SVM_NETWORKS.has(network) ? 'SVM' : undefined;
+  return EVM_NETWORKS.has(network as EVMNetwork) ? 'EVM' : SVM_NETWORKS.has(network as SVMNetwork) ? 'SVM' : undefined;
 }
 
 async function copyFile(src: string, dest: string) {
