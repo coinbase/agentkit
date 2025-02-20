@@ -40,19 +40,23 @@ export function getNetworkFamily(network: EVMNetwork | SVMNetwork) {
   return EVM_NETWORKS.has(network) ? 'EVM' : SVM_NETWORKS.has(network) ? 'SVM' : undefined;
 }
 
+export const CDP_SUPPORTED_EVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["CDP", "Viem", "Privy"];
+export const NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["Viem", "Privy"];
+export const SVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["SolanaKeypair", "Privy"]
+
 export const NetworkToWalletProviders: Record<Network, WalletProviderChoice[]> = {
-  "arbitrum-mainnet": ["CDP", "Viem", "Privy"],
-  "arbitrum-sepolia": ["Viem", "Privy"],
-  "base-mainnet": ["CDP","Viem", "Privy" ],
-  "base-sepolia": ["CDP", "Viem", "Privy"],
-  "ethereum-mainnet": ["CDP", "Viem", "Privy"],
-  "ethereum-sepolia": ["Viem", "Privy"],
-  "optimism-mainnet": ["Viem", "Privy"],
-  "optimism-sepolia": ["Viem", "Privy"],
-  "polygon-mainnet": ["CDP", "Viem", "Privy"],
-  "polygon-mumbai": ["Viem", "Privy"],
-  "solana-mainnet": ["SolanaKeypair", "Privy"],
-  "solana-devnet": ["SolanaKeypair", "Privy"],
+  "arbitrum-mainnet": CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
+  "arbitrum-sepolia": NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
+  "base-mainnet": CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
+  "base-sepolia": CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
+  "ethereum-mainnet": CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
+  "ethereum-sepolia": NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
+  "optimism-mainnet": NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
+  "optimism-sepolia": NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
+  "polygon-mainnet": CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
+  "polygon-mumbai": NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
+  "solana-mainnet": SVM_WALLET_PROVIDERS,
+  "solana-devnet": SVM_WALLET_PROVIDERS,
   "solana-testnet": ["SolanaKeypair", "Privy"]
 }
 
@@ -160,22 +164,28 @@ export const WalletProviderRouteConfigurations: Record<('EVM' | 'SVM'), Partial<
     }
 }
 
-export async function handleWalletProviderSelection(root: string, walletProvider: WalletProviderChoice, network: Network) {
+export async function handleWalletProviderSelection(root: string, walletProvider: WalletProviderChoice, network?: Network, chainId?: string) {
   const agentDir = path.join(root, "app", "api", "agent");
-  const networkFamily = getNetworkFamily(network)
 
-  if (!networkFamily) {
-    return 'ERROR: Unsupported network selected';
+  let networkFamily: ReturnType<typeof getNetworkFamily>;
+  if (network) {
+    networkFamily = getNetworkFamily(network);
+  }
+  else if (chainId) {
+    networkFamily = 'EVM';
+  }
+  else {
+    throw new Error('Unsupported network and chainId selected');
   }
 
-  const selectedRouteConfig = WalletProviderRouteConfigurations[networkFamily][walletProvider];
+  const selectedRouteConfig = WalletProviderRouteConfigurations[networkFamily!][walletProvider];
 
   if (!selectedRouteConfig) {
-    return 'ERROR: Selected invalid network & wallet provider combination'
+    throw new Error('Selected invalid network & wallet provider combination')
   }
 
   // Create .env file
-  const envPath = path.join(root, ".env-local");
+  const envPath = path.join(root, ".env.local");
   await fs.writeFile(
     envPath,
     `NETWORK_ID=${network}\nOPENAI_API_KEY=\n${selectedRouteConfig.env.map(envVar => `${envVar}=`).join('\n')}`
