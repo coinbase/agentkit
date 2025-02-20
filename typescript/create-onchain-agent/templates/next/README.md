@@ -1,39 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-onchain-agent`]().
+# AgentKit Project
+
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-onchain-agent`]().  
+It integrates [AgentKit](https://github.com/coinbase/agentkit) to provide AI-driven interactions with on-chain capabilities.
 
 
 ## Getting Started
 
 First, install dependencies:
 
-```bash
-npm install
-# or
-yarn install
-# or
-pnpm install
-# or
-bun install
-```
+`npm install`
 
 Next, run the development server:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+`npm run dev`
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser to see the project.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## Configuring Your Agent
+
+You can modify your configuration of the agent. By default, your agent configuration occurs in the `/api/agent/route.ts` file.
+
+### 1. Select Your LLM  
+Modify the `ChatOpenAI` instantiation to use the model of your choice.  
+For OpenAI models, refer to: [OpenAI Model Documentation](https://platform.openai.com/docs/models)
+
+### 2. Select Your WalletProvider  
+AgentKit requires a **WalletProvider** to interact with blockchain networks.
+
+- Documentation: [Wallet Providers](https://github.com/coinbase/agentkit/tree/main/typescript/agentkit#evm-wallet-providers)
+
+### 3. Select Your ActionProviders  
+ActionProviders define what your agent can do. You can use built-in providers or create your own.
+
+- Built-in ActionProviders: [Available Providers](https://github.com/coinbase/agentkit/tree/main/typescript/agentkit#action-providers)
+- Custom ActionProviders: [Creating a Provider](https://github.com/coinbase/agentkit/tree/main/typescript/agentkit#creating-an-action-provider)
+
+---
+
+## Next Steps
+
+- Explore the AgentKit README: [AgentKit Documentation](https://github.com/coinbase/agentkit)
+- Learn more about available WalletProviders & ActionProviders.
+- Experiment with custom ActionProviders for your specific use case.
+
+---
 
 ## Learn More
 
-To learn more about AgentKit, see our [documentation](https://docs.cdp.coinbase.com/agentkit/docs/welcome).
+- [Learn more about CDP](https://docs.cdp.coinbase.com/)
+- [Learn more about AgentKit](https://docs.cdp.coinbase.com/agentkit/docs/welcome)
+- [Learn more about Next.js](https://nextjs.org/docs)
+- [Learn more about Tailwind CSS](https://tailwindcss.com/docs)
 
-To learn more about Next.js, see the [Next.js documentation](https://nextjs.org/docs).
+---
+
+## Contributing
+
+Interested in contributing to AgentKit? Follow the contribution guide:
+
+- [Contribution Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING.md)
+- Join the discussion on [Discord](https://discord.gg/CDP)

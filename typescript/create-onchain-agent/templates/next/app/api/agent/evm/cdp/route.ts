@@ -19,7 +19,6 @@ import { AgentRequest, AgentResponse } from "@/app/types/api";
  *    - Modify the `ChatOpenAI` instantiation to choose your preferred LLM.
  * 
  * 2. Set up your WalletProvider:
- *    - Configure the `CdpWalletProvider` to manage blockchain interactions.
  *    - Learn more: https://github.com/coinbase/agentkit/tree/main/typescript/agentkit#evm-wallet-providers
  * 
  * 3️. Set up your ActionProviders:
