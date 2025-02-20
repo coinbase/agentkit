@@ -12,9 +12,9 @@ export const SVM_NETWORKS: Set<SVMNetwork> = new Set([
   "solana-mainnet", "solana-devnet", "solana-testnet"
 ]);
 
-export const CDP_SUPPORTED_EVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["CDP", "Viem", "Privy"];
+const CDP_SUPPORTED_EVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["CDP", "Viem", "Privy"];
+const SVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["SolanaKeypair", "Privy"];
 export const NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["Viem", "Privy"];
-export const SVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["SolanaKeypair", "Privy"];
 
 export const NetworkToWalletProviders: Record<Network, WalletProviderChoice[]> = {
   "arbitrum-mainnet": CDP_SUPPORTED_EVM_WALLET_PROVIDERS,

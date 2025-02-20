@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { EVMNetwork, Network, SVMNetwork, WalletProviderChoice } from './types';
-import { EVM_NETWORKS, SVM_NETWORKS, WalletProviderRouteConfigurations } from './constants.js';
+import { EVM_NETWORKS, NetworkToWalletProviders, NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS, SVM_NETWORKS, WalletProviderRouteConfigurations } from './constants.js';
 
 export function getNetworkFamily(network: EVMNetwork | SVMNetwork) {
   return EVM_NETWORKS.has(network as EVMNetwork) ? 'EVM' : SVM_NETWORKS.has(network as SVMNetwork) ? 'SVM' : undefined;
@@ -73,6 +73,13 @@ export function detectPackageManager(): string {
     }
   }
   return 'npm'; // default to npm if unable to detect
+}
+
+export const getWalletProviders = (network?: Network) => {
+  if (network) {
+    return NetworkToWalletProviders[network];
+  }
+  return NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS;
 }
 
 export async function handleSelection(root: string, walletProvider: WalletProviderChoice, network?: Network, chainId?: string) {

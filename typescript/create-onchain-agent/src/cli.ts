@@ -4,13 +4,14 @@ import ora from "ora";
 import path from "path";
 import pc from "picocolors";
 import prompts from "prompts";
-import { Networks, NetworkToWalletProviders, NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS } from "./constants.js";
+import { Networks, NetworkToWalletProviders } from "./constants.js";
 import { Network, WalletProviderChoice } from "./types.js";
 import { copyTemplate } from "./fileSystem.js";
 import {
   handleSelection,
   isValidPackageName,
-  toValidPackageName
+  toValidPackageName,
+  getWalletProviders
 } from "./utils.js";
 
 async function init() {
@@ -78,19 +79,24 @@ async function init() {
         {
           type: (prev, { network }) => !network || NetworkToWalletProviders[network as Network].length > 1 ? "select" : null,
           name: "walletProvider",
-          message: pc.reset("Choose a wallet provider:"),
+          message: (prev, { network }) => {
+            const walletDescriptions: Record<WalletProviderChoice, string> = {
+              CDP: "Uses Coinbase Developer Platform (CDP)'s managed wallet.",
+              Viem: "Client-side Ethereum wallet.",
+              Privy: "Authentication and wallet infrastructure.",
+              SolanaKeypair: "Client-side Solana wallet.",
+            };
+        
+            const providerDescriptions = getWalletProviders(network)
+              .map((provider) => `  - ${provider}: ${walletDescriptions[provider]}`)
+              .join("\n");
+        
+            return pc.reset(`Choose a wallet provider:\n${providerDescriptions}\n`);
+          },
           choices: (prev, { network, chainId }) => {
-            let walletProviderChoises: WalletProviderChoice[];
-
-            if (network) {
-              walletProviderChoises = NetworkToWalletProviders[network as Network];
-            }
-            else {
-              walletProviderChoises = NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS;
-            }
-
-            return walletProviderChoises.map((provider) => ({
-              title: provider === walletProviderChoises[0] ? `${provider} (default)` : provider,
+            const walletProviders = getWalletProviders(network);
+            return getWalletProviders(network).map((provider) => ({
+              title: provider === walletProviders[0] ? `${provider} (default)` : provider,
               value: provider,
             }))
           },
