@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useAgent } from "./hooks/useAgent";
+import ReactMarkdown from "react-markdown";
 
 export default function Home() {
   const [input, setInput] = useState("");
@@ -44,7 +45,16 @@ export default function Home() {
                     : "bg-gray-100 dark:bg-gray-700 self-start"
                 }`}
               >
-                {msg.text}
+                <ReactMarkdown components={{
+                  a: ({ node, ...props }) => (
+                    <a
+                      {...props}
+                      className="text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    />
+                  ),
+                }}>{msg.text}</ReactMarkdown>
               </div>
             ))
           )}
