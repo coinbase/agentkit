@@ -1,5 +1,5 @@
 import { AgentRequest, AgentResponse } from "@/app/types/api";
-import { AgentKit, SOLANA_NETWORK_ID, SolanaKeypairWalletProvider, splActionProvider, walletActionProvider } from "@coinbase/agentkit";
+import { AgentKit, SOLANA_NETWORK_ID, SolanaKeypairWalletProvider, splActionProvider, walletActionProvider, jupiterActionProvider } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
@@ -43,7 +43,7 @@ async function initializeAgent(): Promise<ReturnType<typeof createReactAgent>> {
     // Initialize AgentKit
     const agentkit = await AgentKit.from({
       walletProvider,
-      actionProviders: [splActionProvider(), walletActionProvider()],
+      actionProviders: [splActionProvider(), walletActionProvider(), jupiterActionProvider()],
     });
     const tools = await getLangChainTools(agentkit);
     const memory = new MemorySaver();
