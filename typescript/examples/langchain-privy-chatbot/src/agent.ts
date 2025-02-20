@@ -46,7 +46,6 @@ export class Agent {
    * @returns Promise that resolves when the agent is stopped
    */
   async start(): Promise<void> {
-    // Handle Ctrl-C gracefully
     process.on("SIGINT", () => {
       console.log("\nExiting...");
       process.exit(0);

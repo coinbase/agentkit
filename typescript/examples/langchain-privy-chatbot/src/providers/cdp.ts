@@ -49,12 +49,10 @@ export class CdpWalletProviderFactory implements WalletProviderFactory<CdpConfig
     const validatedConfig = validateConfig(config);
     const savedWallet = loadSavedWalletData(validatedConfig.walletDataFilePath);
 
-    // Prepare configuration values
     const networkId =
       savedWallet?.networkId || process.env.NETWORK_ID || validatedConfig.walletDefaultNetworkId;
     const walletData = savedWallet?.walletId ? JSON.stringify(savedWallet) : undefined;
 
-    // Configure CDP Wallet Provider
     const cdpConfig = {
       apiKeyName: validatedConfig.apiKeyName,
       apiKeyPrivateKey: validatedConfig.apiKeyPrivateKey,
