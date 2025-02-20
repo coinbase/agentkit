@@ -161,9 +161,9 @@ A failure response will return an error message with details.
    *
    * @returns Always returns true.
    */
-  supportsNetwork(): boolean {
+  supportsNetwork = (): boolean => {
     return true;
-  }
+  };
 }
 
 /**

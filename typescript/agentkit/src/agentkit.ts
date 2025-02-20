@@ -70,10 +70,21 @@ export class AgentKit {
   public getActions(): Action[] {
     const actions: Action[] = [];
 
+    const unsupported: string[] = [];
+
     for (const actionProvider of this.actionProviders) {
       if (actionProvider.supportsNetwork(this.walletProvider.getNetwork())) {
         actions.push(...actionProvider.getActions(this.walletProvider));
+      } else {
+        unsupported.push(actionProvider.name);
       }
+    }
+
+    if (unsupported.length > 0) {
+      console.log(
+        `Warning: The following action providers are not supported on the current network and will be unavailable: ${unsupported.join(", ")}`,
+      );
+      console.log("Current network:", this.walletProvider.getNetwork());
     }
 
     return actions;

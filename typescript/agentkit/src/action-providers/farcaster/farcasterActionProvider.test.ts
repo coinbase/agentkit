@@ -173,4 +173,14 @@ describe("Farcaster Action Provider", () => {
       process.env = originalEnv;
     });
   });
+
+  describe("supportsNetwork", () => {
+    it("should return true when protocolFamily is evm", () => {
+      expect(actionProvider.supportsNetwork({ protocolFamily: "evm" })).toBe(true);
+    });
+
+    it("should return false when protocolFamily is not evm", () => {
+      expect(actionProvider.supportsNetwork({ protocolFamily: "solana" })).toBe(false);
+    });
+  });
 });
