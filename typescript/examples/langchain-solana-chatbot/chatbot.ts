@@ -75,6 +75,7 @@ async function initializeAgent() {
       const keypair = Keypair.generate();
       solanaPrivateKey = bs58.encode(keypair.secretKey);
       fs.appendFileSync(".env", `SOLANA_PRIVATE_KEY=${solanaPrivateKey}\n`);
+      console.log("Private key has been saved to .env file");
     }
 
     // Configure Solana Keypair Wallet Provider
