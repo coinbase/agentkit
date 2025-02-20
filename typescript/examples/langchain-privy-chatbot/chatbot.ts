@@ -48,11 +48,6 @@ function validateEnvironment(): void {
     });
     process.exit(1);
   }
-
-  // Warn about optional CHAIN_ID
-  if (!process.env.CHAIN_ID) {
-    console.warn("Warning: CHAIN_ID not set, defaulting to base-sepolia testnet");
-  }
 }
 
 // Add this right after imports and before any other code
@@ -99,7 +94,7 @@ async function initializeAgent() {
       const config: PrivyWalletConfig = {
         appId: process.env.PRIVY_APP_ID as string,
         appSecret: process.env.PRIVY_APP_SECRET as string,
-        chainId: process.env.CHAIN_ID || "84532",
+        chainId: process.env.CHAIN_ID,
         walletId: process.env.PRIVY_WALLET_ID as string,
         authorizationPrivateKey: process.env.PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY,
         authorizationKeyId: process.env.PRIVY_WALLET_AUTHORIZATION_KEY_ID,
@@ -111,7 +106,16 @@ async function initializeAgent() {
         const savedWallet = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8"));
         config.walletId = savedWallet.walletId;
         config.authorizationPrivateKey = savedWallet.authorizationPrivateKey;
-        config.chainId = savedWallet.chainId;
+
+        if (savedWallet.chainId) {
+          console.log("Found chainId in wallet_data.txt:", savedWallet.chainId);
+          config.chainId = savedWallet.chainId;
+        }
+      }
+
+      if (!config.chainId) {
+        console.log("Warning: CHAIN_ID not set, defaulting to 84532 (base-sepolia)");
+        config.chainId = "84532";
       }
 
       walletProvider = await PrivyWalletProvider.configureWithWallet(config);
