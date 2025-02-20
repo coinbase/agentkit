@@ -1,4 +1,3 @@
-
 export type EVMNetwork =
   | "ethereum-mainnet"
   | "ethereum-sepolia"
@@ -15,9 +14,9 @@ export type SVMNetwork = "solana-mainnet" | "solana-devnet" | "solana-testnet";
 
 export type Network = EVMNetwork | SVMNetwork;
 
-export type WalletProviderChoice = 'CDP' | 'Viem' | 'Privy' | 'SolanaKeypair'
+export type WalletProviderChoice = "CDP" | "Viem" | "Privy" | "SolanaKeypair";
 
 export type WalletProviderRouteConfiguration = {
-    env: string[];
-    apiRoute: string
-}
+  env: string[];
+  apiRoute: string;
+};
