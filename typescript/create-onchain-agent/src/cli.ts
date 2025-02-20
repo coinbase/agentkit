@@ -4,48 +4,14 @@ import ora from "ora";
 import path from "path";
 import pc from "picocolors";
 import prompts from "prompts";
-import { fileURLToPath } from "url";
-import {
-  handleWalletProviderSelection,
-  isValidPackageName,
-  optimizedCopy,
-  toValidPackageName,
-} from "./utils.js";
 import { Networks, NetworkToWalletProviders, NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS } from "./constants.js";
 import { Network, WalletProviderChoice } from "./types.js";
-
-const sourceDir = path.resolve(
-  fileURLToPath(import.meta.url),
-  "../../../templates/next"
-);
-
-const renameFiles: Record<string, string | undefined> = {
-  _gitignore: ".gitignore",
-  "_env.local": ".env.local",
-};
-
-const excludeDirs = ["node_modules", ".next"];
-const excludeFiles = [".DS_Store", "Thumbs.db"];
-
-async function copyDir(src: string, dest: string) {
-  await fs.promises.mkdir(dest, { recursive: true });
-  const entries = await fs.promises.readdir(src, { withFileTypes: true });
-
-  for (const entry of entries) {
-    const srcPath = path.join(src, entry.name);
-    const destPath = path.join(dest, renameFiles[entry.name] || entry.name);
-
-    if (entry.isDirectory()) {
-      if (!excludeDirs.includes(entry.name)) {
-        await copyDir(srcPath, destPath);
-      }
-    } else {
-      if (!excludeFiles.includes(entry.name)) {
-        await optimizedCopy(srcPath, destPath);
-      }
-    }
-  }
-}
+import { copyTemplate } from "./fileSystem.js";
+import {
+  handleSelection,
+  isValidPackageName,
+  toValidPackageName
+} from "./utils.js";
 
 async function init() {
   console.log(
@@ -144,18 +110,13 @@ async function init() {
   }
   const { projectName, packageName, network, chainId, walletProvider } = result;
 
-  const root = path.join(process.cwd(), projectName);
-
   const spinner = ora(`Creating ${projectName}...`).start();
 
-  await copyDir(sourceDir, root);
+  // Copy template over to new project 
+  const root = await copyTemplate(projectName, packageName);
 
-  const pkgPath = path.join(root, "package.json");
-  const pkg = JSON.parse(await fs.promises.readFile(pkgPath, "utf-8"));
-  pkg.name = packageName || toValidPackageName(projectName);
-  await fs.promises.writeFile(pkgPath, JSON.stringify(pkg, null, 2));
-
-  await handleWalletProviderSelection(root, walletProvider, network, chainId)
+  // Handle selection-specific logic over copied-template
+  await handleSelection(root, walletProvider, network, chainId)
 
   spinner.succeed();
   console.log(pc.blueBright(`\nSuccessfully created your AgentKit project in ${root}`));

@@ -75,7 +75,7 @@ export function detectPackageManager(): string {
   return 'npm'; // default to npm if unable to detect
 }
 
-export async function handleWalletProviderSelection(root: string, walletProvider: WalletProviderChoice, network?: Network, chainId?: string) {
+export async function handleSelection(root: string, walletProvider: WalletProviderChoice, network?: Network, chainId?: string) {
   const agentDir = path.join(root, "app", "api", "agent");
 
   let networkFamily: ReturnType<typeof getNetworkFamily>;
