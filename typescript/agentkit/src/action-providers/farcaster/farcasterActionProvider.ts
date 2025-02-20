@@ -145,10 +145,10 @@ A failure response will return a message with the Farcaster API request error:
   /**
    * Checks if the Farcaster action provider supports the given network.
    *
-   * @param _ - The network to check.
+   * @param network - The network to check.
    * @returns True if the Farcaster action provider supports the network, false otherwise.
    */
-  supportsNetwork = (_: Network) => true;
+  supportsNetwork = (network: Network) => network.protocolFamily === "evm";
 }
 
 export const farcasterActionProvider = (config: FarcasterActionProviderConfig = {}) =>
