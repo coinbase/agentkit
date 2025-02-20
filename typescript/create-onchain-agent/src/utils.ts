@@ -136,11 +136,11 @@ export function detectPackageManager(): string {
 export const WalletProviderRouteConfigurations: Record<('EVM' | 'SVM'), Partial<Record<WalletProviderChoice, WalletProviderRouteConfiguration>>> = {
     EVM: {
       CDP: {
-          env: ['NETWORK_ID', 'CDP_API_KEY_NAME', 'CDP_API_KEY_PRIVATE_KEY'],
+          env: ['CDP_API_KEY_NAME', 'CDP_API_KEY_PRIVATE_KEY'],
           apiRoute: 'evm/cdp/route.ts'
       },
       Viem: {
-          env: ['NETWORK_ID', 'PRIVATE_KEY'],
+          env: ['PRIVATE_KEY'],
           apiRoute: 'evm/viem/route.ts'
       },
       Privy: {
@@ -150,7 +150,7 @@ export const WalletProviderRouteConfigurations: Record<('EVM' | 'SVM'), Partial<
     },
     SVM: {
       SolanaKeypair: {
-          env: ['NETWORK_ID', 'SOLANA_RPC_URL', 'SOLANA_PRIVATE_KEY'],
+          env: ['SOLANA_RPC_URL', 'SOLANA_PRIVATE_KEY'],
           apiRoute: 'svm/solanaKeypair/route.ts'
       },
       Privy: {
@@ -188,7 +188,8 @@ export async function handleWalletProviderSelection(root: string, walletProvider
   await fs.rename(selectedRoutePath, newRoutePath);
 
   // Delete all unselected routes
-  const providerRoutes = Object.values(WalletProviderRouteConfigurations[networkFamily]).map((config) => path.join(agentDir, config.apiRoute));
+  const allRouteConfigurations = Object.values(WalletProviderRouteConfigurations).flatMap(routeConfigurations => Object.values(routeConfigurations)).filter(x => x);
+  const providerRoutes = allRouteConfigurations.map((config) => path.join(agentDir, config.apiRoute));
   for (const routePath of providerRoutes) {
     // Remove file
     await fs.rm(routePath, { recursive: true, force: true });
@@ -204,4 +205,6 @@ export async function handleWalletProviderSelection(root: string, walletProvider
       // Skip removing directory
     }
   }
+  await fs.rm(path.join(agentDir, 'evm'), { recursive: true, force: true });
+  await fs.rm(path.join(agentDir, 'svm'), { recursive: true, force: true });
 }
