@@ -1,5 +1,5 @@
 {
-  "name": "@coinbase/create-onchain-agent",
+  "name": "create-onchain-agent",
   "description": "Instantly create onchain-agent applications with AgentKit.",
   "version": "0.1.1",
   "license": "MIT",
