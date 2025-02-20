@@ -1,10 +1,10 @@
-# @coinbase/create-onchain-agent
+# create-onchain-agent
 
 ## Overview
 
-`@coinbase/create-onchain-agent` is a CLI tool that allows developers to quickly scaffold an **onchain agent** project. This tool simplifies the setup process by generating a project with predefined configurations, including blockchain network selection, wallet providers, and framework setup.
+`create-onchain-agent` is a CLI tool powered by [AgentKit](https://github.com/coinbase/agentkit) that allows developers to quickly scaffold an **onchain agent** project. This tool simplifies the setup process by generating a project with predefined configurations, including blockchain network selection, wallet providers, and framework setup.
 
-## Installation & Usage
+## Usage
 
 To use `create-onchain-agent`, simply run:
 
