@@ -1,5 +1,5 @@
 import { AgentRequest, AgentResponse } from "@/app/types/api";
-import { AgentKit, erc20ActionProvider, PrivyWalletProvider, pythActionProvider, walletActionProvider, wethActionProvider } from "@coinbase/agentkit";
+import { AgentKit, erc20ActionProvider, jupiterActionProvider, PrivyWalletProvider, pythActionProvider, splActionProvider, walletActionProvider, wethActionProvider } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
@@ -22,19 +22,19 @@ async function initializeAgent(): Promise<ReturnType<typeof createReactAgent>> {
       appId: process.env.PRIVY_APP_ID as string,
       appSecret: process.env.PRIVY_APP_SECRET as string,
       walletId: process.env.PRIVY_WALLET_ID as string,
-      chainId: process.env.CHAIN_ID,
       authorizationPrivateKey: process.env.PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY,
-      authorizationKeyId: process.env.PRIVY_WALLET_AUTHORIZATION_KEY_ID
+      authorizationKeyId: process.env.PRIVY_WALLET_AUTHORIZATION_KEY_ID,
+      chainType: "solana",
+      networkId: process.env.NETWORK_ID,
     });
     
     // Initialize AgentKit
     const agentkit = await AgentKit.from({
         walletProvider,
         actionProviders: [
-            wethActionProvider(),
-            pythActionProvider(),
-            walletActionProvider(),
-            erc20ActionProvider(),
+          walletActionProvider(),
+          splActionProvider(),
+          jupiterActionProvider()
         ],
     });
     const tools = await getLangChainTools(agentkit);
