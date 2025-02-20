@@ -50,13 +50,15 @@ async function copyDir(src: string, dest: string) {
 
 async function init() {
   console.log(
-    `${pc.greenBright(`
+    `${pc.blue(`
  █████   ██████  ███████ ███    ██ ████████    ██   ██ ██ ████████ 
 ██   ██ ██       ██      ████   ██    ██       ██  ██  ██    ██    
 ███████ ██   ███ █████   ██ ██  ██    ██       █████   ██    ██    
 ██   ██ ██    ██ ██      ██  ██ ██    ██       ██  ██  ██    ██    
 ██   ██  ██████  ███████ ██   ████    ██       ██   ██ ██    ██    
-`)}\n\n`
+                                                                  
+           Giving every AI agent a crypto wallet
+`)}`
   );
 
   const defaultProjectName = "my-onchain-agent-app";
@@ -137,16 +139,17 @@ async function init() {
   await handleWalletProviderSelection(root, walletProvider, network)
 
   spinner.succeed();
-  console.log(`\n${pc.magenta(`Created new AgentKit project in ${root}`)}`);
+  console.log(`\n${pc.blueBright(`Created new AgentKit project in ${root}`)}`);
 
   console.log(`\nFrameworks:`);
-  console.log(`${pc.cyan("- React")}`);
-  console.log(`${pc.cyan("- Next.js")}`);
-  console.log(`${pc.cyan("- Tailwind CSS")}`);
-  console.log(`${pc.cyan("- ESLint")}`);
+  console.log(`${pc.blueBright("- AgentKit")}`);
+  console.log(`${pc.blueBright("- React")}`);
+  console.log(`${pc.blueBright("- Next.js")}`);
+  console.log(`${pc.blueBright("- Tailwind CSS")}`);
+  console.log(`${pc.blueBright("- ESLint")}`);
 
   console.log(
-    `\nTo get started with ${pc.green(projectName)}, run the following commands:\n`
+    `\nTo get started with ${pc.blueBright(projectName)}, run the following commands:\n`
   );
   if (root !== process.cwd()) {
     console.log(` - cd ${path.relative(process.cwd(), root)}`);
