@@ -145,7 +145,7 @@ async function init() {
   console.log("   - Visit the repo");
   console.log(pc.blueBright("      - http://github.com/coinbase/agentkit"));
   console.log("   - Join the community");
-  console.log(pc.blueBright("      - https://discord.gg/CDP"));
+  console.log(pc.blueBright("      - https://discord.gg/CDP\n"));
 }
 
 init().catch((e) => {
