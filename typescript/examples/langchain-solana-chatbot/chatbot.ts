@@ -15,6 +15,7 @@ import { Keypair } from "@solana/web3.js";
 import bs58 from "bs58";
 import * as dotenv from "dotenv";
 import * as readline from "readline";
+import * as fs from "fs";
 
 dotenv.config();
 
@@ -73,8 +74,7 @@ async function initializeAgent() {
       console.log(`No Solana account detected. Generating a wallet...`);
       const keypair = Keypair.generate();
       solanaPrivateKey = bs58.encode(keypair.secretKey);
-      console.log(`Created Solana wallet: ${keypair.publicKey.toBase58()}`);
-      console.log(`Store the private key in your .env for future reuse: ${solanaPrivateKey}`);
+      fs.appendFileSync(".env", `SOLANA_PRIVATE_KEY=${solanaPrivateKey}\n`);
     }
 
     // Configure Solana Keypair Wallet Provider
