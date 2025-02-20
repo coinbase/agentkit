@@ -17,6 +17,10 @@ export type Network = EVMNetwork | SVMNetwork;
 export type WalletProviderChoice = "CDP" | "Viem" | "Privy" | "SolanaKeypair";
 
 export type WalletProviderRouteConfiguration = {
-  env: string[];
+  env: {
+    topComments: string[];
+    required: string[];
+    optional: string[];
+  },
   apiRoute: string;
 };

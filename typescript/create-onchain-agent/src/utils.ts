@@ -97,9 +97,19 @@ export async function handleSelection(root: string, walletProvider: WalletProvid
 
   // Create .env file
   const envPath = path.join(root, ".env.local");
+  const envLines = [
+    // Start file with notes regarding .env var setup
+    ...["Get keys from OpenAI Platform: https://platform.openai.com/api-keys", ...selectedRouteConfig.env.topComments].map(comment => `# ${comment}`).join("\n"),
+    // Continue with # Required section
+    "\n\n# Required\n",
+    ...["OPENAI_API_KEY=", ...selectedRouteConfig.env.required].join("\n"),
+    // Finish with # Optional section
+    "\n\n# Optional\n",
+    ...[`NETWORK_ID=${network}`, ...selectedRouteConfig.env.optional].join("\n")
+  ]
   await fs.writeFile(
     envPath,
-    `NETWORK_ID=${network}\nOPENAI_API_KEY=\n${selectedRouteConfig.env.map(envVar => `${envVar}=`).join('\n')}`
+    envLines
   );
 
   // Promote selected route (move `apiRoute` to `api/agent/route.ts`)
