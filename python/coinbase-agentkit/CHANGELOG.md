@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Fixed Morpho `deposit` and `withdraw` function headers to conform to the Action Provider Paradigm.
+- Added `compound_action_provider` to interact with Compound protocol on Base.
 
 ## [0.1.2] - 2025-02-14
 
