@@ -75,7 +75,7 @@ async function initializeAgent() {
     const networkId = process.env.NETWORK_ID;
 
     if (networkId?.includes("solana")) {
-      walletProvider = await PrivyWalletProvider.configureWithWallet({
+      const config: PrivyWalletConfig = {
         appId: process.env.PRIVY_APP_ID as string,
         appSecret: process.env.PRIVY_APP_SECRET as string,
         walletId: process.env.PRIVY_WALLET_ID as string,
@@ -83,7 +83,18 @@ async function initializeAgent() {
         authorizationKeyId: process.env.PRIVY_WALLET_AUTHORIZATION_KEY_ID,
         chainType: "solana",
         networkId,
-      });
+      };
+
+      // Try to load saved wallet data
+      if (fs.existsSync(WALLET_DATA_FILE)) {
+        const savedWallet = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8"));
+        config.walletId = savedWallet.walletId;
+        config.authorizationPrivateKey = savedWallet.authorizationPrivateKey;
+        config.networkId = savedWallet.networkId;
+      }
+
+      walletProvider = await PrivyWalletProvider.configureWithWallet(config);
+      walletProvider = await PrivyWalletProvider.configureWithWallet(config);
     } else {
       const config: PrivyWalletConfig = {
         appId: process.env.PRIVY_APP_ID as string,
