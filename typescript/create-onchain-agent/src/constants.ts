@@ -1,0 +1,74 @@
+import { EVMNetwork, Network, SVMNetwork, WalletProviderChoice, WalletProviderRouteConfiguration } from "./types";
+
+export const EVM_NETWORKS: Set<string> = new Set<EVMNetwork>([
+  "ethereum-mainnet",
+  "ethereum-sepolia",
+  "polygon-mainnet",
+  "polygon-mumbai",
+  "base-mainnet",
+  "base-sepolia",
+  "arbitrum-mainnet",
+  "arbitrum-sepolia",
+  "optimism-mainnet",
+  "optimism-sepolia",
+]);
+
+export const SVM_NETWORKS: Set<string> = new Set<SVMNetwork>([
+  "solana-mainnet",
+  "solana-devnet",
+  "solana-testnet",
+]);
+
+export const CDP_SUPPORTED_EVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["CDP", "Viem", "Privy"];
+export const NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["Viem", "Privy"];
+export const SVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["SolanaKeypair", "Privy"]
+
+export const NetworkToWalletProviders: Record<Network, WalletProviderChoice[]> = {
+  "arbitrum-mainnet": CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
+  "arbitrum-sepolia": NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
+  "base-mainnet": CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
+  "base-sepolia": CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
+  "ethereum-mainnet": CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
+  "ethereum-sepolia": NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
+  "optimism-mainnet": NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
+  "optimism-sepolia": NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
+  "polygon-mainnet": CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
+  "polygon-mumbai": NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
+  "solana-mainnet": SVM_WALLET_PROVIDERS,
+  "solana-devnet": SVM_WALLET_PROVIDERS,
+  "solana-testnet": ["SolanaKeypair", "Privy"]
+}
+
+
+export const Networks: Network[] = ["ethereum-mainnet", "ethereum-sepolia", "base-mainnet", "base-sepolia", "arbitrum-mainnet", "arbitrum-sepolia", "optimism-mainnet", "optimism-sepolia", "polygon-mainnet", "polygon-mumbai", "solana-mainnet", "solana-devnet", "solana-testnet" ]
+
+export const WalletProviderChoices: WalletProviderChoice[] = ['CDP', 'Viem', 'Privy', 'SolanaKeypair']
+
+
+export const WalletProviderRouteConfigurations: Record<('EVM' | 'SVM'), Partial<Record<WalletProviderChoice, WalletProviderRouteConfiguration>>> = {
+    EVM: {
+      CDP: {
+          env: ['CDP_API_KEY_NAME', 'CDP_API_KEY_PRIVATE_KEY'],
+          apiRoute: 'evm/cdp/route.ts'
+      },
+      Viem: {
+          env: ['PRIVATE_KEY'],
+          apiRoute: 'evm/viem/route.ts'
+      },
+      Privy: {
+          env: ['PRIVY_APP_ID', 'PRIVY_APP_SECRET', 'PRIVY_WALLET_ID', 'CHAIN_ID', 'PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY', 'PRIVY_WALLET_AUTHORIZATION_KEY_ID'],
+          apiRoute: 'evm/privy/route.ts'
+      },
+    },
+    SVM: {
+      SolanaKeypair: {
+          env: ['SOLANA_RPC_URL', 'SOLANA_PRIVATE_KEY'],
+          apiRoute: 'svm/solanaKeypair/route.ts'
+      },
+      Privy: {
+          env: ['PRIVY_APP_ID', 'PRIVY_APP_SECRET', 'PRIVY_WALLET_ID', 'CHAIN_ID', 'PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY', 'PRIVY_WALLET_AUTHORIZATION_KEY_ID'],
+          apiRoute: 'svm/privy/route.ts'
+      },
+    }
+}
+

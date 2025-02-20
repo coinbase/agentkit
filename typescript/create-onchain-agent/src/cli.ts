@@ -8,14 +8,11 @@ import { fileURLToPath } from "url";
 import {
   handleWalletProviderSelection,
   isValidPackageName,
-  Network,
-  Networks,
-  NetworkToWalletProviders,
-  NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
   optimizedCopy,
   toValidPackageName,
-  WalletProviderChoice,
 } from "./utils.js";
+import { Networks, NetworkToWalletProviders, NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS } from "./constants.js";
+import { Network, WalletProviderChoice } from "./types.js";
 
 const sourceDir = path.resolve(
   fileURLToPath(import.meta.url),
