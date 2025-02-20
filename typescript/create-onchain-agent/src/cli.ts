@@ -161,24 +161,33 @@ async function init() {
   await handleWalletProviderSelection(root, walletProvider, network, chainId)
 
   spinner.succeed();
-  console.log(`\n${pc.blueBright(`Created new AgentKit project in ${root}`)}`);
+  console.log(pc.blueBright(`\nSuccessfully created your AgentKit project in ${root}`));
 
   console.log(`\nFrameworks:`);
-  console.log(`${pc.blueBright("- AgentKit")}`);
-  console.log(`${pc.blueBright("- React")}`);
-  console.log(`${pc.blueBright("- Next.js")}`);
-  console.log(`${pc.blueBright("- Tailwind CSS")}`);
-  console.log(`${pc.blueBright("- ESLint")}`);
+  console.log(pc.gray("- AgentKit"));
+  console.log(pc.gray("- React"));
+  console.log(pc.gray("- Next.js"));
+  console.log(pc.gray("- Tailwind CSS"));
+  console.log(pc.gray("- ESLint"));
 
-  console.log(
-    `\nTo get started with ${pc.blueBright(projectName)}, run the following commands:\n`
-  );
+  console.log(pc.bold("\nWhat's Next?"));
+
+  console.log(`\nTo get started, run the following commands:\n`);
   if (root !== process.cwd()) {
     console.log(` - cd ${path.relative(process.cwd(), root)}`);
   }
   console.log(" - npm install");
+  console.log(pc.gray(" - # Open .env.local and configure your API keys"));
   console.log(" - mv .env.local .env");
   console.log(" - npm run dev");
+
+  console.log(pc.bold("\nLearn more"));
+  console.log("   - Checkout the docs");
+  console.log(pc.blueBright("      - https://docs.cdp.coinbase.com/agentkit/docs/welcome"));
+  console.log("   - Visit the repo");
+  console.log(pc.blueBright("      - http://github.com/coinbase/agentkit"));
+  console.log("   - Join the community");
+  console.log(pc.blueBright("      - https://discord.gg/CDP"));
 }
 
 init().catch((e) => {
