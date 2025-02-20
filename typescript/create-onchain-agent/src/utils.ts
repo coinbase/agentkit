@@ -1,9 +1,44 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-export type EVMNetwork =  "ethereum-mainnet" | "ethereum-sepolia" | "polygon-mainnet" | "polygon-mumbai" | "base-mainnet" |  "base-sepolia" | "arbitrum-mainnet" | "arbitrum-sepolia" | "optimism-mainnet" | "optimism-sepolia";
+export type EVMNetwork =
+  | "ethereum-mainnet"
+  | "ethereum-sepolia"
+  | "polygon-mainnet"
+  | "polygon-mumbai"
+  | "base-mainnet"
+  | "base-sepolia"
+  | "arbitrum-mainnet"
+  | "arbitrum-sepolia"
+  | "optimism-mainnet"
+  | "optimism-sepolia";
+
 export type SVMNetwork = "solana-mainnet" | "solana-devnet" | "solana-testnet";
+
 export type Network = EVMNetwork | SVMNetwork;
+
+const EVM_NETWORKS: Set<string> = new Set<EVMNetwork>([
+  "ethereum-mainnet",
+  "ethereum-sepolia",
+  "polygon-mainnet",
+  "polygon-mumbai",
+  "base-mainnet",
+  "base-sepolia",
+  "arbitrum-mainnet",
+  "arbitrum-sepolia",
+  "optimism-mainnet",
+  "optimism-sepolia",
+]);
+
+const SVM_NETWORKS: Set<string> = new Set<SVMNetwork>([
+  "solana-mainnet",
+  "solana-devnet",
+  "solana-testnet",
+]);
+
+export function getNetworkFamily(network: EVMNetwork | SVMNetwork) {
+  return EVM_NETWORKS.has(network) ? 'EVM' : SVM_NETWORKS.has(network) ? 'SVM' : undefined;
+}
 
 export const NetworkToWalletProviders: Record<Network, WalletProviderChoice[]> = {
   "arbitrum-mainnet": ["CDP", "Viem", "Privy"],
@@ -98,28 +133,46 @@ export function detectPackageManager(): string {
   return 'npm'; // default to npm if unable to detect
 }
 
-export const WalletProviderRouteConfigurations: Record<WalletProviderChoice, WalletProviderRouteConfiguration> = {
-    CDP: {
-        env: ['NETWORK_ID', 'CDP_API_KEY_NAME', 'CDP_API_KEY_PRIVATE_KEY'],
-        apiRoute: 'cdp/route.ts'
+export const WalletProviderRouteConfigurations: Record<('EVM' | 'SVM'), Partial<Record<WalletProviderChoice, WalletProviderRouteConfiguration>>> = {
+    EVM: {
+      CDP: {
+          env: ['NETWORK_ID', 'CDP_API_KEY_NAME', 'CDP_API_KEY_PRIVATE_KEY'],
+          apiRoute: 'evm/cdp/route.ts'
+      },
+      Viem: {
+          env: ['NETWORK_ID', 'PRIVATE_KEY'],
+          apiRoute: 'evm/viem/route.ts'
+      },
+      Privy: {
+          env: ['PRIVY_APP_ID', 'PRIVY_APP_SECRET', 'PRIVY_WALLET_ID', 'CHAIN_ID', 'PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY', 'PRIVY_WALLET_AUTHORIZATION_KEY_ID'],
+          apiRoute: 'evm/privy/route.ts'
+      },
     },
-    Viem: {
-        env: ['NETWORK_ID', 'PRIVATE_KEY'],
-        apiRoute: 'viem/route.ts'
-    },
-    Privy: {
-        env: ['PRIVY_APP_ID', 'PRIVY_APP_SECRET', 'PRIVY_WALLET_ID', 'CHAIN_ID', 'PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY', 'PRIVY_WALLET_AUTHORIZATION_KEY_ID'],
-        apiRoute: 'privy/route.ts'
-    },
-    SolanaKeypair: {
-        env: ['NETWORK_ID', 'SOLANA_RPC_URL', 'SOLANA_PRIVATE_KEY'],
-        apiRoute: 'solanaKeypair/route.ts'
-    },
+    SVM: {
+      SolanaKeypair: {
+          env: ['NETWORK_ID', 'SOLANA_RPC_URL', 'SOLANA_PRIVATE_KEY'],
+          apiRoute: 'svm/solanaKeypair/route.ts'
+      },
+      Privy: {
+          env: ['PRIVY_APP_ID', 'PRIVY_APP_SECRET', 'PRIVY_WALLET_ID', 'CHAIN_ID', 'PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY', 'PRIVY_WALLET_AUTHORIZATION_KEY_ID'],
+          apiRoute: 'svm/privy/route.ts'
+      },
+    }
 }
 
 export async function handleWalletProviderSelection(root: string, walletProvider: WalletProviderChoice, network: Network) {
   const agentDir = path.join(root, "app", "api", "agent");
-  const selectedRouteConfig = WalletProviderRouteConfigurations[walletProvider];
+  const networkFamily = getNetworkFamily(network)
+
+  if (!networkFamily) {
+    return 'ERROR: Unsupported network selected';
+  }
+
+  const selectedRouteConfig = WalletProviderRouteConfigurations[networkFamily][walletProvider];
+
+  if (!selectedRouteConfig) {
+    return 'ERROR: Selected invalid network & wallet provider combination'
+  }
 
   // Create .env file
   const envPath = path.join(root, ".env-local");
@@ -135,7 +188,7 @@ export async function handleWalletProviderSelection(root: string, walletProvider
   await fs.rename(selectedRoutePath, newRoutePath);
 
   // Delete all unselected routes
-  const providerRoutes = Object.values(WalletProviderRouteConfigurations).map((config) => path.join(agentDir, config.apiRoute));
+  const providerRoutes = Object.values(WalletProviderRouteConfigurations[networkFamily]).map((config) => path.join(agentDir, config.apiRoute));
   for (const routePath of providerRoutes) {
     // Remove file
     await fs.rm(routePath, { recursive: true, force: true });
