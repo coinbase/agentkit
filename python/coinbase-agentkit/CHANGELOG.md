@@ -9,6 +9,11 @@
 ## [0.1.3] - 2025-02-21
 
 - Fixed Morpho `deposit` and `withdraw` function headers to conform to the Action Provider Paradigm.
+- Added `read_eth_usdt_one_hour_volatility_forecast` to read live volatility forecasts using OpenGradient's ML workflow
+- Added `read_sui_usdt_six_hour_return_forecast` to read live return forecasts using OpenGradient's ML workflow
+- Added `read_sui_usdt_30_minute_return_forecast` to read live return forecasts using OpenGradient's ML workflow
+- Added `prompt_dobby` to prompt the LLM `SentientAGI/Dobby-Mini-Unhinged-Llama-3.1-8B` through OpenGradient's network
+- Added `prompt_qwen` to prompt the LLM `Qwen/Qwen2.5-72B-Instruct` through OpenGradient's network
 
 ## [0.1.2] - 2025-02-14
 

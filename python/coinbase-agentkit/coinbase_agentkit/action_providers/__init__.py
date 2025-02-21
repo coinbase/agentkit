@@ -10,6 +10,10 @@ from .cdp.cdp_api_action_provider import CdpApiActionProvider, cdp_api_action_pr
 from .cdp.cdp_wallet_action_provider import CdpWalletActionProvider, cdp_wallet_action_provider
 from .erc20.erc20_action_provider import ERC20ActionProvider, erc20_action_provider
 from .morpho.morpho_action_provider import MorphoActionProvider, morpho_action_provider
+from .opengradient.opengradient_action_provider import (
+    OpenGradientActionProvider,
+    opengradient_action_provider,
+)
 from .pyth.pyth_action_provider import PythActionProvider, pyth_action_provider
 from .superfluid.superfluid_action_provider import (
     SuperfluidActionProvider,
@@ -34,6 +38,8 @@ __all__ = [
     "erc20_action_provider",
     "MorphoActionProvider",
     "morpho_action_provider",
+    "OpenGradientActionProvider",
+    "opengradient_action_provider",
     "PythActionProvider",
     "pyth_action_provider",
     "SuperfluidActionProvider",

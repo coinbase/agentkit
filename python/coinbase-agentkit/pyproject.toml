@@ -15,6 +15,7 @@ pydantic = "^2.0"
 web3 = "^7.6.0"
 python-dotenv = "^1.0.1"
 requests = "^2.31.0"
+opengradient = "^0.4.5"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.7.1"
