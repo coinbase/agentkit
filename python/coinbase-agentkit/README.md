@@ -243,13 +243,15 @@ wallet_provider = CdpWalletProvider(CdpWalletProviderConfig(
 
 #### Configuring from a mnemonic phrase
 
-The `CdpWalletProvider` can be configured from a mnemonic phrase by passing the `mnemonic_phrase` parameter to the `CdpWalletProviderConfig`.
+The `CdpWalletProvider` can be configured from a mnemonic phrase by passing the `mnemonic_phrase` and `network_id` parameters to the `CdpWalletProviderConfig`. If `network_id` is not defined, the `CdpWalletProvider` will fall back to the env var `NETWORK_ID`, and if that is not defined, it will default to `base-sepolia`.
+
 
 ```python
 from coinbase_agentkit import CdpWalletProvider, CdpWalletProviderConfig
 
 wallet_provider = CdpWalletProvider(CdpWalletProviderConfig(
     mnemonic_phrase="MNEMONIC PHRASE",
+    network_id="base-sepolia",
 ))
 ```
 
@@ -262,6 +264,7 @@ from coinbase_agentkit import CdpWalletProvider
 
 wallet_provider = CdpWalletProvider(CdpWalletProviderConfig(
     mnemonic_phrase="MNEMONIC PHRASE",
+    network_id="base-sepolia",
 ))
 
 wallet_data = wallet_provider.export_wallet()
