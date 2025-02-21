@@ -4,6 +4,13 @@
 
 `create-onchain-agent` is a CLI tool powered by [AgentKit](https://github.com/coinbase/agentkit) that allows developers to quickly scaffold an **onchain agent** project. This tool simplifies the setup process by generating a project with predefined configurations, including blockchain network selection, wallet providers, and framework setup.
 
+## Prerequisites
+
+Before using `create-onchain-agent`, ensure you have the following installed:
+
+- **Node.js** (v18 or later) – [Download here](https://nodejs.org/)
+- **npm** (v9 or later) – Comes bundled with Node.js
+
 ## Usage
 
 To use `create-onchain-agent`, simply run:
@@ -38,21 +45,12 @@ After answering the prompts, the CLI will:
 - Configure the selected settings.
 - Display next steps to get started.
 
-## What's Included
-
-The generated project includes:
-
-- **AgentKit** - The core framework for building onchain agents.
-- **React & Next.js** - Web UI for interaction.
-- **Tailwind CSS** - Preconfigured styling.
-- **ESLint** - Linting and code quality tools.
-
 ## Getting Started
 
 Once your project is created, navigate into the directory and install dependencies:
 
 ```sh
-cd your-project-name
+cd my-project
 npm install
 ```
 
@@ -73,12 +71,3 @@ npm run dev
 - **Docs:** [https://docs.cdp.coinbase.com/agentkit/docs/welcome](https://docs.cdp.coinbase.com/agentkit/docs/welcome)
 - **GitHub Repo:** [http://github.com/coinbase/agentkit](http://github.com/coinbase/agentkit)
 - **Community & Support:** [https://discord.gg/CDP](https://discord.gg/CDP)
-
-## License
-
-This project is licensed under the **MIT License**.
-
----
-
-For any issues, please open a GitHub issue or join the Coinbase Developer Platform Discord for support.
-
