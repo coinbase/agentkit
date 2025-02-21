@@ -34,6 +34,7 @@
 - [🌙 Nightly Builds](#-nightly-builds)
 - [🚨 Security and bug reports](#-security-and-bug-reports)
 - [📧 Contact](#-contact)
+- [🔗 Supported Protocols](#-supported-protocols)
 - [📝 License](#-license)
 - [🔒 Legal and Privacy](#-legal-and-privacy)
 
@@ -237,10 +238,13 @@ AgentKit is proud to have support for the following protocols, frameworks, and w
 <a href="https://www.alchemy.com/" target="_blank"><img src="./assets/protocols/alchemy.svg" width="100" height="auto" alt="Alchemy"></a>
 <a href="https://base.org" target="_blank"><img src="./assets/protocols/base.svg" width="100" height="auto" alt="Base"></a>
 <a href="https://farcaster.xyz" target="_blank"><img src="./assets/protocols/farcaster.svg" width="100" height="auto" alt="Farcaster"></a>
+<a href="https://jup.ag" target="_blank"><img src="./assets/protocols/jupiter.svg" width="100" height="auto" alt="Jupiter"></a>
 <a href="https://www.moonwell.fi" target="_blank"><img src="./assets/protocols/moonwell.svg" width="100" height="auto" alt="Moonwell"></a>
 <a href="https://app.morpho.org" target="_blank"><img src="./assets/protocols/morpho.svg" width="100" height="auto" alt="Morpho"></a>
 <a href="https://privy.io" target="_blank"><img src="./assets/protocols/privy.svg" width="100" height="auto" alt="Privy"></a>
 <a href="https://pyth.network" target="_blank"><img src="./assets/protocols/pyth.svg" width="100" height="auto" alt="Pyth"></a>
+<a href="https://solana.com" target="_blank"><img src="./assets/protocols/solana.svg" width="100" height="auto" alt="Solana"></a>
+<a href="https://superfluid.org" target="_blank"><img src="./assets/protocols/superfluid.svg" width="100" height="auto" alt="Superfluid"></a>
 
 ## 📝 License
 
