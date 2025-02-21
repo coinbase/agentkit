@@ -14,6 +14,15 @@ import {
   getWalletProviders,
 } from "./utils.js";
 
+/**
+ * Initializes the project creation process.
+ *
+ * - Prompts the user for project details including project name, package name, network, chain ID, and wallet provider.
+ * - Validates user input, ensuring directories do not already exist and package names are valid.
+ * - Copies the selected template to the new project directory.
+ * - Handles network and wallet provider selection logic.
+ * - Displays a summary of the created project along with next steps.
+ */
 async function init() {
   console.log(
     `${pc.blue(`
@@ -22,7 +31,7 @@ async function init() {
 ███████ ██   ███ █████   ██ ██  ██    ██       █████   ██    ██    
 ██   ██ ██    ██ ██      ██  ██ ██    ██       ██  ██  ██    ██    
 ██   ██  ██████  ███████ ██   ████    ██       ██   ██ ██    ██    
-                                                                  
+                                                                   
            Giving every AI agent a crypto wallet
 `)}`,
   );
@@ -99,7 +108,7 @@ async function init() {
 
             return pc.reset(`Choose a wallet provider:\n${providerDescriptions}\n`);
           },
-          choices: (prev, { network, chainId }) => {
+          choices: (prev, { network }) => {
             const walletProviders = getWalletProviders(network);
             return getWalletProviders(network).map(provider => ({
               title: provider === walletProviders[0] ? `${provider} (default)` : provider,
@@ -116,8 +125,12 @@ async function init() {
         },
       },
     );
-  } catch (cancelled: any) {
-    console.log(cancelled.message);
+  } catch (cancelled: unknown) {
+    if (cancelled instanceof Error) {
+      console.info(cancelled.message);
+    } else {
+      console.info("An unknown error occurred");
+    }
     process.exit(1);
   }
   const { projectName, packageName, network, chainId, walletProvider } = result;

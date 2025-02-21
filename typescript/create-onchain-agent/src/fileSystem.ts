@@ -13,11 +13,28 @@ const renameFiles: Record<string, string | undefined> = {
 const excludeDirs = ["node_modules", ".next"];
 const excludeFiles = [".DS_Store", "Thumbs.db"];
 
-function getSourceDir() {
+/**
+ * Retrieves the source directory for copying template files.
+ *
+ * @returns {string} The source directory path.
+ */
+function getSourceDir(): string {
   return sourceDir;
 }
 
-async function copyDir(src: string, dest: string) {
+/**
+ * Recursively copies a directory and its contents from the source to the destination.
+ *
+ * - Creates the destination directory if it does not exist.
+ * - Copies files, renaming them if specified in `renameFiles`.
+ * - Skips directories listed in `excludeDirs`.
+ * - Skips files listed in `excludeFiles`.
+ *
+ * @param {string} src - The source directory path.
+ * @param {string} dest - The destination directory path.
+ * @returns {Promise<void>} A promise that resolves when the copy operation is complete.
+ */
+async function copyDir(src: string, dest: string): Promise<void> {
   await fs.promises.mkdir(dest, { recursive: true });
   const entries = await fs.promises.readdir(src, { withFileTypes: true });
 
@@ -37,12 +54,24 @@ async function copyDir(src: string, dest: string) {
   }
 }
 
-export async function copyTemplate(projectName: string, packageName: string) {
+/**
+ * Copies a project template to a new directory and updates the package name.
+ *
+ * - Copies the template from the source directory.
+ * - Updates the `package.json` file with the provided package name.
+ *
+ * @param {string} projectName - The name of the new project directory.
+ * @param {string} packageName - The npm package name to use (auto-formatted if empty).
+ * @returns {Promise<string>} The path of the newly created project directory.
+ */
+export async function copyTemplate(projectName: string, packageName: string): Promise<string> {
   const root = path.join(process.cwd(), projectName);
   await copyDir(getSourceDir(), root);
+
   const pkgPath = path.join(root, "package.json");
   const pkg = JSON.parse(await fs.promises.readFile(pkgPath, "utf-8"));
   pkg.name = packageName || toValidPackageName(projectName);
+
   await fs.promises.writeFile(pkgPath, JSON.stringify(pkg, null, 2));
 
   return root;
