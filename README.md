@@ -231,7 +231,7 @@ See [SECURITY.md](SECURITY.md) for more information.
 For feature requests, feedback, or questions, please reach out to us via the 
 [Coinbase Developer Platform Discord](https://discord.com/channels/1220414409550336183/1304126107876069376).
 
-## Supported Protocols
+## 🔗 Supported Protocols
 
 AgentKit is proud to have support for the following protocols, frameworks, and wallet providers:
 
