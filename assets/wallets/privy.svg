@@ -3,9 +3,34 @@
     <foreignObject width="100%" height="100%">
         <div xmlns="http://www.w3.org/1999/xhtml">
             <style>
+                :root {
+                    --border-color: #404040;
+                    --hover-color: #2470FF;
+                    --logo-gradient-start: #dedede;
+                    --logo-gradient-end: #aaaaaa;
+                }
+
+                @media (prefers-color-scheme: dark) {
+                    :root {
+                        --border-color: #404040;
+                        --hover-color: #2470FF;
+                        --logo-gradient-start: #ffffff;
+                        --logo-gradient-end: #dddddd;
+                    }
+                }
+
+                @media (prefers-color-scheme: light) {
+                    :root {
+                        --border-color: #e0e0e0;
+                        --hover-color: #2470FF;
+                        --logo-gradient-start: #202020;
+                        --logo-gradient-end: #444444;
+                    }
+                }
+
                 #container {
                     box-sizing: border-box;
-                    border: 1px solid #404040;
+                    border: 1px solid var(--border-color);
                     border-radius: 8px;
                     transition: transform 0.2s ease, box-shadow 0.2s ease;
                     display: flex;
@@ -14,7 +39,7 @@
                 }
 
                 #logo:hover {
-                    border-color: #2470FF;
+                    border-color: var(--hover-color);
                 }
 
                 div {
@@ -33,8 +58,8 @@
                             <rect width="59" height="59" fill="white"/>
                         </clipPath>
                         <radialGradient id="radial-gradient-0" cx="50%" cy="50%" r="70%" fx="50%" fy="50%">
-                            <stop offset="0%" style="stop-color:#ffffff"/>
-                            <stop offset="100%" style="stop-color:#dddddd"/>
+                            <stop offset="0%" style="stop-color:var(--logo-gradient-start)"/>
+                            <stop offset="100%" style="stop-color:var(--logo-gradient-end)"/>
                         </radialGradient>
                     </defs>
                 </svg>
