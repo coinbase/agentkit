@@ -2,6 +2,7 @@
   "name": "@coinbase/solana-langchain-chatbot-example",
   "description": "CDP Agentkit Node.js SDK Chatbot Example",
   "version": "1.0.0",
+  "private": true,
   "author": "Coinbase Inc.",
   "license": "Apache-2.0",
   "scripts": {

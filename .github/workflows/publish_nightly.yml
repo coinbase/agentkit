@@ -1,0 +1,187 @@
+name: Publish Nightly Builds
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'  # Run daily at midnight UTC
+
+jobs:
+  prepare-nightly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+      
+      - name: Update nightly branch
+        run: |
+          git checkout -B nightly
+          git push origin nightly --force
+
+  publish-npm-nightly:
+    needs: prepare-nightly
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: nightly
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          registry-url: "https://registry.npmjs.org"
+      
+      - name: Find NPM packages
+        id: find-npm-packages
+        run: |
+          PACKAGES=$(find . -name "package.json" -not -path "*/node_modules/*" -not -path "./package.json" -exec dirname {} \;)
+          echo "Found NPM packages in directories:"
+          echo "$PACKAGES"
+          echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
+      
+      - name: Update package versions
+        run: |
+          while IFS= read -r pkg; do
+            if [ -f "$pkg/package.json" ]; then
+              cd $pkg
+              if ! grep -q '"private": true' package.json; then
+                echo "Updating version for $pkg"
+                npm version prerelease --preid=nightly.$(date +%Y%m%d) --no-git-tag-version
+              fi
+              cd - > /dev/null
+            fi
+          done <<< "${{ steps.find-npm-packages.outputs.packages }}"
+      
+      - run: npm ci
+      
+      - name: Publish packages
+        run: |
+          while IFS= read -r pkg; do
+            if [ -f "$pkg/package.json" ]; then
+              cd $pkg
+              if ! grep -q '"private": true' package.json; then
+                echo "Publishing $pkg"
+                npm publish --tag nightly --provenance --access public
+              fi
+              cd - > /dev/null
+            fi
+          done <<< "${{ steps.find-npm-packages.outputs.packages }}"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-pypi-nightly:
+    needs: prepare-nightly
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: nightly
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+      
+      - name: Find Python packages
+        id: find-python-packages
+        run: |
+          PACKAGES=$(find . -name "pyproject.toml" -exec dirname {} \;)
+          echo "Found Python packages in directories:"
+          echo "$PACKAGES"
+          echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
+      
+      - name: Update package versions
+        run: |
+          while IFS= read -r pkg; do
+            if [ -f "$pkg/pyproject.toml" ]; then
+              cd $pkg
+              if ! grep -q "private = true" pyproject.toml; then
+                echo "Updating version for $pkg"
+                poetry version $(poetry version -s).dev$(date +%Y%m%d)
+              fi
+              cd - > /dev/null
+            fi
+          done <<< "${{ steps.find-python-packages.outputs.packages }}"
+      
+      - name: Build and publish
+        run: |
+          while IFS= read -r pkg; do
+            if [ -f "$pkg/pyproject.toml" ]; then
+              cd $pkg
+              if ! grep -q "private = true" pyproject.toml; then
+                echo "Publishing $pkg"
+                poetry build
+                poetry publish --username __token__ --password ${{ secrets.PYPI_API_TOKEN }}
+              fi
+              cd - > /dev/null
+            fi
+          done <<< "${{ steps.find-python-packages.outputs.packages }}" 
+
+  create-github-release:
+    needs: [prepare-nightly, publish-npm-nightly, publish-pypi-nightly]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      release_id: ${{ steps.create_release.outputs.id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: nightly
+      
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          TODAY=$(date +%Y-%m-%d)
+          
+          echo "Generating release notes for nightly build $TODAY"
+          
+          {
+            echo "# 🌙 Nightly Build $TODAY"
+            echo ""
+            
+            extract_unreleased() {
+              local file=$1
+              local package=$2
+              if [ -f "$file" ]; then
+                echo "## 📦 $package"
+                echo ""
+                # Extract everything between "## Unreleased" and the next "##" or end of file
+                awk '/^## Unreleased$/{p=1;next}/^## /{p=0}p' "$file" | grep -v '^$' || echo "No unreleased changes"
+                echo ""
+              fi
+            }
+            
+            extract_unreleased "typescript/agentkit/CHANGELOG.md" "@coinbase/agentkit"
+            extract_unreleased "typescript/framework-extensions/langchain/CHANGELOG.md" "@coinbase/agentkit-langchain"
+            extract_unreleased "python/coinbase-agentkit/CHANGELOG.md" "coinbase-agentkit"
+            extract_unreleased "python/framework-extensions/langchain/CHANGELOG.md" "coinbase-agentkit-langchain"
+            
+          } > release_notes.md
+          
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
+          cat release_notes.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: nightly-${{ github.sha }}
+          release_name: 🌙 Nightly Build $(date +%Y-%m-%d)
+          body: ${{ steps.release_notes.outputs.RELEASE_NOTES }}
+          draft: false
+          prerelease: true

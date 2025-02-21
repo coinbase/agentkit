@@ -2,6 +2,7 @@
   "name": "@coinbase/langchain-privy-chatbot-example",
   "description": "Privy Agentkit LangChain Extension Chatbot Example",
   "version": "1.0.0",
+  "private": true,
   "author": "Coinbase Inc.",
   "license": "Apache-2.0",
   "scripts": {
