@@ -454,13 +454,14 @@ const walletProvider = await CdpWalletProvider.configureWithWallet({
 
 #### Configuring from a mnemonic phrase
 
-The `CdpWalletProvider` can be configured from a mnemonic phrase by passing the `mnemonicPhrase` parameter to the `configureWithWallet` method.
+The `CdpWalletProvider` can be configured from a mnemonic phrase by passing the `mnemonicPhrase` and `networkId` parameters to the `configureWithWallet` method. If `networkId` is not defined, the `CdpWalletProvider` will fall back to the env var `NETWORK_ID`, and if that is not defined, it will default to `base-sepolia`.
 
 ```typescript
 import { CdpWalletProvider } from "@coinbase/agentkit";
 
 const walletProvider = await CdpWalletProvider.configureWithWallet({
     mnemonicPhrase: "MNEMONIC PHRASE",
+    networkId: "base-sepolia",
 });
 ```
 
@@ -473,6 +474,7 @@ import { CdpWalletProvider } from "@coinbase/agentkit";
 
 const walletProvider = await CdpWalletProvider.configureWithWallet({
     mnemonicPhrase: "MNEMONIC PHRASE",
+    networkId: "base-sepolia",
 });
 
 const walletData = await walletProvider.exportWallet();
