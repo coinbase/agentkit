@@ -1,6 +1,6 @@
 {
   "name": "create-onchain-agent",
-  "description": "Instantly create onchain-agent applications with AgentKit.",
+  "description": "Instantly create onchain-agent applications with Coinbase AgentKit.",
   "version": "0.1.0",
   "license": "MIT",
   "scripts": {
