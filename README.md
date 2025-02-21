@@ -31,6 +31,7 @@
 - [🗂 Repository Structure](#-repository-structure)
 - [🤝 Contributing](#-contributing)
 - [📜 Documentation](#-documentation)
+- [🌙 Nightly Builds](#-nightly-builds)
 - [🚨 Security and bug reports](#-security-and-bug-reports)
 - [📧 Contact](#-contact)
 - [📝 License](#-license)
@@ -180,6 +181,44 @@ agentkit/
 - Node.js API References
   - [AgentKit](https://coinbase.github.io/agentkit/agentkit/typescript/index.html)
   - [AgentKit Langchain Extension](https://coinbase.github.io/agentkit/agentkit-langchain/typescript/index.html)
+
+## 🌙 Nightly Builds
+
+To access the bleeding edge version of AgentKit, you can install the nightly build for your language. This is a build of the latest code in the `main` branch, and is updated nightly.
+
+### Typescript
+
+You can install the latest nightly build with the following command:
+
+```bash
+npm install @coinbase/agentkit@nightly
+```
+
+To install a specific version of the nightly build, you can specify the exact version. For example, if you want to install the nightly build from February 20th, 2025, you can run the following:
+
+```bash
+npm install @coinbase/agentkit@0.2.3-nightly.20250220.0
+```
+
+### Python
+
+You can install the latest nightly build with the following command:
+
+```bash
+pip install --pre coinbase-agentkit
+
+# or, using poetry
+poetry add coinbase-agentkit --preview
+```
+
+To install a specific version of the nightly build, you can specify the exact version. For example, if you want to install the nightly build from February 20th, 2025, you can run the following:
+
+```bash
+pip install coinbase-agentkit==0.1.2.dev20250220
+
+# or, using poetry
+poetry add coinbase-agentkit==0.1.2.dev20250220
+```
 
 ## 🚨 Security and Bug Reports
 

@@ -17,3 +17,6 @@ coinbase-agentkit-langchain = { path = "../../../python/framework-extensions/lan
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api" 
+
+[tool.langchain-cdp-chatbot]
+private = true
