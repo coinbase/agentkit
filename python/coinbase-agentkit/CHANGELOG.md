@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## [0.1.3] - 2025-02-21
+
 - Fixed Morpho `deposit` and `withdraw` function headers to conform to the Action Provider Paradigm.
 
 ## [0.1.2] - 2025-02-14
