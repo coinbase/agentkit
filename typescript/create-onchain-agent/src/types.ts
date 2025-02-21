@@ -21,6 +21,6 @@ export type WalletProviderRouteConfiguration = {
     topComments: string[];
     required: string[];
     optional: string[];
-  },
+  };
   apiRoute: string;
 };

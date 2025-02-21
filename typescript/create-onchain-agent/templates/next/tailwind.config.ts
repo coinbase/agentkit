@@ -9,11 +9,11 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['DM Sans', 'sans-serif'],
+        sans: ["DM Sans", "sans-serif"],
       },
     },
   },
-  plugins: []
+  plugins: [],
 };
 
 export default config;

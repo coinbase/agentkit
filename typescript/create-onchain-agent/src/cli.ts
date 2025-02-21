@@ -11,7 +11,7 @@ import {
   handleSelection,
   isValidPackageName,
   toValidPackageName,
-  getWalletProviders
+  getWalletProviders,
 } from "./utils.js";
 
 async function init() {
@@ -24,12 +24,14 @@ async function init() {
 ██   ██  ██████  ███████ ██   ████    ██       ██   ██ ██    ██    
                                                                   
            Giving every AI agent a crypto wallet
-`)}`
+`)}`,
   );
 
   const defaultProjectName = "onchain-agent";
 
-  let result: prompts.Answers<"projectName" | "packageName" | 'walletProvider' | 'network' | 'chainId'>;
+  let result: prompts.Answers<
+    "projectName" | "packageName" | "walletProvider" | "network" | "chainId"
+  >;
 
   try {
     result = await prompts(
@@ -39,10 +41,10 @@ async function init() {
           name: "projectName",
           message: pc.reset("Project name:"),
           initial: defaultProjectName,
-          onState: (state) => {
+          onState: state => {
             state.value = state.value.trim();
           },
-          validate: (value) => {
+          validate: value => {
             const targetDir = path.join(process.cwd(), value);
             if (fs.existsSync(targetDir) && fs.readdirSync(targetDir).length > 0) {
               return "Directory already exists and is not empty. Please choose a different name.";
@@ -55,29 +57,33 @@ async function init() {
             isValidPackageName(projectName) ? null : "text",
           name: "packageName",
           message: pc.reset("Package name:"),
-          initial: (_, { projectName }: { projectName: string }) =>
-            toValidPackageName(projectName),
-          validate: (dir) =>
-            isValidPackageName(dir) || "Invalid package.json name",
+          initial: (_, { projectName }: { projectName: string }) => toValidPackageName(projectName),
+          validate: dir => isValidPackageName(dir) || "Invalid package.json name",
         },
         {
           type: "select",
           name: "network",
           message: pc.reset("Choose a network:"),
-          choices: Networks.map((network) => ({
+          choices: Networks.map(network => ({
             title: network === "base-sepolia" ? `${network} (default)` : network,
             value: network as Network | null,
-          })).concat([{ title: 'other', value: null}]),
+          })).concat([{ title: "other", value: null }]),
           initial: Networks.indexOf("base-sepolia"),
         },
         {
-          type: (prev, { network }) => network === null ? "text" : null,
+          type: (prev, { network }) => (network === null ? "text" : null),
           name: "chainId",
           message: pc.reset("Enter your Ethereum chain ID:"),
-          validate: (value) => value.trim() ? Number.parseInt(value) ? true : "Chain ID must be a number." : "Chain ID cannot be empty.",
+          validate: value =>
+            value.trim()
+              ? Number.parseInt(value)
+                ? true
+                : "Chain ID must be a number."
+              : "Chain ID cannot be empty.",
         },
         {
-          type: (prev, { network }) => !network || NetworkToWalletProviders[network as Network].length > 1 ? "select" : null,
+          type: (prev, { network }) =>
+            !network || NetworkToWalletProviders[network as Network].length > 1 ? "select" : null,
           name: "walletProvider",
           message: (prev, { network }) => {
             const walletDescriptions: Record<WalletProviderChoice, string> = {
@@ -86,19 +92,19 @@ async function init() {
               Privy: "Authentication and wallet infrastructure.",
               SolanaKeypair: "Client-side Solana wallet.",
             };
-        
+
             const providerDescriptions = getWalletProviders(network)
-              .map((provider) => `  - ${provider}: ${walletDescriptions[provider]}`)
+              .map(provider => `  - ${provider}: ${walletDescriptions[provider]}`)
               .join("\n");
-        
+
             return pc.reset(`Choose a wallet provider:\n${providerDescriptions}\n`);
           },
           choices: (prev, { network, chainId }) => {
             const walletProviders = getWalletProviders(network);
-            return getWalletProviders(network).map((provider) => ({
+            return getWalletProviders(network).map(provider => ({
               title: provider === walletProviders[0] ? `${provider} (default)` : provider,
               value: provider,
-            }))
+            }));
           },
           initial: 0,
         },
@@ -108,7 +114,7 @@ async function init() {
           console.log("\nProject creation cancelled.");
           process.exit(0);
         },
-      }
+      },
     );
   } catch (cancelled: any) {
     console.log(cancelled.message);
@@ -118,11 +124,11 @@ async function init() {
 
   const spinner = ora(`Creating ${projectName}...`).start();
 
-  // Copy template over to new project 
+  // Copy template over to new project
   const root = await copyTemplate(projectName, packageName);
 
   // Handle selection-specific logic over copied-template
-  await handleSelection(root, walletProvider, network, chainId)
+  await handleSelection(root, walletProvider, network, chainId);
 
   spinner.succeed();
   console.log(pc.blueBright(`\nSuccessfully created your AgentKit project in ${root}`));
@@ -154,6 +160,6 @@ async function init() {
   console.log(pc.blueBright("      - https://discord.gg/CDP\n"));
 }
 
-init().catch((e) => {
+init().catch(e => {
   console.error(e);
 });

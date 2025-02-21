@@ -1,17 +1,9 @@
-
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import {
-  optimizedCopy,
-  toValidPackageName
-} from "./utils.js";
+import { optimizedCopy, toValidPackageName } from "./utils.js";
 
-const sourceDir = path.resolve(
-  fileURLToPath(import.meta.url),
-  "../../../templates/next"
-);
-
+const sourceDir = path.resolve(fileURLToPath(import.meta.url), "../../../templates/next");
 
 const renameFiles: Record<string, string | undefined> = {
   _gitignore: ".gitignore",
@@ -52,6 +44,6 @@ export async function copyTemplate(projectName: string, packageName: string) {
   const pkg = JSON.parse(await fs.promises.readFile(pkgPath, "utf-8"));
   pkg.name = packageName || toValidPackageName(projectName);
   await fs.promises.writeFile(pkgPath, JSON.stringify(pkg, null, 2));
-  
+
   return root;
 }
