@@ -137,7 +137,7 @@ def create_project():
 
     console.print("\n[bold]What's Next?[/bold]")
 
-    console.print(f"\nTo get started, run the following commands:\n")
+    console.print(f"To get started, run the following commands:")
     console.print(f"  [gray]- cd {project_name}[/gray]")
     console.print(f"  [gray]- poetry install[/gray]")
     console.print(f"  [dim]- # Open .env.local and configure your API keys[/dim]")
