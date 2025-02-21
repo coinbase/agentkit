@@ -250,6 +250,7 @@ from coinbase_agentkit import CdpWalletProvider, CdpWalletProviderConfig
 
 wallet_provider = CdpWalletProvider(CdpWalletProviderConfig(
     mnemonic_phrase="MNEMONIC PHRASE",
+    network_id="base-sepolia",
 ))
 ```
 
@@ -262,6 +263,7 @@ from coinbase_agentkit import CdpWalletProvider
 
 wallet_provider = CdpWalletProvider(CdpWalletProviderConfig(
     mnemonic_phrase="MNEMONIC PHRASE",
+    network_id="base-sepolia",
 ))
 
 wallet_data = wallet_provider.export_wallet()

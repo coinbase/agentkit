@@ -461,6 +461,7 @@ import { CdpWalletProvider } from "@coinbase/agentkit";
 
 const walletProvider = await CdpWalletProvider.configureWithWallet({
     mnemonicPhrase: "MNEMONIC PHRASE",
+    networkId: "base-sepolia",
 });
 ```
 
@@ -473,6 +474,7 @@ import { CdpWalletProvider } from "@coinbase/agentkit";
 
 const walletProvider = await CdpWalletProvider.configureWithWallet({
     mnemonicPhrase: "MNEMONIC PHRASE",
+    networkId: "base-sepolia",
 });
 
 const walletData = await walletProvider.exportWallet();
