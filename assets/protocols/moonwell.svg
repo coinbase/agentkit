@@ -20,7 +20,7 @@
                     :root {
                         --border-color: #e0e0e0;
                         --hover-color: #2470FF;
-                        --logo-color: #f2f2f2;
+                        --logo-color: #202020;
                     }
                 }
 
