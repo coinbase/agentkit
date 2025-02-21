@@ -258,6 +258,8 @@ AgentKit is proud to have support for the following protocols, frameworks, walle
 <a href="https://ethereum.org" target="_blank"><img src="./assets/networks/ethereum.svg" width="100" height="auto" alt="Ethereum"></a>
 <a href="https://solana.com" target="_blank"><img src="./assets/networks/solana.svg" width="100" height="auto" alt="Solana"></a> 
 
+Note: We support all EVM and SVM networks, with deep protocol support for the above networks. Please don't hesitate to make contributions to add more support for your preferred networks.
+
 ## 📝 License
 
 AgentKit is licensed under the [Apache-2.0](LICENSE.md) license.
