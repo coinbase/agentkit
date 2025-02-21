@@ -191,13 +191,15 @@ To access the bleeding edge version of AgentKit, you can install the nightly bui
 You can install the latest nightly build with the following command:
 
 ```bash
-npm install @coinbase/agentkit@nightly
+npm install @coinbase/agentkit@nightly @coinbase/agentkit-langchain@nightly
 ```
+
+If you're using an AI framework other than Langchain, make sure to install the corresponding package instead of `@coinbase/agentkit-langchain`.
 
 To install a specific version of the nightly build, you can specify the exact version. For example, if you want to install the nightly build from February 20th, 2025, you can run the following:
 
 ```bash
-npm install @coinbase/agentkit@0.2.3-nightly.20250220.0
+npm install @coinbase/agentkit@0.2.3-nightly.20250220.0 @coinbase/agentkit-langchain@0.2.3-nightly.20250220.0
 ```
 
 ### Python
@@ -205,19 +207,21 @@ npm install @coinbase/agentkit@0.2.3-nightly.20250220.0
 You can install the latest nightly build with the following command:
 
 ```bash
-pip install --pre coinbase-agentkit
+pip install --pre coinbase-agentkit coinbase-agentkit-langchain
 
 # or, using poetry
-poetry add coinbase-agentkit --preview
+poetry add coinbase-agentkit coinbase-agentkit-langchain --allow-prereleases
 ```
+
+If you're using an AI framework other than Langchain, make sure to install the corresponding package instead of `coinbase-agentkit-langchain`.
 
 To install a specific version of the nightly build, you can specify the exact version. For example, if you want to install the nightly build from February 20th, 2025, you can run the following:
 
 ```bash
-pip install coinbase-agentkit==0.1.2.dev20250220
+pip install coinbase-agentkit==0.1.2.dev20250220 coinbase-agentkit-langchain==0.1.1.dev20250220
 
 # or, using poetry
-poetry add coinbase-agentkit==0.1.2.dev20250220
+poetry add coinbase-agentkit==0.1.2.dev20250220 coinbase-agentkit-langchain==0.1.1.dev20250220 --allow-prereleases
 ```
 
 ## 🚨 Security and Bug Reports
