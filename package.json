@@ -3,6 +3,7 @@
   "private": true,
   "workspaces": [
     "typescript/agentkit",
+    "typescript/create-onchain-agent",
     "typescript/framework-extensions/langchain",
     "typescript/examples/langchain-cdp-chatbot",
     "typescript/examples/langchain-twitter-chatbot",

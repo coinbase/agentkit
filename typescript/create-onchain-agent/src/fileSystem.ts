@@ -1,0 +1,78 @@
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { optimizedCopy, toValidPackageName } from "./utils.js";
+
+const sourceDir = path.resolve(fileURLToPath(import.meta.url), "../../../templates/next");
+
+const renameFiles: Record<string, string | undefined> = {
+  _gitignore: ".gitignore",
+  "_env.local": ".env.local",
+};
+
+const excludeDirs = ["node_modules", ".next"];
+const excludeFiles = [".DS_Store", "Thumbs.db"];
+
+/**
+ * Retrieves the source directory for copying template files.
+ *
+ * @returns {string} The source directory path.
+ */
+function getSourceDir(): string {
+  return sourceDir;
+}
+
+/**
+ * Recursively copies a directory and its contents from the source to the destination.
+ *
+ * - Creates the destination directory if it does not exist.
+ * - Copies files, renaming them if specified in `renameFiles`.
+ * - Skips directories listed in `excludeDirs`.
+ * - Skips files listed in `excludeFiles`.
+ *
+ * @param {string} src - The source directory path.
+ * @param {string} dest - The destination directory path.
+ * @returns {Promise<void>} A promise that resolves when the copy operation is complete.
+ */
+async function copyDir(src: string, dest: string): Promise<void> {
+  await fs.promises.mkdir(dest, { recursive: true });
+  const entries = await fs.promises.readdir(src, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, renameFiles[entry.name] || entry.name);
+
+    if (entry.isDirectory()) {
+      if (!excludeDirs.includes(entry.name)) {
+        await copyDir(srcPath, destPath);
+      }
+    } else {
+      if (!excludeFiles.includes(entry.name)) {
+        await optimizedCopy(srcPath, destPath);
+      }
+    }
+  }
+}
+
+/**
+ * Copies a project template to a new directory and updates the package name.
+ *
+ * - Copies the template from the source directory.
+ * - Updates the `package.json` file with the provided package name.
+ *
+ * @param {string} projectName - The name of the new project directory.
+ * @param {string} packageName - The npm package name to use (auto-formatted if empty).
+ * @returns {Promise<string>} The path of the newly created project directory.
+ */
+export async function copyTemplate(projectName: string, packageName: string): Promise<string> {
+  const root = path.join(process.cwd(), projectName);
+  await copyDir(getSourceDir(), root);
+
+  const pkgPath = path.join(root, "package.json");
+  const pkg = JSON.parse(await fs.promises.readFile(pkgPath, "utf-8"));
+  pkg.name = packageName || toValidPackageName(projectName);
+
+  await fs.promises.writeFile(pkgPath, JSON.stringify(pkg, null, 2));
+
+  return root;
+}
