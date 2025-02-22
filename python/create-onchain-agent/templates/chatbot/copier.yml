@@ -8,3 +8,5 @@ _exclude:
   - "*.swp"
   - .DS_Store
   - .copier-ignore
+  - 'poetry.lock'
+  - 'copier.yml'
