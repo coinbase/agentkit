@@ -70,21 +70,29 @@ export const WalletProviderRouteConfigurations: Record<
     },
     Viem: {
       env: {
-        topComments: ["Export private key from your Ethereum wallet and save"],
+        topComments: [
+          "Export private key from your Ethereum wallet and save",
+          "Get keys from CDP Portal: https://portal.cdp.coinbase.com/",
+        ],
         required: ["PRIVATE_KEY="],
-        optional: [],
+        optional: ["CDP_API_KEY_NAME=", "CDP_API_KEY_PRIVATE_KEY="],
       },
       apiRoute: "evm/viem/route.ts",
     },
     Privy: {
       env: {
-        topComments: ["Get keys from Privy Dashboard: https://dashboard.privy.io/"],
+        topComments: [
+          "Get keys from Privy Dashboard: https://dashboard.privy.io/",
+          "Get keys from CDP Portal: https://portal.cdp.coinbase.com/",
+        ],
         required: ["PRIVY_APP_ID=", "PRIVY_APP_SECRET="],
         optional: [
           "CHAIN_ID=",
           "PRIVY_WALLET_ID=",
           "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY=",
           "PRIVY_WALLET_AUTHORIZATION_KEY_ID=",
+          "CDP_API_KEY_NAME=",
+          "CDP_API_KEY_PRIVATE_KEY=",
         ],
       },
       apiRoute: "evm/privy/route.ts",
@@ -93,20 +101,28 @@ export const WalletProviderRouteConfigurations: Record<
   SVM: {
     SolanaKeypair: {
       env: {
-        topComments: ["Export private key from your Solana wallet and save"],
+        topComments: [
+          "Export private key from your Solana wallet and save",
+          "Get keys from CDP Portal: https://portal.cdp.coinbase.com/",
+        ],
         required: ["SOLANA_PRIVATE_KEY="],
-        optional: ["SOLANA_RPC_URL="],
+        optional: ["SOLANA_RPC_URL=", "CDP_API_KEY_NAME=", "CDP_API_KEY_PRIVATE_KEY="],
       },
       apiRoute: "svm/solanaKeypair/route.ts",
     },
     Privy: {
       env: {
-        topComments: ["Get keys from Privy Dashboard: https://dashboard.privy.io/"],
+        topComments: [
+          "Get keys from Privy Dashboard: https://dashboard.privy.io/",
+          "Get keys from CDP Portal: https://portal.cdp.coinbase.com/",
+        ],
         required: ["PRIVY_APP_ID=", "PRIVY_APP_SECRET="],
         optional: [
           "PRIVY_WALLET_ID=",
           "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY=",
           "PRIVY_WALLET_AUTHORIZATION_KEY_ID=",
+          "CDP_API_KEY_NAME=",
+          "CDP_API_KEY_PRIVATE_KEY=",
         ],
       },
       apiRoute: "svm/privy/route.ts",
