@@ -38,20 +38,12 @@ After answering the prompts, the CLI will:
 - Configure the selected settings.
 - Display next steps to get started.
 
-## What's Included
-
-The generated project includes:
-
-- **AgentKit** - The core framework for building onchain agents.
-- **Python Chatbot** - A chatbot interface to interact with the blockchain.
-- **Poetry** - Dependency management and virtual environment setup.
-
 ## Getting Started
 
 Once your project is created, navigate into the directory and install dependencies:
 
 ```sh
-cd your-project-name  
+cd my-project
 poetry install
 ```
 
@@ -72,11 +64,3 @@ poetry run python chatbot.py
 - **Docs:** [https://docs.cdp.coinbase.com/agentkit/docs/welcome](https://docs.cdp.coinbase.com/agentkit/docs/welcome)
 - **GitHub Repo:** [http://github.com/coinbase/agentkit](http://github.com/coinbase/agentkit)
 - **Community & Support:** [https://discord.gg/CDP](https://discord.gg/CDP)
-
-## License
-
-This project is licensed under the **MIT License**.
-
----
-
-For any issues, please open a GitHub issue or join the Coinbase Developer Platform Discord for support.
