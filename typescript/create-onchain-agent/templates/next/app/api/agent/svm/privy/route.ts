@@ -93,6 +93,7 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
         walletActionProvider(),
         splActionProvider(),
         jupiterActionProvider(),
+        // The CDP API Action Provider provides faucet functionality on solana-devnet. Can be removed if you do not need this functionality.
         cdpApiActionProvider({
           apiKeyName: process.env.CDP_API_KEY_NAME,
           apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,

@@ -96,6 +96,7 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
         pythActionProvider(),
         walletActionProvider(),
         erc20ActionProvider(),
+        // The CDP API Action Provider provides faucet functionality on base-sepolia. Can be removed if you do not need this functionality.
         cdpApiActionProvider({
           apiKeyName: process.env.CDP_API_KEY_NAME,
           apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
