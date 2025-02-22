@@ -9,7 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@coinbase/agentkit": "latest",
+    "@coinbase/agentkit": "^0.2.2",
+    "@coinbase/agentkit-langchain": "^0.2.2",
+    "@langchain/langgraph": "^0.2.21",
+    "@langchain/openai": "^0.3.14",
+    "@langchain/core": "^0.3.19",
     "@solana/web3.js": "^1.98.0",
     "@tanstack/react-query": "^5",
     "bs58": "^6.0.0",
