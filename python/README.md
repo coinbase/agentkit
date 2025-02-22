@@ -16,6 +16,12 @@ LangChain extension of AgentKit. Enables agentic workflows to interact with onch
 
 See [AgentKit LangChain](./framework-extensions/langchain/README.md) to get started!
 
+### `create-onchain-agent`
+
+A quickstart CLI tool to scaffold out a chatbot using Coinbase AgentKit. Runnable via `pipx run create-onchain-agent`.
+
+See [Create Onchain Agent](./create-onchain-agent/README.md) to get started!
+
 ## 🤝 Contributing
 
 **AgentKit is actively looking for community contributions!**
