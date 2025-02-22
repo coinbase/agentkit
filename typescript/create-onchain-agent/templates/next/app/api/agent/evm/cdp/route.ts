@@ -14,6 +14,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { AgentRequest, AgentResponse } from "@/app/types/api";
+import * as fs from "fs";
 
 /**
  * AgentKit Integration Route
@@ -53,6 +54,9 @@ import { AgentRequest, AgentResponse } from "@/app/types/api";
 // The agent
 let agent: ReturnType<typeof createReactAgent>;
 
+// Configure a file to persist the agent's CDP MPC Wallet Data
+const WALLET_DATA_FILE = "wallet_data.txt";
+
 /**
  * Initializes and returns an instance of the AI agent.
  * If an agent instance already exists, it returns the existing one.
@@ -74,11 +78,24 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
     // Initialize LLM: https://platform.openai.com/docs/models#gpt-4o
     const llm = new ChatOpenAI({ model: "gpt-4o-mini" });
 
+    let walletDataStr: string | null = null;
+
+    // Read existing wallet data if available
+    if (fs.existsSync(WALLET_DATA_FILE)) {
+      try {
+        walletDataStr = fs.readFileSync(WALLET_DATA_FILE, "utf8");
+      } catch (error) {
+        console.error("Error reading wallet data:", error);
+        // Continue without wallet data
+      }
+    }
+
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
     const walletProvider = await CdpWalletProvider.configureWithWallet({
       apiKeyName: process.env.CDP_API_KEY_NAME,
       apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
       networkId: process.env.NETWORK_ID || "base-sepolia",
+      cdpWalletData: walletDataStr || undefined,
     });
 
     // Initialize AgentKit: https://docs.cdp.coinbase.com/agentkit/docs/agent-actions
@@ -121,6 +138,10 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
         restating your tools' descriptions unless it is explicitly requested.
         `,
     });
+
+    // Save wallet data
+    const exportedWallet = await walletProvider.exportWallet();
+    fs.writeFileSync(WALLET_DATA_FILE, JSON.stringify(exportedWallet));
 
     return agent;
   } catch (error) {
