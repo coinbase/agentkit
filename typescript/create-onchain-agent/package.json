@@ -1,0 +1,45 @@
+{
+  "name": "create-onchain-agent",
+  "description": "Instantly create onchain-agent applications with Coinbase AgentKit.",
+  "version": "0.1.2",
+  "license": "MIT",
+  "scripts": {
+    "build": "npm run clean && npm run build:esm+types",
+    "build:esm+types": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationMap --declarationDir ./dist/types",
+    "format": "prettier -c .prettierrc --write \"**/*.{ts,js,cjs,json,md}\"",
+    "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\"",
+    "lint": "eslint -c .eslintrc.json \"src/**/*.ts\"",
+    "lint:fix": "eslint -c .eslintrc.json \"src/**/*.ts\" --fix",
+    "check:types": "tsc --noEmit",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "dev": "node --loader ts-node/esm src/cli.ts"
+  },
+  "files": [
+    "dist/**",
+    "!dist/**/*.tsbuildinfo",
+    "src/**/*.ts",
+    "!src/**/*.test.ts",
+    "!src/**/*.test-d.ts",
+    "templates/**"
+  ],
+  "bin": {
+    "create-onchain-agent": "./dist/esm/cli.js"
+  },
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "cac": "^6.7.14",
+    "cross-spawn": "^7.0.3",
+    "ora": "^8.1.0",
+    "picocolors": "^1.1.0",
+    "prompts": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/cross-spawn": "^6.0.6",
+    "@types/node": "^20.12.10",
+    "@types/prompts": "^2.4.9"
+  }
+}
