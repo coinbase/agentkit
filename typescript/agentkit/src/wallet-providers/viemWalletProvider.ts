@@ -14,6 +14,22 @@ import {
 import { EvmWalletProvider } from "./evmWalletProvider";
 import { Network } from "../network";
 import { CHAIN_ID_TO_NETWORK_ID } from "../network/network";
+import { applyGasMultiplier } from "../utils";
+
+/**
+ * Configuration for gas multipliers.
+ */
+export interface ViemWalletProviderGasConfig {
+  /**
+   * An internal multiplier on gas limit estimation.
+   */
+  gasLimitMultiplier?: number;
+
+  /**
+   * An internal multiplier on fee per gas estimation.
+   */
+  feePerGasMultiplier?: number;
+}
 
 /**
  * A wallet provider that uses the Viem library.
@@ -21,19 +37,25 @@ import { CHAIN_ID_TO_NETWORK_ID } from "../network/network";
 export class ViemWalletProvider extends EvmWalletProvider {
   #walletClient: ViemWalletClient;
   #publicClient: ViemPublicClient;
+  #gasLimitMultiplier: number;
+  #feePerGasMultiplier: number;
 
   /**
    * Constructs a new ViemWalletProvider.
    *
    * @param walletClient - The wallet client.
+   * @param gasConfig - Configuration for gas multipliers.
    */
-  constructor(walletClient: ViemWalletClient) {
+  constructor(walletClient: ViemWalletClient, gasConfig?: ViemWalletProviderGasConfig) {
     super();
+
     this.#walletClient = walletClient;
     this.#publicClient = createPublicClient({
       chain: walletClient.chain,
       transport: http(),
     });
+    this.#gasLimitMultiplier = Math.max(gasConfig?.gasLimitMultiplier ?? 1.2, 1);
+    this.#feePerGasMultiplier = Math.max(gasConfig?.feePerGasMultiplier ?? 1, 1);
   }
 
   /**
@@ -102,12 +124,30 @@ export class ViemWalletProvider extends EvmWalletProvider {
       throw new Error("Chain not found");
     }
 
+    const feeData = await this.#publicClient.estimateFeesPerGas();
+    const maxFeePerGas = applyGasMultiplier(feeData.maxFeePerGas, this.#feePerGasMultiplier);
+    const maxPriorityFeePerGas = applyGasMultiplier(
+      feeData.maxPriorityFeePerGas,
+      this.#feePerGasMultiplier,
+    );
+
+    const gasLimit = await this.#publicClient.estimateGas({
+      account,
+      to: transaction.to,
+      value: transaction.value,
+      data: transaction.data,
+    });
+    const gas = BigInt(Math.round(Number(gasLimit) * this.#gasLimitMultiplier));
+
     const txParams = {
       account: account,
       chain: chain,
       data: transaction.data,
       to: transaction.to,
       value: transaction.value,
+      gas,
+      maxFeePerGas,
+      maxPriorityFeePerGas,
     };
 
     return this.#walletClient.sendTransaction(txParams);

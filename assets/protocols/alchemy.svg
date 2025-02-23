@@ -2,9 +2,37 @@
     <foreignObject width="100%" height="100%">
         <div xmlns="http://www.w3.org/1999/xhtml">
             <style>
+                :root {
+                    --border-color: #404040;
+                    --hover-color: #2470FF;
+                    --gradient-start: #05D5FF;
+                    --gradient-middle: #363FF9;
+                    --gradient-end: #5533FF;
+                }
+
+                @media (prefers-color-scheme: dark) {
+                    :root {
+                        --border-color: #404040;
+                        --hover-color: #2470FF;
+                        --gradient-start: #05D5FF;
+                        --gradient-middle: #363FF9;
+                        --gradient-end: #5533FF;
+                    }
+                }
+
+                @media (prefers-color-scheme: light) {
+                    :root {
+                        --border-color: #e0e0e0;
+                        --hover-color: #2470FF;
+                        --gradient-start: #05D5FF;
+                        --gradient-middle: #363FF9;
+                        --gradient-end: #5533FF;
+                    }
+                }
+
                 #container {
                     box-sizing: border-box;
-                    border: 1px solid #404040;
+                    border: 1px solid var(--border-color);
                     border-radius: 8px;
                     transition: transform 0.2s ease, box-shadow 0.2s ease;
                     display: flex;
@@ -13,7 +41,7 @@
                 }
 
                 #logo:hover {
-                    border-color: #2470FF;
+                    border-color: var(--hover-color);
                 }
 
                 div {
@@ -34,19 +62,19 @@
                             <rect width="1008" height="861" fill="white"/>
                         </clipPath>
                         <linearGradient id="linear-gradient-0" x1="504" y1="64" x2="415.044" y2="861.061" gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#05D5FF"/>
-                            <stop offset="0.723958" stop-color="#363FF9"/>
-                            <stop offset="1" stop-color="#5533FF"/>
+                            <stop stop-color="var(--gradient-start)"/>
+                            <stop offset="0.723958" stop-color="var(--gradient-middle)"/>
+                            <stop offset="1" stop-color="var(--gradient-end)"/>
                         </linearGradient>
                         <linearGradient id="linear-gradient-1" x1="504" y1="64" x2="415.044" y2="861.061" gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#05D5FF"/>
-                            <stop offset="0.723958" stop-color="#363FF9"/>
-                            <stop offset="1" stop-color="#5533FF"/>
+                            <stop stop-color="var(--gradient-start)"/>
+                            <stop offset="0.723958" stop-color="var(--gradient-middle)"/>
+                            <stop offset="1" stop-color="var(--gradient-end)"/>
                         </linearGradient>
                         <linearGradient id="linear-gradient-2" x1="504" y1="64" x2="415.044" y2="861.061" gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#05D5FF"/>
-                            <stop offset="0.723958" stop-color="#363FF9"/>
-                            <stop offset="1" stop-color="#5533FF"/>
+                            <stop stop-color="var(--gradient-start)"/>
+                            <stop offset="0.723958" stop-color="var(--gradient-middle)"/>
+                            <stop offset="1" stop-color="var(--gradient-end)"/>
                         </linearGradient>
                     </defs>
                 </svg>

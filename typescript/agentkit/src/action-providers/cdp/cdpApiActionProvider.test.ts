@@ -2,10 +2,8 @@ import { EvmWalletProvider } from "../../wallet-providers";
 import { CdpApiActionProvider } from "./cdpApiActionProvider";
 import { AddressReputationSchema, RequestFaucetFundsSchema } from "./schemas";
 
-// Mock the entire module
 jest.mock("@coinbase/coinbase-sdk");
 
-// Get the mocked constructor
 const { ExternalAddress } = jest.requireMock("@coinbase/coinbase-sdk");
 
 describe("CDP API Action Provider Input Schemas", () => {
@@ -117,6 +115,17 @@ describe("CDP API Action Provider", () => {
       expect(mockExternalAddressInstance.reputation).toHaveBeenCalledTimes(1);
       expect(result).toBe(`Error checking address reputation: ${error}`);
     });
+
+    it("should return error if not on Ethereum network", async () => {
+      const args = {
+        address: "0xe6b2af36b3bb8d47206a129ff11d5a2de2a63c83",
+        network: "solana-devnet",
+      };
+
+      const result = await actionProvider.addressReputation(args);
+
+      expect(result).toBe("Address reputation is only supported on Ethereum networks.");
+    });
   });
 
   describe("faucet", () => {
@@ -163,6 +172,14 @@ describe("CDP API Action Provider", () => {
       const result = await actionProvider.faucet(mockWallet, args);
 
       expect(result).toBe(`Error requesting faucet funds: ${error}`);
+    });
+
+    it("should return error if not on base-sepolia or solana-devnet", async () => {
+      mockWallet.getNetwork.mockReturnValue({ networkId: "solana-mainnet", protocolFamily: "svm" });
+      const args = {};
+      const result = await actionProvider.faucet(mockWallet, args);
+
+      expect(result).toBe("Faucet is only allowed on 'base-sepolia' or 'solana-devnet'.");
     });
   });
 });

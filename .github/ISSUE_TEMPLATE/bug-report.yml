@@ -5,7 +5,7 @@ body:
 - type: markdown
   attributes:
     value: >
-      #### Before submitting a bug, please make sure the issue hasn't been already addressed by searching through [the existing and past issues](https://github.com/coinbase/cdp-agentkit/issues).
+      #### Before submitting a bug, please make sure the issue hasn't been already addressed by searching through [the existing and past issues](https://github.com/coinbase/agentkit/issues).
 - type: textarea
   attributes:
     label: 🐛 Describe the bug
@@ -48,8 +48,8 @@ body:
       ```sh
       python --version
       poetry --version
-      pip show cdp-agentkit-core
-      pip show cdp-langchain
+      pip show coinbase-agentkit
+      pip show coinbase-agentkit-langchain
       ```
   validations:
     required: true

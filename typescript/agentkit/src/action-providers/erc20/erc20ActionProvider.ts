@@ -100,10 +100,10 @@ Important notes:
   /**
    * Checks if the ERC20 action provider supports the given network.
    *
-   * @param _ - The network to check.
+   * @param network - The network to check.
    * @returns True if the ERC20 action provider supports the network, false otherwise.
    */
-  supportsNetwork = (_: Network) => true;
+  supportsNetwork = (network: Network) => network.protocolFamily === "evm";
 }
 
 export const erc20ActionProvider = () => new ERC20ActionProvider();

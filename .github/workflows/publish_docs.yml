@@ -47,25 +47,25 @@ jobs:
         id: cached-poetry-dependencies-core
         uses: actions/cache@v3
         with:
-          path: ./python/cdp-agentkit-core/.venv
-          key: venv-agentkit-${{ runner.os }}-3.10-${{ hashFiles('python/cdp-agentkit-core/poetry.lock') }}
+          path: ./python/coinbase-agentkit/.venv
+          key: venv-agentkit-${{ runner.os }}-3.10-${{ hashFiles('python/coinbase-agentkit/poetry.lock') }}
 
-      - name: Install dependencies for CDP AgentKit Core Python
+      - name: Install dependencies for Coinbase AgentKit Python
         if: steps.cached-poetry-dependencies-core.outputs.cache-hit != 'true'
         run: |
-          cd python/cdp-agentkit-core
+          cd python/coinbase-agentkit
           poetry install --with dev
           cd ..
 
-      - name: Build Sphinx Documentation for CDP AgentKit Core Python
+      - name: Build Sphinx Documentation for Coinbase AgentKit Python
         run: |
-          cd python/cdp-agentkit-core
+          cd python/coinbase-agentkit
           poetry run make docs
           cd docs
           poetry run make html
           cd ../../..
-          mkdir -p docs/cdp-agentkit-core/python
-          cp -r python/cdp-agentkit-core/docs/_build/html/* docs/cdp-agentkit-core/python
+          mkdir -p docs/coinbase-agentkit/python
+          cp -r python/coinbase-agentkit/docs/_build/html/* docs/coinbase-agentkit/python
 
       - name: Load cached venv for CDP LangChain Python
         id: cached-poetry-dependencies-langchain
@@ -74,46 +74,22 @@ jobs:
           path: ./python/cdp-langchain/.venv
           key: venv-langchain-${{ runner.os }}-3.10-${{ hashFiles('python/cdp-langchain/poetry.lock') }}
 
-      - name: Install dependencies for CDP LangChain Python
+      - name: Install dependencies for Coinbase AgentKit LangChain Python
         if: steps.cached-poetry-dependencies-langchain.outputs.cache-hit != 'true'
         run: |
-          cd python/cdp-langchain
+          cd python/framework-extensions/langchain
           poetry install --with dev
-          cd ..
+          cd ../..
 
-      - name: Build Sphinx Documentation for CDP LangChain Python
+      - name: Build Sphinx Documentation for Coinbase AgentKit LangChain Python
         run: |
-          cd python/cdp-langchain
+          cd python/framework-extensions/langchain
           poetry run make docs
           cd docs
           poetry run make html
-          cd ../../..
-          mkdir -p docs/cdp-langchain/python
-          cp -r python/cdp-langchain/docs/_build/html/* docs/cdp-langchain/python
-
-      - name: Load cached venv for Twitter LangChain Python
-        id: cached-poetry-dependencies-twitter-langchain
-        uses: actions/cache@v3
-        with:
-          path: ./python/twitter-langchain/.venv
-          key: venv-twitter-langchain-${{ runner.os }}-3.10-${{ hashFiles('python/twitter-langchain/poetry.lock') }}
-
-      - name: Install dependencies for Twitter LangChain Python
-        if: steps.cached-poetry-dependencies-twitter-langchain.outputs.cache-hit != 'true'
-        run: |
-          cd python/twitter-langchain
-          poetry install --with dev
-          cd ..
-
-      - name: Build Sphinx Documentation for Twitter LangChain Python
-        run: |
-          cd python/twitter-langchain
-          poetry run make docs
-          cd docs
-          poetry run make html
-          cd ../../..
-          mkdir -p docs/twitter-langchain/python
-          cp -r python/twitter-langchain/docs/_build/html/* docs/twitter-langchain/python
+          cd ../../../..
+          mkdir -p docs/coinbase-agentkit-langchain/python
+          cp -r python/framework-extensions/langchain/docs/_build/html/* docs/coinbase-agentkit-langchain/python
 
       - name: Deploy to Github Pages
         uses: peaceiris/actions-gh-pages@v4

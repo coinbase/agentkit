@@ -1,0 +1,92 @@
+<svg id="logo" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <foreignObject width="100%" height="100%">
+        <div xmlns="http://www.w3.org/1999/xhtml">
+            <style>
+                :root {
+                    --border-color: #404040;
+                    --hover-color: #2470FF;
+                    --logo-color-primary: #C7F284;
+                    --logo-color-secondary: #00BEF0;
+                }
+
+                @media (prefers-color-scheme: dark) {
+                    :root {
+                        --border-color: #404040;
+                        --hover-color: #2470FF;
+                        --logo-color-primary: #C7F284;
+                        --logo-color-secondary: #00BEF0;
+                    }
+                }
+
+                @media (prefers-color-scheme: light) {
+                    :root {
+                        --border-color: #e0e0e0;
+                        --hover-color: #2470FF;
+                        --logo-color-primary: #C7F284;
+                        --logo-color-secondary: #00BEF0;
+                    }
+                }
+
+                #container {
+                    box-sizing: border-box;
+                    border: 1px solid var(--border-color);
+                    border-radius: 8px;
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                #logo:hover {
+                    border-color: var(--hover-color);
+                }
+
+                div {
+                    width: 100%;
+                    height: 100%;
+                }
+            </style>
+            <div id="container">
+              <svg width="24" height="24" viewBox="0 0 33 33" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g clip-path="url(#clip-path-0)">
+                  <path d="M3.09074 25.6666C4.44267 27.5471 6.17683 29.1205 8.1795 30.2838C10.1822 31.447 12.4081 32.1738 14.7114 32.4165C13.5264 30.6333 11.8039 28.9928 9.65354 27.7438C7.50318 26.4948 5.22591 25.8125 3.09074 25.6666Z" fill="url(#linear-gradient_0)"/>
+                  <path d="M12.543 22.7705C8.40015 20.3636 3.91612 19.7502 0.707662 20.8338C1.0174 21.8575 1.42589 22.8487 1.92738 23.7934C4.71498 23.7288 7.75856 24.4859 10.5906 26.1308C13.4227 27.7757 15.5888 30.0459 16.9143 32.5C17.9839 32.4672 19.0479 32.3309 20.0913 32.0932C19.4426 28.7698 16.6849 25.1779 12.543 22.7705Z" fill="url(#linear-gradient_1)"/>
+                  <path d="M32.2852 13.0009C31.7585 10.8584 30.8054 8.84403 29.4829 7.07804C28.1604 5.31205 26.4956 3.83067 24.5879 2.72235C22.6802 1.61403 20.5687 0.901504 18.3796 0.62731C16.1904 0.353116 13.9684 0.52288 11.8463 1.12647C15.3915 1.56033 19.3267 2.89122 23.1859 5.13324C27.0452 7.37525 30.1533 10.1341 32.2852 13.0009Z" fill="url(#linear-gradient_2)"/>
+                  <path d="M27.1271 20.8583C25.3124 17.8446 22.2038 14.9588 18.3743 12.7342C14.5449 10.5095 10.4991 9.2388 6.98531 9.15474C3.894 9.08152 1.57389 9.98017 0.621548 11.6197C0.616124 11.6294 0.608531 11.6386 0.602566 11.6484C0.516877 11.9559 0.443119 12.2639 0.37587 12.5731C1.70568 12.0481 3.24645 11.7558 4.95969 11.7232C8.76959 11.6517 13.0334 12.8703 16.9681 15.1562C20.9027 17.4422 24.0759 20.5438 25.9003 23.8878C26.7182 25.3944 27.2285 26.8777 27.4308 28.2948C27.6662 28.0844 27.8972 27.8669 28.1212 27.6408C28.1272 27.6305 28.131 27.6196 28.1369 27.6088C29.0893 25.9677 28.721 23.5076 27.1271 20.8583Z" fill="url(#linear-gradient_3)"/>
+                  <path d="M15.4609 17.7485C9.59662 14.3416 3.11626 13.8079 -5.33621e-07 16.1855C0.00612042 16.9297 0.0630161 17.6726 0.170292 18.4091C1.08699 18.1312 2.03177 17.9562 2.98718 17.8874C6.46951 17.6254 10.3087 18.5957 13.7927 20.6207C17.2766 22.6458 20.023 25.5018 21.5209 28.6543C21.935 29.518 22.2508 30.4254 22.4624 31.3595C23.1555 31.0878 23.8294 30.7694 24.4794 30.4066C25.0011 26.5213 21.3268 21.156 15.4609 17.7485Z" fill="url(#linear-gradient_4)"/>
+                  <path d="M30.1434 15.8141C28.3082 12.8036 25.1724 9.90969 21.3158 7.67039C17.4593 5.43109 13.3977 4.14033 9.87257 4.03674C7.1853 3.95919 5.10382 4.61053 4.02457 5.84109C8.50588 5.08182 14.4168 6.35794 20.146 9.68625C25.8753 13.0146 29.9135 17.5181 31.4722 21.7868C32.0064 20.2406 31.5416 18.1098 30.1434 15.8141Z" fill="url(#linear-gradient_5)"/>
+                </g>
+                <defs>
+                  <clipPath id="clip-path-0">
+                    <rect width="33" height="33" fill="white"/>
+                  </clipPath>
+                  <linearGradient id="linear-gradient_0" x1="21.5" y1="7" x2="6.66667" y2="32.5" gradientUnits="userSpaceOnUse">
+                    <stop offset="0.0001" stop-color="var(--logo-color-primary)"/>
+                    <stop offset="1" stop-color="var(--logo-color-secondary)"/>
+                  </linearGradient>
+                  <linearGradient id="linear-gradient_1" x1="21.5" y1="7" x2="6.66667" y2="32.5" gradientUnits="userSpaceOnUse">
+                    <stop offset="0.0001" stop-color="var(--logo-color-primary)"/>
+                    <stop offset="1" stop-color="var(--logo-color-secondary)"/>
+                  </linearGradient>
+                  <linearGradient id="linear-gradient_2" x1="21.5" y1="7" x2="6.66667" y2="32.5" gradientUnits="userSpaceOnUse">
+                    <stop offset="0.0001" stop-color="var(--logo-color-primary)"/>
+                    <stop offset="1" stop-color="var(--logo-color-secondary)"/>
+                  </linearGradient>
+                  <linearGradient id="linear-gradient_3" x1="21.5" y1="7" x2="6.66667" y2="32.5" gradientUnits="userSpaceOnUse">
+                    <stop offset="0.0001" stop-color="var(--logo-color-primary)"/>
+                    <stop offset="1" stop-color="var(--logo-color-secondary)"/>
+                  </linearGradient>
+                  <linearGradient id="linear-gradient_4" x1="21.5" y1="7" x2="6.66667" y2="32.5" gradientUnits="userSpaceOnUse">
+                    <stop offset="0.0001" stop-color="var(--logo-color-primary)"/>
+                    <stop offset="1" stop-color="var(--logo-color-secondary)"/>
+                  </linearGradient>
+                  <linearGradient id="linear-gradient_5" x1="21.5" y1="7" x2="6.66667" y2="32.5" gradientUnits="userSpaceOnUse">
+                    <stop offset="0.0001" stop-color="var(--logo-color-primary)"/>
+                    <stop offset="1" stop-color="var(--logo-color-secondary)"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+        </div>
+    </foreignObject>
+</svg>

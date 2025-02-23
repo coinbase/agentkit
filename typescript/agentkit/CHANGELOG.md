@@ -2,10 +2,37 @@
 
 ## Unreleased
 
+## [0.2.2] - 2025-02-19
+
 ### Added
 
-- Added `svmWalletProvider` abstract class for interacting with Solana.
-- Added `solanaKeypairWalletProvider` to concretely implement `svmWalletProvider` with a local keypair.
+- Added support for fauceting SOL on `solana-devnet`.
+- Added `JupiterActionProvider` with `swap` for Solana.
+
+### Fixed
+
+- Fixed handling of `CDP_API_KEY_PRIVATE_KEY` by moving parsing into CDP classes.
+- Fixed handling of `TokenAccountNotFoundError` within `splActionProvider` `getBalance`.
+- Fixed `wowActionProvider` exports, supported networks, and ensuring response parity with python.
+
+## [0.2.1] - 2025-02-18
+
+### Added
+
+- Added `get_balance` to `splActionProvider` to fetch balance of an SPL token.
+- Added support for Privy Server Wallets on Solana. See [here](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/README.md#privywalletprovider-solana) for more details.
+
+## [0.2.0] - 2025-02-15
+
+### Added
+
+- Added gas configuration parameters (`gasLimitMultiplier`, `feePerGasMultiplier`) to `CdpWalletProvider` and `ViemWalletProvider`.
+- Added `svmWalletProvider` with `solanaKeypairWalletProvider` implementation to create a Solana wallet with a local keypair.
+- Added SPL action provider with `transfer` action.
+- Added `privyWalletProvider` to use a Privy server wallet for agent actions.
+- Added gas configuration parameters (`gasLimitMultiplier`, `feePerGasMultiplier`) to `CdpWalletProvider` and `ViemWalletProvider`.
+- Added Solana chatbot example.
+- Added Privy EVM chatbot exmaple.
 
 ## [0.1.2] - 2025-02-07
 

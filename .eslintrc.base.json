@@ -17,7 +17,6 @@
   },
   "rules": {
     "import/first": "error",
-    "multiline-comment-style": ["error", "starred-block"],
     "prettier/prettier": "error",
     "@typescript-eslint/member-ordering": "error",
     "@typescript-eslint/no-unused-vars": [
