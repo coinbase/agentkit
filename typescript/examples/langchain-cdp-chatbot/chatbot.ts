@@ -1,21 +1,20 @@
 import {
   AgentKit,
-  ViemWalletProvider,
+  CdpWalletProvider,
   wethActionProvider,
   walletActionProvider,
   erc20ActionProvider,
+  cdpApiActionProvider,
+  cdpWalletActionProvider,
   pythActionProvider,
-  aaveActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
-import { createWalletClient, http } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
-import { base } from "viem/chains";
 import { HumanMessage } from "@langchain/core/messages";
 import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 import * as dotenv from "dotenv";
+import * as fs from "fs";
 import * as readline from "readline";
 
 dotenv.config();
@@ -30,7 +29,7 @@ function validateEnvironment(): void {
   const missingVars: string[] = [];
 
   // Check required variables
-  const requiredVars = ["OPENAI_API_KEY", "PRIVATE_KEY"];
+  const requiredVars = ["OPENAI_API_KEY", "CDP_API_KEY_NAME", "CDP_API_KEY_PRIVATE_KEY"];
   requiredVars.forEach(varName => {
     if (!process.env[varName]) {
       missingVars.push(varName);
@@ -48,42 +47,51 @@ function validateEnvironment(): void {
 
   // Warn about optional NETWORK_ID
   if (!process.env.NETWORK_ID) {
-    console.warn("Warning: NETWORK_ID not set, defaulting to base-sepolia");
+    console.warn("Warning: NETWORK_ID not set, defaulting to base-sepolia testnet");
   }
 }
 
 // Add this right after imports and before any other code
 validateEnvironment();
 
-/*
- * Configure a file to persist the agent's CDP MPC Wallet Data
- * const WALLET_DATA_FILE = "wallet_data.txt";
- */
+// Configure a file to persist the agent's CDP MPC Wallet Data
+const WALLET_DATA_FILE = "wallet_data.txt";
 
 /**
- * Initialize the agent with Viem wallet
+ * Initialize the agent with CDP Agentkit
  *
  * @returns Agent executor and config
  */
 async function initializeAgent() {
   try {
+    // Initialize LLM
     const llm = new ChatOpenAI({
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4o-mini",
     });
 
-    // Initialize wallet with private key
-    const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
+    let walletDataStr: string | null = null;
 
-    const client = createWalletClient({
-      account,
-      chain: base,
-      transport: http(process.env.RPC_URL), // Optional: Use custom RPC URL
-    });
+    // Read existing wallet data if available
+    if (fs.existsSync(WALLET_DATA_FILE)) {
+      try {
+        walletDataStr = fs.readFileSync(WALLET_DATA_FILE, "utf8");
+      } catch (error) {
+        console.error("Error reading wallet data:", error);
+        // Continue without wallet data
+      }
+    }
 
-    // Create wallet provider
-    const walletProvider = new ViemWalletProvider(client);
+    // Configure CDP Wallet Provider
+    const config = {
+      apiKeyName: process.env.CDP_API_KEY_NAME,
+      apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
+      cdpWalletData: walletDataStr || undefined,
+      networkId: process.env.NETWORK_ID || "base-sepolia",
+    };
 
-    // Initialize AgentKit with your wallet
+    const walletProvider = await CdpWalletProvider.configureWithWallet(config);
+
+    // Initialize AgentKit
     const agentkit = await AgentKit.from({
       walletProvider,
       actionProviders: [
@@ -91,7 +99,14 @@ async function initializeAgent() {
         pythActionProvider(),
         walletActionProvider(),
         erc20ActionProvider(),
-        aaveActionProvider(),
+        cdpApiActionProvider({
+          apiKeyName: process.env.CDP_API_KEY_NAME,
+          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
+        }),
+        cdpWalletActionProvider({
+          apiKeyName: process.env.CDP_API_KEY_NAME,
+          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
+        }),
       ],
     });
 
@@ -99,25 +114,34 @@ async function initializeAgent() {
 
     // Store buffered conversation history in memory
     const memory = new MemorySaver();
-    const agentConfig = { configurable: { thread_id: "Custom Wallet AgentKit Example!" } };
+    const agentConfig = { configurable: { thread_id: "CDP AgentKit Chatbot Example!" } };
 
-    // Create React Agent using the LLM and Viem wallet tools
+    // Create React Agent using the LLM and CDP AgentKit tools
     const agent = createReactAgent({
       llm,
       tools,
       checkpointSaver: memory,
       messageModifier: `
-        You are a helpful agent that can interact onchain using your own wallet. You have access to 
-        various DeFi protocols and can perform operations like supplying to Aave, checking prices via 
-        Pyth, and managing tokens. Before executing actions, always check the wallet balance and network.
-        Be concise and helpful with your responses.
+        You are a helpful agent that can interact onchain using the Coinbase Developer Platform AgentKit. You are 
+        empowered to interact onchain using your tools. If you ever need funds, you can request them from the 
+        faucet if you are on network ID 'base-sepolia'. If not, you can provide your wallet details and request 
+        funds from the user. Before executing your first action, get the wallet details to see what network 
+        you're on. If there is a 5XX (internal) HTTP error code, ask the user to try again later. If someone 
+        asks you to do something you can't do with your currently available tools, you must say so, and 
+        encourage them to implement it themselves using the CDP SDK + Agentkit, recommend they go to 
+        docs.cdp.coinbase.com for more information. Be concise and helpful with your responses. Refrain from 
+        restating your tools' descriptions unless it is explicitly requested.
         `,
     });
+
+    // Save wallet data
+    const exportedWallet = await walletProvider.exportWallet();
+    fs.writeFileSync(WALLET_DATA_FILE, JSON.stringify(exportedWallet));
 
     return { agent, config: agentConfig };
   } catch (error) {
     console.error("Failed to initialize agent:", error);
-    throw error;
+    throw error; // Re-throw to be handled by caller
   }
 }
 

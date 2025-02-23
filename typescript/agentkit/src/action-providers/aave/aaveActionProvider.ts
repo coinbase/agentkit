@@ -69,10 +69,10 @@ The tool will handle the approval and supply transaction.
           return wallet.readContract({
             address: chainAddresses.ASSETS[asset],
             abi: ERC20_ABI,
-            functionName: 'balanceOf',
-            args: [address]
+            functionName: "balanceOf",
+            args: [address],
           }) as Promise<bigint>;
-        }
+        },
       } as ExtendedProvider;
 
       const ethersProvider = new ethers.providers.JsonRpcProvider(provider.transport.url);
@@ -228,10 +228,10 @@ The tool will handle the withdrawal transaction.
           return wallet.readContract({
             address: chainAddresses.ASSETS[asset],
             abi: ERC20_ABI,
-            functionName: 'balanceOf',
-            args: [address]
+            functionName: "balanceOf",
+            args: [address],
           }) as Promise<bigint>;
-        }
+        },
       } as ExtendedProvider;
 
       const ethersProvider = new ethers.providers.JsonRpcProvider(provider.transport.url);
