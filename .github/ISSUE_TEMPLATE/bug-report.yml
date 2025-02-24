@@ -6,23 +6,67 @@ body:
   attributes:
     value: >
       #### Before submitting a bug, please make sure the issue hasn't been already addressed by searching through [the existing and past issues](https://github.com/coinbase/agentkit/issues).
+- type: checkboxes
+  attributes:
+    label: Language Affected
+    description: Which language implementation is affected by this bug?
+    options:
+      - label: Python
+      - label: TypeScript
+  validations:
+    required: true
 - type: textarea
   attributes:
     label: 🐛 Describe the bug
     description: |
       Please provide a clear and concise description of what the bug is.
 
-      If relevant, add a minimal example so that we can reproduce the error by running the code. It is very important for the snippet to be as succinct (minimal) as possible, so please take time to trim down any irrelevant code to help us debug efficiently. We are going to copy-paste your code and we expect to get the same result as you did: avoid any external data, and include the relevant imports, etc. For example:
+      If relevant, add a minimal example so that we can reproduce the error by running the code. It is very important for the snippet to be as succinct (minimal) as possible, so please take time to trim down any irrelevant code to help us debug efficiently. We are going to copy-paste your code and we expect to get the same result as you did: do NOT include any credentials, avoid any external data, and include the relevant imports, etc. For example:
 
       ```python
       # All necessary imports at the beginning
-      from cdp_langchain.agent_toolkits import CdpToolkit
-      from cdp_langchain.utils import CdpAgentkitWrapper
+      from coinbase_agentkit import (
+          AgentKit, 
+          AgentKitConfig, 
+          CdpWalletProvider,
+          CdpWalletProviderConfig,
+          cdp_wallet_action_provider
+      )
+      from coinbase_agentkit_langchain import get_langchain_tools
 
       # A succinct reproducing example trimmed down to the essential parts:
-      agentkit = CdpAgentkitWrapper()
-      cdp_toolkit = CdpToolkit.from_cdp_agentkit_wrapper(agentkit)
-      tools = cdp_toolkit.get_tools()  # Note: the bug is here, the method raises an error
+      cdp_config = CdpWalletProviderConfig(
+          network_id="base-sepolia"
+      )
+      wallet_provider = CdpWalletProvider(cdp_config)
+      agentkit = AgentKit(AgentKitConfig(
+          wallet_provider=wallet_provider,
+          action_providers=[
+              cdp_wallet_action_provider()
+          ]
+      ))
+      tools = get_langchain_tools(agentkit)  # Note: the bug is here, the method raises an error
+      ```
+
+      ```typescript
+      # All necessary imports at the beginning
+      import { AgentKit, CdpWalletProvider, cdpWalletActionProvider } from '@coinbase/agentkit';
+      import { getLangChainTools } from '@coinbase/agentkit-langchain';
+
+      # A succinct reproducing example trimmed down to the essential parts:
+      const config = {
+        networkId: "base-sepolia"
+      };
+
+      const walletProvider = await CdpWalletProvider.configureWithWallet(config);
+      const agentkit = await AgentKit.from({
+        walletProvider,
+        actionProviders: [
+          cdpWalletActionProvider()
+        ]
+      });
+
+      const tools = await getLangChainTools(agentkit);  // Note: the bug is here, the method raises an error
       ```
 
       If the code is too long (hopefully, it isn't), feel free to put it in a public gist and link it in the issue: https://gist.github.com.
@@ -44,12 +88,21 @@ body:
   attributes:
     label: Versions
     description: |
-      Please run the following and paste the output below.
+      Please run the following commands based on your affected language and paste the output below.
+
+      For Python:
       ```sh
       python --version
       poetry --version
       pip show coinbase-agentkit
-      pip show coinbase-agentkit-langchain
+      pip show coinbase-agentkit-langchain  # if using LangChain extension
+      ```
+
+      For TypeScript:
+      ```sh
+      node --version
+      npm list @coinbase/agentkit
+      npm list @coinbase/agentkit-langchain  # if using LangChain extension
       ```
   validations:
     required: true
