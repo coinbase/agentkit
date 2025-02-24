@@ -158,11 +158,11 @@ def create_project():
 
     console.print(f"\n[blue]Creating your onchain agent project: {project_name}[/blue]")
 
-    templatePath = download_and_extract_template()
+    template_path = download_and_extract_template()
 
     # Run Copier with collected answers
     run_copy(
-        templatePath,
+        template_path,
         project_path,
         data={
             "_project_name": project_name,
