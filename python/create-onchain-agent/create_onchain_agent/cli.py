@@ -4,13 +4,21 @@ import os
 import click
 import questionary
 import re
-import logging
+import zipfile
+import requests
+import shutil
+import platformdirs
 from rich.console import Console
 from copier import run_copy
 from prompt_toolkit.styles import Style  # Import for custom styling
+from pathlib import Path
+
+# GitHub repo and folder path
+GITHUB_ZIP_URL = "https://github.com/coinbase/agentkit/archive/refs/heads/main.zip"
+TEMPLATE_SUBDIR = "agentkit-main/python/create-onchain-agent/templates/chatbot"
+LOCAL_CACHE_DIR = Path(platformdirs.user_cache_dir("create-onchain-agent"))
 
 console = Console()
-TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "../templates/chatbot")
 
 # Define a custom style for Questionary prompts
 custom_style = Style.from_dict({
@@ -46,6 +54,35 @@ CDP_SUPPORTED_NETWORKS = {
 
 VALID_PACKAGE_NAME_REGEX = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
+def download_and_extract_template():
+    """Downloads and extracts the chatbot template to a persistent location."""
+    LOCAL_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    zip_path = LOCAL_CACHE_DIR / "repo.zip"
+    extract_path = LOCAL_CACHE_DIR / "templates"
+
+    # If the template is already downloaded, return its path
+    if extract_path.exists():
+        return str(extract_path)
+
+    # Download the zip file
+    response = requests.get(GITHUB_ZIP_URL)
+    response.raise_for_status()
+
+    with open(zip_path, "wb") as f:
+        f.write(response.content)
+
+    # Extract the template
+    with zipfile.ZipFile(zip_path, "r") as zip_ref:
+        zip_ref.extractall(LOCAL_CACHE_DIR)
+
+    template_path = LOCAL_CACHE_DIR / TEMPLATE_SUBDIR
+    if not template_path.exists():
+        raise FileNotFoundError(f"Template path {TEMPLATE_SUBDIR} not found in ZIP.")
+
+    # Move extracted template to a stable path
+    shutil.move(str(template_path), str(extract_path))
+
+    return str(extract_path)
 
 @click.command()
 def create_project():
@@ -63,8 +100,8 @@ def create_project():
 
     console.print(f"[blue]{ascii_art}[/blue]")
 
-    # Prompt for project name (default: "onchain-kit")
-    project_name = questionary.text("Enter your project name:", default="onchain-kit", style=custom_style).ask().strip()
+    # Prompt for project name (default: "onchain-agent")
+    project_name = questionary.text("Enter your project name:", default="onchain-agent", style=custom_style).ask().strip()
 
     project_path = os.path.join(os.getcwd(), project_name)
 
@@ -121,9 +158,11 @@ def create_project():
 
     console.print(f"\n[blue]Creating your onchain agent project: {project_name}[/blue]")
 
+    template_path = download_and_extract_template()
+
     # Run Copier with collected answers
     run_copy(
-        TEMPLATE_PATH,
+        template_path,
         project_path,
         data={
             "_project_name": project_name,

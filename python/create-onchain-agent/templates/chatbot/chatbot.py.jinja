@@ -13,7 +13,6 @@ from langgraph.prebuilt import create_react_agent
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
-
     {% if _wallet_provider == "cdp" %}
     CdpWalletProvider,
     CdpWalletProviderConfig,
@@ -22,7 +21,6 @@ from coinbase_agentkit import (
     EthAccountWalletProvider,
     EthAccountWalletProviderConfig,
     {% endif %}
-
     cdp_wallet_action_provider,
     erc20_action_provider,
     pyth_action_provider,
