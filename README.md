@@ -76,7 +76,7 @@ npm run build
 # Navigate to the langchain-cdp-chatbot example
 cd typescript/examples/langchain-cdp-chatbot
 
-# At this point, fill in your CDP API key name, private key, and OpenAI API key in
+# At this point, fill in your CDP API key ID, secret key, and OpenAI API key in
 # the .env.local file.
 # Then, rename the .env.local file to .env
 mv .env.local .env
@@ -116,7 +116,7 @@ git clone https://github.com/coinbase/agentkit.git
 # Navigate to the chatbot-python example
 cd agentkit/python/examples/langchain-cdp-chatbot 
 
-# At this point, fill in your CDP API key name, private key, and OpenAI API key in the
+# At this point, fill in your CDP API key ID, secret key, and OpenAI API key in the
 # .env.local file.
 # Then, rename the .env.local file to .env
 mv .env.local .env
