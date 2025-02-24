@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added `compoundActionProvider` to interact with Compound protocol on Base.
+
 ## [0.2.2] - 2025-02-19
 
 ### Added
