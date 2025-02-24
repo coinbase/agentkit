@@ -243,6 +243,7 @@ AgentKit is proud to have support for the following protocols, frameworks, walle
 ### Wallets
 <a href="https://coinbase.com" target="_blank"><img src="./assets/wallets/coinbase.svg" width="100" height="auto" alt="Coinbase"></a>
 <a href="https://privy.io" target="_blank"><img src="./assets/wallets/privy.svg" width="100" height="auto" alt="Privy"></a>
+<a href="https://viem.sh" target="_blank"><img src="./assets/wallets/viem.svg" width="100" height="auto" alt="ViEM"></a>
 
 ### Protocols
 <a href="https://www.alchemy.com/" target="_blank"><img src="./assets/protocols/alchemy.svg" width="100" height="auto" alt="Alchemy"></a>
