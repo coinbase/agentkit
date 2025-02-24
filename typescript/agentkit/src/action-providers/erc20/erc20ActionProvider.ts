@@ -4,7 +4,7 @@ import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
 import { GetBalanceSchema, TransferSchema } from "./schemas";
 import { abi } from "./constants";
-import { encodeFunctionData, Hex } from "viem";
+import { encodeFunctionData, formatUnits, Hex } from "viem";
 import { EvmWalletProvider } from "../../wallet-providers";
 
 /**
@@ -41,10 +41,17 @@ export class ERC20ActionProvider extends ActionProvider<EvmWalletProvider> {
         address: args.contractAddress as Hex,
         abi,
         functionName: "balanceOf",
-        args: [walletProvider.getAddress()],
+        args: [walletProvider.getAddress() as Hex],
       });
 
-      return `Balance of ${args.contractAddress} is ${balance}`;
+      const decimals = await walletProvider.readContract({
+        address: args.contractAddress as Hex,
+        abi,
+        functionName: "decimals",
+        args: [],
+      });
+
+      return `Balance of ${args.contractAddress} is ${formatUnits(balance, decimals)}`;
     } catch (error) {
       return `Error getting balance: ${error}`;
     }
