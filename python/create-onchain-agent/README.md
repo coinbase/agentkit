@@ -4,6 +4,12 @@
 
 `create-onchain-agent` is a CLI tool powered by [AgentKit](https://github.com/coinbase/agentkit) that allows developers to quickly scaffold an **onchain agent** project. This tool simplifies the setup process by generating a chatbot with predefined configurations, including blockchain network selection and wallet providers.
 
+## Requirements
+
+To use `create-onchain-agent`, you must first:
+- **Python**: Install Python version 3.10 or 3.11
+- **Pipx**: Install pipx using Python version 3.10 or 3.11
+
 ## Usage
 
 To use `create-onchain-agent`, simply run:
