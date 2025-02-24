@@ -60,7 +60,7 @@ describe("SafeWalletProvider", () => {
     await provider.waitForInitialization();
 
     expect(provider.getName()).toBe("safe_wallet_provider");
-    
+
     const network = provider.getNetwork();
     expect(network).toEqual({
       protocolFamily: "evm",
@@ -94,7 +94,7 @@ describe("SafeWalletProvider", () => {
     (Safe.init as jest.Mock).mockResolvedValue({
       getAddress: jest.fn().mockResolvedValue(mockSafeAddress),
     });
-    
+
     const provider = new SafeWalletProvider({
       privateKey: mockPrivateKey,
       networkId: mockNetworkId,
@@ -104,9 +104,11 @@ describe("SafeWalletProvider", () => {
     await provider.waitForInitialization();
 
     expect(provider.getAddress()).toBe(mockSafeAddress);
-    expect(Safe.init).toHaveBeenCalledWith(expect.objectContaining({
-      safeAddress: mockSafeAddress,
-    }));
+    expect(Safe.init).toHaveBeenCalledWith(
+      expect.objectContaining({
+        safeAddress: mockSafeAddress,
+      }),
+    );
   });
 
   it("should fail if account has no ETH balance when creating new Safe", async () => {
@@ -124,9 +126,7 @@ describe("SafeWalletProvider", () => {
 
     // Wait for initialization to fail
     await expect(provider.waitForInitialization()).rejects.toThrow(
-      "Creating Safe account requires gaas fees. Please ensure you have enough ETH in your wallet."
+      "Creating Safe account requires gaas fees. Please ensure you have enough ETH in your wallet.",
     );
-
+  });
 });
-
-}); 

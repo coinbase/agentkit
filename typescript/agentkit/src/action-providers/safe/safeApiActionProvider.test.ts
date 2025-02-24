@@ -80,7 +80,7 @@ describe("Safe API Action Provider", () => {
         singleton: "0x123",
         fallbackHandler: "0x456",
         guard: "0x789",
-        version: "1.0.0"
+        version: "1.0.0",
       };
 
       const mockPendingTransactions = {
@@ -89,16 +89,14 @@ describe("Safe API Action Provider", () => {
             safeTxHash: "0xabc",
             isExecuted: false,
             confirmationsRequired: 2,
-            confirmations: [
-              { owner: "0x123" },
-              { owner: "0x456" },
-            ],
+            confirmations: [{ owner: "0x123" }, { owner: "0x456" }],
           },
         ],
         count: 1,
       };
 
       mockSafeApiKit.getSafeInfo.mockResolvedValue(mockSafeInfo);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockSafeApiKit.getPendingTransactions.mockResolvedValue(mockPendingTransactions as any);
 
       const args = {
@@ -115,7 +113,9 @@ describe("Safe API Action Provider", () => {
       expect(response).toContain("Modules: 0x789");
       expect(response).toContain("Balance: 1 ETH");
       expect(response).toContain("Pending transactions: 1");
-      expect(response).toContain("Transaction 0xabc (2/2 confirmations, confirmed by: 0x123, 0x456)");
+      expect(response).toContain(
+        "Transaction 0xabc (2/2 confirmations, confirmed by: 0x123, 0x456)",
+      );
     });
 
     it("should handle errors when getting Safe info", async () => {
@@ -133,13 +133,15 @@ describe("Safe API Action Provider", () => {
 
   describe("supportsNetwork", () => {
     it("should return true for EVM networks", () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = actionProvider.supportsNetwork({ protocolFamily: "evm" } as any);
       expect(result).toBe(true);
     });
 
     it("should return false for non-EVM networks", () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = actionProvider.supportsNetwork({ protocolFamily: "solana" } as any);
       expect(result).toBe(false);
     });
   });
-}); 
+});

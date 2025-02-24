@@ -1,7 +1,6 @@
 import { SafeWalletActionProvider } from "./safeWalletActionProvider";
 import { SafeWalletProvider } from "../../wallet-providers";
 import { AddSignerSchema } from "./schemas";
-import Safe from "@safe-global/protocol-kit";
 
 // Mock Safe SDK modules
 jest.mock("@safe-global/protocol-kit");
@@ -24,28 +23,17 @@ describe("SafeWalletActionProvider", () => {
     mockWallet = {
       getAddress: jest.fn().mockReturnValue(MOCK_SAFE_ADDRESS),
       getNetwork: jest.fn().mockReturnValue({ networkId: "base-sepolia" }),
-      getSafeClient: jest.fn(),
       waitForInitialization: jest.fn().mockResolvedValue(undefined),
-      addOwnerWithThreshold: jest.fn().mockResolvedValue(
-        `Successfully proposed adding signer ${MOCK_NEW_SIGNER} to Safe ${MOCK_SAFE_ADDRESS}. Safe transaction hash: ${MOCK_TRANSACTION_HASH}. The other signers will need to confirm the transaction before it can be executed.`
-      ),
+      addOwnerWithThreshold: jest
+        .fn()
+        .mockResolvedValue(
+          `Successfully proposed adding signer ${MOCK_NEW_SIGNER} to Safe ${MOCK_SAFE_ADDRESS}. Safe transaction hash: ${MOCK_TRANSACTION_HASH}. The other signers will need to confirm the transaction before it can be executed.`,
+        ),
       removeOwnerWithThreshold: jest.fn(),
       changeThreshold: jest.fn(),
-    } as unknown as jest.Mocked<SafeWalletProvider>;
-
-    // Mock Safe client methods
-    const mockSafeClient = {
       getOwners: jest.fn().mockResolvedValue(["0xowner1", "0xowner2"]),
       getThreshold: jest.fn().mockResolvedValue(2),
-      createTransaction: jest.fn().mockResolvedValue({
-        data: { safeTxHash: MOCK_TRANSACTION_HASH },
-      }),
-      getPendingTransactions: jest.fn().mockResolvedValue({
-        results: [],
-      }),
-    } as unknown as Safe;
-
-    mockWallet.getSafeClient.mockReturnValue(mockSafeClient);
+    } as unknown as jest.Mocked<SafeWalletProvider>;
   });
 
   describe("Input Schema Validation", () => {
@@ -93,7 +81,7 @@ describe("SafeWalletActionProvider", () => {
       mockWallet.addOwnerWithThreshold.mockRejectedValue(error);
 
       await expect(actionProvider.addSigner(mockWallet, args)).rejects.toThrow(
-        "Failed to add signer: Address is already an owner of this Safe"
+        "Failed to add signer: Address is already an owner of this Safe",
       );
     });
 
@@ -108,7 +96,7 @@ describe("SafeWalletActionProvider", () => {
       mockWallet.addOwnerWithThreshold.mockRejectedValue(error);
 
       await expect(actionProvider.addSigner(mockWallet, args)).rejects.toThrow(
-        "Failed to add signer: Threshold must be at least 1"
+        "Failed to add signer: Threshold must be at least 1",
       );
     });
 
@@ -123,7 +111,7 @@ describe("SafeWalletActionProvider", () => {
       mockWallet.addOwnerWithThreshold.mockRejectedValue(error);
 
       await expect(actionProvider.addSigner(mockWallet, args)).rejects.toThrow(
-        "Failed to add signer: Invalid threshold: 4 cannot be greater than number of owners (3)"
+        "Failed to add signer: Invalid threshold: 4 cannot be greater than number of owners (3)",
       );
     });
   });
@@ -136,9 +124,11 @@ describe("SafeWalletActionProvider", () => {
         newThreshold: 1,
       };
 
-      mockWallet.removeOwnerWithThreshold = jest.fn().mockResolvedValue(
-        `Successfully proposed removing signer ${args.signerToRemove} from Safe ${MOCK_SAFE_ADDRESS}. Safe transaction hash: ${MOCK_TRANSACTION_HASH}. The other signers will need to confirm the transaction before it can be executed.`
-      );
+      mockWallet.removeOwnerWithThreshold = jest
+        .fn()
+        .mockResolvedValue(
+          `Successfully proposed removing signer ${args.signerToRemove} from Safe ${MOCK_SAFE_ADDRESS}. Safe transaction hash: ${MOCK_TRANSACTION_HASH}. The other signers will need to confirm the transaction before it can be executed.`,
+        );
 
       const response = await actionProvider.removeSigner(mockWallet, args);
 
@@ -157,7 +147,7 @@ describe("SafeWalletActionProvider", () => {
       mockWallet.removeOwnerWithThreshold = jest.fn().mockRejectedValue(error);
 
       await expect(actionProvider.removeSigner(mockWallet, args)).rejects.toThrow(
-        "Address is not an owner of this Safe"
+        "Address is not an owner of this Safe",
       );
     });
   });
@@ -169,13 +159,17 @@ describe("SafeWalletActionProvider", () => {
         newThreshold: 2,
       };
 
-      mockWallet.changeThreshold = jest.fn().mockResolvedValue(
-        `Successfully proposed changing threshold to ${args.newThreshold} for Safe ${MOCK_SAFE_ADDRESS}. Safe transaction hash: ${MOCK_TRANSACTION_HASH}. The other signers will need to confirm the transaction before it can be executed.`
-      );
+      mockWallet.changeThreshold = jest
+        .fn()
+        .mockResolvedValue(
+          `Successfully proposed changing threshold to ${args.newThreshold} for Safe ${MOCK_SAFE_ADDRESS}. Safe transaction hash: ${MOCK_TRANSACTION_HASH}. The other signers will need to confirm the transaction before it can be executed.`,
+        );
 
       const response = await actionProvider.changeThreshold(mockWallet, args);
 
-      expect(response).toContain(`Successfully proposed changing threshold to ${args.newThreshold}`);
+      expect(response).toContain(
+        `Successfully proposed changing threshold to ${args.newThreshold}`,
+      );
       expect(response).toContain(`Safe transaction hash: ${MOCK_TRANSACTION_HASH}`);
     });
 
@@ -189,7 +183,7 @@ describe("SafeWalletActionProvider", () => {
       mockWallet.changeThreshold = jest.fn().mockRejectedValue(error);
 
       await expect(actionProvider.changeThreshold(mockWallet, args)).rejects.toThrow(
-        "Threshold cannot be greater than owners length"
+        "Threshold cannot be greater than owners length",
       );
     });
   });
@@ -205,4 +199,4 @@ describe("SafeWalletActionProvider", () => {
       expect(actionProvider.supportsNetwork(nonEvmNetwork)).toBe(false);
     });
   });
-}); 
+});

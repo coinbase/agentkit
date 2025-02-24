@@ -18,11 +18,11 @@ export class SafeWalletActionProvider extends ActionProvider<SafeWalletProvider>
   }
 
   /**
-   * Adds a new signer to the Safe multi-sig wallet.
+   * Adds a new signer to the Safe wallet
    *
-   * @param walletProvider - The SafeWalletProvider instance to use
-   * @param args - The input arguments for creating a Safe.
-   * @returns A Promise that resolves to the transaction hash.
+   * @param walletProvider - The Safe wallet provider instance
+   * @param args - Arguments containing safeAddress and newSigner
+   * @returns A promise that resolves to a success message
    */
   @CreateAction({
     name: "add_signer",
@@ -49,7 +49,11 @@ export class SafeWalletActionProvider extends ActionProvider<SafeWalletProvider>
   }
 
   /**
-   * Removes a signer from the Safe.
+   * Removes a signer from the Safe wallet
+   *
+   * @param walletProvider - The Safe wallet provider instance
+   * @param args - Arguments containing safeAddress, signerToRemove, and newThreshold
+   * @returns A message containing the transaction details
    */
   @CreateAction({
     name: "remove_signer",
@@ -75,6 +79,10 @@ Important notes:
 
   /**
    * Changes the threshold of the Safe.
+   *
+   * @param walletProvider - The Safe wallet provider instance
+   * @param args - Arguments containing newThreshold
+   * @returns A message containing the transaction details
    */
   @CreateAction({
     name: "change_threshold",

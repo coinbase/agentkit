@@ -94,7 +94,7 @@ export class SafeWalletProvider extends WalletProvider {
 
   /**
    * Returns a promise that resolves when the wallet is initialized
-   * 
+   *
    * @returns Promise that resolves when initialization is complete
    */
   async waitForInitialization(): Promise<void> {
@@ -330,13 +330,14 @@ export class SafeWalletProvider extends WalletProvider {
     }
 
     // Determine new threshold (keep current if valid, otherwise reduce)
-    newThreshold = newThreshold || 
+    newThreshold =
+      newThreshold ||
       (currentThreshold > currentOwners.length - 1 ? currentOwners.length - 1 : currentThreshold);
 
     // Validate threshold
     if (newThreshold > currentOwners.length - 1) {
       throw new Error(
-        `Invalid threshold: ${newThreshold} cannot be greater than number of remaining owners (${currentOwners.length - 1})`
+        `Invalid threshold: ${newThreshold} cannot be greater than number of remaining owners (${currentOwners.length - 1})`,
       );
     }
     if (newThreshold < 1) throw new Error("Threshold must be at least 1");
@@ -383,7 +384,7 @@ export class SafeWalletProvider extends WalletProvider {
     // Validate new threshold
     if (newThreshold > currentOwners.length) {
       throw new Error(
-        `Invalid threshold: ${newThreshold} cannot be greater than number of owners (${currentOwners.length})`
+        `Invalid threshold: ${newThreshold} cannot be greater than number of owners (${currentOwners.length})`,
       );
     }
     if (newThreshold < 1) throw new Error("Threshold must be at least 1");
@@ -494,17 +495,5 @@ export class SafeWalletProvider extends WalletProvider {
 
       return existingAddress;
     }
-  }
-
-  /**
-   * Returns the Safe client instance
-   * 
-   * @returns The Safe client
-   */
-  getSafeClient(): Safe {
-    if (!this.#safeClient) {
-      throw new Error("Safe client not initialized");
-    }
-    return this.#safeClient;
   }
 }
