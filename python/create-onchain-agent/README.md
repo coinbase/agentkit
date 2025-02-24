@@ -7,8 +7,16 @@
 ## Requirements
 
 To use `create-onchain-agent`, you must first setup:
-- **Python**: Install Python version 3.10 or 3.11
-- **Pipx**: Install pipx using Python version 3.10 or 3.11
+- **Python**: [Install Python](https://realpython.com/installing-python/) version 3.10 or 3.11
+- **Pipx**: [Install pipx](https://pipx.pypa.io/stable/installation/) using Python version 3.10 or 3.11
+
+**NOTE:** If you have multiple versions of Python installed, you can specify the Python version when installing pipx.
+
+e.g.:
+```sh
+python3.10 -m pip install --user pipx
+python3.10 -m pipx ensurepath
+```
 
 ## Usage
 
