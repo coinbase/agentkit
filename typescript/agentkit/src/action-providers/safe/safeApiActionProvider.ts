@@ -70,7 +70,9 @@ Important notes:
   ): Promise<string> {
     try {
       // Get Safe info
+      console.log("Getting Safe info for address:", args.safeAddress);
       const safeInfo = await this.apiKit.getSafeInfo(args.safeAddress);
+      console.log("Safe info:", safeInfo);
 
       const owners = safeInfo.owners;
       const threshold = safeInfo.threshold;

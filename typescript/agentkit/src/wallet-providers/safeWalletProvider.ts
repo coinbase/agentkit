@@ -16,6 +16,7 @@ import { PublicClient } from "viem";
 // Safe SDK imports
 import Safe from "@safe-global/protocol-kit";
 import SafeApiKit from "@safe-global/api-kit";
+import { getAllowanceModuleDeployment } from "@safe-global/safe-modules-deployments";
 
 /**
  * Configuration options for the SafeWalletProvider.
@@ -409,6 +410,130 @@ export class SafeWalletProvider extends WalletProvider {
       // Single-sig flow: execute immediately
       const tx = await this.#safeClient.executeTransaction(safeTransaction);
       return `Successfully changed threshold to ${newThreshold} for Safe ${this.#safeAddress}. Transaction hash: ${tx.hash}.`;
+    }
+  }
+
+  /**
+   * Approves and optionally executes a pending transaction for the Safe.
+   *
+   * @param safeTxHash - The transaction hash to approve/execute
+   * @param executeImmediately - Whether to execute the transaction if all signatures are collected (default: true)
+   * @returns A message containing the approval/execution details
+   */
+  async approvePendingTransaction(
+    safeTxHash: string,
+    executeImmediately: boolean = true,
+  ): Promise<string> {
+    if (!this.#safeClient) throw new Error("Safe client is not set.");
+
+    try {
+      // Get pending transactions
+      const pendingTxs = await this.#apiKit.getPendingTransactions(this.getAddress());
+
+      // Find the specific transaction
+      const tx = pendingTxs.results.find(tx => tx.safeTxHash === safeTxHash);
+
+      if (!tx) {
+        return `No pending transaction found with hash: ${safeTxHash}`;
+      }
+
+      if (tx.isExecuted) {
+        return `Transaction ${safeTxHash} has already been executed`;
+      }
+
+      // Check if agent has already signed
+      const agentAddress = this.#account.address;
+      const hasAgentSigned = tx.confirmations?.some(
+        c => c.owner.toLowerCase() === agentAddress.toLowerCase(),
+      );
+      const confirmations = tx.confirmations?.length || 0;
+
+      // If agent hasn't signed yet, sign the transaction
+      if (!hasAgentSigned) {
+        const signature = await this.#safeClient.signHash(safeTxHash);
+        await this.#apiKit.confirmTransaction(safeTxHash, signature.data);
+
+        // If this was the last required signature and executeImmediately is true, execute
+        if (confirmations + 1 >= tx.confirmationsRequired && executeImmediately) {
+          const executedTx = await this.#safeClient.executeTransaction(tx);
+          return `Successfully approved and executed transaction. Safe transaction hash: ${safeTxHash}. Execution transaction hash: ${executedTx.hash}`;
+        }
+
+        return `Successfully approved transaction ${safeTxHash}. Current confirmations: ${confirmations + 1}/${tx.confirmationsRequired}${
+          confirmations + 1 >= tx.confirmationsRequired
+            ? ". Transaction can now be executed"
+            : ". Other owners will need to approve the transaction before it can be executed"
+        }`;
+      }
+
+      // If agent has already signed and we have enough confirmations, execute if requested
+      if (confirmations >= tx.confirmationsRequired && executeImmediately) {
+        const executedTx = await this.#safeClient.executeTransaction(tx);
+        return `Successfully executed transaction. Safe transaction hash: ${safeTxHash}. Execution transaction hash: ${executedTx.hash}`;
+      }
+
+      return `Transaction ${safeTxHash} already approved. Current confirmations: ${confirmations}/${tx.confirmationsRequired}${
+        confirmations >= tx.confirmationsRequired
+          ? ". Transaction can now be executed"
+          : ". Other owners will need to approve the transaction before it can be executed"
+      }`;
+    } catch (error) {
+      throw new Error(
+        `Error approving/executing transaction: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  /**
+   * Enables the allowance module for the Safe.
+   *
+   * @returns A message indicating success or failure
+   */
+  async enableAllowanceModule(): Promise<string> {
+    if (!this.#safeClient) throw new Error("Safe client is not set.");
+
+    try {
+      // Get allowance module address for current chain
+      const chainId = this.#chain.id.toString();
+      const allowanceModule = getAllowanceModuleDeployment({ network: chainId });
+      if (!allowanceModule) {
+        throw new Error(`Allowance module not found for chainId [${chainId}]`);
+      }
+
+      // Check if module is already enabled
+      const moduleAddress = allowanceModule.networkAddresses[chainId];
+      const isAlreadyEnabled = await this.#safeClient.isModuleEnabled(moduleAddress);
+      if (isAlreadyEnabled) {
+        return "Allowance module is already enabled for this Safe";
+      }
+
+      // Create transaction to enable module
+      const safeTransaction = await this.#safeClient.createEnableModuleTx(moduleAddress);
+      const currentThreshold = await this.#safeClient.getThreshold();
+
+      if (currentThreshold > 1) {
+        // Multi-sig flow: propose transaction
+        const safeTxHash = await this.#safeClient.getTransactionHash(safeTransaction);
+        const signature = await this.#safeClient.signHash(safeTxHash);
+
+        await this.#apiKit.proposeTransaction({
+          safeAddress: this.getAddress(),
+          safeTransactionData: safeTransaction.data,
+          safeTxHash,
+          senderSignature: signature.data,
+          senderAddress: this.#account.address,
+        });
+
+        return `Successfully proposed enabling allowance module for Safe ${this.#safeAddress}. Safe transaction hash: ${safeTxHash}. The other signers will need to confirm the transaction before it can be executed.`;
+      } else {
+        // Single-sig flow: execute immediately
+        const tx = await this.#safeClient.executeTransaction(safeTransaction);
+        return `Successfully enabled allowance module for Safe ${this.#safeAddress}. Transaction hash: ${tx.hash}.`;
+      }
+    } catch (error) {
+      throw new Error(
+        `Failed to enable allowance module: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 

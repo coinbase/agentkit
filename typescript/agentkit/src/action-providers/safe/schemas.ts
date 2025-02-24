@@ -39,22 +39,17 @@ export const ChangeThresholdSchema = z.object({
   newThreshold: z.number().min(1).describe("New threshold value"),
 });
 
-export const ExecutePendingSchema = z.object({
+export const ApprovePendingTransactionSchema = z.object({
   safeAddress: z
     .string()
     .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
     .describe("Address of the Safe"),
-  safeTxHash: z
-    .string()
+  safeTxHash: z.string().describe("Transaction hash to approve/execute"),
+  executeImmediately: z
+    .boolean()
     .optional()
-    .describe(
-      "Optional specific transaction hash to execute. If not provided, will try to execute all pending transactions",
-    ),
+    .default(true)
+    .describe("Whether to execute the transaction immediately if all signatures are collected"),
 });
 
-export const EnableAllowanceModuleSchema = z.object({
-  safeAddress: z
-    .string()
-    .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
-    .describe("Address of the Safe to enable allowance module for"),
-});
+export const EnableAllowanceModuleSchema = z.object({});

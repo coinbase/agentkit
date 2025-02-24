@@ -33,6 +33,8 @@ describe("SafeWalletActionProvider", () => {
       changeThreshold: jest.fn(),
       getOwners: jest.fn().mockResolvedValue(["0xowner1", "0xowner2"]),
       getThreshold: jest.fn().mockResolvedValue(2),
+      approvePendingTransaction: jest.fn(),
+      enableAllowanceModule: jest.fn(),
     } as unknown as jest.Mocked<SafeWalletProvider>;
   });
 
@@ -197,6 +199,95 @@ describe("SafeWalletActionProvider", () => {
     it("should return false for non-EVM networks", () => {
       const nonEvmNetwork = { protocolFamily: "svm", networkId: "solana", chainId: "1" };
       expect(actionProvider.supportsNetwork(nonEvmNetwork)).toBe(false);
+    });
+  });
+
+  describe("approvePending", () => {
+    it("should successfully approve a pending transaction", async () => {
+      const args = {
+        safeAddress: MOCK_SAFE_ADDRESS,
+        safeTxHash: MOCK_TRANSACTION_HASH,
+        executeImmediately: true,
+      };
+
+      mockWallet.approvePendingTransaction.mockResolvedValue(
+        `Successfully approved transaction ${MOCK_TRANSACTION_HASH}. Transaction will be executed automatically when threshold is reached.`,
+      );
+
+      const response = await actionProvider.approvePending(mockWallet, args);
+
+      expect(mockWallet.approvePendingTransaction).toHaveBeenCalledWith(
+        MOCK_TRANSACTION_HASH,
+        true,
+      );
+      expect(response).toContain(`Successfully approved transaction ${MOCK_TRANSACTION_HASH}`);
+    });
+
+    it("should handle approval without immediate execution", async () => {
+      const args = {
+        safeAddress: MOCK_SAFE_ADDRESS,
+        safeTxHash: MOCK_TRANSACTION_HASH,
+        executeImmediately: false,
+      };
+
+      mockWallet.approvePendingTransaction.mockResolvedValue(
+        `Successfully approved transaction ${MOCK_TRANSACTION_HASH}. Transaction will need to be executed manually.`,
+      );
+
+      const response = await actionProvider.approvePending(mockWallet, args);
+
+      expect(mockWallet.approvePendingTransaction).toHaveBeenCalledWith(
+        MOCK_TRANSACTION_HASH,
+        false,
+      );
+      expect(response).toContain(`Successfully approved transaction ${MOCK_TRANSACTION_HASH}`);
+      expect(response).toContain("will need to be executed manually");
+    });
+
+    it("should fail when approving an invalid transaction", async () => {
+      const args = {
+        safeAddress: MOCK_SAFE_ADDRESS,
+        safeTxHash: "invalid_hash",
+        executeImmediately: true,
+      };
+
+      mockWallet.approvePendingTransaction.mockRejectedValue(new Error("Transaction not found"));
+
+      await expect(actionProvider.approvePending(mockWallet, args)).rejects.toThrow(
+        "Transaction not found",
+      );
+    });
+  });
+
+  describe("enableAllowanceModule", () => {
+    it("should successfully enable the allowance module", async () => {
+      mockWallet.enableAllowanceModule.mockResolvedValue(
+        `Successfully enabled allowance module for Safe ${MOCK_SAFE_ADDRESS}. Transaction hash: ${MOCK_TRANSACTION_HASH}`,
+      );
+
+      const response = await actionProvider.enableAllowanceModule(mockWallet);
+
+      expect(mockWallet.enableAllowanceModule).toHaveBeenCalled();
+      expect(response).toContain(`Successfully enabled allowance module`);
+      expect(response).toContain(MOCK_TRANSACTION_HASH);
+    });
+
+    it("should fail when allowance module is already enabled", async () => {
+      mockWallet.enableAllowanceModule.mockRejectedValue(
+        new Error("Allowance module is already enabled for this Safe"),
+      );
+
+      await expect(actionProvider.enableAllowanceModule(mockWallet)).rejects.toThrow(
+        "Allowance module is already enabled for this Safe",
+      );
+    });
+
+    it("should fail when transaction is rejected", async () => {
+      mockWallet.enableAllowanceModule.mockRejectedValue(new Error("Transaction rejected by user"));
+
+      await expect(actionProvider.enableAllowanceModule(mockWallet)).rejects.toThrow(
+        "Transaction rejected by user",
+      );
     });
   });
 });
