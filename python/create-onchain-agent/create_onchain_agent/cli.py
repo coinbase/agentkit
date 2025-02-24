@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
 
+import sys
+
+# Enforce Python version 3.10 or 3.11
+REQUIRED_MAJOR = 3
+ALLOWED_MINORS = {10, 11}  # Only allow 3.10 and 3.11
+
+if sys.version_info.major != REQUIRED_MAJOR or sys.version_info.minor not in ALLOWED_MINORS:
+    print(f"Unsupported Python version: {sys.version}. Please use Python 3.10 or 3.11.")
+    sys.exit(1)
+
 import os
 import click
 import questionary
