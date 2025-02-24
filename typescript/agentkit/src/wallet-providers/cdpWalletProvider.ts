@@ -11,6 +11,9 @@ import {
   keccak256,
   Signature,
   PublicClient,
+  Abi,
+  ContractFunctionName,
+  ContractFunctionArgs,
 } from "viem";
 import { EvmWalletProvider } from "./evmWalletProvider";
 import { Network } from "../network";
@@ -425,8 +428,14 @@ export class CdpWalletProvider extends EvmWalletProvider {
    * @param params - The parameters to read the contract.
    * @returns The response from the contract.
    */
-  async readContract(params: ReadContractParameters): Promise<ReadContractReturnType> {
-    return this.#publicClient!.readContract(params);
+  async readContract<
+    const abi extends Abi | readonly unknown[],
+    functionName extends ContractFunctionName<abi, "pure" | "view">,
+    const args extends ContractFunctionArgs<abi, "pure" | "view", functionName>,
+  >(
+    params: ReadContractParameters<abi, functionName, args>,
+  ): Promise<ReadContractReturnType<abi, functionName, args>> {
+    return this.#publicClient!.readContract<abi, functionName, args>(params);
   }
 
   /**

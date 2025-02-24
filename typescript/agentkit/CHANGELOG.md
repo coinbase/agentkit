@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixed
+
+- Fixed erc20 `get_balance` action to format erc20 balance with correct number of decimals.
+
 ## [0.2.2] - 2025-02-19
 
 ### Added
