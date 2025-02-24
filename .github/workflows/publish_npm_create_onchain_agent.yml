@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: "18"
           registry-url: "https://registry.npmjs.org"
-      - name: Install, build and publish @coinbase/agentkit
+      - name: Install, build and publish create-onchain-agent
         working-directory: ./typescript/create-onchain-agent
         run: |
           npm ci
