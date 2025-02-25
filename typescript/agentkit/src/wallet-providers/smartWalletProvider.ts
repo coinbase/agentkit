@@ -4,6 +4,7 @@ import {
   createSmartWallet,
   NetworkScopedSmartWallet,
   SendUserOperationOptions,
+  Signer,
   SupportedChainId,
   toSmartWallet,
   waitForUserOperation,
@@ -22,24 +23,26 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { Network, NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_VIEM_CHAIN } from "../network";
 import { EvmWalletProvider } from "./evmWalletProvider";
 
-export interface ConfigureCdpAgentkitWithWalletOptions {
+interface CondigureCdpAgentkitOptions {
   cdpApiKeyName?: string;
   cdpApiKeyPrivateKey?: string;
   networkId?: string;
   chainId?: string;
-  privateKey?: Hex;
   smartWalletAddress?: Hex;
 }
 
-interface SmartWalletProviderConfig
-  extends Required<
-    Omit<
-      ConfigureCdpAgentkitWithWalletOptions,
-      "cdpApiKeyName" | "cdpApiKeyPrivateKey" | "networkId" | "smartWalletAddress"
-    >
-  > {
+export interface ConfigureCdpAgentkitWithWalletOptions extends CondigureCdpAgentkitOptions {
+  privateKey?: Hex;
+}
+
+export interface ConfigureCdpAgentkitWithSignerOptions extends CondigureCdpAgentkitOptions {
+  signer: Signer;
+}
+
+interface SmartWalletProviderConfig {
   smartWallet: NetworkScopedSmartWallet;
   network: Required<Network>;
+  chainId: string;
 }
 
 /**
@@ -47,7 +50,6 @@ interface SmartWalletProviderConfig
  */
 export class SmartWalletProvider extends EvmWalletProvider {
   #smartWallet: NetworkScopedSmartWallet;
-  #privateKey: Hex;
   #network: Required<Network>;
   #publicClient: ViemPublicClient;
 
@@ -60,7 +62,6 @@ export class SmartWalletProvider extends EvmWalletProvider {
     super();
 
     this.#network = config.network;
-    this.#privateKey = config.privateKey;
     this.#smartWallet = config.smartWallet;
     this.#publicClient = createPublicClient({
       chain: NETWORK_ID_TO_VIEM_CHAIN[config.network.networkId],
@@ -98,6 +99,47 @@ export class SmartWalletProvider extends EvmWalletProvider {
   public static async configureWithWallet(
     config: ConfigureCdpAgentkitWithWalletOptions = {},
   ): Promise<SmartWalletProvider> {
+    const privateKey = (config.privateKey ||
+      process.env.PRIVATE_KEY ||
+      generatePrivateKey()) as Hex;
+    const signer = privateKeyToAccount(privateKey);
+
+    return await this.configureWithSigner({
+      ...config,
+      signer,
+    });
+  }
+
+  /**
+   * Configures and returns a `SmartWalletProvider` instance using the provided configuration options.
+   * This method initializes a smart wallet based on the given network and credentials.
+   *
+   * @param {ConfigureCdpAgentkitWithSignerOptions} config
+   *   - Optional configuration parameters for setting up the smart wallet.
+   *
+   * @returns {Promise<SmartWalletProvider>}
+   *   - A promise that resolves to an instance of `SmartWalletProvider` configured with the provided settings.
+   *
+   * @throws {Error}
+   *   - If an invalid combination of `networkId` and `chainId` is provided.
+   *   - If the `chainId` cannot be determined.
+   *   - If the `chainId` is not supported.
+   *   - If `CDP_API_KEY_NAME` or `CDP_API_KEY_PRIVATE_KEY` is missing.
+   *
+   * @example
+   * ```typescript
+   * const smartWalletProvider = await SmartWalletProvider.configureWithWallet({
+   *   networkId: "base-sepolia",
+   *   signer: privateKeyToAccount("0xethprivatekey"),
+   *   cdpApiKeyName: "my-api-key",
+   *   cdpApiKeyPrivateKey: "my-private-key",
+   *   smartWalletAddress: "0x123456...",
+   * });
+   * ```
+   */
+  public static async configureWithSigner(
+    config: ConfigureCdpAgentkitWithSignerOptions,
+  ): Promise<SmartWalletProvider> {
     const networkId = config.networkId || process.env.NETWORK_ID || Coinbase.networks.BaseSepolia;
     const network = {
       protocolFamily: "evm" as const,
@@ -123,11 +165,6 @@ export class SmartWalletProvider extends EvmWalletProvider {
       );
     }
 
-    const privateKey = (config.privateKey ||
-      process.env.PRIVATE_KEY ||
-      generatePrivateKey()) as Hex;
-    const signer = privateKeyToAccount(privateKey);
-
     const cdpApiKeyName = config.cdpApiKeyName || process.env.CDP_API_KEY_NAME;
     const cdpApiKeyPrivateKey = (
       config.cdpApiKeyPrivateKey || process.env.CDP_API_KEY_PRIVATE_KEY
@@ -146,11 +183,11 @@ export class SmartWalletProvider extends EvmWalletProvider {
 
     const smartWallet = config.smartWalletAddress
       ? toSmartWallet({
-          signer,
+          signer: config.signer,
           smartWalletAddress: config.smartWalletAddress,
         })
       : await createSmartWallet({
-          signer,
+          signer: config.signer,
         });
 
     const networkScopedSmartWallet = smartWallet.useNetwork({
@@ -159,7 +196,6 @@ export class SmartWalletProvider extends EvmWalletProvider {
 
     const smartWalletProvider = new SmartWalletProvider({
       smartWallet: networkScopedSmartWallet,
-      privateKey,
       network,
       chainId: network.chainId,
     });
@@ -372,14 +408,5 @@ export class SmartWalletProvider extends EvmWalletProvider {
     } else {
       throw new Error("Transfer failed");
     }
-  }
-
-  /**
-   * Exports the wallet.
-   *
-   * @returns The wallet's data.
-   */
-  async exportPrivateKey(): Promise<Hex> {
-    return this.#privateKey;
   }
 }
