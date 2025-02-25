@@ -47,7 +47,14 @@ class ERC20ActionProvider(ActionProvider[EvmWalletProvider]):
                 args=[wallet_provider.get_address()],
             )
 
-            return f"Balance of {validated_args.contract_address} is {balance}"
+            decimals = wallet_provider.read_contract(
+                contract_address=validated_args.contract_address,
+                abi=ERC20_ABI,
+                function_name="decimals",
+                args=[],
+            )
+
+            return f"Balance of {validated_args.contract_address} is {balance / 10 ** decimals}"
         except Exception as e:
             return f"Error getting balance: {e!s}"
 

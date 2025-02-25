@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixed
+
+- Fixed erc20 `get_balance` action to format erc20 balance with correct number of decimals.
+
 ## [0.1.3] - 2025-02-21
 
 - Fixed Morpho `deposit` and `withdraw` function headers to conform to the Action Provider Paradigm.
