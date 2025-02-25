@@ -1,13 +1,12 @@
-# CDP AgentKit LangChain Extension Examples - Chatbot Typescript
+# Smart Wallet AgentKit LangChain Extension Examples - Chatbot Typescript
 
-This example demonstrates an agent setup as a terminal style chatbot with access to the full set of CDP AgentKit actions.
+This example demonstrates an agent setup as a terminal style chatbot with access to the full set of AgentKit actions. A CDP Smart Wallet will be created and owned by the signer passed into the example.
 
 ## Ask the chatbot to engage in the Web3 ecosystem!
 
 - "Transfer a portion of your ETH to a random address"
+- "Use the faucet"
 - "What is the price of BTC?"
-- "Deploy an NFT that will go super viral!"
-- "Deploy an ERC-20 token with total supply 1 billion"
 
 ## Prerequisites
 
@@ -27,7 +26,7 @@ nvm install node
 
 This will automatically install and use the latest version of Node.
 
-### API Keys
+### Set ENV Vars
 
 You'll need the following API keys:
 - [CDP API Key](https://portal.cdp.coinbase.com/access/api)
@@ -35,9 +34,15 @@ You'll need the following API keys:
 
 Once you have them, rename the `.env-local` file to `.env` and make sure you set the API keys to their corresponding environment variables:
 
-- "CDP_API_KEY_NAME"
-- "CDP_API_KEY_PRIVATE_KEY"
-- "OPENAI_API_KEY"
+#### Required:
+  - `CDP_API_KEY_NAME=`
+  - `CDP_API_KEY_PRIVATE_KEY=`
+  - `OPENAI_API_KEY=`
+
+#### Optional:
+  - `PRIVATE_KEY=` *(if not provided, a new key will be generated)*
+  - `NETWORK_ID=` *(defaults to base-sepolia if not set)*
+  - `CHAIN_ID=` *(optional chain ID override)*
 
 ## Running the example
 
@@ -50,13 +55,13 @@ npm run build
 
 This will install the dependencies and build the packages locally. The chatbot example uses the local `@coinbase/agentkit-langchain` and `@coinbase/agentkit` packages. If you make changes to the packages, you can run `npm run build` from root again to rebuild the packages, and your changes will be reflected in the chatbot example.
 
-Now from the `typescript/examples/langchain-cdp-chatbot` directory, run:
+Now from the `typescript/examples/langchain-smart-wallet-chatbot` directory, run:
 
 ```bash
 npm start
 ```
 
-Select "1. chat mode" and start telling your Agent to do things onchain!
+Select "1. chat mode" and start interacting with your Smart Wallet agent!
 
 ## License
 
