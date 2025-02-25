@@ -1,6 +1,6 @@
 {
-  "name": "@coinbase/cdp-langchain-chatbot-example",
-  "description": "CDP Agentkit Node.js SDK Chatbot Example",
+  "name": "@coinbase/smart-wallet-langchain-chatbot-example",
+  "description": "CDP Smart Wallet Agentkit Node.js Chatbot Example",
   "version": "1.0.0",
   "private": true,
   "author": "Coinbase Inc.",
