@@ -10,6 +10,7 @@ This guide covers Python-specific setup and development for AgentKit.
 - [Integrating into an AI Agent Framework](#integrating-into-an-ai-agent-framework)
 - [Testing](#testing)
 - [Code Style](#code-style)
+- [Changelog](#changelog)
 
 ## Development Setup
 
@@ -23,8 +24,9 @@ poetry --version
 ```
 
 If the versions are not correct or you don't have Python or Poetry installed, download and follow their setup instructions:
-* Python: install with [pyenv](https://github.com/pyenv/pyenv)
-* Poetry: follow the official [Poetry installation instructions](https://python-poetry.org/docs/#installation)
+
+- Python: install with [pyenv](https://github.com/pyenv/pyenv)
+- Poetry: follow the official [Poetry installation instructions](https://python-poetry.org/docs/#installation)
 
 Once you have these installed, make sure you install the project dependencies by running `poetry install` from the package directory.
 
@@ -67,18 +69,18 @@ The description prompt is used by the LLM to understand when and how to use the 
 @create_action(
     name="mint",
     description="""
-This tool will mint an NFT (ERC-721) to a specified destination address onchain via a contract invocation. 
-It takes the contract address of the NFT onchain and the destination address onchain that will receive the NFT as inputs. 
+This tool will mint an NFT (ERC-721) to a specified destination address onchain via a contract invocation.
+It takes the contract address of the NFT onchain and the destination address onchain that will receive the NFT as inputs.
 Do not use the contract address as the destination address. If you are unsure of the destination address, please ask the user before proceeding.
     """,
     schema=MintSchema,
 )
 ```
 
-* The prompt disambuguates the type of NFT by specifying "ERC-721"
-* The prompt specifies that the destination address should not be the contract address
-* The prompt specifies that the LLM should ask the user for the destination address if it is unsure
-* Think about the best UX: if a contract address from a known list of addresses is required, you can instruct the LLM to use another action to get the list of addresses and prompt the user to choose an address from that list. For example, consider a DeFi action that allows a user to withdraw funds from a liquidity provider position. This action would take a contract address, so it would be valuable to have another action that can pull a list of addresses representing the user's positions. You can then instruct the LLM via the prompt to use that action in the case that no contract address is provided.
+- The prompt disambuguates the type of NFT by specifying "ERC-721"
+- The prompt specifies that the destination address should not be the contract address
+- The prompt specifies that the LLM should ask the user for the destination address if it is unsure
+- Think about the best UX: if a contract address from a known list of addresses is required, you can instruct the LLM to use another action to get the list of addresses and prompt the user to choose an address from that list. For example, consider a DeFi action that allows a user to withdraw funds from a liquidity provider position. This action would take a contract address, so it would be valuable to have another action that can pull a list of addresses representing the user's positions. You can then instruct the LLM via the prompt to use that action in the case that no contract address is provided.
 
 ### Defining the input schema
 
@@ -87,13 +89,13 @@ The input schema is used to validate the inputs to the action and to generate a 
 ```python
 class MintSchema(BaseModel):
     """Input schema for minting an NFT."""
-    
+
     contract_address: str = Field(
-        ..., 
+        ...,
         description="The contract address of the NFT to mint"
     )
     destination: str = Field(
-        ..., 
+        ...,
         description="The destination address that will receive the NFT"
     )
 ```
@@ -121,8 +123,8 @@ Now we need to implement the actual function that the AI will call when using yo
 @create_action(
     name="mint",
     description="""
-This tool will mint an NFT (ERC-721) to a specified destination address onchain via a contract invocation. 
-It takes the contract address of the NFT onchain and the destination address onchain that will receive the NFT as inputs. 
+This tool will mint an NFT (ERC-721) to a specified destination address onchain via a contract invocation.
+It takes the contract address of the NFT onchain and the destination address onchain that will receive the NFT as inputs.
 Do not use the contract address as the destination address. If you are unsure of the destination address, please ask the user before proceeding.
     """,
     schema=MintSchema,
@@ -142,7 +144,7 @@ def mint(self, wallet_provider: CdpWalletProvider, args: dict[str, Any]) -> str:
 
 Notice the return value contains useful information for the user, such as the transaction hash and link. It's important to include this information in the return value so that the user can easily see the result of the action.
 
-This class is then exported out of [python/coinbase-agentkit/coinbase_agentkit/\_\_init__.py](https://github.com/coinbase/agentkit/blob/master/python/coinbase-agentkit/coinbase_agentkit/__init__.py) so that is is consumable by users of the `coinbase-agentkit` package.
+This class is then exported out of [python/coinbase-agentkit/coinbase_agentkit/\_\_init\_\_.py](https://github.com/coinbase/agentkit/blob/master/python/coinbase-agentkit/coinbase_agentkit/__init__.py) so that is is consumable by users of the `coinbase-agentkit` package.
 
 ### Testing the action provider
 
@@ -151,6 +153,7 @@ There are two forms of testing you should do: unit testing and manual end-to-end
 To add a unit test for your action provider, add a file to the appropriate folder in `python/coinbase-agentkit/tests/action_providers` for your action provider, pre-fixing it with `test_`. For an example, see [test_cdp_wallet_action_provider.py](https://github.com/coinbase/agentkit/blob/master/python/coinbase-agentkit/tests/action_providers/cdp/test_cdp_wallet_action_provider.py).
 
 You can then run the unit tests with the following command:
+
 ```bash
 cd python/coinbase-agentkit
 make test
@@ -163,6 +166,7 @@ Check out the [Testing](#testing) section to learn how to manually test your new
 Wallet providers give an agent access to a wallet. AgentKit currently supports the following wallet providers:
 
 EVM:
+
 - [CdpWalletProvider](./python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_wallet_provider.py)
 - [EthAccountWalletProvider](./python/coinbase-agentkit/coinbase_agentkit/wallet_providers/eth_account_wallet_provider.py)
 
@@ -179,6 +183,7 @@ Non-EVM Wallet Providers are housed in `wallet_providers/`. Non-EVM Wallet Provi
 Actions are necessary building blocks powering onchain AI applications, but they're just one piece of the puzzle. To make them truly useful, they must be integrated into an AI Agent framework such as [LangChain](https://www.langchain.com/) or other frameworks.
 
 Integrations into AI Agent frameworks are specific to the framework itself, so we can't go into specific implementation details here, but we can offer up some examples and tips:
+
 - Check out how [AgentKit actions are mapped into LangChain Tools](https://github.com/coinbase/agentkit/blob/master/python/framework-extensions/langchain/coinbase_agentkit_langchain/langchain_tools.py)
 
 ## Testing
@@ -202,6 +207,7 @@ make test
 ```
 
 For example, to run all tests in the `coinbase-agentkit` package, you can run:
+
 ```bash
 cd python/coinbase-agentkit
 make test
@@ -221,3 +227,7 @@ make lint
 # Fix linting issues
 make lint-fix
 ```
+
+## Changelog
+
+Currently the CHANGELOG.md is managed manually. Please include a changelog entry in the appropriate package's CHANGELOG.md file when you add a new feature or fix a bug.
