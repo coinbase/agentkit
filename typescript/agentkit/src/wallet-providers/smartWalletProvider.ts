@@ -6,7 +6,7 @@ import {
   SendUserOperationOptions,
   SupportedChainId,
   toSmartWallet,
-  waitForUserOperation
+  waitForUserOperation,
 } from "@coinbase/coinbase-sdk";
 import {
   createPublicClient,
@@ -69,8 +69,31 @@ export class SmartWalletProvider extends EvmWalletProvider {
   }
 
   /**
+   * Configures and returns a `SmartWalletProvider` instance using the provided configuration options.
+   * This method initializes a smart wallet based on the given network and credentials.
    *
-   * @param config
+   * @param {ConfigureCdpAgentkitWithWalletOptions} config
+   *   - Optional configuration parameters for setting up the smart wallet.
+   *
+   * @returns {Promise<SmartWalletProvider>}
+   *   - A promise that resolves to an instance of `SmartWalletProvider` configured with the provided settings.
+   *
+   * @throws {Error}
+   *   - If an invalid combination of `networkId` and `chainId` is provided.
+   *   - If the `chainId` cannot be determined.
+   *   - If the `chainId` is not supported.
+   *   - If `CDP_API_KEY_NAME` or `CDP_API_KEY_PRIVATE_KEY` is missing.
+   *
+   * @example
+   * ```typescript
+   * const smartWalletProvider = await SmartWalletProvider.configureWithWallet({
+   *   networkId: "base-sepolia",
+   *   privateKey: "0xabc123...",
+   *   cdpApiKeyName: "my-api-key",
+   *   cdpApiKeyPrivateKey: "my-private-key",
+   *   smartWalletAddress: "0x123456...",
+   * });
+   * ```
    */
   public static async configureWithWallet(
     config: ConfigureCdpAgentkitWithWalletOptions = {},
@@ -145,46 +168,72 @@ export class SmartWalletProvider extends EvmWalletProvider {
   }
 
   /**
-   * Signs a message.
+   * Stub for message signing
    *
-   * @param message - The message to sign.
+   * @throws as signing messages is not implemented for SmartWallets.
+   *
+   * @param _ - The message to sign.
    * @returns The signed message.
    */
-  async signMessage(message: string): Promise<`0x${string}`> {
+  async signMessage(_: string): Promise<`0x${string}`> {
     throw new Error("Not implemented");
   }
 
   /**
-   * Signs a typed data object.
+   * Stub for typed data signing
    *
-   * @param typedData - The typed data object to sign.
+   * @throws as signing typed data is not implemented for SmartWallets.
+   *
+   * @param _ - The typed data object to sign.
    * @returns The signed typed data object.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async signTypedData(typedData: any): Promise<`0x${string}`> {
+  async signTypedData(_: any): Promise<`0x${string}`> {
     throw new Error("Not implemented");
   }
 
   /**
-   * Signs a transaction.
+   * Stub for transaction signing
    *
-   * @param transaction - The transaction to sign.
+   * @throws as signing transactions is not implemented for SmartWallets.
+   *
+   * @param _ - The transaction to sign.
    * @returns The signed transaction.
    */
-  async signTransaction(transaction: TransactionRequest): Promise<`0x${string}`> {
+  async signTransaction(_: TransactionRequest): Promise<`0x${string}`> {
     throw new Error("Not implemented");
   }
 
   /**
-   * Sends a transaction.
+   * Sends a transaction using the smart wallet.
    *
-   * @param transaction - The transaction to send.
-   * @returns The hash of the transaction.
+   * Unlike traditional Ethereum transactions, this method submits a **User Operation**
+   * instead of directly broadcasting a transaction. The smart wallet handles execution,
+   * but a standard transaction hash is still returned upon completion.
+   *
+   * @param {TransactionRequest} transaction - The transaction details, including:
+   *   - `to`: The recipient address.
+   *   - `value`: The amount of ETH (or native token) to send.
+   *   - `data`: Optional calldata for contract interactions.
+   *
+   * @returns A promise resolving to the transaction hash (`0x...`).
+   *
+   * @throws {Error} If the transaction does not complete successfully.
+   *
+   * @example
+   * ```typescript
+   * const txHash = await smartWallet.sendTransaction({
+   *   to: "0x123...",
+   *   value: parseEther("0.1"),
+   *   data: "0x",
+   * });
+   * console.log(`Transaction sent: ${txHash}`);
+   * ```
    */
-  async sendTransaction(transaction: TransactionRequest): Promise<`0x${string}`> {
+  sendTransaction(transaction: TransactionRequest): Promise<`0x${string}`> {
     const { to, value, data } = transaction;
 
-    const sendUserOperationResult = await this.#smartWallet.sendUserOperation({
+    return this.sendUserOperation({
       calls: [
         {
           to: to as Hex,
@@ -193,17 +242,38 @@ export class SmartWalletProvider extends EvmWalletProvider {
         },
       ],
     });
-
-    const result = await waitForUserOperation(sendUserOperationResult);
-
-    if (result.status == "complete") {
-      return result.transactionHash as `0x${string}`;
-    } else {
-      throw new Error("Transaction failed");
-    }
   }
 
-  async sendUserOperation<T extends readonly unknown[]>(operation: Prettify<Omit<SendUserOperationOptions<T>, "chainId" | "paymasterUrl">>): Promise<`0x${string}`> {
+  /**
+   * Sends a **User Operation** to the smart wallet.
+   *
+   * This method directly exposes the **sendUserOperation** functionality, allowing
+   * **SmartWallet-aware tools** to fully leverage its capabilities, including batching multiple calls.
+   * Unlike `sendTransaction`, which wraps calls in a single operation, this method allows
+   * direct execution of arbitrary operations within a **User Operation**.
+   *
+   * @param {Prettify<Omit<SendUserOperationOptions<T>, "chainId" | "paymasterUrl">>} operation
+   *   - The user operation configuration, omitting `chainId` and `paymasterUrl`,
+   *     which are managed internally by the smart wallet.
+   *
+   * @returns A promise resolving to the transaction hash (`0x...`) if the operation completes successfully.
+   *
+   * @throws {Error} If the operation does not complete successfully.
+   *
+   * @example
+   * ```typescript
+   * const txHash = await smartWallet.sendUserOperation({
+   *   calls: [
+   *     { to: "0x123...", value: parseEther("0.1"), data: "0x" },
+   *     { to: "0x456...", value: parseEther("0.05"), data: "0x" }
+   *   ],
+   * });
+   * console.log(`User Operation sent: ${txHash}`);
+   * ```
+   */
+  async sendUserOperation<T extends readonly unknown[]>(
+    operation: Prettify<Omit<SendUserOperationOptions<T>, "chainId" | "paymasterUrl">>,
+  ): Promise<`0x${string}`> {
     const sendUserOperationResult = await this.#smartWallet.sendUserOperation(operation);
 
     const result = await waitForUserOperation(sendUserOperationResult);
@@ -216,9 +286,9 @@ export class SmartWalletProvider extends EvmWalletProvider {
   }
 
   /**
-   * Gets the address of the wallet.
+   * Gets the address of the smart wallet.
    *
-   * @returns The address of the wallet.
+   * @returns The address of the smart wallet.
    */
   getAddress(): string {
     return this.#smartWallet.address;
@@ -265,7 +335,7 @@ export class SmartWalletProvider extends EvmWalletProvider {
   async waitForTransactionReceipt(txHash: `0x${string}`): Promise<any> {
     return await this.#publicClient.waitForTransactionReceipt({
       hash: txHash,
-    })
+    });
   }
 
   /**
