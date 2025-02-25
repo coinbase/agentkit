@@ -250,10 +250,9 @@ export class SmartWalletProvider extends EvmWalletProvider {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async waitForTransactionReceipt(txHash: `0x${string}`): Promise<any> {
-    return await waitForUserOperation({
-      smartWalletAddress: this.getAddress() as Hex,
-      userOpHash: txHash,
-    });
+    return await this.#publicClient.waitForTransactionReceipt({
+      hash: txHash,
+    })
   }
 
   /**
