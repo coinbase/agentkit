@@ -15,6 +15,11 @@ pydantic = "^2.0"
 web3 = "^7.6.0"
 python-dotenv = "^1.0.1"
 requests = "^2.31.0"
+nilql = "^0.0.0a10"
+ecdsa = "^0.19.0"
+pyjwt = {extras = ["crypto"], version = "^2.10.1"}
+jsonschema = "^4.23.0"
+langchain-openai = "^0.3.6"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.7.1"
