@@ -88,16 +88,18 @@ async function initializeAgent() {
         // Continue without wallet data
       }
     }
-
     if (!privateKey) {
       privateKey = (process.env.PRIVATE_KEY || generatePrivateKey()) as `0x${string}`
     }
 
-    // Configure Smart Wallet Provider
+    // Initialize signer
+    const signer = privateKeyToAccount(privateKey)
+
+    // Configure Smart Wallet Provider with signer
     const walletProvider = await SmartWalletProvider.configureWithSigner({
       networkId: process.env.NETWORK_ID,
       chainId: process.env.CHAIN_ID,
-      signer: privateKeyToAccount(privateKey),
+      signer,
       smartWalletAddress: walletData?.smartWalletAddress 
     });
 
