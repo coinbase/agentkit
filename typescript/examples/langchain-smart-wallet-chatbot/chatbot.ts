@@ -1,15 +1,13 @@
 import {
   AgentKit,
-  CdpWalletProvider,
-  wethActionProvider,
-  walletActionProvider,
-  erc20ActionProvider,
   cdpApiActionProvider,
   cdpWalletActionProvider,
+  erc20ActionProvider,
   pythActionProvider,
   SmartWalletProvider,
+  walletActionProvider,
+  wethActionProvider
 } from "@coinbase/agentkit";
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
 import { MemorySaver } from "@langchain/langgraph";
@@ -18,6 +16,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as readline from "readline";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 dotenv.config();
 
