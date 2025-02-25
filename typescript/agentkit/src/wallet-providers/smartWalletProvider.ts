@@ -10,6 +10,9 @@ import {
   waitForUserOperation,
 } from "@coinbase/coinbase-sdk";
 import {
+  Abi,
+  ContractFunctionArgs,
+  ContractFunctionName,
   createPublicClient,
   Hex,
   http,
@@ -380,7 +383,13 @@ export class SmartWalletProvider extends EvmWalletProvider {
    * @param params - The parameters to read the contract.
    * @returns The response from the contract.
    */
-  async readContract(params: ReadContractParameters): Promise<ReadContractReturnType> {
+  async readContract<
+    const abi extends Abi | readonly unknown[],
+    functionName extends ContractFunctionName<abi, "pure" | "view">,
+    const args extends ContractFunctionArgs<abi, "pure" | "view", functionName>,
+  >(
+    params: ReadContractParameters<abi, functionName, args>,
+  ): Promise<ReadContractReturnType<abi, functionName, args>> {
     return this.#publicClient.readContract(params);
   }
 
