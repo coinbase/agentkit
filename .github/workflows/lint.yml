@@ -13,7 +13,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Install Poetry
         uses: snok/install-poetry@v1
@@ -44,11 +44,11 @@ jobs:
         with:
           node-version: "18"
           cache: "npm"
-      # Install dependencies in parent directory first
-      - run: npm install
-      # formatting/lint in working directory
+          cache-dependency-path: ./typescript
       - name: Check formatting/lint
+        working-directory: ./typescript
         run: |
+          npm ci
           npm run format:check
           npm run lint
 
@@ -56,17 +56,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: "npm"
-      
-      - name: Run npm install
-        run: npm install
-      
+          cache-dependency-path: ./typescript
+
       - name: Check if package-lock.json changed
+        working-directory: ./typescript
         run: |
+          npm install
           if [ -n "$(git diff package-lock.json)" ]; then
             echo "Error: package-lock.json was modified after running npm install. Please commit the updated package-lock.json file."
             git diff package-lock.json
@@ -77,11 +77,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Install Poetry
         uses: snok/install-poetry@v1
