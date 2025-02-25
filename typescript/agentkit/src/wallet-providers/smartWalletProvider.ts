@@ -25,15 +25,12 @@ import {
 import { Network, NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_VIEM_CHAIN } from "../network";
 import { EvmWalletProvider } from "./evmWalletProvider";
 
-interface CondigureCdpAgentkitOptions {
+export interface ConfigureSmartWalletWithSignerOptions {
   cdpApiKeyName?: string;
   cdpApiKeyPrivateKey?: string;
   networkId?: string;
   chainId?: string;
   smartWalletAddress?: Hex;
-}
-
-export interface ConfigureCdpAgentkitWithSignerOptions extends CondigureCdpAgentkitOptions {
   signer: Signer;
 }
 
@@ -71,7 +68,7 @@ export class SmartWalletProvider extends EvmWalletProvider {
    * Configures and returns a `SmartWalletProvider` instance using the provided configuration options.
    * This method initializes a smart wallet based on the given network and credentials.
    *
-   * @param {ConfigureCdpAgentkitWithSignerOptions} config
+   * @param {ConfigureSmartWalletWithSignerOptions} config
    *   - Configuration parameters for setting up the smart wallet.
    *
    * @returns {Promise<SmartWalletProvider>}
@@ -95,7 +92,7 @@ export class SmartWalletProvider extends EvmWalletProvider {
    * ```
    */
   public static async configureWithSigner(
-    config: ConfigureCdpAgentkitWithSignerOptions,
+    config: ConfigureSmartWalletWithSignerOptions,
   ): Promise<SmartWalletProvider> {
     const networkId = config.networkId || process.env.NETWORK_ID || Coinbase.networks.BaseSepolia;
     const network = {
