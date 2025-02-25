@@ -24,7 +24,7 @@ npm --version
 
 If the versions are not correct or you don't have Node.js or npm installed, download through [nvm](https://github.com/nvm-sh/nvm).
 
-Once you have these installed, make sure you install the project dependencies by running `npm install` from the root of the repository.
+Once you have these installed, make sure you install the project dependencies by running `npm install` from the root of the TypeScript monorepo, in other words, from the root `typescript/` folder.
 
 ## Adding an Action Provider
 
@@ -66,18 +66,18 @@ The description prompt is used by the LLM to understand when and how to use the 
   @CreateAction({
     name: "mint",
     description: `
-This tool will mint an NFT (ERC-721) to a specified destination address onchain via a contract invocation. 
-It takes the contract address of the NFT onchain and the destination address onchain that will receive the NFT as inputs. 
+This tool will mint an NFT (ERC-721) to a specified destination address onchain via a contract invocation.
+It takes the contract address of the NFT onchain and the destination address onchain that will receive the NFT as inputs.
 Do not use the contract address as the destination address. If you are unsure of the destination address, please ask the user before proceeding.
 `,
     schema: MintSchema,
   })
 ```
 
-* The prompt disambuguates the type of NFT by specifying "ERC-721"
-* The prompt specifies that the destination address should not be the contract address
-* The prompt specifies that the LLM should ask the user for the destination address if it is unsure
-* Think about the best UX: if a contract address from a known list of addresses is required, you can instruct the LLM to use another action to get the list of addresses and prompt the user to choose an address from that list. For example, consider a DeFi action that allows a user to withdraw funds from a liquidity provider position. This action would take a contract address, so it would be valuable to have another action that can pull a list of addresses representing the user's positions. You can then instruct the LLM via the prompt to use that action in the case that no contract address is provided.
+- The prompt disambuguates the type of NFT by specifying "ERC-721"
+- The prompt specifies that the destination address should not be the contract address
+- The prompt specifies that the LLM should ask the user for the destination address if it is unsure
+- Think about the best UX: if a contract address from a known list of addresses is required, you can instruct the LLM to use another action to get the list of addresses and prompt the user to choose an address from that list. For example, consider a DeFi action that allows a user to withdraw funds from a liquidity provider position. This action would take a contract address, so it would be valuable to have another action that can pull a list of addresses representing the user's positions. You can then instruct the LLM via the prompt to use that action in the case that no contract address is provided.
 
 ### Defining the input schema
 
@@ -88,8 +88,12 @@ The input schema is used to validate the inputs to the action and to generate a 
 
 const MintSchema = z
   .object({
-    contractAddress: z.string().describe("The contract address of the NFT to mint"),
-    destination: z.string().describe("The destination address that will receive the NFT"),
+    contractAddress: z
+      .string()
+      .describe("The contract address of the NFT to mint"),
+    destination: z
+      .string()
+      .describe("The destination address that will receive the NFT"),
   })
   .strip()
   .describe("Instructions for minting an NFT");
@@ -134,7 +138,10 @@ Do not use the contract address as the destination address. If you are unsure of
 `,
     schema: MintSchema,
   })
-  async mint(walletProvider: EvmWalletProvider, args: z.infer<typeof MintSchema>): Promise<string> {
+  async mint(
+    walletProvider: EvmWalletProvider,
+    args: z.infer<typeof MintSchema>
+  ): Promise<string> {
     try {
       const data = encodeFunctionData({
         abi: ERC721_ABI,
@@ -157,7 +164,6 @@ Do not use the contract address as the destination address. If you are unsure of
 
   supportsNetwork = (network: Network) => network.protocolFamily === "evm";
 }
-
 ```
 
 Notice the return value contains useful information for the user, such as the transaction hash and link. It's important to include this information in the return value so that the user can easily see the result of the action.
@@ -171,6 +177,7 @@ There are two forms of testing you should do: unit testing and manual end-to-end
 To add a unit test for your action provider, add a file to your action provider folder post-fixing it with `.test.ts`. For an example, see [pythActionProvider.test.ts](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/action-providers/pyth/pythActionProvider.test.ts).
 
 You can then run the unit tests with the following command:
+
 ```bash
 cd typescript/agentkit
 npm test
@@ -183,6 +190,7 @@ Check out the [Testing](#testing) section to learn how to manually test your new
 Wallet providers give an agent access to a wallet. AgentKit currently supports the following wallet providers:
 
 EVM:
+
 - [CdpWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/cdpWalletProvider.ts)
 - [ViemWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/viemWalletProvider.ts)
 
@@ -199,6 +207,7 @@ Non-EVM Wallet Providers are housed in `typescript/agentkit/src/wallet-providers
 Actions are necessary building blocks powering onchain AI applications, but they're just one piece of the puzzle. To make them truly useful, they must be integrated into an AI Agent framework such as [LangChain](https://www.langchain.com/) or [Eliza](https://elizaos.github.io/eliza/), among others.
 
 Integrations into AI Agent frameworks are specific to the framework itself, so we can't go into specific implementation details here, but we can offer up some examples and tips.
+
 - Check out how [AgentKit actions are mapped into LangChain Tools](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit-langchain/src/index.ts)
 - Check out how [AgentKit Actions are mapped into Eliza Actions](https://github.com/elizaOS/eliza/blob/develop/packages/plugin-agentkit/src/actions.ts#L31)
 
@@ -211,7 +220,7 @@ A good way to test new actions locally is by using the chatbot example in `types
 The flow is:
 
 1. Make your change as described in the [Adding an Agentic Action](#adding-an-agentic-action) section
-2. From root, run  `npm run build && npm i`
+2. From `typescript/`, run `npm run build && npm i`
 3. In `typescript/examples/langchain-cdp-chatbot`, run `npm run start`
 4. You can now interact with your new action via the chatbot!
 
@@ -224,6 +233,7 @@ npm test
 ```
 
 For example, to run all tests in the `@coinbase/agentkit` package, you can run:
+
 ```bash
 cd typescript/agentkit
 npm test
