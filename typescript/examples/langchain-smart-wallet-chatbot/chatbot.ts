@@ -95,9 +95,8 @@ async function initializeAgent() {
     const signer = privateKeyToAccount(privateKey)
 
     // Configure Smart Wallet Provider with signer
-    const walletProvider = await SmartWalletProvider.configureWithSigner({
+    const walletProvider = await SmartWalletProvider.configureWithWallet({
       networkId: process.env.NETWORK_ID,
-      chainId: process.env.CHAIN_ID,
       signer,
       smartWalletAddress: walletData?.smartWalletAddress 
     });

@@ -11,6 +11,7 @@ import {
 } from "@coinbase/coinbase-sdk";
 import {
   Abi,
+  Address,
   ContractFunctionArgs,
   ContractFunctionName,
   createPublicClient,
@@ -24,12 +25,12 @@ import {
 } from "viem";
 import { Network, NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_VIEM_CHAIN } from "../network";
 import { EvmWalletProvider } from "./evmWalletProvider";
+import { version } from "../../package.json";
 
-export interface ConfigureSmartWalletWithSignerOptions {
+export interface ConfigureSmartWalletOptions {
   cdpApiKeyName?: string;
   cdpApiKeyPrivateKey?: string;
   networkId?: string;
-  chainId?: string;
   smartWalletAddress?: Hex;
   signer: Signer;
 }
@@ -41,7 +42,7 @@ interface SmartWalletProviderConfig {
 }
 
 /**
- *
+ * A wallet provider that uses Smart Wallets from the Coinbase SDK.
  */
 export class SmartWalletProvider extends EvmWalletProvider {
   #smartWallet: NetworkScopedSmartWallet;
@@ -68,7 +69,7 @@ export class SmartWalletProvider extends EvmWalletProvider {
    * Configures and returns a `SmartWalletProvider` instance using the provided configuration options.
    * This method initializes a smart wallet based on the given network and credentials.
    *
-   * @param {ConfigureSmartWalletWithSignerOptions} config
+   * @param {ConfigureSmartWalletOptions} config
    *   - Configuration parameters for setting up the smart wallet.
    *
    * @returns {Promise<SmartWalletProvider>}
@@ -91,22 +92,15 @@ export class SmartWalletProvider extends EvmWalletProvider {
    * });
    * ```
    */
-  public static async configureWithSigner(
-    config: ConfigureSmartWalletWithSignerOptions,
+  public static async configureWithWallet(
+    config: ConfigureSmartWalletOptions,
   ): Promise<SmartWalletProvider> {
     const networkId = config.networkId || process.env.NETWORK_ID || Coinbase.networks.BaseSepolia;
     const network = {
       protocolFamily: "evm" as const,
       chainId: NETWORK_ID_TO_CHAIN_ID[networkId],
-      networkId: networkId,
+      networkId,
     };
-
-    if (config.chainId) {
-      if (network.chainId && network.chainId != config.chainId) {
-        throw new Error(`Passed in a invalid combination of networkId and chainId`);
-      }
-      network.chainId = config.chainId;
-    }
 
     if (!network.chainId) {
       throw new Error(`Unable to determine chainId for network ${networkId}`);
@@ -120,20 +114,18 @@ export class SmartWalletProvider extends EvmWalletProvider {
     }
 
     const cdpApiKeyName = config.cdpApiKeyName || process.env.CDP_API_KEY_NAME;
-    const cdpApiKeyPrivateKey = (
-      config.cdpApiKeyPrivateKey || process.env.CDP_API_KEY_PRIVATE_KEY
-    )?.replace(/\\n/g, "\n");
+    const cdpApiKeyPrivateKey = config.cdpApiKeyPrivateKey || process.env.CDP_API_KEY_PRIVATE_KEY;
 
-    if (!cdpApiKeyName || !cdpApiKeyPrivateKey) {
-      throw new Error(
-        `CDP_API_KEY_NAME and CDP_API_KEY_PRIVATE_KEY are both required in SmartWalletProvider`,
-      );
+    if (cdpApiKeyName && cdpApiKeyPrivateKey) {
+      Coinbase.configure({
+        apiKeyName: cdpApiKeyName,
+        privateKey: cdpApiKeyPrivateKey?.replace(/\\n/g, "\n"),
+        source: "agentkit",
+        sourceVersion: version,
+      });
+    } else {
+      Coinbase.configureFromJson();
     }
-
-    Coinbase.configure({
-      apiKeyName: cdpApiKeyName as string,
-      privateKey: cdpApiKeyPrivateKey as string,
-    });
 
     const smartWallet = config.smartWalletAddress
       ? toSmartWallet({
@@ -165,7 +157,7 @@ export class SmartWalletProvider extends EvmWalletProvider {
    * @param _ - The message to sign.
    * @returns The signed message.
    */
-  async signMessage(_: string): Promise<`0x${string}`> {
+  async signMessage(_: string): Promise<Hex> {
     throw new Error("Not implemented");
   }
 
@@ -178,7 +170,7 @@ export class SmartWalletProvider extends EvmWalletProvider {
    * @returns The signed typed data object.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async signTypedData(_: any): Promise<`0x${string}`> {
+  async signTypedData(_: any): Promise<Hex> {
     throw new Error("Not implemented");
   }
 
@@ -190,7 +182,7 @@ export class SmartWalletProvider extends EvmWalletProvider {
    * @param _ - The transaction to sign.
    * @returns The signed transaction.
    */
-  async signTransaction(_: TransactionRequest): Promise<`0x${string}`> {
+  async signTransaction(_: TransactionRequest): Promise<Hex> {
     throw new Error("Not implemented");
   }
 
@@ -220,7 +212,7 @@ export class SmartWalletProvider extends EvmWalletProvider {
    * console.log(`Transaction sent: ${txHash}`);
    * ```
    */
-  sendTransaction(transaction: TransactionRequest): Promise<`0x${string}`> {
+  sendTransaction(transaction: TransactionRequest): Promise<Hex> {
     const { to, value, data } = transaction;
 
     return this.sendUserOperation({
@@ -263,13 +255,13 @@ export class SmartWalletProvider extends EvmWalletProvider {
    */
   async sendUserOperation<T extends readonly unknown[]>(
     operation: Prettify<Omit<SendUserOperationOptions<T>, "chainId" | "paymasterUrl">>,
-  ): Promise<`0x${string}`> {
+  ): Promise<Hex> {
     const sendUserOperationResult = await this.#smartWallet.sendUserOperation(operation);
 
     const result = await waitForUserOperation(sendUserOperationResult);
 
-    if (result.status == "complete") {
-      return result.transactionHash as `0x${string}`;
+    if (result.status === "complete") {
+      return result.transactionHash as Hex;
     } else {
       throw new Error("Transaction failed");
     }
@@ -322,7 +314,7 @@ export class SmartWalletProvider extends EvmWalletProvider {
    * @returns The transaction receipt.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async waitForTransactionReceipt(txHash: `0x${string}`): Promise<any> {
+  async waitForTransactionReceipt(txHash: Hex): Promise<any> {
     return await this.#publicClient.waitForTransactionReceipt({
       hash: txHash,
     });
@@ -351,7 +343,7 @@ export class SmartWalletProvider extends EvmWalletProvider {
    * @param value - The amount to transfer in Wei.
    * @returns The transaction hash.
    */
-  async nativeTransfer(to: `0x${string}`, value: string): Promise<`0x${string}`> {
+  async nativeTransfer(to: Address, value: string): Promise<Hex> {
     const sendUserOperationResult = await this.#smartWallet.sendUserOperation({
       calls: [
         {
@@ -363,8 +355,8 @@ export class SmartWalletProvider extends EvmWalletProvider {
 
     const result = await waitForUserOperation(sendUserOperationResult);
 
-    if (result.status == "complete") {
-      return result.transactionHash as `0x${string}`;
+    if (result.status === "complete") {
+      return result.transactionHash as Hex;
     } else {
       throw new Error("Transfer failed");
     }

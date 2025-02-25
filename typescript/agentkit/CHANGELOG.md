@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Added `SmartWalletProvider` to use CDP Smart Wallet's for agent actions.
+- Added `SmartWalletProvider` to use CDP Smart Wallets for agent actions.
 
 ### Fixed
 
