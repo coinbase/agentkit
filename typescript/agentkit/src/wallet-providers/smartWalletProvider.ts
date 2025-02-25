@@ -22,7 +22,6 @@ import {
   TransactionRequest,
   PublicClient as ViemPublicClient,
 } from "viem";
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { Network, NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_VIEM_CHAIN } from "../network";
 import { EvmWalletProvider } from "./evmWalletProvider";
 
@@ -32,10 +31,6 @@ interface CondigureCdpAgentkitOptions {
   networkId?: string;
   chainId?: string;
   smartWalletAddress?: Hex;
-}
-
-export interface ConfigureCdpAgentkitWithWalletOptions extends CondigureCdpAgentkitOptions {
-  privateKey?: Hex;
 }
 
 export interface ConfigureCdpAgentkitWithSignerOptions extends CondigureCdpAgentkitOptions {
@@ -76,49 +71,8 @@ export class SmartWalletProvider extends EvmWalletProvider {
    * Configures and returns a `SmartWalletProvider` instance using the provided configuration options.
    * This method initializes a smart wallet based on the given network and credentials.
    *
-   * @param {ConfigureCdpAgentkitWithWalletOptions} config
-   *   - Optional configuration parameters for setting up the smart wallet.
-   *
-   * @returns {Promise<SmartWalletProvider>}
-   *   - A promise that resolves to an instance of `SmartWalletProvider` configured with the provided settings.
-   *
-   * @throws {Error}
-   *   - If an invalid combination of `networkId` and `chainId` is provided.
-   *   - If the `chainId` cannot be determined.
-   *   - If the `chainId` is not supported.
-   *   - If `CDP_API_KEY_NAME` or `CDP_API_KEY_PRIVATE_KEY` is missing.
-   *
-   * @example
-   * ```typescript
-   * const smartWalletProvider = await SmartWalletProvider.configureWithWallet({
-   *   networkId: "base-sepolia",
-   *   privateKey: "0xabc123...",
-   *   cdpApiKeyName: "my-api-key",
-   *   cdpApiKeyPrivateKey: "my-private-key",
-   *   smartWalletAddress: "0x123456...",
-   * });
-   * ```
-   */
-  public static async configureWithWallet(
-    config: ConfigureCdpAgentkitWithWalletOptions = {},
-  ): Promise<SmartWalletProvider> {
-    const privateKey = (config.privateKey ||
-      process.env.PRIVATE_KEY ||
-      generatePrivateKey()) as Hex;
-    const signer = privateKeyToAccount(privateKey);
-
-    return await this.configureWithSigner({
-      ...config,
-      signer,
-    });
-  }
-
-  /**
-   * Configures and returns a `SmartWalletProvider` instance using the provided configuration options.
-   * This method initializes a smart wallet based on the given network and credentials.
-   *
    * @param {ConfigureCdpAgentkitWithSignerOptions} config
-   *   - Optional configuration parameters for setting up the smart wallet.
+   *   - Configuration parameters for setting up the smart wallet.
    *
    * @returns {Promise<SmartWalletProvider>}
    *   - A promise that resolves to an instance of `SmartWalletProvider` configured with the provided settings.

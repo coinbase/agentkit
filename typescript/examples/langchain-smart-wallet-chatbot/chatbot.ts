@@ -9,6 +9,7 @@ import {
   pythActionProvider,
   SmartWalletProvider,
 } from "@coinbase/agentkit";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
 import { MemorySaver } from "@langchain/langgraph";
@@ -17,7 +18,6 @@ import { ChatOpenAI } from "@langchain/openai";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as readline from "readline";
-import { Coinbase } from "@coinbase/coinbase-sdk";
 
 dotenv.config();
 
@@ -76,22 +76,28 @@ async function initializeAgent() {
     });
 
     let walletData: WalletData | null = null;
+    let privateKey: `0x${string}` | null = null;
 
     // Read existing wallet data if available
     if (fs.existsSync(WALLET_DATA_FILE)) {
       try {
         walletData = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8")) as WalletData;
+        privateKey = walletData.privateKey;
       } catch (error) {
         console.error("Error reading wallet data:", error);
         // Continue without wallet data
       }
     }
 
+    if (!privateKey) {
+      privateKey = (process.env.PRIVATE_KEY || generatePrivateKey()) as `0x${string}`
+    }
+
     // Configure Smart Wallet Provider
-    const walletProvider = await SmartWalletProvider.configureWithWallet({
+    const walletProvider = await SmartWalletProvider.configureWithSigner({
       networkId: process.env.NETWORK_ID,
       chainId: process.env.CHAIN_ID,
-      privateKey: walletData?.privateKey,
+      signer: privateKeyToAccount(privateKey),
       smartWalletAddress: walletData?.smartWalletAddress 
     });
 
@@ -139,10 +145,9 @@ async function initializeAgent() {
     });
 
     // Save wallet data
-    const exportedPrivateKey = await walletProvider.exportPrivateKey();
     const smartWalletAddress = await walletProvider.getAddress();
     fs.writeFileSync(WALLET_DATA_FILE, JSON.stringify({
-      privateKey: exportedPrivateKey,
+      privateKey,
       smartWalletAddress 
     } as WalletData));
 
