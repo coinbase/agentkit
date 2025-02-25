@@ -6,7 +6,7 @@ import {
   pythActionProvider,
   SmartWalletProvider,
   walletActionProvider,
-  wethActionProvider
+  wethActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -60,7 +60,7 @@ const WALLET_DATA_FILE = "wallet_data.txt";
 type WalletData = {
   privateKey: `0x${string}`;
   smartWalletAddress: `0x${string}`;
-}
+};
 
 /**
  * Initialize the agent with CDP Agentkit
@@ -88,17 +88,17 @@ async function initializeAgent() {
       }
     }
     if (!privateKey) {
-      privateKey = (process.env.PRIVATE_KEY || generatePrivateKey()) as `0x${string}`
+      privateKey = (process.env.PRIVATE_KEY || generatePrivateKey()) as `0x${string}`;
     }
 
     // Initialize signer
-    const signer = privateKeyToAccount(privateKey)
+    const signer = privateKeyToAccount(privateKey);
 
     // Configure Smart Wallet Provider with signer
     const walletProvider = await SmartWalletProvider.configureWithWallet({
       networkId: process.env.NETWORK_ID,
       signer,
-      smartWalletAddress: walletData?.smartWalletAddress 
+      smartWalletAddress: walletData?.smartWalletAddress,
     });
 
     // Initialize AgentKit
@@ -146,10 +146,13 @@ async function initializeAgent() {
 
     // Save wallet data
     const smartWalletAddress = await walletProvider.getAddress();
-    fs.writeFileSync(WALLET_DATA_FILE, JSON.stringify({
-      privateKey,
-      smartWalletAddress 
-    } as WalletData));
+    fs.writeFileSync(
+      WALLET_DATA_FILE,
+      JSON.stringify({
+        privateKey,
+        smartWalletAddress,
+      } as WalletData),
+    );
 
     return { agent, config: agentConfig };
   } catch (error) {
