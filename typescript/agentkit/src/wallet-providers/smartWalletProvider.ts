@@ -2,16 +2,17 @@ import {
   CHAIN_ID_TO_NETWORK_ID,
   Coinbase,
   createSmartWallet,
-  toSmartWallet,
   NetworkScopedSmartWallet,
-  SmartWallet,
+  SendUserOperationOptions,
   SupportedChainId,
-  waitForUserOperation,
+  toSmartWallet,
+  waitForUserOperation
 } from "@coinbase/coinbase-sdk";
 import {
   createPublicClient,
   Hex,
   http,
+  Prettify,
   ReadContractParameters,
   ReadContractReturnType,
   TransactionRequest,
@@ -198,7 +199,19 @@ export class SmartWalletProvider extends EvmWalletProvider {
     if (result.status == "complete") {
       return result.transactionHash as `0x${string}`;
     } else {
-      throw new Error("Transfer failed");
+      throw new Error("Transaction failed");
+    }
+  }
+
+  async sendUserOperation<T extends readonly unknown[]>(operation: Prettify<Omit<SendUserOperationOptions<T>, "chainId" | "paymasterUrl">>): Promise<`0x${string}`> {
+    const sendUserOperationResult = await this.#smartWallet.sendUserOperation(operation);
+
+    const result = await waitForUserOperation(sendUserOperationResult);
+
+    if (result.status == "complete") {
+      return result.transactionHash as `0x${string}`;
+    } else {
+      throw new Error("Transaction failed");
     }
   }
 
