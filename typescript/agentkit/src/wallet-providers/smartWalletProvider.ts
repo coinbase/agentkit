@@ -381,7 +381,7 @@ export class SmartWalletProvider extends EvmWalletProvider {
    * @returns The response from the contract.
    */
   async readContract(params: ReadContractParameters): Promise<ReadContractReturnType> {
-    return this.#publicClient!.readContract(params);
+    return this.#publicClient.readContract(params);
   }
 
   /**
