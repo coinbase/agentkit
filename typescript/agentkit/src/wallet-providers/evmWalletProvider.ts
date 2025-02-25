@@ -9,6 +9,7 @@ import {
   ContractFunctionName,
   Abi,
   ContractFunctionArgs,
+  PublicClient,
 } from "viem";
 
 /**
@@ -70,4 +71,12 @@ export abstract class EvmWalletProvider extends WalletProvider {
   >(
     params: ReadContractParameters<abi, functionName, args>,
   ): Promise<ReadContractReturnType<abi, functionName, args>>;
+  abstract readContract(params: ReadContractParameters): Promise<ReadContractReturnType>;
+
+  /**
+   * Get the public client.
+   *
+   * @returns The public client.
+   */
+  abstract getPublicClient(): PublicClient;
 }
