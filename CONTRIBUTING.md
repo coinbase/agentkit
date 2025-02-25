@@ -4,7 +4,7 @@ Thank you for your interest in contributing to AgentKit! We welcome all contribu
 
 ## Repository Structure
 
-The AgentKit repository is organized as a [multi-package workspace](https://vercel.com/docs/vercel-platform/glossary#multi-package-workspace) (otherwise known as a [monorepo](https://vercel.com/docs/vercel-platform/glossary#monorepo)) and managed with [Turborepo](https://turbo.build/repo/docs). The repo contains multiple packages for Python and TypeScript, where a [package](https://vercel.com/docs/vercel-platform/glossary#package) is a single subfolder with either a `package.json` (if it's a TypeScript package) or a `pyproject.toml` (if it's a Python package),and related code that is published to either NPM or PyPI. For example, the `typescript/agentkit` subfolder is one package, and the `python/coinbase-agentkit` subfolder is another package.
+The AgentKit repository is organized as two [monorepos](https://vercel.com/docs/vercel-platform/glossary#monorepo), one for Python and one for TypeScript. The TypeScript side is organized as a [multi-package workspace](https://vercel.com/docs/vercel-platform/glossary#multi-package-workspace) and is managed with [Turborepo](https://turbo.build/repo/docs), while the Python side is simply a collection of Python packages. A Python package is a single subfolder with a `pyproject.toml` file, along with related code and files that are published together to PyPI, whereas a TypeScript [package](https://vercel.com/docs/vercel-platform/glossary#package) is a single subfolder with a `package.json` and related code that is published to NPM. For example, the `typescript/agentkit` subfolder is a TypeScript package, and the `python/coinbase-agentkit` subfolder is a Python package.
 
 Note that not all AgentKit packages have both Python and TypeScript implementations. This is okay, and we expect some level of drift between the languages. If you'd like to add a TypeScript variant of a package that only has a Python variant (or vice versa), that would be a great and welcome contribution!
 
@@ -16,6 +16,7 @@ Here's a high-level overview of the repository structure:
 agentkit/
 ├── typescript/
 │   ├── agentkit/
+│   ├── create-onchain-agent/
 │   ├── framework-extensions/
 │   |   └── langchain/
 │   └── examples/
@@ -26,7 +27,8 @@ agentkit/
 │       └── langchain-twitter-chatbot/
 ├── python/
 │   ├── coinbase-agentkit/
-│   │── framework-extensions/
+│   ├── create-onchain-agent/
+│   ├── framework-extensions/
 │   │   └── langchain/
 │   └── examples/
 │       ├── langchain-cdp-chatbot/
@@ -61,7 +63,7 @@ There are the high level steps to contribute changes:
 Once you have your changes ready, there are a few more steps to open a PR and get it merged:
 
 - Fill out the PR template completely with as much detail as possible
-    - Ideally, include screenshots or videos of the changes in action
+  - Ideally, include screenshots or videos of the changes in action
 - Link related issues, if any
 - Ensure all CI checks are passing
 
@@ -70,6 +72,7 @@ Once you have your changes ready, there are a few more steps to open a PR and ge
 Once your PR is open, you can expect an initial response acknowledging receipt of the PR within 1 day, and an initial review within 1 day from a maintainer assigned to your PR. Once all comments are addressed and a maintainer has approved the PR, it will be merged by the maintainer and included in the next release.
 
 Current list of maintainers:
+
 - [@John-peterson-coinbase](https://github.com/John-peterson-coinbase)
 - [@stat](https://github.com/stat)
 - [@rohan-agarwal-coinbase](https://github.com/rohan-agarwal-coinbase)
@@ -90,6 +93,6 @@ Thank you for contributing to AgentKit!
 
 Here are some common issues you might run into when developing in our monorepo and how to resolve them:
 
-| Issue | Resolution |
-| ----- | ---------- |
+| Issue                                               | Resolution                                                                                                                 |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | Python imports are not resolving in VSCode / Cursor | Try opening the package folder in a new window. For example, `cd python/coinbase-agentkit` and then `code .` or `cursor .` |
