@@ -53,7 +53,8 @@ AgentKit is [Coinbase Developer Platform's](https://docs.cdp.coinbase.com) frame
 
 ### Node.js
 
-*Prerequisites*:
+_Prerequisites_:
+
 - [Node.js 18+](https://nodejs.org/en/download/)
 - [CDP Secret API Key](https://docs.cdp.coinbase.com/get-started/docs/cdp-api-keys#creating-secret-api-keys)
 - [OpenAI API Key](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key)
@@ -64,8 +65,8 @@ AgentKit is [Coinbase Developer Platform's](https://docs.cdp.coinbase.com) frame
 # Clone the repository
 git clone https://github.com/coinbase/agentkit.git
 
-# Navigate to the root of the repo
-cd agentkit
+# Navigate to the root of the typescript monorepo
+cd agentkit/typescript
 
 # Install dependencies
 npm install
@@ -74,7 +75,7 @@ npm install
 npm run build
 
 # Navigate to the langchain-cdp-chatbot example
-cd typescript/examples/langchain-cdp-chatbot
+cd examples/langchain-cdp-chatbot
 
 # At this point, fill in your CDP API key name, private key, and OpenAI API key in
 # the .env.local file.
@@ -84,6 +85,7 @@ mv .env.local .env
 # Run the chatbot
 npm run start
 ```
+
 2. Select "1. chat mode" and start telling your Agent to do things onchain!
 
 ```bash
@@ -101,7 +103,8 @@ Your wallet has been successfully funded with testnet ETH. You can view the tran
 
 ### Python
 
-*Prerequisites*:
+_Prerequisites_:
+
 - [Python 3.10+](https://www.python.org/downloads/)
 - [Poetry](https://python-poetry.org/docs/)
 - [CDP Secret API Key](https://docs.cdp.coinbase.com/get-started/docs/cdp-api-keys#creating-secret-api-keys)
@@ -114,7 +117,7 @@ Your wallet has been successfully funded with testnet ETH. You can view the tran
 git clone https://github.com/coinbase/agentkit.git
 
 # Navigate to the chatbot-python example
-cd agentkit/python/examples/langchain-cdp-chatbot 
+cd agentkit/python/examples/langchain-cdp-chatbot
 
 # At this point, fill in your CDP API key name, private key, and OpenAI API key in the
 # .env.local file.
@@ -127,6 +130,7 @@ poetry install
 # Run the chatbot
 poetry run python chatbot.py
 ```
+
 2. Select "1. chat mode" and start telling your Agent to do things onchain!
 
 ```bash
@@ -144,12 +148,13 @@ Your wallet has been successfully funded with testnet ETH. You can view the tran
 
 ## 🗂 Repository Structure
 
-AgentKit is organized as a monorepo that contains multiple packages.
+AgentKit is organized as two monorepos, one for Python and one for Typescript, each containing multiple packages.
 
 ```
 agentkit/
 ├── typescript/
 │   ├── agentkit/
+│   ├── create-onchain-agent/
 │   ├── framework-extensions/
 │   |   └── langchain/
 │   └── examples/
@@ -160,6 +165,7 @@ agentkit/
 │       └── langchain-twitter-chatbot/
 ├── python/
 │   ├── coinbase-agentkit/
+│   ├── create-onchain-agent/
 │   ├── framework-extensions/
 │   |   └── langchain/
 │   └── examples/
@@ -233,7 +239,7 @@ See [SECURITY.md](SECURITY.md) for more information.
 
 ## 📧 Contact
 
-For feature requests, feedback, or questions, please reach out to us via the 
+For feature requests, feedback, or questions, please reach out to us via the
 [Coinbase Developer Platform Discord](https://discord.com/channels/1220414409550336183/1304126107876069376).
 
 ## 🔗 Supported Protocols
@@ -241,11 +247,13 @@ For feature requests, feedback, or questions, please reach out to us via the
 AgentKit is proud to have support for the following protocols, frameworks, wallets and networks:
 
 ### Wallets
+
 <a href="https://coinbase.com" target="_blank"><img src="./assets/wallets/coinbase.svg" width="100" height="auto" alt="Coinbase"></a>
 <a href="https://privy.io" target="_blank"><img src="./assets/wallets/privy.svg" width="100" height="auto" alt="Privy"></a>
 <a href="https://viem.sh" target="_blank"><img src="./assets/wallets/viem.svg" width="100" height="auto" alt="ViEM"></a>
 
 ### Protocols
+
 <a href="https://www.alchemy.com/" target="_blank"><img src="./assets/protocols/alchemy.svg" width="100" height="auto" alt="Alchemy"></a>
 <a href="https://farcaster.xyz" target="_blank"><img src="./assets/protocols/farcaster.svg" width="100" height="auto" alt="Farcaster"></a>
 <a href="https://jup.ag" target="_blank"><img src="./assets/protocols/jupiter.svg" width="100" height="auto" alt="Jupiter"></a>
@@ -256,13 +264,15 @@ AgentKit is proud to have support for the following protocols, frameworks, walle
 <a href="https://zora.co" target="_blank"><img src="./assets/protocols/zora.svg" width="100" height="auto" alt="Zora"></a>
 
 ### Frameworks
+
 <a href="https://langchain.com" target="_blank"><img src="./assets/frameworks/langchain.svg" width="100" height="auto" alt="Langchain"></a>
 <a href="https://www.elizaos.ai" target="_blank"><img src="./assets/frameworks/eliza.svg" width="100" height="auto" alt="Eliza"></a>
 
 ### Networks
+
 <a href="https://base.org" target="_blank"><img src="./assets/networks/base.svg" width="100" height="auto" alt="Base"></a>
 <a href="https://ethereum.org" target="_blank"><img src="./assets/networks/ethereum.svg" width="100" height="auto" alt="Ethereum"></a>
-<a href="https://solana.com" target="_blank"><img src="./assets/networks/solana.svg" width="100" height="auto" alt="Solana"></a> 
+<a href="https://solana.com" target="_blank"><img src="./assets/networks/solana.svg" width="100" height="auto" alt="Solana"></a>
 
 Note: We support all EVM and SVM networks, with deep protocol support for the above networks. Please don't hesitate to make contributions to add more support for your preferred networks.
 

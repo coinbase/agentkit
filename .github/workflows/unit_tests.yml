@@ -9,8 +9,8 @@ jobs:
         working-directory: ./python/coinbase-agentkit
     strategy:
       matrix:
-        python: ['3.10', '3.11', '3.12']
-    
+        python: ["3.10", "3.11", "3.12"]
+
     steps:
       - uses: actions/checkout@v3
 
@@ -40,82 +40,6 @@ jobs:
       - name: Run tests
         run: poetry run make test
 
-  # test-cdp-langchain-python:
-  #   runs-on: ubuntu-latest
-  #   defaults:
-  #     run:
-  #       working-directory: ./python/cdp-langchain
-  #   strategy:
-  #     matrix:
-  #       python: ['3.10', '3.11', '3.12']
-    
-  #   steps:
-  #     - uses: actions/checkout@v3
-
-  #     - name: Set up Python ${{ matrix.python }}
-  #       uses: actions/setup-python@v4
-  #       with:
-  #         python-version: ${{ matrix.python }}
-
-  #     - name: Install Poetry
-  #       uses: snok/install-poetry@v1
-  #       with:
-  #         version: latest
-  #         virtualenvs-create: true
-  #         virtualenvs-in-project: true
-
-  #     - name: Load cached venv
-  #       id: cached-poetry-dependencies
-  #       uses: actions/cache@v3
-  #       with:
-  #         path: ./python/cdp-langchain/.venv
-  #         key: venv-langchain-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('python/cdp-langchain/poetry.lock') }}
-
-  #     - name: Install dependencies
-  #       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-  #       run: poetry install --with dev
-
-  #     - name: Run tests
-  #       run: poetry run make test
-
-  # test-twitter-langchain-python:
-  #   runs-on: ubuntu-latest
-  #   defaults:
-  #     run:
-  #       working-directory: ./python/twitter-langchain
-  #   strategy:
-  #     matrix:
-  #       python: ['3.10', '3.11', '3.12']
-    
-  #   steps:
-  #     - uses: actions/checkout@v3
-
-  #     - name: Set up Python ${{ matrix.python }}
-  #       uses: actions/setup-python@v4
-  #       with:
-  #         python-version: ${{ matrix.python }}
-
-  #     - name: Install Poetry
-  #       uses: snok/install-poetry@v1
-  #       with:
-  #         version: latest
-  #         virtualenvs-create: true
-  #         virtualenvs-in-project: true
-
-  #     - name: Load cached venv
-  #       id: cached-poetry-dependencies
-  #       uses: actions/cache@v3
-  #       with:
-  #         path: ./python/twitter-langchain/.venv
-  #         key: venv-twitter-langchain-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('python/twitter-langchain/poetry.lock') }}
-
-  #     - name: Install dependencies
-  #       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-  #       run: poetry install --with dev
-
-  #     - name: Run tests
-  #       run: poetry run make test
-
   test-agentkit-typescript:
     runs-on: ubuntu-latest
     strategy:
@@ -127,7 +51,9 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
+          cache-dependency-path: ./typescript
       - name: Install and test AgentKit.js
+        working-directory: ./typescript
         run: |
-          npm i
+          npm ci
           npm run test

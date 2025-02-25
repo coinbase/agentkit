@@ -15,10 +15,13 @@ jobs:
         with:
           node-version: "18"
           registry-url: "https://registry.npmjs.org"
-      - run: npm i && npm run build
+          cache: "npm"
+          cache-dependency-path: ./typescript
       - name: Install, build and publish @coinbase/agentkit-langchain
         working-directory: ./typescript/framework-extensions/langchain
         run: |
+          npm ci
+          npm run build
           npm publish --ignore-scripts --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

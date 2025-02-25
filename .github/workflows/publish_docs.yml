@@ -14,10 +14,12 @@ jobs:
         with:
           node-version: "18"
           cache: "npm"
+          cache-dependency-path: ./typescript
 
       - name: Install and Build JSDocs
+        working-directory: ./typescript
         run: |
-          npm i
+          npm ci
           npm run build
           npm run docs
 
@@ -34,7 +36,7 @@ jobs:
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Install Poetry
         uses: snok/install-poetry@v1

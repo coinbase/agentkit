@@ -1,15 +1,15 @@
 {
-  "name": "cdp-agentkit-monorepo",
+  "name": "agentkit-typescript-monorepo",
   "private": true,
   "workspaces": [
-    "typescript/agentkit",
-    "typescript/create-onchain-agent",
-    "typescript/framework-extensions/langchain",
-    "typescript/examples/langchain-cdp-chatbot",
-    "typescript/examples/langchain-twitter-chatbot",
-    "typescript/examples/langchain-farcaster-chatbot",
-    "typescript/examples/langchain-privy-chatbot",
-    "typescript/examples/langchain-solana-chatbot"
+    "agentkit",
+    "create-onchain-agent",
+    "framework-extensions/langchain",
+    "examples/langchain-cdp-chatbot",
+    "examples/langchain-twitter-chatbot",
+    "examples/langchain-farcaster-chatbot",
+    "examples/langchain-privy-chatbot",
+    "examples/langchain-solana-chatbot"
   ],
   "packageManager": "npm@8.9.0",
   "scripts": {
