@@ -59,46 +59,32 @@ _Prerequisites_:
 - [CDP Secret API Key](https://docs.cdp.coinbase.com/get-started/docs/cdp-api-keys#creating-secret-api-keys)
 - [OpenAI API Key](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key)
 
-1. Get your agent running:
+1. Create and set up your agent:
 
 ```bash
-# Clone the repository
-git clone https://github.com/coinbase/agentkit.git
+# Create a new agent project
+npm create onchain-agent@latest
 
-# Navigate to the root of the typescript monorepo
-cd agentkit/typescript
+# Navigate to your project directory
+cd onchain-agent
 
 # Install dependencies
 npm install
-
-# Build the packages locally
-npm run build
-
-# Navigate to the langchain-cdp-chatbot example
-cd examples/langchain-cdp-chatbot
 
 # At this point, fill in your CDP API key name, private key, and OpenAI API key in
 # the .env.local file.
 # Then, rename the .env.local file to .env
 mv .env.local .env
 
-# Run the chatbot
-npm run start
+# Run the development server
+npm run dev
 ```
 
-2. Select "1. chat mode" and start telling your Agent to do things onchain!
+2. Visit `http://localhost:3000` in your browser and start telling your Agent to do things onchain!
 
 ```bash
-Prompt: Fund my wallet with some testnet ETH.
--------------------
-Wallet: ccaf1dbf-3a90-4e52-ad34-89a07aad9e8b on network: base-sepolia with default address: 0xD9b990c7b0079c1c3733D2918Ee50b68f29FCFD5
--------------------
-
--------------------
-Received eth from the faucet. Transaction: https://sepolia.basescan.org/tx/0x03e82934cd04be5b725927729b517c606f6f744611f0f36e834f21ad742ad7ca
--------------------
-Your wallet has been successfully funded with testnet ETH. You can view the transaction [here](https://sepolia.basescan.org/tx/0x03e82934cd04be5b725927729b517c606f6f744611f0f36e834f21ad742ad7ca).
--------------------
+User: Fund my wallet with some testnet ETH.
+Agent: Your wallet has been successfully funded with testnet ETH. You can view the transaction [here](https://sepolia.basescan.org/tx/0x03e82934cd04be5b725927729b517c606f6f744611f0f36e834f21ad742ad7ca)
 ```
 
 ### Python
@@ -113,11 +99,11 @@ _Prerequisites_:
 1. Get your agent running:
 
 ```bash
-# Clone the repository
-git clone https://github.com/coinbase/agentkit.git
+# Create a new agent project
+pipx run create-onchain-agent
 
-# Navigate to the chatbot-python example
-cd agentkit/python/examples/langchain-cdp-chatbot
+# Navigate to your project directory
+cd onchain-agent
 
 # At this point, fill in your CDP API key name, private key, and OpenAI API key in the
 # .env.local file.
