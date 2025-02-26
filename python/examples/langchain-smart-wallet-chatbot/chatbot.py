@@ -31,12 +31,20 @@ def initialize_agent():
     """Initialize the agent with SmartWalletProvider."""
     llm = ChatOpenAI(model="gpt-4o-mini")
     
-    wallet_data = None
+    # Load wallet data from JSON file
+    wallet_data = {
+        "private_key": None,
+        "smart_wallet_address": None
+    }
     if os.path.exists(wallet_data_file):
-        with open(wallet_data_file) as f:
-            wallet_data = f.read()
+        try:
+            with open(wallet_data_file) as f:
+                wallet_data = json.load(f)
+        except json.JSONDecodeError:
+            print("Warning: Invalid wallet data file format. Creating new wallet.")
     
-    private_key = os.getenv("PRIVATE_KEY")
+    # Use private key from env if not in wallet data
+    private_key = wallet_data.get("private_key") or os.getenv("PRIVATE_KEY")
     
     if not private_key:
         raise ValueError("PRIVATE_KEY environment variable is required")
@@ -49,8 +57,16 @@ def initialize_agent():
     smart_wallet_provider = SmartWalletProvider(SmartWalletProviderConfig(
         network_id=network_id,
         signer=signer,
-        smart_wallet_address=wallet_data,
+        smart_wallet_address=wallet_data.get("smart_wallet_address"),
     ))
+    
+    # Save both private key and smart wallet address
+    wallet_data = {
+        "private_key": private_key,
+        "smart_wallet_address": smart_wallet_provider.get_address()
+    }
+    with open(wallet_data_file, "w") as f:
+        json.dump(wallet_data, f, indent=2)
     
     agentkit = AgentKit(AgentKitConfig(
         wallet_provider=smart_wallet_provider,
@@ -62,10 +78,6 @@ def initialize_agent():
             weth_action_provider(),
         ]
     ))
-    
-    wallet_data_json = json.dumps(smart_wallet_provider.get_address())
-    with open(wallet_data_file, "w") as f:
-        f.write(wallet_data_json)
     
     tools = get_langchain_tools(agentkit)
     memory = MemorySaver()
