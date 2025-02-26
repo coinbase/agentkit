@@ -21,6 +21,7 @@ class EthAccountWalletProviderConfig(BaseModel):
     account: LocalAccount
     chain_id: str
     gas: EvmGasConfig | None = Field(None, description="Gas configuration settings")
+    rpc_url: str | None = Field(None, description="Optional RPC URL to override default chain RPC")
 
     class Config:
         """Configuration for EthAccountWalletProvider."""
@@ -42,7 +43,7 @@ class EthAccountWalletProvider(EvmWalletProvider):
         self.account = config.account
 
         chain = NETWORK_ID_TO_CHAIN[CHAIN_ID_TO_NETWORK_ID[config.chain_id]]
-        rpc_url = chain.rpc_urls["default"].http[0]
+        rpc_url = config.rpc_url or chain.rpc_urls["default"].http[0]
 
         self.web3 = Web3(Web3.HTTPProvider(rpc_url))
         self.web3.middleware_onion.inject(
