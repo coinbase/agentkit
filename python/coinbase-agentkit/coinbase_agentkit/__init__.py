@@ -23,6 +23,8 @@ from .wallet_providers import (
     CdpWalletProviderConfig,
     EthAccountWalletProvider,
     EthAccountWalletProviderConfig,
+    SmartWalletProvider,
+    SmartWalletProviderConfig,
     EvmWalletProvider,
     WalletProvider,
 )
@@ -42,6 +44,8 @@ __all__ = [
     "EvmWalletProvider",
     "EthAccountWalletProvider",
     "EthAccountWalletProviderConfig",
+    "SmartWalletProvider",
+    "SmartWalletProviderConfig",
     "erc20_action_provider",
     "cdp_api_action_provider",
     "cdp_wallet_action_provider",
