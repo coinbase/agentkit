@@ -1,0 +1,104 @@
+# {{ name_pascal }} Action Provider
+
+This directory contains the **{{ name_pascal }}ActionProvider** implementation, which provides actions for {{ name }} operations.
+
+## Overview
+
+The {{ name_pascal }}ActionProvider is designed to work with the {{ wallet_provider }} for blockchain interactions. It provides a set of actions that enable [describe the main purpose/functionality].
+
+## Directory Structure
+
+```
+{{ name }}/
+├── {{ name }}_action_provider.py    # Main provider implementation
+├── {{ name }}_action_provider_test.py # Test suite
+├── schemas.py                       # Action schemas and types
+└── README.md                       # Documentation (this file)
+```
+
+## Actions
+
+### Example Action
+- `example-action`: Template action implementation
+  - **Purpose**: Demonstrates the basic structure of an action
+  - **Input**:
+    - `field_name` (string): A descriptive name for the field
+    - `amount` (string): The amount to use in the action (e.g. "1.5")
+    - `optional_field` (string, optional): Optional parameter example
+    - `enum_field` ("option1" | "option2" | "option3"): Constrained choices
+  - **Output**: String describing the action result
+  - **Example**:
+    ```python
+    result = await provider.example_action(wallet_provider, {
+        "field_name": "test",
+        "amount": "1.0",
+        "enum_field": "option1"
+    })
+    ```
+
+## Implementation Details
+
+### Network Support
+The {{ name_pascal }} Action Provider supports networks based on the {{ wallet_provider }} requirements:
+{% if wallet_provider == "EvmWalletProvider" %}
+- Supports EVM-compatible networks (protocol_family: "evm")
+{% elif wallet_provider == "WalletProvider" %}
+- Supports all networks (generic wallet provider)
+{% endif %}
+
+### Wallet Provider Integration
+This provider is specifically designed to work with {{ wallet_provider }}. Key integration points:
+- Network compatibility checks
+- Transaction signing and execution
+- Balance and account management
+
+## Adding New Actions
+
+To add new actions:
+
+1. Define the schema in `schemas.py`:
+   ```python
+   class NewActionSchema(BaseModel):
+       # Define your action's parameters
+       pass
+   ```
+
+2. Implement the action in `{{ name }}_action_provider.py`:
+   ```python
+   @create_action(
+       name="new-action",
+       description="Description of what your action does",
+       schema=NewActionSchema,
+   )
+   def new_action(
+       self,
+       wallet_provider: {{ wallet_provider }},
+       args: dict[str, Any],
+   ) -> str:
+       # Implement your action logic
+       pass
+   ```
+
+## Testing
+
+When implementing new actions, ensure to:
+1. Add unit tests for schema validations
+2. Add integration tests for action execution
+3. Test network support
+
+## Dependencies
+- AgentKit core library
+- {{ wallet_provider }} for blockchain interactions
+{% if wallet_provider == "EvmWalletProvider" %}
+- EVM-specific dependencies (e.g., web3.py)
+{% endif %}
+
+## Notes
+- Add any specific considerations for this action provider
+- Document any prerequisites or setup requirements
+- Include relevant external documentation links
+
+## Contributing
+Interested in contributing? Check out:
+- [Contribution Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING.md)
+- [Discord Community](https://discord.gg/CDP) 

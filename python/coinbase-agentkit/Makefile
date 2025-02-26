@@ -25,3 +25,7 @@ local-docs: docs
 .PHONY: test
 test:
 	poetry run pytest
+
+.PHONY: create-action-provider
+create-action-provider:
+	poetry run create-action-provider

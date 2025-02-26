@@ -1,0 +1,40 @@
+"""Tests for example action."""
+
+import pytest
+
+from coinbase_agentkit.action_providers.{{ name }}.schemas import ExampleActionSchema
+
+
+def test_example_action_schema():
+    """Test example action schema validation."""
+    valid_input = {
+        "field_name": "test",
+        "amount": "1.0",
+        "enum_field": "option1",
+    }
+    schema = ExampleActionSchema(**valid_input)
+    assert schema.field_name == "test"
+    assert schema.amount == "1.0"
+    assert schema.enum_field == "option1"
+
+
+def test_example_action_invalid_input():
+    """Test example action schema validation with invalid input."""
+    invalid_input = {
+        "field_name": "",
+        "amount": "invalid",
+        "enum_field": "invalid",
+    }
+    with pytest.raises(ValueError):
+        ExampleActionSchema(**invalid_input)
+
+
+def test_example_action(provider, mock_wallet_provider):
+    """Test example action execution."""
+    args = {
+        "field_name": "test",
+        "amount": "1.0",
+        "enum_field": "option1",
+    }
+    result = provider.example_action(mock_wallet_provider, args)
+    assert "Example action called with test" in result
