@@ -7,11 +7,12 @@ import opengradient as og
 
 import coinbase_agentkit.action_providers.opengradient.constants as constants
 from coinbase_agentkit.action_providers.opengradient.schemas import (
+    OpenGradientBtcOneHourForecast,
+    OpenGradientEthOneHourForecast,
     OpenGradientEthUsdtOneHourVolatilityForecast,
     OpenGradientPromptDobby,
     OpenGradientPromptQwen,
-    OpenGradientSuiUsdt30MinReturnForecast,
-    OpenGradientSuiUsdtSixHourReturnForecast,
+    OpenGradientSolOneHourForecast,
 )
 from coinbase_agentkit.action_providers.opengradient.utils import (
     create_block_explorer_link_smart_contract,
@@ -86,7 +87,7 @@ Important notes:
             return f"Error reading one_hour_eth_usdt_volatility workflow: {e!s}"
 
     @create_action(
-        name="read_sui_usdt_six_hour_return_forecast",
+        name="read_btc_one_hour_price_forecast",
         description="""
 This tool reads the latest SUI/USDT 6-hour return forecast from a smart-contract model deployment on the OpenGradient network.
 The model predicts the expected price return over the next 6 hours for the SUI/USDT trading pair.
@@ -106,9 +107,9 @@ Important notes:
 - This is a read-only operation and will not modify any blockchain state
 - The prediction is automatically updated with the 6 most recent 3-hour OHLC candles using oracle-fed data
 """,
-        schema=OpenGradientSuiUsdtSixHourReturnForecast,
+        schema=OpenGradientBtcOneHourForecast,
     )
-    def read_sui_usdt_six_hour_return_forecast(self, args: dict[str, Any]) -> str:
+    def read_btc_one_hour_price_forecast(self, args: dict[str, Any]) -> str:
         """Read from the SUI/USDT six hour return forecast workflow on the OpenGradient network.
 
         Args:
@@ -119,42 +120,43 @@ Important notes:
 
         """
         try:
-            contract_address = constants.SUI_USDT_SIX_HOUR_FORECAST_ADDRESS
+            contract_address = constants.BTC_ONE_HOUR_FORECAST_ADDRESS
             result = og.read_workflow_result(contract_address)
 
-            formatted_result = format(float(result.numbers["destandardized_prediction"]), ".10%")
+            formatted_result = format(float(result.numbers["regression_output"]), ".10%")
             block_explorer_link = create_block_explorer_link_smart_contract(
-                constants.SUI_USDT_SIX_HOUR_FORECAST_ADDRESS
+                constants.BTC_ONE_HOUR_FORECAST_ADDRESS
             )
 
             return f"{formatted_result}\nBlock Explorer: {block_explorer_link}"
         except Exception as e:
-            return f"Error reading sui_usdt_six_hour_return_forecast workflow: {e!s}"
+            return f"Error reading btc_one_hour_price_forecast workflow: {e!s}"
 
     @create_action(
-        name="read_sui_usdt_30_minute_return_forecast",
+        name="read_eth_one_hour_price_forecast",
         description="""
-This tool reads the latest SUI/USDT 30-minute return forecast from a smart-contract model deployment on the OpenGradient network.
-The model predicts the expected price return over the next 30 minutes for the SUI/USDT trading pair.
+This tool reads the latest SUI/USDT 6-hour return forecast from a smart-contract model deployment on the OpenGradient network.
+The model predicts the expected price return over the next 6 hours for the SUI/USDT trading pair.
 
 Inputs:
 - The model's inputs are handled automatically by oracles - no user input is required.
 
 Outputs:
-- This model outputs a single float value representing the predicted 30-minute return
+- This model outputs a single float value representing the predicted 6-hour return
 - This function also outputs a link to block explorer for the smart contract where the model is deployed
 
-Example output format (represents approximately -3.26% predicted return):
-'-3.2557994127%'
-Block Explorer: https://explorer.opengradient.ai/address/0x7259f3a882B40aF80F7ff51D6023f23DD16b4465
+Example output format (represents approximately -10.84% predicted return):
+'-10.8388245106%'
+Block Explorer: https://explorer.opengradient.ai/address/0x080881b65427Da162CA0995fB23710Db4E8d85Cb
 
 Important notes:
-- The prediction is automatically updated with a rolling window of recent OHLC price data from the last 10 minutes using oracle-fed data
+- This is a read-only operation and will not modify any blockchain state
+- The prediction is automatically updated with the 6 most recent 3-hour OHLC candles using oracle-fed data
 """,
-        schema=OpenGradientSuiUsdt30MinReturnForecast,
+        schema=OpenGradientEthOneHourForecast,
     )
-    def read_sui_usdt_30_minute_return_forecast(self, args: dict[str, Any]) -> str:
-        """Read from the SUI/USDT 30 minute return forecast workflow on the OpenGradient network.
+    def read_eth_one_hour_price_forecast(self, args: dict[str, Any]) -> str:
+        """Read from the SUI/USDT six hour return forecast workflow on the OpenGradient network.
 
         Args:
             args (dict[str, Any]): Input arguments for the action.
@@ -164,17 +166,63 @@ Important notes:
 
         """
         try:
-            contract_address = constants.SUI_USDT_THIRTY_MIN_FORECAST_ADDRESS
+            contract_address = constants.ETH_ONE_HOUR_FORECAST_ADDRESS
             result = og.read_workflow_result(contract_address)
 
-            formatted_result = format(float(result.numbers["destandardized_prediction"]), ".10%")
+            formatted_result = format(float(result.numbers["regression_output"]), ".10%")
             block_explorer_link = create_block_explorer_link_smart_contract(
-                constants.SUI_USDT_THIRTY_MIN_FORECAST_ADDRESS
+                constants.ETH_ONE_HOUR_FORECAST_ADDRESS
             )
 
             return f"{formatted_result}\nBlock Explorer: {block_explorer_link}"
         except Exception as e:
-            return f"Error reading sui_usdt_30_minute_return_forecast workflow: {e!s}"
+            return f"Error reading eth_one_hour_price_forecast workflow: {e!s}"
+
+    @create_action(
+        name="read_sol_one_hour_price_forecast",
+        description="""
+This tool reads the latest SUI/USDT 6-hour return forecast from a smart-contract model deployment on the OpenGradient network.
+The model predicts the expected price return over the next 6 hours for the SUI/USDT trading pair.
+
+Inputs:
+- The model's inputs are handled automatically by oracles - no user input is required.
+
+Outputs:
+- This model outputs a single float value representing the predicted 6-hour return
+- This function also outputs a link to block explorer for the smart contract where the model is deployed
+
+Example output format (represents approximately -10.84% predicted return):
+'-10.8388245106%'
+Block Explorer: https://explorer.opengradient.ai/address/0x080881b65427Da162CA0995fB23710Db4E8d85Cb
+
+Important notes:
+- This is a read-only operation and will not modify any blockchain state
+- The prediction is automatically updated with the 6 most recent 3-hour OHLC candles using oracle-fed data
+""",
+        schema=OpenGradientSolOneHourForecast,
+    )
+    def read_sol_one_hour_price_forecast(self, args: dict[str, Any]) -> str:
+        """Read from the SUI/USDT six hour return forecast workflow on the OpenGradient network.
+
+        Args:
+            args (dict[str, Any]): Input arguments for the action.
+
+        Returns:
+            str: A message containing the action response or error details.
+
+        """
+        try:
+            contract_address = constants.SOL_ONE_HOUR_FORECAST_ADDRESS
+            result = og.read_workflow_result(contract_address)
+
+            formatted_result = format(float(result.numbers["regression_output"]), ".10%")
+            block_explorer_link = create_block_explorer_link_smart_contract(
+                constants.SOL_ONE_HOUR_FORECAST_ADDRESS
+            )
+
+            return f"{formatted_result}\nBlock Explorer: {block_explorer_link}"
+        except Exception as e:
+            return f"Error reading sol_one_hour_price_forecast workflow: {e!s}"
 
     @create_action(
         name="prompt_dobby",

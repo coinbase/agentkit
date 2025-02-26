@@ -2626,15 +2626,15 @@ realtime = ["websockets (>=13,<15)"]
 
 [[package]]
 name = "opengradient"
-version = "0.4.6"
+version = "0.4.7"
 description = "Python SDK for OpenGradient decentralized model management & inference services"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 markers = "python_version == \"3.10\" or python_version == \"3.11\" or python_version >= \"3.12\""
 files = [
-    {file = "opengradient-0.4.6-py3-none-any.whl", hash = "sha256:45100f95048a9f79dc7d6f82b52c6b5c000cb655d8c89108ff4b8709c591fa58"},
-    {file = "opengradient-0.4.6.tar.gz", hash = "sha256:8d00f7a3b8027bb4d601187a3026e8305ea936e9e72828950f1a5bd451797a80"},
+    {file = "opengradient-0.4.7-py3-none-any.whl", hash = "sha256:c00c059c12e148f27400fdfa6ce010e45422723a0313f2c6cf72eda91ca5564e"},
+    {file = "opengradient-0.4.7.tar.gz", hash = "sha256:c9b03a35e9e22f8c13d3ea67331465d485d839e5a30e918440cfea9c312c96f8"},
 ]
 
 [package.dependencies]

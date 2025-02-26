@@ -104,7 +104,6 @@ class CdpWalletProvider(EvmWalletProvider):
                 else 1
             )
 
-
         except ImportError as e:
             raise ImportError(
                 "Failed to import cdp. Please install it with 'pip install cdp-sdk'."

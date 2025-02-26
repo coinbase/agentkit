@@ -204,7 +204,6 @@ class EthAccountWalletProvider(EvmWalletProvider):
         transaction["maxPriorityFeePerGas"] = max_priority_fee_per_gas
         transaction["maxFeePerGas"] = max_fee_per_gas
 
-
         gas = int(self.web3.eth.estimate_gas(transaction) * self._gas_limit_multiplier)
         transaction["gas"] = gas
 
