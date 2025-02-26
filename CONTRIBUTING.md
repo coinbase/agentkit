@@ -56,7 +56,7 @@ There are the high level steps to contribute changes:
 - Create a feature or bugfix branch
 - Follow the appropriate [language guide](#language-specific-guides)
 - Write tests
-- Update CHANGELOG.md
+- Add a changelog entry. See the Changelog section in the appropriate language-specific guide for the changes you're making.
 
 3. **Pull Request Process**
 
