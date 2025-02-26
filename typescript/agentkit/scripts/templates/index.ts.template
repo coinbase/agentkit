@@ -1,0 +1,8 @@
+/**
+ * Exports for {{name}} action provider
+ *
+ * @module {{name}}
+ */
+
+export * from "./{{name}}ActionProvider";
+export * from "./schemas";
