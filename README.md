@@ -59,7 +59,7 @@ _Prerequisites_:
 - [CDP Secret API Key](https://docs.cdp.coinbase.com/get-started/docs/cdp-api-keys#creating-secret-api-keys)
 - [OpenAI API Key](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key)
 
-1. Create and set up your agent:
+1. Get your agent running:
 
 ```bash
 # Create a new fullstack agent project
