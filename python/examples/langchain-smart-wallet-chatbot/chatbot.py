@@ -48,12 +48,12 @@ def initialize_agent():
     
     if not private_key:
         raise ValueError("PRIVATE_KEY environment variable is required")
-    
-    network_id = os.getenv("NETWORK_ID", "base-sepolia")
 
-    # Convert private key string to LocalAccount
     signer = Account.from_key(private_key)
+
+    network_id = os.getenv("NETWORK_ID", "base-sepolia")
     
+    # Initialize CDP Wallet Provider
     smart_wallet_provider = SmartWalletProvider(SmartWalletProviderConfig(
         network_id=network_id,
         signer=signer,
