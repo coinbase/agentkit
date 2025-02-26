@@ -230,4 +230,30 @@ make lint-fix
 
 ## Changelog
 
-Currently the CHANGELOG.md is managed manually. Please include a changelog entry in the appropriate package's CHANGELOG.md file when you add a new feature or fix a bug.
+We use [towncrier](https://towncrier.readthedocs.io/en/stable/index.html) to manage the changelog.
+
+Changelog entries should be in the past tense, and they should be as specific as possible. Some examples of good changelog entries:
+
+- Added a new action provider to interact with Fancy Protocl
+- Fixed a bug preventing wallet balances to be formatted correctly
+
+Changelog entries are stored in the `changelog.d` directory. Each changelog entry is stored as a markdown file named after the type of change it is and the issue number it is associated with. For example, a bug fix associated with issue #123 would be stored in `changelog.d/123.bugfix.md`. If your change does not have an associated issue, you can first create the Pull Request, and then use the PR number in the changelog entry filename.
+
+To add a changelog entry, you can create the changelog entry file yourself, or use `towncrier` to create it for you. For example, to create a changelog entry for a bug fix in `coinbase-agentkit` associated with issue #123, run the following command from the package you are making a change to:
+
+```bash
+cd python/coinbase-agentkit
+
+# Create a new changelog entry file for a bugfix relating to issue #123
+poetry run towncrier create --content "Fixed a bug" 123.bugfix.md
+
+# Or, create a new changelog entry for a feature relating to issue #124
+poetry run towncrier create --content "Added a new feature" 124.feature.md
+```
+
+This will create a new changelog entry in the `changelog.d` directory, which should be committed along the changes in your Pull Request.
+
+The types of changes you can add are:
+
+- `feature`
+- `bugfix`
