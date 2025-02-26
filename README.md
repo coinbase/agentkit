@@ -62,19 +62,19 @@ _Prerequisites_:
 1. Create and set up your agent:
 
 ```bash
-# Create a new agent project
+# Create a new fullstack agent project
 npm create onchain-agent@latest
 
 # Navigate to your project directory
 cd onchain-agent
 
-# Install dependencies
-npm install
-
 # At this point, fill in your CDP API key name, private key, and OpenAI API key in
 # the .env.local file.
 # Then, rename the .env.local file to .env
 mv .env.local .env
+
+# Install dependencies
+npm install
 
 # Run the development server
 npm run dev
@@ -99,7 +99,7 @@ _Prerequisites_:
 1. Get your agent running:
 
 ```bash
-# Create a new agent project
+# Create a new agent chatbot
 pipx run create-onchain-agent
 
 # Navigate to your project directory
