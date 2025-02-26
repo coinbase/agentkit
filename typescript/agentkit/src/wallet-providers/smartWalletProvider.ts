@@ -32,6 +32,7 @@ export interface ConfigureSmartWalletOptions {
   cdpApiKeyPrivateKey?: string;
   networkId?: string;
   smartWalletAddress?: Hex;
+  paymasterUrl?: string;
   signer: Signer;
 }
 
@@ -138,6 +139,7 @@ export class SmartWalletProvider extends EvmWalletProvider {
 
     const networkScopedSmartWallet = smartWallet.useNetwork({
       chainId: Number(network.chainId) as SupportedChainId,
+      paymasterUrl: config.paymasterUrl,
     });
 
     const smartWalletProvider = new SmartWalletProvider({

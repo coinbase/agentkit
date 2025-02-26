@@ -99,6 +99,7 @@ async function initializeAgent() {
       networkId: process.env.NETWORK_ID,
       signer,
       smartWalletAddress: walletData?.smartWalletAddress,
+      paymasterUrl: undefined, // Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
     });
 
     // Initialize AgentKit
