@@ -1,16 +1,12 @@
-from typing import Any, Optional
 from decimal import Decimal
+from typing import Any
 
-from web3 import Web3
-from web3.types import BlockIdentifier, ChecksumAddress, HexStr, TxParams
+from cdp import Cdp, SmartWallet, to_smart_wallet, UserOperation, EncodedCall
 from eth_account.account import LocalAccount
 from eth_account.datastructures import SignedTransaction
 from pydantic import BaseModel, Field
-from cdp import (
-    Cdp,
-    SmartWallet,
-    to_smart_wallet,
-)
+from web3 import Web3
+from web3.types import BlockIdentifier, ChecksumAddress, HexStr, TxParams
 
 from ..network import NETWORK_ID_TO_CHAIN, Network
 from .evm_wallet_provider import EvmWalletProvider
@@ -21,9 +17,9 @@ class SmartWalletProviderConfig(BaseModel):
 
     network_id: str = Field("base-sepolia", description="The network ID")
     signer: LocalAccount
-    smart_wallet_address: Optional[str] = Field(None, description="Smart wallet address")
-    cdp_api_key_name: Optional[str] = Field(None, description="The CDP API Key Name")
-    cdp_api_key_private_key: Optional[str] = Field(None, description="The CDP API Key Private Key")
+    smart_wallet_address: str | None = Field(None, description="Smart wallet address")
+    cdp_api_key_name: str | None = Field(None, description="The CDP API Key Name")
+    cdp_api_key_private_key: str | None = Field(None, description="The CDP API Key Private Key")
 
     class Config:
         """Configuration for SmartWalletProvider."""
@@ -32,7 +28,7 @@ class SmartWalletProviderConfig(BaseModel):
 
 class SmartWalletProvider(EvmWalletProvider):
     """A wallet provider that uses the Coinbase Smart Wallet SDK."""
-    
+
     def __init__(self, config: SmartWalletProviderConfig):
         """Initialize the SmartWalletProvider."""
         self._network_id = config.network_id
@@ -57,7 +53,7 @@ class SmartWalletProvider(EvmWalletProvider):
             )
         else:
             self._smart_wallet = SmartWallet.create(config.signer)
-        
+
         self._smart_wallet = self._smart_wallet.use_network(chain_id=int(self._network.chain_id))
 
     def get_address(self) -> str:
@@ -71,12 +67,13 @@ class SmartWalletProvider(EvmWalletProvider):
     def get_name(self) -> str:
         """Get the name of the wallet provider."""
         return "cdp_smart_wallet_provider"
-    
+
     def sign_message(self, message: str | bytes) -> HexStr:
         """Smart wallets cannot sign raw messages.
 
         Raises:
             NotImplementedError: Always, since smart wallets do not support signing raw messages.
+
         """
         raise NotImplementedError("Smart wallets do not support signing raw messages.")
 
@@ -85,6 +82,7 @@ class SmartWalletProvider(EvmWalletProvider):
 
         Raises:
             NotImplementedError: Always, since smart wallets do not support signing typed data.
+
         """
         raise NotImplementedError("Smart wallets do not support signing typed data.")
 
@@ -93,19 +91,18 @@ class SmartWalletProvider(EvmWalletProvider):
 
         Raises:
             NotImplementedError: Always, since smart wallets do not support signing transactions.
+
         """
         raise NotImplementedError("Smart wallets do not support signing transactions.")
 
     def send_transaction(self, transaction: TxParams) -> HexStr:
         """Send a transaction using the smart wallet."""
-        tx_result = self._smart_wallet.send_user_operation({
-            "calls": [{
-                "to": transaction["to"],
-                "value": transaction.get("value", 0),
-                "data": transaction.get("data", b""),
-            }]
-        })
-        result = wait_for_user_operation(tx_result)
+        user_operation = self._smart_wallet.send_user_operation(
+            calls=[
+                EncodedCall(to=transaction["to"], data=transaction.get("data", b""), value=transaction.get("value", 0)),
+            ]
+        )
+        result = user_operation.wait()
         if result.status == "complete":
             return result.transaction_hash
         else:

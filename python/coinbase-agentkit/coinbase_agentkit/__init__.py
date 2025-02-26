@@ -23,9 +23,9 @@ from .wallet_providers import (
     CdpWalletProviderConfig,
     EthAccountWalletProvider,
     EthAccountWalletProviderConfig,
+    EvmWalletProvider,
     SmartWalletProvider,
     SmartWalletProviderConfig,
-    EvmWalletProvider,
     WalletProvider,
 )
 
