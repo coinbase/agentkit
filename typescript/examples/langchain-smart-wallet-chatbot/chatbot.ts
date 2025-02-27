@@ -87,7 +87,9 @@ async function initializeAgent() {
     }
     if (!privateKey) {
       if (walletData?.smartWalletAddress) {
-        throw new Error(`Smart wallet found but no private key provided. Either provide the private key, or delete ${WALLET_DATA_FILE} and try again.`);
+        throw new Error(
+          `Smart wallet found but no private key provided. Either provide the private key, or delete ${WALLET_DATA_FILE} and try again.`,
+        );
       }
       privateKey = (process.env.PRIVATE_KEY || generatePrivateKey()) as Hex;
     }
