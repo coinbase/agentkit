@@ -3,7 +3,6 @@
 This example demonstrates an agent setup as a terminal style chatbot with access to the full set of AgentKit actions. A CDP Smart Wallet will be created and owned by the signer passed into the example.
 
 ## Ask the chatbot to engage in the Web3 ecosystem!
-
 - "Transfer a portion of your ETH to a random address"
 - "Use the faucet"
 - "What is the price of BTC?"
@@ -42,7 +41,6 @@ Once you have them, rename the `.env-local` file to `.env` and make sure you set
 #### Optional:
   - `PRIVATE_KEY=` *(if not provided, a new key will be generated)*
   - `NETWORK_ID=` *(defaults to base-sepolia if not set)*
-  - `CHAIN_ID=` *(optional chain ID override)*
 
 ## Running the example
 
