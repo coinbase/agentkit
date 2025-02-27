@@ -125,14 +125,13 @@ class SmartWalletProvider(EvmWalletProvider):
 
     def native_transfer(self, to: str, value: Decimal) -> HexStr:
         """Transfer native assets using the smart wallet."""
-        tx_result = self._smart_wallet.send_user_operation({
-            "calls": [{
-                "to": to,
-                "value": int(value),
-            }]
-        })
-        result = wait_for_user_operation(tx_result)
+        user_operation = self._smart_wallet.send_user_operation(
+            calls=[
+                EncodedCall(to=to, value=int(value), data=""),
+            ]
+        )
+        result = user_operation.wait()
         if result.status == "complete":
             return result.transaction_hash
         else:
-            raise Exception("Transfer failed")
+            raise Exception("Transaction failed")
