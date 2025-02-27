@@ -39,12 +39,42 @@ ERC20_ABI = [
     },
     {
         "type": "function",
+        "name": "approve",
+        "inputs": [
+            {
+                "name": "spender",
+                "type": "address",
+            },
+            {
+                "name": "amount",
+                "type": "uint256",
+            },
+        ],
+        "outputs": [
+            {
+                "type": "bool",
+            },
+        ],
+    },
+    {
+        "type": "function",
         "name": "decimals",
         "stateMutability": "view",
         "inputs": [],
         "outputs": [
             {
                 "type": "uint8",
+            },
+        ],
+    },
+    {
+        "type": "function",
+        "name": "symbol",
+        "stateMutability": "view",
+        "inputs": [],
+        "outputs": [
+            {
+                "type": "string",
             },
         ],
     },

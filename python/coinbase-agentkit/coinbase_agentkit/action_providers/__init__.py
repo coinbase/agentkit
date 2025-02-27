@@ -8,6 +8,7 @@ from .basename.basename_action_provider import (
 )
 from .cdp.cdp_api_action_provider import CdpApiActionProvider, cdp_api_action_provider
 from .cdp.cdp_wallet_action_provider import CdpWalletActionProvider, cdp_wallet_action_provider
+from .compound.compound_action_provider import CompoundActionProvider, compound_action_provider
 from .erc20.erc20_action_provider import ERC20ActionProvider, erc20_action_provider
 from .morpho.morpho_action_provider import MorphoActionProvider, morpho_action_provider
 from .pyth.pyth_action_provider import PythActionProvider, pyth_action_provider
@@ -30,6 +31,8 @@ __all__ = [
     "cdp_api_action_provider",
     "CdpWalletActionProvider",
     "cdp_wallet_action_provider",
+    "CompoundActionProvider",
+    "compound_action_provider",
     "ERC20ActionProvider",
     "erc20_action_provider",
     "MorphoActionProvider",
