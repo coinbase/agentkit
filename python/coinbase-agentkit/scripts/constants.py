@@ -3,6 +3,16 @@
 # Protocol families with descriptions
 PROTOCOL_FAMILIES = [
     {
+        "title": "No Protocols",
+        "value": "none",
+        "description": "No protocol support",
+    },
+    {
+        "title": "All Protocols",
+        "value": "all",
+        "description": "Support any protocol",
+    },
+    {
         "title": "EVM Networks",
         "value": "evm",
         "description": "Ethereum Virtual Machine networks (Ethereum, Base, etc.)",
@@ -11,6 +21,13 @@ PROTOCOL_FAMILIES = [
 
 # Network options organized by protocol family
 NETWORKS_BY_PROTOCOL = {
+    "all": [
+        {
+            "title": "All Networks",
+            "value": "all",
+            "description": "Support any network",
+        },
+    ],
     "evm": [
         {
             "title": "All EVM Networks",

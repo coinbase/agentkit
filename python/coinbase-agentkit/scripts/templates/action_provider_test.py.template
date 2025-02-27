@@ -1,16 +1,23 @@
 """Tests for {{ name_pascal }}ActionProvider."""
 
+{% if wallet_provider %}
 from unittest.mock import Mock
+{% endif %}
 
 import pytest
 
 from coinbase_agentkit.action_providers.{{ name }}.{{ name }}_action_provider import {{ name_pascal }}ActionProvider
-{% if protocol_family == "evm" and network_ids|length and network_ids[0] != "all" %}
+{% if protocol_family == "evm" and network_ids|length %}
 from coinbase_agentkit.network import NETWORK_ID_TO_CHAIN_ID, Network
 {% else %}
 from coinbase_agentkit.network import Network
 {% endif %}
+{% if wallet_provider %}
 from coinbase_agentkit.wallet_providers import {{ wallet_provider }}
+{% endif %}
+
+
+{%- if wallet_provider %}
 
 
 @pytest.fixture
@@ -19,7 +26,7 @@ def mock_wallet_provider():
     mock = Mock(spec={{ wallet_provider }})
     mock.get_network.return_value = Network(
         protocol_family="{{ protocol_family }}",
-        {% if network_ids|length and network_ids[0] != "all" %}
+        {% if network_ids|length %}
         network_id="{{ network_ids[0] }}",
         {% if protocol_family == "evm" %}
         chain_id=NETWORK_ID_TO_CHAIN_ID["{{ network_ids[0] }}"],
@@ -31,12 +38,21 @@ def mock_wallet_provider():
     )
     return mock
 
+
+{%- endif %}
+
+
+@pytest.fixture
+def provider():
+    """Create a provider instance for testing."""
+    return {{ name_pascal }}ActionProvider()
+
 def test_initialization(provider):
     """Test provider initialization."""
     assert isinstance(provider, {{ name_pascal }}ActionProvider)
     assert provider.name == "{{ name }}"
 
-{% if protocol_family == "all" %}
+{% if not protocol_family %}
 def test_supports_all_networks(provider):
     """Test that provider supports all networks."""
     network = Network(
@@ -46,10 +62,12 @@ def test_supports_all_networks(provider):
     )
     assert provider.supports_network(network) is True
 {% endif %}
-{% if protocol_family != "all" and not network_ids|length %}
+{% if protocol_family and not network_ids|length %}
 def test_supports_protocol_family(provider):
-    """Test that provider supports the protocol family."""
-    network = Network(protocol_family="{{ protocol_family }}")
+    """Test that provider supports all networks in the protocol family."""
+    network = Network(
+        protocol_family="{{ protocol_family }}"
+    )
     assert provider.supports_network(network) is True
 
 def test_does_not_support_other_protocols(provider):
@@ -57,34 +75,7 @@ def test_does_not_support_other_protocols(provider):
     network = Network(protocol_family="other-protocol-family")
     assert provider.supports_network(network) is False
 {% endif %}
-{% if protocol_family != "all" and network_ids|length %}
-{% if network_ids[0] == "all" %}
-def test_supports_all_protocol_networks(provider):
-    """Test that provider supports all networks in the protocol family."""
-    network = Network(
-        protocol_family="{{ protocol_family }}",
-        network_id=None,
-        chain_id=None
-    )
-    assert provider.supports_network(network) is True
-
-    # Test with specific network IDs
-    {% if protocol_family == "evm" %}
-    test_networks = [
-        ("base-mainnet", "8453"),
-        ("ethereum-mainnet", "1"),
-        ("base-sepolia", "84532"),
-        ("ethereum-sepolia", "11155111"),
-    ]
-    for network_id, chain_id in test_networks:
-        network = Network(
-            protocol_family="{{ protocol_family }}",
-            network_id=network_id,
-            chain_id=chain_id
-        )
-        assert provider.supports_network(network) is True
-    {% endif %}
-{% else %}
+{% if protocol_family and network_ids|length %}
 def test_supports_configured_networks(provider):
     """Test that provider supports configured networks."""
     {% for networkId in network_ids %}
@@ -97,7 +88,6 @@ def test_supports_configured_networks(provider):
     )
     assert provider.supports_network(network) is True
     {% endfor %}
-{% endif %}
 
 def test_does_not_support_other_networks(provider):
     """Test that provider does not support other networks."""
@@ -109,12 +99,12 @@ def test_does_not_support_other_networks(provider):
     assert provider.supports_network(network) is False
 {% endif %}
 
-{% if protocol_family != "all" %}
+{% if protocol_family %}
 def test_handles_invalid_network_objects(provider):
     """Test that provider handles invalid network objects."""
     network = Network(protocol_family="invalid")
     assert provider.supports_network(network) is False
-    {% if network_ids|length and network_ids[0] != "all" %}
+    {% if network_ids|length %}
     network = Network(protocol_family="{{ protocol_family }}")
     assert provider.supports_network(network) is False
     {% endif %}

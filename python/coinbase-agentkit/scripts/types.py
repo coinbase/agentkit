@@ -1,19 +1,22 @@
 """Type definitions for the action provider generator script."""
 
+from dataclasses import dataclass
 from typing import Literal, TypedDict
 
 # Protocol family types
-ProtocolFamily = Literal["all", "evm"]
+# None indicates support for all networks
+ProtocolFamily = Literal["evm"] | None
 NetworkId = str
 WalletProvider = str
 
-class ProviderConfig(TypedDict):
+@dataclass
+class ProviderConfig:
     """Configuration for an action provider."""
 
     name: str
     protocol_family: ProtocolFamily
     network_ids: list[NetworkId]
-    wallet_provider: WalletProvider
+    wallet_provider: WalletProvider | None = None
 
 class PromptResult(TypedDict, total=False):
     """Result from the prompts."""

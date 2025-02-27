@@ -9,26 +9,34 @@ which provides actions for {{ name }} operations.
 from typing import Any
 
 from ...network import Network
+{% if wallet_provider %}
 from ...wallet_providers import {{ wallet_provider }}
+{% endif %}
 from ..action_decorator import create_action
 from ..action_provider import ActionProvider
 from .schemas import ExampleActionSchema
 
-{% if protocol_family != "all" and network_ids|length > 0 %}
+{% if protocol_family and network_ids|length %}
 # Supported network IDs for this provider
 SUPPORTED_NETWORK_IDS = [{% for id in network_ids %}"{{ id }}"{% if not loop.last %}, {% endif %}{% endfor %}]
 {% endif %}
 
-class {{ name_pascal }}ActionProvider(ActionProvider[{{ wallet_provider }}]):
+class {{ name_pascal }}ActionProvider(ActionProvider{% if wallet_provider %}[{{ wallet_provider }}]{% endif %}):
     """{{ name_pascal }}ActionProvider provides actions for {{ name }} operations.
 
-    This provider is designed to work with {{ wallet_provider }} for blockchain interactions.
-    {% if protocol_family == "all" %}
-    It supports all blockchain networks.
+    {% if not protocol_family %}
+    This provider is designed to provide blockchain-agnostic operations.
     {% elif network_ids|length == 0 %}
-    It supports all {{ protocol_family }} networks.
+    This provider is designed to work with {{ protocol_family }} networks.
     {% else %}
-    It supports {{ protocol_family }} networks: {% for networkId in network_ids %}{{ networkId }}{% if not loop.last %}, {% endif %}{% endfor %}.
+    This provider is designed to work with specific {{ protocol_family }} networks:
+    {% for networkId in network_ids %}
+    {{ networkId }}{% if not loop.last %}, {% endif %}
+    {%- endfor %}
+    {% endif %}
+
+    {% if wallet_provider %}
+    This provider requires a {{ wallet_provider }} for blockchain interactions.
     {% endif %}
     """
 
@@ -54,7 +62,9 @@ class {{ name_pascal }}ActionProvider(ActionProvider[{{ wallet_provider }}]):
     )
     def example_action(
         self,
+        {% if wallet_provider %}
         wallet_provider: {{ wallet_provider }},
+        {% endif %}
         args: dict[str, Any],
     ) -> str:
         """Execute example action.
@@ -62,7 +72,9 @@ class {{ name_pascal }}ActionProvider(ActionProvider[{{ wallet_provider }}]):
         Replace or modify this with your actual action.
 
         Args:
+            {% if wallet_provider %}
             wallet_provider: The wallet provider instance for blockchain interactions
+            {% endif %}
             args: Arguments defined by ExampleActionSchema
 
         Returns:
@@ -71,10 +83,14 @@ class {{ name_pascal }}ActionProvider(ActionProvider[{{ wallet_provider }}]):
         """
         # TODO: Implement your action logic here
         # Example implementation:
+        validated_args = ExampleActionSchema(**args)
+        {% if wallet_provider %}
         network = wallet_provider.get_network()
-        return f"Example action called with {args['field_name']} on network {network.network_id}"
+        return f"Example action called with {validated_args.field_name} on network {network.network_id}"
+        {% else %}
+        return f"Example action called with {validated_args.field_name}"
+        {% endif %}
 
-    {% if protocol_family == "all" %}
     def supports_network(self, network: Network) -> bool:
         """Check if this provider supports the given network.
 
@@ -85,21 +101,12 @@ class {{ name_pascal }}ActionProvider(ActionProvider[{{ wallet_provider }}]):
             True if the network is supported
 
         """
-        # all networks
+        {% if not protocol_family %}
+        # Provider is blockchain-agnostic
         return True
-    {% else %}
-    def supports_network(self, network: Network) -> bool:
-        """Check if this provider supports the given network.
-
-        Args:
-            network: The network to check support for
-
-        Returns:
-            True if the network is supported
-
-        """
+        {% else %}
         {% if network_ids|length %}
-        # specific protocol networks
+        # Provider supports specific networks
         if network.protocol_family != "{{ protocol_family }}":
             return False
 
@@ -108,10 +115,10 @@ class {{ name_pascal }}ActionProvider(ActionProvider[{{ wallet_provider }}]):
 
         return network.network_id in SUPPORTED_NETWORK_IDS
         {% else %}
-        # all protocol networks
+        # Provider supports all networks in protocol family
         return network.protocol_family == "{{ protocol_family }}"
         {% endif %}
-    {% endif %}
+        {% endif %}
 
 
 def {{ name }}_action_provider() -> {{ name_pascal }}ActionProvider:
@@ -122,3 +129,4 @@ def {{ name }}_action_provider() -> {{ name_pascal }}ActionProvider:
 
     """
     return {{ name_pascal }}ActionProvider()
+

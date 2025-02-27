@@ -15,6 +15,19 @@ from .types import ProviderConfig
 
 console = Console()
 
+def provider_exists(name: str) -> bool:
+    """Check if an action provider with the given name already exists.
+
+    Args:
+        name: The name to check
+
+    Returns:
+        bool: True if provider exists, False otherwise
+
+    """
+    provider_dir = Path("coinbase_agentkit/action_providers") / name
+    return provider_dir.exists()
+
 def validate_name(name: str) -> bool:
     """Validate the action provider name.
 
@@ -78,7 +91,7 @@ def get_provider_path(config: ProviderConfig) -> Path:
         Path: Directory path for the action provider
 
     """
-    return Path("coinbase_agentkit/action_providers") / config["name"]
+    return Path("coinbase_agentkit/action_providers") / config.name
 
 def format_snake_case(text: str) -> str:
     """Convert a string to snake_case.
@@ -116,11 +129,11 @@ def get_template_context(config: ProviderConfig) -> dict[str, Any]:
 
     """
     return {
-        "name": config["name"],
-        "name_pascal": format_pascal_case(config["name"]),
-        "protocol_family": config["protocol_family"],
-        "network_ids": config["network_ids"],
-        "wallet_provider": config["wallet_provider"],
+        "name": config.name,
+        "name_pascal": format_pascal_case(config.name),
+        "protocol_family": config.protocol_family,
+        "network_ids": config.network_ids,
+        "wallet_provider": config.wallet_provider,
     }
 
 def update_action_providers_init(config: ProviderConfig) -> None:
@@ -135,8 +148,8 @@ def update_action_providers_init(config: ProviderConfig) -> None:
     with open(init_path, encoding="utf-8") as f:
         lines = f.readlines()
 
-    name = config["name"]
-    name_pascal = format_pascal_case(name)
+    name = config.name
+    name_pascal = format_pascal_case(config.name)
 
     last_import_idx = 0
     closing_bracket_idx = 0
@@ -184,7 +197,7 @@ def create_provider_files(config: ProviderConfig) -> None:
     provider_dir = get_provider_path(config)
     create_directory(provider_dir)
 
-    test_dir = Path("tests/action_providers") / config["name"]
+    test_dir = Path("tests/action_providers") / config.name
     create_directory(test_dir)
 
     context = get_template_context(config)
@@ -193,7 +206,7 @@ def create_provider_files(config: ProviderConfig) -> None:
 
     provider_templates = {
         "__init__.py": "__init__.py.template",
-        f"{config['name']}_action_provider.py": "action_provider.py.template",
+        f"{config.name}_action_provider.py": "action_provider.py.template",
         "schemas.py": "schemas.py.template",
         "README.md": "README.md.template",
     }
