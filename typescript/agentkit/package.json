@@ -39,7 +39,7 @@
     "typescript"
   ],
   "dependencies": {
-    "@coinbase/coinbase-sdk": "^0.17.0",
+    "@coinbase/coinbase-sdk": "^0.19.0",
     "@jup-ag/api": "^6.0.39",
     "@privy-io/server-auth": "^1.18.4",
     "@solana/spl-token": "^0.4.12",

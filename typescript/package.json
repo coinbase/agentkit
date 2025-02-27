@@ -9,7 +9,8 @@
     "examples/langchain-twitter-chatbot",
     "examples/langchain-farcaster-chatbot",
     "examples/langchain-privy-chatbot",
-    "examples/langchain-solana-chatbot"
+    "examples/langchain-solana-chatbot",
+    "examples/langchain-smart-wallet-chatbot"
   ],
   "packageManager": "npm@8.9.0",
   "scripts": {

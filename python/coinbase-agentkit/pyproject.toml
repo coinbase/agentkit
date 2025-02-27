@@ -10,7 +10,7 @@ packages = [{ include = "coinbase_agentkit" }]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-cdp-sdk = "0.17.0"
+cdp-sdk = "0.19.0"
 pydantic = "^2.0"
 web3 = "^7.6.0"
 python-dotenv = "^1.0.1"
@@ -30,6 +30,7 @@ myst-parser = "^4.0.0"
 ruff-lsp = "^0.0.58"
 python-lsp-server = "^1.12.0"
 tweepy = "^4.15.0"
+towncrier = "^24.8.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -57,3 +58,16 @@ line-ending = "auto"
 
 [tool.ruff.lint.isort]
 known-first-party = ["coinbase_agentkit, cdp"]
+
+[tool.towncrier]
+package = "coinbase_agentkit"
+package_dir = "coinbase_agentkit"
+filename = "CHANGELOG.md"
+directory = "changelog.d/"
+start_string = "# Coinbase AgentKit Changelog"
+
+[tool.towncrier.fragment.feature]
+name = "Added"
+
+[tool.towncrier.fragment.bugfix]
+name = "Fixed"
