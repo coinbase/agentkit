@@ -2,6 +2,7 @@ from decimal import Decimal
 from typing import Any
 
 from cdp import Cdp, SmartWallet, to_smart_wallet, UserOperation, EncodedCall
+from cdp.evm_call_types import ContractCall
 from eth_account.account import LocalAccount
 from eth_account.datastructures import SignedTransaction
 from pydantic import BaseModel, Field
@@ -100,17 +101,39 @@ class SmartWalletProvider(EvmWalletProvider):
         raise NotImplementedError("Smart wallets do not support signing transactions.")
 
     def send_transaction(self, transaction: TxParams) -> HexStr:
-        """Send a transaction using the smart wallet."""
+        """Send a transaction using the smart wallet.
+
+        Unlike traditional Ethereum transactions, this method submits a User Operation
+        instead of directly broadcasting a transaction. The smart wallet handles execution,
+        but a standard transaction hash is still returned upon completion.
+        """
         user_operation = self._smart_wallet.send_user_operation(
             calls=[
                 EncodedCall(to=transaction["to"], data=transaction.get("data", b""), value=transaction.get("value", 0)),
             ]
         )
-        result = user_operation.wait(interval_seconds=0.2, timeout_seconds=20)
+        result = user_operation.wait()
         if result.status == UserOperation.Status.COMPLETE:
             return result.transaction_hash
         else:
             raise Exception("Transaction failed")
+
+    def send_user_operation(
+        self,
+        calls: list[ContractCall],
+    ) -> HexStr:
+        """Send a user operation directly.
+
+        This method directly exposes the sendUserOperation functionality, allowing
+        SmartWallet-aware tools to fully leverage its capabilities, including batching multiple calls.
+        Unlike send_transaction, which wraps calls in a single operation, this method allows
+        direct execution of arbitrary operations within a User Operation.
+        """
+        user_operation = self._smart_wallet.send_user_operation(calls=calls)
+        result = user_operation.wait()
+        if result.status == UserOperation.Status.COMPLETE:
+            return result.transaction_hash
+        raise Exception(f"Operation failed with status: {result.status}")
 
     def wait_for_transaction_receipt(self, tx_hash: HexStr, timeout: float = 120, poll_latency: float = 0.1) -> dict[str, Any]:
         """Wait for a transaction receipt."""
