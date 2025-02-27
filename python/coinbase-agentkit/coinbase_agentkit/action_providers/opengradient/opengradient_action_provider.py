@@ -53,7 +53,7 @@ Outputs:
 - This function outputs a single float value representing the forecasted standard deviation of 1-minute returns over the next hour
 - This function also outputs a link to block explorer for the smart contract where the model is deployed
 
-Example output format (represents approximately .037% standard deviation around the mean):
+Example output format (represents approximately .038% standard deviation around the mean):
 '0.0377415738%'
 Block Explorer: https://explorer.opengradient.ai/address/0xFC5d8EDba288f9330Af324555F1A729303382725
 
