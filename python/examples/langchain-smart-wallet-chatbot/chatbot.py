@@ -54,7 +54,7 @@ def initialize_agent():
     network_id = os.getenv("NETWORK_ID", "base-sepolia")
     
     # Initialize CDP Wallet Provider
-    smart_wallet_provider = SmartWalletProvider(SmartWalletProviderConfig(
+    wallet_provider = SmartWalletProvider(SmartWalletProviderConfig(
         network_id=network_id,
         signer=signer,
         smart_wallet_address=wallet_data.get("smart_wallet_address"),
@@ -64,13 +64,13 @@ def initialize_agent():
     # Save both private key and smart wallet address
     wallet_data = {
         "private_key": private_key,
-        "smart_wallet_address": smart_wallet_provider.get_address()
+        "smart_wallet_address": wallet_provider.get_address()
     }
     with open(wallet_data_file, "w") as f:
         json.dump(wallet_data, f, indent=2)
     
     agentkit = AgentKit(AgentKitConfig(
-        wallet_provider=smart_wallet_provider,
+        wallet_provider=wallet_provider,
         action_providers=[
             cdp_api_action_provider(),
             erc20_action_provider(),
