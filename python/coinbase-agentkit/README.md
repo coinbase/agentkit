@@ -417,7 +417,7 @@ agent_kit = AgentKit(AgentKitConfig(
 
 ### SmartWalletProvider
 
-Example usage with a private key:
+The `SmartWalletProvider` is a wallet provider that uses [CDP Smart Wallets](https://docs.cdp.coinbase.com/wallet-api/docs/smart-wallets).
 
 ```python
 import os
