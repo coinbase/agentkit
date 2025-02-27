@@ -2,10 +2,6 @@
 
 ## Unreleased
 
-### Added
-
-- Added `rpc_url` to `EthAccountWalletProvider` configurable options.
-
 ### Fixed
 
 - Fixed erc20 `get_balance` action to format erc20 balance with correct number of decimals.
