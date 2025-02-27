@@ -243,7 +243,6 @@ AgentKit is proud to have support for the following protocols, frameworks, walle
 <a href="https://jup.ag" target="_blank"><img src="./assets/protocols/jupiter.svg" width="100" height="auto" alt="Jupiter"></a>
 <a href="https://www.moonwell.fi" target="_blank"><img src="./assets/protocols/moonwell.svg" width="100" height="auto" alt="Moonwell"></a>
 <a href="https://app.morpho.org" target="_blank"><img src="./assets/protocols/morpho.svg" width="100" height="auto" alt="Morpho"></a>
-<a href="https://privy.io" target="_blank"><img src="./assets/protocols/privy.svg" width="100" height="auto" alt="Privy"></a>
 <a href="https://pyth.network" target="_blank"><img src="./assets/protocols/pyth.svg" width="100" height="auto" alt="Pyth"></a>
 <a href="https://superfluid.org" target="_blank"><img src="./assets/protocols/superfluid.svg" width="100" height="auto" alt="Superfluid"></a>
 <a href="https://zora.co" target="_blank"><img src="./assets/protocols/zora.svg" width="100" height="auto" alt="Zora"></a>
