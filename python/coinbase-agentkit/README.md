@@ -405,7 +405,6 @@ account = Account.from_key(private_key)
 wallet_provider = EthAccountWalletProvider(
     config=EthAccountWalletProviderConfig(
         account=account,
-        chain_id="84532",
         rpc_url="https://sepolia.base.org",
     )
 )
