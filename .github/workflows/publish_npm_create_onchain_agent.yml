@@ -1,10 +1,10 @@
-name: Release AgentKit to NPM
+name: Release Create Onchain Agent to NPM
 
 on:
   workflow_dispatch:
 
 jobs:
-  deploy-npm-agentkit:
+  deploy-npm-create-onchain-agent:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -17,8 +17,8 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           cache: "npm"
           cache-dependency-path: ./typescript
-      - name: Install, build and publish @coinbase/agentkit
-        working-directory: ./typescript/agentkit
+      - name: Install, build and publish create-onchain-agent
+        working-directory: ./typescript/create-onchain-agent
         run: |
           npm ci
           npm run build

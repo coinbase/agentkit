@@ -125,7 +125,8 @@ agent = create_react_agent(
 Action providers define the actions that an agent can take. They are created by subclassing the `ActionProvider` abstract class.
 
 ```python
-from coinbase_agentkit import ActionProvider, WalletProvider, Network
+from coinbase_agentkit import ActionProvider, WalletProvider
+from coinbase_agentkit.network import Network
 
 class MyActionProvider(ActionProvider[WalletProvider]):
     def __init__(self):
@@ -152,7 +153,8 @@ class MyActionSchema(BaseModel):
 2. Define the action:
 
 ```python
-from coinbase_agentkit import ActionProvider, WalletProvider, Network, create_action
+from coinbase_agentkit import ActionProvider, WalletProvider, create_action
+from coinbase_agentkit.network import Network
 
 class MyActionProvider(ActionProvider[WalletProvider]):
     def __init__(self):

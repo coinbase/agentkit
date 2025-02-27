@@ -5,6 +5,7 @@ import { encodeFunctionData, Hex } from "viem";
 import { abi } from "./constants";
 
 const MOCK_AMOUNT = 15;
+const MOCK_DECIMALS = 6;
 const MOCK_CONTRACT_ADDRESS = "0x1234567890123456789012345678901234567890";
 const MOCK_DESTINATION = "0x9876543210987654321098765432109876543210";
 const MOCK_ADDRESS = "0x1234567890123456789012345678901234567890";
@@ -40,11 +41,12 @@ describe("Get Balance Action", () => {
       getAddress: jest.fn().mockReturnValue(MOCK_ADDRESS),
       readContract: jest.fn(),
     } as unknown as jest.Mocked<EvmWalletProvider>;
-
-    mockWallet.readContract.mockResolvedValue(MOCK_AMOUNT);
   });
 
   it("should successfully respond", async () => {
+    mockWallet.readContract.mockResolvedValueOnce(MOCK_AMOUNT);
+    mockWallet.readContract.mockResolvedValueOnce(MOCK_DECIMALS);
+
     const args = {
       contractAddress: MOCK_CONTRACT_ADDRESS,
     };
@@ -57,7 +59,9 @@ describe("Get Balance Action", () => {
       functionName: "balanceOf",
       args: [mockWallet.getAddress()],
     });
-    expect(response).toContain(`Balance of ${MOCK_CONTRACT_ADDRESS} is ${MOCK_AMOUNT}`);
+    expect(response).toContain(
+      `Balance of ${MOCK_CONTRACT_ADDRESS} is ${MOCK_AMOUNT / 10 ** MOCK_DECIMALS}`,
+    );
   });
 
   it("should fail with an error", async () => {

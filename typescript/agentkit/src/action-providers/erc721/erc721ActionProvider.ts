@@ -132,7 +132,7 @@ It takes the following inputs:
         address: args.contractAddress as Hex,
         abi: ERC721_ABI,
         functionName: "balanceOf",
-        args: [address],
+        args: [address as Hex],
       });
 
       return `Balance of NFTs for contract ${args.contractAddress} at address ${address} is ${balance}`;
