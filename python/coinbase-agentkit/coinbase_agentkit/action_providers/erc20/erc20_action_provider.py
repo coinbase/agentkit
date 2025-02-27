@@ -10,6 +10,7 @@ from ..action_decorator import create_action
 from ..action_provider import ActionProvider
 from .constants import ERC20_ABI
 from .schemas import GetBalanceSchema, TransferSchema
+from .utils import parse_units
 
 
 class ERC20ActionProvider(ActionProvider[EvmWalletProvider]):
@@ -64,7 +65,7 @@ class ERC20ActionProvider(ActionProvider[EvmWalletProvider]):
         This tool will transfer an ERC20 token from the wallet to another onchain address.
 
         It takes the following inputs:
-        - amount: The amount to transfer
+        - amount: The amount to transfer, in human-readable format (e.g. 1 USDC, 0.01 WETH)
         - contract_address: The contract address of the token to transfer
         - destination: Where to send the tokens
 
@@ -88,9 +89,17 @@ class ERC20ActionProvider(ActionProvider[EvmWalletProvider]):
         try:
             validated_args = TransferSchema(**args)
 
+            decimals = wallet_provider.read_contract(
+                contract_address=validated_args.contract_address,
+                abi=ERC20_ABI,
+                function_name="decimals",
+                args=[],
+            )
+
             contract = Web3().eth.contract(address=validated_args.contract_address, abi=ERC20_ABI)
             data = contract.encode_abi(
-                "transfer", [validated_args.destination, int(validated_args.amount)]
+                "transfer",
+                [validated_args.destination, parse_units(validated_args.amount, decimals)],
             )
 
             tx_hash = wallet_provider.send_transaction(

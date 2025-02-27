@@ -10,6 +10,7 @@ from coinbase_agentkit.action_providers.erc20.erc20_action_provider import (
     erc20_action_provider,
 )
 from coinbase_agentkit.action_providers.erc20.schemas import GetBalanceSchema, TransferSchema
+from coinbase_agentkit.action_providers.erc20.utils import parse_units
 from coinbase_agentkit.network import Network
 
 from .conftest import (
@@ -110,11 +111,14 @@ def test_transfer_success(mock_wallet):
 
     mock_tx_hash = "0xghijkl987654321"
     mock_wallet.send_transaction.return_value = mock_tx_hash
+    mock_wallet.read_contract.side_effect = [MOCK_DECIMALS]
 
     response = provider.transfer(mock_wallet, args)
 
     contract = Web3().eth.contract(address=MOCK_CONTRACT_ADDRESS, abi=ERC20_ABI)
-    expected_data = contract.encode_abi("transfer", [MOCK_DESTINATION, int(MOCK_AMOUNT)])
+    expected_data = contract.encode_abi(
+        "transfer", [MOCK_DESTINATION, parse_units(MOCK_AMOUNT, MOCK_DECIMALS)]
+    )
 
     mock_wallet.send_transaction.assert_called_once_with(
         {
@@ -136,12 +140,15 @@ def test_transfer_error(mock_wallet):
     }
     error = Exception("Failed to execute transfer")
     mock_wallet.send_transaction.side_effect = error
+    mock_wallet.read_contract.side_effect = [MOCK_DECIMALS]
     provider = erc20_action_provider()
 
     response = provider.transfer(mock_wallet, args)
 
     contract = Web3().eth.contract(address=MOCK_CONTRACT_ADDRESS, abi=ERC20_ABI)
-    expected_data = contract.encode_abi("transfer", [MOCK_DESTINATION, int(MOCK_AMOUNT)])
+    expected_data = contract.encode_abi(
+        "transfer", [MOCK_DESTINATION, parse_units(MOCK_AMOUNT, MOCK_DECIMALS)]
+    )
 
     mock_wallet.send_transaction.assert_called_once_with(
         {
