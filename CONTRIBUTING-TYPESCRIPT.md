@@ -10,6 +10,7 @@ This guide covers TypeScript-specific setup and development for AgentKit.
 - [Integrating into an AI Agent Framework](#integrating-into-an-ai-agent-framework)
 - [Testing](#testing)
 - [Code Style](#code-style)
+- [Documentation](#documentation)
 - [Changelog](#changelog)
 
 ## Development Setup
@@ -254,6 +255,10 @@ npm run lint
 # Fix linting issues
 npm run lint:fix
 ```
+
+## Documentation
+
+The majority of our documentation exists within the AgentKit repo itself, in the form of colocated `README.md` files and inline docstrings. When adding new functionality or changing documented behavior, please update the relevant `README.md` file and inline docstrings to reflect the changes. For example, if you're adding a new action provider, also include a `README.md` in your new folder (see [the ERC20 Action Provider README](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/action-providers/erc20/README.md) as a reference). Or, if you're updating an existing action provider, update its `README.md` to reflect the changes. If it doesn't have a README, please add one! These are just a couple examples; docs exist throughout the codebase and most code changes will also require updates to the docs.
 
 ## Changelog
 
