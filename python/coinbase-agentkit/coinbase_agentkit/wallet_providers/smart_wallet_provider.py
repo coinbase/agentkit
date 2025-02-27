@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Any
 
-from cdp import Cdp, SmartWallet, to_smart_wallet, UserOperation, EncodedCall
+from cdp import Cdp, EncodedCall, SmartWallet, UserOperation, to_smart_wallet
 from cdp.evm_call_types import ContractCall
 from eth_account.account import LocalAccount
 from eth_account.datastructures import SignedTransaction
