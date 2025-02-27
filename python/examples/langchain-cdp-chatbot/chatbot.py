@@ -23,12 +23,8 @@ from coinbase_agentkit import (
     pyth_action_provider,
     wallet_action_provider,
     weth_action_provider,
-
-    opengradient_action_provider,
 )
 from coinbase_agentkit_langchain import get_langchain_tools
-
-import opengradient as og
 
 # Configure a file to persist the agent's CDP API Wallet Data.
 wallet_data_file = "wallet_data.txt"
@@ -39,7 +35,7 @@ load_dotenv()
 def initialize_agent():
     """Initialize the agent with CDP Agentkit."""
     # Initialize LLM
-    llm = og.llm.langchain_adapter(private_key=os.environ.get('OPENGRADIENT_PRIVATE_KEY'), model_cid='Qwen/Qwen2.5-72B-Instruct', max_tokens=10000) 
+    llm = ChatOpenAI(model="gpt-4o-mini")
 
     # Initialize CDP Wallet Provider
     wallet_data = None
@@ -62,7 +58,6 @@ def initialize_agent():
             pyth_action_provider(),
             wallet_action_provider(),
             weth_action_provider(),
-            opengradient_action_provider(),
         ]
     ))
 
