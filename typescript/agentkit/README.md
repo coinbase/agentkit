@@ -30,6 +30,7 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
   - [PrivyWalletProvider](#privywalletprovider)
     - [Authorization Keys](#authorization-keys)
     - [Exporting Privy Wallet information](#exporting-privy-wallet-information)
+  - [SmartWalletProvider](#smartwalletprovider)
 - [SVM Wallet Providers](#svm-wallet-providers)
   - [SolanaKeypairWalletProvider](#solanakeypairwalletprovider)
     - [Network Configuration](#solana-network-configuration)
@@ -632,6 +633,28 @@ const walletData = await walletProvider.exportWallet();
     authorizationKey: string | undefined;
     chainId: string | undefined;
 }
+```
+
+### SmartWalletProvider
+
+The `SmartWalletProvider` is a wallet provider that uses [CDP Smart Wallets](https://docs.cdp.coinbase.com/wallet-api/docs/smart-wallets).
+
+```typescript
+import { SmartWalletProvider, SmartWalletConfig } from "@coinbase/agentkit";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+
+const networkId = process.env.NETWORK_ID || "base-sepolia";
+
+const privateKey = process.env.PRIVATE_KEY || generatePrivateKey();
+const signer = privateKeyToAccount(privateKey);
+
+// Configure Wallet Provider
+const walletProvider = await SmartWalletProvider.configureWithWallet({
+  networkId,
+  signer,
+  smartWalletAddress: undefined, // If not provided a new smart wallet will be created
+  paymasterUrl: undefined, // Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
+});
 ```
 
 ## SVM Wallet Providers
