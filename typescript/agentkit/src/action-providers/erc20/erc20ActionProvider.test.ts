@@ -1,7 +1,7 @@
 import { erc20ActionProvider } from "./erc20ActionProvider";
 import { TransferSchema } from "./schemas";
 import { EvmWalletProvider } from "../../wallet-providers";
-import { encodeFunctionData, Hex } from "viem";
+import { encodeFunctionData, Hex, parseUnits } from "viem";
 import { abi } from "./constants";
 
 const MOCK_AMOUNT = 15;
@@ -96,8 +96,10 @@ describe("Transfer Action", () => {
     mockWallet = {
       sendTransaction: jest.fn(),
       waitForTransactionReceipt: jest.fn(),
+      readContract: jest.fn(),
     } as unknown as jest.Mocked<EvmWalletProvider>;
 
+    mockWallet.readContract.mockResolvedValueOnce(MOCK_DECIMALS);
     mockWallet.sendTransaction.mockResolvedValue(TRANSACTION_HASH);
     mockWallet.waitForTransactionReceipt.mockResolvedValue({});
   });
@@ -111,12 +113,19 @@ describe("Transfer Action", () => {
 
     const response = await actionProvider.transfer(mockWallet, args);
 
+    expect(mockWallet.readContract).toHaveBeenCalledWith({
+      address: args.contractAddress as Hex,
+      abi,
+      functionName: "decimals",
+      args: [],
+    });
+
     expect(mockWallet.sendTransaction).toHaveBeenCalledWith({
       to: args.contractAddress as Hex,
       data: encodeFunctionData({
         abi,
         functionName: "transfer",
-        args: [args.destination as Hex, BigInt(args.amount)],
+        args: [args.destination as Hex, parseUnits(args.amount.toString(), MOCK_DECIMALS)],
       }),
     });
     expect(mockWallet.waitForTransactionReceipt).toHaveBeenCalledWith(TRANSACTION_HASH);
@@ -143,7 +152,7 @@ describe("Transfer Action", () => {
       data: encodeFunctionData({
         abi,
         functionName: "transfer",
-        args: [args.destination as Hex, BigInt(args.amount)],
+        args: [args.destination as Hex, parseUnits(args.amount.toString(), MOCK_DECIMALS)],
       }),
     });
     expect(response).toContain(`Error transferring the asset: ${error}`);

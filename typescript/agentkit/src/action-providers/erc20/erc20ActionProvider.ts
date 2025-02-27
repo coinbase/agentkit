@@ -4,7 +4,7 @@ import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
 import { GetBalanceSchema, TransferSchema } from "./schemas";
 import { abi } from "./constants";
-import { encodeFunctionData, formatUnits, Hex } from "viem";
+import { encodeFunctionData, formatUnits, Hex, parseUnits } from "viem";
 import { EvmWalletProvider } from "../../wallet-providers";
 
 /**
@@ -70,7 +70,7 @@ export class ERC20ActionProvider extends ActionProvider<EvmWalletProvider> {
     This tool will transfer an ERC20 token from the wallet to another onchain address.
 
 It takes the following inputs:
-- amount: The amount to transfer
+- amount: The amount to transfer, in human-readable format (e.g. 1 USDC, 0.01 WETH)
 - contractAddress: The contract address of the token to transfer
 - destination: Where to send the funds (can be an onchain address, ENS 'example.eth', or Basename 'example.base.eth')
 
@@ -85,12 +85,19 @@ Important notes:
     args: z.infer<typeof TransferSchema>,
   ): Promise<string> {
     try {
+      const decimals = await walletProvider.readContract({
+        address: args.contractAddress as Hex,
+        abi,
+        functionName: "decimals",
+        args: [],
+      });
+
       const hash = await walletProvider.sendTransaction({
         to: args.contractAddress as Hex,
         data: encodeFunctionData({
           abi,
           functionName: "transfer",
-          args: [args.destination as Hex, BigInt(args.amount)],
+          args: [args.destination as Hex, parseUnits(args.amount.toString(), decimals)],
         }),
       });
 

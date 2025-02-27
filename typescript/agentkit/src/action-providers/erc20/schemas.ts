@@ -5,7 +5,11 @@ import { z } from "zod";
  */
 export const TransferSchema = z
   .object({
-    amount: z.custom<bigint>().describe("The amount of the asset to transfer"),
+    amount: z
+      .custom<bigint>()
+      .describe(
+        "The amount of the asset to transfer, in human-readable format (e.g. 1 USDC, 0.01 WETH)",
+      ),
     contractAddress: z.string().describe("The contract address of the token to transfer"),
     destination: z.string().describe("The destination to transfer the funds"),
   })
