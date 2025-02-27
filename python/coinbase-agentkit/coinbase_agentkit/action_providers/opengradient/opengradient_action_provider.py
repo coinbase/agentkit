@@ -44,16 +44,16 @@ class OpenGradientActionProvider(ActionProvider):
         name="read_eth_usdt_one_hour_volatility_forecast",
         description="""
 This tool reads the latest ETH/USDT 1-hour volatility prediction from a smart-contract model deployment on the OpenGradient network.
-The model forecasts the standard deviation of 1-minute returns for ETH/USDT over the next hour.
+The model forecasts the expected standard deviation of ETH/USDT price movements over 1-minute intervals for the next hour.
 
 Inputs:
 - The model's inputs are handled automatically by oracles - no user input is required.
 
 Outputs:
-- This function outputs a single float value representing the predicted standard deviation
+- This function outputs a single float value representing the forecasted standard deviation of 1-minute returns over the next hour
 - This function also outputs a link to block explorer for the smart contract where the model is deployed
 
-Example output format (represents approximately .037% increase in volatility):
+Example output format (represents approximately .037% standard deviation around the mean):
 '0.0377415738%'
 Block Explorer: https://explorer.opengradient.ai/address/0xFC5d8EDba288f9330Af324555F1A729303382725
 
@@ -89,23 +89,23 @@ Important notes:
     @create_action(
         name="read_btc_one_hour_price_forecast",
         description="""
-This tool reads the latest SUI/USDT 6-hour return forecast from a smart-contract model deployment on the OpenGradient network.
-The model predicts the expected price return over the next 6 hours for the SUI/USDT trading pair.
+This tool reads the latest BTC 1-hour return forecast from a smart-contract model deployment on the OpenGradient network.
+The model predicts the percent price change over the next hour for Bitcoin.
 
 Inputs:
 - The model's inputs are handled automatically by oracles - no user input is required.
 
 Outputs:
-- This model outputs a single float value representing the predicted 6-hour return
+- This model outputs a single float value representing the percent change over the next hour
 - This function also outputs a link to block explorer for the smart contract where the model is deployed
 
-Example output format (represents approximately -10.84% predicted return):
-'-10.8388245106%'
+Example output format (represents approximately -.25% predicted return):
+'-0.2488245106%'
 Block Explorer: https://explorer.opengradient.ai/address/0x080881b65427Da162CA0995fB23710Db4E8d85Cb
 
 Important notes:
 - This is a read-only operation and will not modify any blockchain state
-- The prediction is automatically updated with the 6 most recent 3-hour OHLC candles using oracle-fed data
+- The prediction is automatically updated with the previous 24 hours of BTC price data
 """,
         schema=OpenGradientBtcOneHourForecast,
     )
@@ -135,23 +135,23 @@ Important notes:
     @create_action(
         name="read_eth_one_hour_price_forecast",
         description="""
-This tool reads the latest SUI/USDT 6-hour return forecast from a smart-contract model deployment on the OpenGradient network.
-The model predicts the expected price return over the next 6 hours for the SUI/USDT trading pair.
+This tool reads the latest ETH 1-hour return forecast from a smart-contract model deployment on the OpenGradient network.
+The model predicts the percent price change over the next hour for Ethereum.
 
 Inputs:
 - The model's inputs are handled automatically by oracles - no user input is required.
 
 Outputs:
-- This model outputs a single float value representing the predicted 6-hour return
+- This model outputs a single float value representing the percent change over the next hour
 - This function also outputs a link to block explorer for the smart contract where the model is deployed
 
-Example output format (represents approximately -10.84% predicted return):
-'-10.8388245106%'
+Example output format (represents approximately -.25% predicted return):
+'-0.2488245106%'
 Block Explorer: https://explorer.opengradient.ai/address/0x080881b65427Da162CA0995fB23710Db4E8d85Cb
 
 Important notes:
 - This is a read-only operation and will not modify any blockchain state
-- The prediction is automatically updated with the 6 most recent 3-hour OHLC candles using oracle-fed data
+- The prediction is automatically updated with the previous 24 hours of ETH price data
 """,
         schema=OpenGradientEthOneHourForecast,
     )
@@ -181,23 +181,23 @@ Important notes:
     @create_action(
         name="read_sol_one_hour_price_forecast",
         description="""
-This tool reads the latest SUI/USDT 6-hour return forecast from a smart-contract model deployment on the OpenGradient network.
-The model predicts the expected price return over the next 6 hours for the SUI/USDT trading pair.
+This tool reads the latest SOL 1-hour return forecast from a smart-contract model deployment on the OpenGradient network.
+The model predicts the percent price change over the next hour for Solana.
 
 Inputs:
 - The model's inputs are handled automatically by oracles - no user input is required.
 
 Outputs:
-- This model outputs a single float value representing the predicted 6-hour return
+- This model outputs a single float value representing the percent change over the next hour
 - This function also outputs a link to block explorer for the smart contract where the model is deployed
 
-Example output format (represents approximately -10.84% predicted return):
-'-10.8388245106%'
+Example output format (represents approximately -.25% predicted return):
+'-0.2488245106%'
 Block Explorer: https://explorer.opengradient.ai/address/0x080881b65427Da162CA0995fB23710Db4E8d85Cb
 
 Important notes:
 - This is a read-only operation and will not modify any blockchain state
-- The prediction is automatically updated with the 6 most recent 3-hour OHLC candles using oracle-fed data
+- The prediction is automatically updated with the previous 24 hours of SOL price data
 """,
         schema=OpenGradientSolOneHourForecast,
     )
