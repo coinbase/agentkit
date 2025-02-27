@@ -25,6 +25,7 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
         - [Configuring gas parameters](#configuring-cdpwalletprovider-gas-parameters)
     - [EthAccountWalletProvider](#ethaccountwalletprovider)
         - [Configuring gas parameters](#configuring-ethaccountwalletprovider-gas-parameters)
+    - [SmartWalletProvider](#smartwalletprovider)
 - [Contributing](#contributing)
 
 ## Getting Started
@@ -408,6 +409,43 @@ wallet_provider = EthAccountWalletProvider(
         rpc_url="https://sepolia.base.org",
     )
 )
+
+agent_kit = AgentKit(AgentKitConfig(
+    wallet_provider=wallet_provider
+))
+```
+
+### SmartWalletProvider
+
+The `SmartWalletProvider` is a wallet provider that uses [CDP Smart Wallets](https://docs.cdp.coinbase.com/wallet-api/docs/smart-wallets).
+
+```python
+import os
+from eth_account import Account
+
+from coinbase_agentkit import (
+    AgentKit, 
+    AgentKitConfig, 
+    SmartWalletProvider, 
+    SmartWalletProviderConfig
+)
+
+# See here for creating a private key:
+# https://web3py.readthedocs.io/en/stable/web3.eth.account.html#creating-a-private-key
+private_key = os.environ.get("PRIVATE_KEY")
+assert private_key is not None, "You must set PRIVATE_KEY environment variable"
+assert private_key.startswith("0x"), "Private key must start with 0x hex prefix"
+
+signer = Account.from_key(private_key)
+
+network_id = os.getenv("NETWORK_ID", "base-sepolia")
+
+wallet_provider = SmartWalletProvider(SmartWalletProviderConfig(
+    network_id=network_id,
+    signer=signer,
+    smart_wallet_address=None, # If not provided, a new smart wallet will be created
+    paymaster_url=None, # Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
+))
 
 agent_kit = AgentKit(AgentKitConfig(
     wallet_provider=wallet_provider
