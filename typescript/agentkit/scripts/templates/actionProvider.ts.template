@@ -11,7 +11,9 @@ import { z } from "zod";
 import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
+{% if wallet_provider %}
 import { {{wallet_provider}} } from "../../wallet-providers";
+{% endif %}
 import { ExampleActionSchema } from "./schemas";
 {% if protocol_family != "all" and networkIds|length > 0 %}
 /**
@@ -24,7 +26,7 @@ const SUPPORTED_NETWORK_IDS: string[] = [{% for id in networkIds %}"{{id}}"{% if
  * {{name_pascal}}ActionProvider provides actions for {{name}} operations.
  *
  * @description
- * This provider is designed to work with {{wallet_provider}} for blockchain interactions.
+ * This provider is designed to {% if wallet_provider %}work with {{wallet_provider}} for blockchain interactions{% else %}provide blockchain-agnostic operations{% endif %}.
 {% if protocol_family == "all" %}
  * It supports all blockchain networks.
 {% elif networkIds|length == 0 %}
@@ -33,7 +35,7 @@ const SUPPORTED_NETWORK_IDS: string[] = [{% for id in networkIds %}"{{id}}"{% if
  * It supports {{protocol_family}} networks: {% for networkId in networkIds %}{{networkId}}{% if not loop.last %}, {% endif %}{% endfor %}.
 {% endif %}
  */
-export class {{name_pascal}}ActionProvider extends ActionProvider<{{wallet_provider}}> {
+export class {{name_pascal}}ActionProvider extends ActionProvider{% if wallet_provider %}<{{wallet_provider}}>{% endif %} {
   /**
    * Constructor for the {{name_pascal}}ActionProvider.
    */
@@ -49,7 +51,9 @@ export class {{name_pascal}}ActionProvider extends ActionProvider<{{wallet_provi
    * This is a template action that demonstrates the basic structure.
    * Replace it with your actual implementation.
    *
+   {% if wallet_provider %}
    * @param walletProvider - The wallet provider instance for blockchain interactions
+   {% endif %}
    * @param args - Arguments defined by ExampleActionSchema
    * @returns A promise that resolves to a string describing the action result
    */
@@ -69,14 +73,22 @@ export class {{name_pascal}}ActionProvider extends ActionProvider<{{wallet_provi
     `,
     schema: ExampleActionSchema,
   })
+  {% if wallet_provider %}
   async exampleAction(
     walletProvider: {{wallet_provider}},
     args: z.infer<typeof ExampleActionSchema>,
   ): Promise<string> {
+  {% else %}
+  async exampleAction(args: z.infer<typeof ExampleActionSchema>): Promise<string> {
+  {% endif %}
     // TODO: Implement your action logic here
     // Example implementation:
+    {% if wallet_provider %}
     const network = walletProvider.getNetwork();
     return `Example action called with ${args.fieldName} on network ${network.networkId}`;
+    {% else %}
+    return `Example action called with ${args.fieldName}`;
+    {% endif %}
   }
 
   {% if protocol_family == "all" %}

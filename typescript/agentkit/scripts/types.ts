@@ -6,12 +6,12 @@ import { ProtocolFamily, NetworkId, WalletProvider } from "./constants";
 export interface ProviderConfig {
   /** The name of the provider */
   name: string;
-  /** The protocol family (e.g., "evm", "svm", "all") */
-  protocolFamily: ProtocolFamily;
+  /** The protocol family (e.g., "evm", "svm") or null for all protocols */
+  protocolFamily: ProtocolFamily | null;
   /** The network IDs (e.g., ["ethereum-mainnet", "base-mainnet"]) */
   networkIds: NetworkId[];
-  /** The wallet provider to use */
-  walletProvider: WalletProvider;
+  /** The wallet provider to use (optional) */
+  walletProvider?: WalletProvider;
 }
 
 /**
@@ -20,7 +20,7 @@ export interface ProviderConfig {
 export type PromptResult = {
   name: string;
   overwrite?: boolean;
-  protocolFamily: ProtocolFamily;
+  protocolFamily: ProtocolFamily | null;
   networkIds?: NetworkId[];
   walletProvider?: WalletProvider;
 };

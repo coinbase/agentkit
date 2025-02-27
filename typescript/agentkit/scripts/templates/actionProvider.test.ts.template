@@ -11,9 +11,28 @@ import {
   SOLANA_DEVNET_NETWORK,
 } from "../../network/svm";
 {% endif %}
+{% if wallet_provider %}
+import { {{wallet_provider}} } from "../../wallet-providers";
+{% endif %}
 
 describe("{{name_pascal}}ActionProvider", () => {
   const provider = new {{name_pascal}}ActionProvider();
+  {% if wallet_provider %}
+  let mockWalletProvider: jest.Mocked<{{wallet_provider}}>;
+
+  beforeEach(() => {
+    mockWalletProvider = {
+      getAddress: jest.fn(),
+      getBalance: jest.fn(),
+      getName: jest.fn(),
+      getNetwork: jest.fn().mockReturnValue({
+        protocolFamily: "{{protocol_family}}",
+        networkId: {% if networkIds|length %}"{{networkIds[0]}}"{% else %}"test-network"{% endif %},
+      }),
+      nativeTransfer: jest.fn(),
+    } as unknown as jest.Mocked<{{wallet_provider}}>;
+  });
+  {% endif %}
 
   describe("initialization", () => {
     it("should create an instance", () => {
@@ -132,4 +151,31 @@ describe("{{name_pascal}}ActionProvider", () => {
       expect(parseResult.success).toBe(false);
     });
   });
+
+  {% if wallet_provider %}
+  describe("example action", () => {
+    it("should execute example action with wallet provider", async () => {
+      const args = {
+        fieldName: "test",
+        amount: "1.0",
+        enumField: "option1" as const,
+      };
+      const result = await provider.exampleAction(mockWalletProvider, args);
+      expect(result).toContain(args.fieldName);
+      expect(mockWalletProvider.getNetwork).toHaveBeenCalled();
+    });
+  });
+  {% else %}
+  describe("example action", () => {
+    it("should execute example action", async () => {
+      const args = {
+        fieldName: "test",
+        amount: "1.0",
+        enumField: "option1" as const,
+      };
+      const result = await provider.exampleAction(args);
+      expect(result).toContain(args.fieldName);
+    });
+  });
+  {% endif %}
 });

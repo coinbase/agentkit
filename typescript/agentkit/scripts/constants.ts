@@ -7,9 +7,14 @@ import { networkIdToDisplayName } from "./utils";
  */
 export const PROTOCOL_FAMILIES = [
   {
-    title: "All Networks",
+    title: "No Protocols",
+    value: "none",
+    description: "No protocol support",
+  },
+  {
+    title: "All Protocols",
     value: "all",
-    description: "Support for any blockchain network",
+    description: "Support any protocol",
   },
   {
     title: "EVM Networks",
@@ -105,6 +110,11 @@ const EVM_WALLET_PROVIDERS = [
     value: "PrivyEvmWalletProvider",
     description: "Privy's server wallet API provider for EVM networks",
   },
+  {
+    title: "ViemWalletProvider",
+    value: "ViemWalletProvider",
+    description: "Viem-based wallet provider for EVM networks",
+  },
 ] as const;
 
 /**
@@ -141,5 +151,5 @@ export const WALLET_PROVIDERS_BY_PROTOCOL = {
  * Type definitions for protocol families and providers
  */
 export type ProtocolFamily = (typeof PROTOCOL_FAMILIES)[number]["value"];
-export type WalletProvider = (typeof WALLET_PROVIDERS_BY_PROTOCOL)[ProtocolFamily][number]["value"];
-export type NetworkId = (typeof NETWORKS_BY_PROTOCOL)[ProtocolFamily][number]["value"];
+export type WalletProvider = (typeof WALLET_PROVIDERS_BY_PROTOCOL)[keyof typeof WALLET_PROVIDERS_BY_PROTOCOL][number]["value"];
+export type NetworkId = (typeof NETWORKS_BY_PROTOCOL)[keyof typeof NETWORKS_BY_PROTOCOL][number]["value"];
