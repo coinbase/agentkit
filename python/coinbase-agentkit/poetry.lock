@@ -3184,6 +3184,25 @@ files = [
 ]
 
 [[package]]
+name = "towncrier"
+version = "24.8.0"
+description = "Building newsfiles for your project."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "towncrier-24.8.0-py3-none-any.whl", hash = "sha256:9343209592b839209cdf28c339ba45792fbfe9775b5f9c177462fd693e127d8d"},
+    {file = "towncrier-24.8.0.tar.gz", hash = "sha256:013423ee7eed102b2f393c287d22d95f66f1a3ea10a4baa82d298001a7f18af3"},
+]
+
+[package.dependencies]
+click = "*"
+jinja2 = "*"
+tomli = {version = "*", markers = "python_version < \"3.11\""}
+
+[package.extras]
+dev = ["furo (>=2024.05.06)", "nox", "packaging", "sphinx (>=5)", "twisted"]
+
+[[package]]
 name = "tweepy"
 version = "4.15.0"
 description = "Twitter library for Python"
@@ -3664,4 +3683,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "9e76892986b079789417df35c23bce2e62a9744f353d56ddd042cc881e5bd7cb"
+content-hash = "558a9049021e1bc68aea6a0deb796ca3ede6b4e3dda3d3b16ddacd002ee9f1d2"
