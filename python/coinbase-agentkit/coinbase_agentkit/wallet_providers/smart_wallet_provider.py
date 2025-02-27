@@ -20,6 +20,7 @@ class SmartWalletProviderConfig(BaseModel):
     smart_wallet_address: str | None = Field(None, description="Smart wallet address")
     cdp_api_key_name: str | None = Field(None, description="The CDP API Key Name")
     cdp_api_key_private_key: str | None = Field(None, description="The CDP API Key Private Key")
+    paymaster_url: str | None = Field(None, description="URL for the paymaster service to sponsor transactions")
 
     class Config:
         """Configuration for SmartWalletProvider."""
@@ -54,7 +55,10 @@ class SmartWalletProvider(EvmWalletProvider):
         else:
             self._smart_wallet = SmartWallet.create(config.signer)
 
-        self._smart_wallet = self._smart_wallet.use_network(chain_id=int(self._network.chain_id))
+        self._smart_wallet = self._smart_wallet.use_network(
+            chain_id=int(self._network.chain_id),
+            paymaster_url=config.paymaster_url,
+        )
 
     def get_address(self) -> str:
         """Get the smart wallet address."""

@@ -58,6 +58,7 @@ def initialize_agent():
         network_id=network_id,
         signer=signer,
         smart_wallet_address=wallet_data.get("smart_wallet_address"),
+        paymaster_url=None, # Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
     ))
     
     # Save both private key and smart wallet address
