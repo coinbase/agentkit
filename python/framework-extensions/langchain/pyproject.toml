@@ -26,6 +26,7 @@ sphinx-autodoc-typehints = "^2.4.4"
 myst-parser = "^4.0.0"
 ruff-lsp = "^0.0.58"
 python-lsp-server = "^1.12.0"
+towncrier = "^24.8.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -53,3 +54,16 @@ line-ending = "auto"
 
 [tool.ruff.lint.isort]
 known-first-party = ["coinbase_agentkit"]
+
+[tool.towncrier]
+package = "coinbase_agentkit_langchain"
+package_dir = "coinbase_agentkit_langchain"
+filename = "CHANGELOG.md"
+directory = "changelog.d/"
+start_string = "# Coinbase AgentKit Framework Extension - Langchain Changelog"
+
+[tool.towncrier.fragment.feature]
+name = "Added"
+
+[tool.towncrier.fragment.bugfix]
+name = "Fixed"
