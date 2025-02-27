@@ -48,17 +48,23 @@ For an in-depth guide on how to set up your developer environment and add an age
 
 Whether you are reporting a bug or requesting a new feature, it's always best to check if someone else has already opened an issue for it! If the bug or feature is small and you'd like to take a crack at it, go ahead and skip this step.
 
-2. **Development Process**
+2. **Fork the Repository**
 
-There are the high level steps to contribute changes:
+Fork the repository by clicking the "Fork" button in the top right corner of the repository page. This will create a copy of the repository in your GitHub account. Then, clone your forked repository to your local machine and create a branch for your changes.
 
-- Fork the repository
-- Create a feature or bugfix branch
-- Follow the appropriate [language guide](#language-specific-guides)
-- Write tests
-- Add a changelog entry. See the Changelog section in the appropriate language-specific guide for the changes you're making.
+3. **Development Workflow**
 
-3. **Pull Request Process**
+These are the high level steps to contribute changes:
+
+- Setup your development environment
+- Implement your change
+- Test your change manually, and include unit tests if applicable
+- Write docs for your change
+- Update the changelog
+
+These steps are highly dependent on the language you're working in, so check out the [language-specific guides](#language-specific-guides) for the language you're working in.
+
+4. **Pull Request Process**
 
 Once you have your changes ready, there are a few more steps to open a PR and get it merged:
 
@@ -67,7 +73,7 @@ Once you have your changes ready, there are a few more steps to open a PR and ge
 - Link related issues, if any
 - Ensure all CI checks are passing
 
-4. **PR Review Expectations**
+5. **PR Review Expectations**
 
 Once your PR is open, you can expect an initial response acknowledging receipt of the PR within 1 day, and an initial review within 1 day from a maintainer assigned to your PR. Once all comments are addressed and a maintainer has approved the PR, it will be merged by the maintainer and included in the next release.
 
