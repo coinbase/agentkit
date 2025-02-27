@@ -17,7 +17,6 @@ import {
   createPublicClient,
   Hex,
   http,
-  Prettify,
   ReadContractParameters,
   ReadContractReturnType,
   TransactionRequest,
@@ -77,10 +76,7 @@ export class SmartWalletProvider extends EvmWalletProvider {
    *   - A promise that resolves to an instance of `SmartWalletProvider` configured with the provided settings.
    *
    * @throws {Error}
-   *   - If an invalid combination of `networkId` and `chainId` is provided.
-   *   - If the `chainId` cannot be determined.
-   *   - If the `chainId` is not supported.
-   *   - If `CDP_API_KEY_NAME` or `CDP_API_KEY_PRIVATE_KEY` is missing.
+   *   - If networkId is not a supported network.
    *
    * @example
    * ```typescript
@@ -236,7 +232,7 @@ export class SmartWalletProvider extends EvmWalletProvider {
    * Unlike `sendTransaction`, which wraps calls in a single operation, this method allows
    * direct execution of arbitrary operations within a **User Operation**.
    *
-   * @param {Prettify<Omit<SendUserOperationOptions<T>, "chainId" | "paymasterUrl">>} operation
+   * @param {Omit<SendUserOperationOptions<T>, "chainId" | "paymasterUrl">} operation
    *   - The user operation configuration, omitting `chainId` and `paymasterUrl`,
    *     which are managed internally by the smart wallet.
    *
@@ -256,7 +252,7 @@ export class SmartWalletProvider extends EvmWalletProvider {
    * ```
    */
   async sendUserOperation<T extends readonly unknown[]>(
-    operation: Prettify<Omit<SendUserOperationOptions<T>, "chainId" | "paymasterUrl">>,
+    operation: Omit<SendUserOperationOptions<T>, "chainId" | "paymasterUrl">,
   ): Promise<Hex> {
     const sendUserOperationResult = await this.#smartWallet.sendUserOperation(operation);
 
@@ -265,7 +261,7 @@ export class SmartWalletProvider extends EvmWalletProvider {
     if (result.status === "complete") {
       return result.transactionHash as Hex;
     } else {
-      throw new Error("Transaction failed");
+      throw new Error(`Transaction failed with status ${result.status}`);
     }
   }
 
@@ -316,8 +312,8 @@ export class SmartWalletProvider extends EvmWalletProvider {
    * @returns The transaction receipt.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async waitForTransactionReceipt(txHash: Hex): Promise<any> {
-    return await this.#publicClient.waitForTransactionReceipt({
+  waitForTransactionReceipt(txHash: Hex): Promise<any> {
+    return this.#publicClient.waitForTransactionReceipt({
       hash: txHash,
     });
   }
@@ -360,7 +356,7 @@ export class SmartWalletProvider extends EvmWalletProvider {
     if (result.status === "complete") {
       return result.transactionHash as Hex;
     } else {
-      throw new Error("Transfer failed");
+      throw new Error(`Transfer failed with status ${result.status}`);
     }
   }
 }

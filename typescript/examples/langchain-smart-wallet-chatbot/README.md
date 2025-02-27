@@ -1,4 +1,4 @@
-# Smart Wallet AgentKit LangChain Extension Examples - Chatbot Typescript
+# AgentKit CDP Smart Wallet Example
 
 This example demonstrates an agent setup as a terminal style chatbot with access to the full set of AgentKit actions. A CDP Smart Wallet will be created and owned by the signer passed into the example.
 

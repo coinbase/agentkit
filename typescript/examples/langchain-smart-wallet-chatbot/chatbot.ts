@@ -16,6 +16,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as readline from "readline";
+import { Address, Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 dotenv.config();
@@ -29,7 +30,6 @@ dotenv.config();
 function validateEnvironment(): void {
   const missingVars: string[] = [];
 
-  // Check required variables
   const requiredVars = ["OPENAI_API_KEY", "CDP_API_KEY_NAME", "CDP_API_KEY_PRIVATE_KEY"];
   requiredVars.forEach(varName => {
     if (!process.env[varName]) {
@@ -37,7 +37,6 @@ function validateEnvironment(): void {
     }
   });
 
-  // Exit if any required variables are missing
   if (missingVars.length > 0) {
     console.error("Error: Required environment variables are not set");
     missingVars.forEach(varName => {
@@ -46,7 +45,6 @@ function validateEnvironment(): void {
     process.exit(1);
   }
 
-  // Warn about optional NETWORK_ID
   if (!process.env.NETWORK_ID) {
     console.warn("Warning: NETWORK_ID not set, defaulting to base-sepolia testnet");
   }
@@ -58,8 +56,8 @@ validateEnvironment();
 // Configure a file to persist the agent's CDP Smart Wallet + Private Key data
 const WALLET_DATA_FILE = "wallet_data.txt";
 type WalletData = {
-  privateKey: `0x${string}`;
-  smartWalletAddress: `0x${string}`;
+  privateKey: Hex;
+  smartWalletAddress: Address;
 };
 
 /**
@@ -75,7 +73,7 @@ async function initializeAgent() {
     });
 
     let walletData: WalletData | null = null;
-    let privateKey: `0x${string}` | null = null;
+    let privateKey: Hex | null = null;
 
     // Read existing wallet data if available
     if (fs.existsSync(WALLET_DATA_FILE)) {
@@ -88,13 +86,15 @@ async function initializeAgent() {
       }
     }
     if (!privateKey) {
-      privateKey = (process.env.PRIVATE_KEY || generatePrivateKey()) as `0x${string}`;
+      if (walletData?.smartWalletAddress) {
+        throw new Error(`Smart wallet found but no private key provided. Either provide the private key, or delete ${WALLET_DATA_FILE} and try again.`);
+      }
+      privateKey = (process.env.PRIVATE_KEY || generatePrivateKey()) as Hex;
     }
 
-    // Initialize signer
     const signer = privateKeyToAccount(privateKey);
 
-    // Configure Smart Wallet Provider with signer
+    // Configure Smart Wallet Provider
     const walletProvider = await SmartWalletProvider.configureWithWallet({
       networkId: process.env.NETWORK_ID,
       signer,
