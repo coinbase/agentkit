@@ -102,8 +102,8 @@ class SmartWalletProvider(EvmWalletProvider):
                 EncodedCall(to=transaction["to"], data=transaction.get("data", b""), value=transaction.get("value", 0)),
             ]
         )
-        result = user_operation.wait()
-        if result.status == "complete":
+        result = user_operation.wait(interval_seconds=0.2, timeout_seconds=20)
+        if result.status == UserOperation.Status.COMPLETE:
             return result.transaction_hash
         else:
             raise Exception("Transaction failed")
@@ -125,13 +125,14 @@ class SmartWalletProvider(EvmWalletProvider):
 
     def native_transfer(self, to: str, value: Decimal) -> HexStr:
         """Transfer native assets using the smart wallet."""
+        value_wei = Web3.to_wei(value, "ether")
         user_operation = self._smart_wallet.send_user_operation(
             calls=[
-                EncodedCall(to=to, value=int(value), data=""),
+                EncodedCall(to=to, value=value_wei, data="0x"),
             ]
         )
-        result = user_operation.wait()
-        if result.status == "complete":
+        result = user_operation.wait(interval_seconds=0.2, timeout_seconds=20)
+        if result.status == UserOperation.Status.COMPLETE:
             return result.transaction_hash
         else:
             raise Exception("Transaction failed")
