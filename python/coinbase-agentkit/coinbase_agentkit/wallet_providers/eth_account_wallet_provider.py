@@ -42,8 +42,13 @@ class EthAccountWalletProvider(EvmWalletProvider):
         self.config = config
         self.account = config.account
 
-        chain = NETWORK_ID_TO_CHAIN[CHAIN_ID_TO_NETWORK_ID[config.chain_id]]
-        rpc_url = config.rpc_url or chain.rpc_urls["default"].http[0]
+        network_id = ""
+        rpc_url = config.rpc_url
+
+        if rpc_url is None:
+            chain = NETWORK_ID_TO_CHAIN[CHAIN_ID_TO_NETWORK_ID[config.chain_id]]
+            network_id = CHAIN_ID_TO_NETWORK_ID[config.chain_id]
+            rpc_url = chain.rpc_urls["default"].http[0]
 
         self.web3 = Web3(Web3.HTTPProvider(rpc_url))
         self.web3.middleware_onion.inject(
@@ -53,7 +58,7 @@ class EthAccountWalletProvider(EvmWalletProvider):
         self._network = Network(
             protocol_family="evm",
             chain_id=self.config.chain_id,
-            network_id=CHAIN_ID_TO_NETWORK_ID[self.config.chain_id],
+            network_id=network_id,
         )
 
         self._gas_limit_multiplier = (
@@ -204,7 +209,6 @@ class EthAccountWalletProvider(EvmWalletProvider):
         max_priority_fee_per_gas, max_fee_per_gas = self.estimate_fees()
         transaction["maxPriorityFeePerGas"] = max_priority_fee_per_gas
         transaction["maxFeePerGas"] = max_fee_per_gas
-
 
         gas = int(self.web3.eth.estimate_gas(transaction) * self._gas_limit_multiplier)
         transaction["gas"] = gas
