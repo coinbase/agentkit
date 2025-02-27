@@ -166,6 +166,31 @@ const agent = createReactAgent({
 </table>
 </details>
 <details>
+<summary><strong>Compound</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>supply</code></td>
+    <td width="768">Supplies collateral assets (WETH, CBETH, CBBTC, WSTETH, or USDC) to Compound.</td>
+</tr>
+<tr>
+    <td width="200"><code>withdraw</code></td>
+    <td width="768">Withdraws previously supplied collateral assets from Compound.</td>
+</tr>
+<tr>
+    <td width="200"><code>borrow</code></td>
+    <td width="768">Borrows base assets (WETH or USDC) from Compound using supplied collateral.</td>
+</tr>
+<tr>
+    <td width="200"><code>repay</code></td>
+    <td width="768">Repays borrowed assets back to Compound.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_portfolio</code></td>
+    <td width="768">Retrieves portfolio details including collateral balances and borrowed amounts.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>ERC20</strong></summary>
 <table width="100%">
 <tr>
