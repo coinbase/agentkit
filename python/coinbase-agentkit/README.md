@@ -7,28 +7,30 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
 - [Getting Started](#getting-started)
 - [Installation](#installation)
 - [Usage](#usage)
-  - [Create an AgentKit instance](#create-an-agentkit-instance)
-  - [Create an AgentKit instance with a specified wallet provider](#create-an-agentkit-instance-with-a-specified-wallet-provider)
-  - [Create an AgentKit instance with specified action providers](#create-an-agentkit-instance-with-specified-action-providers)
-  - [Use with a framework extension (e.g., LangChain + OpenAI)](#use-with-a-framework-extension)
+    - [Create an AgentKit instance](#create-an-agentkit-instance)
+    - [Create an AgentKit instance with a specified wallet provider](#create-an-agentkit-instance-with-a-specified-wallet-provider)
+    - [Create an AgentKit instance with specified action providers](#create-an-agentkit-instance-with-specified-action-providers)
+    - [Use with a framework extension (e.g., LangChain + OpenAI)](#use-with-a-framework-extension)
 - [Creating an Action Provider](#creating-an-action-provider)
-  - [Adding Actions to your Action Provider](#adding-actions-to-your-action-provider)
-  - [Adding Actions that use a Wallet Provider](#adding-actions-that-use-a-wallet-provider)
-  - [Adding an Action Provider to your AgentKit instance](#adding-an-action-provider-to-your-agentkit-instance)
+    - [Adding Actions to your Action Provider](#adding-actions-to-your-action-provider)
+    - [Adding Actions that use a Wallet Provider](#adding-actions-that-use-a-wallet-provider)
+    - [Adding an Action Provider to your AgentKit instance](#adding-an-action-provider-to-your-agentkit-instance)
 - [Wallet Providers](#wallet-providers)
-  - [CdpWalletProvider](#cdpwalletprovider)
-    - [Network Configuration](#network-configuration)
-    - [Configuring from an existing CDP API Wallet](#configuring-from-an-existing-cdp-api-wallet)
-    - [Configuring from a mnemonic phrase](#configuring-from-a-mnemonic-phrase)
-    - [Exporting a wallet](#exporting-a-wallet)
-    - [Importing a wallet from WalletData JSON string](#importing-a-wallet-from-walletdata-json-string)
-    - [Configuring gas parameters](#configuring-cdpwalletprovider-gas-parameters)
-  - [EthAccountWalletProvider](#ethaccountwalletprovider)
-    - [Configuring gas parameters](#configuring-ethaccountwalletprovider-gas-parameters)
+    - [CdpWalletProvider](#cdpwalletprovider)
+        - [Network Configuration](#network-configuration)
+        - [Configuring from an existing CDP API Wallet](#configuring-from-an-existing-cdp-api-wallet)
+        - [Configuring from a mnemonic phrase](#configuring-from-a-mnemonic-phrase)
+        - [Exporting a wallet](#exporting-a-wallet)
+        - [Importing a wallet from WalletData JSON string](#importing-a-wallet-from-walletdata-json-string)
+        - [Configuring gas parameters](#configuring-cdpwalletprovider-gas-parameters)
+    - [EthAccountWalletProvider](#ethaccountwalletprovider)
+        - [Configuring gas parameters](#configuring-ethaccountwalletprovider-gas-parameters)
 - [Contributing](#contributing)
+
 ## Getting Started
 
-*Prerequisites*:
+_Prerequisites_:
+
 - [Python 3.10+](https://www.python.org/downloads/)
 - [CDP Secret API Key](https://docs.cdp.coinbase.com/get-started/docs/cdp-api-keys#creating-secret-api-keys)
 
@@ -54,9 +56,9 @@ agent_kit = AgentKit()
 
 ```python
 from coinbase_agentkit import (
-    AgentKit, 
-    AgentKitConfig, 
-    CdpWalletProvider, 
+    AgentKit,
+    AgentKitConfig,
+    CdpWalletProvider,
     CdpWalletProviderConfig
 )
 
@@ -97,7 +99,8 @@ agent_kit = AgentKit(AgentKitConfig(
 
 Example using LangChain + OpenAI:
 
-*Prerequisites*:
+_Prerequisites_:
+
 - [OpenAI API Key](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key)
 - Set `OPENAI_API_KEY` environment variable
 
@@ -131,7 +134,7 @@ from coinbase_agentkit.network import Network
 class MyActionProvider(ActionProvider[WalletProvider]):
     def __init__(self):
         super().__init__("my-action-provider", [])
-    
+
     # Define if the action provider supports the given network
     def supports_network(self, network: Network) -> bool:
         return True
@@ -207,6 +210,7 @@ agent_kit = AgentKit(AgentKitConfig(
 AgentKit supports the following wallet providers:
 
 EVM:
+
 - [CdpWalletProvider](https://github.com/coinbase/agentkit/blob/master/python/coinbase_agentkit/wallet_providers/cdp_wallet_provider.py) - Uses the Coinbase Developer Platform (CDP) API Wallet
 - [EthAccountWalletProvider](https://github.com/coinbase/agentkit/blob/master/python/coinbase_agentkit/wallet_providers/eth_account_wallet_provider.py) - Uses a local private key for any EVM-compatible chain
 
@@ -246,7 +250,6 @@ wallet_provider = CdpWalletProvider(CdpWalletProviderConfig(
 #### Configuring from a mnemonic phrase
 
 The `CdpWalletProvider` can be configured from a mnemonic phrase by passing the `mnemonic_phrase` and `network_id` parameters to the `CdpWalletProviderConfig`. If `network_id` is not defined, the `CdpWalletProvider` will fall back to the env var `NETWORK_ID`, and if that is not defined, it will default to `base-sepolia`.
-
 
 ```python
 from coinbase_agentkit import CdpWalletProvider, CdpWalletProviderConfig
@@ -315,9 +318,9 @@ import os
 from eth_account import Account
 
 from coinbase_agentkit import (
-    AgentKit, 
-    AgentKitConfig, 
-    EthAccountWalletProvider, 
+    AgentKit,
+    AgentKitConfig,
+    EthAccountWalletProvider,
     EthAccountWalletProviderConfig
 )
 
@@ -350,9 +353,9 @@ import os
 from eth_account import Account
 
 from coinbase_agentkit import (
-    AgentKit, 
-    AgentKitConfig, 
-    EthAccountWalletProvider, 
+    AgentKit,
+    AgentKitConfig,
+    EthAccountWalletProvider,
     EthAccountWalletProviderConfig
 )
 
@@ -370,6 +373,39 @@ wallet_provider = EthAccountWalletProvider(
             "gas_limit_multiplier": 2,
             "fee_per_gas_multiplier": 2
         }
+    )
+)
+
+agent_kit = AgentKit(AgentKitConfig(
+    wallet_provider=wallet_provider
+))
+```
+
+#### Configuring `EthAccountWalletProvider` rpc url
+
+The `EthAccountWalletProvider` also exposes parameters for defining the rpc url manually.
+
+```python
+import os
+from eth_account import Account
+
+from coinbase_agentkit import (
+    AgentKit,
+    AgentKitConfig,
+    EthAccountWalletProvider,
+    EthAccountWalletProviderConfig
+)
+
+private_key = os.environ.get("PRIVATE_KEY")
+assert private_key is not None, "You must set PRIVATE_KEY environment variable"
+assert private_key.startswith("0x"), "Private key must start with 0x hex prefix"
+
+account = Account.from_key(private_key)
+
+wallet_provider = EthAccountWalletProvider(
+    config=EthAccountWalletProviderConfig(
+        account=account,
+        rpc_url="https://sepolia.base.org",
     )
 )
 
