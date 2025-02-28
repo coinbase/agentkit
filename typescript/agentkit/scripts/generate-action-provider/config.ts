@@ -15,6 +15,10 @@ import { providerExists, validateName } from "./utils";
  * Prepare provider configuration from CLI args with interactive prompt fallbacks
  */
 export async function prepareProviderConfig(args: CliArgs): Promise<ProviderConfig> {
+  if (!args.name && !args.protocolFamily && !args.networks && !args.walletProvider) {
+    args.interactive = true;
+  }
+
   // always get a valid name first
   let resolvedName = args.name;
   if (!resolvedName || !validateName(resolvedName)) {

@@ -25,7 +25,7 @@ def prepare_provider_config(
         protocol_family: Protocol family from CLI args
         networks: Network IDs from CLI args
         wallet_provider: Wallet provider from CLI args
-        interactive: Whether to prompt for missing values
+        interactive: Whether to prompt for missing values. Defaults to True if no args provided.
 
     Returns:
         ProviderConfig: The complete provider configuration
@@ -34,6 +34,9 @@ def prepare_provider_config(
         ValueError: If required fields are missing or invalid
 
     """
+    if not any([name, protocol_family, networks, wallet_provider]):
+        interactive = True
+
     # always get a valid name first
     resolved_name = name
     if not resolved_name or not validate_name(resolved_name):

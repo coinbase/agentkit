@@ -5,6 +5,9 @@ This script helps you create new action providers with all necessary files and b
 ## Usage
 
 ```bash
+# Interactive mode
+npm run generate-action-provider
+
 # CLI mode with arguments (note the -- before flags)
 npm run generate-action-provider -- [options]
 
