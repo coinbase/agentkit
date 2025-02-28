@@ -16,7 +16,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { AgentRequest, AgentResponse } from "@/app/types/api";
-import { createWalletClient, http } from "viem";
+import { createWalletClient, Hex, http } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import fs from "fs";
 
@@ -83,7 +83,7 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
     const llm = new ChatOpenAI({ model: "gpt-4o-mini" });
 
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
-    let privateKey = process.env.PRIVATE_KEY as `0x${string}`;
+    let privateKey = process.env.PRIVATE_KEY as Hex;
     if (!privateKey) {
       if (fs.existsSync(WALLET_DATA_FILE)) {
         privateKey = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8")).privateKey;
