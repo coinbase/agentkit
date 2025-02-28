@@ -41,11 +41,7 @@
   ],
   "dependencies": {
     "@coinbase/agentkit": "^0.2.2",
-    "@coinbase/coinbase-sdk": "^0.15.0",
     "@langchain/core": "^0.3.19",
     "zod": "^3.22.4"
-  },
-  "peerDependencies": {
-    "@coinbase/coinbase-sdk": "^0.15.0"
   }
 }
