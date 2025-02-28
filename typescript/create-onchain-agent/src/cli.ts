@@ -122,12 +122,6 @@ async function init() {
               }));
             }
           },
-          initial: (prev, { networkFamily, networkType }) => {
-            if (networkFamily === "EVM" && networkType === "testnet") {
-              return Networks.indexOf("base-sepolia");
-            }
-            return 0;
-          },
         },
         {
           type: (prev, { networkFamily, networkType }) =>
