@@ -26,7 +26,7 @@
     "docs": "typedoc --entryPoints ./src --entryPointStrategy expand --exclude ./src/tests/**/*.ts",
     "docs:serve": "http-server ./docs",
     "dev": "tsc --watch",
-    "generate-action-provider": "tsx ./scripts/generate-action-provider/main.ts"
+    "generate-action-provider": "tsx ./scripts/generate-action-provider/main.ts -i"
   },
   "keywords": [
     "coinbase",
