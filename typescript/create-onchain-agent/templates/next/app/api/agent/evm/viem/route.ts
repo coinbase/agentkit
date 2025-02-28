@@ -17,7 +17,8 @@ import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { AgentRequest, AgentResponse } from "@/app/types/api";
 import { createWalletClient, http } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import fs from "fs";
 
 /**
  * AgentKit Integration Route
@@ -57,6 +58,9 @@ import { privateKeyToAccount } from "viem/accounts";
 // The agent
 let agent: ReturnType<typeof createReactAgent>;
 
+// Configure a file to persist a user's private key if none provided
+const WALLET_DATA_FILE = "wallet_data.txt";
+
 /**
  * Initializes and returns an instance of the AI agent.
  * If an agent instance already exists, it returns the existing one.
@@ -79,6 +83,23 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
     const llm = new ChatOpenAI({ model: "gpt-4o-mini" });
 
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
+    let privateKey = process.env.PRIVATE_KEY as `0x${string}`;
+    if (!privateKey) {
+      if (fs.existsSync(WALLET_DATA_FILE)) {
+        const walletData = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8"));
+        if (walletData.privateKey) {
+          privateKey = walletData.privateKey;
+        }
+        console.info("Found private key in wallet_data.txt");
+      }
+      else {
+        privateKey = generatePrivateKey();
+        fs.writeFileSync(WALLET_DATA_FILE, JSON.stringify({ privateKey }));
+        console.log("Created new private key and saved to wallet_data.txt");
+        console.log("We recommend you save this private key to your .env file and delete wallet_data.txt afterwards.");
+      }
+    }
+    
     const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
     const networkId = process.env.NETWORK_ID as string;
     const client = createWalletClient({
