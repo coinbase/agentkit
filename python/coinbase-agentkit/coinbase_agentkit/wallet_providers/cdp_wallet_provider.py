@@ -70,9 +70,6 @@ class CdpWalletProvider(EvmWalletProvider):
 
             network_id = config.network_id or os.getenv("NETWORK_ID", "base-sepolia")
 
-            if not network_id:
-                raise ValueError("NETWORK_ID is required")
-
             if config.wallet_data:
                 wallet_data = WalletData.from_dict(json.loads(config.wallet_data))
 
