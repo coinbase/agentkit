@@ -1,5 +1,15 @@
 # Coinbase Create Onchain Agent Changelog
 
+## [0.1.4] - 2025-02-28
+
+### Added
+
+- Added wallet persistance to all templates (#484)
+
+### Fixed
+
+- Fixed missing .gitignore in template (#478)
+
 ## [0.1.3] - 2025-02-24
 
 ## Added
