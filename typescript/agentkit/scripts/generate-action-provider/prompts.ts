@@ -89,7 +89,9 @@ export async function shouldPromptForWalletProvider(): Promise<boolean> {
 /**
  * Prompt for wallet provider
  */
-export async function promptForWalletProvider(protocolFamily: ProtocolFamily): Promise<WalletProvider | undefined> {
+export async function promptForWalletProvider(
+  protocolFamily: ProtocolFamily,
+): Promise<WalletProvider | undefined> {
   const { walletProvider } = await prompts({
     type: "select",
     name: "walletProvider",
@@ -104,4 +106,4 @@ export async function promptForWalletProvider(protocolFamily: ProtocolFamily): P
   });
 
   return walletProvider;
-} 
+}

@@ -15,12 +15,7 @@ import pc from "picocolors";
 
 import { parseCliArgs } from "./args";
 import { prepareProviderConfig } from "./config";
-import {
-  addProviderExport,
-  addProviderFiles,
-  displayBanner,
-  displaySuccessMessage,
-} from "./utils";
+import { addProviderExport, addProviderFiles, displayBanner, displaySuccessMessage } from "./utils";
 
 /**
  * Creates a new action provider
