@@ -16,9 +16,9 @@ import {
  * @returns {"EVM" | "SVM" | undefined} The network family, or `undefined` if not recognized.
  */
 export function getNetworkFamily(network: EVMNetwork | SVMNetwork): "EVM" | "SVM" | undefined {
-  return EVM_NETWORKS.has(network as EVMNetwork)
+  return EVM_NETWORKS.includes(network as EVMNetwork)
     ? "EVM"
-    : SVM_NETWORKS.has(network as SVMNetwork)
+    : SVM_NETWORKS.includes(network as SVMNetwork)
       ? "SVM"
       : undefined;
 }
@@ -166,6 +166,7 @@ export const getWalletProviders = (network?: Network): WalletProviderChoice[] =>
  * @param {WalletProviderChoice} walletProvider - The selected wallet provider.
  * @param {Network} [network] - The optional blockchain network.
  * @param {string} [chainId] - The optional chain ID for the network.
+ * @param {string} [rpcUrl] - The optional RPC URL for the network.
  * @throws {Error} If neither `network` nor `chainId` are provided, or if the selected combination is invalid.
  * @returns {Promise<void>} A promise that resolves when the selection process is complete.
  */
@@ -174,6 +175,7 @@ export async function handleSelection(
   walletProvider: WalletProviderChoice,
   network?: Network,
   chainId?: string,
+  rpcUrl?: string,
 ) {
   const agentDir = path.join(root, "app", "api", "agent");
 
@@ -207,7 +209,13 @@ export async function handleSelection(
     ...["OPENAI_API_KEY=", ...selectedRouteConfig.env.required].join("\n"),
     // Finish with # Optional section
     "\n\n# Optional\n",
-    ...[`NETWORK_ID=${network}`, ...selectedRouteConfig.env.optional].join("\n"),
+    ...[
+      `NETWORK_ID=${network}`,
+      rpcUrl ? `RPC_URL=${rpcUrl}` : null,
+      ...selectedRouteConfig.env.optional,
+    ]
+      .filter(Boolean)
+      .join("\n"),
   ];
   await fs.writeFile(envPath, envLines);
 

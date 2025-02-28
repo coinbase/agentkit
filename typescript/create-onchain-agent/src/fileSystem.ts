@@ -70,7 +70,7 @@ export async function copyTemplate(projectName: string, packageName: string): Pr
 
   const pkgPath = path.join(root, "package.json");
   const pkg = JSON.parse(await fs.promises.readFile(pkgPath, "utf-8"));
-  pkg.name = packageName || toValidPackageName(projectName);
+  pkg.name = packageName;
 
   await fs.promises.writeFile(pkgPath, JSON.stringify(pkg, null, 2));
 

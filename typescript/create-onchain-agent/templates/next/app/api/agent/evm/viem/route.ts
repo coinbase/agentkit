@@ -100,9 +100,26 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
 
     const account = privateKeyToAccount(privateKey);
     const networkId = process.env.NETWORK_ID as string;
+
+    // If custom chain is provided, use it, otherwise use the networkId
+    const chain: Chain = customChainId && customRpcUrl ? { 
+      id: parseInt(customChainId), 
+      rpcUrls: { 
+        default: { 
+          http: [customRpcUrl] 
+        } 
+      }, 
+      name: "Custom Chain", 
+      nativeCurrency: { 
+        name: "Ether", 
+        symbol: "ETH", 
+        decimals: 18 
+      } 
+    } : NETWORK_ID_TO_VIEM_CHAIN[networkId]
+
     const client = createWalletClient({
       account,
-      chain: NETWORK_ID_TO_VIEM_CHAIN[networkId],
+      chain,
       transport: http(),
     });
     const walletProvider = new ViemWalletProvider(client);

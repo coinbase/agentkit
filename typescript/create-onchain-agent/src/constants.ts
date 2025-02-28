@@ -6,24 +6,20 @@ import {
   WalletProviderRouteConfiguration,
 } from "./types";
 
-export const EVM_NETWORKS: Set<EVMNetwork> = new Set([
-  "ethereum-mainnet",
-  "ethereum-sepolia",
-  "polygon-mainnet",
-  "polygon-mumbai",
+export const EVM_NETWORKS: EVMNetwork[] = [
   "base-mainnet",
   "base-sepolia",
+  "ethereum-mainnet",
+  "ethereum-sepolia",
   "arbitrum-mainnet",
   "arbitrum-sepolia",
   "optimism-mainnet",
   "optimism-sepolia",
-]);
+  "polygon-mainnet",
+  "polygon-mumbai",
+];
 
-export const SVM_NETWORKS: Set<SVMNetwork> = new Set([
-  "solana-mainnet",
-  "solana-devnet",
-  "solana-testnet",
-]);
+export const SVM_NETWORKS: SVMNetwork[] = ["solana-mainnet", "solana-devnet", "solana-testnet"];
 
 const CDP_SUPPORTED_EVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["CDP", "Viem", "Privy"];
 const SVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["SolanaKeypair", "Privy"];
