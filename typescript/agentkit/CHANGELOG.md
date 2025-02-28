@@ -1,12 +1,22 @@
 # AgentKit Changelog
 
-## Unreleased
+## [0.2.3] - 2025-02-28
 
-- Added `SmartWalletProvider` to use CDP Smart Wallets for agent actions.
+### Added
+
+- [#392](https://github.com/coinbase/agentkit/pull/392) [`c5c1513`](https://github.com/coinbase/agentkit/commit/c5c1513933626bd6aef42652a875accb0c95d82e) Thanks [@mikeghen](https://github.com/mikeghen)! - Added `compoundActionProvider` to interact with Compound protocol on Base.
+
+- [#465](https://github.com/coinbase/agentkit/pull/465) [`165360a`](https://github.com/coinbase/agentkit/commit/165360a108ccf1ce1142ebba875c86fbaa823a6c) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Added SmartWalletProvider powered by CDP Smart Wallets
+
+- [#487](https://github.com/coinbase/agentkit/pull/487) [`37d7083`](https://github.com/coinbase/agentkit/commit/37d70831cb0cfe1addb6a61c420c2a8d296bd64e) Thanks [@0xRAG](https://github.com/0xRAG)! - bump @coinbase/coinbase-sdk for support for Ed25519 API keys
 
 ### Fixed
 
-- Fixed erc20 `get_balance` action to format erc20 balance with correct number of decimals.
+- [#486](https://github.com/coinbase/agentkit/pull/486) [`bc4d4d2`](https://github.com/coinbase/agentkit/commit/bc4d4d219b706c4902ff402de49aae3d11c11952) Thanks [@stat](https://github.com/stat)! - use network id from saved wallet
+
+- [#488](https://github.com/coinbase/agentkit/pull/488) [`d12bc8e`](https://github.com/coinbase/agentkit/commit/d12bc8e29c8a4dd8b36788e4e244eca7eddd575e) Thanks [@John-peterson-coinbase](https://github.com/John-peterson-coinbase)! - Fixed under-reporting CDP API metrics bug by properly adding source and source version when configuring the CDP SDK
+
+- [#467](https://github.com/coinbase/agentkit/pull/467) [008f871](https://github.com/coinbase/agentkit/commit/008f871d1c9ebf4fcb5600584b066bdc6d69c8b9) Thanks [0xRAG](https://github.com/0xRAG)! - Fixed erc20 `get_balance` action to format erc20 balance with correct number of decimals.
 
 ## [0.2.2] - 2025-02-19
 

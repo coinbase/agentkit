@@ -1,10 +1,18 @@
 # Coinbase AgentKit Changelog
 
-## Unreleased
+## [0.1.4] - 2025-02-28
+
+### Added
+
+- Added new action provider to interact with Compound Finance (#477)
+- Added SmartWalletProvider powered by CDP Smart Wallets (#472)
+- Added `rpc_url` to `EthAccountWalletProvider` configurable options. (#474)
 
 ### Fixed
 
-- Fixed erc20 `get_balance` action to format erc20 balance with correct number of decimals.
+- Fixed under-reporting bug to ensure all CDP API usage is properly attributed to "agentkit" source and source version (#488)
+- Used network id from saved wallet (#486)
+- Fixed erc20 `get_balance` action to format erc20 balance with correct number of decimals. (#467)
 
 ## [0.1.3] - 2025-02-21
 
