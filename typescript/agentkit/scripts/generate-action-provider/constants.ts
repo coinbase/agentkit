@@ -162,7 +162,7 @@ export const WALLET_PROVIDERS_BY_PROTOCOL = {
 export const SUCCESS_MESSAGES = {
   FILES_CREATED: "\nFiles created:",
   NEXT_STEPS: "\nNext steps:",
-  REMINDERS: "\nDon't forget to:",
+  REMINDERS: "\nAfter filling in your implementation, do not forget to:",
   FILE_STRUCTURE: (name: string) => ({
     DIR: `  src/action-providers/${name}/`,
     PROVIDER: `    ├── ${name}ActionProvider.ts`,

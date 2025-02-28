@@ -106,7 +106,7 @@ WALLET_PROVIDERS_BY_PROTOCOL = {
 SUCCESS_MESSAGES = {
     "FILES_CREATED": "\nFiles created:",
     "NEXT_STEPS": "\nNext steps:",
-    "REMINDERS": "\nDon't forget to:",
+    "REMINDERS": "\nAfter filling in your implementation, do not forget to:",
     "FILE_STRUCTURE": lambda name: {
         "DIR": f"  coinbase_agentkit/action_providers/{name}/",
         "PROVIDER": f"    ├── {name}_action_provider.py",

@@ -263,11 +263,11 @@ def display_success_message(provider_name: str) -> None:
     print("    └── test_example_action.py (example action tests)")
 
     print(SUCCESS_MESSAGES["NEXT_STEPS"])
-    print("1. Define your action schemas in schemas.py")
-    print(f"2. Implement your actions in {provider_name}_action_provider.py")
-    print("3. Update network support check in supports_network() method")
-    print("4. Add more tests")
-    print("5. Update the README.md with proper documentation")
+    print("1. Replace the example action schema in schemas.py with your own")
+    print(f"2. Replace the example action implementation in {provider_name}_action_provider.py with your own")
+    print("3. Add unit tests to cover your action implementation")
+    print("4. Update the README.md with relevant documentation")
+    print("5. Add a changelog entry (see here for instructions: https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-PYTHON.md#changelog")
 
     print(SUCCESS_MESSAGES["REMINDERS"])
     print("• Run make test to verify your implementation")
