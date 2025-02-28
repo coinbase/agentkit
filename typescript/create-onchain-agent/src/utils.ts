@@ -210,7 +210,7 @@ export async function handleSelection(
     // Finish with # Optional section
     "\n\n# Optional\n",
     ...[
-      `NETWORK_ID=${network ?? ''}`,
+      `NETWORK_ID=${network ?? ""}`,
       rpcUrl ? `RPC_URL=${rpcUrl}` : null,
       chainId ? `CHAIN_ID=${chainId}` : null,
       ...selectedRouteConfig.env.optional,
