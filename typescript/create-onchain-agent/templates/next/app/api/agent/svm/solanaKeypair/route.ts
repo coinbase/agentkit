@@ -7,6 +7,7 @@ import {
   walletActionProvider,
   jupiterActionProvider,
   cdpApiActionProvider,
+  ActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { MemorySaver } from "@langchain/langgraph";
@@ -107,24 +108,29 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
     }
 
     // Initialize AgentKit: https://docs.cdp.coinbase.com/agentkit/docs/agent-actions
-    const agentkit = await AgentKit.from({
-      walletProvider,
-      actionProviders: [
-        splActionProvider(),
-        walletActionProvider(),
-        jupiterActionProvider(),
-        // The CDP API Action Provider provides faucet functionality on solana-devnet. Can be removed if you do not need this functionality.
+    const actionProviders: ActionProvider[] = [
+      walletActionProvider(),
+      splActionProvider(),
+      jupiterActionProvider(),
+    ];
+    const canUseCdpApi = process.env.CDP_API_KEY_NAME && process.env.CDP_API_KEY_PRIVATE_KEY;
+    if (canUseCdpApi) {
+      actionProviders.push(
         cdpApiActionProvider({
           apiKeyName: process.env.CDP_API_KEY_NAME,
           apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
         }),
-      ],
+      );
+    }
+    const agentkit = await AgentKit.from({
+      walletProvider,
+      actionProviders,
     });
     const tools = await getLangChainTools(agentkit);
     const memory = new MemorySaver();
 
     // Initialize Agent
-    const canUseFaucet = walletProvider.getNetwork().networkId == "solana-devnet";
+    const canUseFaucet = walletProvider.getNetwork().networkId == "solana-devnet" && canUseCdpApi;
     const faucetMessage = `If you ever need funds, you can request them from the faucet.`;
     const cantUseFaucetMessage = `If you need funds, you can provide your wallet details and request funds from the user.`;
     agent = createReactAgent({
