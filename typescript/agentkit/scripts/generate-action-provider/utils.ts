@@ -42,20 +42,22 @@ export function providerExists(name: string): boolean {
 }
 
 /**
- * Validates provider name format
+ * Validates provider name format to ensure it follows camelCase
  *
  * @param name - The provider name to validate
- * @returns true if valid format, error message string otherwise
+ * @returns true if valid camelCase format, error message string otherwise
  */
 export function validateName(name: string): true | string {
   if (!name) {
     return "Please enter a provider name";
   }
 
-  const formatted = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!/^[a-z]/.test(name)) {
+    return "Provider name must start with a lowercase letter";
+  }
 
-  if (!formatted) {
-    return "Please enter a valid name using only lowercase letters and numbers";
+  if (!/^[a-z][a-zA-Z0-9]*$/.test(name)) {
+    return "Provider name must be in camelCase format (e.g. myProvider)";
   }
 
   return true;

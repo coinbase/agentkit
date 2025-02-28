@@ -27,19 +27,19 @@ npm run generate:action-provider -- [options] -i
 Create a provider for all networks:
 
 ```bash
-npm run generate:action-provider -- -n my-provider -p all
+npm run generate:action-provider -- -n mytoken -p all
 ```
 
 Create an EVM provider for Base networks:
 
 ```bash
-npm run generate:action-provider -- -n my-provider -p evm
+npm run generate:action-provider -- -n mytoken -p evm
 ```
 
 Create an EVM provider with CDP wallet provider:
 
 ```bash
-npm run generate:action-provider -- -n my-provider -p evm -w CdpWalletProvider
+npm run generate:action-provider -- -n mytoken -p evm -w CdpWalletProvider
 ```
 
 ## Generated Files

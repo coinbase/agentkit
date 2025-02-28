@@ -27,19 +27,19 @@ poetry run generate-action-provider [options] -i
 Create a provider for all networks:
 
 ```bash
-poetry run generate-action-provider -n my-provider -p all
+poetry run generate-action-provider -n mytoken -p all
 ```
 
 Create an EVM provider:
 
 ```bash
-poetry run generate-action-provider -n my-provider -p evm
+poetry run generate-action-provider -n mytoken -p evm
 ```
 
 Create an EVM provider with CDP wallet provider:
 
 ```bash
-poetry run generate-action-provider -n my-provider -p evm -w CdpWalletProvider
+poetry run generate-action-provider -n mytoken -p evm -w CdpWalletProvider
 ```
 
 ## Generated Files
