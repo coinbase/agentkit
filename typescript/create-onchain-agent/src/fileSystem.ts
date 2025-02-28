@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { optimizedCopy, toValidPackageName } from "./utils.js";
+import { optimizedCopy } from "./utils.js";
 
 const sourceDir = path.resolve(fileURLToPath(import.meta.url), "../../../templates/next");
 

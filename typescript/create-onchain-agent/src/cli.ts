@@ -155,12 +155,12 @@ async function init() {
               : "RPC URL cannot be empty.",
         },
         {
-          type: (prev, { networkFamily, networkType, network }) => {
+          type: (prev, { networkFamily, networkType }) => {
             // For custom EVM networks, auto-select Viem by returning null
             if (networkFamily === "EVM" && networkType === "custom") {
               return null;
             }
-            // For all other cases (regular EVM networks and SVM networks with multiple providers), show selection
+            // For all other cases (regular EVM networks and SVM networks), show selection
             return "select";
           },
           name: "walletProvider",
@@ -213,10 +213,9 @@ async function init() {
     }
     process.exit(1);
   }
-  let { projectName, packageName, network, chainId, walletProvider, rpcUrl } = result;
-
-  packageName ||= toValidPackageName(projectName);
-  walletProvider ||= "Viem";
+  const { projectName, network, chainId, rpcUrl } = result;
+  const packageName = result.packageName || toValidPackageName(projectName);
+  const walletProvider = result.walletProvider || "Viem";
 
   const spinner = ora(`Creating ${projectName}...`).start();
 
