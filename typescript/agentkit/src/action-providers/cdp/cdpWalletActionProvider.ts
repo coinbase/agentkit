@@ -1,11 +1,10 @@
 import { Coinbase } from "@coinbase/coinbase-sdk";
 import { z } from "zod";
-
+import { version } from "../../../package.json";
 import { CreateAction } from "../actionDecorator";
 import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { CdpWalletProvider, CdpProviderConfig } from "../../wallet-providers";
-
 import { SolidityVersions } from "./constants";
 import { DeployContractSchema, DeployNftSchema, DeployTokenSchema, TradeSchema } from "./schemas";
 
@@ -27,9 +26,11 @@ export class CdpWalletActionProvider extends ActionProvider<CdpWalletProvider> {
       Coinbase.configure({
         apiKeyName: config.apiKeyName,
         privateKey: config.apiKeyPrivateKey?.replace(/\\n/g, "\n"),
+        source: "agentkit",
+        sourceVersion: version,
       });
     } else {
-      Coinbase.configureFromJson();
+      Coinbase.configureFromJson({ source: "agentkit", sourceVersion: version });
     }
   }
 

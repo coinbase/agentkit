@@ -5,6 +5,7 @@ from typing import Any
 
 from cdp import Cdp, ExternalAddress
 
+from ...__version__ import __version__
 from ...network import Network
 from ...wallet_providers import EvmWalletProvider
 from ...wallet_providers.cdp_wallet_provider import CdpProviderConfig
@@ -35,9 +36,11 @@ class CdpApiActionProvider(ActionProvider[EvmWalletProvider]):
                 Cdp.configure(
                     api_key_name=api_key_name,
                     private_key=api_key_private_key.replace("\\n", "\n"),
+                    source="agentkit",
+                    source_version=__version__,
                 )
             else:
-                Cdp.configure_from_json()
+                Cdp.configure_from_json(source="agentkit", source_version=__version__)
         except Exception as e:
             raise ValueError(f"Failed to initialize CDP client: {e!s}") from e
 
