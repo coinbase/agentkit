@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import {
   AgentKit,
   cdpApiActionProvider,
-  cdpWalletActionProvider,
-  CdpWalletProvider,
   erc20ActionProvider,
   NETWORK_ID_TO_VIEM_CHAIN,
   pythActionProvider,
