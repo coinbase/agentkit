@@ -4,7 +4,7 @@ import ora from "ora";
 import path from "path";
 import pc from "picocolors";
 import prompts from "prompts";
-import { EVM_NETWORKS, Networks, NetworkToWalletProviders, SVM_NETWORKS } from "./constants.js";
+import { EVM_NETWORKS, NetworkToWalletProviders, SVM_NETWORKS } from "./constants.js";
 import { Network, WalletProviderChoice } from "./types.js";
 import { copyTemplate } from "./fileSystem.js";
 import {
