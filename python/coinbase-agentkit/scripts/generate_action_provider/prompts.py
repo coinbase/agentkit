@@ -22,8 +22,8 @@ def prompt_for_name() -> str:
     while True:
         name = questionary.text(
             "Enter the name for your action provider (e.g. mytoken)",
-            validate=lambda text: validate_name(
-                text) or "Must start with a letter and contain only lowercase letters, numbers, and underscores"
+            validate=lambda text: validate_name(text)
+            or "Must start with a letter and contain only lowercase letters, numbers, and underscores",
         ).ask()
 
         if name:
@@ -38,10 +38,7 @@ def prompt_for_protocol_family() -> ProtocolFamily:
 
     """
     choices = [
-        questionary.Choice(
-            title=f"{pf['title']} ({pf['description']})",
-            value=pf["value"]
-        )
+        questionary.Choice(title=f"{pf['title']} ({pf['description']})", value=pf["value"])
         for pf in PROTOCOL_FAMILIES
     ]
 
@@ -67,13 +64,14 @@ def prompt_for_networks(protocol_family: ProtocolFamily) -> list[NetworkId]:
     networks = NETWORKS_BY_PROTOCOL[protocol_family]
     choices = [
         questionary.Choice(
-            title=f"{network['title']} ({network['description']})",
-            value=network["value"]
+            title=f"{network['title']} ({network['description']})", value=network["value"]
         )
         for network in networks
     ]
 
-    print(f"\n[dim]Note: Selecting 'All {protocol_family.upper()} Networks' will clear other selections[/dim]")
+    print(
+        f"\n[dim]Note: Selecting 'All {protocol_family.upper()} Networks' will clear other selections[/dim]"
+    )
 
     selected = questionary.checkbox(
         "Select target networks",
@@ -115,8 +113,7 @@ def prompt_for_wallet_provider(protocol_family: ProtocolFamily) -> WalletProvide
     providers = WALLET_PROVIDERS_BY_PROTOCOL[key]
     choices = [
         questionary.Choice(
-            title=f"{provider['title']} - {provider['description']}",
-            value=provider["value"]
+            title=f"{provider['title']} - {provider['description']}", value=provider["value"]
         )
         for provider in providers
     ]

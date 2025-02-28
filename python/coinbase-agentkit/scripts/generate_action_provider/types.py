@@ -3,7 +3,6 @@
 from dataclasses import dataclass
 from typing import Literal, TypedDict
 
-
 ProtocolFamily = Literal["all", "evm"] | None
 NetworkId = str
 WalletProvider = str

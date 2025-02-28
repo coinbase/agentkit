@@ -1,6 +1,5 @@
 """Configuration preparation for the action provider generator script."""
 
-
 from .prompts import (
     prompt_for_name,
     prompt_for_overwrite,

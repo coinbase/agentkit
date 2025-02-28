@@ -8,13 +8,15 @@ import typer
 from .types import NetworkId, ProtocolFamily, WalletProvider
 
 
-def parse_cli_args() -> tuple[
-    str | None,
-    ProtocolFamily | None,
-    list[NetworkId] | None,
-    WalletProvider | None,
-    bool,
-]:
+def parse_cli_args() -> (
+    tuple[
+        str | None,
+        ProtocolFamily | None,
+        list[NetworkId] | None,
+        WalletProvider | None,
+        bool,
+    ]
+):
     """Parse CLI arguments.
 
     Returns:
@@ -37,10 +39,18 @@ def parse_cli_args() -> tuple[
     @app.command()
     def main(
         name: str = typer.Option(None, "--name", "-n", help="Name of the action provider"),
-        protocol_family: str = typer.Option(None, "--protocol-family", "-p", help="Protocol family (e.g. evm, all)"),
-        networks: str = typer.Option(None, "--networks", "-t", help="Comma-separated list of networks"),
-        wallet_provider: str = typer.Option(None, "--wallet-provider", "-w", help="Wallet provider to use (optional)"),
-        interactive: bool = typer.Option(False, "--interactive", "-i", help="Enable interactive mode"),
+        protocol_family: str = typer.Option(
+            None, "--protocol-family", "-p", help="Protocol family (e.g. evm, all)"
+        ),
+        networks: str = typer.Option(
+            None, "--networks", "-t", help="Comma-separated list of networks"
+        ),
+        wallet_provider: str = typer.Option(
+            None, "--wallet-provider", "-w", help="Wallet provider to use (optional)"
+        ),
+        interactive: bool = typer.Option(
+            False, "--interactive", "-i", help="Enable interactive mode"
+        ),
     ):
         result["name"] = name
         if protocol_family == "evm":

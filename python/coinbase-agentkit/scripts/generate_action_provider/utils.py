@@ -83,8 +83,8 @@ def process_template(template_path: str, output_path: str, context: dict[str, An
     template = env.get_template(template_name)
     rendered = template.render(**context)
 
-    if not rendered.endswith('\n'):
-        rendered += '\n'
+    if not rendered.endswith("\n"):
+        rendered += "\n"
 
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(rendered)
@@ -162,8 +162,8 @@ def update_action_providers_init(config: ProviderConfig) -> None:
     instance_exists = False
     provider_exists = False
 
-    instance_pattern = rf'import.*{name}_action_provider'
-    provider_pattern = rf'import.*{name_pascal}ActionProvider'
+    instance_pattern = rf"import.*{name}_action_provider"
+    provider_pattern = rf"import.*{name_pascal}ActionProvider"
 
     for i, line in enumerate(lines):
         if line.startswith("from ."):
@@ -179,7 +179,7 @@ def update_action_providers_init(config: ProviderConfig) -> None:
             instance_exists = True
 
     if not import_exists:
-        new_import = f'from .{name}.{name}_action_provider import {name_pascal}ActionProvider, {name}_action_provider\n'
+        new_import = f"from .{name}.{name}_action_provider import {name_pascal}ActionProvider, {name}_action_provider\n"
         lines.insert(last_import_idx + 1, new_import)
         closing_bracket_idx += 1
 
