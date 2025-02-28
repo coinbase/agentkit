@@ -34,20 +34,6 @@ describe("{{name_pascal}}ActionProvider", () => {
   });
   {% endif %}
 
-  describe("initialization", () => {
-    it("should create an instance", () => {
-      expect(provider).toBeInstanceOf({{name_pascal}}ActionProvider);
-    });
-
-    it("should have the correct name", () => {
-      expect(provider.name).toBe("{{name}}");
-    });
-
-    it("should have defined schemas", () => {
-      expect(ExampleActionSchema).toBeDefined();
-    });
-  });
-
   describe("network support", () => {
     {% if not protocol_family %}
     it("should support all network types", () => {

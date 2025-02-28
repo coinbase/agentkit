@@ -1,12 +1,3 @@
-/**
- * Schemas for {{name}} Action Provider
- *
- * This file contains the Zod schemas that define the input types
- * for the {{name}} action provider's actions.
- *
- * @module {{name}}/schemas
- */
-
 import { z } from "zod";
 
 /**
