@@ -86,10 +86,7 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
     let privateKey = process.env.PRIVATE_KEY as `0x${string}`;
     if (!privateKey) {
       if (fs.existsSync(WALLET_DATA_FILE)) {
-        const walletData = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8"));
-        if (walletData.privateKey) {
-          privateKey = walletData.privateKey;
-        }
+        privateKey = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8")).privateKey;
         console.info("Found private key in wallet_data.txt");
       }
       else {
