@@ -22,6 +22,12 @@ A quickstart CLI tool to scaffold out a chatbot using Coinbase AgentKit. Runnabl
 
 See [Create Onchain Agent](./create-onchain-agent/README.md) to get started!
 
+### `generate-action-provider`
+
+An interactive CLI utility to generate new action providers with all necessary files and boilerplate code. Runnable via `poetry run generate-action-provider`.
+
+See [Generate Action Provider](./coinbase-agentkit/scripts/generate_action_provider/README.md) to get started!
+
 ## 🤝 Contributing
 
 **AgentKit is actively looking for community contributions!**
