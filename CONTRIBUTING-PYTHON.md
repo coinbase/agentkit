@@ -239,7 +239,7 @@ We use [towncrier](https://towncrier.readthedocs.io/en/stable/index.html) to man
 
 Changelog entries should be in the past tense, and they should be as specific as possible. Some examples of good changelog entries:
 
-- Added a new action provider to interact with Fancy Protocl
+- Added a new action provider to interact with Fancy Protocol
 - Fixed a bug preventing wallet balances to be formatted correctly
 
 Changelog entries are stored in the `changelog.d` directory. Each changelog entry is stored as a markdown file named after the type of change it is and the issue number it is associated with. For example, a bug fix associated with issue #123 would be stored in `changelog.d/123.bugfix.md`. If your change does not have an associated issue, you can first create the Pull Request, and then use the PR number in the changelog entry filename.
