@@ -5,9 +5,6 @@ This script helps you create new action providers with all necessary files and b
 ## Usage
 
 ```bash
-# Interactive mode
-poetry run generate-action-provider
-
 # CLI mode with arguments
 poetry run generate-action-provider [options]
 
@@ -73,6 +70,6 @@ Located in `tests/action_providers/{name}/`:
 - CLI arguments for automation
 - Interactive prompts for easy configuration
 - Support for multiple protocol families:
-  - EVM networks
-  - Protocol-agnostic providers
+    - EVM networks
+    - Protocol-agnostic providers
 - Optional wallet provider integration

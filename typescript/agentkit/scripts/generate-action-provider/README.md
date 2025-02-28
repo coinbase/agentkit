@@ -5,9 +5,6 @@ This script helps you create new action providers with all necessary files and b
 ## Usage
 
 ```bash
-# Interactive mode
-npm run generate-action-provider
-
 # CLI mode with arguments (note the -- before flags)
 npm run generate-action-provider -- [options]
 
@@ -60,6 +57,7 @@ Located in `src/action-providers/{name}/`:
 ### Test Files
 
 Located in same directory:
+
 ```
 └── {name}ActionProvider.test.ts  # Provider test suite
 ```
