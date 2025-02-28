@@ -4,7 +4,7 @@ import ora from "ora";
 import path from "path";
 import pc from "picocolors";
 import prompts from "prompts";
-import { Networks, NetworkToWalletProviders } from "./constants.js";
+import { EVM_NETWORKS, Networks, NetworkToWalletProviders, SVM_NETWORKS } from "./constants.js";
 import { Network, WalletProviderChoice } from "./types.js";
 import { copyTemplate } from "./fileSystem.js";
 import {
@@ -107,17 +107,16 @@ async function init() {
           choices: (prev, { networkFamily, networkType }) => {
             if (networkFamily === "SVM") {
               // Show all Solana networks
-              return Networks.filter(n => n.startsWith("solana")).map(network => ({
+              return SVM_NETWORKS.map(network => ({
                 title: network,
                 value: network as Network,
               }));
             } else {
               // Filter EVM networks by mainnet/testnet
-              const networks = Networks.filter(n => {
+              return EVM_NETWORKS.filter(n => {
                 const isMainnet = n.includes("mainnet");
                 return networkType === "mainnet" ? isMainnet : !isMainnet;
-              });
-              return networks.map(network => ({
+              }).map(network => ({
                 title: network === "base-sepolia" ? `${network} (default)` : network,
                 value: network as Network,
               }));
