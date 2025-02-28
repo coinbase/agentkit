@@ -24,3 +24,11 @@ export type WalletProviderRouteConfiguration = {
   };
   apiRoute: string;
 };
+
+export type NetworkSelection = {
+  networkFamily: "EVM" | "SVM";
+  networkType: "mainnet" | "testnet" | "custom";
+  network?: Network;
+  chainId?: string;
+  rpcUrl?: string;
+};
