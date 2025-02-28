@@ -13,9 +13,13 @@ import {
  * Determines the network family based on the provided network.
  *
  * @param {EVMNetwork | SVMNetwork} network - The network to check.
+ * @param {string} chainId - The chain ID to check.
  * @returns {"EVM" | "SVM" | undefined} The network family, or `undefined` if not recognized.
  */
-export function getNetworkType(network?: EVMNetwork | SVMNetwork, chainId?: string): "EVM" | "SVM" | 'CUSTOM_EVM' | null {
+export function getNetworkType(
+  network?: EVMNetwork | SVMNetwork,
+  chainId?: string,
+): "EVM" | "SVM" | "CUSTOM_EVM" | null {
   if (network) {
     if (EVM_NETWORKS.includes(network as EVMNetwork)) {
       return "EVM";

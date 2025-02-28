@@ -7,7 +7,7 @@ import {
   pythActionProvider,
   ViemWalletProvider,
   walletActionProvider,
-  wethActionProvider
+  wethActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { MemorySaver } from "@langchain/langgraph";
