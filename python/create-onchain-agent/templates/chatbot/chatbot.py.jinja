@@ -94,7 +94,7 @@ def initialize_agent():
 
     {% elif _wallet_provider == "eth" %}
     # Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
-        private_key = os.getenv("PRIVATE_KEY")
+    private_key = os.getenv("PRIVATE_KEY")
     
     if not private_key:
         if os.path.exists(wallet_data_file):
