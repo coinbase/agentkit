@@ -1,9 +1,5 @@
 # Coinbase Create Onchain Agent Changelog
 
-## Unreleased
-
-- Fixed the default behavior to handle optional CDP env vars
-
 ## [0.1.4] - 2025-02-24
 
 ## Added
