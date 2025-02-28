@@ -97,14 +97,14 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
       }
     }
     
-    const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
+    const account = privateKeyToAccount(privateKey);
     const networkId = process.env.NETWORK_ID as string;
     const client = createWalletClient({
       account,
       chain: NETWORK_ID_TO_VIEM_CHAIN[networkId],
       transport: http(),
     });
-    const walletProvider = await new ViemWalletProvider(client);
+    const walletProvider = new ViemWalletProvider(client);
 
     // Initialize AgentKit: https://docs.cdp.coinbase.com/agentkit/docs/agent-actions
     const agentkit = await AgentKit.from({
