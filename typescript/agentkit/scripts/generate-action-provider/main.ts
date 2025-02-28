@@ -34,11 +34,9 @@ async function createActionProvider() {
   const spinner = ora();
 
   try {
-    // Parse CLI args and prepare config with prompt fallbacks
     const args = await parseCliArgs();
     const config = await prepareProviderConfig(args);
 
-    // Generate files
     const targetDir = path.join(process.cwd(), "src", "action-providers", config.name);
     spinner.start(`Creating ${config.name} action provider...`);
 

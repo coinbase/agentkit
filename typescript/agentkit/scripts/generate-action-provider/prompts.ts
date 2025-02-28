@@ -6,7 +6,7 @@ import {
   ProtocolFamily,
   WalletProvider,
 } from "./constants";
-import { validateProviderName } from "./utils";
+import { validateName } from "./utils";
 
 /**
  * Prompt for provider name
@@ -16,7 +16,7 @@ export async function promptForName(): Promise<string> {
     type: "text",
     name: "name",
     message: "Enter action provider name (e.g. mytoken):",
-    validate: validateProviderName,
+    validate: validateName,
   });
   return name;
 }

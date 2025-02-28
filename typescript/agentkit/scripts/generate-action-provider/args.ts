@@ -14,7 +14,6 @@ export interface CliArgs {
  * Parse CLI arguments
  */
 export async function parseCliArgs(): Promise<CliArgs> {
-  // If no arguments provided (except script name), return defaults
   if (process.argv.length <= 2) {
     return {
       name: undefined,
@@ -52,19 +51,18 @@ export async function parseCliArgs(): Promise<CliArgs> {
       description: "Enable interactive mode for missing values",
       default: false,
     })
-    .help()
-    .argv;
+    .help().argv;
 
   const protocolFamily = args["protocol-family"] as string;
-  
+
   return {
     name: args.name,
-    // Only accept valid protocol families, otherwise null
-    protocolFamily: protocolFamily && ["evm", "svm"].includes(protocolFamily) 
-      ? protocolFamily as ProtocolFamily 
-      : null,
+    protocolFamily:
+      protocolFamily && ["evm", "svm"].includes(protocolFamily)
+        ? (protocolFamily as ProtocolFamily)
+        : null,
     networks: args.networks?.split(",").map(id => id.trim()),
     walletProvider: args["wallet-provider"] as WalletProvider | undefined,
     interactive: args.interactive || false,
   };
-} 
+}

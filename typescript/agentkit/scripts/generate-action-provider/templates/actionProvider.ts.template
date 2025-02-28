@@ -27,7 +27,7 @@ const SUPPORTED_NETWORK_IDS: string[] = [{% for id in networkIds %}"{{id}}"{% if
  *
  * @description
  * This provider is designed to {% if wallet_provider %}work with {{wallet_provider}} for blockchain interactions{% else %}provide blockchain-agnostic operations{% endif %}.
-{% if protocol_family == "all" %}
+{% if not protocol_family %}
  * It supports all blockchain networks.
 {% elif networkIds|length == 0 %}
  * It supports all {{protocol_family}} networks.
@@ -91,7 +91,7 @@ export class {{name_pascal}}ActionProvider extends ActionProvider{% if wallet_pr
     {% endif %}
   }
 
-  {% if protocol_family == "all" %}
+  {% if not protocol_family %}
   /**
    * Checks if this provider supports the given network.
    *

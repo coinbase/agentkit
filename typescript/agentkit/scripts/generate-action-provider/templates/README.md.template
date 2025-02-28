@@ -4,15 +4,23 @@ This directory contains the **{{name_pascal}}ActionProvider** implementation, wh
 
 ## Overview
 
-The {{name_pascal}}ActionProvider is designed to work with the {{wallet_provider}} for blockchain interactions. It provides a set of actions that enable [describe the main purpose/functionality].
+The {{name_pascal}}ActionProvider is designed to {% if wallet_provider %}work with {{wallet_provider}} for blockchain interactions{% else %}provide blockchain-agnostic operations{% endif %}. It provides a set of actions that enable [describe the main purpose/functionality].
 
 ## Directory Structure
 
 ```
 {{name}}/
-├── {{name}}ActionProvider.ts    # Main provider implementation
-├── schemas.ts                   # Action schemas and types
-└── README.md                    # Documentation (this file)
+├── {{name}}ActionProvider.ts     # Main provider implementation
+├── schemas.ts                    # Action schemas and types
+├── index.ts                      # Package exports
+└── README.md                     # Documentation (this file)
+```
+
+## Test Structure
+
+```
+{{name}}/
+└── {{name}}ActionProvider.test.ts  # Provider test suite
 ```
 
 ## Actions
@@ -21,39 +29,36 @@ The {{name_pascal}}ActionProvider is designed to work with the {{wallet_provider
 - `example-action`: Template action implementation
   - **Purpose**: Demonstrates the basic structure of an action
   - **Input**:
-    - `fieldName` (string): A descriptive name for the field
-    - `amount` (number): The amount to use in the action
+    - `fieldName` (string): A descriptive name for the field (1-100 chars)
+    - `amount` (string): The amount as a decimal string (e.g. "1.5")
     - `optionalField` (string, optional): Optional parameter example
-    - `enumField` ("option1" | "option2" | "option3"): Constrained choices
   - **Output**: String describing the action result
   - **Example**:
     ```typescript
-    const result = await provider.exampleAction(walletProvider, {
+    const result = await provider.exampleAction({% if wallet_provider %}walletProvider, {% endif %}{
       fieldName: "test",
-      amount: 1.0,
-      enumField: "option1"
+      amount: "1.0"
     });
     ```
 
 ## Implementation Details
 
 ### Network Support
-The {{name_pascal}} Action Provider supports networks based on the {{wallet_provider}} requirements:
-{% if wallet_provider == "EvmWalletProvider" %}
-- Supports EVM-compatible networks (protocol_family: "evm")
-{% elif wallet_provider == "SvmWalletProvider" %}
-- Supports Solana networks (protocol_family: "svm")
-{% elif wallet_provider == "CdpWalletProvider" or wallet_provider == "EthAccountWalletProvider" %}
-- Supports EVM-compatible networks (protocol_family: "evm")
+{% if not protocol_family %}
+This provider supports all blockchain networks.
+{% elif networkIds|length == 0 %}
+This provider supports all {{protocol_family}} networks.
 {% else %}
-- Supports all networks (generic wallet provider)
+This provider supports {{protocol_family}} networks: {% for networkId in networkIds %}{{networkId}}{% if not loop.last %}, {% endif %}{% endfor %}.
 {% endif %}
 
+{% if wallet_provider %}
 ### Wallet Provider Integration
 This provider is specifically designed to work with {{wallet_provider}}. Key integration points:
 - Network compatibility checks
 - Transaction signing and execution
 - Balance and account management
+{% endif %}
 
 ## Adding New Actions
 
@@ -74,7 +79,7 @@ To add new actions:
      schema: NewActionSchema,
    })
    async newAction(
-     walletProvider: {{wallet_provider}}, 
+     {% if wallet_provider %}walletProvider: {{wallet_provider}}, {% endif %}
      args: z.infer<typeof NewActionSchema>
    ): Promise<string> {
      // Implement your action logic
@@ -90,11 +95,13 @@ When implementing new actions, ensure to:
 
 ## Dependencies
 - AgentKit core library
+{% if wallet_provider %}
 - {{wallet_provider}} for blockchain interactions
 {% if wallet_provider == "EvmWalletProvider" %}
-- EVM-specific dependencies (e.g., ethers.js, web3.js)
+- EVM-specific dependencies (e.g., viem)
 {% elif wallet_provider == "SvmWalletProvider" %}
 - Solana-specific dependencies (e.g., @solana/web3.js)
+{% endif %}
 {% endif %}
 
 ## Notes

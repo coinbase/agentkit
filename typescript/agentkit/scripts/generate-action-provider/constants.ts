@@ -1,6 +1,17 @@
-import { CHAIN_ID_TO_NETWORK_ID } from "../src/network/network";
-import { SOLANA_CLUSTER_ID_BY_NETWORK_ID } from "../src/network/svm";
+import { CHAIN_ID_TO_NETWORK_ID } from "../../src/network/network";
+import { SOLANA_CLUSTER_ID_BY_NETWORK_ID } from "../../src/network/svm";
 import { networkIdToDisplayName } from "./utils";
+
+/**
+ * ASCII art banner for AgentKit
+ */
+export const AGENTKIT_BANNER = `
+ █████   ██████  ███████ ███    ██ ████████    ██   ██ ██ ████████ 
+██   ██ ██       ██      ████   ██    ██       ██  ██  ██    ██    
+███████ ██   ███ █████   ██ ██  ██    ██       █████   ██    ██    
+██   ██ ██    ██ ██      ██  ██ ██    ██       ██  ██  ██    ██    
+██   ██  ██████  ███████ ██   ████    ██       ██   ██ ██    ██    
+`;
 
 /**
  * Protocol families with descriptions
@@ -68,10 +79,6 @@ export const NETWORKS_BY_PROTOCOL = {
       .sort((a, b) => a.title.localeCompare(b.title)),
   ],
 } as const;
-
-//
-// TODO: consider exporting wallet providers much like networks
-//
 
 /**
  * Base wallet provider configuration
@@ -148,8 +155,34 @@ export const WALLET_PROVIDERS_BY_PROTOCOL = {
 } as const;
 
 /**
+ * Success message strings and templates for action provider creation.
+ * Contains all the message templates used in the success output after creating
+ * a new action provider, including file structure, descriptions, and next steps.
+ */
+export const SUCCESS_MESSAGES = {
+  FILES_CREATED: "\nFiles created:",
+  NEXT_STEPS: "\nNext steps:",
+  REMINDERS: "\nDon't forget to:",
+  FILE_STRUCTURE: (name: string) => ({
+    DIR: `  src/action-providers/${name}/`,
+    PROVIDER: `    ├── ${name}ActionProvider.ts`,
+    TEST: `    ├── ${name}ActionProvider.test.ts`,
+    SCHEMAS: `    ├── schemas.ts`,
+    README: `    └── README.md`,
+  }),
+  DESCRIPTIONS: {
+    PROVIDER: "(main provider implementation)",
+    TEST: "(test suite)",
+    SCHEMAS: "(action schemas and types)",
+    README: "(documentation)",
+  },
+};
+
+/**
  * Type definitions for protocol families and providers
  */
 export type ProtocolFamily = (typeof PROTOCOL_FAMILIES)[number]["value"];
-export type WalletProvider = (typeof WALLET_PROVIDERS_BY_PROTOCOL)[keyof typeof WALLET_PROVIDERS_BY_PROTOCOL][number]["value"];
-export type NetworkId = (typeof NETWORKS_BY_PROTOCOL)[keyof typeof NETWORKS_BY_PROTOCOL][number]["value"];
+export type WalletProvider =
+  (typeof WALLET_PROVIDERS_BY_PROTOCOL)[keyof typeof WALLET_PROVIDERS_BY_PROTOCOL][number]["value"];
+export type NetworkId =
+  (typeof NETWORKS_BY_PROTOCOL)[keyof typeof NETWORKS_BY_PROTOCOL][number]["value"];
