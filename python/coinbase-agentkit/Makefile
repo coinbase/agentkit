@@ -28,4 +28,4 @@ test:
 
 .PHONY: generate-action-provider
 generate-action-provider:
-	poetry run generate-action-provider -i
+	poetry run generate-action-provider

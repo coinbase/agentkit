@@ -22,12 +22,6 @@ A quickstart CLI tool to scaffold out a fullstack chatbot application using Coin
 
 See [Create Onchain Agent](./create-onchain-agent/README.md) to get started!
 
-### `generate-action-provider`
-
-An interactive CLI utility to generate new action providers with all necessary files and boilerplate code. Runnable via `npm run generate-action-provider`.
-
-See [Generate Action Provider](./agentkit/scripts/generate-action-provider/README.md) to get started!
-
 ## 🤝 Contributing
 
 **AgentKit is actively looking for community contributions!**

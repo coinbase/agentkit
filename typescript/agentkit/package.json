@@ -7,9 +7,7 @@
   "license": "Apache-2.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "tsc",
     "lint": "eslint -c .eslintrc.json \"src/**/*.ts\"",
@@ -26,7 +24,7 @@
     "docs": "typedoc --entryPoints ./src --entryPointStrategy expand --exclude ./src/tests/**/*.ts",
     "docs:serve": "http-server ./docs",
     "dev": "tsc --watch",
-    "generate-action-provider": "tsx ./scripts/generate-action-provider/main.ts -i"
+    "generate:action-provider": "tsx ./scripts/generate-action-provider/main.ts"
   },
   "keywords": [
     "coinbase",

@@ -1,8 +1,6 @@
 import { CliArgs } from "./args";
-import { PROTOCOL_FAMILIES, WALLET_PROVIDERS_BY_PROTOCOL } from "./constants";
 import {
   promptForName,
-  promptForNetworks,
   promptForOverwrite,
   promptForProtocolFamily,
   promptForWalletProvider,
@@ -61,11 +59,6 @@ export async function prepareProviderConfig(args: CliArgs): Promise<ProviderConf
   if (!config.protocolFamily) {
     config.protocolFamily = await promptForProtocolFamily();
   }
-
-  // handle network selection if we have a specific protocol
-  // if (config.protocolFamily && !config.networkIds.length) {
-  //   config.networkIds = await promptForNetworks(config.protocolFamily);
-  // }
 
   // handle wallet provider in interactive mode
   if (!config.walletProvider && config.protocolFamily !== "none") {

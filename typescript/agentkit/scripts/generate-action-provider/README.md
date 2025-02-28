@@ -6,13 +6,13 @@ This script helps you create new action providers with all necessary files and b
 
 ```bash
 # Interactive mode
-npm run generate-action-provider
+npm run generate:action-provider
 
 # CLI mode with arguments (note the -- before flags)
-npm run generate-action-provider -- [options]
+npm run generate:action-provider -- [options]
 
 # Hybrid mode with arguments (note the -- before flags)
-npm run generate-action-provider -- [options] -i
+npm run generate:action-provider -- [options] -i
 ```
 
 ## Options
@@ -27,19 +27,19 @@ npm run generate-action-provider -- [options] -i
 Create a provider for all networks:
 
 ```bash
-npm run generate-action-provider -- -n my-provider -p all
+npm run generate:action-provider -- -n my-provider -p all
 ```
 
 Create an EVM provider for Base networks:
 
 ```bash
-npm run generate-action-provider -- -n my-provider -p evm
+npm run generate:action-provider -- -n my-provider -p evm
 ```
 
 Create an EVM provider with CDP wallet provider:
 
 ```bash
-npm run generate-action-provider -- -n my-provider -p evm -w CdpWalletProvider
+npm run generate:action-provider -- -n my-provider -p evm -w CdpWalletProvider
 ```
 
 ## Generated Files

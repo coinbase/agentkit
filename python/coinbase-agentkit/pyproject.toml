@@ -8,7 +8,6 @@ license = "Apache-2.0"
 keywords = ["coinbase", "sdk", "crypto", "cdp", "agentkit", "ai", "agent"]
 packages = [
     { include = "coinbase_agentkit" },
-    { include = "scripts" },
 ]
 
 [tool.poetry.dependencies]
