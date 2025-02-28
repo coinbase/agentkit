@@ -2,18 +2,17 @@ import { AgentRequest, AgentResponse } from "@/app/types/api";
 import {
   AgentKit,
   cdpApiActionProvider,
-  erc20ActionProvider,
   jupiterActionProvider,
+  PrivyWalletConfig,
   PrivyWalletProvider,
-  pythActionProvider,
   splActionProvider,
   walletActionProvider,
-  wethActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
+import fs from "fs";
 import { NextResponse } from "next/server";
 
 /**
@@ -54,6 +53,9 @@ import { NextResponse } from "next/server";
 // The agent
 let agent: ReturnType<typeof createReactAgent>;
 
+// Configure a file to persist the agent's Prviy Wallet Data
+const WALLET_DATA_FILE = "wallet_data.txt";
+
 /**
  * Initializes and returns an instance of the AI agent.
  * If an agent instance already exists, it returns the existing one.
@@ -76,7 +78,7 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
     const llm = new ChatOpenAI({ model: "gpt-4o-mini" });
 
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
-    const walletProvider = await PrivyWalletProvider.configureWithWallet({
+    const config: PrivyWalletConfig = {
       appId: process.env.PRIVY_APP_ID as string,
       appSecret: process.env.PRIVY_APP_SECRET as string,
       walletId: process.env.PRIVY_WALLET_ID as string,
@@ -84,7 +86,15 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
       authorizationKeyId: process.env.PRIVY_WALLET_AUTHORIZATION_KEY_ID,
       chainType: "solana",
       networkId: process.env.NETWORK_ID,
-    });
+    };
+    // Try to load saved wallet data
+    if (fs.existsSync(WALLET_DATA_FILE)) {
+      const savedWallet = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8"));
+      config.walletId = savedWallet.walletId;
+      config.authorizationPrivateKey = savedWallet.authorizationPrivateKey;
+      config.networkId = savedWallet.networkId;
+    }
+    const walletProvider = await PrivyWalletProvider.configureWithWallet(config);
 
     // Initialize AgentKit: https://docs.cdp.coinbase.com/agentkit/docs/agent-actions
     const agentkit = await AgentKit.from({
@@ -122,6 +132,10 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
         restating your tools' descriptions unless it is explicitly requested.
         `,
     });
+
+    // Save wallet data
+    const exportedWallet = walletProvider.exportWallet();
+    fs.writeFileSync(WALLET_DATA_FILE, JSON.stringify(exportedWallet));
 
     return agent;
   } catch (error) {
