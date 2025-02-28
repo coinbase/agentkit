@@ -253,4 +253,5 @@ export async function handleSelection(
   }
   await fs.rm(path.join(agentDir, "evm"), { recursive: true, force: true });
   await fs.rm(path.join(agentDir, "svm"), { recursive: true, force: true });
+  await fs.rm(path.join(agentDir, "custom-evm"), { recursive: true, force: true });
 }
