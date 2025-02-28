@@ -29,7 +29,7 @@ export class CdpApiActionProvider extends ActionProvider<WalletProvider> {
         sourceVersion: version,
       });
     } else {
-      Coinbase.configureFromJson();
+      Coinbase.configureFromJson({ source: "agentkit", sourceVersion: version });
     }
   }
 

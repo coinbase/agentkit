@@ -1,5 +1,6 @@
 """Coinbase AgentKit - Framework for enabling AI agents to take actions onchain."""
 
+from .__version__ import __version__
 from .action_providers import (
     Action,
     ActionProvider,
@@ -29,8 +30,6 @@ from .wallet_providers import (
     WalletProvider,
 )
 
-__version__ = "0.1.0"
-
 __all__ = [
     "AgentKit",
     "AgentKitConfig",
@@ -57,4 +56,5 @@ __all__ = [
     "wallet_action_provider",
     "weth_action_provider",
     "wow_action_provider",
+    "__version__",
 ]

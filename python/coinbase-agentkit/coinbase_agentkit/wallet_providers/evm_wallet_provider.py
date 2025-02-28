@@ -13,8 +13,13 @@ from .wallet_provider import WalletProvider
 class EvmGasConfig(BaseModel):
     """Configuration for gas multipliers."""
 
-    gas_limit_multiplier: float | None = Field(None, description="An internal multiplier on gas limit estimation")
-    fee_per_gas_multiplier: float | None = Field(None, description="An internal multiplier on fee per gas estimation")
+    gas_limit_multiplier: float | None = Field(
+        None, description="An internal multiplier on gas limit estimation"
+    )
+    fee_per_gas_multiplier: float | None = Field(
+        None, description="An internal multiplier on fee per gas estimation"
+    )
+
 
 class EvmWalletProvider(WalletProvider, ABC):
     """Abstract base class for all EVM wallet providers."""
