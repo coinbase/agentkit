@@ -16,8 +16,9 @@ import { ChatOpenAI } from "@langchain/openai";
 import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { AgentRequest, AgentResponse } from "@/app/types/api";
-import { createWalletClient, http } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
+import { createWalletClient, Hex, http } from "viem";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import fs from "fs";
 
 /**
  * AgentKit Integration Route
@@ -57,6 +58,9 @@ import { privateKeyToAccount } from "viem/accounts";
 // The agent
 let agent: ReturnType<typeof createReactAgent>;
 
+// Configure a file to persist a user's private key if none provided
+const WALLET_DATA_FILE = "wallet_data.txt";
+
 /**
  * Initializes and returns an instance of the AI agent.
  * If an agent instance already exists, it returns the existing one.
@@ -79,14 +83,29 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
     const llm = new ChatOpenAI({ model: "gpt-4o-mini" });
 
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
-    const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
+    let privateKey = process.env.PRIVATE_KEY as Hex;
+    if (!privateKey) {
+      if (fs.existsSync(WALLET_DATA_FILE)) {
+        privateKey = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8")).privateKey;
+        console.info("Found private key in wallet_data.txt");
+      } else {
+        privateKey = generatePrivateKey();
+        fs.writeFileSync(WALLET_DATA_FILE, JSON.stringify({ privateKey }));
+        console.log("Created new private key and saved to wallet_data.txt");
+        console.log(
+          "We recommend you save this private key to your .env file and delete wallet_data.txt afterwards.",
+        );
+      }
+    }
+
+    const account = privateKeyToAccount(privateKey);
     const networkId = process.env.NETWORK_ID as string;
     const client = createWalletClient({
       account,
       chain: NETWORK_ID_TO_VIEM_CHAIN[networkId],
       transport: http(),
     });
-    const walletProvider = await new ViemWalletProvider(client);
+    const walletProvider = new ViemWalletProvider(client);
 
     // Initialize AgentKit: https://docs.cdp.coinbase.com/agentkit/docs/agent-actions
     const agentkit = await AgentKit.from({

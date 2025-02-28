@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import time
+import secrets
 
 from dotenv import load_dotenv
 
@@ -16,12 +17,12 @@ from coinbase_agentkit import (
     {% if _wallet_provider == "cdp" %}
     CdpWalletProvider,
     CdpWalletProviderConfig,
-    cdp_api_action_provider,
+    cdp_wallet_action_provider,
     {% elif _wallet_provider == "eth" %}
     EthAccountWalletProvider,
     EthAccountWalletProviderConfig,
     {% endif %}
-    cdp_wallet_action_provider,
+    cdp_api_action_provider,
     erc20_action_provider,
     pyth_action_provider,
     wallet_action_provider,
@@ -67,10 +68,9 @@ Join us in shaping AgentKit! Check out the contribution guide:
 - https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING.md
 - https://discord.gg/CDP
 """
-{% if _wallet_provider == "cdp" %}
-# Configure a file to persist the agent's CDP API Wallet Data.
+# Configure a file to persist wallet data
 wallet_data_file = "wallet_data.txt"
-{% endif %}
+
 load_dotenv()
 
 def initialize_agent():
@@ -78,6 +78,7 @@ def initialize_agent():
 
     # Initialize LLM: https://platform.openai.com/docs/models#gpt-4o
     llm = ChatOpenAI(model="gpt-4o-mini")
+
     {% if _wallet_provider == "cdp" %}
     # Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
     wallet_data = None
@@ -90,16 +91,34 @@ def initialize_agent():
         cdp_config = CdpWalletProviderConfig(wallet_data=wallet_data)
 
     wallet_provider = CdpWalletProvider(cdp_config)
-    {% elif _wallet_provider == "eth" %}
-    # Ensure PRIVATE_KEY is set
-    private_key = os.getenv("PRIVATE_KEY")
-    assert private_key, "You must set the PRIVATE_KEY environment variable"
-    assert private_key.startswith("0x"), "Private key must start with 0x hex prefix"
 
+    {% elif _wallet_provider == "eth" %}
+    # Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
+        private_key = os.getenv("PRIVATE_KEY")
+    
+    if not private_key:
+        if os.path.exists(wallet_data_file):
+            try:
+                with open(wallet_data_file) as f:
+                    wallet_data = json.load(f)
+                    private_key = wallet_data.get("private_key")
+                    print("Found private key in wallet_data.txt")
+            except Exception as e:
+                print(f"Error reading wallet data: {e}")
+        
+        if not private_key:
+            # Generate new private key if none exists
+            private_key = "0x" + secrets.token_hex(32)
+            with open(wallet_data_file, "w") as f:
+                json.dump({"private_key": private_key}, f)
+            print("Created new private key and saved to wallet_data.txt")
+            print("We recommend you save this private key to your .env file and delete wallet_data.txt afterwards.")
+
+    assert private_key.startswith("0x"), "Private key must start with 0x hex prefix"
+    
     # Create Ethereum account from private key
     account = Account.from_key(private_key)
 
-    # Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
     wallet_provider = EthAccountWalletProvider(
         config=EthAccountWalletProviderConfig(
             account=account,
@@ -107,6 +126,7 @@ def initialize_agent():
         )
     )
     {% endif %}
+
     # Initialize AgentKit: https://docs.cdp.coinbase.com/agentkit/docs/agent-actions
     agentkit = AgentKit(AgentKitConfig(
         wallet_provider=wallet_provider,
@@ -121,13 +141,14 @@ def initialize_agent():
             weth_action_provider(),
         ]
     ))
+
     {% if _wallet_provider == "cdp" %}
     # Save wallet to file for reuse
     wallet_data_json = json.dumps(wallet_provider.export_wallet().to_dict())
-
     with open(wallet_data_file, "w") as f:
         f.write(wallet_data_json)
     {% endif %}
+
     # Transform agentkit configuration into langchain tools
     tools = get_langchain_tools(agentkit)
     
