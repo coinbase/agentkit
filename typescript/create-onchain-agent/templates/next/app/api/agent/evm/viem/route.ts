@@ -88,15 +88,16 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
       if (fs.existsSync(WALLET_DATA_FILE)) {
         privateKey = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8")).privateKey;
         console.info("Found private key in wallet_data.txt");
-      }
-      else {
+      } else {
         privateKey = generatePrivateKey();
         fs.writeFileSync(WALLET_DATA_FILE, JSON.stringify({ privateKey }));
         console.log("Created new private key and saved to wallet_data.txt");
-        console.log("We recommend you save this private key to your .env file and delete wallet_data.txt afterwards.");
+        console.log(
+          "We recommend you save this private key to your .env file and delete wallet_data.txt afterwards.",
+        );
       }
     }
-    
+
     const account = privateKeyToAccount(privateKey);
     const networkId = process.env.NETWORK_ID as string;
     const client = createWalletClient({

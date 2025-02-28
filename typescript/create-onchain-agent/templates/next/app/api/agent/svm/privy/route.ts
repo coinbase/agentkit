@@ -6,7 +6,7 @@ import {
   PrivyWalletConfig,
   PrivyWalletProvider,
   splActionProvider,
-  walletActionProvider
+  walletActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { MemorySaver } from "@langchain/langgraph";
@@ -86,7 +86,7 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
       authorizationKeyId: process.env.PRIVY_WALLET_AUTHORIZATION_KEY_ID,
       chainType: "solana",
       networkId: process.env.NETWORK_ID,
-    }
+    };
     // Try to load saved wallet data
     if (fs.existsSync(WALLET_DATA_FILE)) {
       const savedWallet = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8"));
