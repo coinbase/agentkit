@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "create-onchain-agent"
-version = "0.1.3"
+version = "0.1.4"
 description = "CLI to create an onchain agent project"
 authors = ["Carson Roscoe <carsonroscoe7@gmail.com>"]
 readme = "README.md"
