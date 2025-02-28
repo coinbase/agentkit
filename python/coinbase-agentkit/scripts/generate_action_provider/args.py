@@ -21,7 +21,6 @@ def parse_cli_args() -> tuple[
         tuple: (name, protocol_family, networks, wallet_provider, interactive)
 
     """
-    # If no arguments provided (except script name), return all None
     if len(sys.argv) <= 1:
         return None, None, None, None, False
 
@@ -45,8 +44,7 @@ def parse_cli_args() -> tuple[
     ):
         result["name"] = name
         if protocol_family == "evm":
-            result["protocol_family"] = protocol_family  # type: ignore
-        # None or "all" both mean all protocols
+            result["protocol_family"] = protocol_family
         result["networks"] = [id.strip() for id in networks.split(",")] if networks else None
         result["wallet_provider"] = wallet_provider
         result["interactive"] = interactive

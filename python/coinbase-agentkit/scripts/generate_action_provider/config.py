@@ -35,43 +35,38 @@ def prepare_provider_config(
         ValueError: If required fields are missing or invalid
 
     """
-    # Always get a valid name first
+    # always get a valid name first
     resolved_name = name
     if not resolved_name or not validate_name(resolved_name):
         resolved_name = prompt_for_name()
 
-    # Check if provider exists and prompt for overwrite
+    # check if provider exists and prompt for overwrite
     should_overwrite = False
     if provider_exists(resolved_name):
         should_overwrite = prompt_for_overwrite(resolved_name)
         if not should_overwrite:
             raise ValueError("Action provider creation cancelled - provider already exists")
 
-    # Start with provided values
+    # start with provided values
     config = ProviderConfig(
         name=resolved_name,
-        protocol_family=protocol_family,
+        protocol_family=protocol_family or None,
         network_ids=networks or [],
         wallet_provider=wallet_provider,
     )
 
-    # Set default wallet providers by protocol
-    if not config.wallet_provider:
-        if config.protocol_family == "evm":
-            config.wallet_provider = "EvmWalletProvider"
+    # set default wallet providers by protocol
+    if not config.wallet_provider and config.protocol_family == "evm":
+        config.wallet_provider = "EvmWalletProvider"
 
     if not interactive:
         return config
 
-    # Handle missing values
+    # handle missing values
     if not config.protocol_family:
         config.protocol_family = prompt_for_protocol_family()
 
-    # Handle network selection
-    # if config.protocol_family and not config.network_ids:
-    #     config.network_ids = prompt_for_networks(config.protocol_family)
-
-    # Handle wallet provider in interactive mode
+    # handle wallet provider in interactive mode
     if not config.wallet_provider and config.protocol_family != "none":
         if config.protocol_family != "all" and should_prompt_for_wallet_provider():
             config.wallet_provider = prompt_for_wallet_provider(config.protocol_family)
@@ -80,7 +75,7 @@ def prepare_provider_config(
         else:
             config.wallet_provider = "WalletProvider"
 
-    # Convert special values to None
+    # convert special values to None
     if config.protocol_family in ("all", "none"):
         config.protocol_family = None
 

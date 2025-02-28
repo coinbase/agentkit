@@ -24,15 +24,17 @@ SUPPORTED_NETWORK_IDS = [{% for id in network_ids %}"{{ id }}"{% if not loop.las
 class {{ name_pascal }}ActionProvider(ActionProvider{% if wallet_provider %}[{{ wallet_provider }}]{% endif %}):
     """{{ name_pascal }}ActionProvider provides actions for {{ name }} operations.
 
+    This provider is designed to {% if wallet_provider %}work with {{ wallet_provider }} for blockchain interactions{% else %}provide blockchain-agnostic operations{% endif %}.
     {% if not protocol_family %}
-    This provider is designed to provide blockchain-agnostic operations.
-    {% elif network_ids|length == 0 %}
-    This provider is designed to work with {{ protocol_family }} networks.
+    {% if wallet_provider %}
+    It supports all blockchain networks.
     {% else %}
-    This provider is designed to work with specific {{ protocol_family }} networks:
-    {% for networkId in network_ids %}
-    {{ networkId }}{% if not loop.last %}, {% endif %}
-    {%- endfor %}
+    It is designed for non-blockchain operations.
+    {% endif %}
+    {% elif network_ids|length == 0 %}
+    It supports all {{ protocol_family }} networks.
+    {% else %}
+    It supports {{ protocol_family }} networks: {% for networkId in network_ids %}{{ networkId }}{% if not loop.last %}, {% endif %}{% endfor %}.
     {% endif %}
 
     {% if wallet_provider %}
@@ -102,11 +104,11 @@ class {{ name_pascal }}ActionProvider(ActionProvider{% if wallet_provider %}[{{ 
 
         """
         {% if not protocol_family %}
-        # Provider is blockchain-agnostic
+        # all networks
         return True
         {% else %}
         {% if network_ids|length %}
-        # Provider supports specific networks
+        # specific protocol networks
         if network.protocol_family != "{{ protocol_family }}":
             return False
 
@@ -115,7 +117,7 @@ class {{ name_pascal }}ActionProvider(ActionProvider{% if wallet_provider %}[{{ 
 
         return network.network_id in SUPPORTED_NETWORK_IDS
         {% else %}
-        # Provider supports all networks in protocol family
+        # all protocol networks
         return network.protocol_family == "{{ protocol_family }}"
         {% endif %}
         {% endif %}

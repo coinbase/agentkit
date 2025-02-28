@@ -21,8 +21,9 @@ def prompt_for_name() -> str:
     """
     while True:
         name = questionary.text(
-            "Enter the name for your action provider (e.g. 'mytoken', 'superfluid')",
-            validate=lambda text: validate_name(text) or "Must start with a letter and contain only lowercase letters, numbers, and underscores"
+            "Enter the name for your action provider (e.g. mytoken)",
+            validate=lambda text: validate_name(
+                text) or "Must start with a letter and contain only lowercase letters, numbers, and underscores"
         ).ask()
 
         if name:
@@ -60,7 +61,6 @@ def prompt_for_networks(protocol_family: ProtocolFamily) -> list[NetworkId]:
         List[NetworkId]: List of selected network IDs. Empty list if "all" is selected.
 
     """
-    # None means "all"
     if protocol_family is None:
         return []
 
@@ -111,7 +111,6 @@ def prompt_for_wallet_provider(protocol_family: ProtocolFamily) -> WalletProvide
         WalletProvider | None: The selected wallet provider or None if not selected
 
     """
-    # Use "all" as key for wallet providers when protocol family is None
     key = "all" if protocol_family is None else protocol_family
     providers = WALLET_PROVIDERS_BY_PROTOCOL[key]
     choices = [

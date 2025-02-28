@@ -6,17 +6,7 @@ for the {{ name }} action provider's actions.
 @module {{ name }}/schemas
 """
 
-from enum import Enum
-
 from pydantic import BaseModel, Field, field_validator
-
-
-class ExampleEnum(str, Enum):
-    """Example enum for action parameters."""
-
-    OPTION1 = "option1"
-    OPTION2 = "option2"
-    OPTION3 = "option3"
 
 
 class ExampleActionSchema(BaseModel):
@@ -41,11 +31,6 @@ class ExampleActionSchema(BaseModel):
     optional_field: str | None = Field(
         None,
         description="Optional parameter example",
-    )
-
-    enum_field: ExampleEnum = Field(
-        ...,
-        description="Constrained choices example",
     )
 
     @field_validator("amount")

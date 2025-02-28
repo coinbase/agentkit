@@ -1,5 +1,14 @@
 """Constants for the action provider generator script."""
 
+# ASCII art banner for AgentKit
+AGENTKIT_BANNER = """
+ █████   ██████  ███████ ███    ██ ████████    ██   ██ ██ ████████
+██   ██ ██       ██      ████   ██    ██       ██  ██  ██    ██
+███████ ██   ███ █████   ██ ██  ██    ██       █████   ██    ██
+██   ██ ██    ██ ██      ██  ██ ██    ██       ██  ██  ██    ██
+██   ██  ██████  ███████ ██   ████    ██       ██   ██ ██    ██
+"""
+
 # Protocol families with descriptions
 PROTOCOL_FAMILIES = [
     {
@@ -93,15 +102,6 @@ WALLET_PROVIDERS_BY_PROTOCOL = {
     "evm": EVM_WALLET_PROVIDERS,
 }
 
-# ASCII art banner for AgentKit
-AGENTKIT_BANNER = """
- █████   ██████  ███████ ███    ██ ████████    ██   ██ ██ ████████
-██   ██ ██       ██      ████   ██    ██       ██  ██  ██    ██
-███████ ██   ███ █████   ██ ██  ██    ██       █████   ██    ██
-██   ██ ██    ██ ██      ██  ██ ██    ██       ██  ██  ██    ██
-██   ██  ██████  ███████ ██   ████    ██       ██   ██ ██    ██
-"""
-
 # Success message templates
 SUCCESS_MESSAGES = {
     "FILES_CREATED": "\nFiles created:",
@@ -121,3 +121,4 @@ SUCCESS_MESSAGES = {
         "README": "(documentation)",
     },
 }
+

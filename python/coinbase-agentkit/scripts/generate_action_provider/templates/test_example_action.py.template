@@ -48,19 +48,16 @@ def test_example_action_schema():
     valid_args = {
         "field_name": "test",
         "amount": "1.0",
-        "enum_field": "option1",
     }
     invalid_args = {
         "field_name": "",  # Empty string
         "amount": "invalid",  # Invalid format
-        "enum_field": "invalid",  # Invalid enum value
     }
 
     # Test valid args
     result = ExampleActionSchema(**valid_args)
     assert result.field_name == "test"
     assert result.amount == "1.0"
-    assert result.enum_field == "option1"
 
     # Test invalid args
     with pytest.raises(ValueError):
@@ -72,7 +69,6 @@ def test_example_action_execution({% if wallet_provider %}mock_wallet_provider, 
     args = {
         "field_name": "test",
         "amount": "1.0",
-        "enum_field": "option1",
     }
     {% if wallet_provider %}
     result = provider.example_action(mock_wallet_provider, args)

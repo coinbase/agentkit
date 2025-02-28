@@ -20,7 +20,7 @@ python-dotenv = "^1.0.1"
 requests = "^2.31.0"
 
 [tool.poetry.scripts]
-create-action-provider = "scripts.create_action_provider:main"
+generate-action-provider = "scripts.generate_action_provider.main:main"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.7.1"
