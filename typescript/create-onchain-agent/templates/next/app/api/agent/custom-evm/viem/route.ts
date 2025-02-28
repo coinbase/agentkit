@@ -1,23 +1,22 @@
-import { NextResponse } from "next/server";
+import { AgentRequest, AgentResponse } from "@/app/types/api";
 import {
   ActionProvider,
   AgentKit,
   cdpApiActionProvider,
   erc20ActionProvider,
-  NETWORK_ID_TO_VIEM_CHAIN,
   pythActionProvider,
   ViemWalletProvider,
   walletActionProvider,
   wethActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
-import { ChatOpenAI } from "@langchain/openai";
 import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import { AgentRequest, AgentResponse } from "@/app/types/api";
-import { createWalletClient, Hex, http } from "viem";
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { ChatOpenAI } from "@langchain/openai";
 import fs from "fs";
+import { NextResponse } from "next/server";
+import { createWalletClient, http } from "viem";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 /**
  * AgentKit Integration Route
@@ -82,7 +81,7 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
     const llm = new ChatOpenAI({ model: "gpt-4o-mini" });
 
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
-    let privateKey = process.env.PRIVATE_KEY as Hex;
+    let privateKey = process.env.PRIVATE_KEY as `0x${string}`;
     if (!privateKey) {
       if (fs.existsSync(WALLET_DATA_FILE)) {
         privateKey = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8")).privateKey;
@@ -96,13 +95,27 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
         );
       }
     }
-
     const account = privateKeyToAccount(privateKey);
-    const networkId = process.env.NETWORK_ID as string;
 
+    const rpcUrl = process.env.RPC_URL as string;
+    const chainId = process.env.CHAIN_ID as string;
     const client = createWalletClient({
       account,
-      chain: NETWORK_ID_TO_VIEM_CHAIN[networkId],
+      // Customize the chain metadata to match your custom chain
+      chain: {
+        id: parseInt(chainId),
+        rpcUrls: {
+          default: {
+            http: [rpcUrl],
+          },
+        },
+        name: "Custom Chain",
+        nativeCurrency: {
+          name: "Ether",
+          symbol: "ETH",
+          decimals: 18,
+        },
+      },
       transport: http(),
     });
     const walletProvider = new ViemWalletProvider(client);

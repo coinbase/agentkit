@@ -4,7 +4,7 @@ import ora from "ora";
 import path from "path";
 import pc from "picocolors";
 import prompts from "prompts";
-import { Networks, NetworkToWalletProviders } from "./constants.js";
+import { EVM_NETWORKS, NetworkToWalletProviders, SVM_NETWORKS } from "./constants.js";
 import { Network, WalletProviderChoice } from "./types.js";
 import { copyTemplate } from "./fileSystem.js";
 import {
@@ -39,7 +39,14 @@ async function init() {
   const defaultProjectName = "onchain-agent";
 
   let result: prompts.Answers<
-    "projectName" | "packageName" | "walletProvider" | "network" | "chainId"
+    | "projectName"
+    | "packageName"
+    | "networkFamily"
+    | "networkType"
+    | "network"
+    | "chainId"
+    | "rpcUrl"
+    | "walletProvider"
   >;
 
   try {
@@ -71,18 +78,56 @@ async function init() {
         },
         {
           type: "select",
-          name: "network",
-          message: pc.reset("Choose a network:"),
-          choices: Networks.map(network => ({
-            title: network === "base-sepolia" ? `${network} (default)` : network,
-            value: network as Network | null,
-          })).concat([{ title: "other", value: null }]),
-          initial: Networks.indexOf("base-sepolia"),
+          name: "networkFamily",
+          message: pc.reset("Choose a network family:"),
+          choices: [
+            { title: "Ethereum Virtual Machine (EVM)", value: "EVM" },
+            { title: "Solana Virtual Machine (SVM)", value: "SVM" },
+          ],
         },
         {
-          type: (prev, { network }) => (network === null ? "text" : null),
+          type: (prev, { networkFamily }) => (networkFamily === "EVM" ? "select" : null),
+          name: "networkType",
+          message: pc.reset("Choose network type:"),
+          choices: [
+            { title: "Mainnet", value: "mainnet" },
+            { title: "Testnet", value: "testnet" },
+            { title: "Custom Chain ID", value: "custom" },
+          ],
+        },
+        {
+          type: (prev, { networkFamily, networkType }) => {
+            // For SVM, always show network selection
+            if (networkFamily === "SVM") return "select";
+            // For EVM, show network selection only if not custom
+            return networkType === "custom" ? null : "select";
+          },
+          name: "network",
+          message: pc.reset("Choose a network:"),
+          choices: (prev, { networkFamily, networkType }) => {
+            if (networkFamily === "SVM") {
+              // Show all Solana networks
+              return SVM_NETWORKS.map(network => ({
+                title: network,
+                value: network as Network,
+              }));
+            } else {
+              // Filter EVM networks by mainnet/testnet
+              return EVM_NETWORKS.filter(n => {
+                const isMainnet = n.includes("mainnet");
+                return networkType === "mainnet" ? isMainnet : !isMainnet;
+              }).map(network => ({
+                title: network === "base-sepolia" ? `${network} (default)` : network,
+                value: network as Network,
+              }));
+            }
+          },
+        },
+        {
+          type: (prev, { networkFamily, networkType }) =>
+            networkFamily === "EVM" && networkType === "custom" ? "text" : null,
           name: "chainId",
-          message: pc.reset("Enter your Ethereum chain ID:"),
+          message: pc.reset("Enter your chain ID:"),
           validate: value =>
             value.trim()
               ? Number.parseInt(value)
@@ -91,9 +136,38 @@ async function init() {
               : "Chain ID cannot be empty.",
         },
         {
-          type: (prev, { network }) =>
-            !network || NetworkToWalletProviders[network as Network].length > 1 ? "select" : null,
+          type: (prev, { networkFamily, networkType }) =>
+            networkFamily === "EVM" && networkType === "custom" ? "text" : null,
+          name: "rpcUrl",
+          message: pc.reset("Enter your RPC URL:"),
+          validate: value =>
+            value.trim()
+              ? value.startsWith("http")
+                ? true
+                : "RPC URL must start with http:// or https://"
+              : "RPC URL cannot be empty.",
+        },
+        {
+          type: (prev, { networkFamily, networkType }) => {
+            // For custom EVM networks, auto-select Viem by returning null
+            if (networkFamily === "EVM" && networkType === "custom") {
+              return null;
+            }
+            // For all other cases (regular EVM networks and SVM networks), show selection
+            return "select";
+          },
           name: "walletProvider",
+          initial: (prev, { networkFamily, networkType, network }) => {
+            // For custom EVM networks, use Viem
+            if (networkFamily === "EVM" && networkType === "custom") {
+              return "Viem";
+            }
+            // For networks with one provider, use that provider
+            if (network && NetworkToWalletProviders[network as Network].length === 1) {
+              return NetworkToWalletProviders[network as Network][0];
+            }
+            return 0;
+          },
           message: (prev, { network }) => {
             const walletDescriptions: Record<WalletProviderChoice, string> = {
               CDP: "Uses Coinbase Developer Platform (CDP)'s managed wallet.",
@@ -102,20 +176,19 @@ async function init() {
               SolanaKeypair: "Client-side Solana wallet.",
             };
 
-            const providerDescriptions = getWalletProviders(network)
+            const providerDescriptions = getWalletProviders(network as Network)
               .map(provider => `  - ${provider}: ${walletDescriptions[provider]}`)
               .join("\n");
 
             return pc.reset(`Choose a wallet provider:\n${providerDescriptions}\n`);
           },
           choices: (prev, { network }) => {
-            const walletProviders = getWalletProviders(network);
-            return getWalletProviders(network).map(provider => ({
+            const walletProviders = getWalletProviders(network as Network);
+            return walletProviders.map(provider => ({
               title: provider === walletProviders[0] ? `${provider} (default)` : provider,
               value: provider,
             }));
           },
-          initial: 0,
         },
       ],
       {
@@ -133,7 +206,9 @@ async function init() {
     }
     process.exit(1);
   }
-  const { projectName, packageName, network, chainId, walletProvider } = result;
+  const { projectName, network, chainId, rpcUrl } = result;
+  const packageName = result.packageName || toValidPackageName(projectName);
+  const walletProvider = result.walletProvider || "Viem";
 
   const spinner = ora(`Creating ${projectName}...`).start();
 
@@ -141,7 +216,7 @@ async function init() {
   const root = await copyTemplate(projectName, packageName);
 
   // Handle selection-specific logic over copied-template
-  await handleSelection(root, walletProvider, network, chainId);
+  await handleSelection(root, walletProvider, network, chainId, rpcUrl);
 
   spinner.succeed();
   console.log(pc.blueBright(`\nSuccessfully created your AgentKit project in ${root}`));
