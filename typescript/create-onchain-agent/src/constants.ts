@@ -52,7 +52,7 @@ export const WalletProviderChoices: WalletProviderChoice[] = [
 ];
 
 export const WalletProviderRouteConfigurations: Record<
-  "EVM" | "SVM",
+  "EVM" | "CUSTOM_EVM" | "SVM",
   Partial<Record<WalletProviderChoice, WalletProviderRouteConfiguration>>
 > = {
   EVM: {
@@ -95,6 +95,19 @@ export const WalletProviderRouteConfigurations: Record<
         ],
       },
       apiRoute: "evm/privy/route.ts",
+    },
+  },
+  CUSTOM_EVM: {
+    Viem: {
+      env: {
+        topComments: [
+          "Export private key from your Ethereum wallet and save",
+          "Get keys from CDP Portal: https://portal.cdp.coinbase.com/",
+        ],
+        required: ["PRIVATE_KEY="],
+        optional: ["CDP_API_KEY_NAME=", "CDP_API_KEY_PRIVATE_KEY="],
+      },
+      apiRoute: "custom-evm/viem/route.ts",
     },
   },
   SVM: {

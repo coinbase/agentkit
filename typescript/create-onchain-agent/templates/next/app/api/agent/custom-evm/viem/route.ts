@@ -1,24 +1,22 @@
-import { NextResponse } from "next/server";
+import { AgentRequest, AgentResponse } from "@/app/types/api";
 import {
+  ActionProvider,
   AgentKit,
   cdpApiActionProvider,
-  cdpWalletActionProvider,
-  CdpWalletProvider,
   erc20ActionProvider,
-  NETWORK_ID_TO_VIEM_CHAIN,
   pythActionProvider,
   ViemWalletProvider,
   walletActionProvider,
-  wethActionProvider,
+  wethActionProvider
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
-import { ChatOpenAI } from "@langchain/openai";
 import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import { AgentRequest, AgentResponse } from "@/app/types/api";
-import { createWalletClient, Hex, http } from "viem";
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { ChatOpenAI } from "@langchain/openai";
 import fs from "fs";
+import { NextResponse } from "next/server";
+import { createWalletClient, http } from "viem";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 /**
  * AgentKit Integration Route
@@ -83,7 +81,7 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
     const llm = new ChatOpenAI({ model: "gpt-4o-mini" });
 
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
-    let privateKey = process.env.PRIVATE_KEY as Hex;
+    let privateKey = process.env.PRIVATE_KEY as `0x${string}`;
     if (!privateKey) {
       if (fs.existsSync(WALLET_DATA_FILE)) {
         privateKey = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8")).privateKey;
@@ -97,37 +95,56 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
         );
       }
     }
-
     const account = privateKeyToAccount(privateKey);
-    const networkId = process.env.NETWORK_ID as string;
 
+    const rpcUrl = process.env.RPC_URL as string;
+    const chainId = process.env.CHAIN_ID as string;
     const client = createWalletClient({
       account,
-      chain: NETWORK_ID_TO_VIEM_CHAIN[networkId],
+      // Customize the chain metadata to match your custom chain
+      chain: {
+        id: parseInt(chainId),
+        rpcUrls: {
+          default: {
+            http: [rpcUrl],
+          },
+        },
+        name: "Custom Chain",
+        nativeCurrency: {
+          name: "Ether",
+          symbol: "ETH",
+          decimals: 18,
+        },
+      },
       transport: http(),
     });
     const walletProvider = new ViemWalletProvider(client);
 
     // Initialize AgentKit: https://docs.cdp.coinbase.com/agentkit/docs/agent-actions
-    const agentkit = await AgentKit.from({
-      walletProvider,
-      actionProviders: [
-        wethActionProvider(),
-        pythActionProvider(),
-        walletActionProvider(),
-        erc20ActionProvider(),
-        // The CDP API Action Provider provides faucet functionality on base-sepolia. Can be removed if you do not need this functionality.
+    const actionProviders: ActionProvider[] = [
+      wethActionProvider(),
+      pythActionProvider(),
+      walletActionProvider(),
+      erc20ActionProvider(),
+    ];
+    const canUseCdpApi = process.env.CDP_API_KEY_NAME && process.env.CDP_API_KEY_PRIVATE_KEY;
+    if (canUseCdpApi) {
+      actionProviders.push(
         cdpApiActionProvider({
           apiKeyName: process.env.CDP_API_KEY_NAME,
           apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
         }),
-      ],
+      );
+    }
+    const agentkit = await AgentKit.from({
+      walletProvider,
+      actionProviders,
     });
     const tools = await getLangChainTools(agentkit);
     const memory = new MemorySaver();
 
     // Initialize Agent
-    const canUseFaucet = walletProvider.getNetwork().networkId == "base-sepolia";
+    const canUseFaucet = walletProvider.getNetwork().networkId == "base-sepolia" && canUseCdpApi;
     const faucetMessage = `If you ever need funds, you can request them from the faucet.`;
     const cantUseFaucetMessage = `If you need funds, you can provide your wallet details and request funds from the user.`;
     agent = createReactAgent({

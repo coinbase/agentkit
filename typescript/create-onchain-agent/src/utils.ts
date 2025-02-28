@@ -15,12 +15,21 @@ import {
  * @param {EVMNetwork | SVMNetwork} network - The network to check.
  * @returns {"EVM" | "SVM" | undefined} The network family, or `undefined` if not recognized.
  */
-export function getNetworkFamily(network: EVMNetwork | SVMNetwork): "EVM" | "SVM" | undefined {
-  return EVM_NETWORKS.includes(network as EVMNetwork)
-    ? "EVM"
-    : SVM_NETWORKS.includes(network as SVMNetwork)
-      ? "SVM"
-      : undefined;
+export function getNetworkType(network?: EVMNetwork | SVMNetwork, chainId?: string): "EVM" | "SVM" | 'CUSTOM_EVM' | null {
+  if (network) {
+    if (EVM_NETWORKS.includes(network as EVMNetwork)) {
+      return "EVM";
+    }
+    if (SVM_NETWORKS.includes(network as SVMNetwork)) {
+      return "SVM";
+    }
+  }
+
+  if (chainId) {
+    return "CUSTOM_EVM";
+  }
+
+  return null;
 }
 
 /**
@@ -179,16 +188,12 @@ export async function handleSelection(
 ) {
   const agentDir = path.join(root, "app", "api", "agent");
 
-  let networkFamily: ReturnType<typeof getNetworkFamily>;
-  if (network) {
-    networkFamily = getNetworkFamily(network);
-  } else if (chainId) {
-    networkFamily = "EVM";
-  } else {
+  const networkFamily = getNetworkType(network, chainId);
+  if (!networkFamily) {
     throw new Error("Unsupported network and chainId selected");
   }
 
-  const selectedRouteConfig = WalletProviderRouteConfigurations[networkFamily!][walletProvider];
+  const selectedRouteConfig = WalletProviderRouteConfigurations[networkFamily][walletProvider];
 
   if (!selectedRouteConfig) {
     throw new Error("Selected invalid network & wallet provider combination");
