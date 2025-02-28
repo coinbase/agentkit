@@ -121,7 +121,7 @@ export class SmartWalletProvider extends EvmWalletProvider {
         sourceVersion: version,
       });
     } else {
-      Coinbase.configureFromJson();
+      Coinbase.configureFromJson({ source: "agentkit", sourceVersion: version });
     }
 
     const smartWallet = config.smartWalletAddress

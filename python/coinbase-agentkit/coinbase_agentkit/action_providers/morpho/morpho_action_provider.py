@@ -63,7 +63,9 @@ Important notes:
             atomic_assets = Web3.to_wei(assets, "ether")
 
             try:
-                approve(wallet_provider, args["token_address"], args["vault_address"], atomic_assets)
+                approve(
+                    wallet_provider, args["token_address"], args["vault_address"], atomic_assets
+                )
             except Exception as e:
                 return f"Error approving Morpho Vault as spender: {e!s}"
 

@@ -150,7 +150,7 @@ export class CdpWalletProvider extends EvmWalletProvider {
         sourceVersion: version,
       });
     } else {
-      Coinbase.configureFromJson();
+      Coinbase.configureFromJson({ source: "agentkit", sourceVersion: version });
     }
 
     let wallet: Wallet;
