@@ -30,7 +30,7 @@ Create a provider for all networks:
 npm run generate:action-provider -- -n example -p all
 ```
 
-Create an Evm provider for Base networks:
+Create a Evm provider for Evm networks:
 
 ```bash
 npm run generate:action-provider -- -n example -p evm
