@@ -1,0 +1,46 @@
+"""Test fixtures for {{ name }} action provider tests."""
+
+from unittest.mock import Mock
+
+import pytest
+
+from coinbase_agentkit.action_providers.{{ name }}.{{ name }}_action_provider import {{ name_pascal }}ActionProvider
+from coinbase_agentkit.network import NETWORK_ID_TO_CHAIN_ID, Network
+{% if wallet_provider %}
+from coinbase_agentkit.wallet_providers import {{ wallet_provider }}
+{% endif %}
+
+# Mock constants
+MOCK_ADDRESS = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+MOCK_BALANCE = "1.5"
+MOCK_PROVIDER_NAME = "mock_provider"
+
+# Use the first network ID if multiple are provided, otherwise None
+SELECTED_NETWORK = "{{ network_ids[0] if network_ids else 'None' }}"
+CHAIN_ID = NETWORK_ID_TO_CHAIN_ID.get(SELECTED_NETWORK) if SELECTED_NETWORK != "None" else None
+
+MOCK_NETWORK = Network(
+    protocol_family="{{ protocol_family }}",
+    chain_id=CHAIN_ID,
+    network_id=SELECTED_NETWORK if SELECTED_NETWORK != "None" else None
+)
+
+@pytest.fixture
+def provider():
+    """Create a {{ name_pascal }}ActionProvider instance."""
+    return {{ name_pascal }}ActionProvider()
+
+@pytest.fixture
+def {{ name }}_action_provider():
+    """Create a {{ name }} action provider instance."""
+    return {{ name_pascal }}ActionProvider()
+
+@pytest.fixture
+def mock_wallet_provider():
+    """Create a mock wallet provider with common methods."""
+    provider = Mock(spec={{ wallet_provider }})
+    provider.name = MOCK_PROVIDER_NAME
+    provider.get_address.return_value = MOCK_ADDRESS
+    provider.get_balance.return_value = MOCK_BALANCE
+    provider.get_network.return_value = MOCK_NETWORK
+    return provider
