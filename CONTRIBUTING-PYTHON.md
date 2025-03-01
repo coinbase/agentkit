@@ -35,6 +35,8 @@ Once you have these installed, make sure you install the project dependencies by
 
 An Action is an interface for an AI Agent to interact with the real world: any Python function that you can think of can be used by an Agent via an Action! Actions are grouped by Action Providers, which are classes that contain a collection of actions along with configuration and helper functions.
 
+You can use the `generate-action-provider` script to generate a new action provider. See the [Generate Action Provider](./python/coinbase-agentkit/scripts/generate_action_provider/README.md) for more information.
+
 Action Components:
 
 1. **Name**: The name of the action. This is used to identify the action when it is added to an Agent.

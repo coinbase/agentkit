@@ -1,0 +1,163 @@
+import { {{name_pascal}}ActionProvider } from "./{{name}}ActionProvider";
+import { Network } from "../../network";
+import { ExampleActionSchema } from "./schemas";
+{% if protocol_family == "evm" and networkIds|length %}
+import { CHAIN_ID_TO_NETWORK_ID } from "../../network/network";
+{% endif %}
+{% if protocol_family == "svm" and networkIds|length %}
+import {
+  SOLANA_MAINNET_NETWORK,
+  SOLANA_TESTNET_NETWORK,
+  SOLANA_DEVNET_NETWORK,
+} from "../../network/svm";
+{% endif %}
+{% if wallet_provider %}
+import { {{wallet_provider}} } from "../../wallet-providers";
+{% endif %}
+
+describe("{{name_pascal}}ActionProvider", () => {
+  const provider = new {{name_pascal}}ActionProvider();
+  {% if wallet_provider %}
+  let mockWalletProvider: jest.Mocked<{{wallet_provider}}>;
+
+  beforeEach(() => {
+    mockWalletProvider = {
+      getAddress: jest.fn(),
+      getBalance: jest.fn(),
+      getName: jest.fn(),
+      getNetwork: jest.fn().mockReturnValue({
+        protocolFamily: "{{protocol_family}}",
+        networkId: {% if networkIds|length %}"{{networkIds[0]}}"{% else %}"test-network"{% endif %},
+      }),
+      nativeTransfer: jest.fn(),
+    } as unknown as jest.Mocked<{{wallet_provider}}>;
+  });
+  {% endif %}
+
+  describe("network support", () => {
+    {% if not protocol_family %}
+    it("should support all network types", () => {
+      expect(
+        provider.supportsNetwork({
+          networkId: "any-network",
+          protocolFamily: "any-protocol",
+          chainId: "any-chain-id",
+        } as Network),
+      ).toBe(true);
+    });
+    {% endif %}
+    {% if protocol_family and not networkIds|length %}
+    it("should support the protocol family", () => {
+      expect(
+        provider.supportsNetwork({
+          protocolFamily: "{{protocol_family}}",
+        }),
+      ).toBe(true);
+    });
+
+    it("should not support other protocol families", () => {
+      expect(
+        provider.supportsNetwork({
+          protocolFamily: "other-protocol-family",
+        }),
+      ).toBe(false);
+    });
+    {% endif %}
+    {% if protocol_family and networkIds|length %}
+    it("should support configured networks", () => {
+      {% for networkId in networkIds %}
+      {% if protocol_family == "evm" %}
+      {
+        expect(
+          provider.supportsNetwork({
+            networkId: "{{networkId}}",
+            protocolFamily: "{{protocol_family}}",
+            chainId: CHAIN_ID_TO_NETWORK_ID["{{networkId}}"],
+          }),
+        ).toBe(true);
+      }
+      {% elif protocol_family == "svm" %}
+      {
+        const network = [
+          SOLANA_MAINNET_NETWORK,
+          SOLANA_TESTNET_NETWORK,
+          SOLANA_DEVNET_NETWORK,
+        ].find(n => n.networkId === "{{networkId}}");
+        if (!network) {
+          throw new Error("Network not found: {{networkId}}");
+        }
+        expect(provider.supportsNetwork(network)).toBe(true);
+      }
+      {% endif %}
+      {% endfor %}
+    });
+
+    it("should not support other networks", () => {
+      expect(
+        provider.supportsNetwork({
+          networkId: "other-network-id",
+          protocolFamily: "{{protocol_family}}",
+        }),
+      ).toBe(false);
+    });
+    {% endif %}
+    {% if protocol_family %}
+
+    it("should handle invalid network objects", () => {
+      expect(provider.supportsNetwork({} as Network)).toBe(false);
+      {% if networkIds|length %}
+      expect(
+        provider.supportsNetwork({
+          protocolFamily: "{{protocol_family}}",
+        } as Network),
+      ).toBe(false);
+      {% endif %}
+    });
+    {% endif %}
+  });
+
+  describe("action validation", () => {
+    it("should validate example action schema", () => {
+      const validInput = {
+        fieldName: "test",
+        amount: "1.0",
+      };
+      const parseResult = ExampleActionSchema.safeParse(validInput);
+      expect(parseResult.success).toBe(true);
+    });
+
+    it("should reject invalid example action input", () => {
+      const invalidInput = {
+        fieldName: "",
+        amount: "invalid",
+      };
+      const parseResult = ExampleActionSchema.safeParse(invalidInput);
+      expect(parseResult.success).toBe(false);
+    });
+  });
+
+  {% if wallet_provider %}
+  describe("example action", () => {
+    it("should execute example action with wallet provider", async () => {
+      const args = {
+        fieldName: "test",
+        amount: "1.0",
+      };
+      const result = await provider.exampleAction(mockWalletProvider, args);
+      expect(result).toContain(args.fieldName);
+      expect(mockWalletProvider.getNetwork).toHaveBeenCalled();
+    });
+  });
+  {% else %}
+  describe("example action", () => {
+    it("should execute example action", async () => {
+      const args = {
+        fieldName: "test",
+        amount: "1.0",
+      };
+      const result = await provider.exampleAction(args);
+      expect(result).toContain(args.fieldName);
+    });
+  });
+  {% endif %}
+});

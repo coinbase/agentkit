@@ -1,0 +1,134 @@
+"""{{ name_pascal }} Action Provider.
+
+This file contains the implementation of the {{ name_pascal }}ActionProvider,
+which provides actions for {{ name }} operations.
+
+@module {{ name }}
+"""
+
+from typing import Any
+
+from ...network import Network
+{% if wallet_provider %}
+from ...wallet_providers import {{ wallet_provider }}
+{% endif %}
+from ..action_decorator import create_action
+from ..action_provider import ActionProvider
+from .schemas import ExampleActionSchema
+
+{% if protocol_family and network_ids|length %}
+# Supported network IDs for this provider
+SUPPORTED_NETWORK_IDS = [{% for id in network_ids %}"{{ id }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+{% endif %}
+
+class {{ name_pascal }}ActionProvider(ActionProvider{% if wallet_provider %}[{{ wallet_provider }}]{% endif %}):
+    """{{ name_pascal }}ActionProvider provides actions for {{ name }} operations.
+
+    This provider is designed to {% if wallet_provider %}work with {{ wallet_provider }} for blockchain interactions{% else %}provide blockchain-agnostic operations{% endif %}.
+    {% if not protocol_family %}
+    {% if wallet_provider %}
+    It supports all blockchain networks.
+    {% else %}
+    It is designed for non-blockchain operations.
+    {% endif %}
+    {% elif network_ids|length == 0 %}
+    It supports all {{ protocol_family }} networks.
+    {% else %}
+    It supports {{ protocol_family }} networks: {% for networkId in network_ids %}{{ networkId }}{% if not loop.last %}, {% endif %}{% endfor %}.
+    {% endif %}
+
+    {% if wallet_provider %}
+    This provider requires a {{ wallet_provider }} for blockchain interactions.
+    {% endif %}
+    """
+
+    def __init__(self):
+        """Initialize the {{ name_pascal }}ActionProvider."""
+        super().__init__("{{ name }}", [])
+
+    @create_action(
+        name="example_action",
+        description="""
+      Example action for {{ name }} provider.
+
+      This action demonstrates the basic structure of an action implementation.
+      Replace this description with your actual action's purpose and behavior.
+
+      Include:
+      - What the action does
+      - Required inputs and their format
+      - Expected outputs
+      - Any important considerations or limitations
+    """,
+        schema=ExampleActionSchema,
+    )
+    def example_action(
+        self,
+        {% if wallet_provider %}
+        wallet_provider: {{ wallet_provider }},
+        {% endif %}
+        args: dict[str, Any],
+    ) -> str:
+        """Execute example action.
+
+        Replace or modify this with your actual action.
+
+        Args:
+            {% if wallet_provider %}
+            wallet_provider: The wallet provider instance for blockchain interactions
+            {% endif %}
+            args: Arguments defined by ExampleActionSchema
+
+        Returns:
+            A string describing the action result
+
+        """
+        # TODO: Implement your action logic here
+        # Example implementation:
+        validated_args = ExampleActionSchema(**args)
+        {% if wallet_provider %}
+        network = wallet_provider.get_network()
+        return f"Example action called with {validated_args.field_name} on network {network.network_id}"
+        {% else %}
+        return f"Example action called with {validated_args.field_name}"
+        {% endif %}
+
+    def supports_network(self, network: Network) -> bool:
+        """Check if this provider supports the given network.
+
+        Args:
+            network: The network to check support for
+
+        Returns:
+            True if the network is supported
+
+        """
+        {% if not protocol_family %}
+        # all networks
+        return True
+        {% else %}
+        {% if network_ids|length %}
+        # specific protocol networks
+        if network.protocol_family != "{{ protocol_family }}":
+            return False
+
+        if not network.network_id:
+            return False
+
+        return network.network_id in SUPPORTED_NETWORK_IDS
+        {% else %}
+        # all protocol networks
+        return network.protocol_family == "{{ protocol_family }}"
+        {% endif %}
+        {% endif %}
+
+
+def {{ name }}_action_provider() -> {{ name_pascal }}ActionProvider:
+    """Create a new {{ name_pascal }}ActionProvider instance.
+
+    Returns:
+        A new {{ name_pascal }}ActionProvider instance
+
+    """
+    return {{ name_pascal }}ActionProvider()
+
