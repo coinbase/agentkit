@@ -68,7 +68,7 @@ To add new actions:
 2. Implement the action in `{{name}}ActionProvider.ts`:
    ```typescript
    @CreateAction({
-     name: "new-action",
+     name: "new_action",
      description: "Description of what your action does",
      schema: NewActionSchema,
    })

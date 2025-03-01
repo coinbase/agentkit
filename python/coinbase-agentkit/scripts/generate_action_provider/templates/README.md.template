@@ -78,7 +78,7 @@ To add new actions:
 2. Implement the action in `{{ name }}_action_provider.py`:
    ```python
    @create_action(
-       name="new-action",
+       name="new_action",
        description="Description of what your action does",
        schema=NewActionSchema,
    )
