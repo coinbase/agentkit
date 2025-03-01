@@ -23,6 +23,7 @@ from coinbase_agentkit import (
     pyth_action_provider,
     wallet_action_provider,
     weth_action_provider,
+    mytoken_action_provider,
 )
 from coinbase_agentkit_langchain import get_langchain_tools
 
@@ -58,6 +59,7 @@ def initialize_agent():
             pyth_action_provider(),
             wallet_action_provider(),
             weth_action_provider(),
+            mytoken_action_provider(),
         ]
     ))
 

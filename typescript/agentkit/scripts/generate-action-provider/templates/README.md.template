@@ -84,26 +84,9 @@ To add new actions:
 
 When implementing new actions, ensure to:
 1. Add unit tests for schema validations
-2. Add integration tests for action execution
-3. Test network support
-
-## Dependencies
-- AgentKit core library
-{% if wallet_provider %}
-- {{wallet_provider}} for blockchain interactions
-{% if wallet_provider == "EvmWalletProvider" %}
-- EVM-specific dependencies (e.g., viem)
-{% elif wallet_provider == "SvmWalletProvider" %}
-- Solana-specific dependencies (e.g., @solana/web3.js)
-{% endif %}
-{% endif %}
+2. Test network support
 
 ## Notes
 - Add any specific considerations for this action provider
 - Document any prerequisites or setup requirements
 - Include relevant external documentation links
-
-## Contributing
-Interested in contributing? Check out:
-- [Contribution Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING.md)
-- [Discord Community](https://discord.gg/CDP) 

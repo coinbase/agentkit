@@ -17,7 +17,7 @@ poetry run generate-action-provider [options] -i
 
 ## Options
 
-- `-n, --name`: Name of the action provider (e.g. 'mytoken', 'superfluid')
+- `-n, --name`: Name of the action provider (e.g. 'example')
 - `-p, --protocol-family`: Protocol family (e.g. 'evm', 'none', 'all')
 - `-w, --wallet-provider`: Wallet provider to use (optional)
 - `-i, --interactive`: Enable interactive mode
@@ -27,19 +27,19 @@ poetry run generate-action-provider [options] -i
 Create a provider for all networks:
 
 ```bash
-poetry run generate-action-provider -n mytoken -p all
+poetry run generate-action-provider -n example -p all
 ```
 
-Create an EVM provider:
+Create an Evm provider:
 
 ```bash
-poetry run generate-action-provider -n mytoken -p evm
+poetry run generate-action-provider -n example -p evm
 ```
 
-Create an EVM provider with CDP wallet provider:
+Create an Evm provider with CDP wallet provider:
 
 ```bash
-poetry run generate-action-provider -n mytoken -p evm -w CdpWalletProvider
+poetry run generate-action-provider -n example -p evm -w CdpWalletProvider
 ```
 
 ## Generated Files
@@ -67,12 +67,3 @@ Located in `tests/action_providers/{name}/`:
 ├── test_action_provider.py    # Provider test suite
 └── test_example_action.py     # Action-specific tests
 ```
-
-## Features
-
-- CLI arguments for automation
-- Interactive prompts for easy configuration
-- Support for multiple protocol families:
-    - EVM networks
-    - Protocol-agnostic providers
-- Optional wallet provider integration

@@ -58,7 +58,7 @@ export class {{name_pascal}}ActionProvider extends ActionProvider{% if wallet_pr
    * @returns A promise that resolves to a string describing the action result
    */
   @CreateAction({
-    name: "example-action",
+    name: "example_action",
     description: `
       Example action for {{name}} provider.
 

@@ -7,6 +7,7 @@ import {
   cdpApiActionProvider,
   cdpWalletActionProvider,
   pythActionProvider,
+  mytokenActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -95,6 +96,7 @@ async function initializeAgent() {
     const agentkit = await AgentKit.from({
       walletProvider,
       actionProviders: [
+        mytokenActionProvider(),
         wethActionProvider(),
         pythActionProvider(),
         walletActionProvider(),

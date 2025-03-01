@@ -47,7 +47,7 @@ class {{ name_pascal }}ActionProvider(ActionProvider{% if wallet_provider %}[{{ 
         super().__init__("{{ name }}", [])
 
     @create_action(
-        name="example-action",
+        name="example_action",
         description="""
       Example action for {{ name }} provider.
 
