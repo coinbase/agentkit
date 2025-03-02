@@ -275,9 +275,7 @@ Important notes:
         try:
             validated_args = CompoundBorrowSchema(**args)
             comet_address = self._get_comet_address(wallet_provider.get_network())
-            base_token_address = get_base_token_address(
-                wallet_provider.get_network(), comet_address
-            )
+            base_token_address = get_base_token_address(wallet_provider, comet_address)
             base_token_decimals = get_token_decimals(wallet_provider, base_token_address)
 
             # Convert human-readable amount to atomic amount
