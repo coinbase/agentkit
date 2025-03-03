@@ -70,26 +70,26 @@ CDP_SUPPORTED_NETWORKS = {
 
 VALID_PACKAGE_NAME_REGEX = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
-def get_template_path(development_mode: bool = False) -> str:
-    """Gets the template path either from local development directory or downloaded from GitHub.
+def get_template_path(template_path: str | None = None) -> str:
+    """Gets the template path either from a local directory or downloaded from GitHub.
     
     Args:
-        development_mode: If True, use local development path instead of downloading from GitHub
+        template_path: Optional path to local template directory
         
     Returns:
         str: Path to the template directory
     """
-    if development_mode:
-        # Use local development path (relative to this file)
-        local_template_path = Path(__file__).parent.parent / "templates" / "chatbot"
+    if template_path:
+        # Use provided template path
+        local_template_path = Path(template_path)
         if not local_template_path.exists():
             raise FileNotFoundError(
-                f"Local template path not found at {local_template_path}. "
-                "Make sure you're running from the correct directory in development mode."
+                f"Template path not found at {local_template_path}. "
+                "Please provide a valid template directory path."
             )
         return str(local_template_path)
     
-    # Production mode - download from GitHub
+    # No template provided - download from GitHub
     LOCAL_CACHE_DIR.mkdir(parents=True, exist_ok=True)
     zip_path = LOCAL_CACHE_DIR / "repo.zip"
     extract_path = LOCAL_CACHE_DIR / "templates"
@@ -127,8 +127,8 @@ def get_network_choices(network_type: str) -> list:
     ]
 
 @click.command()
-@click.option('--development', is_flag=True, help='Use local development template path')
-def create_project(development):
+@click.option('--template', type=str, help='Path to local template directory', default=None)
+def create_project(template):
     """Creates a new onchain agent project with interactive prompts."""
     
     ascii_art = """
@@ -269,7 +269,7 @@ def create_project(development):
         copier_data["_rpc_url"] = rpc_url
 
     try:
-        template_path = get_template_path(development)
+        template_path = get_template_path(template)
         run_copy(template_path, project_path, data=copier_data)
     except FileNotFoundError as e:
         console.print(f"[red]Error: {str(e)}[/red]")
