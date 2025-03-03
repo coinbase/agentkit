@@ -141,7 +141,7 @@ def initialize_agent():
         if network:
             chain = NETWORK_ID_TO_CHAIN[network]
             rpc_url = chain["rpc_urls"]["default"]["http"][0]
-        elif not rpc_url:
+        else:
             raise ValueError("When using chain_id, you must also provide an RPC_URL if the chain is not recognized")
     else:
         print("No network configuration provided. Defaulting to Base Sepolia...")
