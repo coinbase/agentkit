@@ -138,7 +138,11 @@ def initialize_agent():
     elif chain_id:
         raise ValueError("When using chain_id, you must also provide an RPC_URL")
     else:
-        raise ValueError("Must provide either NETWORK, or both CHAIN_ID and RPC_URL")
+        print("No network configuration provided. Defaulting to Base Sepolia...")
+        network = "base-sepolia"
+        chain_id = NETWORK_ID_TO_CHAIN_ID[network]
+        chain = NETWORK_ID_TO_CHAIN[network]
+        rpc_url = chain["rpc_urls"]["default"]["http"][0]
 
     wallet_provider = EthAccountWalletProvider(
         config=EthAccountWalletProviderConfig(
