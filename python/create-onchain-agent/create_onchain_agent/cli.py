@@ -53,12 +53,6 @@ EVM_NETWORKS = [
     ("polygon-mumbai", "Polygon Mumbai"),
 ]
 
-SVM_NETWORKS = [
-    ("solana-mainnet", "Solana Mainnet"),
-    ("solana-devnet", "Solana Devnet"),
-    ("solana-testnet", "Solana Testnet"),
-]
-
 CDP_SUPPORTED_NETWORKS = {
     "base-mainnet",
     "base-sepolia",
@@ -164,12 +158,13 @@ def create_project(template):
     else:
         package_name = suggested_package_name
 
-    # First, choose network family
-    network_family = questionary.select(
-        "Choose a network family:",
+    # Choose network type
+    network_type = questionary.select(
+        "Choose network type:",
         choices=[
-            "Ethereum Virtual Machine (EVM)",
-            "Solana Virtual Machine (SVM)",
+            "Mainnet",
+            "Testnet",
+            "Custom Chain ID",
         ],
         style=custom_style
     ).ask()
@@ -178,65 +173,43 @@ def create_project(template):
     chain_id = None
     rpc_url = None
 
-    if network_family == "Ethereum Virtual Machine (EVM)":
-        # For EVM, choose network type
-        network_type = questionary.select(
-            "Choose network type:",
-            choices=[
-                "Mainnet",
-                "Testnet",
-                "Custom Chain ID",
-            ],
+    if network_type == "Custom Chain ID":
+        # Handle custom EVM network
+        chain_id = questionary.text(
+            "Enter your chain ID:",
+            validate=lambda text: text.strip().isdigit() or "Chain ID must be a number",
             style=custom_style
         ).ask()
 
-        if network_type == "Custom Chain ID":
-            # Handle custom EVM network
-            chain_id = questionary.text(
-                "Enter your chain ID:",
-                validate=lambda text: text.strip().isdigit() or "Chain ID must be a number",
-                style=custom_style
-            ).ask()
-
-            rpc_url = questionary.text(
-                "Enter your RPC URL:",
-                validate=lambda text: (
-                    text.strip().startswith(("http://", "https://")) or 
-                    "RPC URL must start with http:// or https://"
-                ),
-                style=custom_style
-            ).ask()
-            
-            wallet_provider = "eth"  # Default to eth wallet provider for custom networks
-        else:
-            # Filter networks based on mainnet/testnet selection
-            network_choices = get_network_choices(network_type.lower())
-            network_name = questionary.select(
-                "Choose a network:",
-                choices=[
-                    name + (" (default)" if id == "base-sepolia" else "")
-                    for name, id in network_choices
-                ],
-                default="Base Sepolia (default)" if network_type == "Testnet" else None,
-                style=custom_style
-            ).ask()
-
-            # Remove " (default)" suffix if present
-            network_name = network_name.replace(" (default)", "")
-            network = next(id for name, id in network_choices if name == network_name)
-
-    else:  # SVM
-        network_name = questionary.select(
-            "Choose a network:",
-            choices=[name for _, name in SVM_NETWORKS],
+        rpc_url = questionary.text(
+            "Enter your RPC URL:",
+            validate=lambda text: (
+                text.strip().startswith(("http://", "https://")) or 
+                "RPC URL must start with http:// or https://"
+            ),
             style=custom_style
         ).ask()
         
-        network = next(id for id, name in SVM_NETWORKS if name == network_name)
-        wallet_provider = "solana"  # Default to Solana wallet provider for SVM
+        wallet_provider = "eth"  # Default to eth wallet provider for custom networks
+    else:
+        # Filter networks based on mainnet/testnet selection
+        network_choices = get_network_choices(network_type.lower())
+        network_name = questionary.select(
+            "Choose a network:",
+            choices=[
+                name + (" (default)" if id == "base-sepolia" else "")
+                for name, id in network_choices
+            ],
+            default="Base Sepolia (default)" if network_type == "Testnet" else None,
+            style=custom_style
+        ).ask()
 
-    # Determine wallet provider for non-custom EVM networks
-    if network and network_family == "Ethereum Virtual Machine (EVM)":
+        # Remove " (default)" suffix if present
+        network_name = network_name.replace(" (default)", "")
+        network = next(id for name, id in network_choices if name == network_name)
+
+    # Determine wallet provider
+    if network:
         if network in CDP_SUPPORTED_NETWORKS:
             wallet_choices = [
                 "CDP Wallet Provider",
