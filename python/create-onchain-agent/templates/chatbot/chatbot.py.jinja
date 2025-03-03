@@ -31,6 +31,7 @@ from coinbase_agentkit import (
 from coinbase_agentkit_langchain import get_langchain_tools
 {% if _wallet_provider == "eth" %}
 from eth_account import Account
+from coinbase_agentkit.network import NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_CHAIN, CHAIN_ID_TO_NETWORK_ID
 {% endif %}
 """
 AgentKit Integration
@@ -119,10 +120,41 @@ def initialize_agent():
     # Create Ethereum account from private key
     account = Account.from_key(private_key)
 
+    # Get chain configuration
+    chain_id = os.getenv("CHAIN_ID")
+    rpc_url = os.getenv("RPC_URL")
+    network = os.getenv("NETWORK")
+
+    if chain_id and rpc_url:
+        pass
+    elif network:
+        chain_id = NETWORK_ID_TO_CHAIN_ID.get(network)
+        if not chain_id:
+            raise ValueError(f"Unknown network ID: {network}")
+        
+        if not rpc_url:
+            chain = NETWORK_ID_TO_CHAIN[network]
+            rpc_url = chain["rpc_urls"]["default"]["http"][0]
+    elif chain_id:
+        # Try to find the network ID from the chain ID
+        network = CHAIN_ID_TO_NETWORK_ID.get(chain_id)
+        if network:
+            chain = NETWORK_ID_TO_CHAIN[network]
+            rpc_url = chain["rpc_urls"]["default"]["http"][0]
+        else:
+            raise ValueError("When using chain_id, you must also provide an RPC_URL if the chain is not recognized")
+    else:
+        print("No network configuration provided. Defaulting to Base Sepolia...")
+        network = "base-sepolia"
+        chain_id = NETWORK_ID_TO_CHAIN_ID[network]
+        chain = NETWORK_ID_TO_CHAIN[network]
+        rpc_url = chain["rpc_urls"]["default"]["http"][0]
+
     wallet_provider = EthAccountWalletProvider(
         config=EthAccountWalletProviderConfig(
             account=account,
-            chain_id="84532"
+            chain_id=chain_id,
+            rpc_url=rpc_url
         )
     )
     {% endif %}
