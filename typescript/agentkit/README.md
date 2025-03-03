@@ -10,8 +10,8 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
 - [Usage](#usage)
   - [Create an AgentKit instance](#create-an-agentkit-instance)
   - [Create an AgentKit instance with a specified wallet provider](#create-an-agentkit-instance-with-a-specified-wallet-provider)
-  - [Create an AgentKit instance with a specified action providers](#create-an-agentkit-instance-with-a-specified-action-providers)
-  - [Use the agent's actions with a framework extension. For example, using LangChain + OpenAI](#use-the-agents-actions-with-a-framework-extension-for-example-using-langchain--openai)
+  - [Create an AgentKit instance with specified action providers](#create-an-agentkit-instance-with-a-specified-action-providers)
+  - [Use the agent's actions with a framework extension, such as LangChain + OpenAI](#use-the-agents-actions-with-a-framework-extension-for-example-using-langchain--openai)
 - [Action Providers](#action-providers)
 - [Creating an Action Provider](#creating-an-action-provider)
   - [Adding Actions to your Action Provider](#adding-actions-to-your-action-provider)
@@ -91,7 +91,7 @@ const agentKit = await AgentKit.from({
 });
 ```
 
-### Create an AgentKit instance with a specified action providers.
+### Create an AgentKit instance with specified action providers.
 
 ```typescript
 import { cdpApiActionProvider, pythActionProvider } from "@coinbase/agentkit";
@@ -108,7 +108,7 @@ const agentKit = await AgentKit.from({
 });
 ```
 
-### Use the agent's actions with a framework extension. For example, using LangChain + OpenAI.
+### Use the agent's actions with a framework extension, such as LangChain + OpenAI.
 
 *Prerequisites*:
 - [OpenAI API Key](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key)
