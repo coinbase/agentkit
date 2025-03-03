@@ -105,7 +105,6 @@ export const WalletProviderRouteConfigurations: Record<
         ],
         optional: [
           "PRIVATE_KEY=",
-          "NETWORK_ID=",
         ],
       },
       apiRoute: "evm/smart/route.ts",
