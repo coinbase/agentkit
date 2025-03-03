@@ -28,6 +28,7 @@ yarn-error.log*
 
 # local env files
 .env*
+wallet_data.txt
 
 # vercel
 .vercel
