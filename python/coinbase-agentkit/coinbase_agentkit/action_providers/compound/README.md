@@ -7,7 +7,7 @@
 
 These actions allow you to supply, borrow, repay, withdraw ETH or USDC to Compound V3 markets through the Base USDC Comet Contract.
 
-> 🧪 **Try it on Base Sepolia First!**  
+> 🧪 **Try it on Base Sepolia first!**  
 > These actions work seamlessly on Base Sepolia testnet, allowing you to develop and test your agent's Compound interactions without using real funds. Once you're confident in your implementation, you can switch to Base mainnet for production use. 
 
 ## Actions
@@ -19,7 +19,7 @@ The actions in this package are intended to support agents that want to interact
 - `withdraw`: Withdraw ETH or USDC from Compound V3 markets on Base.
 - `get_portfolio_details`: Get the portfolio details for the Compound V3 markets on Base.
 
-## Supported Compound Markets (aka. Comets)
+## Supported Compound Markets (a.k.a. Comets)
 
 ### Base
 - USDC Comet 
@@ -37,7 +37,7 @@ The actions in this package are intended to support agents that want to interact
 - The amounts sent to these actions are _whole units_ of the asset (e.g., 0.01 ETH, 100 USDC).
 - Token symbols are the `asset_id` (lowercase) rather than the symbol.
 
-## Funded by Compound Grants Program
+## Funded by the Compound Grants Program
 Compound Actions for AgentKit is funded by the Compound Grants Program. Learn more about the Grant on Questbook [here](https://new.questbook.app/dashboard/?role=builder&chainId=10&proposalId=678c218180bdbe26619c3ae8&grantId=66f29bb58868f5130abc054d). For support, please reach out the original author of this action provider: [@mikeghen](https://x.com/mikeghen).
 
 ## Sample Integration Test Reference
