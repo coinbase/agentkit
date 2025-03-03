@@ -21,7 +21,12 @@ export const EVM_NETWORKS: EVMNetwork[] = [
 
 export const SVM_NETWORKS: SVMNetwork[] = ["solana-mainnet", "solana-devnet", "solana-testnet"];
 
-const CDP_SUPPORTED_EVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["CDP", "SmartWallet", "Viem", "Privy"];
+const CDP_SUPPORTED_EVM_WALLET_PROVIDERS: WalletProviderChoice[] = [
+  "CDP",
+  "SmartWallet",
+  "Viem",
+  "Privy",
+];
 const SVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["SolanaKeypair", "Privy"];
 export const NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["Viem", "Privy"];
 
@@ -99,13 +104,8 @@ export const WalletProviderRouteConfigurations: Record<
           "Get keys from CDP Portal: https://portal.cdp.coinbase.com/",
           "Optionally provide a private key, otherwise one will be generated",
         ],
-        required: [
-          "CDP_API_KEY_NAME=",
-          "CDP_API_KEY_PRIVATE_KEY=",
-        ],
-        optional: [
-          "PRIVATE_KEY=",
-        ],
+        required: ["CDP_API_KEY_NAME=", "CDP_API_KEY_PRIVATE_KEY="],
+        optional: ["PRIVATE_KEY="],
       },
       apiRoute: "evm/smart/route.ts",
     },
