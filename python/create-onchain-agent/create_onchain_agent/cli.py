@@ -70,8 +70,26 @@ CDP_SUPPORTED_NETWORKS = {
 
 VALID_PACKAGE_NAME_REGEX = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
-def download_and_extract_template():
-    """Downloads and extracts the chatbot template to a persistent location."""
+def get_template_path(development_mode: bool = False) -> str:
+    """Gets the template path either from local development directory or downloaded from GitHub.
+    
+    Args:
+        development_mode: If True, use local development path instead of downloading from GitHub
+        
+    Returns:
+        str: Path to the template directory
+    """
+    if development_mode:
+        # Use local development path (relative to this file)
+        local_template_path = Path(__file__).parent.parent / "templates" / "chatbot"
+        if not local_template_path.exists():
+            raise FileNotFoundError(
+                f"Local template path not found at {local_template_path}. "
+                "Make sure you're running from the correct directory in development mode."
+            )
+        return str(local_template_path)
+    
+    # Production mode - download from GitHub
     LOCAL_CACHE_DIR.mkdir(parents=True, exist_ok=True)
     zip_path = LOCAL_CACHE_DIR / "repo.zip"
     extract_path = LOCAL_CACHE_DIR / "templates"
@@ -109,7 +127,8 @@ def get_network_choices(network_type: str) -> list:
     ]
 
 @click.command()
-def create_project():
+@click.option('--development', is_flag=True, help='Use local development template path')
+def create_project(development):
     """Creates a new onchain agent project with interactive prompts."""
     
     ascii_art = """
@@ -249,8 +268,12 @@ def create_project():
     if rpc_url:
         copier_data["_rpc_url"] = rpc_url
 
-    template_path = download_and_extract_template()
-    run_copy(template_path, project_path, data=copier_data)
+    try:
+        template_path = get_template_path(development)
+        run_copy(template_path, project_path, data=copier_data)
+    except FileNotFoundError as e:
+        console.print(f"[red]Error: {str(e)}[/red]")
+        return
 
     console.print(f"[bold blue]Successfully created your AgentKit project in {project_path}[/bold blue]")
 
