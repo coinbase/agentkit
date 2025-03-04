@@ -5,12 +5,14 @@
     "agentkit",
     "create-onchain-agent",
     "framework-extensions/langchain",
+    "framework-extensions/vercel-ai-sdk",
     "examples/langchain-cdp-chatbot",
     "examples/langchain-twitter-chatbot",
     "examples/langchain-farcaster-chatbot",
     "examples/langchain-privy-chatbot",
     "examples/langchain-solana-chatbot",
-    "examples/langchain-smart-wallet-chatbot"
+    "examples/langchain-smart-wallet-chatbot",
+    "examples/vercel-ai-sdk-cdp-chatbot"
   ],
   "packageManager": "npm@8.9.0",
   "scripts": {

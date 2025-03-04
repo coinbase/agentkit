@@ -33,6 +33,11 @@ jobs:
           mkdir -p docs/agentkit-langchain/typescript
           cp -r typescript/framework-extensions/langchain/docs/* docs/agentkit-langchain/typescript
 
+      - name: Build AgentKit Vercel AI SDK JSDocs
+        run: |
+          mkdir -p docs/agentkit-vercel-ai-sdk/typescript
+          cp -r typescript/framework-extensions/vercel-ai-sdk/docs/* docs/agentkit-vercel-ai-sdk/typescript
+
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
