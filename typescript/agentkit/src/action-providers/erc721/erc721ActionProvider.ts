@@ -10,7 +10,7 @@ import { Network } from "../../network";
 /**
  * Erc721ActionProvider is an action provider for Erc721 contract interactions.
  */
-export class Erc721ActionProvider extends ActionProvider {
+export class Erc721ActionProvider extends ActionProvider<EvmWalletProvider> {
   /**
    * Constructor for the Erc721ActionProvider class.
    */
@@ -132,7 +132,7 @@ It takes the following inputs:
         address: args.contractAddress as Hex,
         abi: ERC721_ABI,
         functionName: "balanceOf",
-        args: [address],
+        args: [address as Hex],
       });
 
       return `Balance of NFTs for contract ${args.contractAddress} at address ${address} is ${balance}`;

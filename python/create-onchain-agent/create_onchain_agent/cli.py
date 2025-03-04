@@ -1,0 +1,271 @@
+#!/usr/bin/env python3
+
+import sys
+
+# Enforce Python version 3.10 or 3.11
+REQUIRED_MAJOR = 3
+ALLOWED_MINORS = {10, 11}  # Only allow 3.10 and 3.11
+
+if sys.version_info.major != REQUIRED_MAJOR or sys.version_info.minor not in ALLOWED_MINORS:
+    print(f"Unsupported Python version: {sys.version}. Please use Python 3.10 or 3.11.")
+    sys.exit(1)
+
+import os
+import click
+import questionary
+import re
+import zipfile
+import requests
+import shutil
+import platformdirs
+from rich.console import Console
+from copier import run_copy
+from prompt_toolkit.styles import Style  # Import for custom styling
+from pathlib import Path
+
+# GitHub repo and folder path
+GITHUB_ZIP_URL = "https://github.com/coinbase/agentkit/archive/refs/heads/main.zip"
+TEMPLATE_SUBDIR = "agentkit-main/python/create-onchain-agent/templates/chatbot"
+LOCAL_CACHE_DIR = Path(platformdirs.user_cache_dir("create-onchain-agent"))
+
+console = Console()
+
+# Define a custom style for Questionary prompts
+custom_style = Style.from_dict({
+    "question": "bold",       # Bold question text
+    "answer": "bold white",         # Selected answer (cyan instead of yellow)
+    "pointer": "bold cyan",   # Selection arrow (cyan)
+    "highlighted": "bold cyan",  # Highlighted item (cyan)
+    # "selected": "bold cyan",  # Selected option
+})
+
+# Network constants
+EVM_NETWORKS = [
+    ("base-mainnet", "Base Mainnet"),
+    ("base-sepolia", "Base Sepolia"),
+    ("ethereum-mainnet", "Ethereum Mainnet"),
+    ("ethereum-sepolia", "Ethereum Sepolia"),
+    ("arbitrum-mainnet", "Arbitrum Mainnet"),
+    ("arbitrum-sepolia", "Arbitrum Sepolia"),
+    ("optimism-mainnet", "Optimism Mainnet"),
+    ("optimism-sepolia", "Optimism Sepolia"),
+    ("polygon-mainnet", "Polygon Mainnet"),
+    ("polygon-mumbai", "Polygon Mumbai"),
+]
+
+CDP_SUPPORTED_NETWORKS = {
+    "base-mainnet",
+    "base-sepolia",
+    "ethereum-mainnet",
+    "ethereum-sepolia",
+    "polygon-mainnet",
+    "polygon-mumbai",
+}
+
+VALID_PACKAGE_NAME_REGEX = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+
+def get_template_path(template_path: str | None = None) -> str:
+    """Gets the template path either from a local directory or downloaded from GitHub.
+    
+    Args:
+        template_path: Optional path to local template directory
+        
+    Returns:
+        str: Path to the template directory
+    """
+    if template_path:
+        # Use provided template path
+        local_template_path = Path(template_path)
+        if not local_template_path.exists():
+            raise FileNotFoundError(
+                f"Template path not found at {local_template_path}. "
+                "Please provide a valid template directory path."
+            )
+        return str(local_template_path)
+    
+    # No template provided - download from GitHub
+    LOCAL_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    zip_path = LOCAL_CACHE_DIR / "repo.zip"
+    extract_path = LOCAL_CACHE_DIR / "templates"
+
+    # If the template is already downloaded, return its path
+    if extract_path.exists():
+        return str(extract_path)
+
+    # Download the zip file
+    response = requests.get(GITHUB_ZIP_URL)
+    response.raise_for_status()
+
+    with open(zip_path, "wb") as f:
+        f.write(response.content)
+
+    # Extract the template
+    with zipfile.ZipFile(zip_path, "r") as zip_ref:
+        zip_ref.extractall(LOCAL_CACHE_DIR)
+
+    template_path = LOCAL_CACHE_DIR / TEMPLATE_SUBDIR
+    if not template_path.exists():
+        raise FileNotFoundError(f"Template path {TEMPLATE_SUBDIR} not found in ZIP.")
+
+    # Move extracted template to a stable path
+    shutil.move(str(template_path), str(extract_path))
+
+    return str(extract_path)
+
+def get_network_choices(network_type: str) -> list:
+    """Filter network choices based on network type (mainnet/testnet)."""
+    return [
+        (name, id) for id, name in EVM_NETWORKS
+        if (network_type == "mainnet" and "mainnet" in id) or
+           (network_type == "testnet" and any(net in id for net in ["sepolia", "mumbai", "devnet", "testnet"]))
+    ]
+
+@click.command()
+@click.option('--template', type=str, help='Path to local template directory', default=None)
+def create_project(template):
+    """Creates a new onchain agent project with interactive prompts."""
+    
+    ascii_art = """
+     █████   ██████  ███████ ███    ██ ████████    ██   ██ ██ ████████ 
+    ██   ██ ██       ██      ████   ██    ██       ██  ██  ██    ██    
+    ███████ ██   ███ █████   ██ ██  ██    ██       █████   ██    ██    
+    ██   ██ ██    ██ ██      ██  ██ ██    ██       ██  ██  ██    ██    
+    ██   ██  ██████  ███████ ██   ████    ██       ██   ██ ██    ██    
+
+                 Giving every AI agent a crypto wallet
+    """
+
+    console.print(f"[blue]{ascii_art}[/blue]")
+
+    # Prompt for project name (default: "onchain-agent")
+    project_name = questionary.text("Enter your project name:", default="onchain-agent", style=custom_style).ask().strip()
+
+    project_path = os.path.join(os.getcwd(), project_name)
+
+    if os.path.exists(project_path):
+        console.print(f"[red]Error: Directory '{project_name}' already exists.[/red]")
+        return
+
+    # Attempt to generate a valid package name
+    suggested_package_name = project_name.replace("-", "_").replace(" ", "_")
+
+    if not VALID_PACKAGE_NAME_REGEX.match(suggested_package_name):
+        # Prompt user if the generated package name is invalid
+        package_name = questionary.text(
+            "Enter a valid Python package name (letters, numbers, underscores only):",
+            style=custom_style
+        ).ask().strip()
+    else:
+        package_name = suggested_package_name
+
+    # Choose network type
+    network_type = questionary.select(
+        "Choose network type:",
+        choices=[
+            "Mainnet",
+            "Testnet",
+            "Custom Chain ID",
+        ],
+        style=custom_style
+    ).ask()
+
+    network = None
+    chain_id = None
+    rpc_url = None
+
+    if network_type == "Custom Chain ID":
+        # Handle custom EVM network
+        chain_id = questionary.text(
+            "Enter your chain ID:",
+            validate=lambda text: text.strip().isdigit() or "Chain ID must be a number",
+            style=custom_style
+        ).ask()
+
+        rpc_url = questionary.text(
+            "Enter your RPC URL:",
+            validate=lambda text: (
+                text.strip().startswith(("http://", "https://")) or 
+                "RPC URL must start with http:// or https://"
+            ),
+            style=custom_style
+        ).ask()
+        
+        wallet_provider = "eth"  # Default to eth wallet provider for custom networks
+    else:
+        # Filter networks based on mainnet/testnet selection
+        network_choices = get_network_choices(network_type.lower())
+        network_name = questionary.select(
+            "Choose a network:",
+            choices=[
+                name + (" (default)" if id == "base-sepolia" else "")
+                for name, id in network_choices
+            ],
+            default="Base Sepolia (default)" if network_type == "Testnet" else None,
+            style=custom_style
+        ).ask()
+
+        # Remove " (default)" suffix if present
+        network_name = network_name.replace(" (default)", "")
+        network = next(id for name, id in network_choices if name == network_name)
+
+    # Determine wallet provider
+    if network:
+        if network in CDP_SUPPORTED_NETWORKS:
+            wallet_choices = [
+                "CDP Wallet Provider",
+                "Ethereum Account Wallet Provider"
+            ]
+            wallet_selection = questionary.select(
+                "Select a wallet provider:",
+                choices=wallet_choices,
+                default="CDP Wallet Provider",
+                style=custom_style
+            ).ask()
+            wallet_provider = "cdp" if wallet_selection.startswith("CDP") else "eth"
+        else:
+            console.print(f"[yellow]⚠️ CDP is not supported on {network}. Defaulting to Ethereum Account Wallet Provider.[/yellow]")
+            wallet_provider = "eth"
+
+    console.print(f"\n[blue]Creating your onchain agent project: {project_name}[/blue]")
+
+    # Update the Copier data dict to include new fields
+    copier_data = {
+        "_project_name": project_name,
+        "_package_name": package_name,
+        "_network": network,
+        "_wallet_provider": wallet_provider,
+    }
+
+    if chain_id:
+        copier_data["_chain_id"] = chain_id
+    if rpc_url:
+        copier_data["_rpc_url"] = rpc_url
+
+    try:
+        template_path = get_template_path(template)
+        run_copy(template_path, project_path, data=copier_data)
+    except FileNotFoundError as e:
+        console.print(f"[red]Error: {str(e)}[/red]")
+        return
+
+    console.print(f"[bold blue]Successfully created your AgentKit project in {project_path}[/bold blue]")
+
+    console.print("\n[bold]What's Next?[/bold]")
+
+    console.print(f"To get started, run the following commands:")
+    console.print(f"  [gray]- cd {project_name}[/gray]")
+    console.print(f"  [gray]- poetry install[/gray]")
+    console.print(f"  [dim]- # Open .env.local and configure your API keys[/dim]")
+    console.print(f"  [gray]- mv .env.local .env[/gray]")
+    console.print(f"  [gray]- poetry run python chatbot.py[/gray]")
+
+    console.print("\n[bold]Learn more[/bold]")
+    console.print(f"  - Checkout the docs")
+    console.print(f"    [blue]https://docs.cdp.coinbase.com/agentkit/docs/welcome[/blue]")
+    console.print(f"  - Visit the repo")
+    console.print(f"    [blue]http://github.com/coinbase/agentkit[/blue]")
+    console.print(f"  - Join the community")
+    console.print(f"    [blue]https://discord.gg/CDP[/blue]\n")
+
+if __name__ == "__main__":
+    create_project()

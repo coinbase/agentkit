@@ -1,0 +1,137 @@
+/**
+ * {{name_pascal}} Action Provider
+ *
+ * This file contains the implementation of the {{name_pascal}}ActionProvider,
+ * which provides actions for {{name}} operations.
+ *
+ * @module {{name}}
+ */
+
+import { z } from "zod";
+import { ActionProvider } from "../actionProvider";
+import { Network } from "../../network";
+import { CreateAction } from "../actionDecorator";
+{% if wallet_provider %}
+import { {{wallet_provider}} } from "../../wallet-providers";
+{% endif %}
+import { ExampleActionSchema } from "./schemas";
+{% if protocol_family != "all" and networkIds|length > 0 %}
+/**
+ * Supported network IDs for this provider
+ */
+const SUPPORTED_NETWORK_IDS: string[] = [{% for id in networkIds %}"{{id}}"{% if not loop.last %}, {% endif %}{% endfor %}];
+{% endif %}
+
+/**
+ * {{name_pascal}}ActionProvider provides actions for {{name}} operations.
+ *
+ * @description
+ * This provider is designed to {% if wallet_provider %}work with {{wallet_provider}} for blockchain interactions{% else %}provide blockchain-agnostic operations{% endif %}.
+{% if not protocol_family %}
+ * It supports all blockchain networks.
+{% elif networkIds|length == 0 %}
+ * It supports all {{protocol_family}} networks.
+{% else %}
+ * It supports {{protocol_family}} networks: {% for networkId in networkIds %}{{networkId}}{% if not loop.last %}, {% endif %}{% endfor %}.
+{% endif %}
+ */
+export class {{name_pascal}}ActionProvider extends ActionProvider{% if wallet_provider %}<{{wallet_provider}}>{% endif %} {
+  /**
+   * Constructor for the {{name_pascal}}ActionProvider.
+   */
+  constructor() {
+    super("{{name}}", []);
+  }
+
+  /**
+   * Example action implementation.
+   * Replace or modify this with your actual action.
+   *
+   * @description
+   * This is a template action that demonstrates the basic structure.
+   * Replace it with your actual implementation.
+   *
+   {% if wallet_provider %}
+   * @param walletProvider - The wallet provider instance for blockchain interactions
+   {% endif %}
+   * @param args - Arguments defined by ExampleActionSchema
+   * @returns A promise that resolves to a string describing the action result
+   */
+  @CreateAction({
+    name: "example_action",
+    description: `
+      Example action for {{name}} provider.
+
+      This action demonstrates the basic structure of an action implementation.
+      Replace this description with your actual action's purpose and behavior.
+
+      Include:
+      - What the action does
+      - Required inputs and their format
+      - Expected outputs
+      - Any important considerations or limitations
+    `,
+    schema: ExampleActionSchema,
+  })
+  {% if wallet_provider %}
+  async exampleAction(
+    walletProvider: {{wallet_provider}},
+    args: z.infer<typeof ExampleActionSchema>,
+  ): Promise<string> {
+  {% else %}
+  async exampleAction(args: z.infer<typeof ExampleActionSchema>): Promise<string> {
+  {% endif %}
+    // TODO: Implement your action logic here
+    // Example implementation:
+    {% if wallet_provider %}
+    const network = walletProvider.getNetwork();
+    return `Example action called with ${args.fieldName} on network ${network.networkId}`;
+    {% else %}
+    return `Example action called with ${args.fieldName}`;
+    {% endif %}
+  }
+
+  {% if not protocol_family %}
+  /**
+   * Checks if this provider supports the given network.
+   *
+   * @param _ - The network to check support for
+   * @returns True if the network is supported
+   */
+  supportsNetwork(_: Network): boolean {
+    // all networks
+    return true;
+  }
+  {% else %}
+  /**
+   * Checks if this provider supports the given network.
+   *
+   * @param network - The network to check support for
+   * @returns True if the network is supported
+   */
+  supportsNetwork(network: Network): boolean {
+    {% if networkIds.length %}
+    // specific protocol networks
+    if (network.protocolFamily !== "{{protocol_family}}") {
+      return false;
+    }
+
+    if (!network.networkId) {
+      return false;
+    }
+
+    return SUPPORTED_NETWORK_IDS.includes(network.networkId);
+    {% else %}
+    // all protocol networks
+    return network.protocolFamily === "{{protocol_family}}";
+    {% endif %}
+  }
+  {% endif %}
+}
+
+/**
+ * Factory function to create a new {{name_pascal}}ActionProvider instance.
+ *
+ * @returns A new {{name_pascal}}ActionProvider instance
+ */
+export const {{name}}ActionProvider = () => new {{name_pascal}}ActionProvider();

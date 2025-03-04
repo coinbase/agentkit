@@ -1,0 +1,67 @@
+<svg id="logo" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <foreignObject width="100%" height="100%">
+        <div xmlns="http://www.w3.org/1999/xhtml">
+            <style>
+                :root {
+                    --border-color: #404040;
+                    --hover-color: #2470FF;
+                    --logo-color: #f2f2f2;
+                }
+
+                @media (prefers-color-scheme: dark) {
+                    :root {
+                        --border-color: #404040;
+                        --hover-color: #2470FF;
+                        --logo-color: #f2f2f2;
+                    }
+                }
+
+                @media (prefers-color-scheme: light) {
+                    :root {
+                        --border-color: #e0e0e0;
+                        --hover-color: #2470FF;
+                        --logo-color: #202020;
+                    }
+                }
+
+                #container {
+                    box-sizing: border-box;
+                    border: 1px solid var(--border-color);
+                    border-radius: 8px;
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                #logo:hover {
+                    border-color: var(--hover-color);
+                }
+
+                div {
+                    width: 100%;
+                    height: 100%;
+                }
+            </style>
+            <div id="container">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 127 76"
+                    width="24"
+                    height="14"
+                    x="0"
+                    y="0">
+
+                    <g clip-path="url(#clip-path-0)">
+                        <path class="cls-1" d="m50.6,73.58c-3.97,1.42-8.25,2.19-12.72,2.19C16.96,75.77,0,58.81,0,37.89S16.96,0,37.89,0c4.46,0,8.74.77,12.72,2.19-14.67,5.23-25.17,19.23-25.17,35.7s10.5,30.47,25.17,35.7ZM88.75,0c-4.46,0-8.74.77-12.72,2.19,14.67,5.23,25.17,19.23,25.17,35.7s-10.5,30.47-25.17,35.7c3.97,1.42,8.25,2.19,12.72,2.19,20.92,0,37.89-16.96,37.89-37.89S109.67,0,88.75,0Z" fill="var(--logo-color)" opacity="1.0" />
+                    </g>
+                    <defs>
+                        <clipPath id="clip-path-0">
+                            <rect width="126" height="75" fill="white"/>
+                        </clipPath>
+                    </defs>
+                </svg>
+            </div>
+        </div>
+    </foreignObject>
+</svg>

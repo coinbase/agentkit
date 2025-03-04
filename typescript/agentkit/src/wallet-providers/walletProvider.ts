@@ -72,5 +72,5 @@ export abstract class WalletProvider {
    * @param value - The amount to transfer in whole units (e.g. ETH)
    * @returns The transaction hash.
    */
-  abstract nativeTransfer(to: `0x${string}`, value: string): Promise<`0x${string}`>;
+  abstract nativeTransfer(to: string, value: string): Promise<string>;
 }

@@ -18,7 +18,7 @@ import { EvmWalletProvider } from "../../wallet-providers";
 /**
  * Action provider for registering Basenames.
  */
-export class BasenameActionProvider extends ActionProvider {
+export class BasenameActionProvider extends ActionProvider<EvmWalletProvider> {
   /**
    * Constructs a new BasenameActionProvider.
    */

@@ -1,6 +1,6 @@
 import type { Abi } from "abitype";
 
-export const SUPPORTED_NETWORKS = ["base-mainnet"];
+export const SUPPORTED_NETWORKS = ["base-mainnet", "base-sepolia"];
 
 export const WOW_FACTORY_ABI: Abi = [
   {

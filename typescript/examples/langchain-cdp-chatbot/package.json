@@ -2,6 +2,7 @@
   "name": "@coinbase/cdp-langchain-chatbot-example",
   "description": "CDP Agentkit Node.js SDK Chatbot Example",
   "version": "1.0.0",
+  "private": true,
   "author": "Coinbase Inc.",
   "license": "Apache-2.0",
   "scripts": {
@@ -13,8 +14,8 @@
     "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\""
   },
   "dependencies": {
-    "@coinbase/agentkit": "^0.1.0",
-    "@coinbase/agentkit-langchain": "^0.1.0",
+    "@coinbase/agentkit": "^0.2.3",
+    "@coinbase/agentkit-langchain": "^0.2.3",
     "@langchain/langgraph": "^0.2.21",
     "@langchain/openai": "^0.3.14",
     "@langchain/core": "^0.3.19",

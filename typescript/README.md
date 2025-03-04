@@ -16,3 +16,15 @@ LangChain extension of AgentKit. Enables agentic workflows to interact with onch
 
 See [AgentKit LangChain](./framework-extensions/langchain/README.md) to get started!
 
+### `create-onchain-agent`
+
+A quickstart CLI tool to scaffold out a fullstack chatbot application using Coinbase AgentKit. Runnable via `npm create onchain-agent@latest`.
+
+See [Create Onchain Agent](./create-onchain-agent/README.md) to get started!
+
+## 🤝 Contributing
+
+**AgentKit is actively looking for community contributions!**
+
+- To see a list of actions and frameworks we'd love to see open-source contributions for, see [WISHLIST.md](../WISHLIST.md).
+- To understand the process for contributing to AgentKit, see [CONTRIBUTING.md](../CONTRIBUTING.md).

@@ -15,7 +15,7 @@ export const SUPPORTED_NETWORKS = ["base-mainnet", "base-sepolia"];
 /**
  * MorphoActionProvider is an action provider for Morpho Vault interactions.
  */
-export class MorphoActionProvider extends ActionProvider {
+export class MorphoActionProvider extends ActionProvider<EvmWalletProvider> {
   /**
    * Constructor for the MorphoActionProvider class.
    */

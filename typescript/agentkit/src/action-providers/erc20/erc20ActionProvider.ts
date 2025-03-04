@@ -4,13 +4,13 @@ import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
 import { GetBalanceSchema, TransferSchema } from "./schemas";
 import { abi } from "./constants";
-import { encodeFunctionData, Hex } from "viem";
+import { encodeFunctionData, formatUnits, Hex } from "viem";
 import { EvmWalletProvider } from "../../wallet-providers";
 
 /**
  * ERC20ActionProvider is an action provider for ERC20 tokens.
  */
-export class ERC20ActionProvider extends ActionProvider {
+export class ERC20ActionProvider extends ActionProvider<EvmWalletProvider> {
   /**
    * Constructor for the ERC20ActionProvider.
    */
@@ -41,10 +41,17 @@ export class ERC20ActionProvider extends ActionProvider {
         address: args.contractAddress as Hex,
         abi,
         functionName: "balanceOf",
-        args: [walletProvider.getAddress()],
+        args: [walletProvider.getAddress() as Hex],
       });
 
-      return `Balance of ${args.contractAddress} is ${balance}`;
+      const decimals = await walletProvider.readContract({
+        address: args.contractAddress as Hex,
+        abi,
+        functionName: "decimals",
+        args: [],
+      });
+
+      return `Balance of ${args.contractAddress} is ${formatUnits(balance, decimals)}`;
     } catch (error) {
       return `Error getting balance: ${error}`;
     }
@@ -100,10 +107,10 @@ Important notes:
   /**
    * Checks if the ERC20 action provider supports the given network.
    *
-   * @param _ - The network to check.
+   * @param network - The network to check.
    * @returns True if the ERC20 action provider supports the network, false otherwise.
    */
-  supportsNetwork = (_: Network) => true;
+  supportsNetwork = (network: Network) => network.protocolFamily === "evm";
 }
 
 export const erc20ActionProvider = () => new ERC20ActionProvider();

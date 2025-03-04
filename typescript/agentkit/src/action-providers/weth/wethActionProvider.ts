@@ -10,7 +10,7 @@ import { EvmWalletProvider } from "../../wallet-providers";
 /**
  * WethActionProvider is an action provider for WETH.
  */
-export class WethActionProvider extends ActionProvider {
+export class WethActionProvider extends ActionProvider<EvmWalletProvider> {
   /**
    * Constructor for the WethActionProvider.
    */

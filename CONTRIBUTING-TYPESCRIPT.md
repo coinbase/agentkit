@@ -10,6 +10,8 @@ This guide covers TypeScript-specific setup and development for AgentKit.
 - [Integrating into an AI Agent Framework](#integrating-into-an-ai-agent-framework)
 - [Testing](#testing)
 - [Code Style](#code-style)
+- [Documentation](#documentation)
+- [Changelog](#changelog)
 
 ## Development Setup
 
@@ -24,11 +26,13 @@ npm --version
 
 If the versions are not correct or you don't have Node.js or npm installed, download through [nvm](https://github.com/nvm-sh/nvm).
 
-Once you have these installed, make sure you install the project dependencies by running `npm install` from the root of the repository.
+Once you have these installed, make sure you install the project dependencies by running `npm install` from the root of the TypeScript monorepo, in other words, from the root `typescript/` folder.
 
 ## Adding an Action Provider
 
 An Action is an interface for an AI Agent to interact with the real world: any TypeScript function that you can think of can be used by an Agent via an Action! Actions are grouped by Action Providers, which are classes that contain a collection of actions along with configuration and helper functions.
+
+You can use the `generate-action-provider` script to generate a new action provider. See the [Generate Action Provider](./typescript/agentkit/scripts/generate-action-provider/README.md) for more information.
 
 Action Components:
 
@@ -40,7 +44,7 @@ Action Components:
 
 4. **Invocation Function**: The actual logic that executes the action. This function receives as input the wallet that the Agent has access to, and as you'll see in the walkthrough below, we can use this wallet to invoke an onchain contract! For more information on contract invocations using a CDP wallet, see [here](https://docs.cdp.coinbase.com/cdp-sdk/docs/onchain-interactions#smart-contract-interactions).
 
-In practice, action providers are housed in `typescript/agentkit/src/action-providers` and generally grouped by the type of action they are and the configuration they require . For example, actions related to interacting with social platforms such as X (Twitter) are housed in `typescript/agentkit/src/action-providers/twitter`. When adding a new action, check if there is an existing action provider for the type of action you are adding and add your new action to the appropriate folder.
+In practice, action providers are housed in `typescript/agentkit/src/action-providers` and generally grouped by the type of action they are and the configuration they require. For example, actions related to interacting with social platforms such as X (Twitter) are housed in `typescript/agentkit/src/action-providers/twitter`. When adding a new action, check if there is an existing action provider for the type of action you are adding and add your new action to the appropriate folder.
 
 Here's the structure of the action providers directory:
 
@@ -66,18 +70,18 @@ The description prompt is used by the LLM to understand when and how to use the 
   @CreateAction({
     name: "mint",
     description: `
-This tool will mint an NFT (ERC-721) to a specified destination address onchain via a contract invocation. 
-It takes the contract address of the NFT onchain and the destination address onchain that will receive the NFT as inputs. 
+This tool will mint an NFT (ERC-721) to a specified destination address onchain via a contract invocation.
+It takes the contract address of the NFT onchain and the destination address onchain that will receive the NFT as inputs.
 Do not use the contract address as the destination address. If you are unsure of the destination address, please ask the user before proceeding.
 `,
     schema: MintSchema,
   })
 ```
 
-* The prompt disambuguates the type of NFT by specifying "ERC-721"
-* The prompt specifies that the destination address should not be the contract address
-* The prompt specifies that the LLM should ask the user for the destination address if it is unsure
-* Think about the best UX: if a contract address from a known list of addresses is required, you can instruct the LLM to use another action to get the list of addresses and prompt the user to choose an address from that list. For example, consider a DeFi action that allows a user to withdraw funds from a liquidity provider position. This action would take a contract address, so it would be valuable to have another action that can pull a list of addresses representing the user's positions. You can then instruct the LLM via the prompt to use that action in the case that no contract address is provided.
+- The prompt disambiguates the type of NFT by specifying "ERC-721"
+- The prompt specifies that the destination address should not be the contract address
+- The prompt specifies that the LLM should ask the user for the destination address if it is unsure
+- Think about the best UX: if a contract address from a known list of addresses is required, you can instruct the LLM to use another action to get the list of addresses and prompt the user to choose an address from that list. For example, consider a DeFi action that allows a user to withdraw funds from a liquidity provider position. This action would take a contract address, so it would be valuable to have another action that can pull a list of addresses representing the user's positions. You can then instruct the LLM via the prompt to use that action in the case that no contract address is provided.
 
 ### Defining the input schema
 
@@ -88,8 +92,12 @@ The input schema is used to validate the inputs to the action and to generate a 
 
 const MintSchema = z
   .object({
-    contractAddress: z.string().describe("The contract address of the NFT to mint"),
-    destination: z.string().describe("The destination address that will receive the NFT"),
+    contractAddress: z
+      .string()
+      .describe("The contract address of the NFT to mint"),
+    destination: z
+      .string()
+      .describe("The destination address that will receive the NFT"),
   })
   .strip()
   .describe("Instructions for minting an NFT");
@@ -134,7 +142,10 @@ Do not use the contract address as the destination address. If you are unsure of
 `,
     schema: MintSchema,
   })
-  async mint(walletProvider: EvmWalletProvider, args: z.infer<typeof MintSchema>): Promise<string> {
+  async mint(
+    walletProvider: EvmWalletProvider,
+    args: z.infer<typeof MintSchema>
+  ): Promise<string> {
     try {
       const data = encodeFunctionData({
         abi: ERC721_ABI,
@@ -157,7 +168,6 @@ Do not use the contract address as the destination address. If you are unsure of
 
   supportsNetwork = (network: Network) => network.protocolFamily === "evm";
 }
-
 ```
 
 Notice the return value contains useful information for the user, such as the transaction hash and link. It's important to include this information in the return value so that the user can easily see the result of the action.
@@ -171,12 +181,11 @@ There are two forms of testing you should do: unit testing and manual end-to-end
 To add a unit test for your action provider, add a file to your action provider folder post-fixing it with `.test.ts`. For an example, see [pythActionProvider.test.ts](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/action-providers/pyth/pythActionProvider.test.ts).
 
 You can then run the unit tests with the following command:
+
 ```bash
 cd typescript/agentkit
 npm test
 ```
-
-For instructions on manual end-to-end testing, see the [Testing](#testing) section.
 
 Check out the [Testing](#testing) section to learn how to manually test your new action provider.
 
@@ -185,6 +194,7 @@ Check out the [Testing](#testing) section to learn how to manually test your new
 Wallet providers give an agent access to a wallet. AgentKit currently supports the following wallet providers:
 
 EVM:
+
 - [CdpWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/cdpWalletProvider.ts)
 - [ViemWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/viemWalletProvider.ts)
 
@@ -201,6 +211,7 @@ Non-EVM Wallet Providers are housed in `typescript/agentkit/src/wallet-providers
 Actions are necessary building blocks powering onchain AI applications, but they're just one piece of the puzzle. To make them truly useful, they must be integrated into an AI Agent framework such as [LangChain](https://www.langchain.com/) or [Eliza](https://elizaos.github.io/eliza/), among others.
 
 Integrations into AI Agent frameworks are specific to the framework itself, so we can't go into specific implementation details here, but we can offer up some examples and tips.
+
 - Check out how [AgentKit actions are mapped into LangChain Tools](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit-langchain/src/index.ts)
 - Check out how [AgentKit Actions are mapped into Eliza Actions](https://github.com/elizaOS/eliza/blob/develop/packages/plugin-agentkit/src/actions.ts#L31)
 
@@ -213,7 +224,7 @@ A good way to test new actions locally is by using the chatbot example in `types
 The flow is:
 
 1. Make your change as described in the [Adding an Agentic Action](#adding-an-agentic-action) section
-2. From root, run  `npm run build && npm i`
+2. From `typescript/`, run `npm run build && npm i`
 3. In `typescript/examples/langchain-cdp-chatbot`, run `npm run start`
 4. You can now interact with your new action via the chatbot!
 
@@ -226,6 +237,7 @@ npm test
 ```
 
 For example, to run all tests in the `@coinbase/agentkit` package, you can run:
+
 ```bash
 cd typescript/agentkit
 npm test
@@ -245,3 +257,30 @@ npm run lint
 # Fix linting issues
 npm run lint:fix
 ```
+
+## Documentation
+
+The majority of our documentation exists within the AgentKit repo itself, in the form of colocated `README.md` files and inline docstrings. When adding new functionality or changing documented behavior, please update the relevant `README.md` file and inline docstrings to reflect the changes. For example, if you're adding a new action provider, also include a `README.md` in your new folder (see [the ERC20 Action Provider README](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/action-providers/erc20/README.md) as a reference). Or, if you're updating an existing action provider, update its `README.md` to reflect the changes. If it doesn't have a README, please add one! These are just a couple examples; docs exist throughout the codebase and most code changes will also require updates to the docs.
+
+## Changelog
+
+We use [changesets](https://github.com/changesets/changesets) to manage the changelog.
+
+Changesets should be in the past tense, and they should be as specific as possible. Some examples of good changesets:
+
+- Added a new action provider to interact with Fancy Protocol
+- Fixed a bug preventing wallet balances to be formatted correctly
+
+Changesets are stored in the `.changeset` directory. Each changeset is stored as a markdown file with a random name generated by `changesets`.
+
+To add a changeset, use `changesets` to create it for you:
+
+```bash
+npx @changesets/cli
+```
+
+This will kick off an interactive prompt to help you create the changeset. Use the arrow keys to navigate the different options, and press the `Space` key to select an option. You should select the package(s) you are making a change to – most of the time this will be `@coinbase/agentkit`. Once selected, hit `Enter`. You'll then be prompted to specify the type of change you are making (major, minor or patch), starting with major. Most of the time you will not be making a major change, so hitting `Enter` will progress to the next step. If you're adding a new feature, you should select `minor`. If you're fixing a bug, you should select `patch`. Once selected, you will be prompted to provide a summary of your changes. This should be a short, specific description in the past tense (see above for examples).
+
+Once complete, a new changeset will be created in the `.changeset` directory, which should be committed along with the changes in your Pull Request.
+
+For more info on adding changelog entries, [see here](https://github.com/changesets/changesets/blob/main/docs/adding-a-changeset.md).

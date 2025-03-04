@@ -1,3 +1,4 @@
+import { version } from "../../package.json";
 import { Decimal } from "decimal.js";
 import {
   createPublicClient,
@@ -10,6 +11,9 @@ import {
   keccak256,
   Signature,
   PublicClient,
+  Abi,
+  ContractFunctionName,
+  ContractFunctionArgs,
 } from "viem";
 import { EvmWalletProvider } from "./evmWalletProvider";
 import { Network } from "../network";
@@ -26,6 +30,7 @@ import {
   hashMessage,
 } from "@coinbase/coinbase-sdk";
 import { NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_VIEM_CHAIN } from "../network/network";
+import { applyGasMultiplier } from "../utils";
 
 /**
  * Configuration options for the CDP Providers.
@@ -65,6 +70,21 @@ export interface CdpWalletProviderConfig extends CdpProviderConfig {
    * The network ID of the wallet.
    */
   networkId?: string;
+
+  /**
+   * Configuration for gas multipliers.
+   */
+  gas?: {
+    /**
+     * An internal multiplier on gas limit estimation.
+     */
+    gasLimitMultiplier?: number;
+
+    /**
+     * An internal multiplier on fee per gas estimation.
+     */
+    feePerGasMultiplier?: number;
+  };
 }
 
 /**
@@ -90,6 +110,8 @@ export class CdpWalletProvider extends EvmWalletProvider {
   #address?: string;
   #network?: Network;
   #publicClient: PublicClient;
+  #gasLimitMultiplier: number;
+  #feePerGasMultiplier: number;
 
   /**
    * Constructs a new CdpWalletProvider.
@@ -106,6 +128,8 @@ export class CdpWalletProvider extends EvmWalletProvider {
       chain: NETWORK_ID_TO_VIEM_CHAIN[config.network!.networkId!],
       transport: http(),
     });
+    this.#gasLimitMultiplier = Math.max(config.gas?.gasLimitMultiplier ?? 1.2, 1);
+    this.#feePerGasMultiplier = Math.max(config.gas?.feePerGasMultiplier ?? 1, 1);
   }
 
   /**
@@ -119,15 +143,20 @@ export class CdpWalletProvider extends EvmWalletProvider {
     config: ConfigureCdpAgentkitWithWalletOptions = {},
   ): Promise<CdpWalletProvider> {
     if (config.apiKeyName && config.apiKeyPrivateKey) {
-      Coinbase.configure({ apiKeyName: config.apiKeyName, privateKey: config.apiKeyPrivateKey });
+      Coinbase.configure({
+        apiKeyName: config.apiKeyName,
+        privateKey: config.apiKeyPrivateKey?.replace(/\\n/g, "\n"),
+        source: "agentkit",
+        sourceVersion: version,
+      });
     } else {
-      Coinbase.configureFromJson();
+      Coinbase.configureFromJson({ source: "agentkit", sourceVersion: version });
     }
 
     let wallet: Wallet;
 
     const mnemonicPhrase = config.mnemonicPhrase || process.env.MNEMONIC_PHRASE;
-    const networkId = config.networkId || process.env.NETWORK_ID || Coinbase.networks.BaseSepolia;
+    let networkId = config.networkId || process.env.NETWORK_ID || Coinbase.networks.BaseSepolia;
 
     try {
       if (config.wallet) {
@@ -135,6 +164,7 @@ export class CdpWalletProvider extends EvmWalletProvider {
       } else if (config.cdpWalletData) {
         const walletData = JSON.parse(config.cdpWalletData) as WalletData;
         wallet = await Wallet.import(walletData);
+        networkId = wallet.getNetworkId();
       } else if (mnemonicPhrase) {
         wallet = await Wallet.import({ mnemonicPhrase: mnemonicPhrase }, networkId);
       } else {
@@ -156,6 +186,7 @@ export class CdpWalletProvider extends EvmWalletProvider {
       wallet,
       address,
       network,
+      gas: config.gas,
     });
 
     return cdpWalletProvider;
@@ -174,6 +205,10 @@ export class CdpWalletProvider extends EvmWalletProvider {
 
     const messageHash = hashMessage(message);
     const payload = await this.#cdpWallet.createPayloadSignature(messageHash);
+
+    if (payload.getStatus() === "pending" && payload?.wait) {
+      await payload.wait(); // needed for Server-Signers
+    }
 
     return payload.getSignature() as `0x${string}`;
   }
@@ -198,6 +233,10 @@ export class CdpWalletProvider extends EvmWalletProvider {
 
     const payload = await this.#cdpWallet.createPayloadSignature(messageHash);
 
+    if (payload.getStatus() === "pending" && payload?.wait) {
+      await payload.wait(); // needed for Server-Signers
+    }
+
     return payload.getSignature() as `0x${string}`;
   }
 
@@ -216,6 +255,10 @@ export class CdpWalletProvider extends EvmWalletProvider {
     const transactionHash = keccak256(serializedTx);
 
     const payload = await this.#cdpWallet.createPayloadSignature(transactionHash);
+
+    if (payload.getStatus() === "pending" && payload?.wait) {
+      await payload.wait(); // needed for Server-Signers
+    }
 
     return payload.getSignature() as `0x${string}`;
   }
@@ -271,16 +314,20 @@ export class CdpWalletProvider extends EvmWalletProvider {
       address: this.#address! as `0x${string}`,
     });
 
-    const feeData = await this.#publicClient!.estimateFeesPerGas();
+    const feeData = await this.#publicClient.estimateFeesPerGas();
+    const maxFeePerGas = applyGasMultiplier(feeData.maxFeePerGas, this.#feePerGasMultiplier);
+    const maxPriorityFeePerGas = applyGasMultiplier(
+      feeData.maxPriorityFeePerGas,
+      this.#feePerGasMultiplier,
+    );
 
-    const gas = await this.#publicClient!.estimateGas({
-      account: this.#publicClient.account,
+    const gasLimit = await this.#publicClient.estimateGas({
+      account: this.#address! as `0x${string}`,
       to,
       value,
       data,
-      maxFeePerGas: feeData.maxFeePerGas,
-      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
     });
+    const gas = BigInt(Math.round(Number(gasLimit) * this.#gasLimitMultiplier));
 
     const chainId = parseInt(this.#network!.chainId!, 10);
 
@@ -289,8 +336,8 @@ export class CdpWalletProvider extends EvmWalletProvider {
       value,
       data,
       nonce,
-      maxFeePerGas: feeData.maxFeePerGas,
-      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
+      maxFeePerGas,
+      maxPriorityFeePerGas,
       gas,
       chainId,
       type: "eip1559",
@@ -382,8 +429,14 @@ export class CdpWalletProvider extends EvmWalletProvider {
    * @param params - The parameters to read the contract.
    * @returns The response from the contract.
    */
-  async readContract(params: ReadContractParameters): Promise<ReadContractReturnType> {
-    return this.#publicClient!.readContract(params);
+  async readContract<
+    const abi extends Abi | readonly unknown[],
+    functionName extends ContractFunctionName<abi, "pure" | "view">,
+    const args extends ContractFunctionArgs<abi, "pure" | "view", functionName>,
+  >(
+    params: ReadContractParameters<abi, functionName, args>,
+  ): Promise<ReadContractReturnType<abi, functionName, args>> {
+    return this.#publicClient!.readContract<abi, functionName, args>(params);
   }
 
   /**
@@ -474,7 +527,6 @@ export class CdpWalletProvider extends EvmWalletProvider {
     if (!this.#cdpWallet) {
       throw new Error("Wallet not initialized");
     }
-
     const transferResult = await this.#cdpWallet.createTransfer({
       amount: new Decimal(value),
       assetId: Coinbase.assets.Eth,

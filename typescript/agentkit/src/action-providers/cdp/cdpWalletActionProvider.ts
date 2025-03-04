@@ -1,11 +1,10 @@
 import { Coinbase } from "@coinbase/coinbase-sdk";
 import { z } from "zod";
-
+import { version } from "../../../package.json";
 import { CreateAction } from "../actionDecorator";
 import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { CdpWalletProvider, CdpProviderConfig } from "../../wallet-providers";
-
 import { SolidityVersions } from "./constants";
 import { DeployContractSchema, DeployNftSchema, DeployTokenSchema, TradeSchema } from "./schemas";
 
@@ -24,9 +23,14 @@ export class CdpWalletActionProvider extends ActionProvider<CdpWalletProvider> {
     super("cdp_wallet", []);
 
     if (config.apiKeyName && config.apiKeyPrivateKey) {
-      Coinbase.configure({ apiKeyName: config.apiKeyName, privateKey: config.apiKeyPrivateKey });
+      Coinbase.configure({
+        apiKeyName: config.apiKeyName,
+        privateKey: config.apiKeyPrivateKey?.replace(/\\n/g, "\n"),
+        source: "agentkit",
+        sourceVersion: version,
+      });
     } else {
-      Coinbase.configureFromJson();
+      Coinbase.configureFromJson({ source: "agentkit", sourceVersion: version });
     }
   }
 
@@ -204,10 +208,10 @@ Important notes:
   /**
    * Checks if the Cdp action provider supports the given network.
    *
-   * @param _ - The network to check.
+   * @param network - The network to check.
    * @returns True if the Cdp action provider supports the network, false otherwise.
    */
-  supportsNetwork = (_: Network) => true;
+  supportsNetwork = (network: Network) => network.protocolFamily === "evm";
 }
 
 export const cdpWalletActionProvider = (config: CdpProviderConfig = {}) =>

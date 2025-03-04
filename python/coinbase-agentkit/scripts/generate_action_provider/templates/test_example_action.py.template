@@ -1,0 +1,80 @@
+"""Tests for example action."""
+
+{% if wallet_provider %}
+from unittest.mock import Mock
+{% endif %}
+
+import pytest
+
+from coinbase_agentkit.action_providers.{{ name }}.{{ name }}_action_provider import {{ name_pascal }}ActionProvider
+from coinbase_agentkit.action_providers.{{ name }}.schemas import ExampleActionSchema
+{% if wallet_provider %}
+{% if protocol_family == "evm" and network_ids|length %}
+from coinbase_agentkit.network import NETWORK_ID_TO_CHAIN_ID, Network
+{% else %}
+from coinbase_agentkit.network import Network
+{% endif %}
+from coinbase_agentkit.wallet_providers import {{ wallet_provider }}
+{% endif %}
+
+{% if wallet_provider %}
+
+@pytest.fixture
+def mock_wallet_provider():
+    """Create a mock wallet provider for testing."""
+    mock = Mock(spec={{ wallet_provider }})
+    mock.get_network.return_value = Network(
+        protocol_family="{{ protocol_family }}",
+        {% if network_ids|length %}
+        network_id="{{ network_ids[0] }}",
+        {% if protocol_family == "evm" %}
+        chain_id=NETWORK_ID_TO_CHAIN_ID["{{ network_ids[0] }}"],
+        {% endif %}
+        {% else %}
+        network_id=None,
+        chain_id=None,
+        {% endif %}
+    )
+    return mock
+{% endif %}
+
+@pytest.fixture
+def provider():
+    """Create a provider instance for testing."""
+    return {{ name_pascal }}ActionProvider()
+
+def test_example_action_schema():
+    """Test example action schema validation."""
+    valid_args = {
+        "field_name": "test",
+        "amount": "1.0",
+    }
+    invalid_args = {
+        "field_name": "",  # Empty string
+        "amount": "invalid",  # Invalid format
+    }
+
+    # Test valid args
+    result = ExampleActionSchema(**valid_args)
+    assert result.field_name == "test"
+    assert result.amount == "1.0"
+
+    # Test invalid args
+    with pytest.raises(ValueError):
+        ExampleActionSchema(**invalid_args)
+
+
+def test_example_action_execution({% if wallet_provider %}mock_wallet_provider, {% endif %}provider):
+    """Test example action execution."""
+    args = {
+        "field_name": "test",
+        "amount": "1.0",
+    }
+    {% if wallet_provider %}
+    result = provider.example_action(mock_wallet_provider, args)
+    assert "test" in result
+    assert mock_wallet_provider.get_network.called
+    {% else %}
+    result = provider.example_action(args)
+    assert "test" in result
+    {% endif %}
