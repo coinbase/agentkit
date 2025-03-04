@@ -1,6 +1,15 @@
 import { z } from "zod";
 
 /**
+ * Input schema for getting protocol information
+ */
+export const GetProtocolSchema = z
+  .object({
+    protocolId: z.string().describe("The protocol identifier from DefiLlama"),
+  })
+  .strict();
+
+/**
  * Input schema for getting token prices
  */
 export const GetTokenPricesSchema = z
@@ -11,16 +20,7 @@ export const GetTokenPricesSchema = z
     searchWidth: z
       .string()
       .optional()
-      .describe("Optional time range in minutes to search for prices"),
-  })
-  .strict();
-
-/**
- * Input schema for getting protocol information
- */
-export const GetProtocolSchema = z
-  .object({
-    protocolId: z.string().describe("The protocol identifier from DefiLlama"),
+      .describe("Optional time range in minutes to search for prices, default api value is '4h'"),
   })
   .strict();
 
