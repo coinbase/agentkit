@@ -1,4 +1,11 @@
-import { AgentKit, cdpApiActionProvider, erc721ActionProvider, pythActionProvider, walletActionProvider, CdpWalletProvider } from "@coinbase/agentkit";
+import {
+  AgentKit,
+  cdpApiActionProvider,
+  erc721ActionProvider,
+  pythActionProvider,
+  walletActionProvider,
+  CdpWalletProvider,
+} from "@coinbase/agentkit";
 import { getVercelAITools } from "@coinbase/agentkit-vercel-ai-sdk";
 import { openai } from "@ai-sdk/openai";
 import { generateId, Message, streamText, ToolSet } from "ai";
@@ -54,7 +61,7 @@ you're on. If there is a 5XX (internal) HTTP error code, ask the user to try aga
 asks you to do something you can't do with your currently available tools, you must say so, and
 encourage them to implement it themselves using the CDP SDK + Agentkit, recommend they go to
 docs.cdp.coinbase.com for more information. Be concise and helpful with your responses. Refrain from
-restating your tools' descriptions unless it is explicitly requested.`
+restating your tools' descriptions unless it is explicitly requested.`;
 
 /**
  * Initialize the agent with CDP Agentkit and Vercel AI SDK tools
@@ -64,7 +71,6 @@ restating your tools' descriptions unless it is explicitly requested.`
  */
 async function initializeAgent() {
   try {
-
     let walletDataStr: string | null = null;
 
     // Read existing wallet data if available
@@ -77,35 +83,25 @@ async function initializeAgent() {
       }
     }
 
-    // Configure CDP Wallet Provider
-    const config = {
+    const walletProvider = await CdpWalletProvider.configureWithWallet({
       apiKeyName: process.env.CDP_API_KEY_NAME,
       apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY?.replace(/\\n/g, "\n"),
       cdpWalletData: walletDataStr || undefined,
       networkId: process.env.NETWORK_ID || "base-sepolia",
-    };
-
-    const walletProvider = await CdpWalletProvider.configureWithWallet(config);
-
-    // Initialize action providers
-    const cdp = cdpApiActionProvider({
-      apiKeyName: process.env.CDP_API_KEY_NAME,
-      apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
     });
-    const erc721 = erc721ActionProvider();
-    const pyth = pythActionProvider();
-    const wallet = walletActionProvider();
 
-    const agentKit = await AgentKit.from({ 
+    const agentKit = await AgentKit.from({
       walletProvider,
-      actionProviders: [cdp, erc721, pyth, wallet],
+      actionProviders: [
+        cdpApiActionProvider({
+          apiKeyName: process.env.CDP_API_KEY_NAME,
+          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
+        }),
+        erc721ActionProvider(),
+        pythActionProvider(),
+        walletActionProvider(),
+      ],
     });
-
-    // Log available actions
-    const actions = agentKit.getActions();
-    for (const action of actions) {
-      console.log(`Available action: ${action.name}`);
-    }
 
     const tools = getVercelAITools(agentKit);
     return { tools };

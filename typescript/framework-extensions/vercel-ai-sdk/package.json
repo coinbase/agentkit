@@ -41,12 +41,8 @@
     "ai-sdk"
   ],
   "dependencies": {
-    "@coinbase/agentkit": "^0.1.0",
-    "@coinbase/coinbase-sdk": "^0.15.0",
+    "@coinbase/agentkit": "^0.2.3",
     "ai": "^4.1.16",
     "zod": "^3.22.4"
-  },
-  "peerDependencies": {
-    "@coinbase/coinbase-sdk": "^0.15.0"
   }
 }

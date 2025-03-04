@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { getVercelAITools } from "./index";
 import { AgentKit, Action } from "@coinbase/agentkit";
+
+import { getVercelAITools } from "./getVercelAiTools";
 
 // Mocking the Action class
 const mockAction: Action = {
