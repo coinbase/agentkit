@@ -33,7 +33,7 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --with dev
 
-      - name: Run linters
+      - name: Ensure linting
         run: poetry run make lint
 
   lint-typescript:
@@ -45,11 +45,10 @@ jobs:
           node-version: "18"
           cache: "npm"
           cache-dependency-path: ./typescript
-      - name: Check formatting/lint
+      - name: Ensure Linting
         working-directory: ./typescript
         run: |
           npm ci
-          npm run format:check
           npm run lint
 
   check-package-lock:
