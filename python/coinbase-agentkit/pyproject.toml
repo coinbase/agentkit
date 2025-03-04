@@ -17,6 +17,7 @@ pydantic = "^2.0"
 web3 = "^7.6.0"
 python-dotenv = "^1.0.1"
 requests = "^2.31.0"
+paramiko = "^3.5.1"
 
 [tool.poetry.scripts]
 generate-action-provider = "scripts.generate_action_provider.main:main"
