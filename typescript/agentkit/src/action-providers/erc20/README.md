@@ -16,13 +16,13 @@ erc20/
 
 ## Actions
 
-### ERC20 Token Actions
-
 - `get_balance`: Get the balance of an ERC20 token
+
   - Returns the **balance** of the token in the wallet
   - Formats the balance with the correct number of decimals
 
 - `transfer`: Transfer ERC20 tokens to another address
+
   - Constructs and sends the transfer transaction
   - Returns the **transaction hash** upon success
 
@@ -33,6 +33,10 @@ To add new ERC20 actions:
 1. Define your action schema in `schemas.ts`. See [Defining the input schema](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-TYPESCRIPT.md#defining-the-input-schema) for more information.
 2. Implement the action in `erc20ActionProvider.ts`
 3. Implement tests in `erc20ActionProvider.test.ts`
+
+## Network Support
+
+The ERC20 provider supports all EVM-compatible networks.
 
 ## Notes
 

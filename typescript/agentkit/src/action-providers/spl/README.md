@@ -1,35 +1,40 @@
-# SPL Action Provider
+# SPL Token Action Provider
 
-This directory contains the SPL action provider implementation, which provides actions to interact with SPL Token programs.
+This directory contains the **SplActionProvider** implementation, which provides actions to interact with **Solana Program Library (SPL) tokens** on the Solana blockchain.
 
 ## Directory Structure
 
 ```
 spl/
-├── splActionProvider.ts    # Main provider with SPL token transfer functionality
-├── schemas.ts              # SPL token action schemas
-├── index.ts                # Main exports
-└── README.md
+├── splActionProvider.ts         # Main provider with SPL token functionality
+├── splActionProvider.test.ts    # Test file for SPL provider
+├── schemas.ts                   # Token action schemas
+├── index.ts                     # Main exports
+└── README.md                    # This file
 ```
 
 ## Actions
 
-### SPL Actions
-- `transfer`: Transfer SPL tokens from the connected wallet to another address
-  - Handles automatic creation of Associated Token Accounts (ATAs) for recipients
-  - Validates token balances before transfer
-  - Returns transaction signature
+- `transfer`: Transfer SPL tokens
 
-- `get_balance`: Get SPL token balance for an address
-  - Retrieves token balance in human-readable format
-  - Supports checking balance for any address (defaults to connected wallet)
-  - Returns 0 for non-existent token accounts
+  - Handles ATA (Associated Token Account) creation
+
+- `get_balance`: Get SPL token balance
+
+  - Returns human-readable balance with decimals
 
 ## Adding New Actions
 
 To add new SPL actions:
 
-1. Define your schema in `schemas.ts`
-2. Implement your action in `splActionProvider.ts`
+1. Define your action schema in `schemas.ts`
+2. Implement the action in `splActionProvider.ts`
+3. Add tests in `splActionProvider.test.ts`
 
-Note: Common wallet operations like native SOL transfers are handled by the base `WalletActionProvider`.
+## Network Support
+
+The SPL provider supports any Solana network.
+
+## Notes
+
+For more information on **SPL Tokens**, visit [Solana SPL Documentation](https://spl.solana.com/token).
