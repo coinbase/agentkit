@@ -20,6 +20,10 @@ from .twitter.twitter_action_provider import TwitterActionProvider, twitter_acti
 from .wallet.wallet_action_provider import WalletActionProvider, wallet_action_provider
 from .weth.weth_action_provider import WethActionProvider, weth_action_provider
 from .wow.wow_action_provider import WowActionProvider, wow_action_provider
+from .hyperboliclabs.hyperbolic_action_provider import (
+    HyperbolicActionProvider,
+    hyperbolic_action_provider,
+)
 
 __all__ = [
     "Action",
@@ -49,4 +53,6 @@ __all__ = [
     "weth_action_provider",
     "WowActionProvider",
     "wow_action_provider",
+    "HyperbolicActionProvider",
+    "hyperbolic_action_provider",
 ]
