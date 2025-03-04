@@ -515,7 +515,12 @@ def make_api_request(api_key: str, endpoint: str, method: str = "POST", data: Di
     Raises:
         requests.exceptions.RequestException: If the API request fails.
     """
-    url = f"https://api.hyperbolic.xyz/v1/{endpoint}"
+    # Special case for settings and billing endpoints which don't use /v1/
+    if endpoint.startswith(("settings/", "billing/")):
+        url = f"https://api.hyperbolic.xyz/{endpoint}"
+    else:
+        url = f"https://api.hyperbolic.xyz/v1/{endpoint}"
+        
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {api_key}"
