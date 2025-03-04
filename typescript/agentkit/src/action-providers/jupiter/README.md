@@ -1,43 +1,36 @@
 # Jupiter Action Provider
 
-This directory contains the **JupiterActionProvider** implementation, which provides actions to interact with the **Jupiter DEX Aggregator** for token swaps.
+This directory contains the **JupiterActionProvider** implementation, which provides actions to interact with the **Jupiter DEX Aggregator** for token swaps on Solana.
 
 ## Directory Structure
 
 ```
 jupiter/
-├── jupiterActionProvider.ts    # Main provider with Jupiter swap functionality
-├── schemas.ts                  # Swap token action schemas
-├── index.ts                    # Main exports
-└── README.md                   # This file
+├── jupiterActionProvider.ts         # Main provider with Jupiter swap functionality
+├── jupiterActionProvider.test.ts    # Test file for Jupiter provider
+├── schemas.ts                       # Swap action schemas
+├── index.ts                         # Main exports
+└── README.md                        # This file
 ```
 
 ## Actions
 
-### Jupiter Swap Action
-- `swap`: Swap SPL tokens using **Jupiter DEX**
-  - Fetches the best available swap route using **Jupiter's API**
-  - Constructs and signs the swap transaction
-  - Ensures sufficient token balance before execution
-  - Supports automatic **SOL wrapping/unwrapping** for native SOL swaps
-  - Returns the **transaction signature** upon success
+- `swap`: Swap tokens using Jupiter
+  - Returns transaction signature upon success
+  - Automatically handles SOL wrapping/unwrapping
 
 ## Adding New Actions
 
 To add new Jupiter actions:
 
-1. Define the schema in `schemas.ts`
+1. Define your action schema in `schemas.ts`
 2. Implement the action in `jupiterActionProvider.ts`
-3. Ensure proper **error handling and logging**
+3. Add tests in `jupiterActionProvider.test.ts`
 
 ## Network Support
-The Jupiter Action Provider currently supports:
-- **Solana Mainnet** (`solana-mainnet`)
+
+The Jupiter provider supports Solana mainnet.
 
 ## Notes
-- The swap operation **automatically wraps and unwraps SOL** when needed.
-- Ensure **valid token mint addresses** are used.
-- Transactions are **signed and executed automatically** within the provider.
 
-For more information on the **Jupiter DEX API**, visit [Jupiter Aggregator Docs](https://api.jup.ag/).
-
+For more information on the **Jupiter DEX Aggregator**, visit [Jupiter Documentation](https://station.jup.ag/docs/apis/swap-api).
