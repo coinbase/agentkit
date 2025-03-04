@@ -1,4 +1,5 @@
 import { defillamaActionProvider } from "./defillamaActionProvider";
+import { Protocol } from "./types";
 
 describe("DefiLlamaActionProvider", () => {
   const fetchMock = jest.fn();
@@ -44,12 +45,22 @@ describe("DefiLlamaActionProvider", () => {
   });
 
   describe("getProtocol", () => {
+    const mockProtocol: Protocol = {
+      name: "Uniswap",
+      symbol: "UNI",
+      description: "Decentralized exchange protocol",
+      category: "DEX",
+      chain: "Ethereum",
+      tvl: 1000000,
+      url: "https://uniswap.org",
+      logo: "https://example.com/logo.png",
+    };
+
     it("should return protocol information when API call is successful", async () => {
-      const mockResponse = { name: "Uniswap", tvl: 1000000 };
-      fetchMock.mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue(mockResponse) });
+      fetchMock.mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue(mockProtocol) });
 
       const result = await provider.getProtocol({ protocolId: "uniswap" });
-      expect(JSON.parse(result)).toEqual(mockResponse);
+      expect(JSON.parse(result)).toEqual(mockProtocol);
     });
 
     it("should handle API errors gracefully", async () => {
@@ -62,20 +73,33 @@ describe("DefiLlamaActionProvider", () => {
     it("should handle empty response", async () => {
       fetchMock.mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue(null) });
       const result = await provider.getProtocol({ protocolId: "non-existent" });
-      expect(result).toContain("null");
+      expect(JSON.parse(result)).toEqual(null);
     });
   });
 
   describe("searchProtocols", () => {
+    const mockProtocols: Protocol[] = [
+      {
+        name: "Uniswap",
+        symbol: "UNI",
+        category: "DEX",
+        chain: "Ethereum",
+        tvl: 1000000,
+      },
+      {
+        name: "UniswapV3",
+        symbol: "UNI",
+        category: "DEX",
+        chain: "Ethereum",
+        tvl: 2000000,
+      },
+    ];
+
     it("should return matching protocols", async () => {
-      const mockResponse = [
-        { name: "Uniswap", id: "uniswap" },
-        { name: "UniswapV3", id: "uniswap-v3" },
-      ];
-      fetchMock.mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue(mockResponse) });
+      fetchMock.mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue(mockProtocols) });
 
       const result = await provider.searchProtocols({ query: "uniswap" });
-      expect(JSON.parse(result)).toEqual(mockResponse);
+      expect(JSON.parse(result)).toEqual(mockProtocols);
     });
 
     it("should handle API errors gracefully", async () => {
@@ -98,6 +122,13 @@ describe("DefiLlamaActionProvider", () => {
       });
       const result = await provider.searchProtocols({ query: "uniswap" });
       expect(result).toContain("Error searching protocols");
+    });
+
+    it("should filter protocols case-insensitively", async () => {
+      fetchMock.mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue(mockProtocols) });
+
+      const result = await provider.searchProtocols({ query: "UNISWAP" });
+      expect(JSON.parse(result)).toEqual(mockProtocols);
     });
   });
 });
