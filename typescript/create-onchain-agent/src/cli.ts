@@ -171,6 +171,7 @@ async function init() {
           message: (prev, { network }) => {
             const walletDescriptions: Record<WalletProviderChoice, string> = {
               CDP: "Uses Coinbase Developer Platform (CDP)'s managed wallet.",
+              SmartWallet: "Uses Coinbase Developer Platform (CDP)'s Smart Wallet.",
               Viem: "Client-side Ethereum wallet.",
               Privy: "Authentication and wallet infrastructure.",
               SolanaKeypair: "Client-side Solana wallet.",
