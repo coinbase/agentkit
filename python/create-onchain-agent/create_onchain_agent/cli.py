@@ -213,6 +213,7 @@ def create_project(template):
         if network in CDP_SUPPORTED_NETWORKS:
             wallet_choices = [
                 "CDP Wallet Provider",
+                "Smart Wallet Provider",
                 "Ethereum Account Wallet Provider"
             ]
             wallet_selection = questionary.select(
@@ -221,7 +222,13 @@ def create_project(template):
                 default="CDP Wallet Provider",
                 style=custom_style
             ).ask()
-            wallet_provider = "cdp" if wallet_selection.startswith("CDP") else "eth"
+
+            if wallet_selection.startswith("CDP"):
+                wallet_provider = "cdp"
+            elif wallet_selection.startswith("Smart"):
+                wallet_provider = "smart"
+            else:
+                wallet_provider = "eth"
         else:
             console.print(f"[yellow]⚠️ CDP is not supported on {network}. Defaulting to Ethereum Account Wallet Provider.[/yellow]")
             wallet_provider = "eth"

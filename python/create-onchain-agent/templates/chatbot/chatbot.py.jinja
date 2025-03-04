@@ -18,6 +18,9 @@ from coinbase_agentkit import (
     CdpWalletProvider,
     CdpWalletProviderConfig,
     cdp_wallet_action_provider,
+    {% elif _wallet_provider == "smart" %}
+    SmartWalletProvider,
+    SmartWalletProviderConfig,
     {% elif _wallet_provider == "eth" %}
     EthAccountWalletProvider,
     EthAccountWalletProviderConfig,
@@ -29,7 +32,7 @@ from coinbase_agentkit import (
     weth_action_provider,
 )
 from coinbase_agentkit_langchain import get_langchain_tools
-{% if _wallet_provider == "eth" %}
+{% if _wallet_provider == "eth" or _wallet_provider == "smart" %}
 from eth_account import Account
 from coinbase_agentkit.network import NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_CHAIN, CHAIN_ID_TO_NETWORK_ID
 {% endif %}
@@ -75,7 +78,7 @@ wallet_data_file = "wallet_data.txt"
 load_dotenv()
 
 def initialize_agent():
-    {% if _wallet_provider == "cdp" %}"""Initialize the agent with CDP Agentkit."""{% elif _wallet_provider == "eth" %}"""Initialize the agent with an Ethereum Account Wallet Provider."""{% endif %}
+    {% if _wallet_provider == "cdp" %}"""Initialize the agent with CDP Agentkit."""{% elif _wallet_provider == "smart" %}"""Initialize the agent with Smart Wallet Provider."""{% elif _wallet_provider == "eth" %}"""Initialize the agent with an Ethereum Account Wallet Provider."""{% endif %}
 
     # Initialize LLM: https://platform.openai.com/docs/models#gpt-4o
     llm = ChatOpenAI(model="gpt-4o-mini")
@@ -92,6 +95,46 @@ def initialize_agent():
         cdp_config = CdpWalletProviderConfig(wallet_data=wallet_data)
 
     wallet_provider = CdpWalletProvider(cdp_config)
+
+    {% elif _wallet_provider == "smart" %}
+    # Load wallet data from JSON file
+    wallet_data = {
+        "private_key": None,
+        "smart_wallet_address": None
+    }
+    if os.path.exists(wallet_data_file):
+        try:
+            with open(wallet_data_file) as f:
+                wallet_data = json.load(f)
+        except json.JSONDecodeError:
+            print("Warning: Invalid wallet data file format. Creating new wallet.")
+    
+    # Use private key from env if not in wallet data
+    private_key = wallet_data.get("private_key") or os.getenv("PRIVATE_KEY")
+    
+    if not private_key:
+        # Generate new private key if none exists
+        private_key = "0x" + secrets.token_hex(32)
+        print("Created new private key and saved to wallet_data.txt")
+        print("We recommend you save this private key to your .env file and delete wallet_data.txt afterwards.")
+
+    signer = Account.from_key(private_key)
+
+    # Initialize Smart Wallet Provider
+    wallet_provider = SmartWalletProvider(SmartWalletProviderConfig(
+        network_id=os.getenv("NETWORK", "base-sepolia"),
+        signer=signer,
+        smart_wallet_address=wallet_data.get("smart_wallet_address"),
+        paymaster_url=None, # Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
+    ))
+    
+    # Save both private key and smart wallet address
+    wallet_data = {
+        "private_key": private_key,
+        "smart_wallet_address": wallet_provider.get_address()
+    }
+    with open(wallet_data_file, "w") as f:
+        json.dump(wallet_data, f, indent=2)
 
     {% elif _wallet_provider == "eth" %}
     # Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
@@ -188,6 +231,8 @@ def initialize_agent():
     memory = MemorySaver()
     {% if _wallet_provider == "cdp" %}
     config = {"configurable": {"thread_id": "CDP Agentkit Chatbot Example!"}}
+    {% elif _wallet_provider == "smart" %}
+    config = {"configurable": {"thread_id": "Smart Wallet Chatbot"}}
     {% elif _wallet_provider == "eth" %}
     config = {"configurable": {"thread_id": "Ethereum Account Chatbot"}}
     {% endif %}
