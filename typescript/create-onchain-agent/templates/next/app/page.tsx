@@ -46,7 +46,7 @@ export default function Home() {
                 }`}
               >
                 <ReactMarkdown components={{
-                  a: ({ node, ...props }) => (
+                  a: (props) => (
                     <a
                       {...props}
                       className="text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300"
