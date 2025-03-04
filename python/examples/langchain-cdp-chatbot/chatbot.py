@@ -23,6 +23,7 @@ from coinbase_agentkit import (
     pyth_action_provider,
     wallet_action_provider,
     weth_action_provider,
+    hyperbolic_action_provider,
 )
 from coinbase_agentkit_langchain import get_langchain_tools
 
@@ -58,8 +59,9 @@ def initialize_agent():
             pyth_action_provider(),
             wallet_action_provider(),
             weth_action_provider(),
+            hyperbolic_action_provider(),
         ]
-    ))
+        ))
 
     wallet_data_json = json.dumps(wallet_provider.export_wallet().to_dict())
 
