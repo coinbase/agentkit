@@ -180,7 +180,7 @@ export function displaySuccessMessage(providerName: string): void {
   console.log(SUCCESS_MESSAGES.NEXT_STEPS);
   console.log("1. Replace the example action schema in schemas.ts with your own");
   console.log(
-    `2. Replace the example axtion implementation in ${providerName}ActionProvider.ts with your own`,
+    `2. Replace the example action implementation in ${providerName}ActionProvider.ts with your own`,
   );
   console.log("3. Add unit tests to cover your action implementation");
   console.log("4. Update the README.md with relevant documentation");
