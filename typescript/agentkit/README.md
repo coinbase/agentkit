@@ -248,6 +248,19 @@ const agent = createReactAgent({
 </table>
 </details>
 <details>
+<summary><strong>Opensea</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>list_nft</code></td>
+    <td width="768">Lists an NFT for sale on OpenSea.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_nfts_by_account</code></td>
+    <td width="768">Fetches NFTs owned by a specific wallet address on OpenSea.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Pyth</strong></summary>
 <table width="100%">
 <tr>
