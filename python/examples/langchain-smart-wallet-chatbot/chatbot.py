@@ -1,14 +1,7 @@
+import json
 import os
 import sys
-import json
 import time
-
-from dotenv import load_dotenv
-from langchain_core.messages import HumanMessage
-from langchain_openai import ChatOpenAI
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.prebuilt import create_react_agent
-from eth_account.account import Account
 
 from coinbase_agentkit import (
     AgentKit,
@@ -22,68 +15,76 @@ from coinbase_agentkit import (
     weth_action_provider,
 )
 from coinbase_agentkit_langchain import get_langchain_tools
+from dotenv import load_dotenv
+from eth_account.account import Account
+from langchain_core.messages import HumanMessage
+from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.prebuilt import create_react_agent
 
 wallet_data_file = "wallet_data.txt"
 
 load_dotenv()
 
+
 def initialize_agent():
     """Initialize the agent with SmartWalletProvider."""
     llm = ChatOpenAI(model="gpt-4o-mini")
-    
+
     # Load wallet data from JSON file
-    wallet_data = {
-        "private_key": None,
-        "smart_wallet_address": None
-    }
+    wallet_data = {"private_key": None, "smart_wallet_address": None}
     if os.path.exists(wallet_data_file):
         try:
             with open(wallet_data_file) as f:
                 wallet_data = json.load(f)
         except json.JSONDecodeError:
             print("Warning: Invalid wallet data file format. Creating new wallet.")
-    
+
     # Use private key from env if not in wallet data
     private_key = wallet_data.get("private_key") or os.getenv("PRIVATE_KEY")
-    
+
     if not private_key:
         raise ValueError("PRIVATE_KEY environment variable is required")
 
     signer = Account.from_key(private_key)
 
     network_id = os.getenv("NETWORK_ID", "base-sepolia")
-    
+
     # Initialize CDP Wallet Provider
-    wallet_provider = SmartWalletProvider(SmartWalletProviderConfig(
-        network_id=network_id,
-        signer=signer,
-        smart_wallet_address=wallet_data.get("smart_wallet_address"),
-        paymaster_url=None, # Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
-    ))
-    
+    wallet_provider = SmartWalletProvider(
+        SmartWalletProviderConfig(
+            network_id=network_id,
+            signer=signer,
+            smart_wallet_address=wallet_data.get("smart_wallet_address"),
+            paymaster_url=None,  # Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
+        )
+    )
+
     # Save both private key and smart wallet address
     wallet_data = {
         "private_key": private_key,
-        "smart_wallet_address": wallet_provider.get_address()
+        "smart_wallet_address": wallet_provider.get_address(),
     }
     with open(wallet_data_file, "w") as f:
         json.dump(wallet_data, f, indent=2)
-    
-    agentkit = AgentKit(AgentKitConfig(
-        wallet_provider=wallet_provider,
-        action_providers=[
-            cdp_api_action_provider(),
-            erc20_action_provider(),
-            pyth_action_provider(),
-            wallet_action_provider(),
-            weth_action_provider(),
-        ]
-    ))
-    
+
+    agentkit = AgentKit(
+        AgentKitConfig(
+            wallet_provider=wallet_provider,
+            action_providers=[
+                cdp_api_action_provider(),
+                erc20_action_provider(),
+                pyth_action_provider(),
+                wallet_action_provider(),
+                weth_action_provider(),
+            ],
+        )
+    )
+
     tools = get_langchain_tools(agentkit)
     memory = MemorySaver()
     config = {"configurable": {"thread_id": "Smart Wallet Chatbot Example!"}}
-    
+
     return create_react_agent(
         llm,
         tools=tools,
@@ -100,6 +101,7 @@ def initialize_agent():
             "responses."
         ),
     ), config
+
 
 # Autonomous Mode
 def run_autonomous_mode(agent_executor, config, interval=10):
