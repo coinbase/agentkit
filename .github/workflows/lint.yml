@@ -2,11 +2,23 @@ name: Lint
 on: [pull_request]
 
 jobs:
-  lint-coinbase-agentkit-python:
+  lint-python:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package:
+          [
+            "coinbase-agentkit",
+            "framework-extensions/langchain",
+            "create-onchain-agent",
+            "examples/langchain-cdp-chatbot",
+            "examples/langchain-eth-account-chatbot",
+            "examples/langchain-smart-wallet-chatbot",
+            "examples/langchain-twitter-chatbot",
+          ]
     defaults:
       run:
-        working-directory: ./python/coinbase-agentkit
+        working-directory: python/${{ matrix.package }}
     steps:
       - uses: actions/checkout@v3
 
@@ -26,8 +38,8 @@ jobs:
         id: cached-poetry-dependencies
         uses: actions/cache@v3
         with:
-          path: ./python/coinbase-agentkit/.venv
-          key: venv-agentkit-${{ runner.os }}-${{ hashFiles('python/coinbase-agentkit/poetry.lock') }}
+          path: python/${{ matrix.package }}/.venv
+          key: venv-${{ matrix.package }}-${{ runner.os }}-${{ hashFiles(format('python/{0}/poetry.lock', matrix.package)) }}
 
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
