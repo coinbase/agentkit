@@ -1,9 +1,6 @@
 export const ERC721_ABI = [
   {
-    inputs: [
-      { internalType: "address", name: "to", type: "address" },
-      { internalType: "uint256", name: "tokenId", type: "uint256" },
-    ],
+    inputs: [{ internalType: "address", name: "to", type: "address" }],
     name: "mint",
     outputs: [],
     payable: false,
