@@ -30,7 +30,7 @@ from coinbase_agentkit_langchain import get_langchain_tools
 wallet_data_file = "wallet_data.txt"
 
 load_dotenv()
-
+print("hi")
 
 def initialize_agent():
     """Initialize the agent with CDP Agentkit."""
