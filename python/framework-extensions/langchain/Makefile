@@ -1,6 +1,14 @@
+.PHONY: install
+install:
+	poetry install
+
 .PHONY: format
 format:
 	poetry run ruff format .
+
+.PHONY: format-check
+format-check:
+	poetry run ruff format . --check
 
 .PHONY: lint
 lint:
