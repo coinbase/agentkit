@@ -46,6 +46,7 @@
     "@solana/spl-token": "^0.4.12",
     "@solana/web3.js": "^1.98.0",
     "md5": "^2.3.0",
+    "opensea-js": "^7.1.18",
     "reflect-metadata": "^0.2.2",
     "twitter-api-v2": "^1.18.2",
     "viem": "^2.22.16",
@@ -53,21 +54,21 @@
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
-    "@types/secp256k1": "^4.0.6",
     "@types/nunjucks": "^3.2.6",
     "@types/ora": "^3.2.0",
     "@types/prompts": "^2.4.9",
+    "@types/secp256k1": "^4.0.6",
     "http-server": "^14.1.1",
     "jest": "^29.7.0",
     "mock-fs": "^5.2.0",
-    "ts-jest": "^29.2.5",
-    "tsd": "^0.31.2",
-    "typescript": "^5.7.2",
     "nunjucks": "^3.2.4",
     "ora": "^7.0.1",
-    "prompts": "^2.4.2",
     "picocolors": "^1.0.0",
-    "tsx": "^4.7.1"
+    "prompts": "^2.4.2",
+    "ts-jest": "^29.2.5",
+    "tsd": "^0.31.2",
+    "tsx": "^4.7.1",
+    "typescript": "^5.7.2"
   },
   "exports": {
     ".": {
