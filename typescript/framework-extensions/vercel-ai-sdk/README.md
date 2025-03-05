@@ -54,10 +54,13 @@ const tools = await getVercelAITools(agentKit);
 // There are multiple methods to generate text with AI SDK.
 // See here for more information: https://sdk.vercel.ai/docs/ai-sdk-core/generating-text
 const { text } = await generateText({
-  model: openai("gpt-4o"), // Make sure to have OPENAI_API_KEY set in your environment variables
+  model: openai("gpt-4o-mini"), // Make sure to have OPENAI_API_KEY set in your environment variables
   system: "You are an onchain AI assistant with access to a wallet.",
   prompt: "Print wallet details",
   tools,
+  // Allow multi-step tool usage
+  // See: https://sdk.vercel.ai/docs/foundations/agents#multi-step-tool-usage
+  maxSteps: 10,
 });
 
 console.log(text);
