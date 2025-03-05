@@ -1,36 +1,30 @@
 import os
 import sys
-import json
 import time
-
-from dotenv import load_dotenv
-
-from langchain_core.messages import HumanMessage
-from langchain_openai import ChatOpenAI
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.prebuilt import create_react_agent
-from eth_account import Account
 
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
-
     EthAccountWalletProvider,
     EthAccountWalletProviderConfig,
-
-    cdp_api_action_provider,
-    cdp_wallet_action_provider,
     erc20_action_provider,
     pyth_action_provider,
     wallet_action_provider,
     weth_action_provider,
 )
 from coinbase_agentkit_langchain import get_langchain_tools
+from dotenv import load_dotenv
+from eth_account import Account
+from langchain_core.messages import HumanMessage
+from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.prebuilt import create_react_agent
 
 # Configure a file to persist the agent's CDP API Wallet Data.
 wallet_data_file = "wallet_data.txt"
 
 load_dotenv()
+
 
 def initialize_agent():
     """Initialize the agent with an Ethereum Account Wallet Provider."""
@@ -47,22 +41,21 @@ def initialize_agent():
 
     # Initialize Ethereum Account Wallet Provider
     wallet_provider = EthAccountWalletProvider(
-        config=EthAccountWalletProviderConfig(
-            account=account,
-            chain_id="84532"
-        )
+        config=EthAccountWalletProviderConfig(account=account, chain_id="84532")
     )
 
     # Initialize AgentKit
-    agentkit = AgentKit(AgentKitConfig(
-        wallet_provider=wallet_provider,
-        action_providers=[
-            erc20_action_provider(),
-            pyth_action_provider(),
-            wallet_action_provider(),
-            weth_action_provider(),
-        ]
-    ))
+    agentkit = AgentKit(
+        AgentKitConfig(
+            wallet_provider=wallet_provider,
+            action_providers=[
+                erc20_action_provider(),
+                pyth_action_provider(),
+                wallet_action_provider(),
+                weth_action_provider(),
+            ],
+        )
+    )
 
     # use get_langchain_tools
     tools = get_langchain_tools(agentkit)
@@ -82,6 +75,7 @@ def initialize_agent():
             "If you run into a 5XX (internal) error, ask the user to try again later."
         ),
     ), config
+
 
 # Autonomous Mode
 def run_autonomous_mode(agent_executor, config, interval=10):

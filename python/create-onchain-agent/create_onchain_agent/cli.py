@@ -1,6 +1,19 @@
 #!/usr/bin/env python3
 
+import os
+import re
+import shutil
 import sys
+import zipfile
+from pathlib import Path
+
+import click
+import platformdirs
+import questionary
+import requests
+from copier import run_copy
+from prompt_toolkit.styles import Style  # Import for custom styling
+from rich.console import Console
 
 # Enforce Python version 3.10 or 3.11
 REQUIRED_MAJOR = 3
@@ -10,19 +23,6 @@ if sys.version_info.major != REQUIRED_MAJOR or sys.version_info.minor not in ALL
     print(f"Unsupported Python version: {sys.version}. Please use Python 3.10 or 3.11.")
     sys.exit(1)
 
-import os
-import click
-import questionary
-import re
-import zipfile
-import requests
-import shutil
-import platformdirs
-from rich.console import Console
-from copier import run_copy
-from prompt_toolkit.styles import Style  # Import for custom styling
-from pathlib import Path
-
 # GitHub repo and folder path
 GITHUB_ZIP_URL = "https://github.com/coinbase/agentkit/archive/refs/heads/main.zip"
 TEMPLATE_SUBDIR = "agentkit-main/python/create-onchain-agent/templates/chatbot"
@@ -31,13 +31,15 @@ LOCAL_CACHE_DIR = Path(platformdirs.user_cache_dir("create-onchain-agent"))
 console = Console()
 
 # Define a custom style for Questionary prompts
-custom_style = Style.from_dict({
-    "question": "bold",       # Bold question text
-    "answer": "bold white",         # Selected answer (cyan instead of yellow)
-    "pointer": "bold cyan",   # Selection arrow (cyan)
-    "highlighted": "bold cyan",  # Highlighted item (cyan)
-    # "selected": "bold cyan",  # Selected option
-})
+custom_style = Style.from_dict(
+    {
+        "question": "bold",  # Bold question text
+        "answer": "bold white",  # Selected answer (cyan instead of yellow)
+        "pointer": "bold cyan",  # Selection arrow (cyan)
+        "highlighted": "bold cyan",  # Highlighted item (cyan)
+        # "selected": "bold cyan",  # Selected option
+    }
+)
 
 # Network constants
 EVM_NETWORKS = [
@@ -64,14 +66,16 @@ CDP_SUPPORTED_NETWORKS = {
 
 VALID_PACKAGE_NAME_REGEX = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
+
 def get_template_path(template_path: str | None = None) -> str:
-    """Gets the template path either from a local directory or downloaded from GitHub.
-    
+    """Get the template path either from a local directory or downloaded from GitHub.
+
     Args:
         template_path: Optional path to local template directory
-        
+
     Returns:
         str: Path to the template directory
+
     """
     if template_path:
         # Use provided template path
@@ -82,7 +86,7 @@ def get_template_path(template_path: str | None = None) -> str:
                 "Please provide a valid template directory path."
             )
         return str(local_template_path)
-    
+
     # No template provided - download from GitHub
     LOCAL_CACHE_DIR.mkdir(parents=True, exist_ok=True)
     zip_path = LOCAL_CACHE_DIR / "repo.zip"
@@ -112,25 +116,30 @@ def get_template_path(template_path: str | None = None) -> str:
 
     return str(extract_path)
 
+
 def get_network_choices(network_type: str) -> list:
     """Filter network choices based on network type (mainnet/testnet)."""
     return [
-        (name, id) for id, name in EVM_NETWORKS
-        if (network_type == "mainnet" and "mainnet" in id) or
-           (network_type == "testnet" and any(net in id for net in ["sepolia", "mumbai", "devnet", "testnet"]))
+        (name, id)
+        for id, name in EVM_NETWORKS
+        if (network_type == "mainnet" and "mainnet" in id)
+        or (
+            network_type == "testnet"
+            and any(net in id for net in ["sepolia", "mumbai", "devnet", "testnet"])
+        )
     ]
 
+
 @click.command()
-@click.option('--template', type=str, help='Path to local template directory', default=None)
+@click.option("--template", type=str, help="Path to local template directory", default=None)
 def create_project(template):
-    """Creates a new onchain agent project with interactive prompts."""
-    
+    """Create a new onchain agent project with interactive prompts."""
     ascii_art = """
-     █████   ██████  ███████ ███    ██ ████████    ██   ██ ██ ████████ 
-    ██   ██ ██       ██      ████   ██    ██       ██  ██  ██    ██    
-    ███████ ██   ███ █████   ██ ██  ██    ██       █████   ██    ██    
-    ██   ██ ██    ██ ██      ██  ██ ██    ██       ██  ██  ██    ██    
-    ██   ██  ██████  ███████ ██   ████    ██       ██   ██ ██    ██    
+     █████   ██████  ███████ ███    ██ ████████    ██   ██ ██ ████████
+    ██   ██ ██       ██      ████   ██    ██       ██  ██  ██    ██
+    ███████ ██   ███ █████   ██ ██  ██    ██       █████   ██    ██
+    ██   ██ ██    ██ ██      ██  ██ ██    ██       ██  ██  ██    ██
+    ██   ██  ██████  ███████ ██   ████    ██       ██   ██ ██    ██
 
                  Giving every AI agent a crypto wallet
     """
@@ -138,7 +147,11 @@ def create_project(template):
     console.print(f"[blue]{ascii_art}[/blue]")
 
     # Prompt for project name (default: "onchain-agent")
-    project_name = questionary.text("Enter your project name:", default="onchain-agent", style=custom_style).ask().strip()
+    project_name = (
+        questionary.text("Enter your project name:", default="onchain-agent", style=custom_style)
+        .ask()
+        .strip()
+    )
 
     project_path = os.path.join(os.getcwd(), project_name)
 
@@ -151,10 +164,14 @@ def create_project(template):
 
     if not VALID_PACKAGE_NAME_REGEX.match(suggested_package_name):
         # Prompt user if the generated package name is invalid
-        package_name = questionary.text(
-            "Enter a valid Python package name (letters, numbers, underscores only):",
-            style=custom_style
-        ).ask().strip()
+        package_name = (
+            questionary.text(
+                "Enter a valid Python package name (letters, numbers, underscores only):",
+                style=custom_style,
+            )
+            .ask()
+            .strip()
+        )
     else:
         package_name = suggested_package_name
 
@@ -166,7 +183,7 @@ def create_project(template):
             "Testnet",
             "Custom Chain ID",
         ],
-        style=custom_style
+        style=custom_style,
     ).ask()
 
     network = None
@@ -178,18 +195,18 @@ def create_project(template):
         chain_id = questionary.text(
             "Enter your chain ID:",
             validate=lambda text: text.strip().isdigit() or "Chain ID must be a number",
-            style=custom_style
+            style=custom_style,
         ).ask()
 
         rpc_url = questionary.text(
             "Enter your RPC URL:",
             validate=lambda text: (
-                text.strip().startswith(("http://", "https://")) or 
-                "RPC URL must start with http:// or https://"
+                text.strip().startswith(("http://", "https://"))
+                or "RPC URL must start with http:// or https://"
             ),
-            style=custom_style
+            style=custom_style,
         ).ask()
-        
+
         wallet_provider = "eth"  # Default to eth wallet provider for custom networks
     else:
         # Filter networks based on mainnet/testnet selection
@@ -201,7 +218,7 @@ def create_project(template):
                 for name, id in network_choices
             ],
             default="Base Sepolia (default)" if network_type == "Testnet" else None,
-            style=custom_style
+            style=custom_style,
         ).ask()
 
         # Remove " (default)" suffix if present
@@ -214,13 +231,13 @@ def create_project(template):
             wallet_choices = [
                 "CDP Wallet Provider",
                 "Smart Wallet Provider",
-                "Ethereum Account Wallet Provider"
+                "Ethereum Account Wallet Provider",
             ]
             wallet_selection = questionary.select(
                 "Select a wallet provider:",
                 choices=wallet_choices,
                 default="CDP Wallet Provider",
-                style=custom_style
+                style=custom_style,
             ).ask()
 
             if wallet_selection.startswith("CDP"):
@@ -230,7 +247,9 @@ def create_project(template):
             else:
                 wallet_provider = "eth"
         else:
-            console.print(f"[yellow]⚠️ CDP is not supported on {network}. Defaulting to Ethereum Account Wallet Provider.[/yellow]")
+            console.print(
+                f"[yellow]⚠️ CDP is not supported on {network}. Defaulting to Ethereum Account Wallet Provider.[/yellow]"
+            )
             wallet_provider = "eth"
 
     console.print(f"\n[blue]Creating your onchain agent project: {project_name}[/blue]")
@@ -252,27 +271,30 @@ def create_project(template):
         template_path = get_template_path(template)
         run_copy(template_path, project_path, data=copier_data)
     except FileNotFoundError as e:
-        console.print(f"[red]Error: {str(e)}[/red]")
+        console.print(f"[red]Error: {e!s}[/red]")
         return
 
-    console.print(f"[bold blue]Successfully created your AgentKit project in {project_path}[/bold blue]")
+    console.print(
+        f"[bold blue]Successfully created your AgentKit project in {project_path}[/bold blue]"
+    )
 
     console.print("\n[bold]What's Next?[/bold]")
 
-    console.print(f"To get started, run the following commands:")
+    console.print("To get started, run the following commands:")
     console.print(f"  [gray]- cd {project_name}[/gray]")
-    console.print(f"  [gray]- poetry install[/gray]")
-    console.print(f"  [dim]- # Open .env.local and configure your API keys[/dim]")
-    console.print(f"  [gray]- mv .env.local .env[/gray]")
-    console.print(f"  [gray]- poetry run python chatbot.py[/gray]")
+    console.print("  [gray]- poetry install[/gray]")
+    console.print("  [dim]- # Open .env.local and configure your API keys[/dim]")
+    console.print("  [gray]- mv .env.local .env[/gray]")
+    console.print("  [gray]- poetry run python chatbot.py[/gray]")
 
     console.print("\n[bold]Learn more[/bold]")
-    console.print(f"  - Checkout the docs")
-    console.print(f"    [blue]https://docs.cdp.coinbase.com/agentkit/docs/welcome[/blue]")
-    console.print(f"  - Visit the repo")
-    console.print(f"    [blue]http://github.com/coinbase/agentkit[/blue]")
-    console.print(f"  - Join the community")
-    console.print(f"    [blue]https://discord.gg/CDP[/blue]\n")
+    console.print("  - Checkout the docs")
+    console.print("    [blue]https://docs.cdp.coinbase.com/agentkit/docs/welcome[/blue]")
+    console.print("  - Visit the repo")
+    console.print("    [blue]http://github.com/coinbase/agentkit[/blue]")
+    console.print("  - Join the community")
+    console.print("    [blue]https://discord.gg/CDP[/blue]\n")
+
 
 if __name__ == "__main__":
     create_project()

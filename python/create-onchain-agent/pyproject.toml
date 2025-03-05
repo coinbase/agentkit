@@ -20,6 +20,7 @@ prompt-toolkit = "^3.0.50"
 
 [tool.poetry.group.dev.dependencies]
 towncrier = "^24.8.0"
+ruff = "^0.7.1"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -40,3 +41,21 @@ name = "Added"
 
 [tool.towncrier.fragment.bugfix]
 name = "Fixed"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = ["./build/**", "./dist/**", "./docs/**"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "D", "UP", "B", "C4", "SIM", "RUF"]
+ignore = ["D213", "D203", "D100", "D104", "D107", "E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+known-first-party = ["coinbase_agentkit, cdp"]
