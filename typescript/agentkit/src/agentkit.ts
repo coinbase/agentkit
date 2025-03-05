@@ -44,6 +44,7 @@ export class AgentKit {
   public static async from(
     config: AgentKitOptions = { actionProviders: [walletActionProvider()] },
   ): Promise<AgentKit> {
+    console.log("hi");
     let walletProvider: WalletProvider | undefined = config.walletProvider;
 
     if (!config.walletProvider) {
