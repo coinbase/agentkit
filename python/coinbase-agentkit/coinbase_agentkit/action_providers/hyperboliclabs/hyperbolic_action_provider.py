@@ -1,7 +1,9 @@
-"""Hyperbolic action provider."""
+"""Hyperbolic action provider.
 
-import os
-import json
+This module provides actions for interacting with the Hyperbolic platform for GPU compute resources.
+It includes functionality for managing GPU instances, SSH access, and billing operations.
+"""
+
 from typing import Any
 
 from ...network import Network
@@ -20,21 +22,22 @@ from .schemas import (
 )
 from .utils import (
     format_gpu_instance,
-    make_api_request,
-    format_purchase_history,
-    get_balance_info,
     format_gpu_status,
-    format_spend_history,
-    format_wallet_link_response,
+    format_purchase_history,
     format_rent_compute_response,
+    format_spend_history,
     format_terminate_compute_response,
+    format_wallet_link_response,
+    get_api_key,
+    get_balance_info,
+    make_api_request,
     ssh_manager,
 )
 
 
 class HyperbolicActionProvider(ActionProvider):
     """Provides actions for interacting with Hyperbolic platform.
-    
+
     This provider enables interaction with the Hyperbolic platform for GPU compute resources.
     It requires an API key which can be provided directly or through the HYPERBOLIC_API_KEY
     environment variable.
@@ -45,23 +48,24 @@ class HyperbolicActionProvider(ActionProvider):
         api_key: str | None = None,
     ):
         """Initialize the Hyperbolic action provider.
-        
+
         Args:
             api_key: Optional API key for authentication. If not provided,
                     will attempt to read from HYPERBOLIC_API_KEY environment variable.
-        
+
         Raises:
             ValueError: If API key is not provided and not found in environment.
+
         """
         super().__init__("hyperbolic", [])
 
-        self.api_key = api_key or os.getenv("HYPERBOLIC_API_KEY")
-
-        if not self.api_key:
+        try:
+            self.api_key = api_key or get_api_key()
+        except ValueError as e:
             raise ValueError(
-                "HYPERBOLIC_API_KEY is not configured. Please provide it directly "
+                f"{e!s} Please provide it directly "
                 "or set the HYPERBOLIC_API_KEY environment variable."
-            )
+            ) from e
 
     @create_action(
         name="get_available_gpus",
@@ -98,29 +102,29 @@ Important notes:
 
         Returns:
             str: A message containing the formatted list of available GPUs or error details.
+
         """
         GetAvailableGpusSchema(**args)
 
         try:
-            # Get marketplace data
             data = make_api_request(
-                api_key=self.api_key,
-                endpoint="marketplace",
-                data={"filters": {}}
+                api_key=self.api_key, endpoint="marketplace", data={"filters": {}}
             )
-            
-            # Format the response
+
+            if "instances" not in data:
+                return "No available GPU instances found."
+
             formatted_output = "Available GPU Options:\n\n"
-            
+
             if "instances" in data:
                 for instance in data["instances"]:
                     formatted_instance = format_gpu_instance(instance)
                     if formatted_instance:
                         formatted_output += formatted_instance
-            
+
             if formatted_output == "Available GPU Options:\n\n":
                 return "No available GPU instances found."
-            
+
             return formatted_output
 
         except Exception as e:
@@ -139,7 +143,6 @@ A successful response will show:
 
 Example successful response:
     Your current Hyperbolic platform balance is $150.00.
-    
     Purchase History:
     - $100.00 on January 15, 2024
     - $50.00 on December 30, 2023
@@ -164,20 +167,21 @@ Important notes:
 
         Returns:
             str: A message containing the current balance and purchase history or error details.
+
         """
         GetCurrentBalanceSchema(**args)
 
         try:
             # Get balance info
             data = get_balance_info(self.api_key)
-            
+
             # Format the response
             balance_usd = data["balance"] / 100  # Convert cents to dollars
             output = [f"Your current Hyperbolic platform balance is ${balance_usd:.2f}."]
-            
+
             # Add purchase history
             output.append(format_purchase_history(data["purchase_history"]))
-            
+
             return "\n".join(output)
 
         except Exception as e:
@@ -217,72 +221,75 @@ Important notes:
 
         Returns:
             str: A message containing the status of rented GPUs or error details.
+
         """
         GetGpuStatusSchema(**args)
 
         try:
             # Get instances data
             data = make_api_request(
-                api_key=self.api_key,
-                endpoint="marketplace/instances",
-                method="GET"
+                api_key=self.api_key, endpoint="marketplace/instances", method="GET"
             )
-            
+
             # Check if the response has the expected structure
             if not isinstance(data, dict):
                 return f"Error: Unexpected API response format: {data}"
-            
+
             # Format the response
             if not data.get("instances"):
                 return "No rented GPU instances found."
-            
+
             if not isinstance(data["instances"], list):
                 return f"Error: Unexpected instances format: {data['instances']}"
-            
+
             output = ["Your Rented GPU Instances:\n"]
             for instance_data in data["instances"]:
                 try:
                     # Extract the instance ID
                     instance_id = instance_data.get("id", "Unknown ID")
-                    
+
                     # Extract SSH command if available
                     ssh_command = instance_data.get("sshCommand", "")
-                    
+
                     # Get the nested instance object which contains detailed information
                     instance = instance_data.get("instance", {})
                     if not instance:
                         instance = instance_data  # Fallback to the top-level object
-                    
+
                     # Extract status
                     status = instance.get("status", "Unknown")
-                    
+
                     # Create a more complete instance object with all available information
                     complete_instance = {
                         "id": instance_id,
                         "status": status,
                         "hardware": {"gpus": []},
-                        "ssh_access": {"ssh_command": ssh_command}
+                        "ssh_access": {"ssh_command": ssh_command},
                     }
-                    
+
                     # Extract GPU information if available
                     if "hardware" in instance and "gpus" in instance["hardware"]:
                         complete_instance["hardware"] = instance["hardware"]
-                    
+
                     # Extract GPU count if available
                     gpu_count = instance.get("gpu_count", 1)  # Default to 1 if not specified
                     complete_instance["gpu_count"] = gpu_count
-                    
+
                     # Add status detail based on the status
                     if status.lower() == "online" or status.lower() == "running":
                         complete_instance["status"] = "running"
                         complete_instance["status_detail"] = "Instance is running and ready to use."
                     elif status.lower() == "starting" or status.lower() == "provisioning":
-                        complete_instance["status_detail"] = "Instance is starting up. Please check again in a few seconds."
+                        complete_instance["status_detail"] = (
+                            "Instance is starting up. Please check again in a few seconds."
+                        )
                     elif status.lower() == "terminated" or status.lower() == "offline":
                         complete_instance["status_detail"] = "Instance has been terminated."
                     else:
-                        complete_instance["status_detail"] = "Instance is still being provisioned. Please check again later."
-                    
+                        complete_instance["status_detail"] = (
+                            "Instance is still being provisioned. Please check again later."
+                        )
+
                     # Format the instance information
                     output.append(format_gpu_status(complete_instance))
                 except Exception as e:
@@ -290,14 +297,14 @@ Important notes:
                     output.append(f"Raw instance data: {instance_data}")
                     output.append("-" * 40)
                     output.append("")
-            
+
             # Add helpful information about SSH connection
             output.append("SSH Connection Instructions:")
             output.append("1. Wait until instance status is 'running'")
             output.append("2. Use the ssh_connect action with the host and username provided")
             output.append("3. If no SSH details are shown, try again in a few seconds")
             output.append("4. After connecting, use remote_shell to execute commands")
-            
+
             return "\n".join(output)
 
         except Exception as e:
@@ -351,17 +358,16 @@ Notes:
 
         Returns:
             str: A message containing the spending analysis or error details.
+
         """
         GetSpendHistorySchema(**args)
 
         try:
             # Get instance history data
             data = make_api_request(
-                api_key=self.api_key,
-                endpoint="marketplace/instances/history",
-                method="GET"
+                api_key=self.api_key, endpoint="marketplace/instances/history", method="GET"
             )
-            
+
             # Format and analyze the response
             return format_spend_history(data.get("instance_history", []))
 
@@ -410,6 +416,7 @@ Notes:
 
         Returns:
             str: A message containing the linking response and next steps.
+
         """
         validated_args = LinkWalletAddressSchema(**args)
 
@@ -418,9 +425,9 @@ Notes:
             response_data = make_api_request(
                 api_key=self.api_key,
                 endpoint="settings/crypto-address",
-                data={"address": validated_args.wallet_address}
+                data={"address": validated_args.wallet_address},
             )
-            
+
             # Format the response with next steps
             return format_wallet_link_response(response_data)
 
@@ -461,12 +468,13 @@ Important notes:
 
         Returns:
             str: Command output or error message.
+
         """
         validated_args = RemoteShellSchema(**args)
         command = validated_args.command.strip()
 
         # Special command to check SSH status
-        if command.lower() == 'ssh_status':
+        if command.lower() == "ssh_status":
             return ssh_manager.get_connection_info()
 
         # Verify SSH is connected before executing
@@ -474,11 +482,9 @@ Important notes:
             # Try to get instance information to suggest connection details
             try:
                 data = make_api_request(
-                    api_key=self.api_key,
-                    endpoint="marketplace/instances",
-                    method="GET"
+                    api_key=self.api_key, endpoint="marketplace/instances", method="GET"
                 )
-                
+
                 if data.get("instances"):
                     instance_info = []
                     for instance in data["instances"]:
@@ -487,15 +493,20 @@ Important notes:
                         ssh_access = instance.get("ssh_access", {})
                         ssh_host = ssh_access.get("host", "")
                         ssh_username = ssh_access.get("username", "")
-                        
+
                         if ssh_host and ssh_username and status.lower() == "running":
-                            instance_info.append(f"Instance {instance_id}: host={ssh_host}, username={ssh_username}")
-                    
+                            instance_info.append(
+                                f"Instance {instance_id}: host={ssh_host}, username={ssh_username}"
+                            )
+
                     if instance_info:
-                        return "Error: No active SSH connection. Please connect first using ssh_connect.\n\nAvailable instances:\n" + "\n".join(instance_info)
-            except:
+                        return (
+                            "Error: No active SSH connection. Please connect first using ssh_connect.\n\nAvailable instances:\n"
+                            + "\n".join(instance_info)
+                        )
+            except Exception:
                 pass
-            
+
             return "Error: No active SSH connection. Please connect to a remote server first using ssh_connect."
 
         try:
@@ -551,6 +562,7 @@ Notes:
 
         Returns:
             str: A message containing the rental response or error details.
+
         """
         validated_args = RentComputeSchema(**args)
 
@@ -562,10 +574,10 @@ Notes:
                 data={
                     "cluster_name": validated_args.cluster_name,
                     "node_name": validated_args.node_name,
-                    "gpu_count": validated_args.gpu_count
-                }
+                    "gpu_count": validated_args.gpu_count,
+                },
             )
-            
+
             # Format the response with next steps
             return format_rent_compute_response(response_data)
 
@@ -616,6 +628,7 @@ Important notes:
 
         Returns:
             str: Connection status message.
+
         """
         validated_args = SSHAccessSchema(**args)
 
@@ -625,11 +638,9 @@ Important notes:
                 # Try to get instance information to suggest connection details
                 try:
                     data = make_api_request(
-                        api_key=self.api_key,
-                        endpoint="marketplace/instances",
-                        method="GET"
+                        api_key=self.api_key, endpoint="marketplace/instances", method="GET"
                     )
-                    
+
                     if data.get("instances"):
                         instance_info = []
                         for instance in data["instances"]:
@@ -638,15 +649,19 @@ Important notes:
                             ssh_access = instance.get("ssh_access", {})
                             ssh_host = ssh_access.get("host", "")
                             ssh_username = ssh_access.get("username", "")
-                            
+
                             if ssh_host and ssh_username and status.lower() == "running":
-                                instance_info.append(f"Instance {instance_id}: host={ssh_host}, username={ssh_username}")
-                        
+                                instance_info.append(
+                                    f"Instance {instance_id}: host={ssh_host}, username={ssh_username}"
+                                )
+
                         if instance_info:
-                            return "Missing host or username. Available instances:\n" + "\n".join(instance_info)
-                except:
+                            return "Missing host or username. Available instances:\n" + "\n".join(
+                                instance_info
+                            )
+                except Exception:
                     pass
-                
+
                 return "Error: Host and username are required for SSH connection."
 
             # Establish SSH connection
@@ -655,7 +670,7 @@ Important notes:
                 username=validated_args.username,
                 password=validated_args.password,
                 private_key_path=validated_args.private_key_path,
-                port=validated_args.port
+                port=validated_args.port,
             )
 
         except Exception as e:
@@ -684,7 +699,7 @@ Important notes:
 - The instance ID must be valid and active
 - After termination, the instance will no longer be accessible
 - You can get instance IDs using get_gpu_status
-- Any active SSH dions will be closed
+- Any active SSH connections will be closed
 """,
         schema=TerminateComputeSchema,
     )
@@ -697,6 +712,7 @@ Important notes:
 
         Returns:
             str: A message containing the termination response or error details.
+
         """
         validated_args = TerminateComputeSchema(**args)
 
@@ -705,23 +721,24 @@ Important notes:
             response_data = make_api_request(
                 api_key=self.api_key,
                 endpoint="marketplace/instances/terminate",
-                data={"id": validated_args.instance_id}
+                data={"id": validated_args.instance_id},
             )
-            
+
             # Format the response with next steps
             return format_terminate_compute_response(response_data)
 
         except Exception as e:
             return f"Error terminating compute: {e}"
 
-    def supports_network(self, network: Network) -> bool:
+    def supports_network(self, _: Network) -> bool:
         """Check if network is supported by Hyperbolic actions.
 
         Args:
-            network (Network): The network to check support for.
+            _ (Network): The network to check support for.
 
         Returns:
             bool: Always True as Hyperbolic actions don't depend on blockchain networks.
+
         """
         return True
 
@@ -730,15 +747,16 @@ def hyperbolic_action_provider(
     api_key: str | None = None,
 ) -> HyperbolicActionProvider:
     """Create and return a new HyperbolicActionProvider instance.
-    
+
     Args:
         api_key: Optional API key for authentication. If not provided,
                 will attempt to read from HYPERBOLIC_API_KEY environment variable.
-    
+
     Returns:
         HyperbolicActionProvider: A new instance of the Hyperbolic action provider.
-    
+
     Raises:
         ValueError: If API key is not provided and not found in environment.
+
     """
     return HyperbolicActionProvider(api_key=api_key)
