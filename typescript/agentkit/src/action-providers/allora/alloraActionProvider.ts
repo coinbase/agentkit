@@ -25,9 +25,13 @@ export class AlloraActionProvider extends ActionProvider {
    *
    * @param config - Configuration for the Allora API client including API key and optional chain slug
    */
-  constructor(config: AlloraAPIClientConfig) {
+  constructor(config: AlloraAPIClientConfig = {}) {
     super("allora", []);
-    config.apiKey = config.apiKey || "UP-4151d0cc489a44a7aa5cd7ef";
+    // This is a public, development only key and should be used for testing purposes only.
+    // It might be changed or revoked in the future. It is also subject to limits and usage policies.
+    const DEFAULT_API_KEY = "UP-4151d0cc489a44a7aa5cd7ef";
+
+    config.apiKey = config.apiKey || DEFAULT_API_KEY;
     config.chainSlug = config.chainSlug || ChainSlug.TESTNET;
     this.client = new AlloraAPIClient(config);
   }
@@ -43,28 +47,31 @@ export class AlloraActionProvider extends ActionProvider {
     description: `
 This tool will get all available inference topics from Allora Network.
 
-A successful response will return a message with a list of available topics from Allora Network in JSON format. Example:
-    [
-        {
-            "topic_id": 1,
-            "topic_name": "Bitcoin 8h",
-            "description": "Bitcoin price prediction for the next 8 hours",
-            "epoch_length": 100,
-            "ground_truth_lag": 10,
-            "loss_method": "method1",
-            "worker_submission_window": 50,
-            "worker_count": 5,
-            "reputer_count": 3,
-            "total_staked_allo": 1000,
-            "total_emissions_allo": 500,
-            "is_active": true,
-            "updated_at": "2023-01-01T00:00:00Z"
-        }
-    ]
-The description field is a short description of the topic, and the topic_name is the name of the topic. These fields can be used to understand the topic and its purpose.
-The topic_id field is the unique identifier for the topic, and can be used to get the inference data for the topic using the get_inference_by_topic_id action.
-The is_active field indicates if the topic is currently active and accepting submissions.
-The updated_at field is the timestamp of the last update for the topic.
+A successful response will return a list of available topics in JSON format. Example:
+[
+    {
+        "topic_id": 1,
+        "topic_name": "Bitcoin 8h",
+        "description": "Bitcoin price prediction for the next 8 hours",
+        "epoch_length": 100,
+        "ground_truth_lag": 10,
+        "loss_method": "method1",
+        "worker_submission_window": 50,
+        "worker_count": 5,
+        "reputer_count": 3,
+        "total_staked_allo": 1000,
+        "total_emissions_allo": 500,
+        "is_active": true,
+        "updated_at": "2023-01-01T00:00:00Z"
+    }
+]
+
+Key fields:
+- topic_id: Unique identifier, use with get_inference_by_topic_id action
+- topic_name: Name of the topic
+- description: Short description of the topic's purpose
+- is_active: If true, topic is active and accepting submissions
+- updated_at: Timestamp of last update
 
 A failure response will return an error message with details.
 `,
@@ -175,5 +182,5 @@ A failure response will return an error message with details.
   }
 }
 
-export const createAlloraActionProvider = (config: AlloraAPIClientConfig) =>
+export const alloraActionProvider = (config: AlloraAPIClientConfig = {}) =>
   new AlloraActionProvider(config);

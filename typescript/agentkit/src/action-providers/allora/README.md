@@ -1,21 +1,42 @@
 # Allora Action Provider
 
-This action provider enables interaction with the Allora Network, allowing AI agents to fetch topics and inferences.
+This directory contains the **AlloraActionProvider** implementation, which enables interaction with the **Allora Network**, allowing AI agents to fetch topics and inferences for prediction markets.
+
+## Directory Structure
+
+```
+allora/
+├── alloraActionProvider.ts       # Main provider with Allora functionality
+├── alloraActionProvider.test.ts  # Test file for Allora provider
+├── schemas.ts                    # Action schemas for topics and inferences
+├── index.ts                      # Main exports
+└── README.md                     # This file
+```
+
+## Actions
+
+- `get_all_topics`: Fetches all available topics from Allora Network
+- `get_inference_by_topic_id`: Fetches inference data for a specific topic
+- `get_price_inference`: Fetches price inference for a specific token and timeframe
 
 ## Setup
 
-To use the Allora action provider, you'll need an API key from Allora Network. Initialize the provider like this:
+To use the Allora action provider:
 
 ```typescript
 import { createAlloraActionProvider } from "@coinbase/agentkit";
 
-const provider = createAlloraActionProvider({
-  apiKey: "your-api-key",
+// With default configuration
+const provider = createAlloraActionProvider();
+
+// Or with custom configuration
+const providerWithConfig = createAlloraActionProvider({
+  apiKey: "your-api-key", // optional, defaults to a public, development-only key
   chainSlug: "testnet" // optional, defaults to testnet
 });
 ```
 
-## Available Actions
+## Action Details
 
 ### Get All Topics
 
@@ -88,4 +109,20 @@ Example response:
   "asset": "BTC",
   "timeframe": "8h"
 }
-``` 
+```
+
+## Adding New Actions
+
+To add new Allora actions:
+
+1. Define your action schema in `schemas.ts`
+2. Implement the action in `alloraActionProvider.ts`
+3. Add tests in `alloraActionProvider.test.ts`
+
+## Network Support
+
+The Allora provider is network-agnostic.
+
+## Notes
+
+For more information about Allora Network and its capabilities, visit [Allora Documentation](https://docs.allora.network/). 
