@@ -11,14 +11,15 @@ from .action_providers import (
     compound_action_provider,
     create_action,
     erc20_action_provider,
+    hyperbolic_action_provider,
     morpho_action_provider,
     pyth_action_provider,
+    ssh_action_provider,
     superfluid_action_provider,
     twitter_action_provider,
     wallet_action_provider,
     weth_action_provider,
     wow_action_provider,
-    hyperbolic_action_provider,
 )
 from .agentkit import AgentKit, AgentKitConfig
 from .wallet_providers import (
@@ -55,6 +56,7 @@ __all__ = [
     "hyperbolic_action_provider",
     "morpho_action_provider",
     "pyth_action_provider",
+    "ssh_action_provider",
     "superfluid_action_provider",
     "twitter_action_provider",
     "wallet_action_provider",
