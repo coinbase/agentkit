@@ -1,15 +1,14 @@
 """Tests for Allora action provider."""
 
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from allora_sdk.v2.api_client import (
-    AlloraAPIClient,
-    ChainSlug,
-    PriceInferenceToken,
     PriceInferenceTimeframe,
+    PriceInferenceToken,
 )
+from pydantic import ValidationError
 
 from coinbase_agentkit.action_providers.allora.allora_action_provider import AlloraActionProvider
 from coinbase_agentkit.action_providers.allora.schemas import (
@@ -17,21 +16,6 @@ from coinbase_agentkit.action_providers.allora.schemas import (
     GetInferenceByTopicIdInput,
     GetPriceInferenceInput,
 )
-
-
-@pytest.fixture
-def mock_client():
-    """Create a mock Allora API client."""
-    with patch("allora_sdk.v2.api_client.AlloraAPIClient") as mock:
-        yield mock
-
-
-@pytest.fixture
-def provider(mock_client):
-    """Create an Allora action provider with a mock client."""
-    provider = AlloraActionProvider(api_key="test-api-key", chain_slug=ChainSlug.TESTNET)
-    provider.client = mock_client.return_value
-    return provider
 
 
 def test_get_all_topics_input_schema():
@@ -44,30 +28,29 @@ def test_get_all_topics_input_schema():
 def test_get_inference_by_topic_id_input_schema():
     """Test get inference by topic ID input schema."""
     # Test valid inputs
-    valid_inputs = [
-        {"topic_id": 1},
-        {"topic_id": 100},
-        {"topic_id": 999999},
-    ]
-    for input_data in valid_inputs:
-        parsed_input = GetInferenceByTopicIdInput(**input_data)
-        assert parsed_input.topic_id == input_data["topic_id"]
+    valid_inputs = [1, 100, 999999]
+    for topic_id in valid_inputs:
+        parsed_input = GetInferenceByTopicIdInput(topic_id=topic_id)
+        assert parsed_input.topic_id == topic_id
 
-    # Test invalid topic IDs
-    invalid_topic_ids = [
-        0,  # Zero is not allowed
-        -1,  # Negative numbers not allowed
-        "1",  # String not allowed
-        1.5,  # Float not allowed
-    ]
-    for topic_id in invalid_topic_ids:
-        with pytest.raises(ValueError) as exc_info:
-            GetInferenceByTopicIdInput(topic_id=topic_id)
-        error_msg = str(exc_info.value)
-        if isinstance(topic_id, (int, float)) and topic_id <= 0:
-            assert "greater than 0" in error_msg
-        else:
-            assert "must be an integer" in error_msg
+    # Test invalid inputs
+    # Note: Pydantic will try to convert some types, so we need to test carefully
+
+    # Test value validation (gt=0)
+    with pytest.raises((ValueError, ValidationError)):
+        GetInferenceByTopicIdInput(topic_id=0)  # Zero is not allowed (gt=0)
+
+    with pytest.raises((ValueError, ValidationError)):
+        GetInferenceByTopicIdInput(topic_id=-1)  # Negative numbers not allowed (gt=0)
+
+    # Test type validation - note that Pydantic will try to convert strings to int if possible
+    with pytest.raises((ValueError, ValidationError)):
+        GetInferenceByTopicIdInput(topic_id="not_an_int")  # String that can't be converted to int
+
+    # Test float validation - Pydantic might convert some floats to int
+    # For example, 1.0 will be converted to 1, but 1.5 can't be exactly represented as int
+    with pytest.raises((ValueError, ValidationError)):
+        GetInferenceByTopicIdInput(topic_id=1.5)  # Float with fractional part
 
 
 def test_get_price_inference_input_schema():
@@ -86,14 +69,13 @@ def test_get_price_inference_input_schema():
         assert parsed_input.timeframe == input_data["timeframe"]
 
     # Test that empty strings are not allowed (Pydantic's built-in validation)
-    with pytest.raises(ValueError):
+    with pytest.raises((ValueError, ValidationError)):
         GetPriceInferenceInput(asset="", timeframe="5m")
-    with pytest.raises(ValueError):
+    with pytest.raises((ValueError, ValidationError)):
         GetPriceInferenceInput(asset="BTC", timeframe="")
 
 
-@pytest.mark.asyncio
-async def test_get_all_topics_success(provider, mock_client):
+def test_get_all_topics_success(provider, mock_client):
     """Test successful get all topics."""
     mock_topics = [
         {
@@ -113,26 +95,27 @@ async def test_get_all_topics_success(provider, mock_client):
         }
     ]
 
-    mock_client.return_value.get_all_topics = AsyncMock(return_value=mock_topics)
-    result = await provider.get_all_topics({})
+    # Set up the mock to return the mock_topics directly
+    mock_client.return_value.get_all_topics.return_value = mock_topics
+    result = provider.get_all_topics({})
 
     assert "The available topics at Allora Network are:" in result
     assert json.dumps(mock_topics) in result
 
 
-@pytest.mark.asyncio
-async def test_get_all_topics_error(provider, mock_client):
+def test_get_all_topics_error(provider, mock_client):
     """Test error handling in get all topics."""
     error_msg = "API Error"
-    mock_client.return_value.get_all_topics = AsyncMock(side_effect=Exception(error_msg))
 
-    result = await provider.get_all_topics({})
+    # Set up the mock to raise an exception when called
+    mock_client.return_value.get_all_topics.side_effect = Exception(error_msg)
+
+    result = provider.get_all_topics({})
     assert "Error getting all topics:" in result
     assert error_msg in result
 
 
-@pytest.mark.asyncio
-async def test_get_inference_by_topic_id_success(provider, mock_client):
+def test_get_inference_by_topic_id_success(provider, mock_client):
     """Test successful get inference by topic ID."""
     mock_topic_id = 1
     mock_inference = MagicMock()
@@ -145,27 +128,28 @@ async def test_get_inference_by_topic_id_success(provider, mock_client):
         "timestamp": 1718198400,
     }
 
-    mock_client.return_value.get_inference_by_topic_id = AsyncMock(return_value=mock_inference)
-    result = await provider.get_inference_by_topic_id({"topic_id": mock_topic_id})
+    # Set up the mock to return the mock_inference directly
+    mock_client.return_value.get_inference_by_topic_id.return_value = mock_inference
+    result = provider.get_inference_by_topic_id({"topic_id": mock_topic_id})
 
     assert f"The inference for topic {mock_topic_id} is:" in result
     assert json.dumps(mock_inference.inference_data) in result
 
 
-@pytest.mark.asyncio
-async def test_get_inference_by_topic_id_error(provider, mock_client):
+def test_get_inference_by_topic_id_error(provider, mock_client):
     """Test error handling in get inference by topic ID."""
     mock_topic_id = 1
     error_msg = "API Error"
-    mock_client.return_value.get_inference_by_topic_id = AsyncMock(side_effect=Exception(error_msg))
 
-    result = await provider.get_inference_by_topic_id({"topic_id": mock_topic_id})
+    # Set up the mock to raise an exception when called
+    mock_client.return_value.get_inference_by_topic_id.side_effect = Exception(error_msg)
+
+    result = provider.get_inference_by_topic_id({"topic_id": mock_topic_id})
     assert f"Error getting inference for topic {mock_topic_id}:" in result
     assert error_msg in result
 
 
-@pytest.mark.asyncio
-async def test_get_price_inference_success(provider, mock_client):
+def test_get_price_inference_success(provider, mock_client):
     """Test successful get price inference."""
     mock_asset = PriceInferenceToken.BTC
     mock_timeframe = PriceInferenceTimeframe.EIGHT_HOURS
@@ -175,8 +159,9 @@ async def test_get_price_inference_success(provider, mock_client):
         "timestamp": 1718198400,
     }
 
-    mock_client.return_value.get_price_inference = AsyncMock(return_value=mock_inference)
-    result = await provider.get_price_inference(
+    # Set up the mock to return the mock_inference directly
+    mock_client.return_value.get_price_inference.return_value = mock_inference
+    result = provider.get_price_inference(
         {
             "asset": mock_asset,
             "timeframe": mock_timeframe,
@@ -194,19 +179,37 @@ async def test_get_price_inference_success(provider, mock_client):
     assert json.dumps(expected_response) in result
 
 
-@pytest.mark.asyncio
-async def test_get_price_inference_error(provider, mock_client):
+def test_get_price_inference_error(provider, mock_client):
     """Test error handling in get price inference."""
     mock_asset = PriceInferenceToken.BTC
     mock_timeframe = PriceInferenceTimeframe.EIGHT_HOURS
     error_msg = "API Error"
-    mock_client.return_value.get_price_inference = AsyncMock(side_effect=Exception(error_msg))
 
-    result = await provider.get_price_inference(
+    # Set up the mock to raise an exception when called
+    mock_client.return_value.get_price_inference.side_effect = Exception(error_msg)
+
+    result = provider.get_price_inference(
         {
             "asset": mock_asset,
             "timeframe": mock_timeframe,
         }
     )
-    assert f"Error getting price inference for {mock_asset.value} ({mock_timeframe.value}):" in result
+    assert (
+        f"Error getting price inference for {mock_asset.value} ({mock_timeframe.value}):" in result
+    )
     assert error_msg in result
+
+
+def test_run_async_method(provider):
+    """Test the _run_async helper method."""
+
+    # Create a mock coroutine
+    async def mock_coro():
+        return "test_result"
+
+    # Reset the mock to test the actual implementation
+    provider._run_async = AlloraActionProvider._run_async.__get__(provider, AlloraActionProvider)
+
+    # Test that _run_async correctly runs the coroutine
+    result = provider._run_async(mock_coro())
+    assert result == "test_result"

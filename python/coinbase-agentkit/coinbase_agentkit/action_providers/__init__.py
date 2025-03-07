@@ -2,6 +2,7 @@
 
 from .action_decorator import create_action
 from .action_provider import Action, ActionProvider
+from .allora.allora_action_provider import AlloraActionProvider, allora_action_provider
 from .basename.basename_action_provider import (
     BasenameActionProvider,
     basename_action_provider,
@@ -20,7 +21,6 @@ from .twitter.twitter_action_provider import TwitterActionProvider, twitter_acti
 from .wallet.wallet_action_provider import WalletActionProvider, wallet_action_provider
 from .weth.weth_action_provider import WethActionProvider, weth_action_provider
 from .wow.wow_action_provider import WowActionProvider, wow_action_provider
-from .allora.allora_action_provider import AlloraActionProvider, allora_action_provider
 
 __all__ = [
     "Action",
