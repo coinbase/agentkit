@@ -6,6 +6,7 @@
     "create-onchain-agent",
     "framework-extensions/langchain",
     "framework-extensions/vercel-ai-sdk",
+    "framework-extensions/model-context-protocol",
     "examples/langchain-cdp-chatbot",
     "examples/langchain-twitter-chatbot",
     "examples/langchain-farcaster-chatbot",
