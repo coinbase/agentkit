@@ -1,5 +1,13 @@
 # AgentKit Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- [#261](https://github.com/coinbase/agentkit/pull/261) [`674f6c8`](https://github.com/coinbase/agentkit/commit/674f6c83f12a081c2fd605e1bff094bbb4744c1c) Thanks [@phdargen](https://github.com/phdargen)! - Added a new action provider to interact with OpenSea
+
+- [#115](https://github.com/coinbase/agentkit/pull/115) [`9261c42`](https://github.com/coinbase/agentkit/commit/9261c42e91fecbd6b384856cdfc7ad230ce6f73e) Thanks [@fernandofcampos](https://github.com/fernandofcampos)! - Added `alloraActionProvider` to fetch inferences from Allora Network.
+
 ## [0.2.3] - 2025-02-28
 
 ### Added
