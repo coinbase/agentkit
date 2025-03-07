@@ -1,5 +1,7 @@
 # Coinbase AgentKit Changelog
 
+<!-- towncrier release notes start -->
+
 ## [0.1.4] - 2025-02-28
 
 ### Added

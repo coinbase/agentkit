@@ -31,10 +31,10 @@ create-onchain-agent = "create_onchain_agent.cli:create_project"
 
 [tool.towncrier]
 package = "create_onchain_agent"
-package_dir = "create_onchain_agent"
 filename = "CHANGELOG.md"
 directory = "changelog.d/"
-start_string = "# Coinbase Create Onchain Agent Changelog"
+title_format = "## [{version}] - {project_date}"
+issue_format = "[#{issue}](https://github.com/coinbase/agentkit/pull/{issue})"
 
 [tool.towncrier.fragment.feature]
 name = "Added"
