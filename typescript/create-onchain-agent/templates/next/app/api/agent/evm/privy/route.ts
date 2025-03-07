@@ -55,7 +55,7 @@ import fs from "fs";
 // The agent
 let agent: ReturnType<typeof createReactAgent>;
 
-// Configure a file to persist the agent's Prviy Wallet Data
+// Configure a file to persist the agent's Privy Wallet Data
 const WALLET_DATA_FILE = "wallet_data.txt";
 
 /**
