@@ -21,13 +21,13 @@ jobs:
               core.setOutput("skip", "true");
             }
 
-      - name: Check for modified Python files in coinbase-agent
+      - name: Check for modified Python files in coinbase-agentkit
         if: steps.check-label.outputs.skip != 'true'
         id: changed-agent-files
         uses: tj-actions/changed-files@v39
         with:
           files: |
-            python/coinbase-agent/**/*.py
+            python/coinbase-agentkit/**/*.py
 
       - name: Check for modified Python files in create-onchain-agent
         if: steps.check-label.outputs.skip != 'true'
@@ -45,11 +45,11 @@ jobs:
           files: |
             python/framework-extensions/langchain/**/*.py
 
-      - name: Check for new changelog entries - coinbase-agent
+      - name: Check for new changelog entries - coinbase-agentkit
         if: steps.check-label.outputs.skip != 'true' && steps.changed-agent-files.outputs.any_changed == 'true'
         run: |
-          if [ -z "$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'python/coinbase-agent/changelog.d/')" ]; then
-            echo "Error: Python files in coinbase-agent were modified, but no changelog entry was added. See [Contributing Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-PYTHON.md#changelog)."
+          if [ -z "$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'python/coinbase-agentkit/changelog.d/')" ]; then
+            echo "Error: Python files in coinbase-agentkit were modified, but no changelog entry was added. See [Contributing Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-PYTHON.md#changelog)."
             exit 1
           fi
 
