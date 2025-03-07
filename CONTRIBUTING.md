@@ -18,8 +18,9 @@ agentkit/
 │   ├── agentkit/
 │   ├── create-onchain-agent/
 │   ├── framework-extensions/
-│   |   ├── langchain/
-│   |   └── vercel-ai-sdk/
+│   │   ├── langchain/
+│   │   ├── vercel-ai-sdk/
+│   │   └── model-context-protocol/
 │   └── examples/
 │       ├── langchain-cdp-chatbot/
 │       ├── langchain-farcaster-chatbot/
