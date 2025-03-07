@@ -70,10 +70,10 @@ known-first-party = ["coinbase_agentkit, cdp"]
 
 [tool.towncrier]
 package = "coinbase_agentkit"
-package_dir = "coinbase_agentkit"
 filename = "CHANGELOG.md"
 directory = "changelog.d/"
-start_string = "# Coinbase AgentKit Changelog"
+title_format = "## [{version}] - {project_date}"
+issue_format = "[#{issue}](https://github.com/coinbase/agentkit/pull/{issue})"
 
 [tool.towncrier.fragment.feature]
 name = "Added"

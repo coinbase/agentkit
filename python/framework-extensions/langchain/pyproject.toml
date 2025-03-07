@@ -57,10 +57,10 @@ known-first-party = ["coinbase_agentkit"]
 
 [tool.towncrier]
 package = "coinbase_agentkit_langchain"
-package_dir = "coinbase_agentkit_langchain"
 filename = "CHANGELOG.md"
 directory = "changelog.d/"
-start_string = "# Coinbase AgentKit Framework Extension - Langchain Changelog"
+title_format = "## [{version}] - {project_date}"
+issue_format = "[#{issue}](https://github.com/coinbase/agentkit/pull/{issue})"
 
 [tool.towncrier.fragment.feature]
 name = "Added"
