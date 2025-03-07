@@ -1,4 +1,4 @@
-name: Release AgentKit to NPM
+name: Publish AgentKit to NPM
 
 on:
   workflow_dispatch:

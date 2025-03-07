@@ -1,4 +1,4 @@
-name: Release Create Onchain Agent to PyPI
+name: Publish Create Onchain Agent to PyPI
 
 on:
   workflow_dispatch:

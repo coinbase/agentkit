@@ -1,4 +1,4 @@
-name: Release Create Onchain Agent to NPM
+name: Publish Create Onchain Agent to NPM
 
 on:
   workflow_dispatch:
