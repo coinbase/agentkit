@@ -1,4 +1,4 @@
-name: Check Changelog Presence
+name: Changelog
 
 on: [pull_request]
 
