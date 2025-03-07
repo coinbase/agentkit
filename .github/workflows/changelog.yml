@@ -51,7 +51,7 @@ jobs:
         if: steps.check-label.outputs.skip != 'true' && steps.changed-agent-files.outputs.any_changed == 'true'
         run: |
           if [ -z "$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'python/coinbase-agentkit/changelog.d/')" ]; then
-            echo "Error: Python files in coinbase-agentkit were modified, but no changelog entry was added. See [Contributing Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-PYTHON.md#changelog)."
+            echo "::error::Python files in coinbase-agentkit were modified, but no changelog entry was added. See [Contributing Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-PYTHON.md#changelog)."
             exit 1
           fi
 
@@ -59,7 +59,7 @@ jobs:
         if: steps.check-label.outputs.skip != 'true' && steps.changed-create-files.outputs.any_changed == 'true'
         run: |
           if [ -z "$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'python/create-onchain-agent/changelog.d/')" ]; then
-            echo "Error: Python files in create-onchain-agent were modified, but no changelog entry was added. See [Contributing Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-PYTHON.md#changelog)."
+            echo "::error::Python files in create-onchain-agent were modified, but no changelog entry was added. See [Contributing Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-PYTHON.md#changelog)."
             exit 1
           fi
 
@@ -67,7 +67,7 @@ jobs:
         if: steps.check-label.outputs.skip != 'true' && steps.changed-langchain-files.outputs.any_changed == 'true'
         run: |
           if [ -z "$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'python/framework-extensions/langchain/changelog.d/')" ]; then
-            echo "Error: Python files in framework-extensions/langchain were modified, but no changelog entry was added. See [Contributing Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-PYTHON.md#changelog)."
+            echo "::error::Python files in framework-extensions/langchain were modified, but no changelog entry was added. See [Contributing Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-PYTHON.md#changelog)."
             exit 1
           fi
 
@@ -94,14 +94,6 @@ jobs:
               core.setOutput("skip", "true");
             }
 
-      - name: Set up Node.js
-        if: steps.check-label.outputs.skip != 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-          cache: "npm"
-          cache-dependency-path: ./typescript
-
       - name: Check for modified TypeScript files
         if: steps.check-label.outputs.skip != 'true'
         id: changed-ts-files
@@ -114,6 +106,6 @@ jobs:
         if: steps.check-label.outputs.skip != 'true' && steps.changed-ts-files.outputs.any_changed == 'true'
         run: |
           if [ -z "$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '.changeset/')" ]; then
-            echo "Error: TypeScript files were modified, but no changelog entry was added. See [Contributing Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-TYPESCRIPT.md#changelog)."
+            echo "::error::TypeScript files were modified, but no changelog entry was added. See [Contributing Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-TYPESCRIPT.md#changelog)."
             exit 1
           fi
