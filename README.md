@@ -176,6 +176,8 @@ agentkit/
 - Node.js API References
   - [AgentKit](https://coinbase.github.io/agentkit/agentkit/typescript/index.html)
   - [AgentKit Langchain Extension](https://coinbase.github.io/agentkit/agentkit-langchain/typescript/index.html)
+  - [AgentKit Vercel AI SDK Extension](https://coinbase.github.io/agentkit/agentkit-vercel-ai-sdk/typescript/index.html)
+  - [AgentKit Model Context Protocol Extension](https://coinbase.github.io/agentkit/agentkit-model-context-protocol/typescript/index.html)
 
 ## 🌙 Nightly Builds
 
