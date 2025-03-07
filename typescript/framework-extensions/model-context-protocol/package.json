@@ -1,6 +1,6 @@
 {
   "name": "@coinbase/agentkit-model-context-protocol",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Model Context Protocol Extension of Coinbase Agentkit",
   "repository": "https://github.com/coinbase/agentkit",
   "author": "Coinbase Inc.",
