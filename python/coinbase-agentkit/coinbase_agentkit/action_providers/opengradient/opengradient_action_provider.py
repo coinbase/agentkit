@@ -53,7 +53,7 @@ Outputs:
 - This function outputs a single float value representing the forecasted standard deviation of 1-minute returns over the next hour
 - This function also outputs a link to block explorer for the smart contract where the model is deployed
 
-Example output format (represents approximately .038% standard deviation around the mean):
+Example output format (represents approximately .037% standard deviation around the mean):
 '0.0377415738%'
 Block Explorer: https://explorer.opengradient.ai/address/0xFC5d8EDba288f9330Af324555F1A729303382725
 
@@ -110,7 +110,7 @@ Important notes:
         schema=OpenGradientBtcOneHourForecast,
     )
     def read_btc_one_hour_price_forecast(self, args: dict[str, Any]) -> str:
-        """Read from the SUI/USDT six hour return forecast workflow on the OpenGradient network.
+        """Read from the BTC one hour return forecast workflow on the OpenGradient network.
 
         Args:
             args (dict[str, Any]): Input arguments for the action.
@@ -156,7 +156,7 @@ Important notes:
         schema=OpenGradientEthOneHourForecast,
     )
     def read_eth_one_hour_price_forecast(self, args: dict[str, Any]) -> str:
-        """Read from the SUI/USDT six hour return forecast workflow on the OpenGradient network.
+        """Read from the ETH one hour return forecast workflow on the OpenGradient network.
 
         Args:
             args (dict[str, Any]): Input arguments for the action.
@@ -202,7 +202,7 @@ Important notes:
         schema=OpenGradientSolOneHourForecast,
     )
     def read_sol_one_hour_price_forecast(self, args: dict[str, Any]) -> str:
-        """Read from the SUI/USDT six hour return forecast workflow on the OpenGradient network.
+        """Read from the SOL one hour return forecast workflow on the OpenGradient network.
 
         Args:
             args (dict[str, Any]): Input arguments for the action.
