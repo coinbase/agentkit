@@ -6,5 +6,5 @@
     "module": "Node16"
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["src/tests"]
+  "exclude": ["src/**/*.test.ts"]
 }
