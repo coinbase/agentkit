@@ -1,8 +1,8 @@
 """Base class for action providers."""
 
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
 from collections.abc import Callable
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
