@@ -20,3 +20,4 @@ export * from "./twitter";
 export * from "./wallet";
 export * from "./weth";
 export * from "./wow";
+export * from "./allora";
