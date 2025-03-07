@@ -117,8 +117,8 @@ jobs:
           echo "Git diff output:"
           git diff --name-only origin/${{ github.base_ref }}...HEAD
           echo "Files matching changeset pattern:"
-          git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'typescript/.changeset/' || true
-          if [ -z "$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'typescript/.changeset/')" ]; then
+          git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '.changeset/' || true
+          if [ -z "$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '.changeset/')" ]; then
             echo "Error: TypeScript files were modified, but no changelog entry was added. See [Contributing Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-TYPESCRIPT.md#changelog)."
             exit 1
           fi
