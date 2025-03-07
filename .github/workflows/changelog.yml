@@ -109,7 +109,7 @@ jobs:
       - name: Check for new changelog entries
         if: steps.check-label.outputs.skip != 'true' && steps.changed-ts-files.outputs.any_changed == 'true'
         run: |
-          if [ -z "$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'typescript/.changesets/')" ]; then
+          if [ -z "$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'typescript/.changeset/')" ]; then
             echo "Error: TypeScript files were modified, but no changelog entry was added. See [Contributing Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-TYPESCRIPT.md#changelog)."
             exit 1
           fi
