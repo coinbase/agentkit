@@ -1,4 +1,4 @@
-name: Release Coinbase AgentKit to PyPI
+name: Publish Coinbase AgentKit to PyPI
 
 on:
   workflow_dispatch:
