@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@coinbase/agentkit": "^0.3.0",
-    "@coinbase/agentkit-langchain": "^0.2.3",
+    "@coinbase/agentkit-langchain": "^0.3.0",
     "@langchain/core": "0.3.30",
     "@langchain/langgraph": "^0.2.39",
     "@langchain/openai": "^0.3.16",
