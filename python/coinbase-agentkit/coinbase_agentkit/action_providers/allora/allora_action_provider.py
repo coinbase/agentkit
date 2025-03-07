@@ -1,13 +1,13 @@
 """Allora Network action provider."""
 
+import asyncio
 import json
-from typing import Any, Optional
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 from allora_sdk.v2.api_client import (
     AlloraAPIClient,
     ChainSlug,
-    PriceInferenceToken,
-    PriceInferenceTimeframe,
 )
 
 from ..action_decorator import create_action
@@ -20,8 +20,8 @@ class AlloraActionProvider(ActionProvider):
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        chain_slug: Optional[ChainSlug] = None,
+        api_key: str | None = None,
+        chain_slug: ChainSlug | None = None,
     ):
         """Initialize the Allora action provider.
 
@@ -31,47 +31,73 @@ class AlloraActionProvider(ActionProvider):
 
         """
         super().__init__("allora", [])
+
+        # This is a public, development only key and should be used for testing purposes only.
+        # It might be changed or revoked in the future. It is also subject to limits and usage policies.
+        default_api_key = "UP-4151d0cc489a44a7aa5cd7ef"
+
         self.client = AlloraAPIClient(
-            api_key=api_key or "UP-4151d0cc489a44a7aa5cd7ef",
+            api_key=api_key or default_api_key,
             chain_slug=chain_slug or ChainSlug.TESTNET,
         )
+        # Create a thread pool executor for running async code
+        self._executor = ThreadPoolExecutor(max_workers=5)
+
+    def _run_async(self, coro):
+        """Run an async coroutine in a synchronous context.
+
+        Args:
+            coro: The coroutine to run
+
+        Returns:
+            The result of the coroutine
+
+        """
+        loop = asyncio.new_event_loop()
+        try:
+            return loop.run_until_complete(coro)
+        finally:
+            loop.close()
 
     @create_action(
         name="get_all_topics",
         description="""
 This tool will get all available inference topics from Allora Network.
 
-A successful response will return a message with a list of available topics from Allora Network in JSON format. Example:
-    [
-        {
-            "topic_id": 1,
-            "topic_name": "Bitcoin 8h",
-            "description": "Bitcoin price prediction for the next 8 hours",
-            "epoch_length": 100,
-            "ground_truth_lag": 10,
-            "loss_method": "method1",
-            "worker_submission_window": 50,
-            "worker_count": 5,
-            "reputer_count": 3,
-            "total_staked_allo": 1000,
-            "total_emissions_allo": 500,
-            "is_active": true,
-            "updated_at": "2023-01-01T00:00:00Z"
-        }
-    ]
-The description field is a short description of the topic, and the topic_name is the name of the topic. These fields can be used to understand the topic and its purpose.
-The topic_id field is the unique identifier for the topic, and can be used to get the inference data for the topic using the get_inference_by_topic_id action.
-The is_active field indicates if the topic is currently active and accepting submissions.
-The updated_at field is the timestamp of the last update for the topic.
+A successful response will return a list of available topics in JSON format. Example:
+[
+    {
+        "topic_id": 1,
+        "topic_name": "Bitcoin 8h",
+        "description": "Bitcoin price prediction for the next 8 hours",
+        "epoch_length": 100,
+        "ground_truth_lag": 10,
+        "loss_method": "method1",
+        "worker_submission_window": 50,
+        "worker_count": 5,
+        "reputer_count": 3,
+        "total_staked_allo": 1000,
+        "total_emissions_allo": 500,
+        "is_active": true,
+        "updated_at": "2023-01-01T00:00:00Z"
+    }
+]
+
+Key fields:
+- topic_id: Unique identifier, use with get_inference_by_topic_id action
+- topic_name: Name of the topic
+- description: Short description of the topic's purpose
+- is_active: If true, topic is active and accepting submissions
+- updated_at: Timestamp of last update
 
 A failure response will return an error message with details.
         """,
         schema=GetAllTopicsInput,
     )
-    async def get_all_topics(self, args: dict[str, Any]) -> str:
+    def get_all_topics(self, args: dict[str, Any]) -> str:
         """Get all available topics from Allora Network."""
         try:
-            topics = await self.client.get_all_topics()
+            topics = self._run_async(self.client.get_all_topics())
             topics_json = json.dumps(topics)
             return f"The available topics at Allora Network are:\n {topics_json}"
         except Exception as e:
@@ -102,10 +128,10 @@ A failure response will return an error message with details.
         """,
         schema=GetInferenceByTopicIdInput,
     )
-    async def get_inference_by_topic_id(self, args: dict[str, Any]) -> str:
+    def get_inference_by_topic_id(self, args: dict[str, Any]) -> str:
         """Get inference data for a specific topic."""
         try:
-            inference = await self.client.get_inference_by_topic_id(args["topic_id"])
+            inference = self._run_async(self.client.get_inference_by_topic_id(args["topic_id"]))
             inference_json = json.dumps(inference.inference_data)
             return f"The inference for topic {args['topic_id']} is:\n {inference_json}"
         except Exception as e:
@@ -134,12 +160,14 @@ A failure response will return an error message with details.
         """,
         schema=GetPriceInferenceInput,
     )
-    async def get_price_inference(self, args: dict[str, Any]) -> str:
+    def get_price_inference(self, args: dict[str, Any]) -> str:
         """Get price inference for a token/timeframe pair."""
         try:
-            inference = await self.client.get_price_inference(
-                args["asset"],
-                args["timeframe"],
+            inference = self._run_async(
+                self.client.get_price_inference(
+                    args["asset"],
+                    args["timeframe"],
+                )
             )
             response = {
                 "price": inference.inference_data["network_inference_normalized"],
@@ -162,11 +190,13 @@ A failure response will return an error message with details.
         return True  # Allora service is network-agnostic
 
 
-def allora_action_provider() -> AlloraActionProvider:
+def allora_action_provider(
+    api_key: str | None = None, chain_slug: ChainSlug | None = None
+) -> AlloraActionProvider:
     """Create a new Allora action provider.
 
     Returns:
         AlloraActionProvider: A new Allora action provider instance.
 
     """
-    return AlloraActionProvider()
+    return AlloraActionProvider(api_key=api_key, chain_slug=chain_slug)

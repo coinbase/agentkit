@@ -1,9 +1,6 @@
 """Schemas for Allora action provider."""
 
-from typing import Any
-
-from pydantic import BaseModel, Field, field_validator
-from allora_sdk.v2.api_client import PriceInferenceToken, PriceInferenceTimeframe
+from pydantic import BaseModel, Field
 
 
 class GetAllTopicsInput(BaseModel):
@@ -20,16 +17,6 @@ class GetInferenceByTopicIdInput(BaseModel):
         description="The ID of the topic to get inference data for",
         gt=0,  # Must be greater than 0
     )
-
-    @field_validator("topic_id", mode="before")
-    @classmethod
-    def validate_topic_id(cls, v: Any) -> int:
-        """Validate topic_id is a positive integer."""
-        if not isinstance(v, int) or isinstance(v, bool):
-            raise ValueError("topic_id must be an integer")
-        if v <= 0:
-            raise ValueError("topic_id must be greater than 0")
-        return v
 
 
 class GetPriceInferenceInput(BaseModel):
