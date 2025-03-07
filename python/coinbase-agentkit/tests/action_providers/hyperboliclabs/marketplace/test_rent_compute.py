@@ -9,6 +9,12 @@ from coinbase_agentkit.action_providers.hyperboliclabs.hyperbolic_action_provide
     HyperbolicActionProvider,
 )
 
+# Test constants
+MOCK_INSTANCE_ID = "test-instance-123"
+MOCK_CLUSTER = "us-east-1"
+MOCK_NODE = "node-456"
+MOCK_GPU_COUNT = "2"
+
 
 @pytest.fixture
 def mock_api_response():
