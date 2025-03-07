@@ -7,8 +7,8 @@ import { StoredActionMetadata, ACTION_DECORATOR_KEY } from "./actionDecorator";
  * Action is the interface for all actions.
  */
 export interface Action<TActionSchema extends z.ZodSchema = z.ZodSchema> {
-  name: string;
   description: string;
+  name: string;
   schema: TActionSchema;
   invoke: (args: z.infer<TActionSchema>) => Promise<string>;
 }
