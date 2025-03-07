@@ -4,6 +4,7 @@ from .__version__ import __version__
 from .action_providers import (
     Action,
     ActionProvider,
+    allora_action_provider,
     basename_action_provider,
     cdp_api_action_provider,
     cdp_wallet_action_provider,
@@ -17,7 +18,6 @@ from .action_providers import (
     wallet_action_provider,
     weth_action_provider,
     wow_action_provider,
-    allora_action_provider,
 )
 from .agentkit import AgentKit, AgentKitConfig
 from .wallet_providers import (
