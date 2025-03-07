@@ -29,7 +29,3 @@ documentation:
 example:
 - changed-files:
   - any-glob-to-any-file: '**/examples/**'
-
-'needs triage':
-- changed-files:
-  - any-glob-to-any-file: '**'
