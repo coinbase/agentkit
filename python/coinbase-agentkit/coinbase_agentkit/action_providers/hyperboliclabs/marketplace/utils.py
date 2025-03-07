@@ -1,14 +1,20 @@
-"""Utility functions for Hyperbolic action provider."""
+"""Utility functions for Hyperbolic Marketplace action provider."""
 
 import contextlib
 import json
 import os
-from collections import defaultdict
 from datetime import datetime
 from typing import Any
 
 import paramiko
 import requests
+
+from .models import (
+    AvailableInstance,
+    NodeRental,
+    RentInstanceResponse,
+    TerminateInstanceResponse,
+)
 
 
 class SSHManager:
@@ -206,33 +212,33 @@ def get_api_key() -> str:
     return api_key
 
 
-def format_gpu_instance(instance: dict[str, Any]) -> str | None:
+def format_gpu_instance(instance: AvailableInstance) -> str | None:
     """Format a single GPU instance into a readable string.
 
     Args:
-        instance: Dictionary containing instance details.
+        instance: AvailableInstance object containing instance details.
 
     Returns:
         str | None: Formatted string if instance has available GPUs, None otherwise.
 
     """
     # Skip if reserved
-    if instance.get("reserved", True):
+    if instance.reserved:
         return None
 
-    cluster_name = instance.get("cluster_name", "Unknown Cluster")
-    node_id = instance.get("id", "Unknown Node")
+    cluster_name = instance.cluster_name or "Unknown Cluster"
+    node_id = instance.id
 
     # Get GPU information
-    gpus = instance.get("hardware", {}).get("gpus", [])
-    gpu_model = gpus[0].get("model", "Unknown Model") if gpus else "Unknown Model"
+    gpus = instance.hardware.gpus
+    gpu_model = gpus[0].model if gpus else "Unknown Model"
 
     # Get pricing (convert cents to dollars)
-    price_amount = instance.get("pricing", {}).get("price", {}).get("amount", 0) / 100
+    price_amount = instance.pricing.price.amount / 100 if instance.pricing else 0
 
     # Get GPU availability
-    gpus_total = instance.get("gpus_total", 0)
-    gpus_reserved = instance.get("gpus_reserved", 0)
+    gpus_total = instance.gpus_total or 0
+    gpus_reserved = instance.gpus_reserved or 0
     gpus_available = gpus_total - gpus_reserved
 
     if gpus_available <= 0:
@@ -248,57 +254,38 @@ def format_gpu_instance(instance: dict[str, Any]) -> str | None:
     )
 
 
-def format_gpu_status(instance: dict[str, Any]) -> str:
+def format_gpu_status(instance: NodeRental) -> str:
     """Format a rented GPU instance status into a readable string.
 
     Args:
-        instance: Dictionary containing instance details.
+        instance: NodeRental object containing instance details.
 
     Returns:
         str: Formatted status string.
 
     """
-    instance_id = instance.get("id", "Unknown ID")
-    status = instance.get("status", "Unknown")
-    status_detail = instance.get("status_detail", "")
+    instance_id = instance.id
+    status = instance.status
+    status_detail = ""  # This may not be available in the model
 
     # Get GPU information
-    gpus = instance.get("hardware", {}).get("gpus", [])
+    gpus = instance.instance.hardware.gpus
 
     # Extract GPU model from the first GPU
     gpu_model = "Unknown Model"
     if gpus:
-        # Try to get the model directly
-        if "model" in gpus[0]:
-            gpu_model = gpus[0]["model"]
-        # Handle alternative format where model might be nested
-        elif "gpu_type" in gpus[0]:
-            gpu_model = gpus[0]["gpu_type"]
+        gpu_model = gpus[0].model
 
     # Get GPU count
-    gpu_count = instance.get("gpu_count", len(gpus) if gpus else 1)
+    gpu_count = instance.instance.gpu_count or (len(gpus) if gpus else 1)
 
     # Get GPU memory if available
     gpu_memory = None
-    if gpus:
-        # Try different possible memory field names
-        for memory_field in ["ram", "memory", "vram"]:
-            if memory_field in gpus[0]:
-                memory_value = gpus[0][memory_field]
-                if isinstance(memory_value, dict) and "amount" in memory_value:
-                    gpu_memory = f"{memory_value['amount']} {memory_value.get('unit', 'GB')}"
-                else:
-                    gpu_memory = f"{memory_value} MB"
-                break
+    if gpus and gpus[0].ram:
+        gpu_memory = f"{gpus[0].ram} GB"
 
     # Get SSH access details if available
-    ssh_access = instance.get("ssh_access", {})
-    ssh_command = ssh_access.get("ssh_command", "")
-
-    # Get IP address and username if available
-    ssh_host = ssh_access.get("host", "")
-    ssh_username = ssh_access.get("username", "")
-    ssh_key_path = ssh_access.get("key_path", "~/.ssh/id_rsa")
+    ssh_command = instance.ssh_command
 
     # Format the output
     output = [f"Instance ID: {instance_id}"]
@@ -331,12 +318,13 @@ def format_gpu_status(instance: dict[str, Any]) -> str:
     # Add SSH information based on what's available
     if ssh_command:
         output.append(f"SSH Command: {ssh_command}")
-    elif ssh_host and ssh_username:
-        output.append(f"SSH Host: {ssh_host}")
-        output.append(f"SSH Username: {ssh_username}")
-        output.append(f"SSH Key Path: {ssh_key_path}")
-        output.append(f"Connect with: ssh_connect with host={ssh_host}, username={ssh_username}")
+    elif instance.ssh_access:
+        # If we have SSH access details but no command, construct one
+        key_path = instance.ssh_access.key_path or "~/.ssh/id_rsa"
+        output.append(f"SSH Command: ssh {instance.ssh_access.username}@{instance.ssh_access.host} -i {key_path}")
     else:
+        # This part requires extracting host and username from SSH command or other fields
+        # For now, just provide guidance based on status
         if status.lower() in ["running", "online"]:
             output.append(
                 "SSH Command: Not available yet. Instance is running but SSH details are not provided."
@@ -363,135 +351,18 @@ def format_gpu_status(instance: dict[str, Any]) -> str:
     return "\n".join(output)
 
 
-def calculate_duration_seconds(start_time: str, end_time: str) -> float:
-    """Calculate duration in seconds between two timestamps.
-
-    Args:
-        start_time: ISO format timestamp string.
-        end_time: ISO format timestamp string.
-
-    Returns:
-        float: Duration in seconds.
-
-    """
-    start = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
-    end = datetime.fromisoformat(end_time.replace("Z", "+00:00"))
-    duration = end - start
-    return duration.total_seconds()
-
-
-def format_spend_history(instance_history: list[dict[str, Any]]) -> str:
-    """Format spend history into a readable analysis.
-
-    Args:
-        instance_history: List of instance rental records.
-
-    Returns:
-        str: Formatted analysis string.
-
-    """
-    if not instance_history:
-        return "No rental history found."
-
-    # Initialize analysis variables
-    total_cost = 0
-    gpu_stats = defaultdict(lambda: {"count": 0, "total_cost": 0, "total_seconds": 0})
-    instances_summary = []
-
-    # Analyze each instance
-    for instance in instance_history:
-        duration_seconds = calculate_duration_seconds(
-            instance["started_at"], instance["terminated_at"]
-        )
-        # Convert seconds to hours for cost calculation
-        duration_hours = duration_seconds / 3600.0
-        # Calculate cost: (hours) * (cents/hour) / (100 cents/dollar)
-        cost = (duration_hours * instance["price"]["amount"]) / 100.0
-        total_cost += cost
-
-        # Get GPU model and count
-        gpus = instance["hardware"].get("gpus", [])
-        gpu_model = gpus[0].get("model", "Unknown GPU") if gpus else "Unknown GPU"
-        gpu_count = instance["gpu_count"]
-
-        # Update GPU stats
-        gpu_stats[gpu_model]["count"] += gpu_count
-        gpu_stats[gpu_model]["total_cost"] += cost
-        gpu_stats[gpu_model]["total_seconds"] += duration_seconds
-
-        # Create instance summary
-        instances_summary.append(
-            {
-                "name": instance["instance_name"],
-                "gpu_model": gpu_model,
-                "gpu_count": gpu_count,
-                "duration_seconds": int(duration_seconds),
-                "cost": round(cost, 2),
-            }
-        )
-
-    # Format the output
-    output = ["=== GPU Rental Spending Analysis ===\n"]
-
-    output.append("Instance Rentals:")
-    for instance in instances_summary:
-        output.append(f"- {instance['name']}:")
-        output.append(f"  GPU: {instance['gpu_model']} (Count: {instance['gpu_count']})")
-        output.append(f"  Duration: {instance['duration_seconds']} seconds")
-        output.append(f"  Cost: ${instance['cost']:.2f}")
-
-    output.append("\nGPU Type Statistics:")
-    for gpu_model, stats in gpu_stats.items():
-        output.append(f"\n{gpu_model}:")
-        output.append(f"  Total Rentals: {stats['count']}")
-        output.append(f"  Total Time: {int(stats['total_seconds'])} seconds")
-        output.append(f"  Total Cost: ${stats['total_cost']:.2f}")
-
-    output.append(f"\nTotal Spending: ${total_cost:.2f}")
-
-    return "\n".join(output)
-
-
-def format_wallet_link_response(response_data: dict[str, Any]) -> str:
-    """Format wallet linking response into a readable string.
-
-    Args:
-        response_data: API response data from wallet linking.
-
-    Returns:
-        str: Formatted response string with next steps.
-
-    """
-    # Format the API response
-    formatted_response = json.dumps(response_data, indent=2)
-
-    # Add next steps information
-    hyperbolic_address = "0xd3cB24E0Ba20865C530831C85Bd6EbC25f6f3B60"
-    next_steps = (
-        "\nNext Steps:\n"
-        "1. Your wallet has been successfully linked to your Hyperbolic account\n"
-        "2. To add funds, send any of these tokens on Base network:\n"
-        "   - USDC\n"
-        "   - USDT\n"
-        "   - DAI\n"
-        f"3. Send to this Hyperbolic address: {hyperbolic_address}"
-    )
-
-    return f"{formatted_response}\n{next_steps}"
-
-
-def format_rent_compute_response(response_data: dict[str, Any]) -> str:
+def format_rent_compute_response(response_data: RentInstanceResponse) -> str:
     """Format compute rental response into a readable string.
 
     Args:
-        response_data: API response data from compute rental.
+        response_data: RentInstanceResponse object from compute rental API.
 
     Returns:
         str: Formatted response string with next steps.
 
     """
     # Format the API response
-    formatted_response = json.dumps(response_data, indent=2)
+    formatted_response = json.dumps(response_data.model_dump(), indent=2)
 
     # Add next steps information
     next_steps = (
@@ -507,18 +378,18 @@ def format_rent_compute_response(response_data: dict[str, Any]) -> str:
     return f"{formatted_response}\n{next_steps}"
 
 
-def format_terminate_compute_response(response_data: dict[str, Any]) -> str:
+def format_terminate_compute_response(response_data: TerminateInstanceResponse) -> str:
     """Format compute termination response into a readable string.
 
     Args:
-        response_data: API response data from compute termination.
+        response_data: TerminateInstanceResponse object from compute termination API.
 
     Returns:
         str: Formatted response string with next steps.
 
     """
     # Format the API response
-    formatted_response = json.dumps(response_data, indent=2)
+    formatted_response = json.dumps(response_data.model_dump(), indent=2)
 
     # Add next steps information
     next_steps = (
@@ -565,111 +436,3 @@ def make_api_request(
 
     response.raise_for_status()
     return response.json()
-
-
-def format_purchase_history(purchases: list[dict[str, Any]]) -> str:
-    """Format purchase history into a readable string.
-
-    Args:
-        purchases: List of purchase records.
-
-    Returns:
-        str: Formatted purchase history string.
-
-    """
-    if not purchases:
-        return "\nNo previous purchases found."
-
-    output = ["\nPurchase History:"]
-    for purchase in purchases:
-        amount = float(purchase["amount"]) / 100  # Convert cents to dollars
-        timestamp = datetime.fromisoformat(purchase["timestamp"])
-        formatted_date = timestamp.strftime("%B %d, %Y")
-        output.append(f"- ${amount:.2f} on {formatted_date}")
-
-    return "\n".join(output)
-
-
-def get_balance_info(api_key: str) -> dict[str, Any]:
-    """Get current balance and purchase history.
-
-    Args:
-        api_key: The API key for authentication.
-
-    Returns:
-        Dict[str, Any]: Dictionary containing balance and purchase history.
-
-    Raises:
-        requests.exceptions.RequestException: If any API request fails.
-
-    """
-    # Get current balance
-    balance_data = make_api_request(
-        api_key=api_key, endpoint="billing/get_current_balance", method="GET"
-    )
-
-    # Get purchase history
-    history_data = make_api_request(
-        api_key=api_key, endpoint="billing/purchase_history", method="GET"
-    )
-
-    return {
-        "balance": balance_data.get("credits", 0),
-        "purchase_history": history_data.get("purchase_history", []),
-    }
-
-
-def save_base64_image(base64_data: str, output_path: str) -> str:
-    """Save base64 encoded image data to a file.
-
-    Args:
-        base64_data: The base64 encoded image string
-        output_path: Path where to save the image
-
-    Returns:
-        str: The absolute path to the saved image file
-
-    Raises:
-        ValueError: If the base64 data is invalid
-        OSError: If there's an error saving the file
-    """
-    try:
-        import base64
-        import os
-
-        # Remove potential base64 header if present
-        if ',' in base64_data:
-            base64_data = base64_data.split(',')[1]
-
-        # Decode the base64 string
-        image_data = base64.b64decode(base64_data)
-
-        # Ensure the directory exists
-        os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
-
-        # Write the image data
-        with open(output_path, 'wb') as f:
-            f.write(image_data)
-
-        return os.path.abspath(output_path)
-    except base64.binascii.Error as e:
-        raise ValueError(f"Invalid base64 data: {e}")
-    except OSError as e:
-        raise OSError(f"Error saving image file: {e}")
-
-
-__all__ = [
-    "get_api_key",
-    "format_gpu_instance",
-    "format_gpu_status",
-    "calculate_duration_seconds",
-    "format_spend_history",
-    "format_wallet_link_response",
-    "format_rent_compute_response",
-    "format_terminate_compute_response",
-    "make_api_request",
-    "format_purchase_history",
-    "get_balance_info",
-    "ssh_manager",
-    "save_base64_image",
-]

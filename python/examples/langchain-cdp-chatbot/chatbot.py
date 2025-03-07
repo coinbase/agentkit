@@ -23,6 +23,7 @@ from coinbase_agentkit import (
     pyth_action_provider,
     wallet_action_provider,
     weth_action_provider,
+    hyperbolic_action_provider,
 )
 from coinbase_agentkit_langchain import get_langchain_tools
 
@@ -52,12 +53,13 @@ def initialize_agent():
     agentkit = AgentKit(AgentKitConfig(
         wallet_provider=wallet_provider,
         action_providers=[
-            cdp_api_action_provider(),
-            cdp_wallet_action_provider(),
-            erc20_action_provider(),
-            pyth_action_provider(),
-            wallet_action_provider(),
-            weth_action_provider(),
+            #  cdp_api_action_provider(),
+            #  cdp_wallet_action_provider(),
+            #  erc20_action_provider(),
+            #  pyth_action_provider(),
+            #  wallet_action_provider(),
+            #  weth_action_provider(),
+            hyperbolic_action_provider(),
         ]
     ))
 

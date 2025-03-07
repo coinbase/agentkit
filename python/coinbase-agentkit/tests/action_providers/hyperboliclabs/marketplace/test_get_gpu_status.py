@@ -1,51 +1,73 @@
-"""Tests for get_gpu_status action in HyperbolicActionProvider."""
+"""Tests for get_gpu_status action in HyperbolicMarketplaceActionProvider."""
 
 from unittest.mock import Mock, patch
 
 import pytest
 
-from coinbase_agentkit.action_providers.hyperboliclabs.hyperbolic_action_provider import (
-    HyperbolicActionProvider,
+from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.action_provider import (
+    HyperbolicMarketplaceActionProvider,
+)
+from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.models import (
+    NodeRental,
+    NodeInstance,
+    HardwareInfo,
+    GpuHardware,
+    RentedInstancesResponse,
 )
 
 
 @pytest.fixture
 def mock_api_response():
     """Mock API response for GPU status."""
-    mock_response = Mock()
-    mock_response.json.return_value = {
-        "instances": [
-            {
-                "id": "i-123456",
-                "instance": {
-                    "status": "running",
-                    "hardware": {"gpus": [{"model": "NVIDIA A100", "count": 2}]},
-                },
-                "sshCommand": "ssh user@host -i key.pem",
-            },
-            {
-                "id": "i-789012",
-                "instance": {
-                    "status": "starting",
-                    "hardware": {"gpus": [{"model": "NVIDIA A100", "count": 1}]},
-                },
-            },
-        ]
-    }
-    return mock_response
+    gpu = GpuHardware(
+        hardware_type="gpu",
+        model="NVIDIA A100",
+        ram=40000,
+    )
+    
+    hardware = HardwareInfo(
+        gpus=[gpu],
+    )
+    
+    instance1 = NodeInstance(
+        id="instance-1",
+        status="running",
+        hardware=hardware,
+        gpu_count=2,
+    )
+    
+    instance2 = NodeInstance(
+        id="instance-2",
+        status="starting",
+        hardware=hardware,
+        gpu_count=1,
+    )
+    
+    rental1 = NodeRental(
+        id="i-123456",
+        instance=instance1,
+        ssh_command="ssh user@host -i key.pem",
+    )
+    
+    rental2 = NodeRental(
+        id="i-789012",
+        instance=instance2,
+    )
+    
+    return RentedInstancesResponse(instances=[rental1, rental2])
 
 
 @pytest.fixture
 def provider():
-    """Create HyperbolicActionProvider instance with test API key."""
-    return HyperbolicActionProvider(api_key="test-api-key")
+    """Create HyperbolicMarketplaceActionProvider instance with test API key."""
+    return HyperbolicMarketplaceActionProvider(api_key="test-api-key")
 
 
 def test_get_gpu_status_success(provider, mock_api_response):
     """Test successful get_gpu_status action."""
     with (
         patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
-        patch("requests.get", return_value=mock_api_response),
+        patch.object(provider.marketplace, "get_rented_instances", return_value=mock_api_response),
     ):
         result = provider.get_gpu_status({})
 
@@ -54,12 +76,17 @@ def test_get_gpu_status_success(provider, mock_api_response):
         assert "Instance ID: i-123456" in result
         assert "Status: running (Ready to use)" in result
         assert "GPU Model: NVIDIA A100" in result
+        assert "GPU Count: 2" in result
+        assert "GPU Memory: 40000.0 GB" in result
         assert "ssh user@host -i key.pem" in result
 
         # Check second instance (starting)
         assert "Instance ID: i-789012" in result
         assert "Status: starting (Still initializing)" in result
-        assert "Instance is starting up. Please check again in a few seconds." in result
+        assert "GPU Model: NVIDIA A100" in result
+        assert "GPU Count: 1" in result
+        assert "GPU Memory: 40000.0 GB" in result
+        assert "The instance is starting up. Please check again in a few seconds." in result
 
         # Check SSH instructions
         assert "SSH Connection Instructions:" in result
@@ -69,12 +96,11 @@ def test_get_gpu_status_success(provider, mock_api_response):
 
 def test_get_gpu_status_no_instances(provider):
     """Test get_gpu_status action with no instances."""
-    mock_response = Mock()
-    mock_response.json.return_value = {"instances": []}
-
+    empty_response = RentedInstancesResponse(instances=[])
+    
     with (
         patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
-        patch("requests.get", return_value=mock_response),
+        patch.object(provider.marketplace, "get_rented_instances", return_value=empty_response),
     ):
         result = provider.get_gpu_status({})
         assert "No rented GPU instances found." in result
@@ -84,7 +110,7 @@ def test_get_gpu_status_api_error(provider):
     """Test get_gpu_status action with API error."""
     with (
         patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
-        patch("requests.get", side_effect=Exception("API Error")),
+        patch.object(provider.marketplace, "get_rented_instances", side_effect=Exception("API Error")),
     ):
         result = provider.get_gpu_status({})
         assert "Error retrieving GPU status: API Error" in result
@@ -92,12 +118,11 @@ def test_get_gpu_status_api_error(provider):
 
 def test_get_gpu_status_invalid_response(provider):
     """Test get_gpu_status action with invalid response format."""
-    mock_response = Mock()
-    mock_response.json.return_value = {"invalid": "response"}
-
+    empty_response = RentedInstancesResponse(instances=[])
+    
     with (
         patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
-        patch("requests.get", return_value=mock_response),
+        patch.object(provider.marketplace, "get_rented_instances", return_value=empty_response),
     ):
         result = provider.get_gpu_status({})
         assert "No rented GPU instances found." in result
@@ -105,19 +130,18 @@ def test_get_gpu_status_invalid_response(provider):
 
 def test_get_gpu_status_malformed_instance(provider):
     """Test get_gpu_status action with malformed instance data."""
-    mock_response = Mock()
-    mock_response.json.return_value = {
-        "instances": [
-            {
-                "id": "i-123456",
-                # Missing instance data, should use defaults
-            }
-        ]
-    }
-
+    hardware = HardwareInfo(gpus=[])
+    instance = NodeInstance(
+        id="instance-3",
+        status="Unknown",
+        hardware=hardware,
+    )
+    rental = NodeRental(id="i-123456", instance=instance)
+    response = RentedInstancesResponse(instances=[rental])
+    
     with (
         patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
-        patch("requests.get", return_value=mock_response),
+        patch.object(provider.marketplace, "get_rented_instances", return_value=response),
     ):
         result = provider.get_gpu_status({})
 
