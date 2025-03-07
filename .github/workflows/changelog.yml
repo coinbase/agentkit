@@ -1,0 +1,111 @@
+name: Changelog
+
+on: [pull_request]
+
+jobs:
+  check-changelog-python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for 'no changelog required' label
+        id: check-label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo, number } = context.issue;
+            const pr = await github.rest.pulls.get({ owner, repo, pull_number: number });
+            const labels = pr.data.labels.map(label => label.name);
+            if (labels.includes("no changelog required")) {
+              console.log("Skipping changelog check due to 'no changelog required' label.");
+              core.setOutput("skip", "true");
+            }
+
+      - name: Check for modified Python files in coinbase-agentkit
+        if: steps.check-label.outputs.skip != 'true'
+        id: changed-agent-files
+        uses: tj-actions/changed-files@v39
+        with:
+          files: |
+            python/coinbase-agentkit/**/*.py
+
+      - name: Check for modified Python files in create-onchain-agent
+        if: steps.check-label.outputs.skip != 'true'
+        id: changed-create-files
+        uses: tj-actions/changed-files@v39
+        with:
+          files: |
+            python/create-onchain-agent/**/*.py
+
+      - name: Check for modified Python files in langchain extension
+        if: steps.check-label.outputs.skip != 'true'
+        id: changed-langchain-files
+        uses: tj-actions/changed-files@v39
+        with:
+          files: |
+            python/framework-extensions/langchain/**/*.py
+
+      - name: Check for new changelog entries - coinbase-agentkit
+        if: steps.check-label.outputs.skip != 'true' && steps.changed-agent-files.outputs.any_changed == 'true'
+        run: |
+          if [ -z "$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'python/coinbase-agentkit/changelog.d/')" ]; then
+            echo "::error::Python files in coinbase-agentkit were modified, but no changelog entry was added. See [Contributing Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-PYTHON.md#changelog)."
+            exit 1
+          fi
+
+      - name: Check for new changelog entries - create-onchain-agent
+        if: steps.check-label.outputs.skip != 'true' && steps.changed-create-files.outputs.any_changed == 'true'
+        run: |
+          if [ -z "$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'python/create-onchain-agent/changelog.d/')" ]; then
+            echo "::error::Python files in create-onchain-agent were modified, but no changelog entry was added. See [Contributing Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-PYTHON.md#changelog)."
+            exit 1
+          fi
+
+      - name: Check for new changelog entries - langchain extension
+        if: steps.check-label.outputs.skip != 'true' && steps.changed-langchain-files.outputs.any_changed == 'true'
+        run: |
+          if [ -z "$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'python/framework-extensions/langchain/changelog.d/')" ]; then
+            echo "::error::Python files in framework-extensions/langchain were modified, but no changelog entry was added. See [Contributing Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-PYTHON.md#changelog)."
+            exit 1
+          fi
+
+  check-changelog-typescript:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./typescript
+    steps:
+      - uses: actions/checkout@v4
+        with:
+            fetch-depth: 0
+
+      - name: Check for 'no changelog required' label
+        id: check-label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo, number } = context.issue;
+            const pr = await github.rest.pulls.get({ owner, repo, pull_number: number });
+            const labels = pr.data.labels.map(label => label.name);
+            if (labels.includes("no changelog required")) {
+              console.log("Skipping changelog check due to 'no changelog required' label.");
+              core.setOutput("skip", "true");
+            }
+
+      - name: Check for modified TypeScript files
+        if: steps.check-label.outputs.skip != 'true'
+        id: changed-ts-files
+        uses: tj-actions/changed-files@v39
+        with:
+          files: |
+            typescript/**/*.ts
+
+      - name: Check for new changelog entries
+        if: steps.check-label.outputs.skip != 'true' && steps.changed-ts-files.outputs.any_changed == 'true'
+        run: |
+          if [ -z "$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '.changeset/')" ]; then
+            echo "::error::TypeScript files were modified, but no changelog entry was added. See [Contributing Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-TYPESCRIPT.md#changelog)."
+            exit 1
+          fi
