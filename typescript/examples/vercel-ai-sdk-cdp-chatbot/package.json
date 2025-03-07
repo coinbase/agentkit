@@ -15,8 +15,8 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.1.9",
-    "@coinbase/agentkit": "^0.2.3",
-    "@coinbase/agentkit-vercel-ai-sdk": "^0.0.1",
+    "@coinbase/agentkit": "^0.3.0",
+    "@coinbase/agentkit-vercel-ai-sdk": "^0.1.0",
     "ai": "^4.1.16",
     "dotenv": "^16.4.5",
     "tsx": "^4.7.1",

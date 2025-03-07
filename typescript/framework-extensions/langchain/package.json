@@ -44,7 +44,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@coinbase/agentkit": "^0.2.3"
+    "@coinbase/agentkit": "^0.3.0"
   },
   "peerDependencies": {
     "@coinbase/agentkit": ">=0.1.0"
