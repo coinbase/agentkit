@@ -9,6 +9,7 @@ import {
   cdpWalletActionProvider,
   pythActionProvider,
   openseaActionProvider,
+  alloraActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -120,6 +121,7 @@ async function initializeAgent() {
               }),
             ]
           : []),
+        alloraActionProvider(),
       ],
     });
 
