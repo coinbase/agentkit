@@ -11,6 +11,7 @@ from .cdp.cdp_wallet_action_provider import CdpWalletActionProvider, cdp_wallet_
 from .compound.compound_action_provider import CompoundActionProvider, compound_action_provider
 from .erc20.erc20_action_provider import ERC20ActionProvider, erc20_action_provider
 from .morpho.morpho_action_provider import MorphoActionProvider, morpho_action_provider
+from .nillion.nillion_action_provider import NillionActionProvider, nillion_action_provider
 from .pyth.pyth_action_provider import PythActionProvider, pyth_action_provider
 from .superfluid.superfluid_action_provider import (
     SuperfluidActionProvider,
@@ -37,6 +38,8 @@ __all__ = [
     "erc20_action_provider",
     "MorphoActionProvider",
     "morpho_action_provider",
+    "NillionActionProvider",
+    "nillion_action_provider",
     "PythActionProvider",
     "pyth_action_provider",
     "SuperfluidActionProvider",
