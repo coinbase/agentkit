@@ -1,0 +1,88 @@
+name: Check Changelog Presence
+
+on: [pull_request]
+
+jobs:
+  check-changelog-python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for modified Python files in coinbase-agent
+        id: changed-agent-files
+        uses: tj-actions/changed-files@v39
+        with:
+          files: |
+            python/coinbase-agent/**/*.py
+
+      - name: Check for modified Python files in create-onchain-agent
+        id: changed-create-files
+        uses: tj-actions/changed-files@v39
+        with:
+          files: |
+            python/create-onchain-agent/**/*.py
+
+      - name: Check for modified Python files in langchain extension
+        id: changed-langchain-files
+        uses: tj-actions/changed-files@v39
+        with:
+          files: |
+            python/framework-extensions/langchain/**/*.py
+
+      - name: Check for new changelog entries - coinbase-agent
+        if: steps.changed-agent-files.outputs.any_changed == 'true'
+        run: |
+          if [ -z "$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'python/coinbase-agent/changelog.d/')" ]; then
+            echo "Error: Python files in coinbase-agent were modified, but no changelog entry was added. See [Contributing Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-PYTHON.md#changelog)."
+            exit 1
+          fi
+
+      - name: Check for new changelog entries - create-onchain-agent
+        if: steps.changed-create-files.outputs.any_changed == 'true'
+        run: |
+          if [ -z "$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'python/create-onchain-agent/changelog.d/')" ]; then
+            echo "Error: Python files in create-onchain-agent were modified, but no changelog entry was added. See [Contributing Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-PYTHON.md#changelog)."
+            exit 1
+          fi
+
+      - name: Check for new changelog entries - langchain extension
+        if: steps.changed-langchain-files.outputs.any_changed == 'true'
+        run: |
+          if [ -z "$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'python/framework-extensions/langchain/changelog.d/')" ]; then
+            echo "Error: Python files in framework-extensions/langchain were modified, but no changelog entry was added. See [Contributing Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-PYTHON.md#changelog)."
+            exit 1
+          fi
+
+  check-changelog-typescript:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./typescript
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper diff checking
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: ./typescript
+
+      - name: Check for modified TypeScript files
+        id: changed-ts-files
+        uses: tj-actions/changed-files@v39
+        with:
+          files: |
+            typescript/**/*.ts
+
+      - name: Check for new changelog entries
+        if: steps.changed-ts-files.outputs.any_changed == 'true'
+        run: |
+          if [ -z "$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'typescript/.changesets/')" ]; then
+            echo "Error: TypeScript files were modified, but no changelog entry was added. See [Contributing Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING-TYPESCRIPT.md#changelog)."
+            exit 1
+          fi
