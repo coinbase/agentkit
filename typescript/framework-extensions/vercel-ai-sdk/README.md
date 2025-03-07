@@ -46,7 +46,7 @@ import { openai } from "@ai-sdk/openai";
 // Or, check out one of the other supported wallet providers: https://github.com/coinbase/agentkit/tree/main/typescript/agentkit
 const agentKit = await AgentKit.from({
   cdpApiKeyName: process.env.CDP_API_KEY_NAME,
-  cdpApiKeyPrivate: process.env.CDP_API_KEY_PRIVATE_KEY,
+  cdpApiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
 });
 
 const tools = await getVercelAITools(agentKit);
