@@ -1,3 +1,15 @@
+## [0.2.0] - 2025-03-07
+
+### Fixed
+
+- Fixed indentation bug in chatbot.py template
+
+### Added
+
+- Added revised network selection ([#498](https://github.com/coinbase/agentkit/pull/498))
+- Added smart wallet support ([#503](https://github.com/coinbase/agentkit/pull/503))
+
+
 # Coinbase Create Onchain Agent Changelog
 
 ## [0.1.4] - 2025-02-28

@@ -2,6 +2,13 @@
 
 <!-- towncrier release notes start -->
 
+## [0.1.5] - 2025-03-07
+
+### Fixed
+
+- Fixed Compound borrow action ([#496](https://github.com/coinbase/agentkit/pull/496))
+
+
 ## [0.1.4] - 2025-02-28
 
 ### Added
