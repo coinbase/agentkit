@@ -1,5 +1,11 @@
 # CDP AgentKit.js Langchain Extension Changelog
 
+## [0.3.0] - 2025-03-08
+
+### Minor Changes
+
+- Moved `@coinbase/agentkit` to peerDependencies
+
 ## [0.2.3] - 2025-02-28
 
 ### Patch Changes
