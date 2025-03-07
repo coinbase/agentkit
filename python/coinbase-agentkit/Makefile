@@ -6,6 +6,10 @@ install:
 format:
 	poetry run ruff format .
 
+.PHONY: format-check
+format-check:
+	poetry run ruff format . --check
+
 .PHONY: lint
 lint:
 	poetry run ruff check .
@@ -25,3 +29,7 @@ local-docs: docs
 .PHONY: test
 test:
 	poetry run pytest
+
+.PHONY: generate-action-provider
+generate-action-provider:
+	poetry run generate-action-provider

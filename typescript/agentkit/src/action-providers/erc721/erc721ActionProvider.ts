@@ -39,7 +39,7 @@ Do not use the contract address as the destination address. If you are unsure of
       const data = encodeFunctionData({
         abi: ERC721_ABI,
         functionName: "mint",
-        args: [args.destination as Hex, 1n],
+        args: [args.destination as Hex],
       });
 
       const hash = await walletProvider.sendTransaction({

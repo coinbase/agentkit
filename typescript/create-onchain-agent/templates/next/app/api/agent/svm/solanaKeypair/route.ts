@@ -7,6 +7,7 @@ import {
   walletActionProvider,
   jupiterActionProvider,
   cdpApiActionProvider,
+  ActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { MemorySaver } from "@langchain/langgraph";
@@ -15,7 +16,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { Keypair } from "@solana/web3.js";
 import bs58 from "bs58";
 import { NextResponse } from "next/server";
-
+import fs from "fs";
 /**
  * AgentKit Integration Route
  *
@@ -54,6 +55,9 @@ import { NextResponse } from "next/server";
 // The agent
 let agent: ReturnType<typeof createReactAgent>;
 
+// Configure a file to persist a user's private key if none provided
+const WALLET_DATA_FILE = "wallet_data.txt";
+
 /**
  * Initializes and returns an instance of the AI agent.
  * If an agent instance already exists, it returns the existing one.
@@ -76,13 +80,20 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
     const llm = new ChatOpenAI({ model: "gpt-4o-mini" });
 
     // Setup Private Key
-    let solanaPrivateKey = process.env.SOLANA_PRIVATE_KEY as string;
-    if (!solanaPrivateKey) {
-      console.log(`No Solana account detected. Generating a wallet...`);
-      const keypair = Keypair.generate();
-      solanaPrivateKey = bs58.encode(keypair.secretKey);
-      console.log(`Created Solana wallet: ${keypair.publicKey.toBase58()}`);
-      console.log(`Store the private key in your .env for future reuse: ${solanaPrivateKey}`);
+    let privateKey = process.env.SOLANA_PRIVATE_KEY as string;
+    if (!privateKey) {
+      if (fs.existsSync(WALLET_DATA_FILE)) {
+        privateKey = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8")).privateKey;
+        console.info("Found private key in wallet_data.txt");
+      } else {
+        const keypair = Keypair.generate();
+        privateKey = bs58.encode(keypair.secretKey);
+        fs.writeFileSync(WALLET_DATA_FILE, JSON.stringify({ privateKey }));
+        console.log("Created new private key and saved to wallet_data.txt");
+        console.log(
+          "We recommend you save this private key to your .env file and delete wallet_data.txt afterwards.",
+        );
+      }
     }
 
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
@@ -90,31 +101,36 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
     const rpcUrl = process.env.SOLANA_RPC_URL;
     let walletProvider: SolanaKeypairWalletProvider;
     if (rpcUrl) {
-      walletProvider = await SolanaKeypairWalletProvider.fromRpcUrl(rpcUrl, solanaPrivateKey);
+      walletProvider = await SolanaKeypairWalletProvider.fromRpcUrl(rpcUrl, privateKey);
     } else {
       const network = (process.env.NETWORK_ID ?? "solana-devnet") as SOLANA_NETWORK_ID;
-      walletProvider = await SolanaKeypairWalletProvider.fromNetwork(network, solanaPrivateKey);
+      walletProvider = await SolanaKeypairWalletProvider.fromNetwork(network, privateKey);
     }
 
     // Initialize AgentKit: https://docs.cdp.coinbase.com/agentkit/docs/agent-actions
-    const agentkit = await AgentKit.from({
-      walletProvider,
-      actionProviders: [
-        splActionProvider(),
-        walletActionProvider(),
-        jupiterActionProvider(),
-        // The CDP API Action Provider provides faucet functionality on solana-devnet. Can be removed if you do not need this functionality.
+    const actionProviders: ActionProvider[] = [
+      walletActionProvider(),
+      splActionProvider(),
+      jupiterActionProvider(),
+    ];
+    const canUseCdpApi = process.env.CDP_API_KEY_NAME && process.env.CDP_API_KEY_PRIVATE_KEY;
+    if (canUseCdpApi) {
+      actionProviders.push(
         cdpApiActionProvider({
           apiKeyName: process.env.CDP_API_KEY_NAME,
           apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
         }),
-      ],
+      );
+    }
+    const agentkit = await AgentKit.from({
+      walletProvider,
+      actionProviders,
     });
     const tools = await getLangChainTools(agentkit);
     const memory = new MemorySaver();
 
     // Initialize Agent
-    const canUseFaucet = walletProvider.getNetwork().networkId == "solana-devnet";
+    const canUseFaucet = walletProvider.getNetwork().networkId == "solana-devnet" && canUseCdpApi;
     const faucetMessage = `If you ever need funds, you can request them from the faucet.`;
     const cantUseFaucetMessage = `If you need funds, you can provide your wallet details and request funds from the user.`;
     agent = createReactAgent({

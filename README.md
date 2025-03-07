@@ -140,18 +140,21 @@ agentkit/
 │   ├── agentkit/
 │   ├── create-onchain-agent/
 │   ├── framework-extensions/
-│   |   └── langchain/
+│   │   ├── langchain/
+│   │   ├── vercel-ai-sdk/
+│   │   └── model-context-protocol/
 │   └── examples/
 │       ├── langchain-cdp-chatbot/
 │       ├── langchain-farcaster-chatbot/
-│       └── langchain-privy-chatbot/
-│       └── langchain-solana-chatbot/
-│       └── langchain-twitter-chatbot/
+│       ├── langchain-privy-chatbot/
+│       ├── langchain-solana-chatbot/
+│       ├── langchain-twitter-chatbot/
+│       └── vercel-ai-sdk-cdp-chatbot/
 ├── python/
 │   ├── coinbase-agentkit/
 │   ├── create-onchain-agent/
 │   ├── framework-extensions/
-│   |   └── langchain/
+│   │   └── langchain/
 │   └── examples/
 │       ├── langchain-cdp-chatbot/
 │       └── langchain-twitter-chatbot/
@@ -173,6 +176,8 @@ agentkit/
 - Node.js API References
   - [AgentKit](https://coinbase.github.io/agentkit/agentkit/typescript/index.html)
   - [AgentKit Langchain Extension](https://coinbase.github.io/agentkit/agentkit-langchain/typescript/index.html)
+  - [AgentKit Vercel AI SDK Extension](https://coinbase.github.io/agentkit/agentkit-vercel-ai-sdk/typescript/index.html)
+  - [AgentKit Model Context Protocol Extension](https://coinbase.github.io/agentkit/agentkit-model-context-protocol/typescript/index.html)
 
 ## 🌙 Nightly Builds
 
@@ -252,6 +257,7 @@ AgentKit is proud to have support for the following protocols, frameworks, walle
 
 <a href="https://langchain.com" target="_blank"><img src="./assets/frameworks/langchain.svg" width="100" height="auto" alt="Langchain"></a>
 <a href="https://www.elizaos.ai" target="_blank"><img src="./assets/frameworks/eliza.svg" width="100" height="auto" alt="Eliza"></a>
+<a href="https://sdk.vercel.ai" target="_blank"><img src="./assets/frameworks/vercel.svg" width="100" height="auto" alt="Vercel AI SDK"></a>
 
 ### Networks
 

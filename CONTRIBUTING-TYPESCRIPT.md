@@ -10,6 +10,7 @@ This guide covers TypeScript-specific setup and development for AgentKit.
 - [Integrating into an AI Agent Framework](#integrating-into-an-ai-agent-framework)
 - [Testing](#testing)
 - [Code Style](#code-style)
+- [Documentation](#documentation)
 - [Changelog](#changelog)
 
 ## Development Setup
@@ -31,6 +32,8 @@ Once you have these installed, make sure you install the project dependencies by
 
 An Action is an interface for an AI Agent to interact with the real world: any TypeScript function that you can think of can be used by an Agent via an Action! Actions are grouped by Action Providers, which are classes that contain a collection of actions along with configuration and helper functions.
 
+You can use the `generate-action-provider` script to generate a new action provider. See the [Generate Action Provider](./typescript/agentkit/scripts/generate-action-provider/README.md) for more information.
+
 Action Components:
 
 1. **Name**: The name of the action. This is used to identify the action when it is added to an Agent.
@@ -41,7 +44,7 @@ Action Components:
 
 4. **Invocation Function**: The actual logic that executes the action. This function receives as input the wallet that the Agent has access to, and as you'll see in the walkthrough below, we can use this wallet to invoke an onchain contract! For more information on contract invocations using a CDP wallet, see [here](https://docs.cdp.coinbase.com/cdp-sdk/docs/onchain-interactions#smart-contract-interactions).
 
-In practice, action providers are housed in `typescript/agentkit/src/action-providers` and generally grouped by the type of action they are and the configuration they require . For example, actions related to interacting with social platforms such as X (Twitter) are housed in `typescript/agentkit/src/action-providers/twitter`. When adding a new action, check if there is an existing action provider for the type of action you are adding and add your new action to the appropriate folder.
+In practice, action providers are housed in `typescript/agentkit/src/action-providers` and generally grouped by the type of action they are and the configuration they require. For example, actions related to interacting with social platforms such as X (Twitter) are housed in `typescript/agentkit/src/action-providers/twitter`. When adding a new action, check if there is an existing action provider for the type of action you are adding and add your new action to the appropriate folder.
 
 Here's the structure of the action providers directory:
 
@@ -75,7 +78,7 @@ Do not use the contract address as the destination address. If you are unsure of
   })
 ```
 
-- The prompt disambuguates the type of NFT by specifying "ERC-721"
+- The prompt disambiguates the type of NFT by specifying "ERC-721"
 - The prompt specifies that the destination address should not be the contract address
 - The prompt specifies that the LLM should ask the user for the destination address if it is unsure
 - Think about the best UX: if a contract address from a known list of addresses is required, you can instruct the LLM to use another action to get the list of addresses and prompt the user to choose an address from that list. For example, consider a DeFi action that allows a user to withdraw funds from a liquidity provider position. This action would take a contract address, so it would be valuable to have another action that can pull a list of addresses representing the user's positions. You can then instruct the LLM via the prompt to use that action in the case that no contract address is provided.
@@ -255,13 +258,17 @@ npm run lint
 npm run lint:fix
 ```
 
+## Documentation
+
+The majority of our documentation exists within the AgentKit repo itself, in the form of colocated `README.md` files and inline docstrings. When adding new functionality or changing documented behavior, please update the relevant `README.md` file and inline docstrings to reflect the changes. For example, if you're adding a new action provider, also include a `README.md` in your new folder (see [the ERC20 Action Provider README](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/action-providers/erc20/README.md) as a reference). Or, if you're updating an existing action provider, update its `README.md` to reflect the changes. If it doesn't have a README, please add one! These are just a couple examples; docs exist throughout the codebase and most code changes will also require updates to the docs.
+
 ## Changelog
 
 We use [changesets](https://github.com/changesets/changesets) to manage the changelog.
 
 Changesets should be in the past tense, and they should be as specific as possible. Some examples of good changesets:
 
-- Added a new action provider to interact with Fancy Protocl
+- Added a new action provider to interact with Fancy Protocol
 - Fixed a bug preventing wallet balances to be formatted correctly
 
 Changesets are stored in the `.changeset` directory. Each changeset is stored as a markdown file with a random name generated by `changesets`.
@@ -274,6 +281,6 @@ npx @changesets/cli
 
 This will kick off an interactive prompt to help you create the changeset. Use the arrow keys to navigate the different options, and press the `Space` key to select an option. You should select the package(s) you are making a change to – most of the time this will be `@coinbase/agentkit`. Once selected, hit `Enter`. You'll then be prompted to specify the type of change you are making (major, minor or patch), starting with major. Most of the time you will not be making a major change, so hitting `Enter` will progress to the next step. If you're adding a new feature, you should select `minor`. If you're fixing a bug, you should select `patch`. Once selected, you will be prompted to provide a summary of your changes. This should be a short, specific description in the past tense (see above for examples).
 
-Once complete, a new changeset will be created in the `.changeset` directory, which should be committed along the changes in your Pull Request.
+Once complete, a new changeset will be created in the `.changeset` directory, which should be committed along with the changes in your Pull Request.
 
 For more info on adding changelog entries, [see here](https://github.com/changesets/changesets/blob/main/docs/adding-a-changeset.md).

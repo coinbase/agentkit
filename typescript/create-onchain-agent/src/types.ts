@@ -14,7 +14,7 @@ export type SVMNetwork = "solana-mainnet" | "solana-devnet" | "solana-testnet";
 
 export type Network = EVMNetwork | SVMNetwork;
 
-export type WalletProviderChoice = "CDP" | "Viem" | "Privy" | "SolanaKeypair";
+export type WalletProviderChoice = "CDP" | "Viem" | "Privy" | "SolanaKeypair" | "SmartWallet";
 
 export type WalletProviderRouteConfiguration = {
   env: {
@@ -23,4 +23,12 @@ export type WalletProviderRouteConfiguration = {
     optional: string[];
   };
   apiRoute: string;
+};
+
+export type NetworkSelection = {
+  networkFamily: "EVM" | "SVM";
+  networkType: "mainnet" | "testnet" | "custom";
+  network?: Network;
+  chainId?: string;
+  rpcUrl?: string;
 };

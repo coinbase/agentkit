@@ -1,17 +1,35 @@
-<p align="center">
-  <img src="../../../../../assets/protocols/compound.svg" width="200" height="200">
-</p>
+# Compound Action Provider
 
-<h1 align="center">Compound Finance Actions for AI Agents to Lend and Borrow on Base</h1>
+This directory contains the **CompoundActionProvider** implementation, which provides actions to interact with **Compound Protocol** for lending and borrowing operations.
 
+## Directory Structure
+
+```
+compound/
+├── compound_action_provider.py     # Compound action provider
+├── schemas.py                      # Compound action schemas
+├── __init__.py                     # Main exports
+└── README.md                       # This file
+
+# From python/coinbase-agentkit/
+tests/action_providers/compound/
+├── conftest.py                    # Test configuration
+├── test_compound_borrow.py        # Test for borrow action
+├── test_compound_portfolio.py     # Test for portfolio action
+├── test_compound_provider.py      # Test for provider
+├── test_compound_repay.py         # Test for repay action
+├── test_compound_schemas.py       # Test for schemas
+├── test_compound_supply.py        # Test for supply action
+├── test_compound_utils.py         # Test for utils
+└── test_compound_withdraw.py      # Test for withdraw action
+```
+
+## Actions
 
 These actions allow you to supply, borrow, repay, withdraw ETH or USDC to Compound V3 markets through the Base USDC Comet Contract.
 
 > 🧪 **Try it on Base Sepolia First!**  
-> These actions work seamlessly on Base Sepolia testnet, allowing you to develop and test your agent's Compound interactions without using real funds. Once you're confident in your implementation, you can switch to Base mainnet for production use. 
-
-## Actions
-The actions in this package are intended to support agents that want to interact with Compound V3 markets on Base. It supports the following actions:
+> These actions work seamlessly on Base Sepolia testnet, allowing you to develop and test your agent's Compound interactions without using real funds. Once you're confident in your implementation, you can switch to Base mainnet for production use.
 
 - `supply`: Supply ETH or USDC to Compound V3 markets on Base.
 - `borrow`: Borrow ETH or USDC from Compound V3 markets on Base.
@@ -19,28 +37,17 @@ The actions in this package are intended to support agents that want to interact
 - `withdraw`: Withdraw ETH or USDC from Compound V3 markets on Base.
 - `get_portfolio_details`: Get the portfolio details for the Compound V3 markets on Base.
 
-## Supported Compound Markets (aka. Comets)
+## Notes
 
-### Base
-- USDC Comet 
-  - Supply Assets: USDC, WETH, cbBTC, cbETH, wstETH
-  - Borrow Asset: USDC
+### Limitations and Assumptions
 
-### Base Sepolia
-- USDC Comet 
-  - Supply Assets: USDC, WETH
-  - Borrow Asset: USDC
-
-## Limitations and Assumptions
-- Only supports one Comet contract, the Base/Base Sepolia USDC Comet 
+- Only supports one Comet contract, the Base/Base Sepolia USDC Comet
 - The only borrowable asset is USDC as a result of the above.
 - The amounts sent to these actions are _whole units_ of the asset (e.g., 0.01 ETH, 100 USDC).
 - Token symbols are the `asset_id` (lowercase) rather than the symbol.
 
-## Funded by Compound Grants Program
-Compound Actions for AgentKit is funded by the Compound Grants Program. Learn more about the Grant on Questbook [here](https://new.questbook.app/dashboard/?role=builder&chainId=10&proposalId=678c218180bdbe26619c3ae8&grantId=66f29bb58868f5130abc054d). For support, please reach out the original author of this action provider: [@mikeghen](https://x.com/mikeghen).
+### Sample Integration Test Reference
 
-## Sample Integration Test Reference
 Integration tests are planned for Coinbase/Agentkit. In the meantime, you can use the following example to test the action provider, which is how the action provider is tested in the Coinbase/Agentkit repo:
 
 ```python
@@ -135,3 +142,21 @@ def test_compound_integration(wallet, compound_provider, weth_provider, cdp_prov
     assert "No supplied assets found in your Compound position." in portfolio_details
     assert "No borrowed assets found in your Compound position." in portfolio_details
 ```
+
+### Supported Compound Markets (aka. Comets)
+
+#### Base
+
+- USDC Comet
+  - Supply Assets: USDC, WETH, cbBTC, cbETH, wstETH
+  - Borrow Asset: USDC
+
+#### Base Sepolia
+
+- USDC Comet
+  - Supply Assets: USDC, WETH
+  - Borrow Asset: USDC
+
+### Funded by Compound Grants Program
+
+Compound Actions for AgentKit is funded by the Compound Grants Program. Learn more about the Grant on Questbook [here](https://new.questbook.app/dashboard/?role=builder&chainId=10&proposalId=678c218180bdbe26619c3ae8&grantId=66f29bb58868f5130abc054d). For support, please reach out the original author of this action provider: [@mikeghen](https://x.com/mikeghen).

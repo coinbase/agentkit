@@ -10,6 +10,7 @@ This guide covers Python-specific setup and development for AgentKit.
 - [Integrating into an AI Agent Framework](#integrating-into-an-ai-agent-framework)
 - [Testing](#testing)
 - [Code Style](#code-style)
+- [Documentation](#documentation)
 - [Changelog](#changelog)
 
 ## Development Setup
@@ -33,6 +34,8 @@ Once you have these installed, make sure you install the project dependencies by
 ## Adding an Action Provider
 
 An Action is an interface for an AI Agent to interact with the real world: any Python function that you can think of can be used by an Agent via an Action! Actions are grouped by Action Providers, which are classes that contain a collection of actions along with configuration and helper functions.
+
+You can use the `generate-action-provider` script to generate a new action provider. See the [Generate Action Provider](./python/coinbase-agentkit/scripts/generate_action_provider/README.md) for more information.
 
 Action Components:
 
@@ -77,7 +80,7 @@ Do not use the contract address as the destination address. If you are unsure of
 )
 ```
 
-- The prompt disambuguates the type of NFT by specifying "ERC-721"
+- The prompt disambiguates the type of NFT by specifying "ERC-721"
 - The prompt specifies that the destination address should not be the contract address
 - The prompt specifies that the LLM should ask the user for the destination address if it is unsure
 - Think about the best UX: if a contract address from a known list of addresses is required, you can instruct the LLM to use another action to get the list of addresses and prompt the user to choose an address from that list. For example, consider a DeFi action that allows a user to withdraw funds from a liquidity provider position. This action would take a contract address, so it would be valuable to have another action that can pull a list of addresses representing the user's positions. You can then instruct the LLM via the prompt to use that action in the case that no contract address is provided.
@@ -228,13 +231,17 @@ make lint
 make lint-fix
 ```
 
+## Documentation
+
+The majority of our documentation exists within the AgentKit repo itself, in the form of colocated `README.md` files and inline docstrings. When adding new functionality or changing documented behavior, please update the relevant `README.md` file and inline docstrings to reflect the changes. For example, if you're adding a new action provider, also include a `README.md` in your new folder (see [the ERC20 Action Provider README](https://github.com/coinbase/agentkit/blob/main/python/coinbase-agentkit/coinbase_agentkit/action_providers/erc20/README.md) as a reference). Or, if you're updating an existing action provider, update its `README.md` to reflect the changes. If it doesn't have a README, please add one! These are just a couple examples; docs exist throughout the codebase and most code changes will also require updates to the docs.
+
 ## Changelog
 
 We use [towncrier](https://towncrier.readthedocs.io/en/stable/index.html) to manage the changelog.
 
 Changelog entries should be in the past tense, and they should be as specific as possible. Some examples of good changelog entries:
 
-- Added a new action provider to interact with Fancy Protocl
+- Added a new action provider to interact with Fancy Protocol
 - Fixed a bug preventing wallet balances to be formatted correctly
 
 Changelog entries are stored in the `changelog.d` directory. Each changelog entry is stored as a markdown file named after the type of change it is and the issue number it is associated with. For example, a bug fix associated with issue #123 would be stored in `changelog.d/123.bugfix.md`. If your change does not have an associated issue, you can first create the Pull Request, and then use the PR number in the changelog entry filename.
@@ -251,7 +258,7 @@ poetry run towncrier create --content "Fixed a bug" 123.bugfix.md
 poetry run towncrier create --content "Added a new feature" 124.feature.md
 ```
 
-This will create a new changelog entry in the `changelog.d` directory, which should be committed along the changes in your Pull Request.
+This will create a new changelog entry in the `changelog.d` directory, which should be committed along with the changes in your Pull Request.
 
 The types of changes you can add are:
 

@@ -1,17 +1,21 @@
-<p align="center">
-  <img src="../../../../../assets/protocols/compound.svg" width="200" height="200">
-</p>
+# Compound Action Provider
 
-<h1 align="center">Compound Finance Actions for AI Agents to Lend and Borrow on Base</h1>
+This directory contains the **CompoundActionProvider** implementation, which provides actions to interact with **Compound Protocol** for lending and borrowing operations.
 
+## Directory Structure
 
-These actions allow you to supply, borrow, repay, withdraw ETH or USDC to Compound V3 markets through the Base USDC Comet Contract.
-
-> 🧪 **Try it on Base Sepolia First!**  
-> These actions work seamlessly on Base Sepolia testnet, allowing you to develop and test your agent's Compound interactions without using real funds. Once you're confident in your implementation, you can switch to Base mainnet for production use. 
+```
+compound/
+├── compoundActionProvider.ts         # Main provider with Compound functionality
+├── compoundActionProvider.test.ts    # Test file for Compound provider
+├── constants.ts                      # Compound contract constants
+├── schemas.ts                        # Lending/borrowing action schemas
+├── utils.ts                          # Compound utility functions
+├── index.ts                          # Main exports
+└── README.md                         # This file
+```
 
 ## Actions
-The actions in this package are intended to support agents that want to interact with Compound V3 markets on Base. It supports the following actions:
 
 - `supply`: Supply ETH or USDC to Compound V3 markets on Base.
 - `borrow`: Borrow ETH or USDC from Compound V3 markets on Base.
@@ -19,17 +23,34 @@ The actions in this package are intended to support agents that want to interact
 - `withdraw`: Withdraw ETH or USDC from Compound V3 markets on Base.
 - `get_portfolio`: Get the portfolio details for the Compound V3 markets on Base.
 
-## Supported Compound Markets (aka. Comets)
+## Adding New Actions
 
-### Base
-- USDC Comet 
+To add new Compound actions:
+
+1. Define your action schema in `schemas.ts`
+2. Implement the action in `compoundActionProvider.ts`
+3. Add tests in `compoundActionProvider.test.ts`
+
+## Network Support
+
+The Compound provider supports Base mainnet and Base sepolia.
+
+## Notes
+
+### Supported Compound Markets (aka. Comets)
+
+#### Base
+
+- USDC Comet
   - Supply Assets: USDC, WETH, cbBTC, cbETH, wstETH
   - Borrow Asset: USDC
 
-### Base Sepolia
-- USDC Comet 
+#### Base Sepolia
+
+- USDC Comet
   - Supply Assets: USDC, WETH
   - Borrow Asset: USDC
 
-## Funded by Compound Grants Program
+### Funded by Compound Grants Program
+
 Compound Actions for AgentKit is funded by the Compound Grants Program. Learn more about the Grant on Questbook [here](https://new.questbook.app/dashboard/?role=builder&chainId=10&proposalId=678c218180bdbe26619c3ae8&grantId=66f29bb58868f5130abc054d). For support, please reach out the original author of this action provider: [@mikeghen](https://x.com/mikeghen).

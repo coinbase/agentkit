@@ -1,0 +1,30 @@
+name: Publish AgentKit Model Context Protocol to NPM
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-npm-agentkit-model-context-protocol:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          registry-url: "https://registry.npmjs.org"
+          cache: "npm"
+          cache-dependency-path: ./typescript
+      - name: Install and build
+        working-directory: ./typescript
+        run: |
+          npm ci
+          npm run build
+      - name: Publish @coinbase/agentkit-model-context-protocol
+        working-directory: ./typescript/framework-extensions/model-context-protocol
+        run: |
+          npm publish --ignore-scripts --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

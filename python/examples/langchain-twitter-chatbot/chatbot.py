@@ -1,25 +1,22 @@
+import json
 import os
 import sys
-import json
 import time
-
-from dotenv import load_dotenv
-
-from langchain_core.messages import HumanMessage
-from langchain_openai import ChatOpenAI
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.prebuilt import create_react_agent
 
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
     CdpWalletProvider,
     CdpWalletProviderConfig,
-
-    wallet_action_provider,
     twitter_action_provider,
+    wallet_action_provider,
 )
 from coinbase_agentkit_langchain import get_langchain_tools
+from dotenv import load_dotenv
+from langchain_core.messages import HumanMessage
+from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.prebuilt import create_react_agent
 
 # Configure a file to persist the agent's CDP API Wallet Data.
 wallet_data_file = "wallet_data.txt"
@@ -44,13 +41,15 @@ def initialize_agent():
 
     wallet_provider = CdpWalletProvider(cdp_config)
 
-    agentkit = AgentKit(AgentKitConfig(
-        wallet_provider=wallet_provider,
-        action_providers=[
-            twitter_action_provider(),
-            wallet_action_provider(),
-        ]
-    ))
+    agentkit = AgentKit(
+        AgentKitConfig(
+            wallet_provider=wallet_provider,
+            action_providers=[
+                twitter_action_provider(),
+                wallet_action_provider(),
+            ],
+        )
+    )
 
     wallet_data_json = json.dumps(wallet_provider.export_wallet().to_dict())
 

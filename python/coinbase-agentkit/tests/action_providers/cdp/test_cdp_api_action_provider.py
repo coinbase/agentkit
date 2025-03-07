@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
+from coinbase_agentkit.__version__ import __version__
 from coinbase_agentkit.action_providers.cdp.cdp_api_action_provider import cdp_api_action_provider
 from coinbase_agentkit.network import Network
 from coinbase_agentkit.wallet_providers.cdp_wallet_provider import CdpProviderConfig
@@ -23,6 +24,8 @@ def test_provider_init_with_env_vars(mock_cdp_imports):
     mock_cdp.configure.assert_called_once_with(
         api_key_name=MOCK_API_KEY_NAME,
         private_key=MOCK_API_KEY_PRIVATE_KEY,
+        source="agentkit",
+        source_version=__version__,
     )
 
 
@@ -36,6 +39,8 @@ def test_provider_init_with_config(mock_cdp_imports):
     mock_cdp.configure.assert_called_once_with(
         api_key_name=MOCK_API_KEY_NAME,
         private_key=MOCK_API_KEY_PRIVATE_KEY,
+        source="agentkit",
+        source_version=__version__,
     )
 
 
@@ -47,6 +52,8 @@ def test_provider_init_without_config(mock_cdp_imports):
     mock_cdp.configure.assert_called_once_with(
         api_key_name=MOCK_API_KEY_NAME,
         private_key=MOCK_API_KEY_PRIVATE_KEY,
+        source="agentkit",
+        source_version=__version__,
     )
 
 

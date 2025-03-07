@@ -1,0 +1,111 @@
+"""Tests for {{ name_pascal }}ActionProvider."""
+
+{% if wallet_provider %}
+from unittest.mock import Mock
+{% endif %}
+
+import pytest
+
+from coinbase_agentkit.action_providers.{{ name }}.{{ name }}_action_provider import {{ name_pascal }}ActionProvider
+{% if protocol_family == "evm" and network_ids|length %}
+from coinbase_agentkit.network import NETWORK_ID_TO_CHAIN_ID, Network
+{% else %}
+from coinbase_agentkit.network import Network
+{% endif %}
+{% if wallet_provider %}
+from coinbase_agentkit.wallet_providers import {{ wallet_provider }}
+{% endif %}
+
+
+{%- if wallet_provider %}
+
+
+@pytest.fixture
+def mock_wallet_provider():
+    """Create a mock wallet provider for testing."""
+    mock = Mock(spec={{ wallet_provider }})
+    mock.get_network.return_value = Network(
+        protocol_family="{{ protocol_family }}",
+        {% if network_ids|length %}
+        network_id="{{ network_ids[0] }}",
+        {% if protocol_family == "evm" %}
+        chain_id=NETWORK_ID_TO_CHAIN_ID["{{ network_ids[0] }}"],
+        {% endif %}
+        {% else %}
+        network_id=None,
+        chain_id=None,
+        {% endif %}
+    )
+    return mock
+
+
+{%- endif %}
+
+
+@pytest.fixture
+def provider():
+    """Create a provider instance for testing."""
+    return {{ name_pascal }}ActionProvider()
+
+def test_initialization(provider):
+    """Test provider initialization."""
+    assert isinstance(provider, {{ name_pascal }}ActionProvider)
+    assert provider.name == "{{ name }}"
+
+{% if not protocol_family %}
+def test_supports_all_networks(provider):
+    """Test that provider supports all networks."""
+    network = Network(
+        protocol_family="any-protocol",
+        network_id="any-network",
+        chain_id="any-chain-id",
+    )
+    assert provider.supports_network(network) is True
+{% endif %}
+{% if protocol_family and not network_ids|length %}
+def test_supports_protocol_family(provider):
+    """Test that provider supports all networks in the protocol family."""
+    network = Network(
+        protocol_family="{{ protocol_family }}"
+    )
+    assert provider.supports_network(network) is True
+
+def test_does_not_support_other_protocols(provider):
+    """Test that provider does not support other protocol families."""
+    network = Network(protocol_family="other-protocol-family")
+    assert provider.supports_network(network) is False
+{% endif %}
+{% if protocol_family and network_ids|length %}
+def test_supports_configured_networks(provider):
+    """Test that provider supports configured networks."""
+    {% for networkId in network_ids %}
+    network = Network(
+        network_id="{{ networkId }}",
+        protocol_family="{{ protocol_family }}",
+        {% if protocol_family == "evm" %}
+        chain_id=NETWORK_ID_TO_CHAIN_ID["{{ networkId }}"],
+        {% endif %}
+    )
+    assert provider.supports_network(network) is True
+    {% endfor %}
+
+def test_does_not_support_other_networks(provider):
+    """Test that provider does not support other networks."""
+    network = Network(
+        protocol_family="{{ protocol_family }}",
+        network_id="other-network-id",
+        chain_id="999999"
+    )
+    assert provider.supports_network(network) is False
+{% endif %}
+
+{% if protocol_family %}
+def test_handles_invalid_network_objects(provider):
+    """Test that provider handles invalid network objects."""
+    network = Network(protocol_family="invalid")
+    assert provider.supports_network(network) is False
+    {% if network_ids|length %}
+    network = Network(protocol_family="{{ protocol_family }}")
+    assert provider.supports_network(network) is False
+    {% endif %}
+{% endif %}

@@ -13,14 +13,27 @@ import {
  * Determines the network family based on the provided network.
  *
  * @param {EVMNetwork | SVMNetwork} network - The network to check.
+ * @param {string} chainId - The chain ID to check.
  * @returns {"EVM" | "SVM" | undefined} The network family, or `undefined` if not recognized.
  */
-export function getNetworkFamily(network: EVMNetwork | SVMNetwork): "EVM" | "SVM" | undefined {
-  return EVM_NETWORKS.has(network as EVMNetwork)
-    ? "EVM"
-    : SVM_NETWORKS.has(network as SVMNetwork)
-      ? "SVM"
-      : undefined;
+export function getNetworkType(
+  network?: EVMNetwork | SVMNetwork,
+  chainId?: string,
+): "EVM" | "SVM" | "CUSTOM_EVM" | null {
+  if (network) {
+    if (EVM_NETWORKS.includes(network as EVMNetwork)) {
+      return "EVM";
+    }
+    if (SVM_NETWORKS.includes(network as SVMNetwork)) {
+      return "SVM";
+    }
+  }
+
+  if (chainId) {
+    return "CUSTOM_EVM";
+  }
+
+  return null;
 }
 
 /**
@@ -166,6 +179,7 @@ export const getWalletProviders = (network?: Network): WalletProviderChoice[] =>
  * @param {WalletProviderChoice} walletProvider - The selected wallet provider.
  * @param {Network} [network] - The optional blockchain network.
  * @param {string} [chainId] - The optional chain ID for the network.
+ * @param {string} [rpcUrl] - The optional RPC URL for the network.
  * @throws {Error} If neither `network` nor `chainId` are provided, or if the selected combination is invalid.
  * @returns {Promise<void>} A promise that resolves when the selection process is complete.
  */
@@ -174,19 +188,16 @@ export async function handleSelection(
   walletProvider: WalletProviderChoice,
   network?: Network,
   chainId?: string,
+  rpcUrl?: string,
 ) {
   const agentDir = path.join(root, "app", "api", "agent");
 
-  let networkFamily: ReturnType<typeof getNetworkFamily>;
-  if (network) {
-    networkFamily = getNetworkFamily(network);
-  } else if (chainId) {
-    networkFamily = "EVM";
-  } else {
+  const networkFamily = getNetworkType(network, chainId);
+  if (!networkFamily) {
     throw new Error("Unsupported network and chainId selected");
   }
 
-  const selectedRouteConfig = WalletProviderRouteConfigurations[networkFamily!][walletProvider];
+  const selectedRouteConfig = WalletProviderRouteConfigurations[networkFamily][walletProvider];
 
   if (!selectedRouteConfig) {
     throw new Error("Selected invalid network & wallet provider combination");
@@ -207,7 +218,14 @@ export async function handleSelection(
     ...["OPENAI_API_KEY=", ...selectedRouteConfig.env.required].join("\n"),
     // Finish with # Optional section
     "\n\n# Optional\n",
-    ...[`NETWORK_ID=${network}`, ...selectedRouteConfig.env.optional].join("\n"),
+    ...[
+      `NETWORK_ID=${network ?? ""}`,
+      rpcUrl ? `RPC_URL=${rpcUrl}` : null,
+      chainId ? `CHAIN_ID=${chainId}` : null,
+      ...selectedRouteConfig.env.optional,
+    ]
+      .filter(Boolean)
+      .join("\n"),
   ];
   await fs.writeFile(envPath, envLines);
 
@@ -235,4 +253,5 @@ export async function handleSelection(
   }
   await fs.rm(path.join(agentDir, "evm"), { recursive: true, force: true });
   await fs.rm(path.join(agentDir, "svm"), { recursive: true, force: true });
+  await fs.rm(path.join(agentDir, "custom-evm"), { recursive: true, force: true });
 }

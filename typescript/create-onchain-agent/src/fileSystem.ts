@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { optimizedCopy, toValidPackageName } from "./utils.js";
+import { optimizedCopy } from "./utils.js";
 
 const sourceDir = path.resolve(fileURLToPath(import.meta.url), "../../../templates/next");
 
@@ -70,7 +70,7 @@ export async function copyTemplate(projectName: string, packageName: string): Pr
 
   const pkgPath = path.join(root, "package.json");
   const pkg = JSON.parse(await fs.promises.readFile(pkgPath, "utf-8"));
-  pkg.name = packageName || toValidPackageName(projectName);
+  pkg.name = packageName;
 
   await fs.promises.writeFile(pkgPath, JSON.stringify(pkg, null, 2));
 

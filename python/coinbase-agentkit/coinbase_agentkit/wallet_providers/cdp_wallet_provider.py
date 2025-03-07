@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field
 from web3 import Web3
 from web3.types import BlockIdentifier, ChecksumAddress, HexStr, TxParams
 
+from ..__version__ import __version__
 from ..network import NETWORK_ID_TO_CHAIN, Network
 from .evm_wallet_provider import EvmGasConfig, EvmWalletProvider
 
@@ -33,7 +34,7 @@ class CdpProviderConfig(BaseModel):
 class CdpWalletProviderConfig(CdpProviderConfig):
     """Configuration options for CDP wallet provider."""
 
-    network_id: str | None = Field("base-sepolia", description="The network id")
+    network_id: str | None = Field(None, description="The network id")
     mnemonic_phrase: str | None = Field(None, description="The mnemonic phrase of the wallet")
     wallet_data: str | None = Field(None, description="The data of the CDP Wallet as a JSON string")
     gas: EvmGasConfig | None = Field(None, description="Gas configuration settings")
@@ -64,25 +65,29 @@ class CdpWalletProvider(EvmWalletProvider):
                 Cdp.configure(
                     api_key_name=api_key_name,
                     private_key=api_key_private_key.replace("\\n", "\n"),
+                    source="agentkit",
+                    source_version=__version__,
                 )
             else:
-                Cdp.configure_from_json()
+                Cdp.configure_from_json(source="agentkit", source_version=__version__)
 
             network_id = config.network_id or os.getenv("NETWORK_ID", "base-sepolia")
-            chain = NETWORK_ID_TO_CHAIN[network_id]
-            rpc_url = chain.rpc_urls["default"].http[0]
-
-            if not network_id:
-                raise ValueError("NETWORK_ID is required")
 
             if config.wallet_data:
                 wallet_data = WalletData.from_dict(json.loads(config.wallet_data))
-                self._wallet = Wallet.import_data(wallet_data)
+
+                wallet = Wallet.import_data(wallet_data)
+                network_id = wallet.network_id
+
+                self._wallet = wallet
             elif config.mnemonic_phrase:
                 phrase = MnemonicSeedPhrase(config.mnemonic_phrase)
                 self._wallet = Wallet.import_wallet(phrase, network_id)
             else:
                 self._wallet = Wallet.create(network_id=network_id)
+
+            chain = NETWORK_ID_TO_CHAIN[network_id]
+            rpc_url = chain.rpc_urls["default"].http[0]
 
             self._address = self._wallet.default_address.address_id
             self._network = Network(

@@ -6,26 +6,27 @@ import {
   WalletProviderRouteConfiguration,
 } from "./types";
 
-export const EVM_NETWORKS: Set<EVMNetwork> = new Set([
-  "ethereum-mainnet",
-  "ethereum-sepolia",
-  "polygon-mainnet",
-  "polygon-mumbai",
+export const EVM_NETWORKS: EVMNetwork[] = [
   "base-mainnet",
   "base-sepolia",
+  "ethereum-mainnet",
+  "ethereum-sepolia",
   "arbitrum-mainnet",
   "arbitrum-sepolia",
   "optimism-mainnet",
   "optimism-sepolia",
-]);
+  "polygon-mainnet",
+  "polygon-mumbai",
+];
 
-export const SVM_NETWORKS: Set<SVMNetwork> = new Set([
-  "solana-mainnet",
-  "solana-devnet",
-  "solana-testnet",
-]);
+export const SVM_NETWORKS: SVMNetwork[] = ["solana-mainnet", "solana-devnet", "solana-testnet"];
 
-const CDP_SUPPORTED_EVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["CDP", "Viem", "Privy"];
+const CDP_SUPPORTED_EVM_WALLET_PROVIDERS: WalletProviderChoice[] = [
+  "CDP",
+  "SmartWallet",
+  "Viem",
+  "Privy",
+];
 const SVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["SolanaKeypair", "Privy"];
 export const NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["Viem", "Privy"];
 
@@ -56,7 +57,7 @@ export const WalletProviderChoices: WalletProviderChoice[] = [
 ];
 
 export const WalletProviderRouteConfigurations: Record<
-  "EVM" | "SVM",
+  "EVM" | "CUSTOM_EVM" | "SVM",
   Partial<Record<WalletProviderChoice, WalletProviderRouteConfiguration>>
 > = {
   EVM: {
@@ -74,8 +75,8 @@ export const WalletProviderRouteConfigurations: Record<
           "Export private key from your Ethereum wallet and save",
           "Get keys from CDP Portal: https://portal.cdp.coinbase.com/",
         ],
-        required: ["PRIVATE_KEY=", "CDP_API_KEY_NAME=", "CDP_API_KEY_PRIVATE_KEY="],
-        optional: [],
+        required: ["PRIVATE_KEY="],
+        optional: ["CDP_API_KEY_NAME=", "CDP_API_KEY_PRIVATE_KEY="],
       },
       apiRoute: "evm/viem/route.ts",
     },
@@ -85,20 +86,41 @@ export const WalletProviderRouteConfigurations: Record<
           "Get keys from Privy Dashboard: https://dashboard.privy.io/",
           "Get keys from CDP Portal: https://portal.cdp.coinbase.com/",
         ],
-        required: [
-          "PRIVY_APP_ID=",
-          "PRIVY_APP_SECRET=",
-          "CDP_API_KEY_NAME=",
-          "CDP_API_KEY_PRIVATE_KEY=",
-        ],
+        required: ["PRIVY_APP_ID=", "PRIVY_APP_SECRET="],
         optional: [
           "CHAIN_ID=",
           "PRIVY_WALLET_ID=",
           "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY=",
           "PRIVY_WALLET_AUTHORIZATION_KEY_ID=",
+          "CDP_API_KEY_NAME=",
+          "CDP_API_KEY_PRIVATE_KEY=",
         ],
       },
       apiRoute: "evm/privy/route.ts",
+    },
+    SmartWallet: {
+      env: {
+        topComments: [
+          "Get keys from CDP Portal: https://portal.cdp.coinbase.com/",
+          "Optionally provide a private key, otherwise one will be generated",
+        ],
+        required: ["CDP_API_KEY_NAME=", "CDP_API_KEY_PRIVATE_KEY="],
+        optional: ["PRIVATE_KEY="],
+      },
+      apiRoute: "evm/smart/route.ts",
+    },
+  },
+  CUSTOM_EVM: {
+    Viem: {
+      env: {
+        topComments: [
+          "Export private key from your Ethereum wallet and save",
+          "Get keys from CDP Portal: https://portal.cdp.coinbase.com/",
+        ],
+        required: ["PRIVATE_KEY="],
+        optional: ["CDP_API_KEY_NAME=", "CDP_API_KEY_PRIVATE_KEY="],
+      },
+      apiRoute: "custom-evm/viem/route.ts",
     },
   },
   SVM: {
@@ -108,8 +130,8 @@ export const WalletProviderRouteConfigurations: Record<
           "Export private key from your Solana wallet and save",
           "Get keys from CDP Portal: https://portal.cdp.coinbase.com/",
         ],
-        required: ["SOLANA_PRIVATE_KEY=", "CDP_API_KEY_NAME=", "CDP_API_KEY_PRIVATE_KEY="],
-        optional: ["SOLANA_RPC_URL="],
+        required: ["SOLANA_PRIVATE_KEY="],
+        optional: ["SOLANA_RPC_URL=", "CDP_API_KEY_NAME=", "CDP_API_KEY_PRIVATE_KEY="],
       },
       apiRoute: "svm/solanaKeypair/route.ts",
     },
@@ -119,16 +141,13 @@ export const WalletProviderRouteConfigurations: Record<
           "Get keys from Privy Dashboard: https://dashboard.privy.io/",
           "Get keys from CDP Portal: https://portal.cdp.coinbase.com/",
         ],
-        required: [
-          "PRIVY_APP_ID=",
-          "PRIVY_APP_SECRET=",
-          "CDP_API_KEY_NAME=",
-          "CDP_API_KEY_PRIVATE_KEY=",
-        ],
+        required: ["PRIVY_APP_ID=", "PRIVY_APP_SECRET="],
         optional: [
           "PRIVY_WALLET_ID=",
           "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY=",
           "PRIVY_WALLET_AUTHORIZATION_KEY_ID=",
+          "CDP_API_KEY_NAME=",
+          "CDP_API_KEY_PRIVATE_KEY=",
         ],
       },
       apiRoute: "svm/privy/route.ts",

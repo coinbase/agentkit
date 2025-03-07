@@ -1,19 +1,19 @@
 import { AgentRequest, AgentResponse } from "@/app/types/api";
 import {
+  ActionProvider,
   AgentKit,
   cdpApiActionProvider,
-  erc20ActionProvider,
   jupiterActionProvider,
+  PrivyWalletConfig,
   PrivyWalletProvider,
-  pythActionProvider,
   splActionProvider,
   walletActionProvider,
-  wethActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
+import fs from "fs";
 import { NextResponse } from "next/server";
 
 /**
@@ -54,6 +54,9 @@ import { NextResponse } from "next/server";
 // The agent
 let agent: ReturnType<typeof createReactAgent>;
 
+// Configure a file to persist the agent's Prviy Wallet Data
+const WALLET_DATA_FILE = "wallet_data.txt";
+
 /**
  * Initializes and returns an instance of the AI agent.
  * If an agent instance already exists, it returns the existing one.
@@ -76,7 +79,7 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
     const llm = new ChatOpenAI({ model: "gpt-4o-mini" });
 
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
-    const walletProvider = await PrivyWalletProvider.configureWithWallet({
+    const config: PrivyWalletConfig = {
       appId: process.env.PRIVY_APP_ID as string,
       appSecret: process.env.PRIVY_APP_SECRET as string,
       walletId: process.env.PRIVY_WALLET_ID as string,
@@ -84,27 +87,40 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
       authorizationKeyId: process.env.PRIVY_WALLET_AUTHORIZATION_KEY_ID,
       chainType: "solana",
       networkId: process.env.NETWORK_ID,
-    });
+    };
+    // Try to load saved wallet data
+    if (fs.existsSync(WALLET_DATA_FILE)) {
+      const savedWallet = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8"));
+      config.walletId = savedWallet.walletId;
+      config.authorizationPrivateKey = savedWallet.authorizationPrivateKey;
+      config.networkId = savedWallet.networkId;
+    }
+    const walletProvider = await PrivyWalletProvider.configureWithWallet(config);
 
     // Initialize AgentKit: https://docs.cdp.coinbase.com/agentkit/docs/agent-actions
-    const agentkit = await AgentKit.from({
-      walletProvider,
-      actionProviders: [
-        walletActionProvider(),
-        splActionProvider(),
-        jupiterActionProvider(),
-        // The CDP API Action Provider provides faucet functionality on solana-devnet. Can be removed if you do not need this functionality.
+    const actionProviders: ActionProvider[] = [
+      walletActionProvider(),
+      splActionProvider(),
+      jupiterActionProvider(),
+    ];
+    const canUseCdpApi = process.env.CDP_API_KEY_NAME && process.env.CDP_API_KEY_PRIVATE_KEY;
+    if (canUseCdpApi) {
+      actionProviders.push(
         cdpApiActionProvider({
           apiKeyName: process.env.CDP_API_KEY_NAME,
           apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
         }),
-      ],
+      );
+    }
+    const agentkit = await AgentKit.from({
+      walletProvider,
+      actionProviders,
     });
     const tools = await getLangChainTools(agentkit);
     const memory = new MemorySaver();
 
     // Initialize Agent
-    const canUseFaucet = walletProvider.getNetwork().networkId == "solana-devnet";
+    const canUseFaucet = walletProvider.getNetwork().networkId == "solana-devnet" && canUseCdpApi;
     const faucetMessage = `If you ever need funds, you can request them from the faucet.`;
     const cantUseFaucetMessage = `If you need funds, you can provide your wallet details and request funds from the user.`;
     agent = createReactAgent({
@@ -122,6 +138,10 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
         restating your tools' descriptions unless it is explicitly requested.
         `,
     });
+
+    // Save wallet data
+    const exportedWallet = walletProvider.exportWallet();
+    fs.writeFileSync(WALLET_DATA_FILE, JSON.stringify(exportedWallet));
 
     return agent;
   } catch (error) {
