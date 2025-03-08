@@ -26,7 +26,7 @@ jobs:
       - name: Check for modified Python files in coinbase-agentkit
         if: steps.check-label.outputs.skip != 'true'
         id: changed-agent-files
-        uses: tj-actions/changed-files@v39
+        uses: tj-actions/changed-files@v41
         with:
           files: |
             python/coinbase-agentkit/**/*.py
@@ -34,7 +34,7 @@ jobs:
       - name: Check for modified Python files in create-onchain-agent
         if: steps.check-label.outputs.skip != 'true'
         id: changed-create-files
-        uses: tj-actions/changed-files@v39
+        uses: tj-actions/changed-files@v41
         with:
           files: |
             python/create-onchain-agent/**/*.py
@@ -42,7 +42,7 @@ jobs:
       - name: Check for modified Python files in langchain extension
         if: steps.check-label.outputs.skip != 'true'
         id: changed-langchain-files
-        uses: tj-actions/changed-files@v39
+        uses: tj-actions/changed-files@v41
         with:
           files: |
             python/framework-extensions/langchain/**/*.py
@@ -97,7 +97,7 @@ jobs:
       - name: Check for modified TypeScript files
         if: steps.check-label.outputs.skip != 'true'
         id: changed-ts-files
-        uses: tj-actions/changed-files@v39
+        uses: tj-actions/changed-files@v41
         with:
           files: |
             typescript/**/*.ts
