@@ -44,6 +44,8 @@
     "@coinbase/coinbase-sdk": "^0.20.0",
     "@jup-ag/api": "^6.0.39",
     "@privy-io/server-auth": "^1.18.4",
+    "@safe-global/api-kit": "^2.5.11",
+    "@safe-global/protocol-kit": "^5.2.4",
     "@solana/spl-token": "^0.4.12",
     "@solana/web3.js": "^1.98.0",
     "md5": "^2.3.0",

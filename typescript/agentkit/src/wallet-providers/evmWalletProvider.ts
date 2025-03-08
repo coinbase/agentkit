@@ -9,6 +9,7 @@ import {
   ContractFunctionName,
   Abi,
   ContractFunctionArgs,
+  PublicClient,
 } from "viem";
 
 /**
@@ -17,6 +18,14 @@ import {
  * @abstract
  */
 export abstract class EvmWalletProvider extends WalletProvider {
+  /**
+   * Sign a hash.
+   *
+   * @param hash - The hash to sign.
+   * @returns The signed hash.
+   */
+  abstract signHash(hash: `0x${string}`): Promise<`0x${string}`>;
+
   /**
    * Sign a message.
    *
@@ -70,4 +79,11 @@ export abstract class EvmWalletProvider extends WalletProvider {
   >(
     params: ReadContractParameters<abi, functionName, args>,
   ): Promise<ReadContractReturnType<abi, functionName, args>>;
+
+  /**
+   * Get the public client.
+   *
+   * @returns The public client.
+   */
+  abstract getPublicClient(): PublicClient;
 }

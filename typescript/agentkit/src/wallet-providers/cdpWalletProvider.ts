@@ -193,6 +193,27 @@ export class CdpWalletProvider extends EvmWalletProvider {
   }
 
   /**
+   * Signs a hash.
+   *
+   * @param hash - The hash to sign.
+   * @returns The signed hash.
+   */
+  async signHash(hash: `0x${string}`): Promise<`0x${string}`> {
+    if (!this.#cdpWallet) {
+      throw new Error("Wallet not initialized");
+    }
+
+    // Use the wallet's createPayloadSignature method with the raw hash
+    const payload = await this.#cdpWallet.createPayloadSignature(hash);
+
+    if (payload.getStatus() === "pending" && payload?.wait) {
+      await payload.wait(); // needed for Server-Signers
+    }
+
+    return payload.getSignature() as `0x${string}`;
+  }
+
+  /**
    * Signs a message.
    *
    * @param message - The message to sign.
@@ -275,7 +296,7 @@ export class CdpWalletProvider extends EvmWalletProvider {
     }
 
     const preparedTransaction = await this.prepareTransaction(
-      transaction.to!,
+      transaction.to! as `0x${string}`,
       transaction.value!,
       transaction.data!,
     );
@@ -554,6 +575,15 @@ export class CdpWalletProvider extends EvmWalletProvider {
     }
 
     return this.#cdpWallet.export();
+  }
+
+  /**
+   * Gets the public client.
+   *
+   * @returns The public client.
+   */
+  getPublicClient(): PublicClient {
+    return this.#publicClient;
   }
 
   /**
