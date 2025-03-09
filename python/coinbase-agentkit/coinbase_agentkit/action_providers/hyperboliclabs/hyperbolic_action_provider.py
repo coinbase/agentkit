@@ -28,11 +28,11 @@ from .utils import get_api_key
 class HyperbolicActionProvider(ActionProvider):
     """Provides unified access to all Hyperbolic platform services.
 
-    This provider aggregates functionality from all Hyperbolic sub-providers:
-    - marketplace: GPU compute resources (rental, SSH, status)
-    - billing: Balance, spending history
-    - ai: Text, image, and audio generation
-    - settings: Account settings management
+    This provider aggregates functionality from all Hyperbolic action providers:
+    - ai: text, image, and audio generation
+    - billing: balance, spending history
+    - marketplace: GPU compute resources
+    - settings: account settings management
 
     It requires an API key which can be provided directly or through the 
     HYPERBOLIC_API_KEY environment variable.

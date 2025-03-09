@@ -1,10 +1,10 @@
-"""Test fixtures for Hyperbolic billing service."""
+"""Test fixtures for Hyperbolic settings service."""
 
 from unittest.mock import patch
 
 import pytest
 
-from coinbase_agentkit.action_providers.hyperboliclabs.billing.service import Billing
+from coinbase_agentkit.action_providers.hyperboliclabs.settings.service import Settings
 
 
 @pytest.fixture
@@ -21,13 +21,13 @@ def mock_request():
 
 
 @pytest.fixture
-def billing(api_key: str):
-    """Create a Billing service instance for testing.
+def settings(api_key: str):
+    """Create a Settings service instance for testing.
     
     Args:
         api_key: API key for authentication.
     
     Returns:
-        Billing: A billing service instance initialized with the API key.
+        Settings: A settings service instance initialized with the API key.
     """
-    return Billing(api_key) 
+    return Settings(api_key)

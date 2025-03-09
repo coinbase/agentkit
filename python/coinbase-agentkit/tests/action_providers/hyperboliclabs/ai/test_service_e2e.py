@@ -26,7 +26,7 @@ from coinbase_agentkit.action_providers.hyperboliclabs.ai.models import (
     ImageGenerationRequest,
     ImageGenerationResponse,
 )
-from coinbase_agentkit.action_providers.hyperboliclabs.utils import save_base64_image
+from coinbase_agentkit.action_providers.hyperboliclabs.ai.utils import save_base64_image
 
 
 def encode_image(img):

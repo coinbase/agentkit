@@ -236,7 +236,10 @@ Notes:
             str: A JSON string containing the generated audio or error details.
         """
         try:
-            # Validate arguments using schema
+            # Handle string input by converting to a dictionary
+            if isinstance(args, str):
+                args = {"text": args}
+                
             validated_args = GenerateAudioSchema(**args)
             
             # Create request

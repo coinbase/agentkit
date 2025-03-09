@@ -10,11 +10,9 @@ from ....network import Network
 from ...action_decorator import create_action
 from ...action_provider import ActionProvider
 from .schemas import LinkWalletAddressSchema
-from ..services import Settings
-from ..utils import (
-    format_wallet_link_response,
-    get_api_key,
-)
+from .service import Settings
+from .utils import format_wallet_link_response
+from ..utils import get_api_key
 
 
 class HyperbolicSettingsActionProvider(ActionProvider):

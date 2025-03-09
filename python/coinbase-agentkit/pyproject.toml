@@ -84,6 +84,7 @@ name = "Added"
 name = "Fixed"
 
 [tool.pytest.ini_options]
+addopts = "-m 'not e2e'"
 markers = [
     "e2e: marks tests as end-to-end tests that interact with real services",
     "manual: marks tests that should only be run manually (e.g., tests that incur costs)"

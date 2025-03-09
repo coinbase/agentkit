@@ -15,19 +15,16 @@ from coinbase_agentkit.action_providers.hyperboliclabs.ai.models import (
 )
 from coinbase_agentkit.action_providers.hyperboliclabs.ai.service import AIService
 
-# Test constants
-TEST_API_KEY = ""
 
-
-def test_ai_service_init():
+def test_ai_service_init(api_key):
     """Test AI service initialization."""
-    service = AIService(TEST_API_KEY)
+    service = AIService(api_key)
     assert service.base_url == AI_SERVICES_BASE_URL
 
 
-def test_ai_text_generation(mock_request):
+def test_ai_text_generation(mock_request, api_key):
     """Test text generation with different message types."""
-    service = AIService(TEST_API_KEY)
+    service = AIService(api_key)
     model = "meta-llama/Meta-Llama-3-70B-Instruct"
 
     mock_request.return_value.json.return_value = {
@@ -80,9 +77,9 @@ def test_ai_text_generation(mock_request):
     assert response.usage.total_tokens == 30
 
 
-def test_ai_image_generation(mock_request):
+def test_ai_image_generation(mock_request, api_key):
     """Test image generation with different parameters."""
-    service = AIService(TEST_API_KEY)
+    service = AIService(api_key)
     model = SUPPORTED_IMAGE_MODELS[0]  # Use the first supported model
 
     mock_request.return_value.json.return_value = {
@@ -146,9 +143,9 @@ def test_ai_image_generation(mock_request):
     assert response.inference_time == 2.5
 
 
-def test_ai_audio_generation(mock_request):
+def test_ai_audio_generation(mock_request, api_key):
     """Test audio generation with different parameters."""
-    service = AIService(TEST_API_KEY)
+    service = AIService(api_key)
     speaker = "EN-US"
     language = "EN"
 
@@ -182,9 +179,9 @@ def test_ai_audio_generation(mock_request):
     assert response.duration == 3.5
 
 
-def test_ai_service_error_handling(mock_request):
+def test_ai_service_error_handling(mock_request, api_key):
     """Test error handling in AI service."""
-    service = AIService(TEST_API_KEY)
+    service = AIService(api_key)
 
     # Test text generation error
     mock_request.side_effect = requests.exceptions.HTTPError(
@@ -209,9 +206,9 @@ def test_ai_service_error_handling(mock_request):
         service.generate_text(request)
 
 
-def test_ai_image_generation_invalid_model():
+def test_ai_image_generation_invalid_model(api_key):
     """Test image generation with invalid model."""
-    service = AIService(TEST_API_KEY)
+    service = AIService(api_key)
 
     # Test with invalid model
     request = ImageGenerationRequest(

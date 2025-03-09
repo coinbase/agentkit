@@ -6,8 +6,7 @@ import pytest
 
 from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.service import Marketplace
 
-# Test constants
-TEST_API_KEY = ""
+# Test constants for marketplace-specific tests
 TEST_CLUSTER = "test-cluster"
 TEST_NODE = "test-node"
 TEST_GPU_COUNT = 2
@@ -21,17 +20,20 @@ def mock_request():
     Returns:
         MagicMock: A mock object that simulates the requests.request function.
     """
-    with patch("coinbase_agentkit.action_providers.hyperboliclabs.services.base.requests.request") as mock:
+    with patch("coinbase_agentkit.action_providers.hyperboliclabs.service.requests.request") as mock:
         mock.return_value.status_code = 200
         mock.return_value.json.return_value = {"status": "success"}
         yield mock
 
 
 @pytest.fixture
-def marketplace():
+def marketplace(api_key: str):
     """Create a Marketplace service instance for testing.
     
+    Args:
+        api_key: API key for authentication.
+    
     Returns:
-        Marketplace: A marketplace service instance initialized with the test API key.
+        Marketplace: A marketplace service instance initialized with the API key.
     """
-    return Marketplace(TEST_API_KEY)
+    return Marketplace(api_key)

@@ -8,7 +8,7 @@ from .models import (
     BillingPurchaseHistoryResponse,
     InstanceHistoryResponse,
 )
-from ..services.base import Base
+from ..service import Base
 
 
 class Billing(Base):
