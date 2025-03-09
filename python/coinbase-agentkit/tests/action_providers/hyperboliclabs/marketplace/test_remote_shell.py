@@ -6,7 +6,7 @@ from unittest.mock import Mock, PropertyMock, patch
 import pytest
 
 from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.action_provider import (
-    HyperbolicMarketplaceActionProvider,
+    MarketplaceActionProvider,
 )
 from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.utils import (
     SSHManager, ssh_manager
@@ -60,9 +60,9 @@ def mock_rented_instances_response():
 
 
 @pytest.fixture
-def provider():
+def provider(mock_api_key):
     """Create HyperbolicMarketplaceActionProvider instance with test API key."""
-    return HyperbolicMarketplaceActionProvider(api_key="test-api-key")
+    return MarketplaceActionProvider(api_key=mock_api_key)
 
 
 @pytest.fixture(autouse=True)

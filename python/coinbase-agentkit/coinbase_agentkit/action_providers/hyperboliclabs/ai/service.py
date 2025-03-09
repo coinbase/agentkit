@@ -34,17 +34,13 @@ class AIService(Base):
 
         Returns:
             ChatCompletionResponse: The chat completion response.
-
-        Raises:
-            requests.exceptions.RequestException: If the API request fails.
-            pydantic.ValidationError: If the request or response validation fails.
         """
-        response_data = self.make_request(
+        response = self.make_request(
             endpoint=AI_SERVICES_ENDPOINTS["TEXT_GENERATION"],
             data=request.model_dump(exclude_none=True),
         )
 
-        return ChatCompletionResponse(**response_data)
+        return ChatCompletionResponse(**response.json())
 
     def generate_image(
         self,
@@ -57,45 +53,34 @@ class AIService(Base):
 
         Returns:
             ImageGenerationResponse: The image generation response.
-
-        Raises:
-            requests.exceptions.RequestException: If the API request fails.
-            ValueError: If the model is not supported.
-            pydantic.ValidationError: If the request or response validation fails.
         """
-        # Validate model
         if request.model_name not in SUPPORTED_IMAGE_MODELS:
             raise ValueError(
                 f"Model {request.model_name} not supported. Use one of: {SUPPORTED_IMAGE_MODELS}"
             )
 
-        response_data = self.make_request(
+        response = self.make_request(
             endpoint=AI_SERVICES_ENDPOINTS["IMAGE_GENERATION"],
             data=request.model_dump(exclude_none=True),
         )
 
-        return ImageGenerationResponse(**response_data)
+        return ImageGenerationResponse(**response.json())
 
     def generate_audio(
         self,
         request: AudioGenerationRequest,
     ) -> AudioGenerationResponse:
-        """Generate audio from text using specified language and speaker.
+        """Generate audio using specified model.
 
         Args:
             request: The AudioGenerationRequest object containing the request parameters.
 
         Returns:
-            AudioGenerationResponse: The audio generation response containing base64 encoded MP3.
-
-        Raises:
-            requests.exceptions.RequestException: If the API request fails.
-            ValueError: If language not supported or speaker not valid for language.
-            pydantic.ValidationError: If the request or response validation fails.
+            AudioGenerationResponse: The audio generation response.
         """
-        response_data = self.make_request(
+        response = self.make_request(
             endpoint=AI_SERVICES_ENDPOINTS["AUDIO_GENERATION"],
             data=request.model_dump(exclude_none=True),
         )
 
-        return AudioGenerationResponse(**response_data) 
+        return AudioGenerationResponse(**response.json()) 

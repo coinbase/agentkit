@@ -5,11 +5,11 @@ including managing GPU instances and SSH access.
 """
 
 from .action_provider import (
-    HyperbolicMarketplaceActionProvider,
+    MarketplaceActionProvider,
     hyperbolic_marketplace_action_provider,
 )
 
 __all__ = [
-    "HyperbolicMarketplaceActionProvider",
+    "MarketplaceActionProvider",
     "hyperbolic_marketplace_action_provider",
 ]

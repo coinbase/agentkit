@@ -5,9 +5,9 @@ from unittest.mock import Mock, patch
 import pytest
 
 from coinbase_agentkit.action_providers.hyperboliclabs.billing import (
-    HyperbolicBillingActionProvider,
+    BillingActionProvider,
 )
-from coinbase_agentkit.action_providers.hyperboliclabs.billing.models import (
+from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.models import (
     InstanceHistoryResponse,
     InstanceHistoryEntry,
     HardwareInfo,
@@ -17,9 +17,9 @@ from coinbase_agentkit.action_providers.hyperboliclabs.billing.models import (
 
 
 @pytest.fixture
-def provider():
+def provider(mock_api_key):
     """Create HyperbolicBillingActionProvider instance with test API key."""
-    return HyperbolicBillingActionProvider(api_key="test-api-key")
+    return BillingActionProvider(api_key=mock_api_key)
 
 
 def test_get_spend_history_success(provider):
@@ -67,7 +67,7 @@ def test_get_spend_history_success(provider):
     ]
     
     # Mock the service method
-    provider.billing.get_instance_history = Mock(
+    provider.marketplace.get_instance_history = Mock(
         return_value=InstanceHistoryResponse(instance_history=instance_entries)
     )
 
@@ -96,7 +96,7 @@ def test_get_spend_history_success(provider):
 def test_get_spend_history_empty(provider):
     """Test get_spend_history action with empty history."""
     # Mock the service method
-    provider.billing.get_instance_history = Mock(
+    provider.marketplace.get_instance_history = Mock(
         return_value=InstanceHistoryResponse(instance_history=[])
     )
 
@@ -108,7 +108,7 @@ def test_get_spend_history_empty(provider):
 def test_get_spend_history_api_error(provider):
     """Test get_spend_history action with API error."""
     # Setup mock to raise exception
-    provider.billing.get_instance_history = Mock(side_effect=Exception("API Error"))
+    provider.marketplace.get_instance_history = Mock(side_effect=Exception("API Error"))
 
     # Call the method
     result = provider.get_spend_history({})
@@ -118,7 +118,7 @@ def test_get_spend_history_api_error(provider):
 def test_get_spend_history_invalid_response(provider):
     """Test get_spend_history action with invalid response format."""
     # Mock the service method to return an invalid response
-    provider.billing.get_instance_history = Mock(side_effect=Exception("Invalid response"))
+    provider.marketplace.get_instance_history = Mock(side_effect=Exception("Invalid response"))
 
     # Call the method
     result = provider.get_spend_history({})
@@ -148,7 +148,7 @@ def test_get_spend_history_malformed_instance(provider):
     )
     
     # Mock the service method
-    provider.billing.get_instance_history = Mock(
+    provider.marketplace.get_instance_history = Mock(
         return_value=InstanceHistoryResponse(instance_history=[instance_entry])
     )
 

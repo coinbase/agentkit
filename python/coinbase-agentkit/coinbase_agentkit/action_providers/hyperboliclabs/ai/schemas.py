@@ -14,6 +14,10 @@ class GenerateTextSchema(BaseModel):
         default="meta-llama/Meta-Llama-3-70B-Instruct",
         description="The model to use for text generation",
     )
+    system_prompt: str | None = Field(
+        default=None,
+        description="Optional system prompt to guide the model's behavior",
+    )
 
 
 class GenerateImageSchema(BaseModel):

@@ -17,7 +17,7 @@ from .schemas import (
     SSHAccessSchema,
     TerminateComputeSchema,
 )
-from .service import Marketplace
+from .service import MarketplaceService
 from .utils import (
     format_gpu_instance,
     format_gpu_status,
@@ -28,7 +28,7 @@ from .utils import (
 )
 
 
-class HyperbolicMarketplaceActionProvider(ActionProvider):
+class MarketplaceActionProvider(ActionProvider):
     """Provides actions for interacting with Hyperbolic marketplace.
 
     This provider enables interaction with the Hyperbolic marketplace for GPU compute resources.
@@ -59,7 +59,7 @@ class HyperbolicMarketplaceActionProvider(ActionProvider):
                 "or set the HYPERBOLIC_API_KEY environment variable."
             ) from e
 
-        self.marketplace = Marketplace(self.api_key)
+        self.marketplace = MarketplaceService(self.api_key)
 
     @create_action(
         name="get_available_gpus",
@@ -244,7 +244,7 @@ Notes:
             response = self.marketplace.rent_instance(validated_args)
 
             # Format the response with next steps
-            return format_rent_compute_response(response.model_dump())
+            return format_rent_compute_response(response)
 
         except Exception as e:
             return f"Error renting compute: {e}"
@@ -293,7 +293,7 @@ Important notes:
             response = self.marketplace.terminate_instance(validated_args)
 
             # Format the response with next steps
-            return format_terminate_compute_response(response.model_dump())
+            return format_terminate_compute_response(response)
 
         except Exception as e:
             return f"Error terminating compute: {e}"
@@ -471,7 +471,7 @@ Important notes:
 
 def hyperbolic_marketplace_action_provider(
     api_key: str | None = None,
-) -> HyperbolicMarketplaceActionProvider:
+) -> MarketplaceActionProvider:
     """Create and return a new HyperbolicMarketplaceActionProvider instance.
 
     Args:
@@ -484,4 +484,4 @@ def hyperbolic_marketplace_action_provider(
     Raises:
         ValueError: If API key is not provided and not found in environment.
     """
-    return HyperbolicMarketplaceActionProvider(api_key=api_key) 
+    return MarketplaceActionProvider(api_key=api_key) 

@@ -11,9 +11,8 @@ from typing import Any
 from .models import (
     BillingPurchaseHistoryResponse,
     BillingPurchaseHistoryEntry,
-    InstanceHistoryResponse,
-    InstanceHistoryEntry,
 )
+from ..marketplace.models import InstanceHistoryResponse
 
 
 def calculate_duration_seconds(start_time: str, end_time: str) -> float:

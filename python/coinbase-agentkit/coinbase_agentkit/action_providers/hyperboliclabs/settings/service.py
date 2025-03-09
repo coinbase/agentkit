@@ -1,13 +1,14 @@
 """Service for account settings operations."""
 
 from typing import Any
+import requests
 
 from ..constants import SETTINGS_BASE_URL, SETTINGS_ENDPOINTS
 from ..service import Base
-from .models import WalletLinkResponse
+from .models import WalletLinkRequest, WalletLinkResponse
 
 
-class Settings(Base):
+class SettingsService(Base):
     """Service for account settings operations."""
 
     def __init__(self, api_key: str):
@@ -19,21 +20,14 @@ class Settings(Base):
         """
         super().__init__(api_key, SETTINGS_BASE_URL)
 
-    def link_wallet(self, wallet_address: str) -> WalletLinkResponse:
+    def link_wallet(self, request: WalletLinkRequest) -> WalletLinkResponse:
         """Link a wallet address to the Hyperbolic account.
 
         Args:
-            wallet_address: The wallet address to link.
+            request: The wallet link request containing the wallet address.
 
         Returns:
             WalletLinkResponse: The wallet linking response data.
-
-        Raises:
-            requests.exceptions.RequestException: If the API request fails.
-
         """
-        response_data = self.make_request(
-            endpoint=SETTINGS_ENDPOINTS["LINK_WALLET"], data={"wallet_address": wallet_address}
-        )
-        
-        return WalletLinkResponse.model_validate(response_data) 
+        response = self.make_request(endpoint=SETTINGS_ENDPOINTS["LINK_WALLET"], data=request.model_dump())
+        return WalletLinkResponse(**response.json()) 

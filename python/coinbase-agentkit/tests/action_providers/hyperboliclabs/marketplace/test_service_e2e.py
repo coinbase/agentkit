@@ -103,7 +103,7 @@ def test_marketplace_rented_instances(marketplace):
 
 
 @pytest.mark.e2e
-@pytest.mark.skip(reason="This test rents actual GPU instances and incurs costs. Only run manually.")
+# @pytest.mark.skip(reason="This test rents actual GPU instances and incurs costs. Only run manually.")
 def test_marketplace_rent(marketplace, rented_instance):
     """Test renting a GPU instance.
 
@@ -141,7 +141,7 @@ def test_marketplace_rent(marketplace, rented_instance):
 
 
 @pytest.mark.e2e
-@pytest.mark.skip(reason="This test terminates actual GPU instances and should only be run manually.")
+# @pytest.mark.skip(reason="This test terminates actual GPU instances and should only be run manually.")
 def test_marketplace_terminate(marketplace, rented_instance):
     """Test terminating a GPU instance.
 

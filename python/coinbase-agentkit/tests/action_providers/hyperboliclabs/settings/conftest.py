@@ -1,24 +1,12 @@
 """Test fixtures for Hyperbolic settings service."""
 
 from unittest.mock import patch
+import secrets
 
 import pytest
 
-from coinbase_agentkit.action_providers.hyperboliclabs.settings.service import Settings
-
-
-@pytest.fixture
-def mock_request():
-    """Mock the request function for testing.
-    
-    Returns:
-        MagicMock: A mock object that simulates the requests.request function.
-    """
-    with patch("coinbase_agentkit.action_providers.hyperboliclabs.service.requests.request") as mock:
-        mock.return_value.status_code = 200
-        mock.return_value.json.return_value = {"status": "success"}
-        yield mock
-
+from coinbase_agentkit.action_providers.hyperboliclabs.settings.action_provider import SettingsActionProvider
+from coinbase_agentkit.action_providers.hyperboliclabs.settings.service import SettingsService
 
 @pytest.fixture
 def settings(api_key: str):
@@ -30,4 +18,26 @@ def settings(api_key: str):
     Returns:
         Settings: A settings service instance initialized with the API key.
     """
-    return Settings(api_key)
+    return SettingsService(api_key)
+
+@pytest.fixture
+def provider(mock_api_key):
+    """Create a HyperbolicSettingsActionProvider with a mock API key.
+    
+    Args:
+        mock_api_key: Mock API key for authentication.
+        
+    Returns:
+        HyperbolicSettingsActionProvider: Provider with mock API key.
+    """
+    return SettingsActionProvider(api_key=mock_api_key)
+
+@pytest.fixture
+def random_eth_address():
+    """Generate a random Ethereum address for testing.
+    
+    Returns:
+        str: A random Ethereum address with 0x prefix.
+    """
+    # Create a random 20 byte (40 hex char) address
+    return "0x" + secrets.token_hex(20)

@@ -24,7 +24,7 @@ from .schemas import (
 from ..utils import get_api_key
 
 
-class HyperbolicAIActionProvider(ActionProvider):
+class AIActionProvider(ActionProvider):
     """Provides actions for interacting with Hyperbolic AI services.
 
     This provider enables interaction with the Hyperbolic AI services for text, image
@@ -273,7 +273,7 @@ Notes:
 
 def hyperbolic_ai_action_provider(
     api_key: Optional[str] = None,
-) -> HyperbolicAIActionProvider:
+) -> AIActionProvider:
     """Create and return a new HyperbolicAIActionProvider instance.
 
     Args:
@@ -286,4 +286,4 @@ def hyperbolic_ai_action_provider(
     Raises:
         ValueError: If API key is not provided and not found in environment.
     """
-    return HyperbolicAIActionProvider(api_key=api_key) 
+    return AIActionProvider(api_key=api_key) 

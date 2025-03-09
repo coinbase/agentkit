@@ -5,37 +5,37 @@ from unittest.mock import patch
 import pytest
 
 from coinbase_agentkit.action_providers.hyperboliclabs.billing.action_provider import (
-    HyperbolicBillingActionProvider,
+    BillingActionProvider,
     hyperbolic_billing_action_provider,
 )
 from coinbase_agentkit.network import Network
 
 
-def test_init_with_api_key():
+def test_init_with_api_key(mock_api_key):
     """Test initialization with API key."""
-    provider = HyperbolicBillingActionProvider(api_key="test_key")
+    provider = BillingActionProvider(api_key=mock_api_key)
     assert provider is not None
-    assert provider.api_key == "test_key"
+    assert provider.api_key == mock_api_key
 
 
-def test_init_with_env_var():
+def test_init_with_env_var(mock_api_key):
     """Test initialization with environment variable."""
-    with patch.dict(os.environ, {"HYPERBOLIC_API_KEY": "test_key"}):
-        provider = HyperbolicBillingActionProvider()
+    with patch.dict(os.environ, {"HYPERBOLIC_API_KEY": mock_api_key}):
+        provider = BillingActionProvider()
         assert provider is not None
-        assert provider.api_key == "test_key"
+        assert provider.api_key == mock_api_key
 
 
 def test_init_missing_api_key():
     """Test initialization with missing API key."""
     with patch.dict(os.environ, clear=True):
         with pytest.raises(ValueError):
-            HyperbolicBillingActionProvider()
+            BillingActionProvider()
 
 
-def test_supports_network():
+def test_supports_network(mock_api_key):
     """Test supports_network method."""
-    provider = HyperbolicBillingActionProvider(api_key="test_key")
+    provider = BillingActionProvider(api_key=mock_api_key)
     network = Network(
         name="test_network",
         protocol_family="ethereum",
@@ -45,8 +45,8 @@ def test_supports_network():
     assert provider.supports_network(network) is True
 
 
-def test_factory_function():
+def test_factory_function(mock_api_key):
     """Test the factory function."""
-    with patch("coinbase_agentkit.action_providers.hyperboliclabs.billing.action_provider.HyperbolicBillingActionProvider") as mock:
-        hyperbolic_billing_action_provider("test_key")
-        mock.assert_called_once_with(api_key="test_key") 
+    with patch("coinbase_agentkit.action_providers.hyperboliclabs.billing.action_provider.BillingActionProvider") as mock:
+        hyperbolic_billing_action_provider(mock_api_key)
+        mock.assert_called_once_with(api_key=mock_api_key) 

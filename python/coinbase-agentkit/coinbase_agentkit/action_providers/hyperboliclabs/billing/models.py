@@ -63,25 +63,6 @@ class HardwareInfo(BaseModel):
     ram: List[RamHardware] | None = Field(None, description="List of RAM specifications")
 
 
-class InstanceHistoryEntry(BaseModel):
-    """Instance history entry."""
-
-    instance_name: str = Field(..., description="Name of the instance")
-    started_at: str = Field(..., description="Start time in ISO format")
-    terminated_at: str = Field(..., description="Termination time in ISO format")
-    price: Price = Field(..., description="Price information")
-    hardware: HardwareInfo = Field(..., description="Hardware specifications")
-    gpu_count: int = Field(..., description="Number of GPUs")
-
-
-class InstanceHistoryResponse(BaseModel):
-    """Response for instance history."""
-
-    instance_history: List[InstanceHistoryEntry] = Field(
-        ..., description="List of instance history entries"
-    )
-
-
 class BillingBalanceResponse(BaseModel):
     """Response model for billing balance API."""
 

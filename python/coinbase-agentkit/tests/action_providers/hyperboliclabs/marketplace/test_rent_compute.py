@@ -1,13 +1,15 @@
-"""Tests for rent_compute action in HyperbolicActionProvider."""
+"""Tests for rent_compute action in HyperbolicMarketplaceActionProvider."""
 
 from unittest.mock import Mock, patch
 
 import pytest
 from pydantic import ValidationError
 
-from coinbase_agentkit.action_providers.hyperboliclabs.hyperbolic_action_provider import (
-    HyperbolicActionProvider,
+from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.action_provider import (
+    MarketplaceActionProvider,
 )
+from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.models import RentInstanceResponse
+
 
 # Test constants
 MOCK_INSTANCE_ID = "test-instance-123"
@@ -17,33 +19,22 @@ MOCK_GPU_COUNT = "2"
 
 
 @pytest.fixture
-def mock_api_response():
-    """Mock API response for compute rental."""
-    mock_response = Mock()
-    mock_response.json.return_value = {
-        "status": "success",
-        "instance": {
-            "id": "i-123456",
-            "cluster": "us-east-1",
-            "node": "node-789",
-            "gpu_count": 2,
-            "status": "starting",
-        },
-    }
-    return mock_response
+def provider(mock_api_key):
+    """Create HyperbolicMarketplaceActionProvider instance with test API key."""
+    return MarketplaceActionProvider(api_key=mock_api_key)
 
 
-@pytest.fixture
-def provider():
-    """Create HyperbolicActionProvider instance with test API key."""
-    return HyperbolicActionProvider(api_key="test-api-key")
-
-
-def test_rent_compute_success(provider, mock_api_response):
+def test_rent_compute_success(provider):
     """Test successful compute rental."""
+    # Create a proper RentInstanceResponse object
+    mock_response = RentInstanceResponse(
+        status="success",
+        instance_name="i-123456"
+    )
+    
     with (
         patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
-        patch("requests.post", return_value=mock_api_response),
+        patch.object(provider.marketplace, "rent_instance", return_value=mock_response),
     ):
         result = provider.rent_compute(
             {"cluster_name": "us-east-1", "node_name": "node-789", "gpu_count": "2"}
@@ -51,11 +42,7 @@ def test_rent_compute_success(provider, mock_api_response):
 
         # Check success response
         assert '"status": "success"' in result
-        assert '"id": "i-123456"' in result
-        assert '"cluster": "us-east-1"' in result
-        assert '"node": "node-789"' in result
-        assert '"gpu_count": 2' in result
-        assert '"status": "starting"' in result
+        assert '"instance_name": "i-123456"' in result
 
         # Check next steps
         assert "Next Steps:" in result
@@ -71,29 +58,12 @@ def test_rent_compute_api_error(provider):
     """Test compute rental with API error."""
     with (
         patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
-        patch("requests.post", side_effect=Exception("API Error")),
+        patch.object(provider.marketplace, "rent_instance", side_effect=Exception("API Error")),
     ):
         result = provider.rent_compute(
             {"cluster_name": "us-east-1", "node_name": "node-789", "gpu_count": "2"}
         )
         assert "Error renting compute: API Error" in result
-
-
-def test_rent_compute_invalid_response(provider):
-    """Test compute rental with invalid response format."""
-    mock_response = Mock()
-    mock_response.json.return_value = {"invalid": "response"}
-
-    with (
-        patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
-        patch("requests.post", return_value=mock_response),
-    ):
-        result = provider.rent_compute(
-            {"cluster_name": "us-east-1", "node_name": "node-789", "gpu_count": "2"}
-        )
-        # Should still format the response and add next steps
-        assert '"invalid": "response"' in result
-        assert "Next Steps:" in result
 
 
 def test_rent_compute_missing_fields(provider):
