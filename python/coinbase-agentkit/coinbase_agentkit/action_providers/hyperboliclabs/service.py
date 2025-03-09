@@ -4,7 +4,7 @@ from typing import Any
 
 import requests
 
-from ..constants import API_BASE_URL
+from .constants import API_BASE_URL
 
 
 class Base:

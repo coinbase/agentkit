@@ -1,13 +1,12 @@
 """Tests for generate_audio action in HyperbolicAIActionProvider."""
 
-from unittest.mock import patch, Mock
+from unittest.mock import Mock
 import json
 
 import pytest
 from pydantic import ValidationError
 
 from coinbase_agentkit.action_providers.hyperboliclabs.ai.action_provider import (
-    HyperbolicAIActionProvider,
     GenerateAudioSchema,
 )
 from coinbase_agentkit.action_providers.hyperboliclabs.ai.models import (
@@ -15,24 +14,8 @@ from coinbase_agentkit.action_providers.hyperboliclabs.ai.models import (
 )
 
 
-@pytest.fixture
-def mock_ai_service():
-    """Create a mock AIService."""
-    with patch("coinbase_agentkit.action_providers.hyperboliclabs.ai.action_provider.AIService") as mock:
-        yield mock.return_value
-
-
-@pytest.fixture
-def provider():
-    """Create a HyperbolicAIActionProvider with a test API key."""
-    return HyperbolicAIActionProvider(api_key="test-api-key")
-
-
-def test_generate_audio_success(provider, mock_ai_service, monkeypatch):
+def test_generate_audio_success(provider, mock_ai_service):
     """Test successful audio generation."""
-    # Replace the provider's ai_service with our mock
-    monkeypatch.setattr(provider, "ai_service", mock_ai_service)
-    
     # Setup mock response
     mock_response = AudioGenerationResponse(
         audio="base64_encoded_audio_data",
@@ -60,11 +43,8 @@ def test_generate_audio_success(provider, mock_ai_service, monkeypatch):
     assert request.speaker == "EN-US"  # Default value
 
 
-def test_generate_audio_with_string_input(provider, mock_ai_service, monkeypatch):
-    """Test audio generation with a string input."""
-    # Replace the provider's ai_service with our mock
-    monkeypatch.setattr(provider, "ai_service", mock_ai_service)
-    
+def test_generate_audio_with_minimal_input(provider, mock_ai_service):
+    """Test audio generation with a dictionary containing only the required text field."""
     # Setup mock response
     mock_response = AudioGenerationResponse(
         audio="base64_encoded_audio_data",
@@ -72,8 +52,8 @@ def test_generate_audio_with_string_input(provider, mock_ai_service, monkeypatch
     )
     mock_ai_service.generate_audio.return_value = mock_response
 
-    # Call the method with a string
-    result = provider.generate_audio("Test audio text")
+    # Call the method with a dictionary containing only the required text
+    result = provider.generate_audio({"text": "Test audio text"})
 
     # Verify the result is a string
     assert isinstance(result, str)
@@ -90,11 +70,8 @@ def test_generate_audio_with_string_input(provider, mock_ai_service, monkeypatch
     assert request.speaker == "EN-US"  # Default value
 
 
-def test_generate_audio_with_custom_parameters(provider, mock_ai_service, monkeypatch):
+def test_generate_audio_with_custom_parameters(provider, mock_ai_service):
     """Test audio generation with custom parameters."""
-    # Replace the provider's ai_service with our mock
-    monkeypatch.setattr(provider, "ai_service", mock_ai_service)
-    
     # Setup mock response
     mock_response = AudioGenerationResponse(
         audio="base64_encoded_audio_data",
@@ -162,11 +139,8 @@ def test_generate_audio_schema_validation():
         GenerateAudioSchema(text="Test", speed=6.0)  # speed > 5.0
 
 
-def test_generate_audio_error(provider, mock_ai_service, monkeypatch):
+def test_generate_audio_error(provider, mock_ai_service):
     """Test audio generation with error."""
-    # Replace the provider's ai_service with our mock
-    monkeypatch.setattr(provider, "ai_service", mock_ai_service)
-    
     # Setup mock to raise exception
     mock_ai_service.generate_audio.side_effect = Exception("API error")
 

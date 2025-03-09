@@ -1,7 +1,7 @@
 """Service for marketplace-related operations."""
 
 from ..constants import MARKETPLACE_BASE_URL, MARKETPLACE_ENDPOINTS
-from ..services.base import Base
+from ..service import Base
 from .models import (
     AvailableInstancesResponse,
     InstanceHistoryResponse,

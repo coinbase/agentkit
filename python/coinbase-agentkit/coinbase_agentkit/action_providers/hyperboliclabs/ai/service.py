@@ -9,7 +9,7 @@ from .models import (
     ImageGenerationRequest,
     ImageGenerationResponse,
 )
-from ..services.base import Base
+from ..service import Base
 
 
 class AIService(Base):

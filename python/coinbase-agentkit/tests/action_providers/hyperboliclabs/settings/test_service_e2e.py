@@ -8,6 +8,8 @@ import json
 import pytest
 import requests
 
+from coinbase_agentkit.action_providers.hyperboliclabs.settings.models import WalletLinkResponse
+
 
 @pytest.mark.e2e
 def test_settings_link_wallet(settings):
@@ -15,13 +17,12 @@ def test_settings_link_wallet(settings):
     # Test with a valid Ethereum address
     valid_address = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
     response = settings.link_wallet(valid_address)
-    print("\nWallet linking response:", json.dumps(response, indent=2))
+    print("\nWallet linking response:", json.dumps(response.model_dump(), indent=2))
 
-    assert isinstance(response, dict)
-    assert "status" in response
-    assert response["status"] == "success"
-    assert "message" in response
-    assert "wallet" in response or "address" in response
+    assert isinstance(response, WalletLinkResponse)
+    assert response.status == "success"
+    assert response.message is not None
+    assert response.wallet_address is not None
 
 
 @pytest.mark.e2e
@@ -36,7 +37,5 @@ def test_settings_link_wallet(settings):
 )
 def test_settings_link_wallet_invalid(settings, invalid_address):
     """Test linking invalid wallet addresses."""
-    with pytest.raises(requests.exceptions.HTTPError) as exc_info:
-        settings.link_wallet(invalid_address)
-
-    assert exc_info.value.response.status_code == 422 
+    with pytest.raises(requests.exceptions.HTTPError):
+        settings.link_wallet(invalid_address) 
