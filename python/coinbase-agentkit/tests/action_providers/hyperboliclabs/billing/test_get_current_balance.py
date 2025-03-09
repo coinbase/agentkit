@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from coinbase_agentkit.action_providers.hyperboliclabs.billing import (
-    HyperbolicBillingActionProvider,
+    BillingActionProvider,
 )
 from coinbase_agentkit.action_providers.hyperboliclabs.billing.models import (
     BillingBalanceResponse,
@@ -15,9 +15,9 @@ from coinbase_agentkit.action_providers.hyperboliclabs.billing.models import (
 
 
 @pytest.fixture
-def provider():
-    """Create HyperbolicBillingActionProvider instance with test API key."""
-    return HyperbolicBillingActionProvider(api_key="test-api-key")
+def provider(mock_api_key):
+    """Create BillingActionProvider instance for testing."""
+    return BillingActionProvider(api_key=mock_api_key)
 
 
 def test_get_current_balance_success(provider):

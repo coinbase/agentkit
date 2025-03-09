@@ -13,7 +13,7 @@ from .models import (
 )
 
 
-class Marketplace(Base):
+class MarketplaceService(Base):
     """Service for marketplace-related operations."""
 
     def __init__(self, api_key: str):
@@ -30,48 +30,33 @@ class Marketplace(Base):
 
         Returns:
             AvailableInstancesResponse: The marketplace instances data.
-
-        Raises:
-            requests.exceptions.RequestException: If the API request fails.
-            pydantic.ValidationError: If response validation fails.
-
         """
-        response_data = self.make_request(
+        response = self.make_request(
             endpoint=MARKETPLACE_ENDPOINTS["LIST_INSTANCES"], method="POST", data={"filters": {}}
         )
-        return AvailableInstancesResponse(**response_data)
+        return AvailableInstancesResponse(**response.json())
 
     def get_instance_history(self) -> InstanceHistoryResponse:
         """Get GPU instance rental history.
 
         Returns:
             InstanceHistoryResponse: The instance history data.
-
-        Raises:
-            requests.exceptions.RequestException: If the API request fails.
-            pydantic.ValidationError: If response validation fails.
-
         """
-        response_data = self.make_request(
+        response = self.make_request(
             endpoint=MARKETPLACE_ENDPOINTS["INSTANCE_HISTORY"], method="GET"
         )
-        return InstanceHistoryResponse(**response_data)
+        return InstanceHistoryResponse(**response.json())
 
     def get_rented_instances(self) -> RentedInstancesResponse:
         """Get currently rented GPU instances.
 
         Returns:
             RentedInstancesResponse: The rented instances data.
-
-        Raises:
-            requests.exceptions.RequestException: If the API request fails.
-            pydantic.ValidationError: If response validation fails.
-
         """
-        response_data = self.make_request(
+        response = self.make_request(
             endpoint=MARKETPLACE_ENDPOINTS["LIST_USER_INSTANCES"], method="GET"
         )
-        return RentedInstancesResponse(**response_data)
+        return RentedInstancesResponse(**response.json())
 
     def rent_instance(
         self,
@@ -84,16 +69,11 @@ class Marketplace(Base):
 
         Returns:
             RentInstanceResponse: The rental response data.
-
-        Raises:
-            requests.exceptions.RequestException: If the API request fails.
-            pydantic.ValidationError: If request/response validation fails.
-
         """
-        response_data = self.make_request(
+        response = self.make_request(
             endpoint=MARKETPLACE_ENDPOINTS["CREATE_INSTANCE"], data=request.model_dump()
         )
-        return RentInstanceResponse(**response_data)
+        return RentInstanceResponse(**response.json())
 
     def terminate_instance(
         self,
@@ -106,13 +86,8 @@ class Marketplace(Base):
 
         Returns:
             TerminateInstanceResponse: The termination response data.
-
-        Raises:
-            requests.exceptions.RequestException: If the API request fails.
-            pydantic.ValidationError: If request/response validation fails.
-
         """
-        response_data = self.make_request(
+        response = self.make_request(
             endpoint=MARKETPLACE_ENDPOINTS["TERMINATE_INSTANCE"], data=request.model_dump()
         )
-        return TerminateInstanceResponse(**response_data) 
+        return TerminateInstanceResponse(**response.json()) 

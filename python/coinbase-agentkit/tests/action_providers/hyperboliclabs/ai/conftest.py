@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from coinbase_agentkit.action_providers.hyperboliclabs.ai.service import AIService
-from coinbase_agentkit.action_providers.hyperboliclabs.ai.action_provider import HyperbolicAIActionProvider
+from coinbase_agentkit.action_providers.hyperboliclabs.ai.action_provider import AIActionProvider
 
 
 @pytest.fixture
@@ -33,24 +33,17 @@ def mock_ai_service():
 
 
 @pytest.fixture
-def provider(mock_ai_service):
-    """Create a HyperbolicAIActionProvider with a test API key and mock service.
+def provider(mock_api_key, mock_ai_service):
+    """Create a HyperbolicAIActionProvider with a mock API key and service.
     
     Args:
+        mock_api_key: Mock API key for authentication.
         mock_ai_service: Mock AIService to use in the provider.
         
     Returns:
-        HyperbolicAIActionProvider: Provider with mock service.
+        HyperbolicAIActionProvider: Provider with mock API key and service.
     """
-    provider = HyperbolicAIActionProvider(api_key="test-api-key")
+    provider = AIActionProvider(api_key=mock_api_key)
     provider.ai_service = mock_ai_service
     return provider
 
-
-@pytest.fixture
-def mock_request():
-    """Mock requests for all tests."""
-    with patch("coinbase_agentkit.action_providers.hyperboliclabs.service.requests.request") as mock:
-        mock.return_value.json.return_value = {"status": "success"}
-        mock.return_value.raise_for_status.return_value = None
-        yield mock 

@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.action_provider import (
-    HyperbolicMarketplaceActionProvider,
+    MarketplaceActionProvider,
 )
 from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.utils import ssh_manager
 
@@ -33,37 +33,37 @@ def mock_instances_response():
 
 
 @pytest.fixture
-def provider():
+def provider(mock_api_key):
     """Create HyperbolicMarketplaceActionProvider instance with test API key."""
-    return HyperbolicMarketplaceActionProvider(api_key="test-api-key")
+    return MarketplaceActionProvider(api_key=mock_api_key)
 
 
 def test_ssh_connect_success_with_password(provider):
     """Test successful SSH connection using password authentication."""
-    # Create a mock ssh manager
-    mock_ssh = Mock()
-    mock_ssh.connect.return_value = "Successfully connected to host.example.com as testuser"
+    mock_response = "Successfully connected to host.example.com as testuser"
     
     with (
-        patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
-        patch('coinbase_agentkit.action_providers.hyperboliclabs.marketplace.action_provider.ssh_manager', mock_ssh),
+        patch.object(ssh_manager, "connect", return_value=mock_response),
     ):
         result = provider.ssh_connect(
             {"host": "host.example.com", "username": "testuser", "password": "testpass"}
         )
         assert "Successfully connected to host.example.com as testuser" in result
-        mock_ssh.connect.assert_called_once()
+        ssh_manager.connect.assert_called_once_with(
+            host="host.example.com",
+            username="testuser",
+            password="testpass",
+            private_key_path=None,
+            port=22
+        )
 
 
 def test_ssh_connect_success_with_key(provider):
     """Test successful SSH connection using key authentication."""
-    # Create a mock ssh manager
-    mock_ssh = Mock()
-    mock_ssh.connect.return_value = "Successfully connected to host.example.com as testuser"
+    mock_response = "Successfully connected to host.example.com as testuser"
     
     with (
-        patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
-        patch('coinbase_agentkit.action_providers.hyperboliclabs.marketplace.action_provider.ssh_manager', mock_ssh),
+        patch.object(ssh_manager, "connect", return_value=mock_response),
     ):
         result = provider.ssh_connect(
             {
@@ -73,40 +73,51 @@ def test_ssh_connect_success_with_key(provider):
             }
         )
         assert "Successfully connected to host.example.com as testuser" in result
-        mock_ssh.connect.assert_called_once()
+        ssh_manager.connect.assert_called_once_with(
+            host="host.example.com",
+            username="testuser",
+            password=None,
+            private_key_path="~/.ssh/test_key",
+            port=22
+        )
 
 
 def test_ssh_connect_missing_credentials(provider, mock_instances_response):
     """Test SSH connection with missing host/username."""
     with (
-        patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
         patch("requests.get", return_value=mock_instances_response),
     ):
-        # Empty host and username
         result = provider.ssh_connect({"host": "", "username": ""})
         assert "Error: Host and username are required for SSH connection." in result
 
 
 def test_ssh_connect_connection_error(provider):
     """Test SSH connection with connection error."""
-    # Create a mock ssh manager
-    mock_ssh = Mock()
-    mock_ssh.connect.side_effect = Exception("Connection refused")
+    mock_error_response = "SSH Connection Error: Connection refused"
     
     with (
-        patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
-        patch('coinbase_agentkit.action_providers.hyperboliclabs.marketplace.action_provider.ssh_manager', mock_ssh),
+        patch.object(ssh_manager, "connect", return_value=mock_error_response),
     ):
         result = provider.ssh_connect(
             {"host": "host.example.com", "username": "testuser", "password": "testpass"}
         )
         assert "SSH Connection Error: Connection refused" in result
-        mock_ssh.connect.assert_called_once()
+        ssh_manager.connect.assert_called_once_with(
+            host="host.example.com",
+            username="testuser",
+            password="testpass",
+            private_key_path=None,
+            port=22
+        )
 
 
 def test_ssh_connect_key_error(provider):
     """Test SSH connection with key file error."""
-    with patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"):
+    mock_key_error = "SSH Key Error: Key file not found at ~/.ssh/test_key"
+    
+    with (
+        patch.object(ssh_manager, "connect", return_value=mock_key_error),
+    ):
         result = provider.ssh_connect(
             {
                 "host": "host.example.com",
@@ -115,17 +126,21 @@ def test_ssh_connect_key_error(provider):
             }
         )
         assert "SSH Key Error: Key file not found at" in result
+        ssh_manager.connect.assert_called_once_with(
+            host="host.example.com",
+            username="testuser",
+            password=None,
+            private_key_path="~/.ssh/test_key",
+            port=22
+        )
 
 
 def test_ssh_connect_custom_port(provider):
     """Test SSH connection with custom port."""
-    # Create a mock ssh manager
-    mock_ssh = Mock()
-    mock_ssh.connect.return_value = "Successfully connected to host.example.com:2222 as testuser"
+    mock_response = "Successfully connected to host.example.com as testuser"
     
     with (
-        patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
-        patch('coinbase_agentkit.action_providers.hyperboliclabs.marketplace.action_provider.ssh_manager', mock_ssh),
+        patch.object(ssh_manager, "connect", return_value=mock_response),
     ):
         result = provider.ssh_connect(
             {
@@ -135,8 +150,14 @@ def test_ssh_connect_custom_port(provider):
                 "port": 2222,
             }
         )
-        assert "Successfully connected to host.example.com:2222 as testuser" in result
-        mock_ssh.connect.assert_called_once()
+        assert "Successfully connected to host.example.com as testuser" in result
+        ssh_manager.connect.assert_called_once_with(
+            host="host.example.com",
+            username="testuser",
+            password="testpass",
+            private_key_path=None,
+            port=2222
+        )
 
 
 def test_ssh_connect_no_running_instances(provider):
@@ -146,7 +167,6 @@ def test_ssh_connect_no_running_instances(provider):
     mock_response.status_code = 200
 
     with (
-        patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
         patch("requests.get", return_value=mock_response),
     ):
         result = provider.ssh_connect({"host": "", "username": ""})

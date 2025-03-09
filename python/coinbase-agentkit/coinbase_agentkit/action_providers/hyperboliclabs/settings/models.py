@@ -11,19 +11,32 @@ from pydantic import BaseModel, Field
 class WalletLinkRequest(BaseModel):
     """Request model for wallet linking."""
     
-    wallet_address: str = Field(
+    address: str = Field(
         ...,
-        description="The wallet address to link to your Hyperbolic account"
+        description="The wallet address to link to your Hyperbolic account",
+        min_length=2
     )
 
 
 class WalletLinkResponse(BaseModel):
-    """Response model for wallet linking API."""
+    """Response model for wallet linking API.
     
-    status: str = Field(..., description="Response status")
-    message: Optional[str] = Field(None, description="Optional response message")
-    wallet_address: Optional[str] = Field(None, description="The linked wallet address")
+    The API returns either a success response with {"success": true}
+    or an error response with {"error_code": int, "message": str}
+    """
     
-    # Additional fields that might be returned by the API
-    address_type: Optional[str] = Field(None, description="Type of the wallet address")
-    timestamp: Optional[str] = Field(None, description="Timestamp of wallet linking") 
+    # For success responses
+    success: Optional[bool] = Field(None, description="Whether the operation was successful")
+    
+    # For error responses
+    error_code: Optional[int] = Field(None, description="Error code for failed operations")
+    message: Optional[str] = Field(None, description="Response message or error description")
+    
+    @property
+    def status(self) -> str:
+        """Return status string based on success boolean for backward compatibility."""
+        if self.success is True:
+            return "success"
+        if self.error_code is not None:
+            return f"error_{self.error_code}"
+        return "error"

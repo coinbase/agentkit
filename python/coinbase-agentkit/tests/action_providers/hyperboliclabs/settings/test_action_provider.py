@@ -5,37 +5,37 @@ from unittest.mock import patch
 import pytest
 
 from coinbase_agentkit.action_providers.hyperboliclabs.settings.action_provider import (
-    HyperbolicSettingsActionProvider,
+    SettingsActionProvider,
     hyperbolic_settings_action_provider,
 )
 from coinbase_agentkit.network import Network
 
 
-def test_init_with_api_key(api_key):
+def test_init_with_api_key(mock_api_key):
     """Test initialization with API key."""
-    provider = HyperbolicSettingsActionProvider(api_key=api_key)
+    provider = SettingsActionProvider(api_key=mock_api_key)
     assert provider is not None
-    assert provider.api_key == api_key
+    assert provider.api_key == mock_api_key
 
 
-def test_init_with_env_var(api_key):
+def test_init_with_env_var(mock_api_key):
     """Test initialization with environment variable."""
-    with patch.dict(os.environ, {"HYPERBOLIC_API_KEY": api_key}):
-        provider = HyperbolicSettingsActionProvider()
+    with patch.dict(os.environ, {"HYPERBOLIC_API_KEY": mock_api_key}):
+        provider = SettingsActionProvider()
         assert provider is not None
-        assert provider.api_key == api_key
+        assert provider.api_key == mock_api_key
 
 
 def test_init_missing_api_key():
     """Test initialization with missing API key."""
     with patch.dict(os.environ, clear=True):
         with pytest.raises(ValueError):
-            HyperbolicSettingsActionProvider()
+            SettingsActionProvider()
 
 
-def test_supports_network(api_key):
+def test_supports_network(mock_api_key):
     """Test supports_network method."""
-    provider = HyperbolicSettingsActionProvider(api_key=api_key)
+    provider = SettingsActionProvider(api_key=mock_api_key)
     network = Network(
         name="test_network",
         protocol_family="ethereum",
@@ -45,8 +45,8 @@ def test_supports_network(api_key):
     assert provider.supports_network(network) is True
 
 
-def test_factory_function(api_key):
+def test_factory_function(mock_api_key):
     """Test the factory function."""
-    with patch("coinbase_agentkit.action_providers.hyperboliclabs.settings.action_provider.HyperbolicSettingsActionProvider") as mock:
-        hyperbolic_settings_action_provider(api_key)
-        mock.assert_called_once_with(api_key=api_key) 
+    with patch("coinbase_agentkit.action_providers.hyperboliclabs.settings.action_provider.SettingsActionProvider") as mock:
+        hyperbolic_settings_action_provider(mock_api_key)
+        mock.assert_called_once_with(api_key=mock_api_key) 

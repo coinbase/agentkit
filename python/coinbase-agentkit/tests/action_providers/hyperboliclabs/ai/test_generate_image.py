@@ -7,7 +7,7 @@ import pytest
 from pydantic import ValidationError
 
 from coinbase_agentkit.action_providers.hyperboliclabs.ai.action_provider import (
-    HyperbolicAIActionProvider,
+    AIActionProvider,
 )
 from coinbase_agentkit.action_providers.hyperboliclabs.ai.schemas import (
     GenerateImageSchema,
@@ -29,7 +29,7 @@ def mock_ai_service():
 @pytest.fixture
 def provider():
     """Create a HyperbolicAIActionProvider with a test API key."""
-    return HyperbolicAIActionProvider(api_key="test-api-key")
+    return AIActionProvider(api_key="test-api-key")
 
 
 def test_generate_image_success(provider, mock_ai_service, monkeypatch):

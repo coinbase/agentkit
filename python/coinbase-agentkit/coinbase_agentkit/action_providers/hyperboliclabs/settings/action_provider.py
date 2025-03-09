@@ -9,13 +9,14 @@ from typing import Any
 from ....network import Network
 from ...action_decorator import create_action
 from ...action_provider import ActionProvider
+from .models import WalletLinkRequest
 from .schemas import LinkWalletAddressSchema
-from .service import Settings
+from .service import SettingsService
 from .utils import format_wallet_link_response
 from ..utils import get_api_key
 
 
-class HyperbolicSettingsActionProvider(ActionProvider):
+class SettingsActionProvider(ActionProvider):
     """Provides actions for interacting with Hyperbolic settings.
 
     This provider enables interaction with the Hyperbolic settings services for managing
@@ -46,7 +47,7 @@ class HyperbolicSettingsActionProvider(ActionProvider):
                 "or set the HYPERBOLIC_API_KEY environment variable."
             ) from e
 
-        self.settings = Settings(self.api_key)
+        self.settings = SettingsService(self.api_key)
 
     @create_action(
         name="link_wallet_address",
@@ -54,7 +55,7 @@ class HyperbolicSettingsActionProvider(ActionProvider):
 This tool links a wallet address to your Hyperbolic account.
 
 Required inputs:
-- wallet_address: The wallet address to link to your Hyperbolic account
+- address: The wallet address to link to your Hyperbolic account
 
 Example successful response:
     {
@@ -86,7 +87,7 @@ Notes:
 
         Args:
             args (dict[str, Any]): Dictionary containing:
-                - wallet_address: The wallet address to link.
+                - address: The wallet address to link.
 
         Returns:
             str: A message containing the linking response and next steps.
@@ -95,7 +96,8 @@ Notes:
 
         try:
             # Link the wallet address
-            response = self.settings.link_wallet(validated_args.wallet_address)
+            request = WalletLinkRequest(address=validated_args.address)
+            response = self.settings.link_wallet(request)
 
             # Format the response with next steps
             return format_wallet_link_response(response)
@@ -117,7 +119,7 @@ Notes:
 
 def hyperbolic_settings_action_provider(
     api_key: str | None = None,
-) -> HyperbolicSettingsActionProvider:
+) -> SettingsActionProvider:
     """Create and return a new HyperbolicSettingsActionProvider instance.
 
     Args:
@@ -130,4 +132,4 @@ def hyperbolic_settings_action_provider(
     Raises:
         ValueError: If API key is not provided and not found in environment.
     """
-    return HyperbolicSettingsActionProvider(api_key=api_key) 
+    return SettingsActionProvider(api_key=api_key) 

@@ -7,19 +7,19 @@ It includes sub-providers for marketplace (GPU compute), billing, AI services, a
 from ...network import Network
 from ..action_provider import ActionProvider
 from .marketplace.action_provider import (
-    HyperbolicMarketplaceActionProvider,
+    MarketplaceActionProvider,
     hyperbolic_marketplace_action_provider,
 )
 from .billing.action_provider import (
-    HyperbolicBillingActionProvider,
+    BillingActionProvider,
     hyperbolic_billing_action_provider,
 )
 from .ai.action_provider import (
-    HyperbolicAIActionProvider,
+    AIActionProvider,
     hyperbolic_ai_action_provider,
 )
 from .settings.action_provider import (
-    HyperbolicSettingsActionProvider,
+    SettingsActionProvider,
     hyperbolic_settings_action_provider,
 )
 from .utils import get_api_key
@@ -59,13 +59,11 @@ class HyperbolicActionProvider(ActionProvider):
                 "or set the HYPERBOLIC_API_KEY environment variable."
             ) from e
 
-        # Initialize all sub-providers first
-        self.marketplace_provider = hyperbolic_marketplace_action_provider(api_key=self.api_key)
-        self.billing_provider = hyperbolic_billing_action_provider(api_key=self.api_key)
-        self.ai_provider = hyperbolic_ai_action_provider(api_key=self.api_key)
-        self.settings_provider = hyperbolic_settings_action_provider(api_key=self.api_key)
+        self.marketplace_provider = MarketplaceActionProvider(api_key=self.api_key)
+        self.billing_provider = BillingActionProvider(api_key=self.api_key)
+        self.ai_provider = AIActionProvider(api_key=self.api_key)
+        self.settings_provider = SettingsActionProvider(api_key=self.api_key)
 
-        # Pass sub-providers to parent constructor which will register their actions
         super().__init__(
             "hyperbolic", 
             [

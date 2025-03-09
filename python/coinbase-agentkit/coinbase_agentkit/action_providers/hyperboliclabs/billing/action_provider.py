@@ -13,12 +13,7 @@ from .schemas import (
     GetCurrentBalanceSchema,
     GetSpendHistorySchema,
 )
-from .models import (
-    BillingBalanceResponse,
-    BillingPurchaseHistoryResponse,
-    InstanceHistoryResponse,
-)
-from .service import Billing
+from .service import BillingService
 from .utils import (
     format_purchase_history,
     format_spend_history,
@@ -26,9 +21,10 @@ from .utils import (
 from ..utils import (
     get_api_key,
 )
+from ..marketplace.service import MarketplaceService
 
 
-class HyperbolicBillingActionProvider(ActionProvider):
+class BillingActionProvider(ActionProvider):
     """Provides actions for interacting with Hyperbolic billing.
 
     This provider enables interaction with the Hyperbolic billing services for balance
@@ -59,7 +55,8 @@ class HyperbolicBillingActionProvider(ActionProvider):
                 "or set the HYPERBOLIC_API_KEY environment variable."
             ) from e
 
-        self.billing = Billing(self.api_key)
+        self.billing = BillingService(self.api_key)
+        self.marketplace = MarketplaceService(self.api_key)
 
     @create_action(
         name="get_current_balance",
@@ -172,8 +169,8 @@ Notes:
             # Validate arguments using schema
             GetSpendHistorySchema(**args)
             
-            # Get instance history
-            response = self.billing.get_instance_history()
+            # Get instance history from marketplace service
+            response = self.marketplace.get_instance_history()
 
             if not response.instance_history:
                 return "No rental history found."
@@ -198,7 +195,7 @@ Notes:
 
 def hyperbolic_billing_action_provider(
     api_key: str | None = None,
-) -> HyperbolicBillingActionProvider:
+) -> BillingActionProvider:
     """Create and return a new HyperbolicBillingActionProvider instance.
 
     Args:
@@ -211,4 +208,4 @@ def hyperbolic_billing_action_provider(
     Raises:
         ValueError: If API key is not provided and not found in environment.
     """
-    return HyperbolicBillingActionProvider(api_key=api_key) 
+    return BillingActionProvider(api_key=api_key) 

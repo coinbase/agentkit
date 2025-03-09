@@ -22,27 +22,6 @@ class Base:
         self.api_key = api_key
         self.base_url = base_url or API_BASE_URL
 
-    def make_api_request(
-        self,
-        api_key: str,
-        path: str,
-        method: str = "POST",
-        data: dict[str, Any] | None = None,
-        params: dict[str, Any] | None = None,
-        headers: dict[str, str] | None = None,
-    ) -> dict[str, Any]:
-        if not headers:
-            headers = {}
-        headers.update({"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"})
-
-        response = requests.request(
-            method=method, url=path, headers=headers, json=data, params=params
-        )
-        if not response.ok:
-            print("\nAPI Error Response:", response.text)
-        response.raise_for_status()
-        return response.json()
-
     def make_request(
         self,
         endpoint: str,
@@ -50,7 +29,7 @@ class Base:
         data: dict[str, Any] | None = None,
         params: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
-    ) -> dict[str, Any]:
+    ) -> requests.Response:
         """Make an API request to the service endpoint.
 
         Args:
@@ -61,17 +40,16 @@ class Base:
             headers: Optional additional headers.
 
         Returns:
-            dict[str, Any]: The API response data.
-
-        Raises:
-            requests.exceptions.RequestException: If the API request fails.
-
+            requests.Response: The raw HTTP response object.
         """
-        return self.make_api_request(
-            api_key=self.api_key,
-            path=f"{self.base_url}{endpoint}",
-            method=method,
-            data=data,
-            params=params,
-            headers=headers,
-        ) 
+        if not headers:
+            headers = {}
+        headers.update({"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}"})
+
+        url = f"{self.base_url}{endpoint}"
+        
+        response = requests.request(
+            method=method, url=url, headers=headers, json=data, params=params
+        )
+        
+        return response

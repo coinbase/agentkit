@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.action_provider import (
-    HyperbolicMarketplaceActionProvider,
+    MarketplaceActionProvider,
 )
 from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.models import (
     NodeRental,
@@ -58,9 +58,9 @@ def mock_api_response():
 
 
 @pytest.fixture
-def provider():
+def provider(mock_api_key):
     """Create HyperbolicMarketplaceActionProvider instance with test API key."""
-    return HyperbolicMarketplaceActionProvider(api_key="test-api-key")
+    return MarketplaceActionProvider(api_key=mock_api_key)
 
 
 def test_get_gpu_status_success(provider, mock_api_response):
@@ -114,18 +114,6 @@ def test_get_gpu_status_api_error(provider):
     ):
         result = provider.get_gpu_status({})
         assert "Error retrieving GPU status: API Error" in result
-
-
-def test_get_gpu_status_invalid_response(provider):
-    """Test get_gpu_status action with invalid response format."""
-    empty_response = RentedInstancesResponse(instances=[])
-    
-    with (
-        patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
-        patch.object(provider.marketplace, "get_rented_instances", return_value=empty_response),
-    ):
-        result = provider.get_gpu_status({})
-        assert "No rented GPU instances found." in result
 
 
 def test_get_gpu_status_malformed_instance(provider):

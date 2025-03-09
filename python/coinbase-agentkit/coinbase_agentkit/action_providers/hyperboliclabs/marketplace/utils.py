@@ -4,7 +4,7 @@ import contextlib
 import json
 import os
 from datetime import datetime
-from typing import Any
+from typing import Any, Union
 
 import paramiko
 import requests
@@ -362,7 +362,7 @@ def format_rent_compute_response(response_data: RentInstanceResponse) -> str:
 
     """
     # Format the API response
-    formatted_response = json.dumps(response_data.model_dump(), indent=2)
+    formatted_response = response_data.model_dump_json(indent=2)
 
     # Add next steps information
     next_steps = (
@@ -389,7 +389,7 @@ def format_terminate_compute_response(response_data: TerminateInstanceResponse) 
 
     """
     # Format the API response
-    formatted_response = json.dumps(response_data.model_dump(), indent=2)
+    formatted_response = response_data.model_dump_json(indent=2)
 
     # Add next steps information
     next_steps = (
@@ -401,38 +401,3 @@ def format_terminate_compute_response(response_data: TerminateInstanceResponse) 
     )
 
     return f"{formatted_response}\n{next_steps}"
-
-
-def make_api_request(
-    api_key: str, endpoint: str, method: str = "POST", data: dict[str, Any] | None = None
-) -> dict[str, Any]:
-    """Make an API request to the Hyperbolic platform.
-
-    Args:
-        api_key: The API key for authentication.
-        endpoint: The API endpoint to call.
-        method: The HTTP method to use (default: "POST").
-        data: The request data (default: None).
-
-    Returns:
-        Dict[str, Any]: The API response data.
-
-    Raises:
-        requests.exceptions.RequestException: If the API request fails.
-
-    """
-    # Special case for settings and billing endpoints which don't use /v1/
-    if endpoint.startswith(("settings/", "billing/")):
-        url = f"https://api.hyperbolic.xyz/{endpoint}"
-    else:
-        url = f"https://api.hyperbolic.xyz/v1/{endpoint}"
-
-    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
-
-    if method == "POST":
-        response = requests.post(url, headers=headers, json=data or {})
-    else:
-        response = requests.get(url, headers=headers)
-
-    response.raise_for_status()
-    return response.json()
