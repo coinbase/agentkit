@@ -125,7 +125,9 @@ class ImageGenerationRequest(BaseModel):
     )
     enable_refiner: bool = Field(False, description="Enable Stable Diffusion XL-refiner")
     controlnet_name: str | None = Field(None, description="Name of ControlNet to use")
-    controlnet_image: str | None = Field(None, description="Base64 encoded image for ControlNet input")
+    controlnet_image: str | None = Field(
+        None, description="Base64 encoded image for ControlNet input"
+    )
     loras: dict[str, float] | None = Field(None, description="Pairs of lora name and weight")
 
 

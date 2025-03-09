@@ -128,6 +128,7 @@ class NodeInstance(BaseModel):
 
 class AvailableInstance(NodeInstance):
     """Available instance information."""
+
     pass
 
 
@@ -139,7 +140,7 @@ class AvailableInstancesResponse(BaseModel):
 
 class SSHAccess(BaseModel):
     """SSH access information for connecting to a remote instance."""
-    
+
     host: str = Field(..., description="SSH host address")
     username: str = Field(..., description="SSH username")
     key_path: str | None = Field("~/.ssh/id_rsa", description="Path to SSH key file")

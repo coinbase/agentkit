@@ -48,6 +48,7 @@ class MarketplaceActionProvider(ActionProvider):
 
         Raises:
             ValueError: If API key is not provided and not found in environment.
+
         """
         super().__init__("hyperbolic_marketplace", [])
 
@@ -96,6 +97,7 @@ Important notes:
 
         Returns:
             str: A message containing the available GPU instances or error details.
+
         """
         GetAvailableGpusSchema(**args)
 
@@ -107,19 +109,18 @@ Important notes:
                 return "No available GPU instances found."
 
             # Format the response
-            output = ["Available GPU Options:"]
-            
+
             # Filter out None values that might be returned by format_gpu_instance
             formatted_instances = []
             for instance in response.instances:
                 formatted = format_gpu_instance(instance)
                 if formatted is not None:
                     formatted_instances.append(formatted)
-            
+
             # Check if we have any available instances after filtering
             if not formatted_instances:
                 return "No available GPU instances with free resources found."
-            
+
             # Join the formatted instances with the header
             return "Available GPU Options:\n\n" + "\n".join(formatted_instances)
 
@@ -160,6 +161,7 @@ Important notes:
 
         Returns:
             str: A message containing the status of rented GPUs or error details.
+
         """
         GetGpuStatusSchema(**args)
 
@@ -177,12 +179,14 @@ Important notes:
                 output.append("-" * 40)
 
             # Add SSH instructions
-            output.extend([
-                "\nSSH Connection Instructions:",
-                "1. Wait until instance status is 'running'",
-                "2. Use the ssh_connect action with the provided host and username",
-                "3. Once connected, use remote_shell to execute commands",
-            ])
+            output.extend(
+                [
+                    "\nSSH Connection Instructions:",
+                    "1. Wait until instance status is 'running'",
+                    "2. Use the ssh_connect action with the provided host and username",
+                    "3. Once connected, use remote_shell to execute commands",
+                ]
+            )
 
             return "\n".join(output)
 
@@ -236,6 +240,7 @@ Notes:
 
         Returns:
             str: A message containing the rental response or error details.
+
         """
         validated_args = RentComputeSchema(**args)
 
@@ -285,6 +290,7 @@ Important notes:
 
         Returns:
             str: A message containing the termination response or error details.
+
         """
         validated_args = TerminateComputeSchema(**args)
 
@@ -342,6 +348,7 @@ Important notes:
 
         Returns:
             str: Connection status message.
+
         """
         validated_args = SSHAccessSchema(**args)
 
@@ -417,6 +424,7 @@ Important notes:
 
         Returns:
             str: Command output or error message.
+
         """
         validated_args = RemoteShellSchema(**args)
         command = validated_args.command.strip()
@@ -465,6 +473,7 @@ Important notes:
 
         Returns:
             bool: Always True as Hyperbolic marketplace actions don't depend on blockchain networks.
+
         """
         return True
 
@@ -483,5 +492,6 @@ def hyperbolic_marketplace_action_provider(
 
     Raises:
         ValueError: If API key is not provided and not found in environment.
+
     """
-    return MarketplaceActionProvider(api_key=api_key) 
+    return MarketplaceActionProvider(api_key=api_key)

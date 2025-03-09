@@ -5,7 +5,6 @@ such as saving generated images.
 """
 
 import os
-from typing import Any
 
 
 def save_base64_image(base64_data: str, output_path: str) -> str:
@@ -21,13 +20,14 @@ def save_base64_image(base64_data: str, output_path: str) -> str:
     Raises:
         ValueError: If the base64 data is invalid
         OSError: If there's an error saving the file
+
     """
     try:
         import base64
 
         # Remove potential base64 header if present
-        if ',' in base64_data:
-            base64_data = base64_data.split(',')[1]
+        if "," in base64_data:
+            base64_data = base64_data.split(",")[1]
 
         # Decode the base64 string
         image_data = base64.b64decode(base64_data)
@@ -36,7 +36,7 @@ def save_base64_image(base64_data: str, output_path: str) -> str:
         os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
 
         # Write the image data
-        with open(output_path, 'wb') as f:
+        with open(output_path, "wb") as f:
             f.write(image_data)
 
         return os.path.abspath(output_path)
@@ -48,4 +48,4 @@ def save_base64_image(base64_data: str, output_path: str) -> str:
 
 __all__ = [
     "save_base64_image",
-] 
+]

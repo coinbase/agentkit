@@ -1,6 +1,6 @@
 """Tests for get_spend_history action in HyperbolicBillingActionProvider."""
 
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
 
@@ -8,10 +8,10 @@ from coinbase_agentkit.action_providers.hyperboliclabs.billing import (
     BillingActionProvider,
 )
 from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.models import (
-    InstanceHistoryResponse,
-    InstanceHistoryEntry,
-    HardwareInfo,
     GpuHardware,
+    HardwareInfo,
+    InstanceHistoryEntry,
+    InstanceHistoryResponse,
     Price,
 )
 
@@ -65,7 +65,7 @@ def test_get_spend_history_success(provider):
             ),
         ),
     ]
-    
+
     # Mock the service method
     provider.marketplace.get_instance_history = Mock(
         return_value=InstanceHistoryResponse(instance_history=instance_entries)
@@ -146,7 +146,7 @@ def test_get_spend_history_malformed_instance(provider):
             period="hourly",
         ),
     )
-    
+
     # Mock the service method
     provider.marketplace.get_instance_history = Mock(
         return_value=InstanceHistoryResponse(instance_history=[instance_entry])

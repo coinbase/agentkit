@@ -150,4 +150,4 @@ def wait_for_termination(
     raise AssertionError(
         f"Failed to terminate instance {instance_id} after {max_retries} attempts. "
         "IMPORTANT: You may have a running instance still incurring costs!"
-    ) 
+    )

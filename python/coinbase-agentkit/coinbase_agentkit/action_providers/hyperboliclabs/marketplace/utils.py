@@ -1,13 +1,10 @@
 """Utility functions for Hyperbolic Marketplace action provider."""
 
 import contextlib
-import json
 import os
 from datetime import datetime
-from typing import Any, Union
 
 import paramiko
-import requests
 
 from .models import (
     AvailableInstance,
@@ -321,7 +318,9 @@ def format_gpu_status(instance: NodeRental) -> str:
     elif instance.ssh_access:
         # If we have SSH access details but no command, construct one
         key_path = instance.ssh_access.key_path or "~/.ssh/id_rsa"
-        output.append(f"SSH Command: ssh {instance.ssh_access.username}@{instance.ssh_access.host} -i {key_path}")
+        output.append(
+            f"SSH Command: ssh {instance.ssh_access.username}@{instance.ssh_access.host} -i {key_path}"
+        )
     else:
         # This part requires extracting host and username from SSH command or other fields
         # For now, just provide guidance based on status

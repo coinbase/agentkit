@@ -6,21 +6,17 @@ It includes sub-providers for marketplace (GPU compute), billing, AI services, a
 
 from ...network import Network
 from ..action_provider import ActionProvider
-from .marketplace.action_provider import (
-    MarketplaceActionProvider,
-    hyperbolic_marketplace_action_provider,
+from .ai.action_provider import (
+    AIActionProvider,
 )
 from .billing.action_provider import (
     BillingActionProvider,
-    hyperbolic_billing_action_provider,
 )
-from .ai.action_provider import (
-    AIActionProvider,
-    hyperbolic_ai_action_provider,
+from .marketplace.action_provider import (
+    MarketplaceActionProvider,
 )
 from .settings.action_provider import (
     SettingsActionProvider,
-    hyperbolic_settings_action_provider,
 )
 from .utils import get_api_key
 
@@ -34,7 +30,7 @@ class HyperbolicActionProvider(ActionProvider):
     - marketplace: GPU compute resources
     - settings: account settings management
 
-    It requires an API key which can be provided directly or through the 
+    It requires an API key which can be provided directly or through the
     HYPERBOLIC_API_KEY environment variable.
     """
 
@@ -50,6 +46,7 @@ class HyperbolicActionProvider(ActionProvider):
 
         Raises:
             ValueError: If API key is not provided and not found in environment.
+
         """
         try:
             self.api_key = api_key or get_api_key()
@@ -65,13 +62,13 @@ class HyperbolicActionProvider(ActionProvider):
         self.settings_provider = SettingsActionProvider(api_key=self.api_key)
 
         super().__init__(
-            "hyperbolic", 
+            "hyperbolic",
             [
                 self.marketplace_provider,
                 self.billing_provider,
                 self.ai_provider,
                 self.settings_provider,
-            ]
+            ],
         )
 
     def supports_network(self, network: Network) -> bool:
@@ -82,6 +79,7 @@ class HyperbolicActionProvider(ActionProvider):
 
         Returns:
             bool: True, as Hyperbolic actions don't require any specific network.
+
         """
         return True
 
@@ -97,5 +95,6 @@ def hyperbolic_action_provider(
 
     Returns:
         HyperbolicActionProvider: An initialized Hyperbolic action provider.
+
     """
     return HyperbolicActionProvider(api_key=api_key)

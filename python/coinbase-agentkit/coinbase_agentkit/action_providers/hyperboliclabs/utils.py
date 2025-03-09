@@ -2,6 +2,7 @@
 
 import os
 
+
 def get_api_key() -> str:
     """Get Hyperbolic API key from environment variables.
 

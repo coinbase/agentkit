@@ -30,6 +30,7 @@ class MarketplaceService(Base):
 
         Returns:
             AvailableInstancesResponse: The marketplace instances data.
+
         """
         response = self.make_request(
             endpoint=MARKETPLACE_ENDPOINTS["LIST_INSTANCES"], method="POST", data={"filters": {}}
@@ -41,6 +42,7 @@ class MarketplaceService(Base):
 
         Returns:
             InstanceHistoryResponse: The instance history data.
+
         """
         response = self.make_request(
             endpoint=MARKETPLACE_ENDPOINTS["INSTANCE_HISTORY"], method="GET"
@@ -52,6 +54,7 @@ class MarketplaceService(Base):
 
         Returns:
             RentedInstancesResponse: The rented instances data.
+
         """
         response = self.make_request(
             endpoint=MARKETPLACE_ENDPOINTS["LIST_USER_INSTANCES"], method="GET"
@@ -69,6 +72,7 @@ class MarketplaceService(Base):
 
         Returns:
             RentInstanceResponse: The rental response data.
+
         """
         response = self.make_request(
             endpoint=MARKETPLACE_ENDPOINTS["CREATE_INSTANCE"], data=request.model_dump()
@@ -86,8 +90,9 @@ class MarketplaceService(Base):
 
         Returns:
             TerminateInstanceResponse: The termination response data.
+
         """
         response = self.make_request(
             endpoint=MARKETPLACE_ENDPOINTS["TERMINATE_INSTANCE"], data=request.model_dump()
         )
-        return TerminateInstanceResponse(**response.json()) 
+        return TerminateInstanceResponse(**response.json())

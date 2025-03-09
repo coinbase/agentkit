@@ -1,6 +1,5 @@
 """Tests for generate_audio action in HyperbolicAIActionProvider."""
 
-from unittest.mock import Mock
 import json
 
 import pytest
@@ -29,7 +28,7 @@ def test_generate_audio_success(provider, mock_ai_service):
 
     # Verify the result is a string
     assert isinstance(result, str)
-    
+
     # Parse the JSON string to verify its contents
     result_json = json.loads(result)
     assert result_json["audio"] == "base64_encoded_audio_data"
@@ -57,7 +56,7 @@ def test_generate_audio_with_minimal_input(provider, mock_ai_service):
 
     # Verify the result is a string
     assert isinstance(result, str)
-    
+
     # Parse the JSON string to verify its contents
     result_json = json.loads(result)
     assert result_json["audio"] == "base64_encoded_audio_data"
@@ -90,7 +89,7 @@ def test_generate_audio_with_custom_parameters(provider, mock_ai_service):
 
     # Verify the result is a string
     assert isinstance(result, str)
-    
+
     # Parse the JSON string to verify its contents
     result_json = json.loads(result)
     assert result_json["audio"] == "base64_encoded_audio_data"
@@ -134,7 +133,7 @@ def test_generate_audio_schema_validation():
     # Test with invalid values
     with pytest.raises(ValidationError):
         GenerateAudioSchema(text="Test", speed=0.05)  # speed < 0.1
-    
+
     with pytest.raises(ValidationError):
         GenerateAudioSchema(text="Test", speed=6.0)  # speed > 5.0
 
@@ -150,4 +149,4 @@ def test_generate_audio_error(provider, mock_ai_service):
 
     # Verify the result is a string
     assert isinstance(result, str)
-    assert "Error generating audio: API error" in result 
+    assert "Error generating audio: API error" in result

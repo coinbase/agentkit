@@ -4,7 +4,8 @@ This module provides models for interacting with Hyperbolic billing services.
 It includes models for balance, purchase history, and instance history.
 """
 
-from typing import Any, List
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -55,12 +56,12 @@ class RamHardware(BaseModel):
 class HardwareInfo(BaseModel):
     """Complete hardware information."""
 
-    cpus: List[CpuHardware] | None = Field(None, description="List of CPU specifications")
-    gpus: List[GpuHardware] = Field(..., description="List of GPU specifications")
-    storage: List[StorageHardware] | None = Field(
+    cpus: list[CpuHardware] | None = Field(None, description="List of CPU specifications")
+    gpus: list[GpuHardware] = Field(..., description="List of GPU specifications")
+    storage: list[StorageHardware] | None = Field(
         None, description="List of storage specifications"
     )
-    ram: List[RamHardware] | None = Field(None, description="List of RAM specifications")
+    ram: list[RamHardware] | None = Field(None, description="List of RAM specifications")
 
 
 class BillingBalanceResponse(BaseModel):
@@ -80,6 +81,6 @@ class BillingPurchaseHistoryEntry(BaseModel):
 class BillingPurchaseHistoryResponse(BaseModel):
     """Response model for billing purchase history API."""
 
-    purchase_history: List[BillingPurchaseHistoryEntry] = Field(
+    purchase_history: list[BillingPurchaseHistoryEntry] = Field(
         ..., description="List of purchase history entries"
-    ) 
+    )

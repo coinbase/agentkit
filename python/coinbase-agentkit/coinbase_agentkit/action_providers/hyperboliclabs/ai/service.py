@@ -1,6 +1,7 @@
 """AI service for Hyperbolic platform."""
 
 from ..constants import AI_SERVICES_BASE_URL, AI_SERVICES_ENDPOINTS, SUPPORTED_IMAGE_MODELS
+from ..service import Base
 from .models import (
     AudioGenerationRequest,
     AudioGenerationResponse,
@@ -9,7 +10,6 @@ from .models import (
     ImageGenerationRequest,
     ImageGenerationResponse,
 )
-from ..service import Base
 
 
 class AIService(Base):
@@ -20,6 +20,7 @@ class AIService(Base):
 
         Args:
             api_key: API key for authentication.
+
         """
         super().__init__(api_key, AI_SERVICES_BASE_URL)
 
@@ -34,6 +35,7 @@ class AIService(Base):
 
         Returns:
             ChatCompletionResponse: The chat completion response.
+
         """
         response = self.make_request(
             endpoint=AI_SERVICES_ENDPOINTS["TEXT_GENERATION"],
@@ -53,6 +55,7 @@ class AIService(Base):
 
         Returns:
             ImageGenerationResponse: The image generation response.
+
         """
         if request.model_name not in SUPPORTED_IMAGE_MODELS:
             raise ValueError(
@@ -77,10 +80,11 @@ class AIService(Base):
 
         Returns:
             AudioGenerationResponse: The audio generation response.
+
         """
         response = self.make_request(
             endpoint=AI_SERVICES_ENDPOINTS["AUDIO_GENERATION"],
             data=request.model_dump(exclude_none=True),
         )
 
-        return AudioGenerationResponse(**response.json()) 
+        return AudioGenerationResponse(**response.json())

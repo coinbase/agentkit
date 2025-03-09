@@ -18,7 +18,7 @@ def test_billing_balance(billing):
     print("\nBalance response:", json.dumps(response.model_dump(), indent=2))
 
     assert isinstance(response, BillingBalanceResponse)
-    assert isinstance(response.credits, (int, str))
+    assert isinstance(response.credits, int | str)
     if isinstance(response.credits, str):
         assert float(response.credits) >= 0
     else:
@@ -37,11 +37,15 @@ def test_billing_history(billing):
     # If there is purchase history, validate entry structure and constraints
     if response.purchase_history:
         purchase = response.purchase_history[0]
-        
+
         # Validate amount constraints
         assert float(purchase.amount) > 0, "Purchase amount should be positive"
-        assert float(purchase.amount) <= 100000, "Purchase amount should be within reasonable limits"
-        assert round(float(purchase.amount), 2) == float(purchase.amount), "Amount should have at most 2 decimal places"
+        assert (
+            float(purchase.amount) <= 100000
+        ), "Purchase amount should be within reasonable limits"
+        assert round(float(purchase.amount), 2) == float(
+            purchase.amount
+        ), "Amount should have at most 2 decimal places"
 
         # API returns timestamps in format: "2025-03-06 07:26:08.969381+00:00"
         # datetime.fromisoformat() handles this format natively since Python 3.7
@@ -50,4 +54,7 @@ def test_billing_history(billing):
         assert purchase_time <= current_time, "Purchase time should not be in the future"
 
         # Validate source field
-        assert purchase.source in ["signup_promo", "stripe_purchase"], "Source should be a known value" 
+        assert purchase.source in [
+            "signup_promo",
+            "stripe_purchase",
+        ], "Source should be a known value"

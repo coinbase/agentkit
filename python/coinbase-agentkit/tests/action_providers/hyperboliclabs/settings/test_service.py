@@ -1,14 +1,18 @@
 """Test HyperbolicLabs Settings service."""
 
+from unittest.mock import ANY
+
 import pytest
 import requests
-from unittest.mock import ANY
 
 from coinbase_agentkit.action_providers.hyperboliclabs.constants import (
     SETTINGS_BASE_URL,
     SETTINGS_ENDPOINTS,
 )
-from coinbase_agentkit.action_providers.hyperboliclabs.settings.models import WalletLinkRequest, WalletLinkResponse
+from coinbase_agentkit.action_providers.hyperboliclabs.settings.models import (
+    WalletLinkRequest,
+    WalletLinkResponse,
+)
 from coinbase_agentkit.action_providers.hyperboliclabs.settings.service import SettingsService
 
 
@@ -29,19 +33,16 @@ def test_settings_link_wallet_success(mock_request, mock_api_key):
     wallet_address = "0x1234567890abcdef1234567890abcdef12345678"
     request = WalletLinkRequest(address=wallet_address)
     response = service.link_wallet(request)
-    
+
     assert isinstance(response, WalletLinkResponse)
     assert response.success is True
 
     mock_request.assert_called_with(
-        method="POST", 
-        url=f"{SETTINGS_BASE_URL}{SETTINGS_ENDPOINTS['LINK_WALLET']}", 
-        headers={
-            "Content-Type": "application/json", 
-            "Authorization": f"Bearer {mock_api_key}"
-        }, 
+        method="POST",
+        url=f"{SETTINGS_BASE_URL}{SETTINGS_ENDPOINTS['LINK_WALLET']}",
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {mock_api_key}"},
         json={"address": wallet_address},
-        params=None
+        params=None,
     )
 
 
@@ -83,24 +84,24 @@ def test_link_wallet_success(settings, mock_request):
         "message": "Wallet address linked successfully",
         "address": "0x1234567890abcdef1234567890abcdef12345678",
     }
-    
+
     # Call the service method
     wallet_address = "0x1234567890abcdef1234567890abcdef12345678"
     request = WalletLinkRequest(address=wallet_address)
     response = settings.link_wallet(request)
-    
+
     # Verify the response
     assert isinstance(response, WalletLinkResponse)
     assert response.success is True
     assert response.message == "Wallet address linked successfully"
-    
+
     # Verify the API was called correctly
     mock_request.assert_called_once_with(
         method="POST",
         url=f"{SETTINGS_BASE_URL}{SETTINGS_ENDPOINTS['LINK_WALLET']}",
         headers=ANY,
         json={"address": wallet_address},
-        params=None
+        params=None,
     )
 
 
@@ -109,10 +110,10 @@ def test_link_wallet_invalid_address(settings, mock_request):
     mock_request.side_effect = requests.exceptions.HTTPError(
         "422 Client Error: Unprocessable Entity"
     )
-    
+
     invalid_address = "not-a-valid-address"
     request = WalletLinkRequest(address=invalid_address)
-    
+
     with pytest.raises(requests.exceptions.HTTPError):
         settings.link_wallet(request)
 
@@ -122,9 +123,9 @@ def test_link_wallet_api_error(settings, mock_request):
     mock_request.side_effect = requests.exceptions.HTTPError(
         "500 Server Error: Internal Server Error"
     )
-    
+
     address = "0x1234567890abcdef1234567890abcdef12345678"
     request = WalletLinkRequest(address=address)
-    
+
     with pytest.raises(requests.exceptions.HTTPError):
-        settings.link_wallet(request) 
+        settings.link_wallet(request)

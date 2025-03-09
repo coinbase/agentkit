@@ -1,13 +1,11 @@
 """Service for billing-related operations."""
 
-from typing import Any
-
 from ..constants import BILLING_BASE_URL, BILLING_ENDPOINTS
+from ..service import Base
 from .models import (
     BillingBalanceResponse,
     BillingPurchaseHistoryResponse,
 )
-from ..service import Base
 
 
 class BillingService(Base):
@@ -27,6 +25,7 @@ class BillingService(Base):
 
         Returns:
             BillingBalanceResponse: The balance data.
+
         """
         response = self.make_request(endpoint=BILLING_ENDPOINTS["GET_BALANCE"], method="GET")
         return BillingBalanceResponse(**response.json())
@@ -36,6 +35,7 @@ class BillingService(Base):
 
         Returns:
             BillingPurchaseHistoryResponse: The purchase history data.
+
         """
         response = self.make_request(endpoint=BILLING_ENDPOINTS["PURCHASE_HISTORY"], method="GET")
-        return BillingPurchaseHistoryResponse(**response.json()) 
+        return BillingPurchaseHistoryResponse(**response.json())

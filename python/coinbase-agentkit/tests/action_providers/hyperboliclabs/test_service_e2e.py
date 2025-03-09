@@ -1,10 +1,8 @@
 """End-to-end tests for the Base service class."""
 
-import os
 import pytest
 import requests
 
-from coinbase_agentkit.action_providers.hyperboliclabs.constants import API_BASE_URL
 from coinbase_agentkit.action_providers.hyperboliclabs.service import Base
 
 
@@ -12,14 +10,11 @@ from coinbase_agentkit.action_providers.hyperboliclabs.service import Base
 def test_make_request_success(api_key):
     """Test successful API request."""
     base = Base(api_key)
-    
+
     # Try to make a request to a simple endpoint that's likely to succeed
     try:
-        response = base.make_request(
-            endpoint="/v1",
-            method="GET"
-        )
-        
+        response = base.make_request(endpoint="/v1", method="GET")
+
         # Verify response is a Response object, since the implementation now returns the raw response
         assert isinstance(response, requests.Response)
         # Ensure the request was successful (status code 2xx)
@@ -38,13 +33,10 @@ def test_make_request_success(api_key):
 def test_make_request_error(api_key):
     """Test API request with error response."""
     base = Base(api_key)
-    
+
     # Make a request to a nonexistent endpoint that should fail
-    response = base.make_request(
-        endpoint="/nonexistent-endpoint",
-        method="GET"
-    )
-    
+    response = base.make_request(endpoint="/nonexistent-endpoint", method="GET")
+
     # Now manually raise for status since the implementation doesn't do it anymore
     with pytest.raises(requests.exceptions.HTTPError):
-        response.raise_for_status() 
+        response.raise_for_status()

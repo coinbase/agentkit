@@ -4,12 +4,13 @@ This module provides actions for interacting with Hyperbolic AI services.
 It includes functionality for text, image and audio generation.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from coinbase_agentkit.network import Network
+
 from ...action_decorator import create_action
 from ...action_provider import ActionProvider
-from .service import AIService
+from ..utils import get_api_key
 from .models import (
     AudioGenerationRequest,
     ChatCompletionRequest,
@@ -17,24 +18,24 @@ from .models import (
     ImageGenerationRequest,
 )
 from .schemas import (
-    GenerateTextSchema,
-    GenerateImageSchema,
     GenerateAudioSchema,
+    GenerateImageSchema,
+    GenerateTextSchema,
 )
-from ..utils import get_api_key
+from .service import AIService
 
 
 class AIActionProvider(ActionProvider):
     """Provides actions for interacting with Hyperbolic AI services.
 
     This provider enables interaction with the Hyperbolic AI services for text, image
-    and audio generation. It requires an API key which can be provided directly or 
+    and audio generation. It requires an API key which can be provided directly or
     through the HYPERBOLIC_API_KEY environment variable.
     """
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
     ):
         """Initialize the Hyperbolic AI action provider.
 
@@ -44,6 +45,7 @@ class AIActionProvider(ActionProvider):
 
         Raises:
             ValueError: If API key is not provided and not found in environment.
+
         """
         super().__init__("hyperbolic_ai", [])
 
@@ -106,26 +108,27 @@ Notes:
 
         Returns:
             str: A JSON string containing the generated text or error details.
+
         """
         try:
             # Validate arguments using schema
             validated_args = GenerateTextSchema(**args)
-            
+
             # Create chat message
             messages = []
             if validated_args.system_prompt:
                 messages.append(ChatMessage(role="system", content=validated_args.system_prompt))
             messages.append(ChatMessage(role="user", content=validated_args.prompt))
-            
+
             # Create request
             request = ChatCompletionRequest(
                 messages=messages,
                 model=validated_args.model,
             )
-            
+
             # Generate text
             response = self.ai_service.generate_text(request)
-            
+
             # Return response as JSON string
             return response.model_dump_json(indent=2)
         except Exception as e:
@@ -174,11 +177,12 @@ Notes:
 
         Returns:
             str: A JSON string containing the generated image or error details.
+
         """
         try:
             # Validate arguments using schema
             validated_args = GenerateImageSchema(**args)
-            
+
             # Create request
             request = ImageGenerationRequest(
                 prompt=validated_args.prompt,
@@ -189,10 +193,10 @@ Notes:
                 num_images=validated_args.num_images,
                 negative_prompt=validated_args.negative_prompt,
             )
-            
+
             # Generate image
             response = self.ai_service.generate_image(request)
-            
+
             # Return response as JSON string
             return response.model_dump_json(indent=2)
         except Exception as e:
@@ -234,14 +238,15 @@ Notes:
 
         Returns:
             str: A JSON string containing the generated audio or error details.
+
         """
         try:
             # Handle string input by converting to a dictionary
             if isinstance(args, str):
                 args = {"text": args}
-                
+
             validated_args = GenerateAudioSchema(**args)
-            
+
             # Create request
             request = AudioGenerationRequest(
                 text=validated_args.text,
@@ -249,7 +254,7 @@ Notes:
                 speaker=validated_args.speaker,
                 speed=validated_args.speed,
             )
-            
+
             # Generate audio
             response = self.ai_service.generate_audio(request)
 
@@ -267,12 +272,13 @@ Notes:
 
         Returns:
             bool: Always True as Hyperbolic AI actions don't depend on blockchain networks.
+
         """
         return True
 
 
 def hyperbolic_ai_action_provider(
-    api_key: Optional[str] = None,
+    api_key: str | None = None,
 ) -> AIActionProvider:
     """Create and return a new HyperbolicAIActionProvider instance.
 
@@ -285,5 +291,6 @@ def hyperbolic_ai_action_provider(
 
     Raises:
         ValueError: If API key is not provided and not found in environment.
+
     """
-    return AIActionProvider(api_key=api_key) 
+    return AIActionProvider(api_key=api_key)

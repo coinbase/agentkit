@@ -4,9 +4,6 @@ This module provides utility functions for formatting and processing
 settings information from Hyperbolic services.
 """
 
-import json
-from typing import Any
-
 from .models import WalletLinkResponse
 
 
@@ -40,4 +37,4 @@ def format_wallet_link_response(response_data: WalletLinkResponse) -> str:
 
 __all__ = [
     "format_wallet_link_response",
-] 
+]

@@ -9,18 +9,18 @@ from typing import Any
 from ....network import Network
 from ...action_decorator import create_action
 from ...action_provider import ActionProvider
+from ..utils import get_api_key
 from .models import WalletLinkRequest
 from .schemas import LinkWalletAddressSchema
 from .service import SettingsService
 from .utils import format_wallet_link_response
-from ..utils import get_api_key
 
 
 class SettingsActionProvider(ActionProvider):
     """Provides actions for interacting with Hyperbolic settings.
 
     This provider enables interaction with the Hyperbolic settings services for managing
-    account settings. It requires an API key which can be provided directly or 
+    account settings. It requires an API key which can be provided directly or
     through the HYPERBOLIC_API_KEY environment variable.
     """
 
@@ -36,6 +36,7 @@ class SettingsActionProvider(ActionProvider):
 
         Raises:
             ValueError: If API key is not provided and not found in environment.
+
         """
         super().__init__("hyperbolic_settings", [])
 
@@ -91,6 +92,7 @@ Notes:
 
         Returns:
             str: A message containing the linking response and next steps.
+
         """
         validated_args = LinkWalletAddressSchema(**args)
 
@@ -113,6 +115,7 @@ Notes:
 
         Returns:
             bool: Always True as Hyperbolic settings actions don't depend on blockchain networks.
+
         """
         return True
 
@@ -131,5 +134,6 @@ def hyperbolic_settings_action_provider(
 
     Raises:
         ValueError: If API key is not provided and not found in environment.
+
     """
-    return SettingsActionProvider(api_key=api_key) 
+    return SettingsActionProvider(api_key=api_key)

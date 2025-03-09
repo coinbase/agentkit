@@ -3,8 +3,6 @@
 This module provides models for AI API communication.
 """
 
-from typing import List
-
 from pydantic import BaseModel, Field, field_validator
 
 from ..constants import (
@@ -128,7 +126,9 @@ class ImageGenerationRequest(BaseModel):
     )
     enable_refiner: bool = Field(False, description="Enable Stable Diffusion XL-refiner")
     controlnet_name: str | None = Field(None, description="Name of ControlNet to use")
-    controlnet_image: str | None = Field(None, description="Base64 encoded image for ControlNet input")
+    controlnet_image: str | None = Field(
+        None, description="Base64 encoded image for ControlNet input"
+    )
     loras: dict[str, float] | None = Field(None, description="Pairs of lora name and weight")
 
 
@@ -200,4 +200,4 @@ class AudioGenerationResponse(BaseModel):
     """Response model for audio generation API."""
 
     audio: str = Field(..., description="Base64 encoded audio data in MP3 format")
-    duration: float | None = Field(None, description="Duration of the generated audio in seconds") 
+    duration: float | None = Field(None, description="Duration of the generated audio in seconds")

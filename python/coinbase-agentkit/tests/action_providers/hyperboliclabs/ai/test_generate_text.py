@@ -1,7 +1,7 @@
 """Tests for generate_text action in HyperbolicAIActionProvider."""
 
-from unittest.mock import patch, Mock
 import json
+from unittest.mock import patch
 
 import pytest
 from pydantic import ValidationError
@@ -9,21 +9,23 @@ from pydantic import ValidationError
 from coinbase_agentkit.action_providers.hyperboliclabs.ai.action_provider import (
     AIActionProvider,
 )
-from coinbase_agentkit.action_providers.hyperboliclabs.ai.schemas import (
-    GenerateTextSchema,
-)
 from coinbase_agentkit.action_providers.hyperboliclabs.ai.models import (
     ChatCompletionResponse,
     ChatCompletionResponseChoice,
     ChatCompletionResponseMessage,
     ChatCompletionResponseUsage,
 )
+from coinbase_agentkit.action_providers.hyperboliclabs.ai.schemas import (
+    GenerateTextSchema,
+)
 
 
 @pytest.fixture
 def mock_ai_service():
     """Create a mock AIService."""
-    with patch("coinbase_agentkit.action_providers.hyperboliclabs.ai.action_provider.AIService") as mock:
+    with patch(
+        "coinbase_agentkit.action_providers.hyperboliclabs.ai.action_provider.AIService"
+    ) as mock:
         yield mock.return_value
 
 
@@ -37,7 +39,7 @@ def test_generate_text_success(provider, mock_ai_service, monkeypatch):
     """Test successful text generation."""
     # Replace the provider's ai_service with our mock
     monkeypatch.setattr(provider, "ai_service", mock_ai_service)
-    
+
     # Setup mock response
     mock_response = ChatCompletionResponse(
         id="chat-12345",
@@ -68,7 +70,7 @@ def test_generate_text_success(provider, mock_ai_service, monkeypatch):
 
     # Verify the result is a string
     assert isinstance(result, str)
-    
+
     # Parse the JSON string to verify its contents
     result_json = json.loads(result)
     assert result_json["id"] == "chat-12345"
@@ -88,7 +90,7 @@ def test_generate_text_with_custom_model(provider, mock_ai_service, monkeypatch)
     """Test text generation with a custom model."""
     # Replace the provider's ai_service with our mock
     monkeypatch.setattr(provider, "ai_service", mock_ai_service)
-    
+
     # Setup mock response
     mock_response = ChatCompletionResponse(
         id="chat-12345",
@@ -114,15 +116,12 @@ def test_generate_text_with_custom_model(provider, mock_ai_service, monkeypatch)
     mock_ai_service.generate_text.return_value = mock_response
 
     # Call the method with custom model
-    args = {
-        "prompt": "Test prompt",
-        "model": "meta-llama/Meta-Llama-3-8B-Instruct"
-    }
+    args = {"prompt": "Test prompt", "model": "meta-llama/Meta-Llama-3-8B-Instruct"}
     result = provider.generate_text(args)
 
     # Verify the result is a string
     assert isinstance(result, str)
-    
+
     # Parse the JSON string to verify its contents
     result_json = json.loads(result)
     assert result_json["model"] == "meta-llama/Meta-Llama-3-8B-Instruct"
@@ -155,7 +154,7 @@ def test_generate_text_error(provider, mock_ai_service, monkeypatch):
     """Test text generation with error."""
     # Replace the provider's ai_service with our mock
     monkeypatch.setattr(provider, "ai_service", mock_ai_service)
-    
+
     # Setup mock to raise exception
     mock_ai_service.generate_text.side_effect = Exception("API error")
 
@@ -165,4 +164,4 @@ def test_generate_text_error(provider, mock_ai_service, monkeypatch):
 
     # Verify the result is a string
     assert isinstance(result, str)
-    assert "Error generating text: API error" in result 
+    assert "Error generating text: API error" in result

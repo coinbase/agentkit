@@ -1,6 +1,7 @@
 """Unit tests for the Base service class."""
 
 from unittest.mock import patch
+
 import pytest
 import requests
 
@@ -10,7 +11,9 @@ from coinbase_agentkit.action_providers.hyperboliclabs.service import Base
 @pytest.fixture
 def mock_request():
     """Mock the request function for testing."""
-    with patch("coinbase_agentkit.action_providers.hyperboliclabs.service.requests.request") as mock:
+    with patch(
+        "coinbase_agentkit.action_providers.hyperboliclabs.service.requests.request"
+    ) as mock:
         mock.return_value.status_code = 200
         mock.return_value.json.return_value = {"status": "success"}
         mock.return_value.raise_for_status.return_value = None
@@ -27,15 +30,17 @@ def test_init():
 def test_make_request():
     """Test make_request method."""
     base = Base("test_api_key", "https://api.example.com")
-    
-    with patch("coinbase_agentkit.action_providers.hyperboliclabs.service.requests.request") as mock_request:
+
+    with patch(
+        "coinbase_agentkit.action_providers.hyperboliclabs.service.requests.request"
+    ) as mock_request:
         mock_response = mock_request.return_value
         mock_response.json.return_value = {"status": "success"}
         mock_response.ok = True
-        
+
         # Call the method
         response = base.make_request("/test")
-        
+
         # Check that the right calls were made
         mock_request.assert_called_once()
         assert response is mock_response
@@ -93,6 +98,6 @@ def test_service_make_request_invalid_method(mock_request, mock_api_key):
     # The implementation no longer validates HTTP methods directly,
     # but we can test that we pass the method correctly to requests
     mock_request.side_effect = ValueError("Invalid HTTP method: INVALID")
-    
+
     with pytest.raises(ValueError, match="Invalid HTTP method"):
-        service.make_request("/test", method="INVALID") 
+        service.make_request("/test", method="INVALID")
