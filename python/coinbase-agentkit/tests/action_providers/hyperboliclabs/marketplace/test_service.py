@@ -6,13 +6,7 @@ import requests
 from coinbase_agentkit.action_providers.hyperboliclabs.constants import MARKETPLACE_BASE_URL
 from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.models import (
     AvailableInstancesResponse,
-    GpuHardware,
-    HardwareInfo,
     InstanceHistoryResponse,
-    NodeInstance,
-    NodeRental,
-    Price,
-    PricingInfo,
     RentedInstancesResponse,
     RentInstanceRequest,
     RentInstanceResponse,
@@ -54,7 +48,7 @@ def test_marketplace_get_available_instances(mock_request, mock_api_key):
 def test_marketplace_get_available_instances_with_data(mock_request, mock_api_key):
     """Test get_available_instances method with populated response."""
     service = MarketplaceService(mock_api_key)
-    
+
     mock_request.return_value.json.return_value = {
         "instances": [
             {
@@ -70,7 +64,7 @@ def test_marketplace_get_available_instances_with_data(mock_request, mock_api_ke
             }
         ]
     }
-    
+
     response = service.get_available_instances()
     assert isinstance(response, AvailableInstancesResponse)
     assert len(response.instances) == 1
@@ -80,7 +74,7 @@ def test_marketplace_get_available_instances_with_data(mock_request, mock_api_ke
     assert response.instances[0].gpu_count == 8
     assert response.instances[0].gpus_reserved == 4
     assert response.instances[0].hardware.gpus[0].model == "NVIDIA A100"
-    
+
     mock_request.assert_called_once()
 
 
@@ -92,7 +86,7 @@ def test_marketplace_get_instance_history(mock_request, mock_api_key):
     response = service.get_instance_history()
     assert isinstance(response, InstanceHistoryResponse)
     assert response.instance_history == []
-    
+
     mock_request.assert_called_once()
     assert mock_request.call_args is not None
     assert "Bearer" in mock_request.call_args.kwargs.get("headers", {}).get("Authorization", "")
@@ -101,7 +95,7 @@ def test_marketplace_get_instance_history(mock_request, mock_api_key):
 def test_marketplace_get_instance_history_with_data(mock_request, mock_api_key):
     """Test get_instance_history method with populated response."""
     service = MarketplaceService(mock_api_key)
-    
+
     mock_request.return_value.json.return_value = {
         "instance_history": [
             {
@@ -116,7 +110,7 @@ def test_marketplace_get_instance_history_with_data(mock_request, mock_api_key):
             }
         ]
     }
-    
+
     response = service.get_instance_history()
     assert isinstance(response, InstanceHistoryResponse)
     assert len(response.instance_history) == 1
@@ -126,7 +120,7 @@ def test_marketplace_get_instance_history_with_data(mock_request, mock_api_key):
     assert response.instance_history[0].price.amount == 2.5
     assert response.instance_history[0].price.period == "hourly"
     assert response.instance_history[0].gpu_count == 2
-    
+
     mock_request.assert_called_once()
 
 
@@ -138,7 +132,7 @@ def test_marketplace_get_rented_instances(mock_request, mock_api_key):
     response = service.get_rented_instances()
     assert isinstance(response, RentedInstancesResponse)
     assert response.instances == []
-    
+
     mock_request.assert_called_once()
     assert mock_request.call_args is not None
     assert "Bearer" in mock_request.call_args.kwargs.get("headers", {}).get("Authorization", "")
@@ -147,7 +141,7 @@ def test_marketplace_get_rented_instances(mock_request, mock_api_key):
 def test_marketplace_get_rented_instances_with_data(mock_request, mock_api_key):
     """Test get_rented_instances method with populated response."""
     service = MarketplaceService(mock_api_key)
-    
+
     mock_request.return_value.json.return_value = {
         "instances": [
             {
@@ -163,11 +157,11 @@ def test_marketplace_get_rented_instances_with_data(mock_request, mock_api_key):
                 "ssh_access": {
                     "host": "host.example.com",
                     "username": "user",
-                }
+                },
             }
         ]
     }
-    
+
     response = service.get_rented_instances()
     assert isinstance(response, RentedInstancesResponse)
     assert len(response.instances) == 1
@@ -178,14 +172,14 @@ def test_marketplace_get_rented_instances_with_data(mock_request, mock_api_key):
     assert response.instances[0].ssh_access is not None
     assert response.instances[0].ssh_access.host == "host.example.com"
     assert response.instances[0].ssh_access.username == "user"
-    
+
     mock_request.assert_called_once()
 
 
 def test_marketplace_rent_instance_success(mock_request, mock_api_key):
     """Test rent_instance method with successful response."""
     service = MarketplaceService(mock_api_key)
-    
+
     mock_request.return_value.json.return_value = {
         "status": "success",
         "instance_name": TEST_INSTANCE_ID,
@@ -204,7 +198,7 @@ def test_marketplace_rent_instance_success(mock_request, mock_api_key):
     mock_request.assert_called_once()
     assert mock_request.call_args is not None
     assert "Bearer" in mock_request.call_args.kwargs.get("headers", {}).get("Authorization", "")
-    
+
     json_data = mock_request.call_args.kwargs.get("json", {})
     assert json_data.get("cluster_name") == TEST_CLUSTER
     assert json_data.get("node_name") == TEST_NODE
@@ -215,13 +209,13 @@ def test_marketplace_rent_instance_success(mock_request, mock_api_key):
 def test_marketplace_rent_instance_with_message(mock_request, mock_api_key):
     """Test rent_instance method with additional message in response."""
     service = MarketplaceService(mock_api_key)
-    
+
     mock_request.return_value.json.return_value = {
         "status": "success",
         "instance_name": "instance-abc123",
         "message": "Instance created successfully",
     }
-    
+
     request = RentInstanceRequest(
         cluster_name="us-west-2",
         node_name="node-456",
@@ -231,10 +225,10 @@ def test_marketplace_rent_instance_with_message(mock_request, mock_api_key):
     assert isinstance(response, RentInstanceResponse)
     assert response.status == "success"
     assert response.instance_name == "instance-abc123"
-    
+
     mock_request.assert_called_once()
     assert mock_request.call_args is not None
-    
+
     json_data = mock_request.call_args.kwargs.get("json", {})
     assert json_data.get("cluster_name") == "us-west-2"
     assert json_data.get("node_name") == "node-456"
@@ -260,7 +254,7 @@ def test_marketplace_rent_instance_connection_error(mock_request, mock_api_key):
     """Test rent_instance method with connection error."""
     service = MarketplaceService(mock_api_key)
     mock_request.side_effect = requests.exceptions.ConnectionError("Connection refused")
-    
+
     request = RentInstanceRequest(
         cluster_name=TEST_CLUSTER,
         node_name=TEST_NODE,
@@ -273,7 +267,7 @@ def test_marketplace_rent_instance_connection_error(mock_request, mock_api_key):
 def test_marketplace_terminate_instance_success(mock_request, mock_api_key):
     """Test terminate_instance method with successful response."""
     service = MarketplaceService(mock_api_key)
-    
+
     mock_request.return_value.json.return_value = {
         "status": "success",
         "message": "Instance terminated successfully",
@@ -284,7 +278,7 @@ def test_marketplace_terminate_instance_success(mock_request, mock_api_key):
     assert isinstance(response, TerminateInstanceResponse)
     assert response.status == "success"
     assert response.message == "Instance terminated successfully"
-    
+
     mock_request.assert_called_once()
     assert mock_request.call_args is not None
     assert "Bearer" in mock_request.call_args.kwargs.get("headers", {}).get("Authorization", "")
@@ -294,18 +288,18 @@ def test_marketplace_terminate_instance_success(mock_request, mock_api_key):
 def test_marketplace_terminate_instance_with_custom_message(mock_request, mock_api_key):
     """Test terminate_instance method with custom success message."""
     service = MarketplaceService(mock_api_key)
-    
+
     mock_request.return_value.json.return_value = {
         "status": "success",
         "message": "Instance i-abc123 has been terminated",
     }
-    
+
     request = TerminateInstanceRequest(id="i-abc123")
     response = service.terminate_instance(request)
     assert isinstance(response, TerminateInstanceResponse)
     assert response.status == "success"
     assert response.message == "Instance i-abc123 has been terminated"
-    
+
     mock_request.assert_called_once()
     assert mock_request.call_args is not None
     assert mock_request.call_args.kwargs.get("json") == {"id": "i-abc123"}
@@ -325,7 +319,7 @@ def test_marketplace_terminate_instance_bad_request(mock_request, mock_api_key):
     """Test terminate_instance method with bad request error."""
     service = MarketplaceService(mock_api_key)
     mock_request.side_effect = requests.exceptions.HTTPError("400 Client Error: Bad Request")
-    
+
     request = TerminateInstanceRequest(id="")
     with pytest.raises(requests.exceptions.HTTPError, match="400 Client Error"):
-        service.terminate_instance(request) 
+        service.terminate_instance(request)

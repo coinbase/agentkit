@@ -5,28 +5,25 @@ They require a valid API key in the HYPERBOLIC_API_KEY environment variable.
 """
 
 import base64
-from io import BytesIO
 import os
+from io import BytesIO
+
+import pytest
 import requests
 from PIL import Image
-import pytest
 
-from coinbase_agentkit.action_providers.hyperboliclabs.constants import (
-    SUPPORTED_AUDIO_LANGUAGES,
-    SUPPORTED_AUDIO_SPEAKERS,
-    SUPPORTED_IMAGE_MODELS,
-)
 from coinbase_agentkit.action_providers.hyperboliclabs.ai.models import (
-    AudioGenerationResponse,
     AudioGenerationRequest,
+    AudioGenerationResponse,
     ChatCompletionRequest,
     ChatCompletionResponse,
     ChatMessage,
-    GeneratedImage,
     ImageGenerationRequest,
-    ImageGenerationResponse,
 )
-from coinbase_agentkit.action_providers.hyperboliclabs.ai.utils import save_base64_image
+from coinbase_agentkit.action_providers.hyperboliclabs.constants import (
+    SUPPORTED_AUDIO_LANGUAGES,
+    SUPPORTED_IMAGE_MODELS,
+)
 
 
 def encode_image(img):
@@ -89,7 +86,7 @@ def test_ai_audio_generation_languages(ai_service, language):
     text = "Hello, this is a language test"
     request = AudioGenerationRequest(text=text, language=language)
     response = ai_service.generate_audio(request)
-    
+
     assert isinstance(response, AudioGenerationResponse)
     assert response.audio is not None
     if response.duration:
@@ -183,7 +180,7 @@ def test_ai_image_generation_models(ai_service, model, tmp_path):
     # Skip ControlNet models as they're tested separately
     if "ControlNet" in model:
         pytest.skip("ControlNet models are tested separately")
-        
+
     prompt = "A serene lake at dawn"
     request = ImageGenerationRequest(
         prompt=prompt,
@@ -218,13 +215,15 @@ def test_ai_image_generation_models(ai_service, model, tmp_path):
 def test_ai_image_generation_controlnet(ai_service, model, controlnet_type, tmp_path):
     """Test image generation with ControlNet models and different control types."""
     prompt = "an astronaut on mars"
-    
-    image_url = "https://huggingface.co/lllyasviel/sd-controlnet-depth/resolve/main/images/stormtrooper.png"
+
+    image_url = (
+        "https://huggingface.co/lllyasviel/sd-controlnet-depth/resolve/main/images/stormtrooper.png"
+    )
     response = requests.get(image_url)
     response.raise_for_status()
     image = Image.open(BytesIO(response.content))
     test_image = encode_image(image)
-    
+
     request = ImageGenerationRequest(
         prompt=prompt,
         model_name=model,
@@ -237,28 +236,30 @@ def test_ai_image_generation_controlnet(ai_service, model, controlnet_type, tmp_
         controlnet_image=test_image,
         seed=5742320,
     )
-    
+
     # Print request data for debugging
-    print(f"\nRequest data:")
+    print("\nRequest data:")
     print(f"  Model: {model}")
     print(f"  ControlNet type: {controlnet_type}")
-    
+
     try:
         response = ai_service.generate_image(request)
-        
+
         assert len(response.images) > 0
         assert response.inference_time is not None
         assert isinstance(response.inference_time, float)
-        
+
         # Save the generated image
         image = response.images[0]
         assert image.image is not None
         assert isinstance(image.random_seed, int)
         assert isinstance(image.index, int)
-        
-        output_path = os.path.join(tmp_path, f"generated_image_{model.lower()}_{controlnet_type}.png")
+
+        output_path = os.path.join(
+            tmp_path, f"generated_image_{model.lower()}_{controlnet_type}.png"
+        )
         saved_path = save_image(image.image, output_path)
         assert os.path.exists(saved_path)
         print(f"\nControlNet image saved to: {saved_path}")
     except Exception as e:
-        pytest.skip(f"ControlNet test failed: {str(e)}") 
+        pytest.skip(f"ControlNet test failed: {e!s}")

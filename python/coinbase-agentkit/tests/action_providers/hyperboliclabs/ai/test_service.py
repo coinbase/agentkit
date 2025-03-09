@@ -3,10 +3,6 @@
 import pytest
 import requests
 
-from coinbase_agentkit.action_providers.hyperboliclabs.constants import (
-    AI_SERVICES_BASE_URL,
-    SUPPORTED_IMAGE_MODELS,
-)
 from coinbase_agentkit.action_providers.hyperboliclabs.ai.models import (
     AudioGenerationRequest,
     ChatCompletionRequest,
@@ -14,6 +10,10 @@ from coinbase_agentkit.action_providers.hyperboliclabs.ai.models import (
     ImageGenerationRequest,
 )
 from coinbase_agentkit.action_providers.hyperboliclabs.ai.service import AIService
+from coinbase_agentkit.action_providers.hyperboliclabs.constants import (
+    AI_SERVICES_BASE_URL,
+    SUPPORTED_IMAGE_MODELS,
+)
 
 
 def test_ai_service_init(mock_api_key):
@@ -131,7 +131,7 @@ def test_ai_image_generation(mock_request, mock_api_key):
                 "image": "base64_encoded_image_data_2",
                 "random_seed": 12346,
                 "index": 1,
-            }
+            },
         ],
         "inference_time": 2.5,
     }
@@ -198,7 +198,9 @@ def test_ai_service_error_handling(mock_request, mock_api_key):
     mock_request.side_effect = requests.exceptions.ConnectionError(
         "Failed to establish a connection"
     )
-    with pytest.raises(requests.exceptions.ConnectionError, match="Failed to establish a connection"):
+    with pytest.raises(
+        requests.exceptions.ConnectionError, match="Failed to establish a connection"
+    ):
         request = ChatCompletionRequest(
             messages=[ChatMessage(role="user", content="Test prompt")],
             model="meta-llama/Meta-Llama-3-70B-Instruct",

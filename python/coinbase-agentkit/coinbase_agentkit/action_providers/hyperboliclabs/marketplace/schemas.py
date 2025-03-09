@@ -45,4 +45,4 @@ class SSHAccessSchema(BaseModel):
 class TerminateComputeSchema(BaseModel):
     """Schema for terminate_compute action."""
 
-    instance_id: str = Field(description="The ID of the instance to terminate") 
+    instance_id: str = Field(description="The ID of the instance to terminate")

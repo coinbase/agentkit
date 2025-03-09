@@ -7,7 +7,9 @@ import pytest
 from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.action_provider import (
     MarketplaceActionProvider,
 )
-from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.models import TerminateInstanceResponse
+from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.models import (
+    TerminateInstanceResponse,
+)
 
 
 @pytest.fixture
@@ -19,10 +21,9 @@ def provider(mock_api_key):
 def test_terminate_compute_success(provider):
     """Test successful compute termination."""
     mock_response = TerminateInstanceResponse(
-        status="success",
-        message="Instance terminated successfully"
+        status="success", message="Instance terminated successfully"
     )
-    
+
     with (
         patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
         patch.object(provider.marketplace, "terminate_instance", return_value=mock_response),
@@ -43,7 +44,9 @@ def test_terminate_compute_api_error(provider):
     """Test compute termination with API error."""
     with (
         patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
-        patch.object(provider.marketplace, "terminate_instance", side_effect=Exception("API Error")),
+        patch.object(
+            provider.marketplace, "terminate_instance", side_effect=Exception("API Error")
+        ),
     ):
         result = provider.terminate_compute({"instance_id": "i-123456"})
         assert "Error terminating compute: API Error" in result
@@ -58,4 +61,3 @@ def test_terminate_compute_missing_instance_id(provider):
         with pytest.raises(Exception) as exc_info:
             provider.terminate_compute({})
         assert "Field required" in str(exc_info.value)
-

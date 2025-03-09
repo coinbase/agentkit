@@ -1,6 +1,6 @@
 """Tests for get_gpu_status action in HyperbolicMarketplaceActionProvider."""
 
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -8,10 +8,10 @@ from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.action_provid
     MarketplaceActionProvider,
 )
 from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.models import (
-    NodeRental,
-    NodeInstance,
-    HardwareInfo,
     GpuHardware,
+    HardwareInfo,
+    NodeInstance,
+    NodeRental,
     RentedInstancesResponse,
 )
 
@@ -24,36 +24,36 @@ def mock_api_response():
         model="NVIDIA A100",
         ram=40000,
     )
-    
+
     hardware = HardwareInfo(
         gpus=[gpu],
     )
-    
+
     instance1 = NodeInstance(
         id="instance-1",
         status="running",
         hardware=hardware,
         gpu_count=2,
     )
-    
+
     instance2 = NodeInstance(
         id="instance-2",
         status="starting",
         hardware=hardware,
         gpu_count=1,
     )
-    
+
     rental1 = NodeRental(
         id="i-123456",
         instance=instance1,
         ssh_command="ssh user@host -i key.pem",
     )
-    
+
     rental2 = NodeRental(
         id="i-789012",
         instance=instance2,
     )
-    
+
     return RentedInstancesResponse(instances=[rental1, rental2])
 
 
@@ -97,7 +97,7 @@ def test_get_gpu_status_success(provider, mock_api_response):
 def test_get_gpu_status_no_instances(provider):
     """Test get_gpu_status action with no instances."""
     empty_response = RentedInstancesResponse(instances=[])
-    
+
     with (
         patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
         patch.object(provider.marketplace, "get_rented_instances", return_value=empty_response),
@@ -110,7 +110,9 @@ def test_get_gpu_status_api_error(provider):
     """Test get_gpu_status action with API error."""
     with (
         patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
-        patch.object(provider.marketplace, "get_rented_instances", side_effect=Exception("API Error")),
+        patch.object(
+            provider.marketplace, "get_rented_instances", side_effect=Exception("API Error")
+        ),
     ):
         result = provider.get_gpu_status({})
         assert "Error retrieving GPU status: API Error" in result
@@ -126,7 +128,7 @@ def test_get_gpu_status_malformed_instance(provider):
     )
     rental = NodeRental(id="i-123456", instance=instance)
     response = RentedInstancesResponse(instances=[rental])
-    
+
     with (
         patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
         patch.object(provider.marketplace, "get_rented_instances", return_value=response),

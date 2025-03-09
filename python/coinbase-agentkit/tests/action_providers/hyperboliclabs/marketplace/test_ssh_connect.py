@@ -41,7 +41,7 @@ def provider(mock_api_key):
 def test_ssh_connect_success_with_password(provider):
     """Test successful SSH connection using password authentication."""
     mock_response = "Successfully connected to host.example.com as testuser"
-    
+
     with (
         patch.object(ssh_manager, "connect", return_value=mock_response),
     ):
@@ -54,14 +54,14 @@ def test_ssh_connect_success_with_password(provider):
             username="testuser",
             password="testpass",
             private_key_path=None,
-            port=22
+            port=22,
         )
 
 
 def test_ssh_connect_success_with_key(provider):
     """Test successful SSH connection using key authentication."""
     mock_response = "Successfully connected to host.example.com as testuser"
-    
+
     with (
         patch.object(ssh_manager, "connect", return_value=mock_response),
     ):
@@ -78,7 +78,7 @@ def test_ssh_connect_success_with_key(provider):
             username="testuser",
             password=None,
             private_key_path="~/.ssh/test_key",
-            port=22
+            port=22,
         )
 
 
@@ -94,7 +94,7 @@ def test_ssh_connect_missing_credentials(provider, mock_instances_response):
 def test_ssh_connect_connection_error(provider):
     """Test SSH connection with connection error."""
     mock_error_response = "SSH Connection Error: Connection refused"
-    
+
     with (
         patch.object(ssh_manager, "connect", return_value=mock_error_response),
     ):
@@ -107,14 +107,14 @@ def test_ssh_connect_connection_error(provider):
             username="testuser",
             password="testpass",
             private_key_path=None,
-            port=22
+            port=22,
         )
 
 
 def test_ssh_connect_key_error(provider):
     """Test SSH connection with key file error."""
     mock_key_error = "SSH Key Error: Key file not found at ~/.ssh/test_key"
-    
+
     with (
         patch.object(ssh_manager, "connect", return_value=mock_key_error),
     ):
@@ -131,14 +131,14 @@ def test_ssh_connect_key_error(provider):
             username="testuser",
             password=None,
             private_key_path="~/.ssh/test_key",
-            port=22
+            port=22,
         )
 
 
 def test_ssh_connect_custom_port(provider):
     """Test SSH connection with custom port."""
     mock_response = "Successfully connected to host.example.com as testuser"
-    
+
     with (
         patch.object(ssh_manager, "connect", return_value=mock_response),
     ):
@@ -156,7 +156,7 @@ def test_ssh_connect_custom_port(provider):
             username="testuser",
             password="testpass",
             private_key_path=None,
-            port=2222
+            port=2222,
         )
 
 

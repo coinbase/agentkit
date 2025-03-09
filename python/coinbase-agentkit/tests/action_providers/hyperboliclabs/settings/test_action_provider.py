@@ -2,6 +2,7 @@
 
 import os
 from unittest.mock import patch
+
 import pytest
 
 from coinbase_agentkit.action_providers.hyperboliclabs.settings.action_provider import (
@@ -28,9 +29,8 @@ def test_init_with_env_var(mock_api_key):
 
 def test_init_missing_api_key():
     """Test initialization with missing API key."""
-    with patch.dict(os.environ, clear=True):
-        with pytest.raises(ValueError):
-            SettingsActionProvider()
+    with patch.dict(os.environ, clear=True), pytest.raises(ValueError):
+        SettingsActionProvider()
 
 
 def test_supports_network(mock_api_key):
@@ -47,6 +47,8 @@ def test_supports_network(mock_api_key):
 
 def test_factory_function(mock_api_key):
     """Test the factory function."""
-    with patch("coinbase_agentkit.action_providers.hyperboliclabs.settings.action_provider.SettingsActionProvider") as mock:
+    with patch(
+        "coinbase_agentkit.action_providers.hyperboliclabs.settings.action_provider.SettingsActionProvider"
+    ) as mock:
         hyperbolic_settings_action_provider(mock_api_key)
-        mock.assert_called_once_with(api_key=mock_api_key) 
+        mock.assert_called_once_with(api_key=mock_api_key)

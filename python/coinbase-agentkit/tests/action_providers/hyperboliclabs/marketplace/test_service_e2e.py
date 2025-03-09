@@ -175,4 +175,4 @@ def test_marketplace_terminate(marketplace, rented_instance):
         None,
         "terminated",
         "terminating",
-    ], f"Instance should be terminated but is {instance_status}" 
+    ], f"Instance should be terminated but is {instance_status}"

@@ -1,7 +1,7 @@
 """Tests for generate_image action in HyperbolicAIActionProvider."""
 
-from unittest.mock import patch, Mock
 import json
+from unittest.mock import patch
 
 import pytest
 from pydantic import ValidationError
@@ -9,12 +9,12 @@ from pydantic import ValidationError
 from coinbase_agentkit.action_providers.hyperboliclabs.ai.action_provider import (
     AIActionProvider,
 )
+from coinbase_agentkit.action_providers.hyperboliclabs.ai.models import (
+    GeneratedImage,
+    ImageGenerationResponse,
+)
 from coinbase_agentkit.action_providers.hyperboliclabs.ai.schemas import (
     GenerateImageSchema,
-)
-from coinbase_agentkit.action_providers.hyperboliclabs.ai.models import (
-    ImageGenerationResponse,
-    GeneratedImage,
 )
 from coinbase_agentkit.action_providers.hyperboliclabs.constants import SUPPORTED_IMAGE_MODELS
 
@@ -22,7 +22,9 @@ from coinbase_agentkit.action_providers.hyperboliclabs.constants import SUPPORTE
 @pytest.fixture
 def mock_ai_service():
     """Create a mock AIService."""
-    with patch("coinbase_agentkit.action_providers.hyperboliclabs.ai.action_provider.AIService") as mock:
+    with patch(
+        "coinbase_agentkit.action_providers.hyperboliclabs.ai.action_provider.AIService"
+    ) as mock:
         yield mock.return_value
 
 
@@ -36,7 +38,7 @@ def test_generate_image_success(provider, mock_ai_service, monkeypatch):
     """Test successful image generation."""
     # Replace the provider's ai_service with our mock
     monkeypatch.setattr(provider, "ai_service", mock_ai_service)
-    
+
     # Setup mock response
     mock_response = ImageGenerationResponse(
         images=[
@@ -56,7 +58,7 @@ def test_generate_image_success(provider, mock_ai_service, monkeypatch):
 
     # Verify the result is a string
     assert isinstance(result, str)
-    
+
     # Parse the JSON string to verify its contents
     result_json = json.loads(result)
     assert len(result_json["images"]) == 1
@@ -77,7 +79,7 @@ def test_generate_image_with_custom_parameters(provider, mock_ai_service, monkey
     """Test image generation with custom parameters."""
     # Replace the provider's ai_service with our mock
     monkeypatch.setattr(provider, "ai_service", mock_ai_service)
-    
+
     # Setup mock response
     mock_response = ImageGenerationResponse(
         images=[
@@ -104,7 +106,7 @@ def test_generate_image_with_custom_parameters(provider, mock_ai_service, monkey
 
     # Verify the result is a string
     assert isinstance(result, str)
-    
+
     # Parse the JSON string to verify its contents
     result_json = json.loads(result)
     assert len(result_json["images"]) == 1
@@ -123,7 +125,7 @@ def test_generate_image_multiple_images(provider, mock_ai_service, monkeypatch):
     """Test generation of multiple images."""
     # Replace the provider's ai_service with our mock
     monkeypatch.setattr(provider, "ai_service", mock_ai_service)
-    
+
     # Setup mock response with multiple images
     mock_response = ImageGenerationResponse(
         images=[
@@ -151,7 +153,7 @@ def test_generate_image_multiple_images(provider, mock_ai_service, monkeypatch):
 
     # Verify the result is a string
     assert isinstance(result, str)
-    
+
     # Parse the JSON string to verify its contents
     result_json = json.loads(result)
     assert len(result_json["images"]) == 2
@@ -203,13 +205,13 @@ def test_generate_image_schema_validation():
     # Test with invalid values
     with pytest.raises(ValidationError):
         GenerateImageSchema(prompt="Test", height=4000)  # height > 2048
-    
+
     with pytest.raises(ValidationError):
         GenerateImageSchema(prompt="Test", width=32)  # width < 64
-    
+
     with pytest.raises(ValidationError):
         GenerateImageSchema(prompt="Test", steps=150)  # steps > 100
-    
+
     with pytest.raises(ValidationError):
         GenerateImageSchema(prompt="Test", num_images=10)  # num_images > 4
 
@@ -218,7 +220,7 @@ def test_generate_image_error(provider, mock_ai_service, monkeypatch):
     """Test image generation with error."""
     # Replace the provider's ai_service with our mock
     monkeypatch.setattr(provider, "ai_service", mock_ai_service)
-    
+
     # Setup mock to raise exception
     mock_ai_service.generate_image.side_effect = Exception("API error")
 
@@ -235,19 +237,16 @@ def test_generate_image_invalid_model(provider, mock_ai_service, monkeypatch):
     """Test image generation with invalid model."""
     # Replace the provider's ai_service with our mock
     monkeypatch.setattr(provider, "ai_service", mock_ai_service)
-    
+
     # Setup mock to raise ValueError for invalid model
     mock_ai_service.generate_image.side_effect = ValueError(
         f"Model InvalidModel not supported. Use one of: {SUPPORTED_IMAGE_MODELS}"
     )
 
     # Call the method with invalid model
-    args = {
-        "prompt": "Test image prompt",
-        "model_name": "InvalidModel"
-    }
+    args = {"prompt": "Test image prompt", "model_name": "InvalidModel"}
     result = provider.generate_image(args)
 
     # Verify the result is a string
     assert isinstance(result, str)
-    assert "Error generating image: Model InvalidModel not supported" in result 
+    assert "Error generating image: Model InvalidModel not supported" in result

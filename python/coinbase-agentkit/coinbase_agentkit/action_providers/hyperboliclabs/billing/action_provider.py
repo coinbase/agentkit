@@ -7,8 +7,13 @@ It includes functionality for checking balance and spend history.
 from typing import Any
 
 from coinbase_agentkit.network import Network
+
 from ...action_decorator import create_action
 from ...action_provider import ActionProvider
+from ..marketplace.service import MarketplaceService
+from ..utils import (
+    get_api_key,
+)
 from .schemas import (
     GetCurrentBalanceSchema,
     GetSpendHistorySchema,
@@ -18,17 +23,13 @@ from .utils import (
     format_purchase_history,
     format_spend_history,
 )
-from ..utils import (
-    get_api_key,
-)
-from ..marketplace.service import MarketplaceService
 
 
 class BillingActionProvider(ActionProvider):
     """Provides actions for interacting with Hyperbolic billing.
 
     This provider enables interaction with the Hyperbolic billing services for balance
-    and spend history. It requires an API key which can be provided directly or 
+    and spend history. It requires an API key which can be provided directly or
     through the HYPERBOLIC_API_KEY environment variable.
     """
 
@@ -44,6 +45,7 @@ class BillingActionProvider(ActionProvider):
 
         Raises:
             ValueError: If API key is not provided and not found in environment.
+
         """
         super().__init__("hyperbolic_billing", [])
 
@@ -95,11 +97,12 @@ Important notes:
 
         Returns:
             str: A message containing the current balance and purchase history or error details.
+
         """
         try:
             # Validate arguments using schema
             GetCurrentBalanceSchema(**args)
-            
+
             # Get balance info
             response = self.billing.get_balance()
 
@@ -164,11 +167,12 @@ Notes:
 
         Returns:
             str: A message containing the spend history or error details.
+
         """
         try:
             # Validate arguments using schema
             GetSpendHistorySchema(**args)
-            
+
             # Get instance history from marketplace service
             response = self.marketplace.get_instance_history()
 
@@ -189,6 +193,7 @@ Notes:
 
         Returns:
             bool: Always True as Hyperbolic billing actions don't depend on blockchain networks.
+
         """
         return True
 
@@ -207,5 +212,6 @@ def hyperbolic_billing_action_provider(
 
     Raises:
         ValueError: If API key is not provided and not found in environment.
+
     """
-    return BillingActionProvider(api_key=api_key) 
+    return BillingActionProvider(api_key=api_key)

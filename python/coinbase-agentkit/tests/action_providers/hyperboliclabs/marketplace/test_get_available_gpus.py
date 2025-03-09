@@ -1,6 +1,6 @@
 """Tests for get_available_gpus action in HyperbolicMarketplaceActionProvider."""
 
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -10,15 +10,14 @@ from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.action_provid
 from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.models import (
     AvailableInstance,
     AvailableInstancesResponse,
-    HardwareInfo,
-    GpuHardware,
     CpuHardware,
-    StorageHardware,
-    RamHardware,
+    GpuHardware,
+    HardwareInfo,
+    Location,
     Price,
     PricingInfo,
-    Location,
-    NodeInstance,
+    RamHardware,
+    StorageHardware,
 )
 
 
@@ -31,35 +30,20 @@ def mock_api_response():
         clock_speed=1000,
         compute_power=1000,
         ram=8192,
-        interface="PCIeX16"
+        interface="PCIeX16",
     )
-    
-    cpu = CpuHardware(
-        hardware_type="cpu",
-        model="AMD-23-49",
-        virtual_cores=32
-    )
-    
-    storage = StorageHardware(
-        hardware_type="storage",
-        capacity=80
-    )
-    
-    ram = RamHardware(
-        hardware_type="ram",
-        capacity=1070
-    )
-    
-    hardware = HardwareInfo(
-        cpus=[cpu],
-        gpus=[gpu],
-        storage=[storage],
-        ram=[ram]
-    )
-    
+
+    cpu = CpuHardware(hardware_type="cpu", model="AMD-23-49", virtual_cores=32)
+
+    storage = StorageHardware(hardware_type="storage", capacity=80)
+
+    ram = RamHardware(hardware_type="ram", capacity=1070)
+
+    hardware = HardwareInfo(cpus=[cpu], gpus=[gpu], storage=[storage], ram=[ram])
+
     price1 = Price(amount=2000, period="hourly", agent="platform")
     price2 = Price(amount=1600, period="hourly", agent="platform")
-    
+
     instance1 = AvailableInstance(
         id="korea-amd14-78",
         status="node_ready",
@@ -70,9 +54,9 @@ def mock_api_response():
         has_persistent_storage=True,
         pricing=PricingInfo(price=price1),
         reserved=False,
-        cluster_name="angelic-mushroom-dolphin"
+        cluster_name="angelic-mushroom-dolphin",
     )
-    
+
     instance2 = AvailableInstance(
         id="korea-amd11-181",
         status="node_ready",
@@ -83,9 +67,9 @@ def mock_api_response():
         has_persistent_storage=True,
         pricing=PricingInfo(price=price2),
         reserved=False,
-        cluster_name="beneficial-palm-boar"
+        cluster_name="beneficial-palm-boar",
     )
-    
+
     return AvailableInstancesResponse(instances=[instance1, instance2])
 
 
@@ -99,7 +83,9 @@ def test_get_available_gpus_success(provider, mock_api_response):
     """Test successful get_available_gpus action."""
     with (
         patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
-        patch.object(provider.marketplace, "get_available_instances", return_value=mock_api_response),
+        patch.object(
+            provider.marketplace, "get_available_instances", return_value=mock_api_response
+        ),
     ):
         result = provider.get_available_gpus({})
 
@@ -129,7 +115,7 @@ def test_get_available_gpus_success(provider, mock_api_response):
 def test_get_available_gpus_empty_response(provider):
     """Test get_available_gpus action with empty response."""
     empty_response = AvailableInstancesResponse(instances=[])
-    
+
     with (
         patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
         patch.object(provider.marketplace, "get_available_instances", return_value=empty_response),
@@ -142,7 +128,9 @@ def test_get_available_gpus_api_error(provider):
     """Test get_available_gpus action with API error."""
     with (
         patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
-        patch.object(provider.marketplace, "get_available_instances", side_effect=Exception("API Error")),
+        patch.object(
+            provider.marketplace, "get_available_instances", side_effect=Exception("API Error")
+        ),
     ):
         result = provider.get_available_gpus({})
         assert "Error retrieving available GPUs: API Error" in result

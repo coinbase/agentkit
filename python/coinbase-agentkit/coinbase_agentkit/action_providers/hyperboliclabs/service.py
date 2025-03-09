@@ -41,15 +41,18 @@ class Base:
 
         Returns:
             requests.Response: The raw HTTP response object.
+
         """
         if not headers:
             headers = {}
-        headers.update({"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}"})
+        headers.update(
+            {"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}"}
+        )
 
         url = f"{self.base_url}{endpoint}"
-        
+
         response = requests.request(
             method=method, url=url, headers=headers, json=data, params=params
         )
-        
+
         return response

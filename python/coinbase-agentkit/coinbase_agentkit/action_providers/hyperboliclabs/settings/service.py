@@ -1,8 +1,5 @@
 """Service for account settings operations."""
 
-from typing import Any
-import requests
-
 from ..constants import SETTINGS_BASE_URL, SETTINGS_ENDPOINTS
 from ..service import Base
 from .models import WalletLinkRequest, WalletLinkResponse
@@ -28,6 +25,9 @@ class SettingsService(Base):
 
         Returns:
             WalletLinkResponse: The wallet linking response data.
+
         """
-        response = self.make_request(endpoint=SETTINGS_ENDPOINTS["LINK_WALLET"], data=request.model_dump())
-        return WalletLinkResponse(**response.json()) 
+        response = self.make_request(
+            endpoint=SETTINGS_ENDPOINTS["LINK_WALLET"], data=request.model_dump()
+        )
+        return WalletLinkResponse(**response.json())

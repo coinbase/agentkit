@@ -6,13 +6,11 @@ billing information from Hyperbolic services.
 
 from collections import defaultdict
 from datetime import datetime
-from typing import Any
 
+from ..marketplace.models import InstanceHistoryResponse
 from .models import (
     BillingPurchaseHistoryResponse,
-    BillingPurchaseHistoryEntry,
 )
-from ..marketplace.models import InstanceHistoryResponse
 
 
 def calculate_duration_seconds(start_time: str, end_time: str) -> float:
@@ -52,9 +50,7 @@ def format_spend_history(instance_history: InstanceHistoryResponse) -> str:
 
     # Analyze each instance
     for instance in instance_history.instance_history:
-        duration_seconds = calculate_duration_seconds(
-            instance.started_at, instance.terminated_at
-        )
+        duration_seconds = calculate_duration_seconds(instance.started_at, instance.terminated_at)
         # Convert seconds to hours for cost calculation
         duration_hours = duration_seconds / 3600.0
         # Calculate cost: (hours) * (cents/hour) / (100 cents/dollar)
@@ -99,7 +95,7 @@ def format_spend_history(instance_history: InstanceHistoryResponse) -> str:
         output.append(f"  Total Cost: ${stats['total_cost']:.2f}")
 
     output.append(f"\nTotal Spending: ${total_cost:.2f}")
-    
+
     return "\n".join(output)
 
 
@@ -111,16 +107,16 @@ def format_purchase_history(purchases: BillingPurchaseHistoryResponse) -> str:
 
     Returns:
         str: Formatted purchase history string.
-    
+
     """
     if not purchases.purchase_history:
         return "No previous purchases found"
-    
+
     output = ["Purchase History:"]
     for purchase in purchases.purchase_history:
         amount = float(purchase.amount) / 100  # Convert cents to dollars
         timestamp = datetime.fromisoformat(purchase.timestamp.replace("Z", "+00:00"))
         formatted_date = timestamp.strftime("%B %d, %Y")
         output.append(f"- ${amount:.2f} on {formatted_date}")
-    
+
     return "\n".join(output)

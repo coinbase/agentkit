@@ -1,6 +1,6 @@
 """Tests for get_current_balance action in HyperbolicBillingActionProvider."""
 
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
 
@@ -9,8 +9,8 @@ from coinbase_agentkit.action_providers.hyperboliclabs.billing import (
 )
 from coinbase_agentkit.action_providers.hyperboliclabs.billing.models import (
     BillingBalanceResponse,
-    BillingPurchaseHistoryResponse,
     BillingPurchaseHistoryEntry,
+    BillingPurchaseHistoryResponse,
 )
 
 
@@ -24,7 +24,7 @@ def test_get_current_balance_success(provider):
     """Test successful get_current_balance action."""
     # Mock the service methods
     provider.billing.get_balance = Mock(return_value=BillingBalanceResponse(credits="15000"))
-    
+
     # Create purchase history entries
     purchase_entries = [
         BillingPurchaseHistoryEntry(
@@ -38,7 +38,7 @@ def test_get_current_balance_success(provider):
             source="stripe_purchase",
         ),
     ]
-    
+
     provider.billing.get_purchase_history = Mock(
         return_value=BillingPurchaseHistoryResponse(purchase_history=purchase_entries)
     )
