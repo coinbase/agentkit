@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from typing import Any
 
 
 class NillionCreateSchemaInput(BaseModel):
@@ -23,7 +24,7 @@ class NillionDataUploadInput(BaseModel):
     schema_uuid: str = Field(
         description="the UUID obtained from the nillion_lookup_schema tool."
     )
-    data_to_store: list = Field(
+    data_to_store: list[dict[str, Any]] = Field(
         description="data to store in the database that validates against desired schema"
     )
 
