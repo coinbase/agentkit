@@ -4,6 +4,11 @@ import { useState, useEffect, useRef } from "react";
 import { useAgent } from "./hooks/useAgent";
 import ReactMarkdown from "react-markdown";
 
+/**
+ * Home page for the AgentKit Quickstart
+ *
+ * @returns {React.ReactNode} The home page
+ */
 export default function Home() {
   const [input, setInput] = useState("");
   const { messages, sendMessage, isThinking } = useAgent();
@@ -45,24 +50,26 @@ export default function Home() {
                     : "bg-gray-100 dark:bg-gray-700 self-start"
                 }`}
               >
-                <ReactMarkdown components={{
-                  a: (props) => (
-                    <a
-                      {...props}
-                      className="text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    />
-                  ),
-                }}>{msg.text}</ReactMarkdown>
+                <ReactMarkdown
+                  components={{
+                    a: props => (
+                      <a
+                        {...props}
+                        className="text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      />
+                    ),
+                  }}
+                >
+                  {msg.text}
+                </ReactMarkdown>
               </div>
             ))
           )}
 
           {/* Thinking Indicator */}
-          {isThinking && (
-            <div className="text-right mr-2 text-gray-500 italic">🤖 Thinking...</div>
-          )}
+          {isThinking && <div className="text-right mr-2 text-gray-500 italic">🤖 Thinking...</div>}
 
           {/* Invisible div to track the bottom */}
           <div ref={messagesEndRef} />
@@ -75,8 +82,8 @@ export default function Home() {
             className="flex-grow p-2 rounded border dark:bg-gray-700 dark:border-gray-600"
             placeholder={"Type a message..."}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && onSendMessage()}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && onSendMessage()}
             disabled={isThinking}
           />
           <button
