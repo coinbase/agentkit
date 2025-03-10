@@ -41,7 +41,7 @@ async function messageAgent(userMessage: string): Promise<string | null> {
  * #### See Also
  * - The API logic in `/api/agent.ts`
  *
- * @returns {Object} An object containing:
+ * @returns {object} An object containing:
  * - `messages`: The conversation history.
  * - `sendMessage`: A function to send a new message.
  * - `isThinking`: Boolean indicating if the agent is processing a response.
