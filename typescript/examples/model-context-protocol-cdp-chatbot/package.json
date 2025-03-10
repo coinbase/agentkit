@@ -17,8 +17,8 @@
   },
   "dependencies": {
     "@coinbase/agentkit": "^0.2.3",
-    "@coinbase/agentkit-model-context-protocol": "^0.2.3",
-    "@modelcontextprotocol/sdk": "^0.1.0",
+    "@coinbase/agentkit-model-context-protocol": "^0.1.0",
+    "@modelcontextprotocol/sdk": "^1.6.1",
     "dotenv": "^16.4.5",
     "zod": "^3.22.4"
   },
