@@ -35,7 +35,11 @@ function validateEnvironment(): void {
 }
 
 /**
- * Initialize the MCP server with CDP Agentkit
+ * This function creates a new server instance with the capabilities to handle MCP requests.
+ * It configures the CDP Wallet Provider with the provided API keys and network ID.
+ * It then initializes the AgentKit with the configured wallet provider and action providers.
+ *
+ * @returns {Promise<Server>} The initialized MCP server
  */
 async function initializeServer() {
   try {
@@ -49,7 +53,7 @@ async function initializeServer() {
         capabilities: {
           tools: {},
         },
-      }
+      },
     );
 
     // Configure CDP Wallet Provider
@@ -100,7 +104,6 @@ async function initializeServer() {
       }
     });
 
-
     return server;
   } catch (error) {
     console.error("Failed to initialize server:", error);
@@ -108,9 +111,12 @@ async function initializeServer() {
   }
 }
 
+/**
+ * Main function to run the MCP server
+ */
 async function main() {
   validateEnvironment();
-  
+
   try {
     const server = await initializeServer();
     const transport = new StdioServerTransport();
