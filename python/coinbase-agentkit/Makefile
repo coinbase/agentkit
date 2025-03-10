@@ -1,3 +1,9 @@
+ifneq (,$(wildcard ./.env))
+	include .env
+endif
+
+export
+
 .PHONY: install
 install:
 	poetry install
@@ -16,7 +22,7 @@ lint:
 
 .PHONY: lint-fix
 lint-fix:
-	poetry run ruff check . --fix
+	poetry run ruff check . --fix --unsafe-fixes
 
 .PHONY: docs
 docs:
@@ -29,6 +35,10 @@ local-docs: docs
 .PHONY: test
 test:
 	poetry run pytest
+
+.PHONY: test-e2e
+test-e2e:
+	poetry run pytest -m e2e
 
 .PHONY: generate-action-provider
 generate-action-provider:

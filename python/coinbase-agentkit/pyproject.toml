@@ -17,6 +17,7 @@ pydantic = "^2.0"
 web3 = "^7.6.0"
 python-dotenv = "^1.0.1"
 requests = "^2.31.0"
+paramiko = "^3.5.1"
 
 [tool.poetry.scripts]
 generate-action-provider = "scripts.generate_action_provider.main:main"
@@ -40,6 +41,7 @@ typer = "^0.9.0"
 prompt-toolkit = "^3.0.50"
 questionary = "^2.1.0"
 rich = "^13.7.1"
+pillow = "^11.1.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -80,3 +82,10 @@ name = "Added"
 
 [tool.towncrier.fragment.bugfix]
 name = "Fixed"
+
+[tool.pytest.ini_options]
+addopts = "-m 'not e2e'"
+markers = [
+    "e2e: marks tests as end-to-end tests that interact with real services",
+    "manual: marks tests that should only be run manually (e.g., tests that incur costs)"
+]
