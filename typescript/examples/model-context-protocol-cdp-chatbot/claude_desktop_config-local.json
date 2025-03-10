@@ -3,7 +3,7 @@
         "agentkit": {
             "command": "node",
             "args": [
-                "/Users/carsonroscoe/Documents/Github/Coinbase/agentkit/typescript/examples/model-context-protocol-cdp-chatbot/build/index.js"
+                "/Users/YOUR_USER/YOUR_DIRECTORIES/agentkit/typescript/examples/model-context-protocol-cdp-chatbot/build/index.js"
             ],
             "env": {
                 "CDP_API_KEY_NAME": "YOUR_CDP_API_KEY_NAME",

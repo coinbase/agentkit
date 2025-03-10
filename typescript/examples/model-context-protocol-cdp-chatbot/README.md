@@ -1,6 +1,6 @@
-# CDP AgentKit LangChain Extension Examples - Chatbot Typescript
+# CDP AgentKit Model Context Protocol Examples - Chatbot Typescript
 
-This example demonstrates an agent setup as a terminal style chatbot with access to the full set of CDP AgentKit actions.
+This example demonstrates an agent setup as a server for Model Context Protocol, allowing Claude Desktop access to the full set of CDP AgentKit actions.
 
 ## Ask the chatbot to engage in the Web3 ecosystem!
 
@@ -29,15 +29,15 @@ This will automatically install and use the latest version of Node.
 
 ### API Keys
 
-You'll need the following API keys:
+You'll need the following API key:
 - [CDP API Key](https://portal.cdp.coinbase.com/access/api)
-- [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
 
-Once you have them, rename the `.env-local` file to `.env` and make sure you set the API keys to their corresponding environment variables:
+You'll need to configure the Claude desktop config file with your CDP API keys. Copy the contents from `claude_desktop_config-local.json` to your Claude desktop config file and update the following:
 
-- "CDP_API_KEY_NAME"
-- "CDP_API_KEY_PRIVATE_KEY"
-- "OPENAI_API_KEY"
+1. Update the `args` path to match the location of your built index.js file
+2. Set your CDP API keys in the `env` section:
+   - "CDP_API_KEY_NAME"
+   - "CDP_API_KEY_PRIVATE_KEY"
 
 ## Running the example
 
@@ -48,15 +48,9 @@ npm install
 npm run build
 ```
 
-This will install the dependencies and build the packages locally. The chatbot example uses the local `@coinbase/agentkit-langchain` and `@coinbase/agentkit` packages. If you make changes to the packages, you can run `npm run build` from root again to rebuild the packages, and your changes will be reflected in the chatbot example.
+This will install the dependencies and build the packages locally. The chatbot example uses the local `@coinbase/agentkit-model-context-protocol` and `@coinbase/agentkit` packages. If you make changes to the packages, you can run `npm run build` from root again to rebuild the packages, and your changes will be reflected in the chatbot example.
 
-Now from the `typescript/examples/langchain-cdp-chatbot` directory, run:
-
-```bash
-npm start
-```
-
-Select "1. chat mode" and start telling your Agent to do things onchain!
+To use the chatbot, simply open Claude desktop after configuring your API keys. The MCP server will run automatically when you interact with Claude.
 
 ## License
 
