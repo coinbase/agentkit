@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "preserveSymlinks": true,
-    "outDir": "./build",
+    "outDir": "./dist",
     "rootDir": ".",
     "module": "Node16",
     "moduleResolution": "Node16"
