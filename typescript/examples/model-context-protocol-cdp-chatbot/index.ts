@@ -1,4 +1,3 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { getMcpTools } from "@coinbase/agentkit-model-context-protocol";
 import {
@@ -12,12 +11,8 @@ import {
   cdpWalletActionProvider,
   pythActionProvider,
 } from "@coinbase/agentkit";
-import * as fs from "fs";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
-
-// Configure a file to persist the agent's CDP MPC Wallet Data
-// const WALLET_DATA_FILE = "wallet_data.txt";
 
 /**
  * Validates that required environment variables are set
@@ -57,22 +52,10 @@ async function initializeServer() {
       }
     );
 
-    let walletDataStr: string | null = null;
-
-    // Read existing wallet data if available
-    // if (fs.existsSync(WALLET_DATA_FILE)) {
-    //   try {
-    //     walletDataStr = fs.readFileSync(WALLET_DATA_FILE, "utf8");
-    //   } catch (error) {
-    //     console.error("Error reading wallet data:", error);
-    //   }
-    // }
-
     // Configure CDP Wallet Provider
     const config = {
       apiKeyName: process.env.CDP_API_KEY_NAME!,
       apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY!,
-      cdpWalletData: walletDataStr || undefined,
       networkId: process.env.NETWORK_ID || "base-sepolia",
     };
 
@@ -117,9 +100,6 @@ async function initializeServer() {
       }
     });
 
-    // Save wallet data
-    // const exportedWallet = await walletProvider.exportWallet();
-    // fs.writeFileSync(WALLET_DATA_FILE, JSON.stringify(exportedWallet));
 
     return server;
   } catch (error) {
