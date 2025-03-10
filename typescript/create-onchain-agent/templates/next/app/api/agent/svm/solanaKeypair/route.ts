@@ -7,6 +7,7 @@ import {
   walletActionProvider,
   jupiterActionProvider,
   cdpApiActionProvider,
+  alloraActionProvider,
   ActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
@@ -112,6 +113,7 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
       walletActionProvider(),
       splActionProvider(),
       jupiterActionProvider(),
+      alloraActionProvider(),
     ];
     const canUseCdpApi = process.env.CDP_API_KEY_NAME && process.env.CDP_API_KEY_PRIVATE_KEY;
     if (canUseCdpApi) {

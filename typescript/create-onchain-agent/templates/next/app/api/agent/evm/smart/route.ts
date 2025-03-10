@@ -8,6 +8,7 @@ import {
   pythActionProvider,
   walletActionProvider,
   wethActionProvider,
+  alloraActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { ChatOpenAI } from "@langchain/openai";
@@ -134,6 +135,7 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
           apiKeyName: process.env.CDP_API_KEY_NAME,
           apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
         }),
+        alloraActionProvider(),
       ],
     });
     const tools = await getLangChainTools(agentkit);
