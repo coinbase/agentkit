@@ -1,5 +1,6 @@
 docs/
 dist/
+build/
 coverage/
 .github/
 src/client
