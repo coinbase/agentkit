@@ -16,13 +16,13 @@ export type Network = EVMNetwork | SVMNetwork;
 
 export type WalletProviderChoice = "CDP" | "Viem" | "Privy" | "SolanaKeypair" | "SmartWallet";
 
-export type WalletProviderRouteConfiguration = {
+export type AgentkitRouteConfiguration = {
   env: {
     topComments: string[];
     required: string[];
     optional: string[];
   };
-  apiRoute: string;
+  prepareAgentkitRoute: `${string}.ts`;
 };
 
 export type NetworkSelection = {
@@ -32,3 +32,7 @@ export type NetworkSelection = {
   chainId?: string;
   rpcUrl?: string;
 };
+
+export type Framework = "Langchain" | "Vercel AI SDK" | "Model Context Protocol";
+
+export type Template = 'next' | 'mcpServer';

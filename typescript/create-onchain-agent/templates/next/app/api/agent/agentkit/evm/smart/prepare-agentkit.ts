@@ -1,19 +1,14 @@
-import { NextResponse } from "next/server";
 import {
   AgentKit,
   cdpApiActionProvider,
   cdpWalletActionProvider,
-  SmartWalletProvider,
   erc20ActionProvider,
   pythActionProvider,
+  SmartWalletProvider,
   walletActionProvider,
+  WalletProvider,
   wethActionProvider,
 } from "@coinbase/agentkit";
-import { getLangChainTools } from "@coinbase/agentkit-langchain";
-import { ChatOpenAI } from "@langchain/openai";
-import { MemorySaver } from "@langchain/langgraph";
-import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import { AgentRequest, AgentResponse } from "@/app/types/api";
 import * as fs from "fs";
 import { Address, Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
@@ -53,9 +48,6 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
  * - https://discord.gg/CDP
  */
 
-// The agent
-let agent: ReturnType<typeof createReactAgent>;
-
 // Configure a file to persist the agent's Smart Wallet + Private Key data
 const WALLET_DATA_FILE = "wallet_data.txt";
 
@@ -65,26 +57,17 @@ type WalletData = {
 };
 
 /**
- * Initializes and returns an instance of the AI agent.
- * If an agent instance already exists, it returns the existing one.
+ * Prepares the AgentKit and WalletProvider.
  *
- * @function getOrInitializeAgent
- * @returns {Promise<ReturnType<typeof createReactAgent>>} The initialized AI agent.
+ * @function prepareAgentkitAndWalletProvider
+ * @returns {Promise<{ agentkit: AgentKit, walletProvider: WalletProvider }>} The initialized AI agent.
  *
  * @description Handles agent setup
  *
  * @throws {Error} If the agent initialization fails.
  */
-async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgent>> {
-  // If agent has already been initialized, return it
-  if (agent) {
-    return agent;
-  }
-
+export async function prepareAgentkitAndWalletProvider(): Promise<{ agentkit: AgentKit, walletProvider: WalletProvider }> {
   try {
-    // Initialize LLM: https://platform.openai.com/docs/models#gpt-4o
-    const llm = new ChatOpenAI({ model: "gpt-4o-mini" });
-
     let walletData: WalletData | null = null;
     let privateKey: Hex | null = null;
 
@@ -136,28 +119,6 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
         }),
       ],
     });
-    const tools = await getLangChainTools(agentkit);
-    const memory = new MemorySaver();
-
-    // Initialize Agent
-    const canUseFaucet = walletProvider.getNetwork().networkId == "base-sepolia";
-    const faucetMessage = `If you ever need funds, you can request them from the faucet.`;
-    const cantUseFaucetMessage = `If you need funds, you can provide your wallet details and request funds from the user.`;
-    agent = createReactAgent({
-      llm,
-      tools,
-      checkpointSaver: memory,
-      messageModifier: `
-        You are a helpful agent that can interact onchain using the Coinbase Developer Platform AgentKit. You are 
-        empowered to interact onchain using your tools. ${canUseFaucet ? faucetMessage : cantUseFaucetMessage}.
-        Before executing your first action, get the wallet details to see what network 
-        you're on. If there is a 5XX (internal) HTTP error code, ask the user to try again later. If someone 
-        asks you to do something you can't do with your currently available tools, you must say so, and 
-        encourage them to implement it themselves using the CDP SDK + Agentkit, recommend they go to 
-        docs.cdp.coinbase.com for more information. Be concise and helpful with your responses. Refrain from 
-        restating your tools' descriptions unless it is explicitly requested.
-        `,
-    });
 
     // Save wallet data
     const smartWalletAddress = await walletProvider.getAddress();
@@ -169,58 +130,9 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
       } as WalletData),
     );
 
-    return agent;
+    return { agentkit, walletProvider };
   } catch (error) {
     console.error("Error initializing agent:", error);
     throw new Error("Failed to initialize agent");
-  }
-}
-
-/**
- * Handles incoming POST requests to interact with the AgentKit-powered AI agent.
- * This function processes user messages and streams responses from the agent.
- *
- * @function POST
- * @param {Request & { json: () => Promise<AgentRequest> }} req - The incoming request object containing the user message.
- * @returns {Promise<NextResponse<AgentResponse>>} JSON response containing the AI-generated reply or an error message.
- *
- * @description Sends a single message to the agent and returns the agents' final response.
- *
- * @example
- * const response = await fetch("/api/agent", {
- *     method: "POST",
- *     headers: { "Content-Type": "application/json" },
- *     body: JSON.stringify({ userMessage: input }),
- * });
- */
-export async function POST(
-  req: Request & { json: () => Promise<AgentRequest> },
-): Promise<NextResponse<AgentResponse>> {
-  try {
-    // 1️. Extract user message from the request body
-    const { userMessage } = await req.json();
-
-    // 2. Get the agent
-    const agent = await getOrInitializeAgent();
-
-    // 3.Start streaming the agent's response
-    const stream = await agent.stream(
-      { messages: [{ content: userMessage, role: "user" }] }, // The new message to send to the agent
-      { configurable: { thread_id: "AgentKit Discussion" } }, // Customizable thread ID for tracking conversations
-    );
-
-    // 4️. Process the streamed response chunks into a single message
-    let agentResponse = "";
-    for await (const chunk of stream) {
-      if ("agent" in chunk) {
-        agentResponse += chunk.agent.messages[0].content;
-      }
-    }
-
-    // 5️. Return the final response
-    return NextResponse.json({ response: agentResponse });
-  } catch (error) {
-    console.error("Error processing request:", error);
-    return NextResponse.json({ error: "Failed to process message" });
   }
 }
