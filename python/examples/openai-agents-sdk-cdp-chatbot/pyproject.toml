@@ -1,0 +1,41 @@
+[tool.poetry]
+name = "openai-agents-sdk-chatbot-python"
+version = "0.0.1"
+description = "OpenAI Agents SDK Example Chatbot"
+authors = ["John Peterson <john.peterson@coinbase.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.10"
+python-dotenv = "^1.0.1"
+coinbase-agentkit = { path = "../../../python/coinbase-agentkit", develop = true }
+coinbase-agentkit-openai-agents-sdk = { path = "../../../python/framework-extensions/openai-agents-sdk", develop = true }
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.7.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api" 
+
+[tool.openai-agents-sdk-chatbot]
+private = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = ["./build/**", "./dist/**", "./docs/**"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "D", "UP", "B", "C4", "SIM", "RUF"]
+ignore = ["D213", "D203", "D100", "D104", "D107", "E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+known-first-party = ["coinbase_agentkit, cdp"]
