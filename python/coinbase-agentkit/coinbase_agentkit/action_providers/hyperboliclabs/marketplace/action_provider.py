@@ -5,12 +5,21 @@ It includes functionality for managing GPU instances and SSH access.
 """
 
 from typing import Any
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 from ....network import Network
 from ...action_decorator import create_action
 from ...action_provider import ActionProvider
 from .schemas import (
+    GetAvailableGpusByTypeSchema,
     GetAvailableGpusSchema,
+    GetAvailableGpusTypesSchema,
     GetGpuStatusSchema,
     RemoteShellSchema,
     RentComputeSchema,
@@ -19,8 +28,11 @@ from .schemas import (
 )
 from .service import MarketplaceService
 from .utils import (
+    format_all_gpu_instances,
     format_gpu_instance,
+    format_gpu_instances_by_type,
     format_gpu_status,
+    format_gpu_types,
     format_rent_compute_response,
     format_terminate_compute_response,
     get_api_key,
@@ -82,7 +94,6 @@ A failure response will return an error message like:
     Error retrieving available GPUs: Rate limit exceeded
 
 Important notes:
-- Authorization key is required for this operation
 - The GPU prices are shown in dollars per hour
 - Only non-reserved and available GPU instances are returned
 - GPU availability is real-time and may change between queries
@@ -108,21 +119,118 @@ Important notes:
             if not response.instances:
                 return "No available GPU instances found."
 
-            # Format the response
+            # Use the format function to generate the response
+            return format_all_gpu_instances(response.instances)
 
-            # Filter out None values that might be returned by format_gpu_instance
-            formatted_instances = []
-            for instance in response.instances:
-                formatted = format_gpu_instance(instance)
-                if formatted is not None:
-                    formatted_instances.append(formatted)
+        except Exception as e:
+            return f"Error retrieving available GPUs: {e}"
 
-            # Check if we have any available instances after filtering
-            if not formatted_instances:
-                return "No available GPU instances with free resources found."
+    @create_action(
+        name="get_available_gpus_types",
+        description="""
+This tool will get all the available GPU types/models on the Hyperbolic platform.
 
-            # Join the formatted instances with the header
-            return "Available GPU Options:\n\n" + "\n".join(formatted_instances)
+It does not take any inputs.
+
+A successful response will return a list of available GPU models like:
+    Available GPU Types:
+    - NVIDIA A100
+    - NVIDIA RTX 4090
+    - NVIDIA H100
+
+A failure response will return an error message like:
+    Error retrieving available GPU types: API request failed
+
+Important notes:
+- Only models with available GPUs are listed
+- GPU availability is real-time and may change between queries
+- The GPU model name must be exact
+""",
+        schema=GetAvailableGpusTypesSchema,
+    )
+    def get_available_gpus_types(self, args: dict[str, Any]) -> str:
+        """Get available GPU types/models from the marketplace.
+
+        Args:
+            args (dict[str, Any]): Empty dictionary, no arguments needed.
+
+        Returns:
+            str: A message containing the available GPU types or error details.
+        """
+        GetAvailableGpusTypesSchema(**args)
+
+        try:
+            # Get available instances
+            response = self.marketplace.get_available_instances()
+
+            if not response.instances:
+                return "No available GPU instances found."
+
+            # Use the format function to generate the response
+            return format_gpu_types(response.instances)
+
+        except Exception as e:
+            return f"Error retrieving available GPU types: {e}"
+
+    @create_action(
+        name="get_available_gpus_by_type",
+        description="""
+This tool will get all available GPU machines of a specific model on the Hyperbolic platform.
+
+Required inputs:
+- gpu_model: The GPU model to filter by (e.g., "NVIDIA A100")
+
+A successful response will list available GPU machines of the specified model:
+    Available NVIDIA A100 GPU Options:
+    
+    Cluster: us-east-1
+    Node ID: node-123
+    GPU Model: NVIDIA A100
+    Available GPUs: 4/8
+    Price: $2.50/hour per GPU
+    ----------------------------------------
+    
+    Cluster: us-west-1
+    Node ID: node-456
+    GPU Model: NVIDIA A100
+    Available GPUs: 2/2
+    Price: $2.75/hour per GPU
+    ----------------------------------------
+
+Failure responses include:
+    Error retrieving available GPUs: API request failed
+    No available GPU instances with the model 'NVIDIA A100' found.
+
+Important notes:
+- GPU model name must be exact
+- Only non-reserved and available instances are shown
+- Availability is real-time and may change
+- The GPU model name must be exact
+""",
+        schema=GetAvailableGpusByTypeSchema,
+    )
+    def get_available_gpus_by_type(self, args: dict[str, Any]) -> str:
+        """Get available GPU instances of a specific model from the marketplace.
+
+        Args:
+            args (dict[str, Any]): Dictionary containing:
+                - gpu_model: The specific GPU model to filter by.
+
+        Returns:
+            str: A message containing the available GPU instances of the specified model or error details.
+        """
+        validated_args = GetAvailableGpusByTypeSchema(**args)
+        gpu_model = validated_args.gpu_model
+
+        try:
+            # Get available instances
+            response = self.marketplace.get_available_instances()
+
+            if not response.instances:
+                return "No available GPU instances found."
+
+            # Use the format function to generate the response
+            return format_gpu_instances_by_type(response.instances, gpu_model)
 
         except Exception as e:
             return f"Error retrieving available GPUs: {e}"
@@ -143,10 +251,8 @@ A successful response will show details for each rented GPU like:
 
 A failure response will return an error message like:
     Error retrieving GPU status: API request failed
-    Error retrieving GPU status: Invalid authentication credentials
 
 Important notes:
-- Authorization key is required for this operation
 - If status is "starting", the GPU is not ready yet - check again in a few seconds
 - Once status is "running", you can use the SSH command to access the instance
 - If no SSH command is shown, the instance is still being provisioned
@@ -164,18 +270,34 @@ Important notes:
 
         """
         GetGpuStatusSchema(**args)
+        logging.info("Getting GPU status from Hyperbolic Marketplace")
 
         try:
             # Get rented instances
             response = self.marketplace.get_rented_instances()
-
+            
+            logging.info(f"Retrieved {len(response.instances)} rented instances")
+            
             if not response.instances:
                 return "No rented GPU instances found."
 
             # Format the response
             output = ["Your Rented GPU Instances:"]
-            for instance in response.instances:
-                output.append(format_gpu_status(instance))
+            for i, instance in enumerate(response.instances):
+                logging.info(f"Formatting instance {i+1}: {instance.id}")
+                logging.info(f"  Status: {instance.status}")
+                logging.info(f"  SSH Command: {instance.ssh_command}")
+                
+                # Check instance properties before formatting
+                if instance.instance and instance.instance.hardware and instance.instance.hardware.gpus:
+                    gpus = instance.instance.hardware.gpus
+                    logging.info(f"  GPU Model: {gpus[0].model if gpus else 'Unknown'}")
+                    logging.info(f"  GPU Count: {instance.instance.gpu_count or len(gpus) if gpus else 1}")
+                
+                formatted = format_gpu_status(instance)
+                logging.info(f"Formatted output for instance {i+1}:\n{formatted}")
+                
+                output.append(formatted)
                 output.append("-" * 40)
 
             # Add SSH instructions
@@ -188,9 +310,12 @@ Important notes:
                 ]
             )
 
-            return "\n".join(output)
+            final_output = "\n".join(output)
+            logging.info(f"Final output:\n{final_output}")
+            return final_output
 
         except Exception as e:
+            logging.exception(f"Error retrieving GPU status: {e}")
             return f"Error retrieving GPU status: {e}"
 
     @create_action(
@@ -219,7 +344,7 @@ A failure response will return an error message like:
     Error renting compute: Invalid cluster name
     Error renting compute: Node not available
 
-Notes:
+Important notes:
 - Use get_available_gpus first to get valid cluster and node names
 - Do not ask for a duration, it is not needed
 - After renting, you can:
@@ -260,7 +385,7 @@ Notes:
 This tool allows you to terminate a GPU instance on the Hyperbolic platform.
 
 Required inputs:
-- instance_id: The ID of the instance to terminate (e.g., "respectful-rose-pelican")
+- id: The ID of the instance to terminate (e.g., "respectful-rose-pelican")
 
 Example successful response:
     {
@@ -286,22 +411,29 @@ Important notes:
 
         Args:
             args (dict[str, Any]): Dictionary containing:
-                - instance_id: The ID of the instance to terminate.
+                - id: The ID of the instance to terminate.
 
         Returns:
             str: A message containing the termination response or error details.
 
         """
         validated_args = TerminateComputeSchema(**args)
+        
+        # Log the request payload for debugging
+        logging.info(f"Terminate compute request payload: {validated_args.model_dump()}")
 
         try:
             # Make the termination request
             response = self.marketplace.terminate_instance(validated_args)
-
-            # Format the response with next steps
+            
+            # Log the response for debugging
+            logging.info(f"Terminate compute response: {response.model_dump()}")
+            
+            # Format the success response with next steps
             return format_terminate_compute_response(response)
 
         except Exception as e:
+            logging.error(f"Error in terminate_compute: {e}", exc_info=True)
             return f"Error terminating compute: {e}"
 
     @create_action(
@@ -353,30 +485,30 @@ Important notes:
         validated_args = SSHAccessSchema(**args)
 
         try:
-            # Check if we have a valid host and username
-            if not validated_args.host or not validated_args.username:
-                # Try to get instance information to suggest connection details
-                try:
-                    response = self.marketplace.get_rented_instances()
+            # # Check if we have a valid host and username
+            # if not validated_args.host or not validated_args.username:
+            #     # Try to get instance information to suggest connection details
+            #     try:
+            #         response = self.marketplace.get_rented_instances()
 
-                    if response.instances:
-                        instance_info = []
-                        for instance in response.instances:
-                            status = instance.status.lower()
-                            instance_id = instance.id
-                            if instance.ssh_access and status == "running":
-                                instance_info.append(
-                                    f"Instance {instance_id}: host={instance.ssh_access.host}, username={instance.ssh_access.username}"
-                                )
+            #         if response.instances:
+            #             instance_info = []
+            #             for instance in response.instances:
+            #                 status = instance.status.lower()
+            #                 instance_id = instance.id
+            #                 if instance.ssh_access and status == "running":
+            #                     instance_info.append(
+            #                         f"Instance {instance_id}: host={instance.ssh_access.host}, username={instance.ssh_access.username}"
+            #                     )
 
-                        if instance_info:
-                            return "Missing host or username. Available instances:\n" + "\n".join(
-                                instance_info
-                            )
-                except Exception:
-                    pass
+            #             if instance_info:
+            #                 return "Missing host or username. Available instances:\n" + "\n".join(
+            #                     instance_info
+            #                 )
+            #     except Exception:
+            #         pass
 
-                return "Error: Host and username are required for SSH connection."
+            #     return "Error: Host and username are required for SSH connection."
 
             # Establish SSH connection
             return ssh_manager.connect(

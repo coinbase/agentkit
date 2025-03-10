@@ -12,13 +12,13 @@ from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.models import
 
 
 @pytest.fixture
-def rented_instance(marketplace):
+def rented_instance(marketplace, request):
     """Fixture to rent the cheapest available instance.
 
     This fixture will:
     1. Find the cheapest available instance in North America
     2. Rent it
-    3. Ensure it's terminated after the test
+    3. Ensure it's terminated after the test (unless disable_auto_terminate is True)
 
     WARNING: This fixture rents actual GPU instances and incurs costs.
     It should only be used in tests that are explicitly marked to run manually.
@@ -28,6 +28,10 @@ def rented_instance(marketplace):
     - Instance rental fails
     - Instance termination fails or instance remains running
 
+    Args:
+        marketplace: The marketplace service fixture
+        request: The pytest request object to get marker information
+
     Yields:
         tuple: (instance_id, original_response) of the rented instance
 
@@ -36,6 +40,13 @@ def rented_instance(marketplace):
         Exception: For other failures during rental or cleanup
 
     """
+    # Check if auto-termination should be disabled
+    disable_auto_terminate = False
+    marker = request.node.get_closest_marker("disable_auto_terminate")
+    if marker:
+        disable_auto_terminate = True
+        print("\nWARNING: Auto-termination is disabled. Remember to manually terminate the instance!")
+        
     # First, get available instances to find the cheapest one
     available = marketplace.get_available_instances()
     assert len(available.instances) > 0, "No instances available to rent"
@@ -98,7 +109,7 @@ def rented_instance(marketplace):
         yield instance_id, response
 
     finally:
-        if instance_id:
+        if instance_id and not disable_auto_terminate:
             print(f"\nCleaning up instance {instance_id}")
             try:
                 wait_for_termination(marketplace, instance_id)
@@ -108,6 +119,9 @@ def rented_instance(marketplace):
                     "IMPORTANT: You may have a running instance still incurring costs!"
                 )
                 raise Exception(error_msg) from e
+        elif instance_id and disable_auto_terminate:
+            print(f"\nSkipping auto-termination for instance {instance_id} as requested.")
+            print(f"IMPORTANT: Remember to manually terminate this instance to avoid unnecessary costs!")
 
 
 def wait_for_termination(
@@ -150,4 +164,14 @@ def wait_for_termination(
     raise AssertionError(
         f"Failed to terminate instance {instance_id} after {max_retries} attempts. "
         "IMPORTANT: You may have a running instance still incurring costs!"
+    )
+
+def pytest_configure(config):
+    """Register custom markers."""
+    config.addinivalue_line(
+        "markers", "e2e: mark tests as end-to-end tests (may incur costs)"
+    )
+    config.addinivalue_line(
+        "markers", 
+        "disable_auto_terminate: mark tests to disable automatic termination of GPU instances (DANGER: instances must be manually terminated!)"
     )

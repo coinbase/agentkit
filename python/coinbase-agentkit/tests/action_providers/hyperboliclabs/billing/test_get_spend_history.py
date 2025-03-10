@@ -76,7 +76,7 @@ def test_get_spend_history_success(provider):
 
     # Check the response formatting
     assert "=== GPU Rental Spending Analysis ===" in result
-    assert "Instance Rentals:" in result
+    assert "Instance Rentals (showing 5 most recent):" in result
     assert "- instance-123:" in result
     assert "GPU: NVIDIA A100 (Count: 2)" in result
     assert "Duration: 3600 seconds" in result
@@ -85,7 +85,7 @@ def test_get_spend_history_success(provider):
     assert "GPU: NVIDIA A100 (Count: 1)" in result
     assert "Duration: 7200 seconds" in result
     assert "Cost: $25.00" in result
-    assert "GPU Type Statistics:" in result
+    assert "GPU Type Statistics (showing 5 most recent):" in result
     assert "NVIDIA A100:" in result
     assert "Total Rentals: 3" in result
     assert "Total Time: 10800 seconds" in result

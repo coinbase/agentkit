@@ -154,7 +154,7 @@ class NodeRental(BaseModel):
     start: str | None = Field(None, description="Start time of the rental")
     end: str | None = Field(None, description="End time of the rental")
     instance: NodeInstance = Field(..., description="Full node details")
-    ssh_command: str | None = Field(None, description="SSH command to access the node")
+    ssh_command: str | None = Field(None, description="SSH command to access the node", alias="sshCommand")
     ssh_access: SSHAccess | None = Field(None, description="SSH access details")
 
     @property
@@ -191,8 +191,23 @@ class TerminateInstanceRequest(BaseModel):
 class TerminateInstanceResponse(BaseModel):
     """Response from terminate instance API endpoint."""
 
-    status: str = Field(..., description="Response status")
+    # For success responses
+    status: str | None = Field(None, description="Response status")
     message: str | None = Field(None, description="Optional response message")
+    
+    # For error responses
+    error_code: int | None = Field(None, description="Error code for failed operations")
+
+    @property
+    def get_status(self) -> str:
+        """Return status string based on fields for backward compatibility."""
+        if self.status == "success" or self.status == "status":
+            return "success"
+        if self.error_code is not None:
+            return f"error_{self.error_code}"
+        if self.status is not None:
+            return self.status
+        return "error"
 
 
 class ContainerImage(BaseModel):

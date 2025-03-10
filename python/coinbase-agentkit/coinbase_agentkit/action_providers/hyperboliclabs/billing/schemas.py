@@ -15,6 +15,15 @@ class GetCurrentBalanceSchema(BaseModel):
     pass
 
 
+class GetPurchaseHistorySchema(BaseModel):
+    """Schema for get_purchase_history action.
+
+    This action doesn't require any inputs.
+    """
+
+    pass
+
+
 class GetSpendHistorySchema(BaseModel):
     """Schema for get_spend_history action.
 

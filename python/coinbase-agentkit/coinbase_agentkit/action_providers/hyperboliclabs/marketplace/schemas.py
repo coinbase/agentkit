@@ -9,6 +9,18 @@ class GetAvailableGpusSchema(BaseModel):
     pass
 
 
+class GetAvailableGpusByTypeSchema(BaseModel):
+    """Schema for get_available_gpus_by_type action."""
+
+    gpu_model: str = Field(description="The GPU model to filter by (e.g., 'NVIDIA A100')")
+
+
+class GetAvailableGpusTypesSchema(BaseModel):
+    """Schema for get_available_gpus_types action."""
+
+    pass
+
+
 class GetGpuStatusSchema(BaseModel):
     """Schema for get_gpu_status action."""
 
@@ -45,4 +57,4 @@ class SSHAccessSchema(BaseModel):
 class TerminateComputeSchema(BaseModel):
     """Schema for terminate_compute action."""
 
-    instance_id: str = Field(description="The ID of the instance to terminate")
+    id: str = Field(description="The ID of the instance to terminate")

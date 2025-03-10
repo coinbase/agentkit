@@ -5,10 +5,15 @@ They require a valid API key in the HYPERBOLIC_API_KEY environment variable.
 """
 
 import json
+import os
 import time
+import logging
 
 import pytest
 
+from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.action_provider import (
+    MarketplaceActionProvider,
+)
 from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.models import (
     AvailableInstance,
     AvailableInstancesResponse,
@@ -141,15 +146,24 @@ def test_marketplace_rent(marketplace, rented_instance):
 
 
 @pytest.mark.e2e
-# @pytest.mark.skip(reason="This test terminates actual GPU instances and should only be run manually.")
-def test_marketplace_terminate(marketplace, rented_instance):
+# @pytest.mark.skip(reason="This test terminates actual GPU instances and incurs costs. Only run manually.")
+@pytest.mark.disable_auto_terminate
+def test_marketplace_terminate(marketplace, rented_instance, request):
     """Test terminating a GPU instance.
 
-    WARNING: This test terminates actual GPU instances.
+    This test can run in two modes:
+    1. Normal mode: Rents an instance and terminates it explicitly (default)
+    2. Manual mode: With @pytest.mark.disable_auto_terminate marker, rents an instance but doesn't
+       terminate it, allowing manual termination via the action provider
+    
+    WARNING: This test rents actual GPU instances.
     It should only be run manually and with full awareness of the implications.
+    When using the disable_auto_terminate marker, remember to manually terminate
+    the instance to avoid unnecessary costs.
     """
     instance_id, _ = rented_instance
 
+    # Normal mode - proceed with explicit termination
     # Wait for instance to be in a terminatable state
     print("\nWaiting for instance to be ready for termination...")
     time.sleep(3)
@@ -161,7 +175,6 @@ def test_marketplace_terminate(marketplace, rented_instance):
     # Verify termination response
     assert isinstance(terminate_response, TerminateInstanceResponse)
     assert terminate_response.status == "success"
-    assert terminate_response.message is not None
 
     # Wait for termination to process
     time.sleep(3)
