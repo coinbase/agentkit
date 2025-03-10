@@ -149,6 +149,7 @@ agentkit/
 │       ├── langchain-privy-chatbot/
 │       ├── langchain-solana-chatbot/
 │       ├── langchain-twitter-chatbot/
+│       ├── model-context-protocol-cdp-chatbot/
 │       └── vercel-ai-sdk-cdp-chatbot/
 ├── python/
 │   ├── coinbase-agentkit/
