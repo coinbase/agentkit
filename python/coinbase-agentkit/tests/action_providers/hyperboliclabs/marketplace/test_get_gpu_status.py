@@ -162,24 +162,26 @@ def test_get_gpu_status_with_ssh_command(provider, mock_rented_instances_with_ss
     with (
         patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
         patch.object(
-            provider.marketplace, "get_rented_instances", return_value=mock_rented_instances_with_ssh_command
+            provider.marketplace,
+            "get_rented_instances",
+            return_value=mock_rented_instances_with_ssh_command,
         ),
     ):
         result = provider.get_gpu_status({})
-        
+
         # Check header
         assert "Your Rented GPU Instances:" in result
-        
+
         # Check instance details
         assert "Instance ID: running-instance-1" in result
         assert "Status: running (Ready to use)" in result
         assert "GPU Model: NVIDIA-A100" in result
         assert "GPU Count: 1" in result
         assert "GPU Memory: 40.0 GB" in result
-        
+
         # Verify SSH command is directly included from instance
         assert "SSH Command: ssh user@hostname.example.com -i ~/.ssh/id_rsa" in result
-        
+
         # Verify SSH instructions are included
         assert "SSH Connection Instructions:" in result
         assert "1. Wait until instance status is 'running'" in result
@@ -192,24 +194,26 @@ def test_get_gpu_status_with_ssh_access(provider, mock_rented_instances_with_ssh
     with (
         patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
         patch.object(
-            provider.marketplace, "get_rented_instances", return_value=mock_rented_instances_with_ssh_access
+            provider.marketplace,
+            "get_rented_instances",
+            return_value=mock_rented_instances_with_ssh_access,
         ),
     ):
         result = provider.get_gpu_status({})
-        
+
         # Check header
         assert "Your Rented GPU Instances:" in result
-        
+
         # Check instance details
         assert "Instance ID: running-instance-2" in result
         assert "Status: running (Ready to use)" in result
         assert "GPU Model: NVIDIA-GeForce-RTX-3070" in result
         assert "GPU Count: 1" in result
         assert "GPU Memory: 8.0 GB" in result
-        
+
         # Verify SSH command is constructed from ssh_access
         assert "SSH Command: ssh ubuntu@hostname2.example.com -i ~/.ssh/id_rsa" in result
-        
+
         # Verify SSH instructions are included
         assert "SSH Connection Instructions:" in result
         assert "1. Wait until instance status is 'running'" in result
@@ -222,25 +226,27 @@ def test_get_gpu_status_without_ssh(provider, mock_rented_instances_without_ssh)
     with (
         patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
         patch.object(
-            provider.marketplace, "get_rented_instances", return_value=mock_rented_instances_without_ssh
+            provider.marketplace,
+            "get_rented_instances",
+            return_value=mock_rented_instances_without_ssh,
         ),
     ):
         result = provider.get_gpu_status({})
-        
+
         # Check header
         assert "Your Rented GPU Instances:" in result
-        
+
         # Check instance details
         assert "Instance ID: starting-instance-1" in result
         assert "Status: starting (Still initializing)" in result
         assert "GPU Model: NVIDIA-H100" in result
         assert "GPU Count: 1" in result
         assert "GPU Memory: 80.0 GB" in result
-        
+
         # Verify appropriate message is shown for starting instance
         assert "SSH Command: Not available yet. Instance is still being provisioned." in result
         assert "The instance is starting up. Please check again in a few seconds." in result
-        
+
         # Verify SSH instructions are included
         assert "SSH Connection Instructions:" in result
         assert "1. Wait until instance status is 'running'" in result
@@ -251,7 +257,7 @@ def test_get_gpu_status_without_ssh(provider, mock_rented_instances_without_ssh)
 def test_get_gpu_status_empty_response(provider):
     """Test get_gpu_status with no rented instances."""
     empty_response = RentedInstancesResponse(instances=[])
-    
+
     with (
         patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
         patch.object(provider.marketplace, "get_rented_instances", return_value=empty_response),

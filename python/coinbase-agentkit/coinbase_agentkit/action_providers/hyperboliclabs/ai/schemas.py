@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 class GenerateTextSchema(BaseModel):
     """Schema for generate_text action."""
 
-    prompt: str = Field(description="The text prompt to generate from")
+    prompt: str = Field(description="The text prompt to generate from", min_length=1)
     model: str = Field(
         default="meta-llama/Meta-Llama-3-70B-Instruct",
         description="The model to use for text generation",
@@ -23,7 +23,7 @@ class GenerateTextSchema(BaseModel):
 class GenerateImageSchema(BaseModel):
     """Schema for generate_image action."""
 
-    prompt: str = Field(description="The image prompt to generate from")
+    prompt: str = Field(description="The image prompt to generate from", min_length=1)
     model_name: str = Field(
         default="SDXL1.0-base",
         description="The model to use for image generation",
@@ -61,7 +61,7 @@ class GenerateImageSchema(BaseModel):
 class GenerateAudioSchema(BaseModel):
     """Schema for generate_audio action."""
 
-    text: str = Field(description="The text to convert to speech")
+    text: str = Field(description="The text to convert to speech", min_length=1)
     language: str = Field(
         default="EN",
         description="The language code (e.g., 'EN', 'ES', 'FR', 'ZH', 'JP', 'KR')",

@@ -3,7 +3,6 @@
 import contextlib
 import os
 from datetime import datetime
-import logging
 
 import paramiko
 
@@ -78,7 +77,7 @@ class SSHManager:
 
             # Initialize new client
             self._ssh_client = paramiko.SSHClient()
-            self._ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            self._ssh_client.set_missing_host_key_policy(paramiko.RejectPolicy())
 
             # Get default key path from environment
             default_key_path = os.getenv("HYPERBOLIC_SSH_PRIVATE_KEY_PATH", "~/.ssh/id_rsa")
@@ -260,22 +259,23 @@ def format_gpu_types(instances: list[AvailableInstance]) -> str:
 
     Returns:
         str: Formatted string with available GPU types.
+
     """
     # Extract and collect all available GPU models
     gpu_models = set()
-    
+
     for instance in instances:
         # Skip if reserved or no available GPUs
         if instance.reserved:
             continue
-        
+
         gpus_total = instance.gpus_total or 0
         gpus_reserved = instance.gpus_reserved or 0
         gpus_available = gpus_total - gpus_reserved
-        
+
         if gpus_available <= 0:
             continue
-        
+
         # Get GPU model information
         gpus = instance.hardware.gpus
         if gpus:
@@ -286,7 +286,7 @@ def format_gpu_types(instances: list[AvailableInstance]) -> str:
         return "No available GPU types found."
 
     # Format the response
-    gpu_models_list = sorted(list(gpu_models))
+    gpu_models_list = sorted(gpu_models)
     formatted_models = "\n".join([f"- {model}" for model in gpu_models_list])
     return f"Available GPU Types:\n{formatted_models}"
 
@@ -300,31 +300,32 @@ def format_gpu_instances_by_type(instances: list[AvailableInstance], gpu_model: 
 
     Returns:
         str: Formatted string with available GPU instances of the specified model.
+
     """
     # Filter and format instances by GPU model
     formatted_instances = []
-    
+
     for instance in instances:
         # Skip if reserved
         if instance.reserved:
             continue
-        
+
         # Get GPU information
         gpus = instance.hardware.gpus
         instance_gpu_model = gpus[0].model if gpus else "Unknown Model"
-        
+
         # Skip if not matching the requested model
         if instance_gpu_model != gpu_model:
             continue
-        
+
         # Get GPU availability
         gpus_total = instance.gpus_total or 0
         gpus_reserved = instance.gpus_reserved or 0
         gpus_available = gpus_total - gpus_reserved
-        
+
         if gpus_available <= 0:
             continue
-        
+
         formatted = format_gpu_instance(instance)
         if formatted is not None:
             formatted_instances.append(formatted)
@@ -345,10 +346,11 @@ def format_all_gpu_instances(instances: list[AvailableInstance]) -> str:
 
     Returns:
         str: Formatted string with all available GPU instances.
+
     """
     # Format all available instances
     formatted_instances = []
-    
+
     for instance in instances:
         formatted = format_gpu_instance(instance)
         if formatted is not None:
@@ -372,24 +374,20 @@ def format_gpu_status(instance: NodeRental) -> str:
         str: Formatted status string.
 
     """
-    logging.info(f"Formatting GPU status for instance: {instance.id}")
     instance_id = instance.id
     status = instance.status
     status_detail = ""  # This may not be available in the model
 
     # Get GPU information
     gpus = instance.instance.hardware.gpus
-    logging.info(f"GPUs: {gpus}")
 
     # Extract GPU model from the first GPU
     gpu_model = "Unknown Model"
     if gpus:
         gpu_model = gpus[0].model
-    logging.info(f"GPU Model: {gpu_model}")
 
     # Get GPU count
     gpu_count = instance.instance.gpu_count or (len(gpus) if gpus else 1)
-    logging.info(f"GPU Count: {gpu_count}")
 
     # Get GPU memory if available
     gpu_memory = None
@@ -397,16 +395,9 @@ def format_gpu_status(instance: NodeRental) -> str:
         # Convert from MB to GB by dividing by 1024
         ram_gb = gpus[0].ram / 1024
         gpu_memory = f"{ram_gb:.1f} GB"
-    logging.info(f"GPU Memory: {gpu_memory}")
 
     # Get SSH access details if available
     ssh_command = instance.ssh_command
-    logging.info(f"SSH Command from instance: {ssh_command}")
-    
-    if instance.ssh_access:
-        logging.info(f"SSH Access details: host={instance.ssh_access.host}, username={instance.ssh_access.username}, keypath={instance.ssh_access.key_path}")
-    else:
-        logging.info("No SSH Access details available")
 
     # Format the output
     output = [f"Instance ID: {instance_id}"]
@@ -424,8 +415,6 @@ def format_gpu_status(instance: NodeRental) -> str:
         output.append("Status: running (Ready to use)")
     else:
         output.append(f"Status: {status}")
-    
-    logging.info(f"Formatted status: {output[-1]}")
 
     # Add status detail if available
     if status_detail:
@@ -440,19 +429,18 @@ def format_gpu_status(instance: NodeRental) -> str:
 
     # Add SSH information based on what's available
     if ssh_command:
-        logging.info(f"Using provided SSH command: {ssh_command}")
         output.append(f"SSH Command: {ssh_command}")
     elif instance.ssh_access:
         # If we have SSH access details but no command, construct one
         key_path = instance.ssh_access.key_path or "~/.ssh/id_rsa"
-        constructed_ssh_cmd = f"ssh {instance.ssh_access.username}@{instance.ssh_access.host} -i {key_path}"
-        logging.info(f"Constructed SSH command: {constructed_ssh_cmd}")
+        constructed_ssh_cmd = (
+            f"ssh {instance.ssh_access.username}@{instance.ssh_access.host} -i {key_path}"
+        )
         output.append(f"SSH Command: {constructed_ssh_cmd}")
     else:
         # This part requires extracting host and username from SSH command or other fields
         # For now, just provide guidance based on status
         if status.lower() in ["running", "online"]:
-            logging.info("Instance is running but SSH details are missing")
             output.append(
                 "SSH Command: Not available yet. Instance is running but SSH details are not provided."
             )
@@ -460,7 +448,6 @@ def format_gpu_status(instance: NodeRental) -> str:
                 "Try again in a few seconds or check the Hyperbolic dashboard for SSH details."
             )
         else:
-            logging.info(f"Instance not ready for SSH. Status: {status}")
             output.append("SSH Command: Not available yet. Instance is still being provisioned.")
 
             # Add more specific guidance based on status
@@ -475,10 +462,9 @@ def format_gpu_status(instance: NodeRental) -> str:
 
     output.append("-" * 40)
     output.append("")
-    
+
     result = "\n".join(output)
-    logging.info(f"Final formatted output:\n{result}")
-    
+
     return result
 
 
@@ -519,15 +505,13 @@ def format_terminate_compute_response(response_data: TerminateInstanceResponse) 
         str: Formatted response string with next steps.
 
     """
-    # Log the response data being formatted
-    logging.info(f"Formatting terminate compute response: {response_data.model_dump()}")
-    
     # If this is an error response, just return a simple message without next steps
-    if response_data.error_code is not None or (response_data.status and response_data.status.lower() != "success"):
+    if response_data.error_code is not None or (
+        response_data.status and response_data.status.lower() != "success"
+    ):
         error_msg = f"Error terminating compute: {response_data.message}"
-        logging.warning(f"Termination error: {error_msg}")
         return error_msg
-    
+
     # Format the API response
     formatted_response = response_data.model_dump_json(indent=2)
 
@@ -539,5 +523,4 @@ def format_terminate_compute_response(response_data: TerminateInstanceResponse) 
         "3. You can check your spend history with get_spend_history\n"
         "4. To rent a new instance, use get_available_gpus and rent_compute"
     )
-
     return f"{formatted_response}\n{next_steps}"

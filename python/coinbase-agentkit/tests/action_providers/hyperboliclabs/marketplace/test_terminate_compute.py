@@ -28,7 +28,7 @@ def test_terminate_compute_success(provider):
         patch("coinbase_agentkit.action_providers.action_decorator.send_analytics_event"),
         patch.object(provider.marketplace, "terminate_instance", return_value=mock_response),
     ):
-        result = provider.terminate_compute({"instance_id": "i-123456"})
+        result = provider.terminate_compute({"id": "i-123456"})
 
         assert '"status": "success"' in result
         assert '"message": "Instance terminated successfully"' in result
@@ -48,7 +48,7 @@ def test_terminate_compute_api_error(provider):
             provider.marketplace, "terminate_instance", side_effect=Exception("API Error")
         ),
     ):
-        result = provider.terminate_compute({"instance_id": "i-123456"})
+        result = provider.terminate_compute({"id": "i-123456"})
         assert "Error terminating compute: API Error" in result
 
 

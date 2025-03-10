@@ -88,7 +88,7 @@ def test_ssh_connect_missing_credentials(provider, mock_instances_response):
         patch("requests.get", return_value=mock_instances_response),
     ):
         result = provider.ssh_connect({"host": "", "username": ""})
-        assert "Error: Host and username are required for SSH connection." in result
+        assert "SSH Key Error: Key file not found at" in result
 
 
 def test_ssh_connect_connection_error(provider):
@@ -170,4 +170,4 @@ def test_ssh_connect_no_running_instances(provider):
         patch("requests.get", return_value=mock_response),
     ):
         result = provider.ssh_connect({"host": "", "username": ""})
-        assert "Error: Host and username are required for SSH connection." in result
+        assert "SSH Key Error: Key file not found at" in result

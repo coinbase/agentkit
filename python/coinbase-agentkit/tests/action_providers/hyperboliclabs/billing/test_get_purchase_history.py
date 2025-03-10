@@ -73,4 +73,4 @@ def test_get_purchase_history_api_error(provider):
 
     # Call the method
     result = provider.get_purchase_history({})
-    assert "Error retrieving purchase history: API Error" in result 
+    assert "Error retrieving purchase history: API Error" in result

@@ -5,15 +5,10 @@ They require a valid API key in the HYPERBOLIC_API_KEY environment variable.
 """
 
 import json
-import os
 import time
-import logging
 
 import pytest
 
-from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.action_provider import (
-    MarketplaceActionProvider,
-)
 from coinbase_agentkit.action_providers.hyperboliclabs.marketplace.models import (
     AvailableInstance,
     AvailableInstancesResponse,
@@ -74,8 +69,6 @@ def test_marketplace_instance_history(marketplace):
         entry = response.instance_history[0]
         assert isinstance(entry, InstanceHistoryEntry)
         assert entry.instance_name is not None
-        assert entry.started_at is not None
-        assert entry.terminated_at is not None
         assert entry.price is not None
         assert entry.hardware is not None
         assert entry.gpu_count > 0
@@ -155,7 +148,7 @@ def test_marketplace_terminate(marketplace, rented_instance, request):
     1. Normal mode: Rents an instance and terminates it explicitly (default)
     2. Manual mode: With @pytest.mark.disable_auto_terminate marker, rents an instance but doesn't
        terminate it, allowing manual termination via the action provider
-    
+
     WARNING: This test rents actual GPU instances.
     It should only be run manually and with full awareness of the implications.
     When using the disable_auto_terminate marker, remember to manually terminate

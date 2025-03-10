@@ -5,13 +5,6 @@ It includes functionality for managing GPU instances and SSH access.
 """
 
 from typing import Any
-import logging
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 
 from ....network import Network
 from ...action_decorator import create_action
@@ -29,7 +22,6 @@ from .schemas import (
 from .service import MarketplaceService
 from .utils import (
     format_all_gpu_instances,
-    format_gpu_instance,
     format_gpu_instances_by_type,
     format_gpu_status,
     format_gpu_types,
@@ -156,6 +148,7 @@ Important notes:
 
         Returns:
             str: A message containing the available GPU types or error details.
+
         """
         GetAvailableGpusTypesSchema(**args)
 
@@ -182,14 +175,14 @@ Required inputs:
 
 A successful response will list available GPU machines of the specified model:
     Available NVIDIA A100 GPU Options:
-    
+
     Cluster: us-east-1
     Node ID: node-123
     GPU Model: NVIDIA A100
     Available GPUs: 4/8
     Price: $2.50/hour per GPU
     ----------------------------------------
-    
+
     Cluster: us-west-1
     Node ID: node-456
     GPU Model: NVIDIA A100
@@ -218,6 +211,7 @@ Important notes:
 
         Returns:
             str: A message containing the available GPU instances of the specified model or error details.
+
         """
         validated_args = GetAvailableGpusByTypeSchema(**args)
         gpu_model = validated_args.gpu_model
@@ -270,33 +264,18 @@ Important notes:
 
         """
         GetGpuStatusSchema(**args)
-        logging.info("Getting GPU status from Hyperbolic Marketplace")
 
         try:
             # Get rented instances
             response = self.marketplace.get_rented_instances()
-            
-            logging.info(f"Retrieved {len(response.instances)} rented instances")
-            
+
             if not response.instances:
                 return "No rented GPU instances found."
 
             # Format the response
             output = ["Your Rented GPU Instances:"]
-            for i, instance in enumerate(response.instances):
-                logging.info(f"Formatting instance {i+1}: {instance.id}")
-                logging.info(f"  Status: {instance.status}")
-                logging.info(f"  SSH Command: {instance.ssh_command}")
-                
-                # Check instance properties before formatting
-                if instance.instance and instance.instance.hardware and instance.instance.hardware.gpus:
-                    gpus = instance.instance.hardware.gpus
-                    logging.info(f"  GPU Model: {gpus[0].model if gpus else 'Unknown'}")
-                    logging.info(f"  GPU Count: {instance.instance.gpu_count or len(gpus) if gpus else 1}")
-                
+            for _i, instance in enumerate(response.instances):
                 formatted = format_gpu_status(instance)
-                logging.info(f"Formatted output for instance {i+1}:\n{formatted}")
-                
                 output.append(formatted)
                 output.append("-" * 40)
 
@@ -311,11 +290,9 @@ Important notes:
             )
 
             final_output = "\n".join(output)
-            logging.info(f"Final output:\n{final_output}")
             return final_output
 
         except Exception as e:
-            logging.exception(f"Error retrieving GPU status: {e}")
             return f"Error retrieving GPU status: {e}"
 
     @create_action(
@@ -418,22 +395,15 @@ Important notes:
 
         """
         validated_args = TerminateComputeSchema(**args)
-        
-        # Log the request payload for debugging
-        logging.info(f"Terminate compute request payload: {validated_args.model_dump()}")
 
         try:
             # Make the termination request
             response = self.marketplace.terminate_instance(validated_args)
-            
-            # Log the response for debugging
-            logging.info(f"Terminate compute response: {response.model_dump()}")
-            
+
             # Format the success response with next steps
             return format_terminate_compute_response(response)
 
         except Exception as e:
-            logging.error(f"Error in terminate_compute: {e}", exc_info=True)
             return f"Error terminating compute: {e}"
 
     @create_action(
@@ -485,31 +455,6 @@ Important notes:
         validated_args = SSHAccessSchema(**args)
 
         try:
-            # # Check if we have a valid host and username
-            # if not validated_args.host or not validated_args.username:
-            #     # Try to get instance information to suggest connection details
-            #     try:
-            #         response = self.marketplace.get_rented_instances()
-
-            #         if response.instances:
-            #             instance_info = []
-            #             for instance in response.instances:
-            #                 status = instance.status.lower()
-            #                 instance_id = instance.id
-            #                 if instance.ssh_access and status == "running":
-            #                     instance_info.append(
-            #                         f"Instance {instance_id}: host={instance.ssh_access.host}, username={instance.ssh_access.username}"
-            #                     )
-
-            #             if instance_info:
-            #                 return "Missing host or username. Available instances:\n" + "\n".join(
-            #                     instance_info
-            #                 )
-            #     except Exception:
-            #         pass
-
-            #     return "Error: Host and username are required for SSH connection."
-
             # Establish SSH connection
             return ssh_manager.connect(
                 host=validated_args.host,
@@ -613,14 +558,14 @@ Important notes:
 def hyperbolic_marketplace_action_provider(
     api_key: str | None = None,
 ) -> MarketplaceActionProvider:
-    """Create and return a new HyperbolicMarketplaceActionProvider instance.
+    """Create a new instance of the MarketplaceActionProvider.
 
     Args:
         api_key: Optional API key for authentication. If not provided,
                 will attempt to read from HYPERBOLIC_API_KEY environment variable.
 
     Returns:
-        HyperbolicMarketplaceActionProvider: A new instance of the Hyperbolic marketplace action provider.
+        A new Marketplace action provider instance.
 
     Raises:
         ValueError: If API key is not provided and not found in environment.

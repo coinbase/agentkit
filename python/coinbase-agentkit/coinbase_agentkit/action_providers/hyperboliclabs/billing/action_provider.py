@@ -242,14 +242,14 @@ Important notes:
 def hyperbolic_billing_action_provider(
     api_key: str | None = None,
 ) -> BillingActionProvider:
-    """Create and return a new HyperbolicBillingActionProvider instance.
+    """Create a new instance of the BillingActionProvider.
 
     Args:
         api_key: Optional API key for authentication. If not provided,
                 will attempt to read from HYPERBOLIC_API_KEY environment variable.
 
     Returns:
-        HyperbolicBillingActionProvider: A new instance of the Hyperbolic billing action provider.
+        A new Billing action provider instance.
 
     Raises:
         ValueError: If API key is not provided and not found in environment.

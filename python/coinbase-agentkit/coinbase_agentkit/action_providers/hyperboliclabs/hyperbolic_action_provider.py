@@ -87,14 +87,14 @@ class HyperbolicActionProvider(ActionProvider):
 def hyperbolic_action_provider(
     api_key: str | None = None,
 ) -> HyperbolicActionProvider:
-    """Factory function to create a HyperbolicActionProvider.
+    """Create a new instance of the HyperbolicActionProvider.
 
     Args:
         api_key: Optional API key for authentication. If not provided,
                 will attempt to read from HYPERBOLIC_API_KEY environment variable.
 
     Returns:
-        HyperbolicActionProvider: An initialized Hyperbolic action provider.
+        A new Hyperbolic action provider instance.
 
     """
     return HyperbolicActionProvider(api_key=api_key)

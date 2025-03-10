@@ -35,6 +35,7 @@ def format_purchase_history(purchases: BillingPurchaseHistoryResponse, limit: in
 
     Args:
         purchases: Billing purchase history response.
+        limit: Maximum number of purchase records to include in the output.
 
     Returns:
         str: Formatted purchase history string.
@@ -58,6 +59,7 @@ def format_spend_history(instance_history: InstanceHistoryResponse, limit: int =
 
     Args:
         instance_history: Instance history response with rental records.
+        limit: Maximum number of spend records to include in the output.
 
     Returns:
         str: Formatted analysis string.

@@ -241,4 +241,4 @@ def test_get_available_gpus_by_type_api_error(provider):
         ),
     ):
         result = provider.get_available_gpus_by_type({"gpu_model": "NVIDIA-A100"})
-        assert "Error retrieving available GPUs: API Error" in result 
+        assert "Error retrieving available GPUs: API Error" in result

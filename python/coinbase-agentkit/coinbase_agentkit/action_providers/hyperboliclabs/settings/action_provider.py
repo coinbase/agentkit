@@ -123,14 +123,14 @@ Notes:
 def hyperbolic_settings_action_provider(
     api_key: str | None = None,
 ) -> SettingsActionProvider:
-    """Create and return a new HyperbolicSettingsActionProvider instance.
+    """Create a new instance of the SettingsActionProvider.
 
     Args:
         api_key: Optional API key for authentication. If not provided,
                 will attempt to read from HYPERBOLIC_API_KEY environment variable.
 
     Returns:
-        HyperbolicSettingsActionProvider: A new instance of the Hyperbolic settings action provider.
+        A new Settings action provider instance.
 
     Raises:
         ValueError: If API key is not provided and not found in environment.

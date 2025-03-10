@@ -154,8 +154,12 @@ class NodeRental(BaseModel):
     start: str | None = Field(None, description="Start time of the rental")
     end: str | None = Field(None, description="End time of the rental")
     instance: NodeInstance = Field(..., description="Full node details")
-    ssh_command: str | None = Field(None, description="SSH command to access the node", alias="sshCommand")
+    ssh_command: str | None = Field(
+        None, description="SSH command to access the node", alias="sshCommand"
+    )
     ssh_access: SSHAccess | None = Field(None, description="SSH access details")
+
+    model_config = {"populate_by_name": True}
 
     @property
     def status(self) -> str:
@@ -167,8 +171,8 @@ class InstanceHistoryEntry(BaseModel):
     """Instance history entry."""
 
     instance_name: str = Field(..., description="Name of the instance")
-    started_at: str = Field(..., description="Start time in ISO format")
-    terminated_at: str = Field(..., description="Termination time in ISO format")
+    started_at: str | None = Field(None, description="Start time in ISO format")
+    terminated_at: str | None = Field(None, description="Termination time in ISO format")
     price: Price = Field(..., description="Price information")
     hardware: HardwareInfo = Field(..., description="Hardware specifications")
     gpu_count: int = Field(..., description="Number of GPUs")
@@ -194,7 +198,7 @@ class TerminateInstanceResponse(BaseModel):
     # For success responses
     status: str | None = Field(None, description="Response status")
     message: str | None = Field(None, description="Optional response message")
-    
+
     # For error responses
     error_code: int | None = Field(None, description="Error code for failed operations")
 

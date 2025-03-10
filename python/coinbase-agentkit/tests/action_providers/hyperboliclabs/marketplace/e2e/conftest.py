@@ -45,8 +45,10 @@ def rented_instance(marketplace, request):
     marker = request.node.get_closest_marker("disable_auto_terminate")
     if marker:
         disable_auto_terminate = True
-        print("\nWARNING: Auto-termination is disabled. Remember to manually terminate the instance!")
-        
+        print(
+            "\nWARNING: Auto-termination is disabled. Remember to manually terminate the instance!"
+        )
+
     # First, get available instances to find the cheapest one
     available = marketplace.get_available_instances()
     assert len(available.instances) > 0, "No instances available to rent"
@@ -121,7 +123,9 @@ def rented_instance(marketplace, request):
                 raise Exception(error_msg) from e
         elif instance_id and disable_auto_terminate:
             print(f"\nSkipping auto-termination for instance {instance_id} as requested.")
-            print(f"IMPORTANT: Remember to manually terminate this instance to avoid unnecessary costs!")
+            print(
+                "IMPORTANT: Remember to manually terminate this instance to avoid unnecessary costs!"
+            )
 
 
 def wait_for_termination(
@@ -166,12 +170,11 @@ def wait_for_termination(
         "IMPORTANT: You may have a running instance still incurring costs!"
     )
 
+
 def pytest_configure(config):
     """Register custom markers."""
+    config.addinivalue_line("markers", "e2e: mark tests as end-to-end tests (may incur costs)")
     config.addinivalue_line(
-        "markers", "e2e: mark tests as end-to-end tests (may incur costs)"
-    )
-    config.addinivalue_line(
-        "markers", 
-        "disable_auto_terminate: mark tests to disable automatic termination of GPU instances (DANGER: instances must be manually terminated!)"
+        "markers",
+        "disable_auto_terminate: mark tests to disable automatic termination of GPU instances (DANGER: instances must be manually terminated!)",
     )
