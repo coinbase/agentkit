@@ -268,8 +268,7 @@ async function init() {
       console.log(" - mv .env.local .env");
       console.log(" - npm run dev");
       break;
-    case "mcpServer":
-      // TODO: Implement MCP Server template
+    default:
       break;
   }
 
