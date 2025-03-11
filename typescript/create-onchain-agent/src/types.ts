@@ -35,4 +35,4 @@ export type NetworkSelection = {
 
 export type Framework = "Langchain" | "Vercel AI SDK" | "Model Context Protocol";
 
-export type Template = 'next' | 'mcpServer';
+export type Template = "next" | "mcpServer";

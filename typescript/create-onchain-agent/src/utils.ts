@@ -177,7 +177,7 @@ export const getWalletProviders = (network?: Network): WalletProviderChoice[] =>
  * - Deletes all unselected API routes and cleans up empty directories.
  *
  * @param {string} root - The root directory of the project.
- * @param {Framework} framework - The selected framework. 
+ * @param {Framework} framework - The selected framework.
  * @param {WalletProviderChoice} walletProvider - The selected wallet provider.
  * @param {Network} [network] - The optional blockchain network.
  * @param {string} [chainId] - The optional chain ID for the network.
@@ -242,15 +242,13 @@ export async function handleNextSelection(
     const selectedRoutePath = path.join(agentDir, type, toPromose);
     const newRoutePath = path.join(agentDir, to);
     await fs.rename(selectedRoutePath, newRoutePath);
-  }
+  };
 
-  await promoteRoute(agentkitRouteConfig.prepareAgentkitRoute, 'agentkit', "prepare-agentkit.ts");
-  await promoteRoute(frameworkRouteConfig.createAgentRoute, 'framework', "create-agent.ts");
-  await promoteRoute(frameworkRouteConfig.apiRoute, 'framework', "route.ts");
+  await promoteRoute(agentkitRouteConfig.prepareAgentkitRoute, "agentkit", "prepare-agentkit.ts");
+  await promoteRoute(frameworkRouteConfig.createAgentRoute, "framework", "create-agent.ts");
+  await promoteRoute(frameworkRouteConfig.apiRoute, "framework", "route.ts");
 
   // Delete boilerplate routes
-  await fs.rm(path.join(agentDir, 'agentkit'), { recursive: true, force: true });
-  await fs.rm(path.join(agentDir, 'framework'), { recursive: true, force: true });
+  await fs.rm(path.join(agentDir, "agentkit"), { recursive: true, force: true });
+  await fs.rm(path.join(agentDir, "framework"), { recursive: true, force: true });
 }
-
-

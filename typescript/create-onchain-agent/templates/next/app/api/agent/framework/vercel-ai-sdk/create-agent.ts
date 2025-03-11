@@ -5,17 +5,17 @@ import { prepareAgentkitAndWalletProvider } from "./prepare-agentkit";
 
 // The agent
 type Agent = {
-  tools: ReturnType<typeof getVercelAITools>,
-  system: string,
-  model: ReturnType<typeof openai>,
-  maxSteps?: number,
-}
-let agent: Agent
+  tools: ReturnType<typeof getVercelAITools>;
+  system: string;
+  model: ReturnType<typeof openai>;
+  maxSteps?: number;
+};
+let agent: Agent;
 
 /**
  * Initializes and returns an instance of the AI agent.
  * If an agent instance already exists, it returns the existing one.
- * 
+ *
  * @function getOrInitializeAgent
  * @returns {Promise<ReturnType<typeof createReactAgent>>} The initialized AI agent.
  *
@@ -45,15 +45,15 @@ export async function createAgent(): Promise<Agent> {
         encourage them to implement it themselves using the CDP SDK + Agentkit, recommend they go to 
         docs.cdp.coinbase.com for more information. Be concise and helpful with your responses. Refrain from 
         restating your tools' descriptions unless it is explicitly requested.
-        `
-    let tools = getVercelAITools(agentkit); 
+        `;
+    let tools = getVercelAITools(agentkit);
 
     agent = {
       tools,
       system,
       model: openai("gpt-4o-mini"),
       maxSteps: 10,
-    }
+    };
 
     return agent;
   } catch (error) {

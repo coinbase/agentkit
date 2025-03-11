@@ -60,7 +60,10 @@ const WALLET_DATA_FILE = "wallet_data.txt";
  *
  * @throws {Error} If the agent initialization fails.
  */
-export async function prepareAgentkitAndWalletProvider(): Promise<{ agentkit: AgentKit, walletProvider: WalletProvider }> {
+export async function prepareAgentkitAndWalletProvider(): Promise<{
+  agentkit: AgentKit;
+  walletProvider: WalletProvider;
+}> {
   try {
     // Setup Private Key
     let privateKey = process.env.SOLANA_PRIVATE_KEY as string;

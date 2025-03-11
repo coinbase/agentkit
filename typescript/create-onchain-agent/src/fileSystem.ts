@@ -17,6 +17,7 @@ const excludeFiles = [".DS_Store", "Thumbs.db"];
 /**
  * Retrieves the source directory for copying template files.
  *
+ * @param template - The template to use.
  * @returns {string} The source directory path.
  */
 function getSourceDir(template: Template): string {
@@ -66,7 +67,11 @@ async function copyDir(src: string, dest: string): Promise<void> {
  * @param {Template} template - The template to use.
  * @returns {Promise<string>} The path of the newly created project directory.
  */
-export async function copyTemplate(projectName: string, packageName: string, template: Template): Promise<string> {
+export async function copyTemplate(
+  projectName: string,
+  packageName: string,
+  template: Template,
+): Promise<string> {
   const root = path.join(process.cwd(), projectName);
   await copyDir(getSourceDir(template), root);
 

@@ -162,18 +162,20 @@ export const Frameworks: Framework[] = ["Langchain", "Vercel AI SDK", "Model Con
 export const Templates: Template[] = ["next", "mcpServer"];
 
 export const FrameworkToTemplates: Record<Framework, Template[]> = {
-  "Langchain": ["next"],
+  Langchain: ["next"],
   "Vercel AI SDK": ["next"],
   "Model Context Protocol": ["mcpServer"],
 };
 
 export type NextTemplateRouteConfiguration = {
-  createAgentRoute: `${string}.ts`,
-  apiRoute: `${string}.ts`,
+  createAgentRoute: `${string}.ts`;
+  apiRoute: `${string}.ts`;
 };
 
-export const NextTemplateRouteConfigurations: Partial<Record<Framework, NextTemplateRouteConfiguration>> = {
-  "Langchain": {
+export const NextTemplateRouteConfigurations: Partial<
+  Record<Framework, NextTemplateRouteConfiguration>
+> = {
+  Langchain: {
     apiRoute: "langchain/route.ts",
     createAgentRoute: "langchain/create-agent.ts",
   },

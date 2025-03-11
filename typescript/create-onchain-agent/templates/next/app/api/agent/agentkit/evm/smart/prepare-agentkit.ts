@@ -66,7 +66,10 @@ type WalletData = {
  *
  * @throws {Error} If the agent initialization fails.
  */
-export async function prepareAgentkitAndWalletProvider(): Promise<{ agentkit: AgentKit, walletProvider: WalletProvider }> {
+export async function prepareAgentkitAndWalletProvider(): Promise<{
+  agentkit: AgentKit;
+  walletProvider: WalletProvider;
+}> {
   try {
     let walletData: WalletData | null = null;
     let privateKey: Hex | null = null;

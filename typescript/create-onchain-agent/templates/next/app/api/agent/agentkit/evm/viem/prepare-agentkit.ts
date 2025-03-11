@@ -62,7 +62,10 @@ const WALLET_DATA_FILE = "wallet_data.txt";
  *
  * @throws {Error} If the agent initialization fails.
  */
-export async function prepareAgentkitAndWalletProvider(): Promise<{ agentkit: AgentKit, walletProvider: WalletProvider }> {
+export async function prepareAgentkitAndWalletProvider(): Promise<{
+  agentkit: AgentKit;
+  walletProvider: WalletProvider;
+}> {
   try {
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
     let privateKey = process.env.PRIVATE_KEY as Hex;
@@ -110,7 +113,7 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{ agentkit: Ag
       walletProvider,
       actionProviders,
     });
-   
+
     return { agentkit, walletProvider };
   } catch (error) {
     console.error("Error initializing agent:", error);

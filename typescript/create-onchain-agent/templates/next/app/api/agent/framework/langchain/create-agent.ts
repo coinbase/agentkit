@@ -10,7 +10,7 @@ let agent: ReturnType<typeof createReactAgent>;
 /**
  * Initializes and returns an instance of the AI agent.
  * If an agent instance already exists, it returns the existing one.
- * 
+ *
  * @function getOrInitializeAgent
  * @returns {Promise<ReturnType<typeof createReactAgent>>} The initialized AI agent.
  *

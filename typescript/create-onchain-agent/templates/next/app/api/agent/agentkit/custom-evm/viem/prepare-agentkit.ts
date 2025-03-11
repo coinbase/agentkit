@@ -52,16 +52,19 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 const WALLET_DATA_FILE = "wallet_data.txt";
 
 /**
-* Prepares the AgentKit and WalletProvider.
-*
-* @function prepareAgentkitAndWalletProvider
-* @returns {Promise<{ agentkit: AgentKit, walletProvider: WalletProvider }>} The initialized AI agent.
-*
-* @description Handles agent setup
-*
-* @throws {Error} If the agent initialization fails.
-*/
-export async function prepareAgentkitAndWalletProvider(): Promise<{ agentkit: AgentKit, walletProvider: WalletProvider }> {
+ * Prepares the AgentKit and WalletProvider.
+ *
+ * @function prepareAgentkitAndWalletProvider
+ * @returns {Promise<{ agentkit: AgentKit, walletProvider: WalletProvider }>} The initialized AI agent.
+ *
+ * @description Handles agent setup
+ *
+ * @throws {Error} If the agent initialization fails.
+ */
+export async function prepareAgentkitAndWalletProvider(): Promise<{
+  agentkit: AgentKit;
+  walletProvider: WalletProvider;
+}> {
   try {
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
     let privateKey = process.env.PRIVATE_KEY as `0x${string}`;

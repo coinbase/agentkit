@@ -5,7 +5,7 @@ import path from "path";
 import pc from "picocolors";
 import prompts from "prompts";
 import { EVM_NETWORKS, NetworkToWalletProviders, SVM_NETWORKS } from "./constants.js";
-import { Network, WalletProviderChoice, Framework, Template } from "./types.js";
+import { Network, WalletProviderChoice, Framework } from "./types.js";
 import { copyTemplate } from "./fileSystem.js";
 import {
   handleNextSelection,
@@ -89,11 +89,11 @@ async function init() {
           })),
         },
         {
-          type: (prev, { framework }) => 
+          type: (prev, { framework }) =>
             FrameworkToTemplates[framework as Framework].length > 1 ? "select" : null,
           name: "template",
           message: pc.reset("Choose a template:"),
-          choices: (prev, { framework }) => 
+          choices: (prev, { framework }) =>
             FrameworkToTemplates[framework as Framework].map(template => ({
               title: template,
               value: template,
@@ -230,13 +230,7 @@ async function init() {
     }
     process.exit(1);
   }
-  const { 
-    projectName, 
-    network, 
-    chainId, 
-    rpcUrl, 
-    framework 
-  } = result;
+  const { projectName, network, chainId, rpcUrl, framework } = result;
   const packageName = result.packageName || toValidPackageName(projectName);
   const walletProvider = result.walletProvider || "Viem";
   // If template wasn't selected (because there was only one option), use the first template
@@ -254,7 +248,7 @@ async function init() {
 
       spinner.succeed();
       console.log(pc.blueBright(`\nSuccessfully created your AgentKit project in ${root}`));
-    
+
       console.log(`\nFrameworks:`);
       console.log(pc.gray("- AgentKit"));
       console.log(pc.gray(`- ${framework}`));
@@ -262,9 +256,9 @@ async function init() {
       console.log(pc.gray("- Next.js"));
       console.log(pc.gray("- Tailwind CSS"));
       console.log(pc.gray("- ESLint"));
-    
+
       console.log(pc.bold("\nWhat's Next?"));
-    
+
       console.log(`\nTo get started, run the following commands:\n`);
       if (root !== process.cwd()) {
         console.log(` - cd ${path.relative(process.cwd(), root)}`);
