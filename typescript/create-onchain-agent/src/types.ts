@@ -33,6 +33,6 @@ export type NetworkSelection = {
   rpcUrl?: string;
 };
 
-export type Framework = "Langchain" | "Vercel AI SDK" | "Model Context Protocol";
+export type Framework = "Langchain" | "Vercel AI SDK";
 
-export type Template = "next" | "mcpServer";
+export type Template = "next";
