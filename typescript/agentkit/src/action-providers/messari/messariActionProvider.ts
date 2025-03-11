@@ -14,11 +14,6 @@ export interface MessariActionProviderConfig {
   apiKey?: string;
 }
 
-// Configuration constants
-const CONFIG = {
-  API_ENDPOINT: "https://api.messari.io/ai/v1/chat/completions",
-};
-
 /**
  * Types for API responses and errors
  */
@@ -31,10 +26,19 @@ interface MessariAPIResponse {
   };
 }
 
+interface MessariErrorResponse {
+  error?: string;
+  data?: null | unknown;
+}
+
 interface MessariError extends Error {
   status?: number;
   statusText?: string;
   responseText?: string;
+  errorResponse?: {
+    error?: string;
+    data?: null | unknown;
+  };
 }
 
 /**
@@ -45,6 +49,7 @@ interface MessariError extends Error {
  */
 export class MessariActionProvider extends ActionProvider {
   private readonly apiKey: string;
+  private readonly baseUrl = "https://api.messari.io/ai/v1";
 
   /**
    * Constructor for the MessariActionProvider class.
@@ -94,7 +99,8 @@ Examples of good questions:
   })
   async researchQuestion(args: z.infer<typeof MessariResearchQuestionSchema>): Promise<string> {
     try {
-      const response = await fetch(CONFIG.API_ENDPOINT, {
+      // Make API request
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -109,30 +115,31 @@ Examples of good questions:
           ],
         }),
       });
-
       if (!response.ok) {
-        const responseText = await response.text();
-        const error = new Error() as MessariError;
-        error.status = response.status;
-        error.statusText = response.statusText;
-        error.responseText = responseText;
-        throw error;
+        throw await this.createMessariError(response);
       }
 
-      const data = (await response.json()) as MessariAPIResponse;
+      // Parse and validate response
+      let data: MessariAPIResponse;
+      try {
+        data = (await response.json()) as MessariAPIResponse;
+      } catch (jsonError) {
+        throw new Error(
+          `Failed to parse API response: ${jsonError instanceof Error ? jsonError.message : String(jsonError)}`,
+        );
+      }
+      if (!data.data?.messages?.[0]?.content) {
+        throw new Error("Received invalid response format from Messari API");
+      }
+
       const result = data.data.messages[0].content;
-
       return `Messari Research Results:\n\n${result}`;
-    } catch (error) {
-      const err = error as MessariError;
-      const errorDetails = {
-        status: err.status,
-        statusText: err.statusText,
-        responseText: err.responseText,
-        message: err.message,
-      };
+    } catch (error: unknown) {
+      if (error instanceof Error && "responseText" in error) {
+        return this.formatMessariApiError(error as MessariError);
+      }
 
-      return `Error querying Messari AI: ${JSON.stringify(errorDetails, null, 2)}`;
+      return this.formatGenericError(error);
     }
   }
 
@@ -145,6 +152,73 @@ Examples of good questions:
    */
   supportsNetwork(_: Network): boolean {
     return true; // Messari research is network-agnostic
+  }
+
+  /**
+   * Creates a MessariError from an HTTP response
+   *
+   * @param response - The fetch Response object
+   * @returns A MessariError with response details
+   */
+  private async createMessariError(response: Response): Promise<MessariError> {
+    const error = new Error(
+      `Messari API returned ${response.status} ${response.statusText}`,
+    ) as MessariError;
+    error.status = response.status;
+    error.statusText = response.statusText;
+
+    const responseText = await response.text();
+    error.responseText = responseText;
+    try {
+      const errorJson = JSON.parse(responseText) as MessariErrorResponse;
+      error.errorResponse = errorJson;
+    } catch {
+      // If parsing fails, just use the raw text
+    }
+
+    return error;
+  }
+
+  /**
+   * Formats error details for API errors
+   *
+   * @param error - The MessariError to format
+   * @returns Formatted error message
+   */
+  private formatMessariApiError(error: MessariError): string {
+    if (error.errorResponse?.error) {
+      return `Messari API Error: ${error.errorResponse.error}`;
+    }
+
+    const errorDetails = {
+      status: error.status,
+      statusText: error.statusText,
+      responseText: error.responseText,
+      message: error.message,
+    };
+    return `Messari API Error: ${JSON.stringify(errorDetails, null, 2)}`;
+  }
+
+  /**
+   * Formats generic errors
+   *
+   * @param error - The error to format
+   * @returns Formatted error message
+   */
+  private formatGenericError(error: unknown): string {
+    // Check if this might be a JSON string containing an error message
+    if (typeof error === "string") {
+      try {
+        const parsedError = JSON.parse(error) as MessariErrorResponse;
+        if (parsedError.error) {
+          return `Messari API Error: ${parsedError.error}`;
+        }
+      } catch {
+        // Not valid JSON, continue with normal handling
+      }
+    }
+
+    return `Unexpected error: ${error instanceof Error ? error.message : String(error)}`;
   }
 }
 
