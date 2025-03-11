@@ -13,6 +13,7 @@ python = "^3.10"
 coinbase-agentkit = "^0.1.0"
 openai-agents-sdk = { path = "../../../agentsdk_prototype-main/agents", develop = true }
 python-dotenv = "^1.0.1"
+pytest-asyncio = "^0.25.3"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.7.1"
@@ -67,3 +68,10 @@ name = "Added"
 
 [tool.towncrier.fragment.bugfix]
 name = "Fixed"
+
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    "ignore::pydantic.PydanticDeprecatedSince20",
+]
