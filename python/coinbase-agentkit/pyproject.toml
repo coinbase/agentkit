@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "coinbase-agentkit"
-version = "0.1.5"
+version = "0.1.6"
 description = "Coinbase AgentKit"
 authors = ["John Peterson <john.peterson@coinbase.com>"]
 readme = "README.md"
@@ -12,7 +12,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.10"
-cdp-sdk = "0.19.0"
+cdp-sdk = "0.21.0"
 pydantic = "^2.0"
 web3 = "^7.6.0"
 python-dotenv = "^1.0.1"

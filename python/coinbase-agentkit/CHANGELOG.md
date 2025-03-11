@@ -2,6 +2,13 @@
 
 <!-- towncrier release notes start -->
 
+## [0.1.6] - 2025-03-11
+
+### Added
+
+- Added edwards key support via updating cdp-sdk version
+
+
 ## [0.1.5] - 2025-03-07
 
 ### Fixed
