@@ -4,6 +4,22 @@ import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 import { prepareAgentkitAndWalletProvider } from "./prepare-agentkit";
 
+/**
+ * Agent Configuration Guide
+ *
+ * This file handles the core configuration of your AI agent's behavior and capabilities.
+ *
+ * Key Steps to Customize Your Agent:
+ *
+ * 1. Select your LLM:
+ *    - Modify the `ChatOpenAI` instantiation to choose your preferred LLM
+ *    - Configure model parameters like temperature and max tokens
+ *
+ * 2. Instantiate your Agent:
+ *    - Pass the LLM, tools, and memory into `createReactAgent()`
+ *    - Configure agent-specific parameters
+ */
+
 // The agent
 let agent: ReturnType<typeof createReactAgent>;
 
