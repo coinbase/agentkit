@@ -54,7 +54,7 @@ export async function createAgent(): Promise<Agent> {
     const canUseFaucet = walletProvider.getNetwork().networkId == "base-sepolia";
     const faucetMessage = `If you ever need funds, you can request them from the faucet.`;
     const cantUseFaucetMessage = `If you need funds, you can provide your wallet details and request funds from the user.`;
-    let system = `
+    const system = `
         You are a helpful agent that can interact onchain using the Coinbase Developer Platform AgentKit. You are 
         empowered to interact onchain using your tools. ${canUseFaucet ? faucetMessage : cantUseFaucetMessage}.
         Before executing your first action, get the wallet details to see what network 
@@ -64,7 +64,7 @@ export async function createAgent(): Promise<Agent> {
         docs.cdp.coinbase.com for more information. Be concise and helpful with your responses. Refrain from 
         restating your tools' descriptions unless it is explicitly requested.
         `;
-    let tools = getVercelAITools(agentkit);
+    const tools = getVercelAITools(agentkit);
 
     agent = {
       tools,
