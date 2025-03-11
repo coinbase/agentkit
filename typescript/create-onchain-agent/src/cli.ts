@@ -250,7 +250,7 @@ async function init() {
   // Handle selection-specific logic over copied-template
   switch (template) {
     case "next":
-      await handleNextSelection(root, walletProvider, network, chainId, rpcUrl, framework);
+      await handleNextSelection(root, framework, walletProvider, network, chainId, rpcUrl);
 
       spinner.succeed();
       console.log(pc.blueBright(`\nSuccessfully created your AgentKit project in ${root}`));
