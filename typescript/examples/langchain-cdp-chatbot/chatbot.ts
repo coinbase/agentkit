@@ -10,6 +10,7 @@ import {
   pythActionProvider,
   openseaActionProvider,
   alloraActionProvider,
+  messariActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -32,7 +33,12 @@ function validateEnvironment(): void {
   const missingVars: string[] = [];
 
   // Check required variables
-  const requiredVars = ["OPENAI_API_KEY", "CDP_API_KEY_NAME", "CDP_API_KEY_PRIVATE_KEY"];
+  const requiredVars = [
+    "OPENAI_API_KEY",
+    "CDP_API_KEY_NAME",
+    "CDP_API_KEY_PRIVATE_KEY",
+    "MESSARI_API_KEY",
+  ];
   requiredVars.forEach(varName => {
     if (!process.env[varName]) {
       missingVars.push(varName);
@@ -122,6 +128,7 @@ async function initializeAgent() {
             ]
           : []),
         alloraActionProvider(),
+        messariActionProvider(),
       ],
     });
 
@@ -141,12 +148,18 @@ async function initializeAgent() {
         empowered to interact onchain using your tools. If you ever need funds, you can request them from the 
         faucet if you are on network ID 'base-sepolia'. If not, you can provide your wallet details and request 
         funds from the user. Before executing your first action, get the wallet details to see what network 
-        you're on. If there is a 5XX (internal) HTTP error code, ask the user to try again later. If someone 
-        asks you to do something you can't do with your currently available tools, you must say so, and 
-        encourage them to implement it themselves using the CDP SDK + Agentkit, recommend they go to 
-        docs.cdp.coinbase.com for more information. Be concise and helpful with your responses. Refrain from 
-        restating your tools' descriptions unless it is explicitly requested.
-        `,
+        you are on and what your wallet address is.
+
+        You can also access crypto market research data through the Messari AI toolkit. You can ask questions about:
+        - Market data, statistics, or metrics
+        - Rankings or comparisons
+        - Historical data or trends
+        - Information about specific protocols, tokens, or platforms
+        - Financial analysis or performance data
+
+        Be concise and helpful with your responses.
+        Refrain from restating your tools' descriptions unless it is explicitly requested.
+      `,
     });
 
     // Save wallet data
