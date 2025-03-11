@@ -15,6 +15,12 @@ const MOCK_RESEARCH_RESPONSE = {
   },
 };
 
+// Sample error response in Messari format
+const MOCK_ERROR_RESPONSE = {
+  error: "Internal server error, please try again. If the problem persists, please contact support",
+  data: null,
+};
+
 describe("MessariActionProvider", () => {
   let provider: MessariActionProvider;
 
@@ -88,25 +94,75 @@ describe("MessariActionProvider", () => {
       expect(response).toContain(MOCK_RESEARCH_RESPONSE.data.messages[0].content);
     });
 
-    it("should handle non-ok response", async () => {
-      const statusText = "Too Many Requests";
-      const responseText = "Rate limit exceeded";
+    it("should handle non-ok response with structured error format", async () => {
+      const errorResponseText = JSON.stringify(MOCK_ERROR_RESPONSE);
 
       jest.spyOn(global, "fetch").mockResolvedValue({
         ok: false,
-        status: 429,
-        statusText,
-        text: async () => responseText,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: async () => errorResponseText,
       } as Response);
 
       const response = await provider.researchQuestion({
         question: "What is the current price of Bitcoin?",
       });
 
-      expect(response).toContain("Error querying Messari AI");
+      // Should use the structured error message from the response
+      expect(response).toContain("Messari API Error: Internal server error");
+      expect(response).not.toContain("500"); // Should not include technical details when we have a structured error
+    });
+
+    it("should handle non-ok response with non-JSON error format", async () => {
+      const plainTextError = "Rate limit exceeded";
+
+      jest.spyOn(global, "fetch").mockResolvedValue({
+        ok: false,
+        status: 429,
+        statusText: "Too Many Requests",
+        text: async () => plainTextError,
+      } as Response);
+
+      const response = await provider.researchQuestion({
+        question: "What is the current price of Bitcoin?",
+      });
+
+      // Should fall back to detailed error format
+      expect(response).toContain("Messari API Error:");
       expect(response).toContain("429");
-      expect(response).toContain(statusText);
-      expect(response).toContain(responseText);
+      expect(response).toContain("Too Many Requests");
+      expect(response).toContain(plainTextError);
+    });
+
+    it("should handle JSON parsing error in successful response", async () => {
+      jest.spyOn(global, "fetch").mockResolvedValue({
+        ok: true,
+        json: async () => {
+          throw new Error("Invalid JSON");
+        },
+      } as unknown as Response);
+
+      const response = await provider.researchQuestion({
+        question: "What is the market cap of Solana?",
+      });
+
+      expect(response).toContain("Unexpected error: Failed to parse API response");
+      expect(response).toContain("Invalid JSON");
+    });
+
+    it("should handle invalid response format", async () => {
+      jest.spyOn(global, "fetch").mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: { messages: [] } }), // Empty messages array
+      } as Response);
+
+      const response = await provider.researchQuestion({
+        question: "What is the market cap of Solana?",
+      });
+
+      expect(response).toContain(
+        "Unexpected error: Received invalid response format from Messari API",
+      );
     });
 
     it("should handle fetch error", async () => {
@@ -117,8 +173,20 @@ describe("MessariActionProvider", () => {
         question: "What is the market cap of Solana?",
       });
 
-      expect(response).toContain("Error querying Messari AI");
-      expect(response).toContain(error.message);
+      expect(response).toContain("Unexpected error: Network error");
+    });
+
+    it("should handle string error with JSON content", async () => {
+      // This simulates a case where an error might be stringified JSON
+      const stringifiedError = JSON.stringify(MOCK_ERROR_RESPONSE);
+      jest.spyOn(global, "fetch").mockRejectedValue(stringifiedError);
+
+      const response = await provider.researchQuestion({
+        question: "What is the market cap of Solana?",
+      });
+
+      // Should parse the JSON string and extract the error message
+      expect(response).toContain("Messari API Error: Internal server error");
     });
   });
 
