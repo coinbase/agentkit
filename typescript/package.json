@@ -4,6 +4,7 @@
   "workspaces": [
     "agentkit",
     "create-onchain-agent",
+    "create-onchain-agent/templates/next",
     "framework-extensions/langchain",
     "framework-extensions/vercel-ai-sdk",
     "framework-extensions/model-context-protocol",
