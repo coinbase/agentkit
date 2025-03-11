@@ -154,10 +154,12 @@ agentkit/
 │   ├── coinbase-agentkit/
 │   ├── create-onchain-agent/
 │   ├── framework-extensions/
-│   │   └── langchain/
+│   │   ├── langchain/
+│   │   └── openai-agents-sdk/
 │   └── examples/
 │       ├── langchain-cdp-chatbot/
-│       └── langchain-twitter-chatbot/
+│       ├── langchain-twitter-chatbot/
+│       └── openai-agents-sdk-cdp-chatbot/
 ```
 
 ## 🤝 Contributing
