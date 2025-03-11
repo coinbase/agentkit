@@ -1,0 +1,44 @@
+name: Publish Coinbase AgentKit OpenAI Agents SDK to PyPI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-pypi-coinbase-agentkit-openai-agents-sdk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./python/framework-extensions/openai-agents-sdk
+    environment:
+      name: pypi
+      url: https://pypi.org/p/coinbase-agentkit-openai-agents-sdk
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: latest
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Install dependencies
+      run: poetry install --only main
+
+    - name: Build package
+      run: poetry build
+
+    - name: Publish package
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
+        packages-dir: python/framework-extensions/openai-agents-sdk/dist/
