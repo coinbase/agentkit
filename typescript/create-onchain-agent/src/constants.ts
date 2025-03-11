@@ -157,7 +157,7 @@ export const AgentkitRouteConfigurations: Record<
   },
 };
 
-export const Frameworks: Framework[] = ["Langchain", "Vercel AI SDK", "Model Context Protocol"];
+export const Frameworks: Framework[] = ["Langchain", "Vercel AI SDK"]; // TODO: Add "Model Context Protocol" once the "mcpServer" template is added
 
 export const Templates: Template[] = ["next", "mcpServer"];
 
