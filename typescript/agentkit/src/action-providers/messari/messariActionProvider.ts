@@ -79,21 +79,28 @@ export class MessariActionProvider extends ActionProvider {
     description: `
 This tool will query the Messari AI toolkit with a research question about crypto markets, protocols, or tokens.
 
-Use this tool for questions like:
-1. Market data, statistics, or metrics
-2. Rankings or comparisons
-3. Historical data or trends
-4. Information about specific protocols, tokens, or platforms
-5. Financial analysis or performance data
+Use this tool for questions about these specific datasets:
+1. News, Podcasts, Blogs - Access aggregated crypto news, podcasts, and blogs from various sources
+2. Exchanges - Information on volume, market share, and assets for major CEXs and DEXs
+3. Onchain Data - Metrics on active addresses, transaction fees, and total transactions
+4. Token Unlocks - Details on upcoming supply unlocks from vesting periods or mining
+5. Market Data - Asset prices, trading volume, and Total Value Locked (TVL)
+6. Fundraising Data - Investment information for crypto companies and projects
+7. Thematic & Protocol Research - Detailed analysis of how protocols work and their mechanisms
+8. Social Data - Twitter followers and Reddit subscribers metrics for cryptocurrencies, including current counts and historical changes
 
 A successful response will return the research findings from Messari.
 A failure response will return an error message with details.
 
 Examples of good questions:
-- "What are the top 10 L2s by fees?"
-- "What is the current price of ETH?"
-- "What is the TVL of Arbitrum?"
-- "How has Bitcoin's market cap changed over the last month?"
+- News & Content: "What are the latest developments in Ethereum scaling solutions?" or "What did Vitalik Buterin say about rollups in his recent blog posts?"
+- Exchanges: "Which DEXs have the highest trading volume this month?" or "How has Binance's market share changed over the past quarter?"
+- Onchain Data: "What's the daily active address count for Solana?" or "Which blockchain collected the most transaction fees last week?"
+- Token Unlocks: "When is the next major token unlock for Arbitrum?" or "What percentage of Optimism's supply will be unlocked in the next 3 months?"
+- Market Data: "What is the current price and 24h volume for MATIC?" or "Which L1 blockchains have the highest TVL right now?"
+- Fundraising: "Which crypto projects received the most funding in 2023?" or "Who were the lead investors in Celestia's latest funding round?"
+- Protocol Research: "How does Morpho generate yield?" or "What is the mechanism behind Lido's liquid staking protocol?"
+- Social Data: "Which cryptocurrency has gained the most Twitter followers this year?" or "How does Solana's Reddit subscriber growth compare to Cardano's?"
     `,
     schema: MessariResearchQuestionSchema,
   })
