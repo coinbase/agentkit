@@ -78,7 +78,7 @@ def prepare_agentkit():
         network_id=os.getenv("NETWORK", "base-sepolia"),
         signer=signer,
         smart_wallet_address=wallet_data.get("smart_wallet_address"),
-        paymaster_url=None,
+        paymaster_url=None, # Place your paymaster URL here: https://docs.cdp.coinbase.com/paymaster/docs/welcome
     ))
     
     # Save both private key and smart wallet address
