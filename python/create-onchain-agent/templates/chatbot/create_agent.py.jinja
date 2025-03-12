@@ -3,7 +3,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 from coinbase_agentkit_langchain import get_langchain_tools
-{% elif _framework == "openai_assistants" %}
+{% elif _framework == "openai_agents" %}
 from coinbase_agentkit_openai_agents_sdk import get_openai_agents_sdk_tools
 from agents.agent import Agent
 {% endif %}
@@ -53,7 +53,7 @@ def create_agent():
         state_modifier=AGENT_INSTRUCTIONS,
     ), config
 
-    {% elif _framework == "openai_assistants" %}
+    {% elif _framework == "openai_agents" %}
     # Get OpenAI Agents SDK tools
     tools = get_openai_agents_sdk_tools(agentkit)
 

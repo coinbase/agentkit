@@ -1,11 +1,12 @@
 import sys
 import time
-{% if _framework == "openai_assistants" %}
+{% if _framework == "openai_agents" %}
 import asyncio
 from agents.run import Runner
+{% elif _framework == "langchain" %}
+from langchain_core.messages import HumanMessage
 {% endif %}
 from dotenv import load_dotenv
-from langchain_core.messages import HumanMessage
 
 from create_agent import create_agent
 
@@ -48,7 +49,7 @@ Join us in shaping AgentKit! Check out the contribution guide:
 
 load_dotenv()
 
-{% if _framework == "openai_assistants" %}
+{% if _framework == "openai_agents" %}
 # Autonomous Mode
 async def run_autonomous_mode(agent, config, interval=10):
     """Run the agent autonomously with specified intervals."""
@@ -162,7 +163,7 @@ def choose_mode():
             return "auto"
         print("Invalid choice. Please try again.")
 
-{% if _framework == "openai_assistants" %}
+{% if _framework == "openai_agents" %}
 async def main():
 {% elif _framework == "langchain" %}
 def main():
@@ -172,13 +173,13 @@ def main():
 
     mode = choose_mode()
     if mode == "chat":
-        {% if _framework == "openai_assistants" %}
+        {% if _framework == "openai_agents" %}
         await run_chat_mode(agent=agent_executor, config=config)
         {% elif _framework == "langchain" %}
         run_chat_mode(agent_executor=agent_executor, config=config)
         {% endif %}
     elif mode == "auto":
-        {% if _framework == "openai_assistants" %}
+        {% if _framework == "openai_agents" %}
         await run_autonomous_mode(agent=agent_executor, config=config)
         {% elif _framework == "langchain" %}
         run_autonomous_mode(agent_executor=agent_executor, config=config)
@@ -186,7 +187,7 @@ def main():
 
 if __name__ == "__main__":
     print("Starting Agent...")
-    {% if _framework == "openai_assistants" %}
+    {% if _framework == "openai_agents" %}
     asyncio.run(main())
     {% elif _framework == "langchain" %}
     main()

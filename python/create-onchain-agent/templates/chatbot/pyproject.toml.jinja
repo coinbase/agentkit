@@ -12,9 +12,9 @@ python-dotenv = "^1.0.1"
 coinbase-agentkit = "^0.1.5"
 {% if _framework == "langchain" %}langchain-openai = "^0.2.4"
 langgraph = "^0.2.39"
-coinbase-agentkit-langchain = "0.1.0"{% elif _framework == "openai_assistants" %}
-openai-agents = "^0.0.2"
-coinbase-agentkit-openai-agents-sdk = "^0.1.0"{% endif %}
+coinbase-agentkit-langchain = "0.1.0"{% elif _framework == "openai_agents" %}openai-agents = "0.0.2"
+coinbase-agentkit-openai-agents-sdk = "0.1.0"
+openai = "1.66.0"{% endif %}
 
 [tool.poetry.scripts]
 start-agent = "chatbot:main"

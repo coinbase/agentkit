@@ -58,7 +58,7 @@ EVM_NETWORKS = [
 # Framework constants
 FRAMEWORKS = [
     ("Langchain", "langchain"),
-    ("OpenAI Assistants API", "openai_assistants"),
+    ("OpenAI Agents SDK", "openai_agents"),
 ]
 
 CDP_SUPPORTED_NETWORKS = {
