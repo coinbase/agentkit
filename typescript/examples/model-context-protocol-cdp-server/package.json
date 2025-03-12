@@ -1,0 +1,28 @@
+{
+  "name": "@coinbase/cdp-model-context-protocol-server",
+  "description": "Coinbase AgentKit Example Model Context Protocol Server",
+  "version": "1.0.0",
+  "private": true,
+  "author": "Coinbase Inc.",
+  "license": "Apache-2.0",
+  "bin": {
+    "agentkit": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc && node -e \"require('fs').chmodSync('dist/index.js', '755')\"",
+    "lint": "eslint -c .eslintrc.json *.ts",
+    "lint:fix": "eslint -c .eslintrc.json *.ts --fix",
+    "format": "prettier --write \"**/*.{ts,js,cjs,json,md}\"",
+    "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\""
+  },
+  "dependencies": {
+    "@coinbase/agentkit": "^0.2.3",
+    "@coinbase/agentkit-model-context-protocol": "^0.1.0",
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0",
+    "ts-node": "^10.9.2"
+  }
+}
