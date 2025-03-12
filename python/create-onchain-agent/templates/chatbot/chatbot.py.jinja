@@ -1,5 +1,9 @@
 import sys
 import time
+{% if _framework == "openai_assistants" %}
+import asyncio
+from agents.run import Runner
+{% endif %}
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
 
@@ -44,6 +48,50 @@ Join us in shaping AgentKit! Check out the contribution guide:
 
 load_dotenv()
 
+{% if _framework == "openai_assistants" %}
+# Autonomous Mode
+async def run_autonomous_mode(agent, config, interval=10):
+    """Run the agent autonomously with specified intervals."""
+    print("Starting autonomous mode...")
+    while True:
+        try:
+            thought = (
+                "Be creative and do something interesting on the blockchain. "
+                "Choose an action or set of actions and execute it that highlights your abilities."
+            )
+
+            # Run agent in autonomous mode
+            output = await Runner.run(agent, thought)
+            print(output.final_output)
+            print("-------------------")
+
+            # Wait before the next action
+            await asyncio.sleep(interval)
+
+        except KeyboardInterrupt:
+            print("Goodbye Agent!")
+            sys.exit(0)
+
+# Chat Mode
+async def run_chat_mode(agent, config):
+    """Run the agent interactively based on user input."""
+    print("Starting chat mode... Type 'exit' to end.")
+    while True:
+        try:
+            user_input = input("\nPrompt: ")
+            if user_input.lower() == "exit":
+                break
+
+            # Run agent with the user's input in chat mode
+            output = await Runner.run(agent, user_input)
+            print(output.final_output)
+            print("-------------------")
+
+        except KeyboardInterrupt:
+            print("Goodbye Agent!")
+            sys.exit(0)
+
+{% elif _framework == "langchain" %}
 # Autonomous Mode
 def run_autonomous_mode(agent_executor, config, interval=10):
     """Run the agent autonomously with specified intervals."""
@@ -97,7 +145,7 @@ def run_chat_mode(agent_executor, config):
         except KeyboardInterrupt:
             print("Goodbye Agent!")
             sys.exit(0)
-
+{% endif %}
 
 # Mode Selection
 def choose_mode():
@@ -114,18 +162,32 @@ def choose_mode():
             return "auto"
         print("Invalid choice. Please try again.")
 
-
+{% if _framework == "openai_assistants" %}
+async def main():
+{% elif _framework == "langchain" %}
 def main():
+{% endif %}
     """Start the chatbot agent."""
     agent_executor, config = create_agent()
 
     mode = choose_mode()
     if mode == "chat":
+        {% if _framework == "openai_assistants" %}
+        await run_chat_mode(agent=agent_executor, config=config)
+        {% elif _framework == "langchain" %}
         run_chat_mode(agent_executor=agent_executor, config=config)
+        {% endif %}
     elif mode == "auto":
+        {% if _framework == "openai_assistants" %}
+        await run_autonomous_mode(agent=agent_executor, config=config)
+        {% elif _framework == "langchain" %}
         run_autonomous_mode(agent_executor=agent_executor, config=config)
-
+        {% endif %}
 
 if __name__ == "__main__":
     print("Starting Agent...")
+    {% if _framework == "openai_assistants" %}
+    asyncio.run(main())
+    {% elif _framework == "langchain" %}
     main()
+    {% endif %}

@@ -55,6 +55,12 @@ EVM_NETWORKS = [
     ("polygon-mumbai", "Polygon Mumbai"),
 ]
 
+# Framework constants
+FRAMEWORKS = [
+    ("Langchain", "langchain"),
+    ("OpenAI Assistants API", "openai_assistants"),
+]
+
 CDP_SUPPORTED_NETWORKS = {
     "base-mainnet",
     "base-sepolia",
@@ -175,6 +181,23 @@ def create_project(template):
     else:
         package_name = suggested_package_name
 
+    # Choose framework
+    framework_choices = [
+        name + (" (default)" if id == "langchain" else "")
+        for name, id in FRAMEWORKS
+    ]
+    framework_name = questionary.select(
+        "Choose your agent framework:",
+        choices=framework_choices,
+        default="Langchain (default)",
+        style=custom_style,
+    ).ask()
+
+    # Remove " (default)" suffix if present
+    framework_name = framework_name.replace(" (default)", "")
+    # Look up the framework ID from the name
+    framework = next(id for name, id in FRAMEWORKS if name == framework_name)
+
     # Choose network type
     network_type = questionary.select(
         "Choose network type:",
@@ -260,6 +283,7 @@ def create_project(template):
         "_package_name": package_name,
         "_network": network,
         "_wallet_provider": wallet_provider,
+        "_framework": framework,
     }
 
     if chain_id:
