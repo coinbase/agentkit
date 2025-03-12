@@ -29,10 +29,10 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see the p
 
 ## Configuring Your Agent
 
-You can [modify your configuration](https://github.com/coinbase/agentkit/tree/main/typescript/agentkit#usage) of the agent. By default, your agent configuration occurs in the `/api/agent/route.ts` file.
+You can [modify your configuration](https://github.com/coinbase/agentkit/tree/main/typescript/agentkit#usage) of the agent. By default, your agentkit configuration occurs in the `/api/agent/prepare-agentkit.ts` file, and agent instantiation occurs in the `/api/agent/create-agent.ts` file.
 
 ### 1. Select Your LLM  
-Modify the `ChatOpenAI` instantiation to use the model of your choice.
+Modify the OpenAI model instantiation to use the model of your choice.
 
 ### 2. Select Your Wallet Provider  
 AgentKit requires a **Wallet Provider** to interact with blockchain networks.
