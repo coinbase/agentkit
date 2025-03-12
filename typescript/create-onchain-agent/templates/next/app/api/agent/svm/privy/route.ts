@@ -8,6 +8,7 @@ import {
   PrivyWalletProvider,
   splActionProvider,
   walletActionProvider,
+  alloraActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { MemorySaver } from "@langchain/langgraph";
@@ -102,6 +103,7 @@ async function getOrInitializeAgent(): Promise<ReturnType<typeof createReactAgen
       walletActionProvider(),
       splActionProvider(),
       jupiterActionProvider(),
+      alloraActionProvider(),
     ];
     const canUseCdpApi = process.env.CDP_API_KEY_NAME && process.env.CDP_API_KEY_PRIVATE_KEY;
     if (canUseCdpApi) {
