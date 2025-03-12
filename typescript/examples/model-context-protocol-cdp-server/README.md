@@ -32,12 +32,14 @@ This will automatically install and use the latest version of Node.
 You'll need the following API key:
 - [CDP API Key](https://portal.cdp.coinbase.com/access/api)
 
-You'll need to configure the Claude desktop config file with your CDP API keys. Copy the contents from `claude_desktop_config-local.json` to your Claude desktop config file and update the following:
+You'll need to configure the Claude desktop config file with your CDP API keys. Copy the contents from `claude_desktop_config.json` to your Claude desktop config file and update the following:
 
 1. Update the `args` path to match the location of your built index.js file
 2. Set your CDP API keys in the `env` section:
    - "CDP_API_KEY_NAME"
    - "CDP_API_KEY_PRIVATE_KEY"
+
+Then, navigate to the `claude_desktop_config.json` file found in your Claude Desktop apps' settings and update it's contents to the contents of our `claude_desktop_config.json` file.
 
 ## Running the example
 
