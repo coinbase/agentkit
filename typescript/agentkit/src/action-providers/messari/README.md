@@ -2,9 +2,19 @@
 
 The Messari Action Provider enables AI agents to query the [Messari AI toolkit](https://messari.io/) for crypto market research data. This provider allows agents to ask research questions about market data, statistics, rankings, historical trends, and information about specific protocols, tokens, or platforms.
 
+## Getting an API Key
+
+To use the Messari Action Provider, you need to obtain a Messari API key by following these steps:
+
+1. Sign up for a Messari account at [messari.io](https://messari.io/)
+2. After signing up, navigate to [messari.io/account/api](https://messari.io/account/api)
+3. Generate your API key from the account dashboard
+
+Different subscription tiers provide different levels of access to the API. See the [Rate Limiting](#rate-limiting) section for details.
+
 ## Configuration
 
-To use the Messari Action Provider, you need to obtain a Messari API key. You can configure the provider in two ways:
+Once you have your Messari API key, you can configure the provider in two ways:
 
 ### 1. Environment Variable
 
@@ -25,6 +35,19 @@ const provider = messariActionProvider({
   apiKey: "your_messari_api_key",
 });
 ```
+
+## Rate Limiting
+
+The Messari API has rate limits based on your subscription tier:
+
+| Subscription Tier | Daily Request Limit |
+|-------------------|---------------------|
+| Free (Unpaid)     | 2 requests per day  |
+| Lite              | 10 requests per day |
+| Pro               | 20 requests per day |
+| Enterprise        | 50 requests per day |
+
+If you need more than 50 requests per day, you can contact Messari's sales team to discuss a custom credit allocation system for your specific needs.
 
 ## Actions
 
