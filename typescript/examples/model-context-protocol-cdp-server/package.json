@@ -20,7 +20,7 @@
     "@coinbase/agentkit-model-context-protocol": "^0.1.0",
     "@modelcontextprotocol/sdk": "^1.6.1",
     "zod": "^3.22.4"
-},
+  },
   "devDependencies": {
     "nodemon": "^3.1.0",
     "ts-node": "^10.9.2"
