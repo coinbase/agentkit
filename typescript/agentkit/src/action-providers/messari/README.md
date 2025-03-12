@@ -10,6 +10,8 @@ To use the Messari Action Provider, you need to obtain a Messari API key by foll
 2. After signing up, navigate to [messari.io/account/api](https://messari.io/account/api)
 3. Generate your API key from the account dashboard
 
+For more detailed information about authentication, refer to the [Messari API Authentication documentation](https://docs.messari.io/reference/authentication).
+
 Different subscription tiers provide different levels of access to the API. See the [Rate Limiting](#rate-limiting) section for details.
 
 ## Configuration
