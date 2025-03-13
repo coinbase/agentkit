@@ -11,37 +11,24 @@ from dotenv import load_dotenv
 from create_agent import create_agent
 
 """
-AgentKit Integration
+AgentKit Chatbot Interface
 
-This file serves as the entry point for integrating AgentKit into your chatbot.  
-It defines your AI agent, enabling you to  
-customize its behavior, connect it to blockchain networks, and extend its functionality  
-with additional tools and providers.
+This file provides a command-line interface for interacting with your AgentKit-powered AI agent.
+It supports two modes of operation:
 
-# Key Steps to Customize Your Agent:
+1. Chat Mode:
+   - Interactive conversations with the agent
+   - Direct user input and agent responses
 
-1. Select your LLM:
-   - Modify the `ChatOpenAI` instantiation to choose your preferred LLM.
+2. Autonomous Mode:
+   - Agent operates independently
+   - Performs periodic blockchain interactions
+   - Useful for automated tasks or monitoring
 
-2. Set up your WalletProvider:
-   - Learn more: https://github.com/coinbase/agentkit/tree/main/python/agentkit#evm-wallet-providers
+Use this as a starting point for building your own agent interface or integrate
+the agent into your existing applications.
 
-3. Set up your Action Providers:
-   - Action Providers define what your agent can do.  
-   - Choose from built-in providers or create your own:
-     - Built-in: https://github.com/coinbase/agentkit/tree/main/python/coinbase-agentkit#create-an-agentkit-instance-with-specified-action-providers
-     - Custom: https://github.com/coinbase/agentkit/tree/main/python/coinbase-agentkit#creating-an-action-provider
-
-4. Instantiate your Agent:
-   - Pass the LLM, tools, and memory into your agent's initialization function to bring it to life.
-
-# Next Steps:
-
-- Explore the AgentKit README: https://github.com/coinbase/agentkit
-- Learn more about available WalletProviders & Action Providers.
-- Experiment with custom Action Providers for your unique use case.
-
-## Want to contribute?
+# Want to contribute?
 Join us in shaping AgentKit! Check out the contribution guide:  
 - https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING.md
 - https://discord.gg/CDP

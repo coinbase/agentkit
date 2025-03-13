@@ -358,7 +358,7 @@ def create_beginner_project(template: str | None = None):
     }
 
     try:
-        template_path = get_template_path(template, "introduction")
+        template_path = get_template_path(template, "beginner")
         run_copy(template_path, project_path, data=copier_data)
 
         console.print(

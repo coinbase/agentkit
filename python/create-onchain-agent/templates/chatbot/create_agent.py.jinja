@@ -1,14 +1,31 @@
-{% if _framework == "langchain" %}
-from langchain_openai import ChatOpenAI
+{% if _framework == "langchain" %}from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 from coinbase_agentkit_langchain import get_langchain_tools
 {% elif _framework == "openai_agents" %}
 from coinbase_agentkit_openai_agents_sdk import get_openai_agents_sdk_tools
-from agents.agent import Agent
-{% endif %}
-
+from agents.agent import Agent{% endif %}
 from prepare_agentkit import prepare_agentkit
+
+"""
+Agent Framework Integration
+
+This file bridges your AgentKit configuration with your chosen AI framework 
+(Langchain or OpenAI Assistants). It handles:
+
+1. LLM Configuration:
+   - Select and configure your Language Model
+
+2. Tool Integration:
+   - Convert AgentKit tools to framework-compatible format
+   - Configure tool availability and permissions
+
+3. Agent Creation:
+   - Initialize the agent with tools and instructions
+   - Set up memory and conversation management
+
+The create_agent() function returns a configured agent ready for use in your application.
+"""
 
 # Shared agent instructions
 AGENT_INSTRUCTIONS = (
