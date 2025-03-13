@@ -1,28 +1,28 @@
-import { withRetry } from 'viem'
+import { withRetry } from "viem";
 
-import { Account } from '@near-js/accounts';
-import { connect, Near, transactions, utils as nearUtils } from 'near-api-js';
-import { KeyPair } from '@near-js/crypto';
-import { Connection, ConnectionConfig } from '@near-js/accounts';
-import { InMemoryKeyStore } from '@near-js/keyStores';
-import type { TxExecutionStatus, FinalExecutionOutcome } from '@near-js/types'
+import { Account } from "@near-js/accounts";
+import { connect, Near, transactions, utils as nearUtils } from "near-api-js";
+import { KeyPair } from "@near-js/crypto";
+import { Connection, ConnectionConfig } from "@near-js/accounts";
+import { InMemoryKeyStore } from "@near-js/keyStores";
+import type { TxExecutionStatus, FinalExecutionOutcome } from "@near-js/types";
 
 import { NEAR_MAINNET_NETWORK_ID, NEAR_NETWORK_ID, NEAR_NETWORKS, Network } from "../network";
 import { NEARWalletProvider, TransactionSenderParams } from "./nearWalletProvider";
 
 export interface SendTransactionOptions {
-  until: TxExecutionStatus
-  retryCount: number
-  delay: number
-  nodeUrl: string
+  until: TxExecutionStatus;
+  retryCount: number;
+  delay: number;
+  nodeUrl: string;
 }
 
 const DEFAULT_OPTIONS: SendTransactionOptions = {
-  until: 'EXECUTED_OPTIMISTIC',
+  until: "EXECUTED_OPTIMISTIC",
   retryCount: 3,
   delay: 5000, // Near RPC timeout
-  nodeUrl: 'https://test.rpc.fastnear.com' // defaults to testnet
-}
+  nodeUrl: "https://test.rpc.fastnear.com", // defaults to testnet
+};
 
 /**
  * NeaKeypairWalletProvider is a wallet provider that uses a local Near keypair.
@@ -43,19 +43,19 @@ export class NearKeypairWalletProvider extends NEARWalletProvider {
 
   /**
    * Creates a new NearKeypairWalletProvider.
-   *  
+   *
    * @param keypair - The keypair to use for signing transactions.
    * @param accountId - The account ID to use for signing transactions.
    * @param rpcProviderUrl - The RPC provider URL.
    * @param network - The network ID.
-   * 
+   *
    * @returns A new NearKeypairWalletProvider.
    */
   constructor(
     keypair: KeyPair,
     accountId: string,
     rpcProviderUrl: string,
-    network: NEAR_NETWORK_ID
+    network: NEAR_NETWORK_ID,
   ) {
     super();
 
@@ -71,13 +71,12 @@ export class NearKeypairWalletProvider extends NEARWalletProvider {
       nodeUrl: this.rpcProviderUrl,
       keyStore: this.keyStore,
       jsvmAccountId: this.accountId,
-    }
+    };
   }
-
 
   /**
    * Get the public key of the keypair.
-   * 
+   *
    * @returns The public key of the keypair.
    */
   getPublicKey(): string {
@@ -122,10 +121,10 @@ export class NearKeypairWalletProvider extends NEARWalletProvider {
   }
 
   /**
- * Get the NEAR account of the wallet provider.
- * 
- * @returns The NEAR account of the wallet provider.
- */
+   * Get the NEAR account of the wallet provider.
+   *
+   * @returns The NEAR account of the wallet provider.
+   */
   async getAccount(): Promise<Account> {
     await this.connectIfNeeded();
     return this.account!;
@@ -155,32 +154,32 @@ export class NearKeypairWalletProvider extends NEARWalletProvider {
 
   /**
    * Sign and send a transaction.
-   * 
+   *
    * @returns The transaction hash.
    */
-  async signAndSendTransaction(args: TransactionSenderParams, options: SendTransactionOptions = DEFAULT_OPTIONS): Promise<FinalExecutionOutcome> {
+  async signAndSendTransaction(
+    args: TransactionSenderParams,
+    options: SendTransactionOptions = DEFAULT_OPTIONS,
+  ): Promise<FinalExecutionOutcome> {
     await this.connectIfNeeded();
     const accountId = this.accountId;
 
-    const { signer } = this.near.connection
-    const connection = this.near.connection
+    const { signer } = this.near.connection;
+    const connection = this.near.connection;
 
-    const publicKey = await signer.getPublicKey(
-      accountId,
-      connection.networkId
-    )
+    const publicKey = await signer.getPublicKey(accountId, connection.networkId);
 
     const accessKey = (await connection.provider.query(
       `access_key/${accountId}/${publicKey.toString()}`,
-      ''
+      "",
     )) as unknown as {
-      block_hash: string
-      block_height: number
-      nonce: number
-      permission: string
-    }
+      block_hash: string;
+      block_height: number;
+      nonce: number;
+      permission: string;
+    };
 
-    const recentBlockHash = nearUtils.serialize.base_decode(accessKey.block_hash)
+    const recentBlockHash = nearUtils.serialize.base_decode(accessKey.block_hash);
 
     const tx = transactions.createTransaction(
       accountId,
@@ -188,20 +187,16 @@ export class NearKeypairWalletProvider extends NEARWalletProvider {
       args.receiverId,
       ++accessKey.nonce,
       args.actions,
-      recentBlockHash
-    )
+      recentBlockHash,
+    );
 
-    const serializedTx = nearUtils.serialize.serialize(
-      transactions.SCHEMA.Transaction,
-      tx
-    )
+    const serializedTx = nearUtils.serialize.serialize(transactions.SCHEMA.Transaction, tx);
 
     const nearTransactionSignature = await signer.signMessage(
       serializedTx,
       accountId,
-      connection.networkId
-    )
-
+      connection.networkId,
+    );
 
     const signedTransaction = new transactions.SignedTransaction({
       transaction: tx,
@@ -209,42 +204,38 @@ export class NearKeypairWalletProvider extends NEARWalletProvider {
         keyType: tx.publicKey.keyType,
         data: nearTransactionSignature.signature,
       }),
-    })
+    });
     const { transaction } = await connection.provider.sendTransactionUntil(
       signedTransaction,
-      'INCLUDED_FINAL'
-    )
+      "INCLUDED_FINAL",
+    );
 
-    const txHash = transaction.hash as string | undefined
+    const txHash = transaction.hash as string | undefined;
 
     if (!txHash) {
-      throw new Error('No transaction hash found')
+      throw new Error("No transaction hash found");
     }
 
     return await withRetry(
       async () => {
-        const txOutcome = await connection.provider.txStatus(
-          txHash,
-          accountId,
-          options.until
-        )
+        const txOutcome = await connection.provider.txStatus(txHash, accountId, options.until);
 
         if (txOutcome) {
-          return txOutcome
+          return txOutcome;
         }
 
-        throw new Error('Transaction not found')
+        throw new Error("Transaction not found");
       },
       {
         retryCount: options.retryCount,
         delay: options.delay,
-      }
-    )
+      },
+    );
   }
 
   /**
    * Connect to the Near network if needed.
-   * 
+   *
    * @returns A Promise that resolves when the connection is established.
    */
   async connectIfNeeded() {
@@ -257,5 +248,3 @@ export class NearKeypairWalletProvider extends NEARWalletProvider {
     }
   }
 }
-
-
