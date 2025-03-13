@@ -159,7 +159,7 @@ export function detectPackageManager(): string {
  * @param {Network} [network] - The optional network to get wallet providers for.
  * @returns {WalletProviderChoice[]} An array of wallet providers for the specified network.
  */
-export const getWalletProviders = (network?: Network): WalletProviderChoice[] => {
+export const getWalletProviders = (network?: Network): readonly WalletProviderChoice[] => {
   if (network) {
     return NetworkToWalletProviders[network];
   }
