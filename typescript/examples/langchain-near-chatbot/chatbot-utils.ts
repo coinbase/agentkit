@@ -48,8 +48,11 @@ function getRandomInt(min: number, max: number): number {
 }
 
 /**
+ * Get the NEAR network endpoints by network ID
  *
- * @param network
+ * @param network - NEAR network ID
+ *
+ * @returns NEAR network first endpoint
  */
 export function getEndpointsByNetworkId(network: NEAR_NETWORK_ID): string {
   const nearNetwork = network === NEAR_MAINNET_NETWORK_ID ? "mainnet" : "testnet";
@@ -57,8 +60,11 @@ export function getEndpointsByNetworkId(network: NEAR_NETWORK_ID): string {
 }
 
 /**
+ * Get the key store key by network ID
  *
- * @param network
+ * @param network - NEAR network ID
+ *
+ * @returns NEAR network key store key
  */
 export function getNearKeyStoreKey(network: NEAR_NETWORK_ID): string {
   return network === NEAR_MAINNET_NETWORK_ID ? "mainnet" : "testnet";
@@ -112,7 +118,8 @@ export async function chooseAccount(): Promise<string> {
 /**
  * Check if an account is already registered
  *
- * @param account
+ * @param account - NEAR account ID
+ *
  * @returns True if the account is already registered, false otherwise
  */
 export async function isRegisteredAccount(account: string) {
