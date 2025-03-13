@@ -147,7 +147,7 @@ def mint(self, wallet_provider: CdpWalletProvider, args: dict[str, Any]) -> str:
 
 Notice the return value contains useful information for the user, such as the transaction hash and link. It's important to include this information in the return value so that the user can easily see the result of the action.
 
-This class is then exported out of [python/coinbase-agentkit/coinbase_agentkit/\_\_init\_\_.py](https://github.com/coinbase/agentkit/blob/master/python/coinbase-agentkit/coinbase_agentkit/__init__.py) so that is is consumable by users of the `coinbase-agentkit` package.
+This class is then exported out of [python/coinbase-agentkit/coinbase_agentkit/\_\_init\_\_.py](https://github.com/coinbase/agentkit/blob/master/python/coinbase-agentkit/coinbase_agentkit/__init__.py) so that it is consumable by users of the `coinbase-agentkit` package.
 
 ### Testing the action provider
 
