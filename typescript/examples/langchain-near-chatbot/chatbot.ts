@@ -3,7 +3,9 @@ import {
   walletActionProvider,
   NearKeypairWalletProvider,
   nearActionProvider,
-  NEAR_NETWORK_ID, NEAR_TESTNET_NETWORK_ID, NEAR_MAINNET_NETWORK_ID
+  NEAR_NETWORK_ID,
+  NEAR_TESTNET_NETWORK_ID,
+  NEAR_MAINNET_NETWORK_ID,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -11,14 +13,18 @@ import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 
-import { UnencryptedFileSystemKeyStore } from '@near-js/keystores-node';
-import { KeyPair } from '@near-js/crypto';
+import { UnencryptedFileSystemKeyStore } from "@near-js/keystores-node";
+import { KeyPair } from "@near-js/crypto";
 
-import { join } from 'node:path';
+import { join } from "node:path";
 import * as dotenv from "dotenv";
 import * as readline from "readline";
 
-import { chooseAccount, createFundedTestnetAccount, getEndpointsByNetworkId } from "./chatbot-utils";
+import {
+  chooseAccount,
+  createFundedTestnetAccount,
+  getEndpointsByNetworkId,
+} from "./chatbot-utils";
 
 dotenv.config();
 
@@ -50,14 +56,14 @@ function validateEnvironment(): void {
 
   // Warn about optional NETWORK_ID
   if (!process.env.NETWORK_ID) {
-    console.warn(
-      "Warning: NETWORK_ID both is unset, defaulting to near-testnet",
-    );
+    console.warn("Warning: NETWORK_ID both is unset, defaulting to near-testnet");
   }
 
   const networkId = process.env.NETWORK_ID || NEAR_TESTNET_NETWORK_ID;
   if (networkId !== NEAR_TESTNET_NETWORK_ID && networkId !== NEAR_MAINNET_NETWORK_ID) {
-    console.error(`Error: NETWORK_ID must be one of ${NEAR_TESTNET_NETWORK_ID} or ${NEAR_MAINNET_NETWORK_ID}`);
+    console.error(
+      `Error: NETWORK_ID must be one of ${NEAR_TESTNET_NETWORK_ID} or ${NEAR_MAINNET_NETWORK_ID}`,
+    );
     process.exit(1);
   }
 
@@ -81,12 +87,16 @@ function validateEnvironment(): void {
 
     // Check optional dependant variables NEAR_ACCOUNT_ID without NEAR_PRIVATE_KEY
     if (process.env.NEAR_ACCOUNT_ID && !process.env.NEAR_PRIVATE_KEY) {
-      console.warn(`Warning: NEAR_ACCOUNT_ID is set without NEAR_PRIVATE_KEY, the private key will be loaded from the keystore using the provided NEAR_ACCOUNT_ID`);
+      console.warn(
+        `Warning: NEAR_ACCOUNT_ID is set without NEAR_PRIVATE_KEY, the private key will be loaded from the keystore using the provided NEAR_ACCOUNT_ID`,
+      );
     }
 
     // Warn about optional NEAR_ACCOUNT_ID & NEAR_PRIVATE_KEY
     if (!process.env.NEAR_ACCOUNT_ID && !process.env.NEAR_PRIVATE_KEY) {
-      console.warn("Warning: NEAR_ACCOUNT_ID and NEAR_PRIVATE_KEY are unset, you will be prompted to create an account");
+      console.warn(
+        "Warning: NEAR_ACCOUNT_ID and NEAR_PRIVATE_KEY are unset, you will be prompted to create an account",
+      );
     }
   }
 }
@@ -118,7 +128,6 @@ async function initializeAgent() {
       walletProvider = new NearKeypairWalletProvider(keyPair, accountId, rpcProviderUrl, network);
     }
 
-
     if (network === NEAR_TESTNET_NETWORK_ID) {
       if (nearPrivateKey && accountId) {
         const keyPair = KeyPair.fromString(nearPrivateKey);
@@ -126,7 +135,9 @@ async function initializeAgent() {
       }
 
       if (accountId && !nearPrivateKey) {
-        const keystore = new UnencryptedFileSystemKeyStore(join(process.cwd(), '.near-credentials'));
+        const keystore = new UnencryptedFileSystemKeyStore(
+          join(process.cwd(), ".near-credentials"),
+        );
         const keypair = await keystore.getKey(network, accountId);
         walletProvider = new NearKeypairWalletProvider(keypair, accountId, rpcProviderUrl, network);
       }
@@ -134,15 +145,14 @@ async function initializeAgent() {
       if (!accountId && !nearPrivateKey) {
         console.log(`No NEAR account detected. Creating an account...`);
         const accountId = await chooseAccount();
-        const keyPair = KeyPair.fromRandom('ed25519'); // Generate a new keypair
+        const keyPair = KeyPair.fromRandom("ed25519"); // Generate a new keypair
 
-        const keystore = new UnencryptedFileSystemKeyStore(join(process.cwd(), '.near-credentials'));
-        await keystore.setKey('testnet', accountId, keyPair);
-
-        await createFundedTestnetAccount(
-          accountId,
-          keyPair.getPublicKey().toString()
+        const keystore = new UnencryptedFileSystemKeyStore(
+          join(process.cwd(), ".near-credentials"),
         );
+        await keystore.setKey("testnet", accountId, keyPair);
+
+        await createFundedTestnetAccount(accountId, keyPair.getPublicKey().toString());
 
         console.log(`✅ Account created: ${accountId}`);
 
@@ -189,7 +199,6 @@ async function initializeAgent() {
     throw error; // Re-throw to be handled by caller
   }
 }
-
 
 /**
  * Run the agent autonomously with specified intervals
