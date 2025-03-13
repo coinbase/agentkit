@@ -399,12 +399,11 @@ def create_beginner_project(template: str | None = None):
 @click.command()
 @click.option("--template", type=str, help="Path to local template directory", default=None)
 @click.option(
-    "--mode",
-    type=click.Choice(["beginner", "advanced"], case_sensitive=False),
-    default="advanced",
-    help="Project creation mode (beginner or advanced)",
+    "--beginner",
+    is_flag=True,
+    help="Use beginner mode with simplified setup",
 )
-def create_project(template, mode):
+def create_project(template, beginner):
     """Create a new onchain agent project with interactive prompts."""
     ascii_art = """
      █████   ██████  ███████ ███    ██ ████████    ██   ██ ██ ████████
@@ -418,7 +417,7 @@ def create_project(template, mode):
 
     console.print(f"[blue]{ascii_art}[/blue]")
 
-    if mode.lower() == "beginner":
+    if beginner:
         create_beginner_project(template)
     else:
         create_advanced_project(template)
