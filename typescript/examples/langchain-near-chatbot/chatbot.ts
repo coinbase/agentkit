@@ -18,7 +18,7 @@ import { join } from 'node:path';
 import * as dotenv from "dotenv";
 import * as readline from "readline";
 
-import { chooseAccount, createFundedTestnetAccount, getNearProvider } from "./chatbot-utils";
+import { chooseAccount, createFundedTestnetAccount, getEndpointsByNetworkId } from "./chatbot-utils";
 
 dotenv.config();
 
@@ -109,26 +109,26 @@ async function initializeAgent() {
     const network = (process.env.NETWORK_ID || NEAR_TESTNET_NETWORK_ID) as NEAR_NETWORK_ID;
     let nearPrivateKey = process.env.NEAR_PRIVATE_KEY as string;
     let accountId = process.env.NEAR_ACCOUNT_ID as string;
-    let rpcProvider = getNearProvider(network);
+    let rpcProviderUrl = getEndpointsByNetworkId(network);
 
     let walletProvider;
 
     if (network === NEAR_MAINNET_NETWORK_ID) {
       const keyPair = KeyPair.fromString(nearPrivateKey);
-      walletProvider = new NearKeypairWalletProvider(keyPair, accountId, rpcProvider, network);
+      walletProvider = new NearKeypairWalletProvider(keyPair, accountId, rpcProviderUrl, network);
     }
 
 
     if (network === NEAR_TESTNET_NETWORK_ID) {
       if (nearPrivateKey && accountId) {
         const keyPair = KeyPair.fromString(nearPrivateKey);
-        walletProvider = new NearKeypairWalletProvider(keyPair, accountId, rpcProvider, network);
+        walletProvider = new NearKeypairWalletProvider(keyPair, accountId, rpcProviderUrl, network);
       }
 
       if (accountId && !nearPrivateKey) {
         const keystore = new UnencryptedFileSystemKeyStore(join(process.cwd(), '.near-credentials'));
         const keypair = await keystore.getKey(network, accountId);
-        walletProvider = new NearKeypairWalletProvider(keypair, accountId, rpcProvider, network);
+        walletProvider = new NearKeypairWalletProvider(keypair, accountId, rpcProviderUrl, network);
       }
 
       if (!accountId && !nearPrivateKey) {
@@ -146,7 +146,7 @@ async function initializeAgent() {
 
         console.log(`✅ Account created: ${accountId}`);
 
-        walletProvider = new NearKeypairWalletProvider(keyPair, accountId, rpcProvider, network);
+        walletProvider = new NearKeypairWalletProvider(keyPair, accountId, rpcProviderUrl, network);
       }
     }
 
