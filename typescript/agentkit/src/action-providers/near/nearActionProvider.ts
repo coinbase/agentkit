@@ -8,7 +8,7 @@ import { ActionProvider } from "../actionProvider";
 import { CreateAction } from "../actionDecorator";
 
 import { GET_CROSS_CHAIN_ADDRESS_DESCRIPTION, GET_CROSS_CHAIN_PUBLIC_KEY_DESCRIPTION, SIGN_PAYLOAD_DESCRIPTION } from "./descriptions";
-import { generateAddress, deriveChildPublicKey, getRootPublicKey, getMpcAccountIdByNetwork, MpcContract, AddressType } from './utils'
+import { generateAddress, deriveChildPublicKey, getRootPublicKey, getMpcAccountIdByNetwork, MpcContract, AddressType, SignArgs } from './utils'
 import { GetCrossChainAddressInput, GetCrossChainPublicKeyInput, SignPayloadInput } from "./schemas"
 import { DEFAULT_KEY_VERSION, DEFAULT_PATH, SUPPORTED_NETWORKS } from "./constants"
 
@@ -27,8 +27,8 @@ export class NearActionProvider extends ActionProvider<NEARWalletProvider> {
     })
     async getCrossChainAddress(walletProvider: NEARWalletProvider, args: z.infer<typeof GetCrossChainAddressInput>): Promise<string> {
         const accountId = args.accountId || (await walletProvider.getAccount()).accountId;
-        const networkId = args.networkId || (walletProvider.getNetwork().networkId) as NEAR_NETWORK_ID;
-        const path = args.path || DEFAULT_PATH;
+        const networkId = (args.networkId || (walletProvider.getNetwork().networkId)) as NEAR_NETWORK_ID;
+        const path = (args.path || DEFAULT_PATH) as string;
         const addressType = args.addressType as AddressType;
         const rootPublicKey = getRootPublicKey(networkId);
 
@@ -49,8 +49,8 @@ export class NearActionProvider extends ActionProvider<NEARWalletProvider> {
     })
     async getCrossChainPublicKey(walletProvider: NEARWalletProvider, args: z.infer<typeof GetCrossChainPublicKeyInput>): Promise<string> {
         const accountId = args.accountId || (await walletProvider.getAccount()).accountId;
-        const networkId = args.networkId || (walletProvider.getNetwork().networkId) as NEAR_NETWORK_ID;
-        const path = args.path || DEFAULT_PATH;
+        const networkId = (args.networkId || (walletProvider.getNetwork().networkId)) as NEAR_NETWORK_ID;
+        const path = (args.path || DEFAULT_PATH) as string;
         const rootPublicKey = getRootPublicKey(networkId);
 
         const publicKey = deriveChildPublicKey(
@@ -68,16 +68,16 @@ export class NearActionProvider extends ActionProvider<NEARWalletProvider> {
         schema: SignPayloadInput,
     })
     async signPayload(walletProvider: NEARWalletProvider, args: z.infer<typeof SignPayloadInput>): Promise<string> {
-        const path = args.path || DEFAULT_PATH;
-        const keyVersion = args.keyVersion || DEFAULT_KEY_VERSION;
-        const payload = args.payload;
+        const path = (args.path || DEFAULT_PATH) as string;
+        const keyVersion = (args.keyVersion || DEFAULT_KEY_VERSION) as number;
+        const payload = args.payload as string;
 
-        const networkId = args.networkId || (walletProvider.getNetwork().networkId) as NEAR_NETWORK_ID;
+        const networkId = (args.networkId || (walletProvider.getNetwork().networkId)) as NEAR_NETWORK_ID;
 
         const connection = await walletProvider.getConnection();
         const mpcAccountId = getMpcAccountIdByNetwork(networkId);
 
-        const signatureRequestArgs = {
+        const signatureRequestArgs: SignArgs = {
             payload: Array.from(toBytes(payload)),
             path,
             key_version: keyVersion
