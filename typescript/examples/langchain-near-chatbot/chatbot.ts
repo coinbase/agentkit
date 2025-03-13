@@ -117,9 +117,9 @@ async function initializeAgent() {
     });
 
     const network = (process.env.NETWORK_ID || NEAR_TESTNET_NETWORK_ID) as NEAR_NETWORK_ID;
-    let nearPrivateKey = process.env.NEAR_PRIVATE_KEY as string;
-    let accountId = process.env.NEAR_ACCOUNT_ID as string;
-    let rpcProviderUrl = getEndpointsByNetworkId(network);
+    const nearPrivateKey = process.env.NEAR_PRIVATE_KEY as string;
+    const accountId = process.env.NEAR_ACCOUNT_ID as string;
+    const rpcProviderUrl = getEndpointsByNetworkId(network);
 
     let walletProvider;
 

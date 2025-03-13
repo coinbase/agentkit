@@ -55,6 +55,7 @@ function getRandomInt(min: number, max: number): number {
 /**
  * Returns the NEAR provider based on the network
  *
+ * @param network
  * @returns NEAR provider
  */
 export function getNearProvider(network: NEAR_NETWORK_ID): any {
@@ -65,11 +66,19 @@ export function getNearProvider(network: NEAR_NETWORK_ID): any {
   return rpcProvider;
 }
 
+/**
+ *
+ * @param network
+ */
 export function getEndpointsByNetworkId(network: NEAR_NETWORK_ID): string {
   const nearNetwork = network === NEAR_MAINNET_NETWORK_ID ? "mainnet" : "testnet";
   return getEndpointsByNetwork(nearNetwork)[0];
 }
 
+/**
+ *
+ * @param network
+ */
 export function getNearKeyStoreKey(network: NEAR_NETWORK_ID): string {
   return network === NEAR_MAINNET_NETWORK_ID ? "mainnet" : "testnet";
 }
@@ -122,6 +131,7 @@ export async function chooseAccount(): Promise<string> {
 /**
  * Check if an account is already registered
  *
+ * @param account
  * @returns True if the account is already registered, false otherwise
  */
 export async function isRegisteredAccount(account: string) {
@@ -144,8 +154,8 @@ export async function isRegisteredAccount(account: string) {
 /**
  * Create a funded testnet account
  *
- * @param newAccountId the new account ID
- * @param newPublicKey the public key of the new account
+ * @param newAccountId - the new account ID
+ * @param newPublicKey - the public key of the new account
  *
  * @returns the final outcome of the transaction
  */
