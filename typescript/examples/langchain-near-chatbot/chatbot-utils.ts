@@ -2,6 +2,7 @@ import {
     getTestnetRpcProvider,
     getProviderByNetwork,
     getAccountState,
+    getEndpointsByNetwork,
 } from '@near-js/client';
 import type { FinalExecutionOutcome } from '@near-js/types';
 import { NEAR_MAINNET_NETWORK_ID, NEAR_NETWORK_ID } from '@coinbase/agentkit';
@@ -57,6 +58,11 @@ function getRandomInt(min: number, max: number): number {
 export function getNearProvider(network: NEAR_NETWORK_ID): any {
     const rpcProvider = network === NEAR_MAINNET_NETWORK_ID ? getProviderByNetwork('mainnet') : getProviderByNetwork('testnet');
     return rpcProvider;
+}
+
+export function getEndpointsByNetworkId(network: NEAR_NETWORK_ID): string {
+    const nearNetwork = network === NEAR_MAINNET_NETWORK_ID ? 'mainnet' : 'testnet';
+    return getEndpointsByNetwork(nearNetwork)[0];
 }
 
 export function getNearKeyStoreKey(network: NEAR_NETWORK_ID): string {
