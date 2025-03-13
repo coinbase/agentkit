@@ -15,7 +15,8 @@
     "examples/langchain-solana-chatbot",
     "examples/langchain-smart-wallet-chatbot",
     "examples/vercel-ai-sdk-cdp-chatbot",
-    "examples/model-context-protocol-cdp-server"
+    "examples/model-context-protocol-cdp-server",
+    "examples/langchain-near-chatbot"
   ],
   "packageManager": "npm@8.9.0",
   "scripts": {
