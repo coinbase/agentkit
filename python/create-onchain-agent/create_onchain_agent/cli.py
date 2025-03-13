@@ -137,6 +137,7 @@ def get_network_choices(network_type: str) -> list:
     ]
 
 def create_advanced_project(templates_path: str | None = None):
+    """Create a new onchain agent project with advanced setup."""
     # Prompt for project name (default: "onchain-agent")
     project_name = (
         questionary.text("Enter your project name:", default="onchain-agent", style=custom_style)
@@ -306,6 +307,7 @@ def create_advanced_project(templates_path: str | None = None):
         return
 
 def create_beginner_project(templates_path: str | None = None):
+    """Create a new onchain agent project with simplified setup."""
     # Prompt for project name (default: "onchain-agent")
     project_name = (
         questionary.text("Enter your project name:", default="onchain-agent", style=custom_style)
@@ -334,7 +336,7 @@ def create_beginner_project(templates_path: str | None = None):
         )
     else:
         package_name = suggested_package_name
-    
+
     framework_choices = [
         name + (" (default)" if id == "langchain" else "")
         for name, id in FRAMEWORKS

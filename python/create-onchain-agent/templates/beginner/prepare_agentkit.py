@@ -1,9 +1,4 @@
 import os
-import json
-import secrets
-from dotenv import load_dotenv
-
-from wallet import get_wallet_signer, save_wallet
 
 from coinbase_agentkit import (
     AgentKit,
@@ -15,6 +10,7 @@ from coinbase_agentkit import (
     wallet_action_provider,
     weth_action_provider,
 )
+from wallet import get_wallet_signer, save_wallet
 
 """
 AgentKit Configuration
@@ -28,7 +24,7 @@ It handles wallet setup, persistence, and initializes AgentKit with the appropri
    - Learn more: https://github.com/coinbase/agentkit/tree/main/python/agentkit#evm-wallet-providers
 
 2. Set up your Action Providers:
-   - Action Providers define what your agent can do.  
+   - Action Providers define what your agent can do.
    - Choose from built-in providers or create your own:
      - Built-in: https://github.com/coinbase/agentkit/tree/main/python/coinbase-agentkit#create-an-agentkit-instance-with-specified-action-providers
      - Custom: https://github.com/coinbase/agentkit/tree/main/python/coinbase-agentkit#creating-an-action-provider
@@ -40,7 +36,7 @@ It handles wallet setup, persistence, and initializes AgentKit with the appropri
 - Experiment with custom Action Providers for your unique use case.
 
 ## Want to contribute?
-Join us in shaping AgentKit! Check out the contribution guide:  
+Join us in shaping AgentKit! Check out the contribution guide:
 - https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING.md
 - https://discord.gg/CDP
 """
@@ -50,7 +46,6 @@ network_id = os.getenv("NETWORK_ID", "base-sepolia")
 
 def prepare_agentkit():
     """Initialize CDP Smart Wallet Agentkit and return tools."""
-
     # Get wallet signer to use for wallet provider
     signer, smart_wallet_address = get_wallet_signer(network_id)
 
