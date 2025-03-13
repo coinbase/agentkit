@@ -79,23 +79,11 @@ def run_chat_mode(agent_executor, config):
             sys.exit(0)
 {% endif %}
 
-{% if _framework == "openai_agents" %}
-async def main():
-{% elif _framework == "langchain" %}
-def main():
-{% endif %}
+{% if _framework == "openai_agents" %}async def main():{% elif _framework == "langchain" %}def main():{% endif %}
     """Start the chatbot agent."""
     print("Starting Agent...")
     agent_executor, config = create_agent()
-    {% if _framework == "openai_agents" %}
-    await run_chat_mode(agent=agent_executor, config=config)
-    {% elif _framework == "langchain" %}
-    run_chat_mode(agent_executor=agent_executor, config=config)
-    {% endif %}
+    {% if _framework == "openai_agents" %}await run_chat_mode(agent=agent_executor, config=config){% elif _framework == "langchain" %}run_chat_mode(agent_executor=agent_executor, config=config){% endif %}
 
 if __name__ == "__main__":
-    {% if _framework == "openai_agents" %}
-    asyncio.run(main())
-    {% elif _framework == "langchain" %}
-    main()
-    {% endif %}
+    {% if _framework == "openai_agents" %}asyncio.run(main()){% elif _framework == "langchain" %}main(){% endif %}

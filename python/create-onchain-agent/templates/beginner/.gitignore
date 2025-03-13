@@ -40,5 +40,5 @@ poetry.lock
 .DS_Store
 
 # Project specific
-wallet_data.txt
+wallet_data*.txt
 .env.local 

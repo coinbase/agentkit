@@ -3,6 +3,8 @@ import json
 import secrets
 from dotenv import load_dotenv
 
+from wallet import get_wallet_signer, save_wallet
+
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
@@ -13,8 +15,6 @@ from coinbase_agentkit import (
     wallet_action_provider,
     weth_action_provider,
 )
-
-from .wallet import get_wallet_signer, save_wallet
 
 """
 AgentKit Configuration
@@ -51,19 +51,16 @@ network_id = os.getenv("NETWORK_ID", "base-sepolia")
 def prepare_agentkit():
     """Initialize CDP Smart Wallet Agentkit and return tools."""
 
+    # Get wallet signer to use for wallet provider
+    signer, smart_wallet_address = get_wallet_signer(network_id)
+
     # Initialize Smart Wallet Provider first (without signer) to pass to get_wallet_signer
     wallet_provider = SmartWalletProvider(SmartWalletProviderConfig(
         network_id=network_id,
-        signer=None,  # We'll set this after getting the signer
-        smart_wallet_address=None,
+        signer=signer,
+        smart_wallet_address=smart_wallet_address,
         paymaster_url=None, # Place your paymaster URL here: https://docs.cdp.coinbase.com/paymaster/docs/welcome
     ))
-
-    # Get wallet signer to use for wallet provider
-    signer = get_wallet_signer(network_id, wallet_provider)
-    
-    # Update wallet provider with signer
-    wallet_provider.config.signer = signer
 
     # Save wallet to file for reuse
     save_wallet(wallet_provider, network_id)

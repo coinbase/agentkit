@@ -73,19 +73,20 @@ CDP_SUPPORTED_NETWORKS = {
 VALID_PACKAGE_NAME_REGEX = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 
-def get_template_path(template_path: str | None = None, template_name: str | None = None) -> str:
+def get_template_path(template_name: str, templates_path: str | None = None) -> str:
     """Get the template path either from a local directory or downloaded from GitHub.
 
     Args:
-        template_path: Optional path to local template directory
+        templates_path: Optional path to local template directory
+        template_name: The name of the template to get
 
     Returns:
         str: Path to the template directory
 
     """
-    if template_path:
+    if templates_path:
         # Use provided template path
-        local_template_path = Path(template_path)
+        local_template_path = Path(f"{templates_path}/{template_name}")
         if not local_template_path.exists():
             raise FileNotFoundError(
                 f"Template path not found at {local_template_path}. "
@@ -135,7 +136,7 @@ def get_network_choices(network_type: str) -> list:
         )
     ]
 
-def create_advanced_project(template: str | None = None):
+def create_advanced_project(templates_path: str | None = None):
     # Prompt for project name (default: "onchain-agent")
     project_name = (
         questionary.text("Enter your project name:", default="onchain-agent", style=custom_style)
@@ -276,7 +277,7 @@ def create_advanced_project(template: str | None = None):
         copier_data["_rpc_url"] = rpc_url
 
     try:
-        template_path = get_template_path(template, "chatbot")
+        template_path = get_template_path("chatbot", templates_path)
         run_copy(template_path, project_path, data=copier_data)
 
         console.print(
@@ -304,7 +305,7 @@ def create_advanced_project(template: str | None = None):
         console.print(f"[red]Error: {e!s}[/red]")
         return
 
-def create_beginner_project(template: str | None = None):
+def create_beginner_project(templates_path: str | None = None):
     # Prompt for project name (default: "onchain-agent")
     project_name = (
         questionary.text("Enter your project name:", default="onchain-agent", style=custom_style)
@@ -358,7 +359,7 @@ def create_beginner_project(template: str | None = None):
     }
 
     try:
-        template_path = get_template_path(template, "beginner")
+        template_path = get_template_path("beginner", templates_path)
         run_copy(template_path, project_path, data=copier_data)
 
         console.print(
@@ -397,13 +398,13 @@ def create_beginner_project(template: str | None = None):
         return
 
 @click.command()
-@click.option("--template", type=str, help="Path to local template directory", default=None)
+@click.option("--templates-path", type=str, help="Path to local template directory", default=None)
 @click.option(
     "--beginner",
     is_flag=True,
     help="Use beginner mode with simplified setup",
 )
-def create_project(template, beginner):
+def create_project(templates_path, beginner):
     """Create a new onchain agent project with interactive prompts."""
     ascii_art = """
      █████   ██████  ███████ ███    ██ ████████    ██   ██ ██ ████████
@@ -418,9 +419,9 @@ def create_project(template, beginner):
     console.print(f"[blue]{ascii_art}[/blue]")
 
     if beginner:
-        create_beginner_project(template)
+        create_beginner_project(templates_path)
     else:
-        create_advanced_project(template)
+        create_advanced_project(templates_path)
 
 
 if __name__ == "__main__":
