@@ -26,32 +26,71 @@ Finally, run the chatbot:
 
 `poetry run python chatbot.py`
 
+## Project Architecture
+
+This template creates a secure AI agent with its own wallet. Let's explore how each component works together:
+
+### 1. Wallet Management (`wallet.py`)
+The wallet system manages two key components:
+- **Your Wallet**: Acts as the controlling wallet (like a parent account)
+- **Agent's Wallet**: A separate smart wallet owned by your wallet
+
+The system persists wallet data between sessions in network-specific files (e.g., `wallet_data_base_sepolia.txt`). This allows you to:
+- Maintain consistent wallet addresses across restarts
+- Use different wallets for different networks
+- Keep control of the agent's wallet through your wallet
+
+### 2. AgentKit Configuration (`prepare_agentkit.py`)
+This file wires together the core building blocks of AgentKit:
+
+1. **Smart Wallet Provider**: Creates a secure setup where:
+   - The agent gets its own wallet
+   - Your wallet maintains control
+   - The agent can't access your wallet
+   
+2. **Action Providers**: Defines the agent's capabilities:
+   - `wallet_action_provider`: Basic wallet operations
+   - `erc20_action_provider`: Token transfers
+   - `weth_action_provider`: WETH operations
+   - `cdp_api_action_provider`: CDP platform interactions
+
+### 3. Agent Creation (`create_agent.py`)
+Bridges AgentKit with your chosen AI framework:
+- Configures the Language Model (LLM)
+- Converts AgentKit tools to framework-compatible format
+- Sets up the agent with instructions and capabilities
+- Manages conversation memory and state
+
+### 4. Application Interface (`chatbot.py`)
+A simple command-line interface demonstrating how to:
+- Initialize the agent
+- Handle user interactions
+- Process agent responses
+- Manage the conversation flow
+
+This serves as a starting point. You can replace it with your own application interface!
+
 ## Configuring Your Agent
 
-You can [modify your agent configuration](https://github.com/coinbase/agentkit/tree/main/typescript/agentkit#usage) in the `chatbot.py` file.
+You can [modify your agent configuration](https://github.com/coinbase/agentkit/tree/main/typescript/agentkit#usage) in the following ways:
 
-### 1. Select Your LLM  
-Modify the `ChatOpenAI` instantiation to use the model of your choice.
+### 1. Customize the Wallet Provider  
+Adjust the `SmartWalletProvider` configuration in `prepare_agentkit.py` to:
+- Change networks
+- Add a paymaster for gasless transactions on mainnet
+- Try different wallet providers
 
-### 2. Select Your Wallet Provider  
-AgentKit requires a **Wallet Provider** to interact with blockchain networks.
-
-### 3. Select Your Action Providers  
-Action Providers define what your agent can do. You can use built-in providers or create your own.
-
----
-
-## Next Steps
-
-- Explore the AgentKit README: [AgentKit Documentation](https://github.com/coinbase/agentkit)
-- Learn more about available Wallet Providers & Action Providers.
-- Experiment with custom Action Providers for your specific use case.
+### 2. Add Action Providers  
+Extend the agent's capabilities in `prepare_agentkit.py` by:
+- Adding more built-in providers
+- Creating custom providers
 
 ## Learn More
 
 - [Learn more about CDP](https://docs.cdp.coinbase.com/)
 - [Learn more about AgentKit](https://docs.cdp.coinbase.com/agentkit/docs/welcome)
-
+- [Explore Action Providers](https://github.com/coinbase/agentkit/tree/main/python/coinbase-agentkit#create-an-agentkit-instance-with-specified-action-providers)
+- [Create Custom Providers](https://github.com/coinbase/agentkit/tree/main/python/coinbase-agentkit#creating-an-action-provider)
 
 ## Contributing
 
