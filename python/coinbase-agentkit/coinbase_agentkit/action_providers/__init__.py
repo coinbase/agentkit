@@ -2,6 +2,7 @@
 
 from .action_decorator import create_action
 from .action_provider import Action, ActionProvider
+from .allora.allora_action_provider import AlloraActionProvider, allora_action_provider
 from .basename.basename_action_provider import (
     BasenameActionProvider,
     basename_action_provider,
@@ -49,4 +50,6 @@ __all__ = [
     "weth_action_provider",
     "WowActionProvider",
     "wow_action_provider",
+    "AlloraActionProvider",
+    "allora_action_provider",
 ]

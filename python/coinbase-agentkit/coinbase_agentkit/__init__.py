@@ -4,6 +4,7 @@ from .__version__ import __version__
 from .action_providers import (
     Action,
     ActionProvider,
+    allora_action_provider,
     basename_action_provider,
     cdp_api_action_provider,
     cdp_wallet_action_provider,
@@ -56,5 +57,6 @@ __all__ = [
     "wallet_action_provider",
     "weth_action_provider",
     "wow_action_provider",
+    "allora_action_provider",
     "__version__",
 ]
