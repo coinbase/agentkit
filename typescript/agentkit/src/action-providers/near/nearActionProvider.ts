@@ -29,11 +29,11 @@ import {
 import { DEFAULT_KEY_VERSION, DEFAULT_PATH, SUPPORTED_NETWORKS } from "./constants";
 
 /**
- * The NearActionProvider class provides actions for the NEAR protocol family.
+ * The NearActionProvider class provides actions for the NEAR protocol family
  */
 export class NearActionProvider extends ActionProvider<NEARWalletProvider> {
   /**
-   * Creates an instance of NearActionProvider.
+   * Creates an instance of NearActionProvider
    */
   constructor() {
     super("near", []);
@@ -45,11 +45,11 @@ export class NearActionProvider extends ActionProvider<NEARWalletProvider> {
     SUPPORTED_NETWORKS.includes(network.networkId!);
 
   /**
-   * Returns the cross chain address for the given account id, network id, path and address type.
-   * 
+   * Returns the cross chain address for the given account id, network id, path and address type
+   *
    * @param walletProvider - The wallet provider
    * @param args - The get cross chain address input arguments
-   * 
+   *
    * @returns The cross chain address
    */
   @CreateAction({
@@ -67,22 +67,17 @@ export class NearActionProvider extends ActionProvider<NEARWalletProvider> {
     const addressType = args.addressType as AddressType;
     const rootPublicKey = getRootPublicKey(networkId);
 
-    const generatedAddress = generateAddress(
-      rootPublicKey,
-      accountId,
-      path,
-      addressType,
-    );
+    const generatedAddress = generateAddress(rootPublicKey, accountId, path, addressType);
 
     return `Generated cross chain address of type ${addressType} for account id ${accountId}, network ${networkId} and derivation path ${path} is ${generatedAddress.address}`;
   }
 
   /**
    * Returns the cross chain public key for the given account id, network id and path.
-   * 
+   *
    * @param walletProvider - The wallet provider
    * @param args - The get cross chain public key input arguments
-   * 
+   *
    * @returns The cross chain public key
    */
   @CreateAction({
@@ -106,7 +101,7 @@ export class NearActionProvider extends ActionProvider<NEARWalletProvider> {
 
   /**
    * Signs the given payload using the MPC contract.
-   * 
+   *
    * @param walletProvider - The wallet provider
    * @param args - The sign payload input arguments
    */
