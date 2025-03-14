@@ -28,7 +28,13 @@ import {
 } from "./schemas";
 import { DEFAULT_KEY_VERSION, DEFAULT_PATH, SUPPORTED_NETWORKS } from "./constants";
 
+/**
+ * The NearActionProvider class provides actions for the NEAR protocol family.
+ */
 export class NearActionProvider extends ActionProvider<NEARWalletProvider> {
+  /**
+   * Creates an instance of NearActionProvider.
+   */
   constructor() {
     super("near", []);
   }
@@ -38,6 +44,14 @@ export class NearActionProvider extends ActionProvider<NEARWalletProvider> {
     network.protocolFamily === NEAR_PROTOCOL_FAMILY &&
     SUPPORTED_NETWORKS.includes(network.networkId!);
 
+  /**
+   * Returns the cross chain address for the given account id, network id, path and address type.
+   * 
+   * @param walletProvider - The wallet provider
+   * @param args - The get cross chain address input arguments
+   * 
+   * @returns The cross chain address
+   */
   @CreateAction({
     name: "get_cross_chain_address",
     description: GET_CROSS_CHAIN_ADDRESS_DESCRIPTION,
@@ -53,16 +67,24 @@ export class NearActionProvider extends ActionProvider<NEARWalletProvider> {
     const addressType = args.addressType as AddressType;
     const rootPublicKey = getRootPublicKey(networkId);
 
-    const generatedAddress = generateAddress({
-      publicKey: rootPublicKey,
+    const generatedAddress = generateAddress(
+      rootPublicKey,
       accountId,
       path,
       addressType,
-    });
+    );
 
     return `Generated cross chain address of type ${addressType} for account id ${accountId}, network ${networkId} and derivation path ${path} is ${generatedAddress.address}`;
   }
 
+  /**
+   * Returns the cross chain public key for the given account id, network id and path.
+   * 
+   * @param walletProvider - The wallet provider
+   * @param args - The get cross chain public key input arguments
+   * 
+   * @returns The cross chain public key
+   */
   @CreateAction({
     name: "get_cross_chain_public_key",
     description: GET_CROSS_CHAIN_PUBLIC_KEY_DESCRIPTION,
@@ -82,6 +104,12 @@ export class NearActionProvider extends ActionProvider<NEARWalletProvider> {
     return `Computed public key for account id ${accountId}, network ${networkId} and derivation path ${path} is ${publicKey}`;
   }
 
+  /**
+   * Signs the given payload using the MPC contract.
+   * 
+   * @param walletProvider - The wallet provider
+   * @param args - The sign payload input arguments
+   */
   @CreateAction({
     name: "sign_payload",
     description: SIGN_PAYLOAD_DESCRIPTION,

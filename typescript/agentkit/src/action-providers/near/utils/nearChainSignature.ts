@@ -15,11 +15,24 @@ import {
   ROOT_PUBLIC_KEY_TESTNET,
 } from "../constants";
 
+/**
+ * Convert a najPublicKeyStr to an uncompressed hex point.
+ * 
+ * @param najPublicKeyStr - The najPublicKeyStr to convert.
+ * 
+ * @returns The uncompressed hex point.
+ */
 function najPublicKeyStrToUncompressedHexPoint(najPublicKeyStr: string): string {
   const decodedKey = baseDecode(najPublicKeyStr.split(":")[1]!);
   return "04" + Buffer.from(decodedKey).toString("hex");
 }
 
+/**
+ * Derive a child public key from a parent public key.
+ * @param parentUncompressedPublicKeyHex - The parent public key.
+ * @param accountId - The account ID.
+ * @param path - The path.
+ */
 export function deriveChildPublicKey(
   parentUncompressedPublicKeyHex: string,
   accountId: string,
@@ -59,13 +72,16 @@ type GenerateAddressParams = {
   addressType: AddressType;
 };
 
-export function generateAddress({
-  publicKey,
-  accountId,
-  path,
-  addressType,
-}: GenerateAddressParams) {
-  let childPublicKey = deriveChildPublicKey(
+/**
+ * Generate an address
+ * 
+ * @param publicKey - The public key.
+ * @param accountId - The account ID.
+ * @param path - The path.
+ * @param addressType - The address type.
+ */
+export function generateAddress(publicKey: string, accountId: string, path: string, addressType: AddressType) {
+  const childPublicKey = deriveChildPublicKey(
     najPublicKeyStrToUncompressedHexPoint(publicKey),
     accountId,
     path,
@@ -97,6 +113,13 @@ export function generateAddress({
   };
 }
 
+/**
+ * Get the root public key by network
+ * 
+ * @param network - The NEAR network ID.
+ * 
+ * @returns The root public key.
+ */
 export function getRootPublicKey(network: NEAR_NETWORK_ID): string {
   switch (network) {
     case NEAR_TESTNET_NETWORK_ID:
@@ -108,6 +131,13 @@ export function getRootPublicKey(network: NEAR_NETWORK_ID): string {
   }
 }
 
+/**
+ * Get the MPC account ID by network
+ * 
+ * @param network - The NEAR network ID.
+ * 
+ * @returns The MPC account ID.
+ */
 export function getMpcAccountIdByNetwork(network: NEAR_NETWORK_ID): string {
   switch (network) {
     case NEAR_TESTNET_NETWORK_ID:

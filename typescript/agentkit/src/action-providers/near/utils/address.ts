@@ -3,7 +3,7 @@ import { keccak256 } from "viem";
 /**
  * Convert an uncompressed hex point to an EVM address
  *
- * @param uncompressedHexPoint Uncompressed hex point (64 characters) as a string
+ * @param uncompressedHexPoint - Uncompressed hex point (64 characters) as a string
  *
  * @returns EVM address as a string
  */
