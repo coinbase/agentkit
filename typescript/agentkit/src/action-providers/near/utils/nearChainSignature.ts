@@ -17,9 +17,9 @@ import {
 
 /**
  * Convert a najPublicKeyStr to an uncompressed hex point.
- * 
+ *
  * @param najPublicKeyStr - The najPublicKeyStr to convert.
- * 
+ *
  * @returns The uncompressed hex point.
  */
 function najPublicKeyStrToUncompressedHexPoint(najPublicKeyStr: string): string {
@@ -28,10 +28,13 @@ function najPublicKeyStrToUncompressedHexPoint(najPublicKeyStr: string): string 
 }
 
 /**
- * Derive a child public key from a parent public key.
- * @param parentUncompressedPublicKeyHex - The parent public key.
- * @param accountId - The account ID.
- * @param path - The path.
+ * Derive a child public key from a parent public key
+ *
+ * @param parentUncompressedPublicKeyHex - The parent public key
+ * @param accountId - The account ID
+ * @param path - The path
+ * 
+ * @returns The child public key
  */
 export function deriveChildPublicKey(
   parentUncompressedPublicKeyHex: string,
@@ -74,13 +77,18 @@ type GenerateAddressParams = {
 
 /**
  * Generate an address
- * 
+ *
  * @param publicKey - The public key.
  * @param accountId - The account ID.
  * @param path - The path.
  * @param addressType - The address type.
  */
-export function generateAddress(publicKey: string, accountId: string, path: string, addressType: AddressType) {
+export function generateAddress(
+  publicKey: string,
+  accountId: string,
+  path: string,
+  addressType: AddressType,
+) {
   const childPublicKey = deriveChildPublicKey(
     najPublicKeyStrToUncompressedHexPoint(publicKey),
     accountId,
@@ -115,9 +123,9 @@ export function generateAddress(publicKey: string, accountId: string, path: stri
 
 /**
  * Get the root public key by network
- * 
+ *
  * @param network - The NEAR network ID.
- * 
+ *
  * @returns The root public key.
  */
 export function getRootPublicKey(network: NEAR_NETWORK_ID): string {
@@ -133,9 +141,9 @@ export function getRootPublicKey(network: NEAR_NETWORK_ID): string {
 
 /**
  * Get the MPC account ID by network
- * 
+ *
  * @param network - The NEAR network ID.
- * 
+ *
  * @returns The MPC account ID.
  */
 export function getMpcAccountIdByNetwork(network: NEAR_NETWORK_ID): string {

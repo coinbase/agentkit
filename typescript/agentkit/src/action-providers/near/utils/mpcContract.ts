@@ -42,10 +42,10 @@ export class MpcContract {
 
   /**
    * Create a new MPC contract instance
-   * 
+   *
    * @param connection - Near connection
    * @param contractId - The MPC contract ID
-   * 
+   *
    * @returns A new MPC contract instance
    */
   constructor(connection: Connection, contractId: string) {
@@ -60,7 +60,7 @@ export class MpcContract {
 
   /**
    * Get the experimental signature deposit from the MPC contract instance
-   * 
+   *
    * @returns The experimental signature deposit
    */
   public async getExperimentalSignatureDeposit(): Promise<string> {
@@ -69,9 +69,9 @@ export class MpcContract {
 
   /**
    * Get the sign action from the MPC contract instance
-   * 
+   *
    * @param signArgs - The sign arguments
-   * 
+   *
    * @returns The sign action
    */
   public async getSignAction(signArgs: SignArgs): Promise<NearAction> {

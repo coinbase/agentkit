@@ -157,7 +157,7 @@ export class NearKeypairWalletProvider extends NEARWalletProvider {
    *
    * @param args - The transaction sender parameters.
    * @param options - The send transaction options.
-   * 
+   *
    * @returns The final execution outcome
    */
   async signAndSendTransaction(
