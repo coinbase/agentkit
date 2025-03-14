@@ -1,5 +1,15 @@
 # AgentKit Changelog
 
+## 0.4.0
+
+### Minor Changes
+
+- [#513](https://github.com/coinbase/agentkit/pull/513) [`e826563`](https://github.com/coinbase/agentkit/commit/e826563297aeda2ecfdb7d600ea5ed3711a62eff) Thanks [@stat](https://github.com/stat)! - Added defillama action provider for find protocol, get protocol, and get token price
+
+### Patch Changes
+
+- [#573](https://github.com/coinbase/agentkit/pull/573) [`81b35a2`](https://github.com/coinbase/agentkit/commit/81b35a23916b2c344972fd1bcb0cbb85d01b2cbd) Thanks [@John-peterson-coinbase](https://github.com/John-peterson-coinbase)! - Fixed bug in Morpho action provider to allow depositing ERC20 tokens of variable decimal precision
+
 ## 0.3.0
 
 ### Minor Changes
