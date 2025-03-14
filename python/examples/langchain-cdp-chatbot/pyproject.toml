@@ -13,7 +13,6 @@ langchain-openai = "^0.2.4"
 langgraph = "^0.2.39"
 coinbase-agentkit = { path = "../../../python/coinbase-agentkit", develop = true }
 coinbase-agentkit-langchain = { path = "../../../python/framework-extensions/langchain", develop = true }
-allora-sdk = "^0.2.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.7.1"
