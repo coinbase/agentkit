@@ -249,6 +249,7 @@ AgentKit is proud to have support for the following protocols, frameworks, walle
 
 <a href="https://www.alchemy.com/" target="_blank"><img src="./assets/protocols/alchemy.svg" width="100" height="auto" alt="Alchemy"></a>
 <a href="https://compound.finance/" target="_blank"><img src="./assets/protocols/compound.svg" width="100" height="auto" alt="Compound"></a>
+<a href="https://defillama.com/" target="_blank"><img src="./assets/protocols/defillama.svg" width="100" height="auto" alt="DefiLlama"></a>
 <a href="https://farcaster.xyz" target="_blank"><img src="./assets/protocols/farcaster.svg" width="100" height="auto" alt="Farcaster"></a>
 <a href="https://jup.ag" target="_blank"><img src="./assets/protocols/jupiter.svg" width="100" height="auto" alt="Jupiter"></a>
 <a href="https://hyperbolic.xyz/" target="_blank"><img src="./assets/protocols/hyperbolic.svg" width="100" height="auto" alt="Hyperbolic"></a>
