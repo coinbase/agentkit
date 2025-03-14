@@ -40,3 +40,9 @@ poetry install
 ```bash
 poetry run python chatbot.py
 ``` 
+
+Note: If you are seeing the log `OPENAI_API_KEY is not set, skipping trace export`, fix it by exporting the OPENAI_API_KEY in your terminal.
+
+```sh
+export OPENAI_API_KEY=<your-openai-api-key>
+```
