@@ -5,6 +5,7 @@
     "agentkit",
     "create-onchain-agent",
     "create-onchain-agent/templates/next",
+    "create-onchain-agent/templates/mcp",
     "framework-extensions/langchain",
     "framework-extensions/vercel-ai-sdk",
     "framework-extensions/model-context-protocol",
