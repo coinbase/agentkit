@@ -9,6 +9,11 @@ export type AgentkitRouteConfiguration = {
   prepareAgentkitRoute: `${string}.ts`;
 };
 
+export type MCPRouteConfiguration = {
+  getAgentkitRoute: `${string}.ts`;
+  configRoute: `${string}.json`;
+};
+
 export type NetworkSelection = {
   networkFamily: "EVM" | "SVM";
   networkType: "mainnet" | "testnet" | "custom";
