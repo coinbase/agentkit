@@ -23,80 +23,80 @@ jobs:
           git checkout -B nightly
           git push origin nightly --force
 
-  publish-npm-nightly:
-    needs: prepare-nightly
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: nightly
+  # publish-npm-nightly:
+  #   needs: prepare-nightly
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: read
+  #     id-token: write
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         ref: nightly
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-          registry-url: "https://registry.npmjs.org"
-          cache: "npm"
-          cache-dependency-path: ./typescript
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: "18"
+  #         registry-url: "https://registry.npmjs.org"
+  #         cache: "npm"
+  #         cache-dependency-path: ./typescript
 
-      - name: Install jq
-        run: sudo apt-get install jq
+  #     - name: Install jq
+  #       run: sudo apt-get install jq
 
-      - name: Install dependencies and build packages
-        run: |
-          cd typescript
-          npm ci
-          npm run build
+  #     - name: Install dependencies and build packages
+  #       run: |
+  #         cd typescript
+  #         npm ci
+  #         npm run build
 
-      - name: Find NPM packages
-        id: find-npm-packages
-        run: |
-          cd typescript
-          PACKAGES=$(find . -name "package.json" \
-            -not -path "*/node_modules/*" \
-            -not -path "./package.json" \
-            -not -path "*/examples/*" \
-            -not -path "*/create-onchain-agent/templates/*" \
-            -not -path "*/dist/*" \
-            -exec dirname {} \; | tr '\n' ' ')
-          echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
+  #     - name: Find NPM packages
+  #       id: find-npm-packages
+  #       run: |
+  #         cd typescript
+  #         PACKAGES=$(find . -name "package.json" \
+  #           -not -path "*/node_modules/*" \
+  #           -not -path "./package.json" \
+  #           -not -path "*/examples/*" \
+  #           -not -path "*/create-onchain-agent/templates/*" \
+  #           -not -path "*/dist/*" \
+  #           -exec dirname {} \; | tr '\n' ' ')
+  #         echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
 
-      - name: Update NPM package versions
-        run: |
-          cd typescript
-          for pkg in ${{ steps.find-npm-packages.outputs.packages }}; do
-            if [ -f "$pkg/package.json" ]; then
-              cd $pkg
-              if ! grep -q '"private": true' package.json; then
-                PKG_NAME=$(node -p "require('./package.json').name")
-                ALL_VERSIONS=$(npm view "$PKG_NAME" versions --all --json 2>/dev/null || echo "[]")
-                LATEST_NIGHTLY=$(echo "$ALL_VERSIONS" | jq -r '.[]' 2>/dev/null | grep -E "nightly\.[0-9]{8}\.[0-9]+$" | sort -V | tail -n1 || echo "")
-                TODAY=$(date +%Y%m%d)
-                if [ -z "$LATEST_NIGHTLY" ]; then
-                  npm version prerelease --preid=nightly.$TODAY --no-git-tag-version
-                else
-                  BUILD_NUM=$(echo $LATEST_NIGHTLY | grep -Eo '[0-9]+$')
-                  NEXT_BUILD=$((BUILD_NUM + 1))
-                  npm version "$(echo $LATEST_NIGHTLY | cut -d'-' -f1)-nightly.$TODAY.$NEXT_BUILD" --no-git-tag-version
-                fi
-              fi
-              cd - > /dev/null
-            fi
-          done
+  #     - name: Update NPM package versions
+  #       run: |
+  #         cd typescript
+  #         for pkg in ${{ steps.find-npm-packages.outputs.packages }}; do
+  #           if [ -f "$pkg/package.json" ]; then
+  #             cd $pkg
+  #             if ! grep -q '"private": true' package.json; then
+  #               PKG_NAME=$(node -p "require('./package.json').name")
+  #               ALL_VERSIONS=$(npm view "$PKG_NAME" versions --all --json 2>/dev/null || echo "[]")
+  #               LATEST_NIGHTLY=$(echo "$ALL_VERSIONS" | jq -r '.[]' 2>/dev/null | grep -E "nightly\.[0-9]{8}\.[0-9]+$" | sort -V | tail -n1 || echo "")
+  #               TODAY=$(date +%Y%m%d)
+  #               if [ -z "$LATEST_NIGHTLY" ]; then
+  #                 npm version prerelease --preid=nightly.$TODAY --no-git-tag-version
+  #               else
+  #                 BUILD_NUM=$(echo $LATEST_NIGHTLY | grep -Eo '[0-9]+$')
+  #                 NEXT_BUILD=$((BUILD_NUM + 1))
+  #                 npm version "$(echo $LATEST_NIGHTLY | cut -d'-' -f1)-nightly.$TODAY.$NEXT_BUILD" --no-git-tag-version
+  #               fi
+  #             fi
+  #             cd - > /dev/null
+  #           fi
+  #         done
 
-      - name: Publish packages
-        run: |
-          cd typescript
-          for pkg in ${{ steps.find-npm-packages.outputs.packages }}; do
-            if [ -f "$pkg/package.json" ] && ! grep -q '"private": true' "$pkg/package.json"; then
-              cd $pkg && npm publish --tag nightly --provenance --access public
-              cd - > /dev/null
-            fi
-          done
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  #     - name: Publish packages
+  #       run: |
+  #         cd typescript
+  #         for pkg in ${{ steps.find-npm-packages.outputs.packages }}; do
+  #           if [ -f "$pkg/package.json" ] && ! grep -q '"private": true' "$pkg/package.json"; then
+  #             cd $pkg && npm publish --tag nightly --provenance --access public
+  #             cd - > /dev/null
+  #           fi
+  #         done
+  #       env:
+  #         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-pypi-nightly:
     needs: prepare-nightly
@@ -148,13 +148,7 @@ jobs:
                 ALL_VERSIONS=$(curl -s "https://pypi.org/pypi/$PKG_NAME/json" | jq -r '.releases | keys[]')
                 LATEST_NIGHTLY=$(echo "$ALL_VERSIONS" | grep -E "^${NEXT_VERSION}\.dev${TODAY}[0-9]$" | sort -V | tail -n1 || echo "")
                 
-                if [ -z "$LATEST_NIGHTLY" ]; then
-                  poetry version "${NEXT_VERSION}.dev${TODAY}0"
-                else
-                  BUILD_NUM=$(echo $LATEST_NIGHTLY | sed -E "s/.*\.dev${TODAY}([0-9])$/\1/")
-                  NEXT_BUILD=$((BUILD_NUM + 1))
-                  poetry version "${NEXT_VERSION}.dev${TODAY}${NEXT_BUILD}"
-                fi
+                poetry version "${NEXT_VERSION}.dev${TODAY}1"
               fi
               cd - > /dev/null
             fi
