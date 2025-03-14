@@ -21,11 +21,17 @@ from .twitter.twitter_action_provider import TwitterActionProvider, twitter_acti
 from .wallet.wallet_action_provider import WalletActionProvider, wallet_action_provider
 from .weth.weth_action_provider import WethActionProvider, weth_action_provider
 from .wow.wow_action_provider import WowActionProvider, wow_action_provider
+from .hyperboliclabs.hyperbolic_action_provider import (
+    HyperbolicActionProvider,
+    hyperbolic_action_provider,
+)
 
 __all__ = [
     "Action",
     "ActionProvider",
     "create_action",
+    "AlloraActionProvider",
+    "allora_action_provider",
     "BasenameActionProvider",
     "basename_action_provider",
     "CdpApiActionProvider",
@@ -36,6 +42,8 @@ __all__ = [
     "compound_action_provider",
     "ERC20ActionProvider",
     "erc20_action_provider",
+    "HyperbolicActionProvider",
+    "hyperbolic_action_provider",
     "MorphoActionProvider",
     "morpho_action_provider",
     "PythActionProvider",
@@ -50,6 +58,4 @@ __all__ = [
     "weth_action_provider",
     "WowActionProvider",
     "wow_action_provider",
-    "AlloraActionProvider",
-    "allora_action_provider",
 ]

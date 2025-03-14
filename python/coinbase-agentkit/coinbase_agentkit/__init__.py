@@ -18,6 +18,7 @@ from .action_providers import (
     wallet_action_provider,
     weth_action_provider,
     wow_action_provider,
+    hyperbolic_action_provider,
 )
 from .agentkit import AgentKit, AgentKitConfig
 from .wallet_providers import (
@@ -46,10 +47,12 @@ __all__ = [
     "EthAccountWalletProviderConfig",
     "SmartWalletProvider",
     "SmartWalletProviderConfig",
-    "erc20_action_provider",
+    "allora_action_provider",
     "cdp_api_action_provider",
     "cdp_wallet_action_provider",
     "compound_action_provider",
+    "erc20_action_provider",
+    "hyperbolic_action_provider",
     "morpho_action_provider",
     "pyth_action_provider",
     "superfluid_action_provider",
@@ -57,6 +60,5 @@ __all__ = [
     "wallet_action_provider",
     "weth_action_provider",
     "wow_action_provider",
-    "allora_action_provider",
     "__version__",
 ]
