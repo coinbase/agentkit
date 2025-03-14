@@ -27,6 +27,7 @@ import {
   SignPayloadInput,
 } from "./schemas";
 import { DEFAULT_KEY_VERSION, DEFAULT_PATH, SUPPORTED_NETWORKS } from "./constants";
+import { MPCSignature } from "./types";
 
 /**
  * The NearActionProvider class provides actions for the NEAR protocol family
@@ -104,6 +105,7 @@ export class NearActionProvider extends ActionProvider<NEARWalletProvider> {
    *
    * @param walletProvider - The wallet provider
    * @param args - The sign payload input arguments
+   * @returns The signature result
    */
   @CreateAction({
     name: "sign_payload",
@@ -147,12 +149,3 @@ export class NearActionProvider extends ActionProvider<NEARWalletProvider> {
 
 export const nearActionProvider = () => new NearActionProvider();
 
-export interface MPCSignature {
-  big_r: {
-    affine_point: string;
-  };
-  s: {
-    scalar: string;
-  };
-  recovery_id: number;
-}
