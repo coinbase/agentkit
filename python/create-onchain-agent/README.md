@@ -28,9 +28,20 @@ pipx run create-onchain-agent
 
 This command will guide you through setting up an onchain agent project by prompting for necessary configuration options.
 
+### Beginner Mode
+
+If you are a beginner to web3 agents, we recommend running the command with the `beginner` flag:
+
+```sh
+pipx run create-onchain-agent --beginner
+```
+
+This will create a simplified chatbot with our recommended configurations, so you can get started quickly, without having to worry about the underlying details.
+
 ## Features
 
 - **Guided setup**: Interactive prompts help configure the project.
+- **Supports multiple agent frameworks**.
 - **Supports multiple blockchain networks**.
 - **Select your preferred wallet provider**.
 - **Automates environment setup**.
@@ -41,9 +52,10 @@ The CLI will prompt you for the following details:
 
 1. **Project Name**: The name of your new onchain agent project.
 2. **Package Name**: The Python package name (auto-formatted if needed).
-3. **Network**: Choose from available blockchain networks.
-4. **Chain ID**: Specify if using a custom network.
-5. **Wallet Provider**: Select a preferred method for wallet management.
+3. **Framework**: Choose from available agent frameworks.
+4. **Network**: Choose from available blockchain networks.
+5. **Chain ID**: Specify if using a custom network.
+6. **Wallet Provider**: Select a preferred method for wallet management.
 
 After answering the prompts, the CLI will:
 

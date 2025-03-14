@@ -25,7 +25,7 @@ if sys.version_info.major != REQUIRED_MAJOR or sys.version_info.minor not in ALL
 
 # GitHub repo and folder path
 GITHUB_ZIP_URL = "https://github.com/coinbase/agentkit/archive/refs/heads/main.zip"
-TEMPLATE_SUBDIR = "agentkit-main/python/create-onchain-agent/templates/chatbot"
+TEMPLATES_SUBDIR = "agentkit-main/python/create-onchain-agent/templates"
 LOCAL_CACHE_DIR = Path(platformdirs.user_cache_dir("create-onchain-agent"))
 
 console = Console()
@@ -55,6 +55,12 @@ EVM_NETWORKS = [
     ("polygon-mumbai", "Polygon Mumbai"),
 ]
 
+# Framework constants
+FRAMEWORKS = [
+    ("Langchain", "langchain"),
+    ("OpenAI Agents SDK", "openai_agents"),
+]
+
 CDP_SUPPORTED_NETWORKS = {
     "base-mainnet",
     "base-sepolia",
@@ -67,19 +73,20 @@ CDP_SUPPORTED_NETWORKS = {
 VALID_PACKAGE_NAME_REGEX = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 
-def get_template_path(template_path: str | None = None) -> str:
+def get_template_path(template_name: str, templates_path: str | None = None) -> str:
     """Get the template path either from a local directory or downloaded from GitHub.
 
     Args:
-        template_path: Optional path to local template directory
+        templates_path: Optional path to local template directory
+        template_name: The name of the template to get
 
     Returns:
         str: Path to the template directory
 
     """
-    if template_path:
+    if templates_path:
         # Use provided template path
-        local_template_path = Path(template_path)
+        local_template_path = Path(f"{templates_path}/{template_name}")
         if not local_template_path.exists():
             raise FileNotFoundError(
                 f"Template path not found at {local_template_path}. "
@@ -107,9 +114,9 @@ def get_template_path(template_path: str | None = None) -> str:
     with zipfile.ZipFile(zip_path, "r") as zip_ref:
         zip_ref.extractall(LOCAL_CACHE_DIR)
 
-    template_path = LOCAL_CACHE_DIR / TEMPLATE_SUBDIR
+    template_path = LOCAL_CACHE_DIR / TEMPLATES_SUBDIR / template_name
     if not template_path.exists():
-        raise FileNotFoundError(f"Template path {TEMPLATE_SUBDIR} not found in ZIP.")
+        raise FileNotFoundError(f"Template path {TEMPLATES_SUBDIR}/{template_name} not found in ZIP.")
 
     # Move extracted template to a stable path
     shutil.move(str(template_path), str(extract_path))
@@ -129,23 +136,8 @@ def get_network_choices(network_type: str) -> list:
         )
     ]
 
-
-@click.command()
-@click.option("--template", type=str, help="Path to local template directory", default=None)
-def create_project(template):
-    """Create a new onchain agent project with interactive prompts."""
-    ascii_art = """
-     █████   ██████  ███████ ███    ██ ████████    ██   ██ ██ ████████
-    ██   ██ ██       ██      ████   ██    ██       ██  ██  ██    ██
-    ███████ ██   ███ █████   ██ ██  ██    ██       █████   ██    ██
-    ██   ██ ██    ██ ██      ██  ██ ██    ██       ██  ██  ██    ██
-    ██   ██  ██████  ███████ ██   ████    ██       ██   ██ ██    ██
-
-                 Giving every AI agent a crypto wallet
-    """
-
-    console.print(f"[blue]{ascii_art}[/blue]")
-
+def create_advanced_project(templates_path: str | None = None):
+    """Create a new onchain agent project with advanced setup."""
     # Prompt for project name (default: "onchain-agent")
     project_name = (
         questionary.text("Enter your project name:", default="onchain-agent", style=custom_style)
@@ -174,6 +166,23 @@ def create_project(template):
         )
     else:
         package_name = suggested_package_name
+
+    # Choose framework
+    framework_choices = [
+        name + (" (default)" if id == "langchain" else "")
+        for name, id in FRAMEWORKS
+    ]
+    framework_name = questionary.select(
+        "Choose your agent framework:",
+        choices=framework_choices,
+        default="Langchain (default)",
+        style=custom_style,
+    ).ask()
+
+    # Remove " (default)" suffix if present
+    framework_name = framework_name.replace(" (default)", "")
+    # Look up the framework ID from the name
+    framework = next(id for name, id in FRAMEWORKS if name == framework_name)
 
     # Choose network type
     network_type = questionary.select(
@@ -260,6 +269,7 @@ def create_project(template):
         "_package_name": package_name,
         "_network": network,
         "_wallet_provider": wallet_provider,
+        "_framework": framework,
     }
 
     if chain_id:
@@ -268,32 +278,152 @@ def create_project(template):
         copier_data["_rpc_url"] = rpc_url
 
     try:
-        template_path = get_template_path(template)
+        template_path = get_template_path("chatbot", templates_path)
         run_copy(template_path, project_path, data=copier_data)
+
+        console.print(
+            f"[bold blue]Successfully created your AgentKit project in {project_path}[/bold blue]"
+        )
+
+        console.print("\n[bold]What's Next?[/bold]")
+
+        console.print("To get started, run the following commands:")
+        console.print(f"  [gray]- cd {project_name}[/gray]")
+        console.print("  [gray]- poetry install[/gray]")
+        console.print("  [dim]- # Open .env.local and configure your API keys[/dim]")
+        console.print("  [gray]- mv .env.local .env[/gray]")
+        console.print("  [gray]- poetry run python chatbot.py[/gray]")
+
+        console.print("\n[bold]Learn more[/bold]")
+        console.print("  - Checkout the docs")
+        console.print("    [blue]https://docs.cdp.coinbase.com/agentkit/docs/welcome[/blue]")
+        console.print("  - Visit the repo")
+        console.print("    [blue]http://github.com/coinbase/agentkit[/blue]")
+        console.print("  - Join the community")
+        console.print("    [blue]https://discord.gg/CDP[/blue]\n")
+
     except FileNotFoundError as e:
         console.print(f"[red]Error: {e!s}[/red]")
         return
 
-    console.print(
-        f"[bold blue]Successfully created your AgentKit project in {project_path}[/bold blue]"
+def create_beginner_project(templates_path: str | None = None):
+    """Create a new onchain agent project with simplified setup."""
+    # Prompt for project name (default: "onchain-agent")
+    project_name = (
+        questionary.text("Enter your project name:", default="onchain-agent", style=custom_style)
+        .ask()
+        .strip()
     )
 
-    console.print("\n[bold]What's Next?[/bold]")
+    project_path = os.path.join(os.getcwd(), project_name)
 
-    console.print("To get started, run the following commands:")
-    console.print(f"  [gray]- cd {project_name}[/gray]")
-    console.print("  [gray]- poetry install[/gray]")
-    console.print("  [dim]- # Open .env.local and configure your API keys[/dim]")
-    console.print("  [gray]- mv .env.local .env[/gray]")
-    console.print("  [gray]- poetry run python chatbot.py[/gray]")
+    if os.path.exists(project_path):
+        console.print(f"[red]Error: Directory '{project_name}' already exists.[/red]")
+        return None, None
 
-    console.print("\n[bold]Learn more[/bold]")
-    console.print("  - Checkout the docs")
-    console.print("    [blue]https://docs.cdp.coinbase.com/agentkit/docs/welcome[/blue]")
-    console.print("  - Visit the repo")
-    console.print("    [blue]http://github.com/coinbase/agentkit[/blue]")
-    console.print("  - Join the community")
-    console.print("    [blue]https://discord.gg/CDP[/blue]\n")
+    # Attempt to generate a valid package name
+    suggested_package_name = project_name.replace("-", "_").replace(" ", "_")
+
+    if not VALID_PACKAGE_NAME_REGEX.match(suggested_package_name):
+        # Prompt user if the generated package name is invalid
+        package_name = (
+            questionary.text(
+                "Enter a valid Python package name (letters, numbers, underscores only):",
+                style=custom_style,
+            )
+            .ask()
+            .strip()
+        )
+    else:
+        package_name = suggested_package_name
+
+    framework_choices = [
+        name + (" (default)" if id == "langchain" else "")
+        for name, id in FRAMEWORKS
+    ]
+    framework_name = questionary.select(
+        "Choose your agent framework:",
+        choices=framework_choices,
+        default="Langchain (default)",
+        style=custom_style,
+    ).ask()
+
+    # Remove " (default)" suffix if present
+    framework_name = framework_name.replace(" (default)", "")
+    framework = next(id for name, id in FRAMEWORKS if name == framework_name)
+
+    console.print(f"\n[blue]Creating your onchain agent project: {project_name}[/blue]")
+
+    copier_data = {
+        "_project_name": project_name,
+        "_package_name": package_name,
+        "_framework": framework,
+    }
+
+    try:
+        template_path = get_template_path("beginner", templates_path)
+        run_copy(template_path, project_path, data=copier_data)
+
+        console.print(
+            f"[bold blue]🎉 Successfully created your AI agent in {project_path}![/bold blue]"
+        )
+
+        console.print("\n[bold]What makes this agent special?[/bold]")
+        console.print(
+            "[gray]Your AI agent comes with a secure digital wallet on the Base Sepolia network - "
+            "a network designed for development and testing with no financial risk. Your agent can:[/gray]\n"
+            "[dim]  • Check wallet balances\n"
+            "  • Send and receive tokens\n"
+            "  • Make secure financial decisions\n[/dim]"
+            "\n[gray]When you're ready to move to Base Mainnet, your agent will get $X in free transaction fees. "
+            "You can change networks anytime by updating the NETWORK_ID in your .env file.[/gray]"
+        )
+
+        console.print("\n[bold]What's next?[/bold]")
+        console.print("To get started, run the following commands:")
+        console.print(f"  [gray]- cd {project_name}[/gray]")
+        console.print("  [gray]- poetry install[/gray]")
+        console.print("  [dim]- # Open .env.local and configure your API keys[/dim]")
+        console.print("  [gray]- mv .env.local .env[/gray]")
+        console.print("  [gray]- poetry run python chatbot.py[/gray]")
+
+        console.print("\n[bold]Learn more[/bold]")
+        console.print("  - Checkout the docs")
+        console.print("    [blue]https://docs.cdp.coinbase.com/agentkit/docs/welcome[/blue]")
+        console.print("  - Visit the repo")
+        console.print("    [blue]http://github.com/coinbase/agentkit[/blue]")
+        console.print("  - Join the community")
+        console.print("    [blue]https://discord.gg/CDP[/blue]\n")
+
+    except FileNotFoundError as e:
+        console.print(f"[red]Error: {e!s}[/red]")
+        return
+
+@click.command()
+@click.option("--templates-path", type=str, help="Path to local template directory", default=None)
+@click.option(
+    "--beginner",
+    is_flag=True,
+    help="Use beginner mode with simplified setup",
+)
+def create_project(templates_path, beginner):
+    """Create a new onchain agent project with interactive prompts."""
+    ascii_art = """
+     █████   ██████  ███████ ███    ██ ████████    ██   ██ ██ ████████
+    ██   ██ ██       ██      ████   ██    ██       ██  ██  ██    ██
+    ███████ ██   ███ █████   ██ ██  ██    ██       █████   ██    ██
+    ██   ██ ██    ██ ██      ██  ██ ██    ██       ██  ██  ██    ██
+    ██   ██  ██████  ███████ ██   ████    ██       ██   ██ ██    ██
+
+                 Giving every AI agent a crypto wallet
+    """
+
+    console.print(f"[blue]{ascii_art}[/blue]")
+
+    if beginner:
+        create_beginner_project(templates_path)
+    else:
+        create_advanced_project(templates_path)
 
 
 if __name__ == "__main__":
