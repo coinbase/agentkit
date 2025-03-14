@@ -1,4 +1,4 @@
-import { AgentkitRouteConfiguration } from "./types";
+import { AgentkitRouteConfiguration, MCPRouteConfiguration } from "./types";
 
 export const EVM_NETWORKS = [
   "base-mainnet",
@@ -155,17 +155,18 @@ export const AgentkitRouteConfigurations: Record<
   },
 };
 
-export const Frameworks = ["Langchain", "Vercel AI SDK"] as const;
+export const Frameworks = ["Langchain", "Vercel AI SDK", "Model Context Protocol"] as const;
 
 export type Framework = (typeof Frameworks)[number];
 
-export const Templates = ["next"] as const;
+export const Templates = ["next", "mcp"] as const;
 
 export type Template = (typeof Templates)[number];
 
 export const FrameworkToTemplates: Record<Framework, Template[]> = {
   Langchain: ["next"],
   "Vercel AI SDK": ["next"],
+  "Model Context Protocol": ["mcp"],
 };
 
 export type NextTemplateRouteConfiguration = {
@@ -183,5 +184,45 @@ export const NextTemplateRouteConfigurations: Partial<
   "Vercel AI SDK": {
     apiRoute: "vercel-ai-sdk/route.ts",
     createAgentRoute: "vercel-ai-sdk/create-agent.ts",
+  },
+};
+
+export const MCPRouteConfigurations: Record<
+  "EVM" | "CUSTOM_EVM" | "SVM",
+  Partial<Record<WalletProviderChoice, MCPRouteConfiguration>>
+> = {
+  EVM: {
+    CDP: {
+      getAgentkitRoute: "evm/cdp/getAgentKit.ts",
+      configRoute: "evm/cdp/claude_desktop_config.json",
+    },
+    Viem: {
+      getAgentkitRoute: "evm/viem/getAgentKit.ts",
+      configRoute: "evm/viem/claude_desktop_config.json",
+    },
+    Privy: {
+      getAgentkitRoute: "evm/privy/getAgentKit.ts",
+      configRoute: "evm/privy/claude_desktop_config.json",
+    },
+    SmartWallet: {
+      getAgentkitRoute: "evm/smart/getAgentKit.ts",
+      configRoute: "evm/smart/claude_desktop_config.json",
+    },
+  },
+  CUSTOM_EVM: {
+    Viem: {
+      getAgentkitRoute: "custom-evm/viem/getAgentKit.ts",
+      configRoute: "custom-evm/viem/claude_desktop_config.json",
+    },
+  },
+  SVM: {
+    SolanaKeypair: {
+      getAgentkitRoute: "svm/solana-keypair/getAgentKit.ts",
+      configRoute: "svm/solana-keypair/claude_desktop_config.json",
+    },
+    Privy: {
+      getAgentkitRoute: "svm/privy/getAgentKit.ts",
+      configRoute: "svm/privy/claude_desktop_config.json",
+    },
   },
 };
