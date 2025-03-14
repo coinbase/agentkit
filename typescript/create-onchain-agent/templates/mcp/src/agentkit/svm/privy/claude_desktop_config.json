@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "agentkit": {
+      "command": "node",
+      "args": ["{absolutePath}/build/index.js"],
+      "env": {
+        "PRIVY_APP_ID": "",
+        "PRIVY_APP_SECRET": "",
+        "PRIVY_WALLET_ID": "",
+        "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY": "",
+        "PRIVY_WALLET_AUTHORIZATION_KEY_ID": "",
+        "NETWORK_ID": "solana-devnet",
+        "CDP_API_KEY_NAME": "",
+        "CDP_API_KEY_PRIVATE_KEY": ""
+      }
+    }
+  }
+}
