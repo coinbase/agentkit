@@ -1,5 +1,0 @@
----
-"@coinbase/agentkit": patch
----
-
-Fixed bug in Morpho action provider to allow depositing ERC20 tokens of variable decimal precision
