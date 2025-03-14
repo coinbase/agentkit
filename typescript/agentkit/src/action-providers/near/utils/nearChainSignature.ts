@@ -19,7 +19,6 @@ import {
  * Convert a najPublicKeyStr to an uncompressed hex point.
  *
  * @param najPublicKeyStr - The najPublicKeyStr to convert.
- *
  * @returns The uncompressed hex point.
  */
 function najPublicKeyStrToUncompressedHexPoint(najPublicKeyStr: string): string {
@@ -33,7 +32,6 @@ function najPublicKeyStrToUncompressedHexPoint(najPublicKeyStr: string): string 
  * @param parentUncompressedPublicKeyHex - The parent public key
  * @param accountId - The account ID
  * @param path - The path
- * 
  * @returns The child public key
  */
 export function deriveChildPublicKey(
@@ -68,20 +66,14 @@ export enum AddressType {
   BITCOIN_TESTNET_SEGWIT = "bitcoin-testnet-segwit",
 }
 
-type GenerateAddressParams = {
-  publicKey: string;
-  accountId: string;
-  path: string;
-  addressType: AddressType;
-};
-
 /**
  * Generate an address
  *
- * @param publicKey - The public key.
- * @param accountId - The account ID.
- * @param path - The path.
- * @param addressType - The address type.
+ * @param publicKey - The public key
+ * @param accountId - The account ID
+ * @param path - The path
+ * @param addressType - The address type
+ * @returns The generated address
  */
 export function generateAddress(
   publicKey: string,
@@ -125,7 +117,6 @@ export function generateAddress(
  * Get the root public key by network
  *
  * @param network - The NEAR network ID.
- *
  * @returns The root public key.
  */
 export function getRootPublicKey(network: NEAR_NETWORK_ID): string {
@@ -143,7 +134,6 @@ export function getRootPublicKey(network: NEAR_NETWORK_ID): string {
  * Get the MPC account ID by network
  *
  * @param network - The NEAR network ID.
- *
  * @returns The MPC account ID.
  */
 export function getMpcAccountIdByNetwork(network: NEAR_NETWORK_ID): string {
