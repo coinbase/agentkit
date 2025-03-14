@@ -8,7 +8,39 @@ import {
   SVM_NETWORKS,
   AgentkitRouteConfigurations,
   NextTemplateRouteConfigurations,
+  MCPRouteConfigurations,
 } from "./constants.js";
+
+/**
+ * Copied from `@coinbase/agentkit` so that we don't need to depend on it.
+ * Maps EVM chain IDs to Coinbase network IDs
+ */
+export const CHAIN_ID_TO_NETWORK_ID: Record<number, string> = {
+  1: "ethereum-mainnet",
+  11155111: "ethereum-sepolia",
+  137: "polygon-mainnet",
+  80001: "polygon-mumbai",
+  8453: "base-mainnet",
+  84532: "base-sepolia",
+  42161: "arbitrum-mainnet",
+  421614: "arbitrum-sepolia",
+  10: "optimism-mainnet",
+  11155420: "optimism-sepolia",
+};
+
+/**
+ * Copied from `@coinbase/agentkit` so that we don't need to depend on it.
+ * Maps Coinbase network IDs to EVM chain IDs
+ */
+export const NETWORK_ID_TO_CHAIN_ID: Record<string, string> = Object.entries(
+  CHAIN_ID_TO_NETWORK_ID,
+).reduce(
+  (acc, [chainId, networkId]) => {
+    acc[networkId] = String(chainId);
+    return acc;
+  },
+  {} as Record<string, string>,
+);
 
 /**
  * Determines the network family based on the provided network.
@@ -192,7 +224,7 @@ export async function handleNextSelection(
   network?: Network,
   chainId?: string,
   rpcUrl?: string,
-) {
+): Promise<void> {
   const agentDir = path.join(root, "app", "api", "agent");
 
   const networkFamily = getNetworkType(network, chainId);
@@ -251,4 +283,96 @@ export async function handleNextSelection(
   // Delete boilerplate routes
   await fs.rm(path.join(agentDir, "agentkit"), { recursive: true, force: true });
   await fs.rm(path.join(agentDir, "framework"), { recursive: true, force: true });
+}
+
+/**
+ * Handles the selection of a network and wallet provider, updating the project configuration accordingly.
+ *
+ * This function:
+ * - Determines the network family (`EVM` or `SVM`) based on the provided network or chain ID.
+ * - Retrieves the correct route configuration for the selected wallet provider.
+ * - Creates or updates the `.env.local` file with required and optional environment variables.
+ * - Moves the selected API route file to `api/agent/route.ts`.
+ * - Deletes all unselected API routes and cleans up empty directories.
+ *
+ * @param {string} root - The root directory of the project.
+ * @param {WalletProviderChoice} walletProvider - The selected wallet provider.
+ * @param {Network} [network] - The optional blockchain network.
+ * @param {string} [chainId] - The optional chain ID for the network.
+ * @param {string} [rpcUrl] - The optional RPC URL for the network.
+ *
+ * @returns {Promise<void>} A promise that resolves when the function completes.
+ */
+export async function handleMcpSelection(
+  root: string,
+  walletProvider: WalletProviderChoice,
+  network?: Network,
+  chainId?: string,
+  rpcUrl?: string,
+): Promise<void> {
+  const srcDir = path.join(root, "src");
+
+  const networkFamily = getNetworkType(network, chainId);
+  if (!networkFamily) {
+    throw new Error("Unsupported network and chainId selected");
+  }
+
+  const mcpConfig = MCPRouteConfigurations[networkFamily][walletProvider];
+  if (!mcpConfig) {
+    throw new Error("Selected invalid network & wallet provider combination");
+  }
+
+  /**
+   * Copies the claude_desktop_config.json file to the root directory
+   * and replaces the {parentFolderPath} placeholder with the absolute path.
+   */
+  async function copyAndReplaceConfig() {
+    const existingConfig = await fs.readFile(
+      path.join(srcDir, "agentkit", mcpConfig!.configRoute),
+      "utf-8",
+    );
+    const configJson = JSON.parse(existingConfig);
+
+    configJson.mcpServers.agentkit.args[0] = configJson.mcpServers.agentkit.args[0].replace(
+      "{absolutePath}",
+      root,
+    );
+
+    if (network) {
+      // privy uses CHAIN_ID, others use NETWORK_ID
+      if (configJson.mcpServers.agentkit.env.NETWORK_ID) {
+        configJson.mcpServers.agentkit.env.NETWORK_ID = network;
+      }
+
+      if (configJson.mcpServers.agentkit.env.CHAIN_ID) {
+        configJson.mcpServers.agentkit.env.CHAIN_ID = NETWORK_ID_TO_CHAIN_ID[network];
+      }
+    }
+
+    if (chainId) {
+      configJson.mcpServers.agentkit.env.CHAIN_ID = chainId;
+    }
+
+    if (rpcUrl) {
+      configJson.mcpServers.agentkit.env.RPC_URL = rpcUrl;
+    }
+
+    await fs.writeFile(
+      path.join(root, "claude_desktop_config.json"),
+      JSON.stringify(configJson, null, 2),
+    );
+  }
+
+  // Promote selected routes to
+  const promoteRoute = async (toPromote: string, to: string) => {
+    const selectedRoutePath = path.join(srcDir, "agentkit", toPromote);
+    const newRoutePath = path.join(srcDir, to);
+    await fs.rename(selectedRoutePath, newRoutePath);
+  };
+
+  await copyAndReplaceConfig();
+
+  await promoteRoute(mcpConfig.getAgentkitRoute, "getAgentKit.ts");
+
+  await fs.rm(path.join(srcDir, "agentkit"), { recursive: true, force: true });
 }
