@@ -45,7 +45,7 @@ class NillionActionProvider(ActionProvider):
         """Initialize config with JWTs signed with ES256K for multiple node_ids; Add cluster key."""
         self.org_did = org_did
         response = requests.post(
-            "https://sv-sda-registration.replit.app/api/config",
+            "https://secret-vault-registration.replit.app/api/config",
             headers={
                 "Content-Type": "application/json",
             },
@@ -127,15 +127,15 @@ class NillionActionProvider(ActionProvider):
         return my_schema
 
     def _mutate_secret_attributes(self, entry: dict) -> None:
-        """Apply encrypotion or secret sharing to all fields in schema that are indicated w/ $share keyname."""
+        """Apply encryption or secret sharing to all fields in schema that are indicated w/ %share keyname."""
         keys = list(entry.keys())
         for key in keys:
             value = entry[key]
             if key == "_id":
                 entry[key] = str(uuid.uuid4())
-            elif key == "$share":
-                del entry["$share"]
-                entry["$allot"] = nilql.encrypt(self.key, value)
+            elif key == "%share":
+                del entry["%share"]
+                entry["%allot"] = nilql.encrypt(self.key, value)
             elif isinstance(value, dict):
                 self._mutate_secret_attributes(value)
 
@@ -143,50 +143,6 @@ class NillionActionProvider(ActionProvider):
         """Build a validator to validate the candidate document against loaded schema."""
         return validators.extend(Draft7Validator)
 
-    '''
-
-    def post(self, data_to_store: list) -> list:
-        """Create/upload records in the specified node and schema."""
-        print(f"fn:data_upload [{self.schema_uuid}] [{data_to_store}]")
-        try:
-
-            builder = self._validator_builder()
-            validator = builder(self.schema_definition)
-
-            for entry in data_to_store:
-                self._mutate_secret_attributes(entry)
-
-            record_uuids = [x["_id"] for x in data_to_store]
-            payloads = nilql.allot(data_to_store)
-
-            for idx, shard in enumerate(payloads):
-
-                validator.validate(shard)
-
-                node = self.nodes[idx]
-                headers = {
-                    "Authorization": f'Bearer {node["bearer"]}',
-                    "Content-Type": "application/json",
-                }
-
-                body = {"schema": self.schema_uuid, "data": shard}
-
-                response = requests.post(
-                    f"{node['url']}/api/v1/data/create",
-                    headers=headers,
-                    json=body,
-                )
-
-                assert (
-                    response.status_code == 200
-                    and response.json().get("errors", []) == []
-                ), f"upload (host-{idx}) failed: " + response.content.decode("utf8")
-            print(f"fn:data_upload COMPLETED: {record_uuids}")
-            return record_uuids
-        except Exception as e:
-            print(f"Error creating records in node: {e!r}")
-            return []
-    '''
 
     @create_action(
         name="lookup_schema",
@@ -337,7 +293,7 @@ A failure response will return a tuple with empty values
             schema_prompt = f"""
             1. I'll provide you with a description of the schema I want to implement
             3. For any fields that could be considered financial, secret, currency, value holding, political, family values, sexual, criminal, risky, personal, private or personally
-               identifying (PII), I want you to replace that type and value, instead, with an object that has a key named `$share` and the value of string as shown in this example:
+               identifying (PII), I want you to replace that type and value, instead, with an object that has a key named `%share` and the value of string as shown in this example:
 
                 ORIGINAL ATTRIBUTE:
                 "password": {{
@@ -348,7 +304,7 @@ A failure response will return a tuple with empty values
                 "password": {{
                     "type": "object",
                     "properties": {{
-                        "$share": {{
+                        "%share": {{
                           "type": "string",
                          }}
                      }}
@@ -367,6 +323,7 @@ A failure response will return a tuple with empty values
             - Mark required fields (_id is always required)
             - Set additionalProperties to false
             - Avoid "$" prefix in field names to prevent query conflicts
+            - Avoid "%" prefix in field names to prevent query conflicts
             - The schema to create is embedded in the "schema" attribute
             - "_id" should be the only "keys"
             - Note: System adds _created and _updated fields automatically
@@ -404,18 +361,22 @@ A failure response will return a tuple with empty values
             {validated_args.schema_description}
             """
 
-            llm = ChatOpenAI(model="gpt-4o-mini")
-            response = llm.invoke(schema_prompt)
+            try:
+                llm = ChatOpenAI(model="gpt-4o-mini")
+                response = llm.invoke(schema_prompt)
 
-            schema = json.loads(str(response.content))
+                schema = json.loads(str(response.content))
 
-            schema["_id"] = str(uuid.uuid4())
-            schema["owner"] = self.org_did
+                schema["_id"] = str(uuid.uuid4())
+                schema["owner"] = self.org_did
+            except Exception as e:
+                print(f"Error invoking model: {str(e)}")
+                raise
 
             deque(
                 self._post(self.nodes, "schemas", schema), maxlen=0
             )  # discard results since we throw on err
-            print(f'fn:create_schema [{schema["_id"]}]')
+            print(f'fn:create_schema COMPLETE [{schema["_id"]}]')
             return schema["_id"], schema
         except Exception as e:
             print(f"Error creating schema: {str(e)}")
