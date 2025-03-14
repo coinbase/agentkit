@@ -130,6 +130,7 @@ export async function isRegisteredAccount(account: string) {
         rpcProvider: getTestnetRpcProvider(),
       },
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
     if (e.type === "AccountDoesNotExist" || e.type === "RetriesExceeded") {
       return false;

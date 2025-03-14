@@ -32,11 +32,22 @@ export interface MpcContractInterface extends Contract {
   sign: (args: ChangeMethodArgs<SignArgs>) => Promise<MPCSignature>;
 }
 
+/**
+ *
+ */
 export class MpcContract {
   contract: MpcContractInterface;
   connectedAccount: Account;
   contractId: string;
 
+  /**
+   * Create a new MPC contract instance
+   * 
+   * @param connection - Near connection
+   * @param contractId - The MPC contract ID
+   * 
+   * @returns A new MPC contract instance
+   */
   constructor(connection: Connection, contractId: string) {
     this.connectedAccount = new Account(connection, contractId);
     this.contractId = contractId;
@@ -47,10 +58,22 @@ export class MpcContract {
     }) as MpcContractInterface;
   }
 
+  /**
+   * Get the experimental signature deposit from the MPC contract instance
+   * 
+   * @returns The experimental signature deposit
+   */
   public async getExperimentalSignatureDeposit(): Promise<string> {
     return this.contract.experimental_signature_deposit();
   }
 
+  /**
+   * Get the sign action from the MPC contract instance
+   * 
+   * @param signArgs - The sign arguments
+   * 
+   * @returns The sign action
+   */
   public async getSignAction(signArgs: SignArgs): Promise<NearAction> {
     const signatureDeposit = await this.getExperimentalSignatureDeposit();
 
