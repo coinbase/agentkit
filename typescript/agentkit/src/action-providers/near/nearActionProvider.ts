@@ -40,11 +40,6 @@ export class NearActionProvider extends ActionProvider<NEARWalletProvider> {
     super("near", []);
   }
 
-  // Define if the action provider supports the given network
-  supportsNetwork = (network: Network) =>
-    network.protocolFamily === NEAR_PROTOCOL_FAMILY &&
-    SUPPORTED_NETWORKS.includes(network.networkId!);
-
   /**
    * Returns the cross chain address for the given account id, network id, path and address type
    *
@@ -145,7 +140,11 @@ export class NearActionProvider extends ActionProvider<NEARWalletProvider> {
 
     return `The signature result is big_r: ${big_r.affine_point}, big_s: ${s.scalar} and recovery_id: ${recoveryId}`;
   }
+
+  // Define if the action provider supports the given network
+  supportsNetwork = (network: Network) =>
+    network.protocolFamily === NEAR_PROTOCOL_FAMILY &&
+    SUPPORTED_NETWORKS.includes(network.networkId!);
 }
 
 export const nearActionProvider = () => new NearActionProvider();
-
