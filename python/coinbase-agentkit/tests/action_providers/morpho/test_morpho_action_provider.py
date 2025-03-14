@@ -10,6 +10,7 @@ MOCK_VAULT_ADDRESS = "0x1234567890123456789012345678901234567890"
 MOCK_TOKEN_ADDRESS = "0x0987654321098765432109876543210987654321"
 MOCK_RECEIVER = "0x5555555555555555555555555555555555555555"
 MOCK_TX_HASH = "0xabcdef1234567890"
+MOCK_DECIMALS = 18
 
 
 # Deposit Tests
@@ -17,6 +18,7 @@ def test_morpho_deposit_success():
     """Test successful morpho deposit with valid parameters."""
     mock_wallet = MagicMock()
     mock_wallet.send_transaction.return_value = MOCK_TX_HASH
+    mock_wallet.read_contract.return_value = MOCK_DECIMALS
 
     with patch(
         "coinbase_agentkit.action_providers.morpho.morpho_action_provider.approve"
