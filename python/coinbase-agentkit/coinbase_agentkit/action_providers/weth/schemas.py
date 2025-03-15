@@ -2,7 +2,7 @@
 
 import re
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from .constants import MIN_WRAP_AMOUNT
 
@@ -12,7 +12,7 @@ class WrapEthSchema(BaseModel):
 
     amount_to_wrap: str = Field(..., description="Amount of ETH to wrap in wei")
 
-    @validator("amount_to_wrap")
+    @field_validator("amount_to_wrap")
     @classmethod
     def validate_amount(cls, v: str) -> str:
         """Validate that amount is a valid wei value (whole number as string)."""
