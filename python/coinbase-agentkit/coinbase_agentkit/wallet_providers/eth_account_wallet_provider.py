@@ -7,7 +7,7 @@ from typing import Any
 from eth_account.account import LocalAccount
 from eth_account.datastructures import SignedTransaction
 from eth_account.messages import encode_defunct
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from web3 import Web3
 from web3.middleware import SignAndSendRawMiddlewareBuilder
 from web3.types import BlockIdentifier, ChecksumAddress, HexStr, TxParams
@@ -24,10 +24,7 @@ class EthAccountWalletProviderConfig(BaseModel):
     gas: EvmGasConfig | None = Field(None, description="Gas configuration settings")
     rpc_url: str | None = Field(None, description="Optional RPC URL to override default chain RPC")
 
-    class Config:
-        """Configuration for EthAccountWalletProvider."""
-
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class EthAccountWalletProvider(EvmWalletProvider):
