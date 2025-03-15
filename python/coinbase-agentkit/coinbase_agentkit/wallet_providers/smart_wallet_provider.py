@@ -5,7 +5,7 @@ from cdp import Cdp, EncodedCall, SmartWallet, UserOperation, to_smart_wallet
 from cdp.evm_call_types import ContractCall
 from eth_account.account import LocalAccount
 from eth_account.datastructures import SignedTransaction
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from web3 import Web3
 from web3.types import BlockIdentifier, ChecksumAddress, HexStr, TxParams
 
@@ -26,10 +26,7 @@ class SmartWalletProviderConfig(BaseModel):
         None, description="URL for the paymaster service to sponsor transactions"
     )
 
-    class Config:
-        """Configuration for SmartWalletProvider."""
-
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class SmartWalletProvider(EvmWalletProvider):
