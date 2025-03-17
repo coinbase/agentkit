@@ -4,7 +4,7 @@
 
 Add support for Privy Evm embedded wallets with delegation.
 
-This change introduces a new wallet provider, `PrivyEvmEmbeddedWalletProvider`, which allows AgentKit to use Privy's embedded wallets that have been delegated to a server. This enables autonomous agents to perform on-chain actions on behalf of users who have delegated transaction signing authority to the agent.
+This change introduces a new wallet provider, `PrivyEvmEmbeddedWalletProvider`, which allows AgentKit to use Privy's embedded wallets that have been delegated to a server. This enables autonomous agents to perform onchain actions on behalf of users who have delegated transaction signing authority to the agent.
 
 Key changes:
 - Add `PrivyEvmEmbeddedWalletProvider` class extending the `EvmWalletProvider` base class
