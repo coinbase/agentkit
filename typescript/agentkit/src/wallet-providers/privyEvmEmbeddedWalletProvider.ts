@@ -1,4 +1,3 @@
-// src/wallet-providers/privyEmbeddedWalletProvider.ts
 import { EvmWalletProvider } from "./evmWalletProvider";
 import { Network } from "../network";
 
