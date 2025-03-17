@@ -6,6 +6,7 @@ import { KeyPair } from "@near-js/crypto";
 import { Connection, ConnectionConfig } from "@near-js/accounts";
 import { InMemoryKeyStore } from "@near-js/keyStores";
 import type { TxExecutionStatus, FinalExecutionOutcome } from "@near-js/types";
+import { actionCreators } from "@near-js/transactions";
 
 import { NEAR_MAINNET_NETWORK_ID, NEAR_NETWORK_ID, NEAR_NETWORKS, Network } from "../network";
 import { NEARWalletProvider, TransactionSenderParams } from "./nearWalletProvider";
@@ -149,7 +150,17 @@ export class NearKeypairWalletProvider extends NEARWalletProvider {
    * @returns The transaction hash
    */
   async nativeTransfer(to: string, value: string): Promise<string> {
-    throw new Error("Method not implemented.");
+    await this.connectIfNeeded();
+    const amountYocto = nearUtils.format.parseNearAmount(value);
+    if (!amountYocto) {
+      throw new Error("Error converting amount to yoctonear");
+    }
+    const action = actionCreators.transfer(BigInt(amountYocto));
+    const outcome = await this.account.signAndSendTransaction({
+      receiverId: to,
+      actions: [action],
+    });
+    return outcome.transaction.hash;
   }
 
   /**
