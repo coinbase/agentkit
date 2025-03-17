@@ -17,7 +17,7 @@ import {
 /**
  * Configuration options for the Privy Embedded Wallet provider.
  */
-export interface PrivyEmbeddedWalletConfig {
+export interface PrivyEvmEmbeddedWalletConfig {
   /** The Privy App ID */
   appId: string;
 
@@ -51,7 +51,7 @@ export interface PrivyEmbeddedWalletConfig {
  * This provider extends the EvmWalletProvider to provide Privy-specific wallet functionality
  * while maintaining compatibility with the base wallet provider interface.
  */
-export class PrivyEmbeddedWalletProvider extends EvmWalletProvider {
+export class PrivyEvmEmbeddedWalletProvider extends EvmWalletProvider {
   private walletId: string;
   private address: string;
   private appId: string;
@@ -67,7 +67,7 @@ export class PrivyEmbeddedWalletProvider extends EvmWalletProvider {
    * @param config - The configuration options for the wallet provider
    * @param address - The wallet address
    */
-  private constructor(config: PrivyEmbeddedWalletConfig, address: string) {
+  private constructor(config: PrivyEvmEmbeddedWalletConfig, address: string) {
     super();
 
     this.walletId = config.walletId;
@@ -102,8 +102,8 @@ export class PrivyEmbeddedWalletProvider extends EvmWalletProvider {
    * ```
    */
   public static async configureWithWallet(
-    config: PrivyEmbeddedWalletConfig,
-  ): Promise<PrivyEmbeddedWalletProvider> {
+    config: PrivyEvmEmbeddedWalletConfig,
+  ): Promise<PrivyEvmEmbeddedWalletProvider> {
     try {
       // Fetch wallet details to get the address
       const headers = {
@@ -120,7 +120,7 @@ export class PrivyEmbeddedWalletProvider extends EvmWalletProvider {
         throw new Error(`Could not find wallet address for wallet ID ${config.walletId}`);
       }
 
-      return new PrivyEmbeddedWalletProvider(config, walletAddress);
+      return new PrivyEvmEmbeddedWalletProvider(config, walletAddress);
     } catch (error) {
       if (error instanceof Error) {
         throw new Error("Failed to configure Privy embedded wallet provider: " + error.message);
