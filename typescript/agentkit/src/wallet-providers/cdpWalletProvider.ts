@@ -567,4 +567,41 @@ export class CdpWalletProvider extends EvmWalletProvider {
     }
     return this.#cdpWallet;
   }
+
+  /**
+   * ERC20 transfer method
+   *
+   * @param options - The transfer options
+   * @returns The transaction hash
+   */
+  async erc20Transfer(
+    assetId: typeof Coinbase.assets.Usdc | typeof Coinbase.assets.Cbbtc | typeof Coinbase.assets.Eurc,
+    destination: `0x${string}`,
+    amount: bigint
+  ): Promise<`0x${string}`> {
+    if (!this.#cdpWallet) {
+      throw new Error("Wallet not initialized");
+    }
+
+    console.info({
+      amount,
+      assetId,
+      destination,
+      gasless: true,
+    });
+    const transferResult = await this.#cdpWallet.createTransfer({
+      amount,
+      assetId,
+      destination,
+      gasless: true,
+    });
+
+    const result = await transferResult.wait();
+
+    if (!result.getTransactionHash()) {
+      throw new Error("Transaction hash not found");
+    }
+
+    return result.getTransactionHash() as `0x${string}`;
+  }
 }
