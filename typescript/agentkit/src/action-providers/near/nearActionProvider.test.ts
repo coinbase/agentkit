@@ -1,4 +1,6 @@
 import { Connection } from "@near-js/accounts";
+import { Provider, JsonRpcProvider } from "@near-js/providers";
+import { InMemoryKeyStore } from "@near-js/keyStores";
 import { NEAR_MAINNET_NETWORK, NEAR_MAINNET_NETWORK_ID, NEAR_NETWORK_ID } from "../../network";
 import { NEARWalletProvider } from "../../wallet-providers";
 import { NearActionProvider } from "./nearActionProvider";
@@ -7,13 +9,26 @@ import { MpcContract } from "./utils";
 describe("NearActionProvider", () => {
   const actionProvider = new NearActionProvider();
   let mockWallet: jest.Mocked<NEARWalletProvider>;
+  let mockProvider: jest.Mocked<Provider>;
+  let mockConnection: jest.Mocked<Connection>;
+  let mockSigner: jest.Mocked<InMemoryKeyStore>;
 
   const MOCK_ADDRESS = "wallet.near";
   const MOCK_CONTRACT = "contract.near";
   const MOCK_DESTINATION = "destination.near";
   const MOCK_TX_HASH = "5j2XGJZXq8McE9x4Y8EJ3f9tVQvFfY6zK7k1d9QXp6Bq";
+  const ACCOUNT_ID = "jsvm.testnet";
 
   beforeEach(() => {
+    mockProvider = new JsonRpcProvider("https://rpc.testnet.near.org");
+    mockSigner = new InMemoryKeyStore();
+    mockConnection = new Connection(
+      NEAR_MAINNET_NETWORK,
+      mockProvider,
+      mockSigner,
+      ACCOUNT_ID
+    );
+
     mockWallet = {
       getAddress: jest.fn().mockReturnValue(MOCK_ADDRESS),
       getNetwork: jest.fn().mockReturnValue(NEAR_MAINNET_NETWORK),
@@ -22,19 +37,12 @@ describe("NearActionProvider", () => {
       nativeTransfer: jest.fn().mockResolvedValue(MOCK_TX_HASH as `0x${string}`),
       getAccount: jest.fn().mockReturnValue({
         accountId: MOCK_ADDRESS,
-        connection: {} as any,
+        connection: mockConnection,
         contract: MOCK_CONTRACT,
         destination: MOCK_DESTINATION,
         signAndSendTransaction: jest.fn().mockResolvedValue(MOCK_TX_HASH as `0x${string}`),
       }),
-      getConnection: jest.fn().mockReturnValue(
-        new Connection(
-          NEAR_MAINNET_NETWORK,
-          {} as any,
-          {} as any,
-          "jsvm.testnet", // jsvmAccountId
-        ),
-      ),
+      getConnection: jest.fn().mockReturnValue(mockConnection),
       getPublicKey: jest.fn().mockReturnValue("0494da"),
       signAndSendTransaction: jest.fn().mockResolvedValue(MOCK_TX_HASH as `0x${string}`),
     } as unknown as jest.Mocked<NEARWalletProvider>;
