@@ -268,7 +268,8 @@ export class PrivyEvmEmbeddedWalletProvider extends EvmWalletProvider {
     type: number;
   }> {
     void txHash; // Mark parameter as intentionally unused
-    // Implementation depends on having a provider
+    /**This is not used implemented and used currently.
+    added here for the sake of an error that has to do with inheriting the evmWalletProvider */
     throw new Error("Method not implemented");
   }
 
@@ -296,7 +297,7 @@ export class PrivyEvmEmbeddedWalletProvider extends EvmWalletProvider {
    * @returns The name of the wallet provider
    */
   getName(): string {
-    return "privy_embedded_wallet_provider";
+    return "privy_evm_embedded_wallet_provider";
   }
 
   /**
