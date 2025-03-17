@@ -79,7 +79,7 @@ describe("Chain Signature Utils", () => {
 
       cases.forEach(
         ({ publicKey, accountId, path, addressType, expectedAddress, expectedPublicKey }) => {
-          const result = generateAddress({ publicKey, accountId, path, addressType });
+          const result = generateAddress(publicKey, accountId, path, addressType);
 
           expect(result).toHaveProperty("address", expectedAddress);
           expect(result).toHaveProperty("publicKey", expectedPublicKey);
@@ -88,15 +88,14 @@ describe("Chain Signature Utils", () => {
     });
 
     it("should throw an error for unsupported address types", () => {
-      expect(() =>
-        generateAddress({
-          publicKey:
-            "secp256k1:4NfTiv3UsGahebgTaHyD9vF8KYKMBnfd6kh94mK6xv8fGBiJB8TBtFMP5WWXz6B89Ac1fbpzPwAvoyQebemHFwx3",
-          accountId: "omnitester.testnet",
-          path: "0",
-          addressType: AddressType.BITCOIN_MAINNET_LEGACY,
-        }),
-      ).toThrow("Unsupported address type: bitcoin-mainnet-legacy");
+      const publicKey =
+        "secp256k1:4NfTiv3UsGahebgTaHyD9vF8KYKMBnfd6kh94mK6xv8fGBiJB8TBtFMP5WWXz6B89Ac1fbpzPwAvoyQebemHFwx3";
+      const accountId = "omnitester.testnet";
+      const path = "0";
+      const addressType = AddressType.BITCOIN_MAINNET_LEGACY;
+      expect(() => generateAddress(publicKey, accountId, path, addressType)).toThrow(
+        "Unsupported address type: bitcoin-mainnet-legacy",
+      );
     });
   });
 
@@ -110,6 +109,7 @@ describe("Chain Signature Utils", () => {
     });
 
     it("should throw an error for unsupported networks", () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect(() => getRootPublicKey("invalid-network" as any)).toThrow(
         "Unsupported network: invalid-network",
       );
@@ -126,6 +126,7 @@ describe("Chain Signature Utils", () => {
     });
 
     it("should throw an error for unsupported networks", () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect(() => getMpcAccountIdByNetwork("invalid-network" as any)).toThrow(
         "Unsupported network: invalid-network",
       );

@@ -25,7 +25,7 @@ export const GetCrossChainAddressInput = z.object({
     .describe(
       "The address type based on the target chain and type of address for networks like Bitcoin and Ethereum (e.g., 'evm' or 'bitcoin-mainnet-legacy').",
     )
-    .refine(val => SUPPORTED_ADDRESS_TYPES.includes(val as any), {
+    .refine(val => SUPPORTED_ADDRESS_TYPES.includes(val), {
       message: `Unsupported address type. Supported address types are: ${SUPPORTED_ADDRESS_TYPES.join(", ")}`,
     }),
 });
