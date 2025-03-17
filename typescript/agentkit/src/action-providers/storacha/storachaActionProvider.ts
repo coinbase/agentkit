@@ -8,22 +8,21 @@ import {
     StorachaUploadFilesSchema,
 } from "./schemas";
 import { initStorachaClient } from "./client";
-import type { Client } from "@storacha/client";
+import type { Client } from "@web3-storage/w3up-client/client";
 
 /**
  * Configuration options for the StorachaActionProvider.
  */
 export interface StorachaActionProviderConfig {
     /**
-     * Storacha Private Key
+     * Storacha Agent Private Key
      */
-    key?: string;
+    agentPrivateKey?: string;
 
     /**
-     * Storacha Space Proof
+     * Storacha Agent Delegation
      */
-    proof?: string;
-
+    agentDelegation?: string;
 
 }
 
@@ -41,16 +40,18 @@ export class StorachaActionProvider extends ActionProvider {
     constructor(config: StorachaActionProviderConfig = {}) {
         super("storacha", []);
 
-        config.key ||= process.env.STORACHA_PRIVATE_KEY;
-        config.proof ||= process.env.STORACHA_PROOF;
+        config.agentPrivateKey ||= process.env.STORACHA_AGENT_PRIVATE_KEY;
+        config.agentDelegation ||= process.env.STORACHA_AGENT_DELEGATION;
 
-        if (!config.key) {
-            throw new Error("STORACHA_PRIVATE_KEY is not configured.");
+
+
+        if (!config.agentPrivateKey) {
+            throw new Error("Agent private key is missing from the storage client configuration");
+        }
+        if (!config.agentDelegation) {
+            throw new Error("Agent delegation is missing from the storage client configuration");
         }
 
-        if (!config.proof) {
-            throw new Error("STORACHA_PROOF is not configured.");
-        }
         this.config = config;
 
 
@@ -62,13 +63,17 @@ export class StorachaActionProvider extends ActionProvider {
         // TODO
     }
 
+    // https://github.com/storacha/elizaos-plugin/blob/main/src/utils.ts#L8
+
     private getClient = async () => {
 
         if (!this.client) {
             const { client } = await initStorachaClient({
-                keyString: this.config.key!,
-                proofString: this.config.proof!,
+                privateKeyString: this.config.agentPrivateKey!,
+                delegationString: this.config.agentDelegation!,
             });
+
+
 
             this.client = client;
         }
@@ -89,13 +94,15 @@ export class StorachaActionProvider extends ActionProvider {
 This tool will upload files to Storacha
 
 A successful response will return a message with root data CID for in the JSON payload:
-    [{"cid":"bafybeib"}]
+    [{"cid":"bafybeib..."}]
 `,
         schema: StorachaUploadFilesSchema,
     })
     async uploadFiles(args: z.infer<typeof StorachaUploadFilesSchema>): Promise<string> {
 
         // TODO
+
+        // this.client.
 
         return '';
     }

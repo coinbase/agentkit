@@ -3,7 +3,8 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "module": "Node16"
+    "module": "ES2020",
+    "moduleResolution": "bundler",
   },
   "include": ["src/**/*.ts"],
   "exclude": ["src/tests"]

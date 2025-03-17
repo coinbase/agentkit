@@ -1,14 +1,18 @@
+import { readFileSync, statSync } from "node:fs";
+import { basename } from "node:path";
 import {
     Signer,
     type DID as W3DID,
-} from "@storacha/client/principal/ed25519";
-import * as Proof from "@storacha/client/proof";
+} from "@web3-storage/w3up-client/principal/ed25519";
+import * as Proof from "@web3-storage/w3up-client/proof";
 import type {
     Client,
     EmailAddress,
     FileLike,
     ProgressStatus,
-} from "@storacha/client/types";
+    ServiceAbility,
+} from "@web3-storage/w3up-client/types";
+import { StoreMemory } from '@web3-storage/w3up-client/stores';
 
 export type DownloadProgress = {
     percent: number;
@@ -21,18 +25,17 @@ export type DownloadProgress = {
 };
 
 import * as DID from "@ipld/dag-ucan/did";
-import type { ServiceAbility } from "@storacha/client/types";
+// import type { ServiceAbility } from "@storacha/client/types";
 
-import { create } from "@storacha/client";
-import { StoreMemory } from "@storacha/client/stores/memory";
+import { create } from "@web3-storage/w3up-client";
 
 // enable sync methods
 import * as ed from "@noble/ed25519";
 import { sha512 } from "@noble/hashes/sha512";
 
 export type StorachaInitParams = {
-    keyString: string;
-    proofString: string;
+    privateKeyString: string;
+    delegationString: string;
     store?: StoreMemory;
 };
 
@@ -136,16 +139,18 @@ export const createDelegation = async (
 };
 
 export const initStorachaClient = async ({
-    keyString,
-    proofString,
+    privateKeyString,
+    delegationString,
     store = new StoreMemory(),
 }: StorachaInitParams) => {
-    const principal = Signer.parse(keyString);
+    const principal = Signer.parse(privateKeyString);
     const client = await createClient({
         principal,
     });
 
-    const proof = await Proof.parse(proofString);
+
+    // c.f. https://github.com/storacha/elizaos-plugin/blob/main/src/utils.ts#L35
+    const proof = await Proof.parse(delegationString);
     const space = await client.addSpace(proof);
 
     await client.setCurrentSpace(space.did());
@@ -158,4 +163,20 @@ export const initStorachaClient = async ({
         client,
         space,
     };
+};
+
+// do not support directory, use native function readdir/glob if necessary
+export const mapPathAsWebFile = async (filePath: string): Promise<FileLike> => {
+    const { mtime } = await statSync(filePath);
+
+    const fileContent = readFileSync(filePath);
+
+    const name = basename(filePath);
+
+    const blob = new Blob([fileContent], {});
+    const file = new File([blob], name, {
+        lastModified: mtime.getTime(),
+    });
+
+    return file;
 };
