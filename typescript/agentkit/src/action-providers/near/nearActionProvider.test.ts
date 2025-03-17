@@ -22,12 +22,7 @@ describe("NearActionProvider", () => {
   beforeEach(() => {
     mockProvider = new JsonRpcProvider("https://rpc.testnet.near.org");
     mockSigner = new InMemoryKeyStore();
-    mockConnection = new Connection(
-      NEAR_MAINNET_NETWORK,
-      mockProvider,
-      mockSigner,
-      ACCOUNT_ID
-    );
+    mockConnection = new Connection(NEAR_MAINNET_NETWORK, mockProvider, mockSigner, ACCOUNT_ID);
 
     mockWallet = {
       getAddress: jest.fn().mockReturnValue(MOCK_ADDRESS),
