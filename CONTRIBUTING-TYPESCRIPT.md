@@ -276,7 +276,7 @@ Changesets are stored in the `.changeset` directory. Each changeset is stored as
 To add a changeset, use `changesets` to create it for you:
 
 ```bash
-npx @changesets/cli
+npm run changeset
 ```
 
 This will kick off an interactive prompt to help you create the changeset. Use the arrow keys to navigate the different options, and press the `Space` key to select an option. You should select the package(s) you are making a change to – most of the time this will be `@coinbase/agentkit`. Once selected, hit `Enter`. You'll then be prompted to specify the type of change you are making (major, minor or patch), starting with major. Most of the time you will not be making a major change, so hitting `Enter` will progress to the next step. If you're adding a new feature, you should select `minor`. If you're fixing a bug, you should select `patch`. Once selected, you will be prompted to provide a summary of your changes. This should be a short, specific description in the past tense (see above for examples).
