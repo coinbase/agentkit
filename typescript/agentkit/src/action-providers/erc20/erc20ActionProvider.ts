@@ -3,7 +3,7 @@ import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
 import { GetBalanceSchema, TransferSchema } from "./schemas";
-import { abi, BASE_MAINNET_GASLESS_TOKENS, BASE_SEPOLIA_GASLESS_TOKENS } from "./constants";
+import { abi, BaseTokenToAssetId, BaseSepoliaTokenToAssetId } from "./constants";
 import { encodeFunctionData, formatUnits, Hex, getAddress } from "viem";
 import { EvmWalletProvider, CdpWalletProvider } from "../../wallet-providers";
 
@@ -92,16 +92,16 @@ Important notes:
 
       const canDoGasless =
         isCdpWallet &&
-        ((network.networkId === "base-mainnet" && BASE_MAINNET_GASLESS_TOKENS.has(tokenAddress)) ||
-          (network.networkId === "base-sepolia" && BASE_SEPOLIA_GASLESS_TOKENS.has(tokenAddress)));
+        ((network.networkId === "base-mainnet" && BaseTokenToAssetId.has(tokenAddress)) ||
+          (network.networkId === "base-sepolia" && BaseSepoliaTokenToAssetId.has(tokenAddress)));
 
       if (canDoGasless) {
         // Cast to CdpWalletProvider to access erc20Transfer
         const cdpWallet = walletProvider as CdpWalletProvider;
         const assetId =
           network.networkId === "base-mainnet"
-            ? BASE_MAINNET_GASLESS_TOKENS.get(tokenAddress)!
-            : BASE_SEPOLIA_GASLESS_TOKENS.get(tokenAddress)!;
+            ? BaseTokenToAssetId.get(tokenAddress)!
+            : BaseSepoliaTokenToAssetId.get(tokenAddress)!;
         const hash = await cdpWallet.gaslessERC20Transfer(assetId, args.destination as Hex, args.amount);
 
         await walletProvider.waitForTransactionReceipt(hash);

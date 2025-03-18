@@ -14,6 +14,8 @@ import {
   Abi,
   ContractFunctionName,
   ContractFunctionArgs,
+  Address,
+  Hex,
 } from "viem";
 import { EvmWalletProvider } from "./evmWalletProvider";
 import { Network } from "../network";
@@ -581,9 +583,9 @@ export class CdpWalletProvider extends EvmWalletProvider {
       | typeof Coinbase.assets.Usdc
       | typeof Coinbase.assets.Cbbtc
       | typeof Coinbase.assets.Eurc,
-    destination: `0x${string}`,
+    destination: Address,
     amount: bigint,
-  ): Promise<`0x${string}`> {
+  ): Promise<Hex> {
     if (!this.#cdpWallet) {
       throw new Error("Wallet not initialized");
     }
@@ -601,6 +603,6 @@ export class CdpWalletProvider extends EvmWalletProvider {
       throw new Error("Transaction hash not found");
     }
 
-    return result.getTransactionHash() as `0x${string}`;
+    return result.getTransactionHash() as Hex;
   }
 }
