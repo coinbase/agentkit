@@ -571,24 +571,23 @@ export class CdpWalletProvider extends EvmWalletProvider {
   /**
    * ERC20 transfer method
    *
-   * @param options - The transfer options
+   * @param assetId - The asset ID to transfer. Either USDC, CBBTC or EURC
+   * @param destination - The destination address
+   * @param amount - The amount to transfer
    * @returns The transaction hash
    */
   async erc20Transfer(
-    assetId: typeof Coinbase.assets.Usdc | typeof Coinbase.assets.Cbbtc | typeof Coinbase.assets.Eurc,
+    assetId:
+      | typeof Coinbase.assets.Usdc
+      | typeof Coinbase.assets.Cbbtc
+      | typeof Coinbase.assets.Eurc,
     destination: `0x${string}`,
-    amount: bigint
+    amount: bigint,
   ): Promise<`0x${string}`> {
     if (!this.#cdpWallet) {
       throw new Error("Wallet not initialized");
     }
 
-    console.info({
-      amount,
-      assetId,
-      destination,
-      gasless: true,
-    });
     const transferResult = await this.#cdpWallet.createTransfer({
       amount,
       assetId,

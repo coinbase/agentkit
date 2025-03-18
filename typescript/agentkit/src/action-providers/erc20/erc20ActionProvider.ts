@@ -89,20 +89,20 @@ Important notes:
       const isCdpWallet = walletProvider.getName() === "cdp_wallet_provider";
       const network = walletProvider.getNetwork();
       const tokenAddress = getAddress(args.contractAddress);
-      
-      const canDoGasless = isCdpWallet && 
+
+      const canDoGasless =
+        isCdpWallet &&
         ((network.networkId === "base-mainnet" && BASE_MAINNET_GASLESS_TOKENS.has(tokenAddress)) ||
-         (network.networkId === "base-sepolia" && BASE_SEPOLIA_GASLESS_TOKENS.has(tokenAddress)));
+          (network.networkId === "base-sepolia" && BASE_SEPOLIA_GASLESS_TOKENS.has(tokenAddress)));
 
       if (canDoGasless) {
         // Cast to CdpWalletProvider to access erc20Transfer
         const cdpWallet = walletProvider as CdpWalletProvider;
-        const assetId = network.networkId === "base-mainnet" ? BASE_MAINNET_GASLESS_TOKENS.get(tokenAddress)! : BASE_SEPOLIA_GASLESS_TOKENS.get(tokenAddress)!;
-        const hash = await cdpWallet.erc20Transfer(
-          assetId,
-          args.destination as Hex,
-          args.amount,
-        );
+        const assetId =
+          network.networkId === "base-mainnet"
+            ? BASE_MAINNET_GASLESS_TOKENS.get(tokenAddress)!
+            : BASE_SEPOLIA_GASLESS_TOKENS.get(tokenAddress)!;
+        const hash = await cdpWallet.erc20Transfer(assetId, args.destination as Hex, args.amount);
 
         await walletProvider.waitForTransactionReceipt(hash);
 
