@@ -7,7 +7,7 @@ import {
   pythActionProvider,
   cdpApiActionProvider,
   PrivyEvmEmbeddedWalletProvider,
-} from "@coinbase/agentkit";
+} from "../../agentkit/src";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
 import { MemorySaver } from "@langchain/langgraph";
@@ -81,8 +81,8 @@ async function initializeAgent() {
       walletProvider = await PrivyWalletProvider.configureWithWallet({
         appId: process.env.PRIVY_APP_ID!,
         appSecret: process.env.PRIVY_APP_SECRET!,
-        authorizationPrivateKey: process.env.PRIVY_AUTH_KEY,
-        walletId: process.env.PRIVY_WALLET_ID,
+        authorizationPrivateKey: process.env.PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY,
+        walletId: process.env.PRIVY_DELEGATED_WALLET_ID,
         networkId: "base",
         walletType: "embedded",
       });
