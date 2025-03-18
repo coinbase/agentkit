@@ -531,8 +531,8 @@ AgentKit supports the following wallet providers:
 
 EVM:
 
-- [CdpWalletProvider](https://github.com/coinbase/agentkit/blob/master/python/coinbase_agentkit/wallet_providers/cdp_wallet_provider.py) - Uses the Coinbase Developer Platform (CDP) API Wallet
-- [EthAccountWalletProvider](https://github.com/coinbase/agentkit/blob/master/python/coinbase_agentkit/wallet_providers/eth_account_wallet_provider.py) - Uses a local private key for any EVM-compatible chain
+- [CdpWalletProvider](https://github.com/coinbase/agentkit/blob/master/python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_wallet_provider.py) - Uses the Coinbase Developer Platform (CDP) API Wallet
+- [EthAccountWalletProvider](https://github.com/coinbase/agentkit/blob/master/python/coinbase-agentkit/coinbase_agentkit/wallet_providers/eth_account_wallet_provider.py) - Uses a local private key for any EVM-compatible chain
 
 ### CdpWalletProvider
 
