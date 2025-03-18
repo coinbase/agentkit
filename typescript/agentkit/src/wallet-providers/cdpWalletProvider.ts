@@ -576,7 +576,7 @@ export class CdpWalletProvider extends EvmWalletProvider {
    * @param amount - The amount to transfer
    * @returns The transaction hash
    */
-  async erc20Transfer(
+  async gaslessERC20Transfer(
     assetId:
       | typeof Coinbase.assets.Usdc
       | typeof Coinbase.assets.Cbbtc

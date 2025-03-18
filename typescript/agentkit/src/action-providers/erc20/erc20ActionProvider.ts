@@ -102,7 +102,7 @@ Important notes:
           network.networkId === "base-mainnet"
             ? BASE_MAINNET_GASLESS_TOKENS.get(tokenAddress)!
             : BASE_SEPOLIA_GASLESS_TOKENS.get(tokenAddress)!;
-        const hash = await cdpWallet.erc20Transfer(assetId, args.destination as Hex, args.amount);
+        const hash = await cdpWallet.gaslessERC20Transfer(assetId, args.destination as Hex, args.amount);
 
         await walletProvider.waitForTransactionReceipt(hash);
 
