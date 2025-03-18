@@ -96,6 +96,10 @@ describe("Transfer Action", () => {
     mockWallet = {
       sendTransaction: jest.fn(),
       waitForTransactionReceipt: jest.fn(),
+      getName: jest.fn().mockReturnValue("evm_wallet_provider"),
+      getNetwork: jest.fn().mockReturnValue({
+        networkId: "base-mainnet",
+      }),
     } as unknown as jest.Mocked<EvmWalletProvider>;
 
     mockWallet.sendTransaction.mockResolvedValue(TRANSACTION_HASH);
