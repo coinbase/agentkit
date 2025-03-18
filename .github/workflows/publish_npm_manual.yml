@@ -1,10 +1,16 @@
-name: Publish AgentKit to NPM
+name: Publish Package to NPM
 
 on:
   workflow_dispatch:
+    inputs:
+      directory:
+        description: "Directory within the 'typescript' folder containing the package to publish (e.g., agentkit)"
+        required: true
+        type: string
+        default: "agentkit"
 
 jobs:
-  deploy-npm-agentkit:
+  deploy-npm-package:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -17,8 +23,8 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           cache: "npm"
           cache-dependency-path: ./typescript
-      - name: Install, build and publish @coinbase/agentkit
-        working-directory: ./typescript/agentkit
+      - name: Install, build and publish package
+        working-directory: ./typescript/${{ inputs.directory }}
         run: |
           npm ci
           npm run build
