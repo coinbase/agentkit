@@ -1,6 +1,6 @@
 # Dexpaprika Action Provider
 
-This directory contains the **DexpaprikaActionProvider** implementation, which provides actions for dexpaprika operations.
+This directory contains the **DexpaprikaActionProvider** implementation, which provides actions for dexpaprika operations created by Tokenomia.pro
 
 ## Overview
 
