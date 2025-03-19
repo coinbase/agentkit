@@ -7,6 +7,7 @@ import {
   pythActionProvider,
   cdpApiActionProvider,
   PrivyEvmEmbeddedWalletProvider,
+  cdpWalletActionProvider,
 } from "../../agentkit/src";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -97,6 +98,10 @@ async function initializeAgent() {
         walletActionProvider(),
         erc20ActionProvider(),
         cdpApiActionProvider({
+          apiKeyName: process.env.CDP_API_KEY_NAME as string,
+          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY as string,
+        }),
+        cdpWalletActionProvider({
           apiKeyName: process.env.CDP_API_KEY_NAME as string,
           apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY as string,
         }),

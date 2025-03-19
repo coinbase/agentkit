@@ -1,5 +1,3 @@
-// src/wallet-providers/privyEvmEmbeddedWalletProvider.ts
-import { EvmWalletProvider } from "./evmWalletProvider";
 import { Network } from "../network";
 import axios from "axios";
 import canonicalize from "canonicalize";
@@ -13,10 +11,14 @@ import {
   ReadContractReturnType,
   ContractFunctionArgs,
   ContractFunctionName,
+  TransactionReceipt,
+  parseEther,
 } from "viem";
 import { getChain } from "../network/network";
-import { PrivyWalletConfig, PrivyWalletExport } from "./privyShared";
+import { PrivyWalletConfig, PrivyWalletExport, createPrivyClient } from "./privyShared";
 import { createPublicClient, http } from "viem";
+import { WalletWithMetadata } from "@privy-io/server-auth";
+import { WalletProvider } from "./walletProvider";
 
 interface PrivyResponse<T> {
   data: T;
@@ -41,7 +43,7 @@ export interface PrivyEvmEmbeddedWalletConfig extends PrivyWalletConfig {
  * This provider extends the EvmWalletProvider to provide Privy-specific wallet functionality
  * while maintaining compatibility with the base wallet provider interface.
  */
-export class PrivyEvmEmbeddedWalletProvider extends EvmWalletProvider {
+export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
   #walletId: string;
   #address: string;
   #appId: string;
@@ -118,20 +120,23 @@ export class PrivyEvmEmbeddedWalletProvider extends EvmWalletProvider {
         throw new Error("authorizationPrivateKey is required for PrivyEvmEmbeddedWalletProvider");
       }
 
-      // Fetch wallet details to get the address
-      const headers = {
-        "Content-Type": "application/json",
-        Authorization: `Basic ${Buffer.from(`${config.appId}:${config.appSecret}`).toString("base64")}`,
-        "privy-app-id": config.appId,
-      };
+      const privyClient = createPrivyClient(config);
+      const user = await privyClient.getUser(config.walletId);
 
-      const url = `https://api.privy.io/v1/wallets/${config.walletId}`;
-      const response = await axios.get<{ address: string }>(url, { headers });
-      const walletAddress = response.data?.address || "";
+      const embeddedWallets = user.linkedAccounts.filter(
+        (account): account is WalletWithMetadata =>
+          account.type === "wallet" && account.walletClientType === "privy",
+      );
 
-      if (!walletAddress) {
+      console.log(embeddedWallets, "embedded wallets");
+
+      if (embeddedWallets.length === 0) {
         throw new Error(`Could not find wallet address for wallet ID ${config.walletId}`);
       }
+
+      const walletAddress = embeddedWallets[0].address;
+
+      console.log(walletAddress, "wallet address");
 
       // Verify the network/chain ID if provided
       if (config.chainId) {
@@ -186,18 +191,12 @@ export class PrivyEvmEmbeddedWalletProvider extends EvmWalletProvider {
    * @returns The balance of the wallet in wei
    */
   async getBalance(): Promise<bigint> {
-    const body = {
-      address: this.#address,
-      chain_type: "ethereum",
-      method: "eth_getBalance",
-      params: [this.#address, "latest"],
-    };
-
     try {
-      const response = await this.executePrivyRequest<PrivyResponse<{ result: string }>>(body);
-      // Response contains hex string balance
-      const balanceHex = response.data?.result || "0x0";
-      return BigInt(balanceHex);
+      const balance = await this.#publicClient.getBalance({
+        address: this.#address as `0x${string}`,
+      });
+
+      return balance;
     } catch (error) {
       if (error instanceof Error) {
         throw new Error(`Error getting balance: ${error.message}`);
@@ -339,22 +338,10 @@ export class PrivyEvmEmbeddedWalletProvider extends EvmWalletProvider {
    * @param txHash - The hash of the transaction to wait for.
    * @returns The transaction receipt.
    */
-  async waitForTransactionReceipt(txHash: `0x${string}`): Promise<unknown> {
-    try {
-      // Attempt to use public client to get receipt
-      return await this.#publicClient.waitForTransactionReceipt({
-        hash: txHash,
-        timeout: 30_000,
-      });
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
-      // Fallback to a minimal receipt if public client fails
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      return {
-        transactionHash: txHash,
-        status: 1,
-      };
-    }
+  async waitForTransactionReceipt(txHash: `0x${string}`): Promise<TransactionReceipt> {
+    return await this.#publicClient.waitForTransactionReceipt({
+      hash: txHash,
+    });
   }
 
   /**
@@ -403,26 +390,32 @@ export class PrivyEvmEmbeddedWalletProvider extends EvmWalletProvider {
    * @returns The transaction hash.
    */
   async nativeTransfer(to: string, value: string): Promise<`0x${string}`> {
-    // Convert value to wei/hex format if needed
-    const valueWei = BigInt(value);
-    const valueHex = `0x${valueWei.toString(16)}`;
+    const valueInWei = parseEther(value);
+    const valueHex = `0x${valueInWei.toString(16)}`;
 
     const body = {
       address: this.#address,
       chain_type: "ethereum",
       method: "eth_sendTransaction",
+      caip2: `eip155:${this.mapNetworkToChainId(this.#network.networkId!)}`,
       params: {
         transaction: {
           to,
           value: valueHex,
-          from: this.#address,
         },
       },
     };
 
     try {
       const response = await this.executePrivyRequest<PrivyResponse<{ hash: `0x${string}` }>>(body);
-      return response.data?.hash;
+
+      const receipt = await this.waitForTransactionReceipt(response.data.hash);
+
+      if (!receipt) {
+        throw new Error("Transaction failed");
+      }
+
+      return receipt.transactionHash;
     } catch (error) {
       if (error instanceof Error) {
         throw new Error(`Native transfer failed: ${error.message}`);
@@ -453,7 +446,7 @@ export class PrivyEvmEmbeddedWalletProvider extends EvmWalletProvider {
    */
   private mapNetworkToChainId(networkId: string): string {
     const networkToChainId: Record<string, string> = {
-      "base-mainnet": "8453",
+      base: "8453",
       "base-sepolia": "84532",
       "ethereum-mainnet": "1",
       "ethereum-sepolia": "11155111",
