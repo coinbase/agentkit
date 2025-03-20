@@ -1,5 +1,23 @@
 # Coinbase Create Onchain Agent Changelog
 
+## 0.2.0
+
+### Minor Changes
+
+- [#569](https://github.com/coinbase/agentkit/pull/569) [`dea911e`](https://github.com/coinbase/agentkit/commit/dea911e384a702b1c2b26dde66b1f3213683e603) Thanks [@0xRAG](https://github.com/0xRAG)! - Added option to generate MCP Server project
+
+### Patch Changes
+
+- [#548](https://github.com/coinbase/agentkit/pull/548) [`281e81a`](https://github.com/coinbase/agentkit/commit/281e81a46f3148531b1ba13096cbd9b6fcddb7b0) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Added multi framework support
+
+## 0.1.6
+
+### Patch Changes
+
+- [#499](https://github.com/coinbase/agentkit/pull/499) [`15520d4`](https://github.com/coinbase/agentkit/commit/15520d4cf48f204a2b0a43a303f9ab03f3c92409) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Added smart wallet support
+
+- [#511](https://github.com/coinbase/agentkit/pull/511) [`91d6e74`](https://github.com/coinbase/agentkit/commit/91d6e748345beb354c5839c1013f0e94e076e80f) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Fixed linter error in generated project
+
 ## [0.1.5] - 2025-02-28
 
 ### Fixed

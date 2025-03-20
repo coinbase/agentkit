@@ -4,6 +4,8 @@
   "workspaces": [
     "agentkit",
     "create-onchain-agent",
+    "create-onchain-agent/templates/next",
+    "create-onchain-agent/templates/mcp",
     "framework-extensions/langchain",
     "framework-extensions/vercel-ai-sdk",
     "framework-extensions/model-context-protocol",
@@ -13,11 +15,15 @@
     "examples/langchain-privy-chatbot",
     "examples/langchain-solana-chatbot",
     "examples/langchain-smart-wallet-chatbot",
-    "examples/vercel-ai-sdk-cdp-chatbot"
+    "examples/vercel-ai-sdk-cdp-chatbot",
+    "examples/model-context-protocol-cdp-server"
   ],
   "packageManager": "npm@8.9.0",
   "scripts": {
     "build": "turbo run build",
+    "changeset": "changeset",
+    "changeset:publish": "npm ci && npm run build && changeset publish",
+    "changeset:version": "changeset version",
     "test": "turbo run test",
     "lint": "turbo run lint",
     "clean": "turbo run clean",
@@ -31,6 +37,9 @@
   "author": "Coinbase Inc.",
   "license": "Apache-2.0",
   "repository": "https://github.com/coinbase/agentkit",
+  "publishConfig": {
+    "provenance": true
+  },
   "keywords": [
     "coinbase",
     "sdk",

@@ -3,9 +3,9 @@ import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
 import { GetBalanceSchema, TransferSchema } from "./schemas";
-import { abi } from "./constants";
-import { encodeFunctionData, formatUnits, Hex } from "viem";
-import { EvmWalletProvider } from "../../wallet-providers";
+import { abi, BaseTokenToAssetId, BaseSepoliaTokenToAssetId } from "./constants";
+import { encodeFunctionData, formatUnits, Hex, getAddress } from "viem";
+import { EvmWalletProvider, CdpWalletProvider } from "../../wallet-providers";
 
 /**
  * ERC20ActionProvider is an action provider for ERC20 tokens.
@@ -85,6 +85,37 @@ Important notes:
     args: z.infer<typeof TransferSchema>,
   ): Promise<string> {
     try {
+      // Check if we can do gasless transfer
+      const isCdpWallet = walletProvider.getName() === "cdp_wallet_provider";
+      const network = walletProvider.getNetwork();
+      const tokenAddress = getAddress(args.contractAddress);
+
+      const canDoGasless =
+        isCdpWallet &&
+        ((network.networkId === "base-mainnet" && BaseTokenToAssetId.has(tokenAddress)) ||
+          (network.networkId === "base-sepolia" && BaseSepoliaTokenToAssetId.has(tokenAddress)));
+
+      if (canDoGasless) {
+        // Cast to CdpWalletProvider to access erc20Transfer
+        const cdpWallet = walletProvider as CdpWalletProvider;
+        const assetId =
+          network.networkId === "base-mainnet"
+            ? BaseTokenToAssetId.get(tokenAddress)!
+            : BaseSepoliaTokenToAssetId.get(tokenAddress)!;
+        const hash = await cdpWallet.gaslessERC20Transfer(
+          assetId,
+          args.destination as Hex,
+          args.amount,
+        );
+
+        await walletProvider.waitForTransactionReceipt(hash);
+
+        return `Transferred ${args.amount} of ${args.contractAddress} to ${
+          args.destination
+        } using gasless transfer.\nTransaction hash: ${hash}`;
+      }
+
+      // Fallback to regular transfer
       const hash = await walletProvider.sendTransaction({
         to: args.contractAddress as Hex,
         data: encodeFunctionData({

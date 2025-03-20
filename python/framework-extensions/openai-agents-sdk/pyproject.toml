@@ -1,0 +1,77 @@
+[tool.poetry]
+name = "coinbase-agentkit-openai-agents-sdk"
+version = "0.1.0"
+description = "Coinbase AgentKit OpenAI Agents SDK extension"
+authors = ["John Peterson <john.peterson@coinbase.com>"]
+readme = "README.md"
+license = "Apache-2.0"
+keywords = ["coinbase", "sdk", "crypto", "cdp", "openai", "agents", "ai", "agent"]
+packages = [{ include = "coinbase_agentkit_openai_agents_sdk" }]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+coinbase-agentkit = "^0.1.0"
+python-dotenv = "^1.0.1"
+pytest-asyncio = "^0.25.3"
+openai-agents = "^0.0.2"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.7.1"
+mypy = "^1.13.0"
+pytest = "^8.3.3"
+pytest-cov = "^6.0.0"
+sphinx = "^8.0.2"
+sphinx-autobuild = "^2024.9.19"
+sphinxcontrib-napoleon = "^0.7"
+sphinx-autodoc-typehints = "^2.4.4"
+myst-parser = "^4.0.0"
+ruff-lsp = "^0.0.58"
+python-lsp-server = "^1.12.0"
+towncrier = "^24.8.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = ["./build/**", "./dist/**", "./docs/**"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "D", "UP", "B", "C4", "SIM", "RUF"]
+ignore = ["D213", "D203", "D100", "D104", "D107", "E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+known-first-party = ["coinbase_agentkit"]
+
+[tool.towncrier]
+package = "coinbase_agentkit_openai_agents_sdk"
+filename = "CHANGELOG.md"
+directory = "changelog.d/"
+title_format = "## [{version}] - {project_date}"
+issue_format = "[#{issue}](https://github.com/coinbase/agentkit/pull/{issue})"
+
+[tool.towncrier.fragment.feature]
+name = "Added"
+
+[tool.towncrier.fragment.bugfix]
+name = "Fixed"
+
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    "ignore::pydantic.PydanticDeprecatedSince20",
+]

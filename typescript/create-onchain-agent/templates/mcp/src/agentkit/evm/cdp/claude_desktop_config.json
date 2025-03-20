@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "agentkit": {
+      "command": "node",
+      "args": ["{absolutePath}/build/index.js"],
+      "env": {
+        "CDP_API_KEY_NAME": "",
+        "CDP_API_KEY_PRIVATE_KEY": "",
+        "NETWORK_ID": "base-sepolia"
+      }
+    }
+  }
+}

@@ -1,28 +1,17 @@
-export type EVMNetwork =
-  | "ethereum-mainnet"
-  | "ethereum-sepolia"
-  | "polygon-mainnet"
-  | "polygon-mumbai"
-  | "base-mainnet"
-  | "base-sepolia"
-  | "arbitrum-mainnet"
-  | "arbitrum-sepolia"
-  | "optimism-mainnet"
-  | "optimism-sepolia";
+import { Network } from "./constants";
 
-export type SVMNetwork = "solana-mainnet" | "solana-devnet" | "solana-testnet";
-
-export type Network = EVMNetwork | SVMNetwork;
-
-export type WalletProviderChoice = "CDP" | "Viem" | "Privy" | "SolanaKeypair" | "SmartWallet";
-
-export type WalletProviderRouteConfiguration = {
+export type AgentkitRouteConfiguration = {
   env: {
     topComments: string[];
     required: string[];
     optional: string[];
   };
-  apiRoute: string;
+  prepareAgentkitRoute: `${string}.ts`;
+};
+
+export type MCPRouteConfiguration = {
+  getAgentkitRoute: `${string}.ts`;
+  configRoute: `${string}.json`;
 };
 
 export type NetworkSelection = {
@@ -32,3 +21,12 @@ export type NetworkSelection = {
   chainId?: string;
   rpcUrl?: string;
 };
+
+export type {
+  EVMNetwork,
+  SVMNetwork,
+  Network,
+  WalletProviderChoice,
+  Framework,
+  Template,
+} from "./constants";

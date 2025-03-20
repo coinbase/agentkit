@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "coinbase-agentkit"
-version = "0.1.4"
+version = "0.2.0"
 description = "Coinbase AgentKit"
 authors = ["John Peterson <john.peterson@coinbase.com>"]
 readme = "README.md"
@@ -12,14 +12,16 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.10"
-cdp-sdk = "0.19.0"
+cdp-sdk = "0.21.0"
 pydantic = "^2.0"
 web3 = "^7.6.0"
 python-dotenv = "^1.0.1"
 requests = "^2.31.0"
-opengradient = "^0.4.5"
+allora-sdk = "^0.2.0"
+paramiko = "^3.5.1"
 
 [tool.poetry.scripts]
+check-description-length = "scripts.check_description_length:main"
 generate-action-provider = "scripts.generate_action_provider.main:main"
 
 [tool.poetry.group.dev.dependencies]
@@ -41,6 +43,7 @@ typer = "^0.9.0"
 prompt-toolkit = "^3.0.50"
 questionary = "^2.1.0"
 rich = "^13.7.1"
+pillow = "^11.1.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -68,6 +71,7 @@ line-ending = "auto"
 
 [tool.ruff.lint.isort]
 known-first-party = ["coinbase_agentkit, cdp"]
+combine-as-imports = true
 
 [tool.towncrier]
 package = "coinbase_agentkit"
@@ -81,3 +85,10 @@ name = "Added"
 
 [tool.towncrier.fragment.bugfix]
 name = "Fixed"
+
+[tool.pytest.ini_options]
+addopts = "-m 'not e2e'"
+markers = [
+    "e2e: marks tests as end-to-end tests that interact with real services",
+    "manual: marks tests that should only be run manually (e.g., tests that incur costs)"
+]

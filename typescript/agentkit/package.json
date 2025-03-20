@@ -2,7 +2,7 @@
   "name": "@coinbase/agentkit",
   "description": "Coinbase AgentKit core primitives",
   "repository": "https://github.com/coinbase/agentkit",
-  "version": "0.2.3",
+  "version": "0.4.0",
   "author": "Coinbase Inc.",
   "license": "Apache-2.0",
   "main": "dist/index.js",
@@ -40,6 +40,7 @@
     "typescript"
   ],
   "dependencies": {
+    "@alloralabs/allora-sdk": "^0.1.0",
     "@coinbase/coinbase-sdk": "^0.20.0",
     "@jup-ag/api": "^6.0.39",
     "@privy-io/server-auth": "^1.18.4",

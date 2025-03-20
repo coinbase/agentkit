@@ -14,6 +14,8 @@ import {
   Abi,
   ContractFunctionName,
   ContractFunctionArgs,
+  Address,
+  Hex,
 } from "viem";
 import { EvmWalletProvider } from "./evmWalletProvider";
 import { Network } from "../network";
@@ -566,5 +568,41 @@ export class CdpWalletProvider extends EvmWalletProvider {
       throw new Error("Wallet not initialized");
     }
     return this.#cdpWallet;
+  }
+
+  /**
+   * ERC20 transfer method
+   *
+   * @param assetId - The asset ID to transfer. Either USDC, CBBTC or EURC
+   * @param destination - The destination address
+   * @param amount - The amount to transfer
+   * @returns The transaction hash
+   */
+  async gaslessERC20Transfer(
+    assetId:
+      | typeof Coinbase.assets.Usdc
+      | typeof Coinbase.assets.Cbbtc
+      | typeof Coinbase.assets.Eurc,
+    destination: Address,
+    amount: bigint,
+  ): Promise<Hex> {
+    if (!this.#cdpWallet) {
+      throw new Error("Wallet not initialized");
+    }
+
+    const transferResult = await this.#cdpWallet.createTransfer({
+      amount,
+      assetId,
+      destination,
+      gasless: true,
+    });
+
+    const result = await transferResult.wait();
+
+    if (!result.getTransactionHash()) {
+      throw new Error("Transaction hash not found");
+    }
+
+    return result.getTransactionHash() as Hex;
   }
 }

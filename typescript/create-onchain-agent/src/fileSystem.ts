@@ -2,8 +2,9 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { optimizedCopy } from "./utils.js";
+import { Template } from "./types.js";
 
-const sourceDir = path.resolve(fileURLToPath(import.meta.url), "../../../templates/next");
+const sourceDir = path.resolve(fileURLToPath(import.meta.url), "../../../templates");
 
 const renameFiles: Record<string, string | undefined> = {
   _gitignore: ".gitignore",
@@ -16,10 +17,11 @@ const excludeFiles = [".DS_Store", "Thumbs.db"];
 /**
  * Retrieves the source directory for copying template files.
  *
+ * @param template - The template to use.
  * @returns {string} The source directory path.
  */
-function getSourceDir(): string {
-  return sourceDir;
+function getSourceDir(template: Template): string {
+  return path.join(sourceDir, template);
 }
 
 /**
@@ -62,11 +64,16 @@ async function copyDir(src: string, dest: string): Promise<void> {
  *
  * @param {string} projectName - The name of the new project directory.
  * @param {string} packageName - The npm package name to use (auto-formatted if empty).
+ * @param {Template} template - The template to use.
  * @returns {Promise<string>} The path of the newly created project directory.
  */
-export async function copyTemplate(projectName: string, packageName: string): Promise<string> {
+export async function copyTemplate(
+  projectName: string,
+  packageName: string,
+  template: Template,
+): Promise<string> {
   const root = path.join(process.cwd(), projectName);
-  await copyDir(getSourceDir(), root);
+  await copyDir(getSourceDir(template), root);
 
   const pkgPath = path.join(root, "package.json");
   const pkg = JSON.parse(await fs.promises.readFile(pkgPath, "utf-8"));

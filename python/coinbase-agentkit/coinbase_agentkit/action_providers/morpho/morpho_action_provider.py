@@ -7,6 +7,7 @@ from web3 import Web3
 
 from coinbase_agentkit.action_providers.action_decorator import create_action
 from coinbase_agentkit.action_providers.action_provider import ActionProvider
+from coinbase_agentkit.action_providers.erc20.constants import ERC20_ABI
 from coinbase_agentkit.action_providers.morpho.constants import METAMORPHO_ABI
 from coinbase_agentkit.action_providers.morpho.schemas import (
     MorphoDepositSchema,
@@ -60,7 +61,14 @@ Important notes:
             return "Error: Assets amount must be greater than 0"
 
         try:
-            atomic_assets = Web3.to_wei(assets, "ether")
+            decimals = wallet_provider.read_contract(
+                contract_address=args["token_address"],
+                abi=ERC20_ABI,
+                function_name="decimals",
+                args=[],
+            )
+
+            atomic_assets = int(assets * (10**decimals))
 
             try:
                 approve(

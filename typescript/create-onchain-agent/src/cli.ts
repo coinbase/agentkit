@@ -5,14 +5,16 @@ import path from "path";
 import pc from "picocolors";
 import prompts from "prompts";
 import { EVM_NETWORKS, NetworkToWalletProviders, SVM_NETWORKS } from "./constants.js";
-import { Network, WalletProviderChoice } from "./types.js";
+import { Network, WalletProviderChoice, Framework } from "./types.js";
 import { copyTemplate } from "./fileSystem.js";
 import {
-  handleSelection,
+  handleNextSelection,
   isValidPackageName,
   toValidPackageName,
   getWalletProviders,
+  handleMcpSelection,
 } from "./utils.js";
+import { Frameworks, FrameworkToTemplates } from "./constants.js";
 
 /**
  * Initializes the project creation process.
@@ -47,6 +49,8 @@ async function init() {
     | "chainId"
     | "rpcUrl"
     | "walletProvider"
+    | "framework"
+    | "template"
   >;
 
   try {
@@ -75,6 +79,26 @@ async function init() {
           message: pc.reset("Package name:"),
           initial: (_, { projectName }: { projectName: string }) => toValidPackageName(projectName),
           validate: dir => isValidPackageName(dir) || "Invalid package.json name",
+        },
+        {
+          type: "select",
+          name: "framework",
+          message: pc.reset("Choose a framework:"),
+          choices: Frameworks.map(framework => ({
+            title: framework,
+            value: framework,
+          })),
+        },
+        {
+          type: (prev, { framework }) =>
+            FrameworkToTemplates[framework as Framework].length > 1 ? "select" : null,
+          name: "template",
+          message: pc.reset("Choose a template:"),
+          choices: (prev, { framework }) =>
+            FrameworkToTemplates[framework as Framework].map(template => ({
+              title: template,
+              value: template,
+            })),
         },
         {
           type: "select",
@@ -207,38 +231,80 @@ async function init() {
     }
     process.exit(1);
   }
-  const { projectName, network, chainId, rpcUrl } = result;
+  const { projectName, network, chainId, rpcUrl, framework } = result;
   const packageName = result.packageName || toValidPackageName(projectName);
   const walletProvider = result.walletProvider || "Viem";
+  // If template wasn't selected (because there was only one option), use the first template
+  const template = result.template || FrameworkToTemplates[framework as Framework][0];
 
   const spinner = ora(`Creating ${projectName}...`).start();
 
   // Copy template over to new project
-  const root = await copyTemplate(projectName, packageName);
+  const root = await copyTemplate(projectName, packageName, template);
 
   // Handle selection-specific logic over copied-template
-  await handleSelection(root, walletProvider, network, chainId, rpcUrl);
+  switch (template) {
+    case "next":
+      await handleNextSelection(root, framework, walletProvider, network, chainId, rpcUrl);
 
-  spinner.succeed();
-  console.log(pc.blueBright(`\nSuccessfully created your AgentKit project in ${root}`));
+      spinner.succeed();
+      console.log(pc.blueBright(`\nSuccessfully created your AgentKit project in ${root}`));
 
-  console.log(`\nFrameworks:`);
-  console.log(pc.gray("- AgentKit"));
-  console.log(pc.gray("- React"));
-  console.log(pc.gray("- Next.js"));
-  console.log(pc.gray("- Tailwind CSS"));
-  console.log(pc.gray("- ESLint"));
+      console.log(`\nFrameworks:`);
+      console.log(pc.gray("- AgentKit"));
+      console.log(pc.gray(`- ${framework}`));
+      console.log(pc.gray("- React"));
+      console.log(pc.gray("- Next.js"));
+      console.log(pc.gray("- Tailwind CSS"));
+      console.log(pc.gray("- ESLint"));
 
-  console.log(pc.bold("\nWhat's Next?"));
+      console.log(pc.bold("\nWhat's Next?"));
 
-  console.log(`\nTo get started, run the following commands:\n`);
-  if (root !== process.cwd()) {
-    console.log(` - cd ${path.relative(process.cwd(), root)}`);
+      console.log(`\nTo get started, run the following commands:\n`);
+      if (root !== process.cwd()) {
+        console.log(` - cd ${path.relative(process.cwd(), root)}`);
+      }
+      console.log(" - npm install");
+      console.log(pc.gray(" - # Open .env.local and configure your API keys"));
+      console.log(" - mv .env.local .env");
+      console.log(" - npm run dev");
+      break;
+    case "mcp":
+      await handleMcpSelection(root, walletProvider, network, chainId);
+
+      spinner.succeed();
+      console.log(pc.blueBright(`\nSuccessfully created your AgentKit project in ${root}`));
+
+      console.log(`\nTo get started, run the following commands:\n`);
+      if (root !== process.cwd()) {
+        console.log(` - cd ${path.relative(process.cwd(), root)}`);
+      }
+      console.log(" - npm install");
+      console.log(" - npm run build");
+      console.log(
+        " - cp claude_desktop_config.json ~/Library/Application\\ Support/Claude/claude_desktop_config.json",
+      );
+
+      if (walletProvider === "CDP" || walletProvider === "SmartWallet") {
+        console.log(
+          " - # Make sure to open claude_desktop_config.json and configure your CDP API keys!",
+        );
+      }
+
+      if (walletProvider === "Privy") {
+        console.log(
+          " - # Make sure to open claude_desktop_config.json and configure your Privy API keys!",
+        );
+      }
+
+      console.log(
+        "\nNow open Claude Desktop and start prompting Claude to do things onchain",
+        "\nFor example, ask it to print your wallet details",
+      );
+      break;
+    default:
+      break;
   }
-  console.log(" - npm install");
-  console.log(pc.gray(" - # Open .env.local and configure your API keys"));
-  console.log(" - mv .env.local .env");
-  console.log(" - npm run dev");
 
   console.log(pc.bold("\nLearn more"));
   console.log("   - Checkout the docs");

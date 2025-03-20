@@ -8,6 +8,33 @@
 - Added `prompt_dobby` to prompt the LLM `SentientAGI/Dobby-Mini-Unhinged-Llama-3.1-8B` through OpenGradient's network
 - Added `prompt_qwen` to prompt the LLM `Qwen/Qwen2.5-72B-Instruct` through OpenGradient's network
 
+## [0.2.0] - 2025-03-14
+
+### Fixed
+
+- Fixed bug in Morpho action provider to allow depositing ERC20 tokens of variable decimal precision ([#573](https://github.com/coinbase/agentkit/pull/573))
+
+### Added
+
+- Added Allora Network action provider ([#110](https://github.com/coinbase/agentkit/pull/110))
+- Added Hyperbolic action providers for AI, Billing, Marketplace, and Settings
+- Added SSH action provider for connecting, running remote commands, downloading and uploading
+
+
+## [0.1.6] - 2025-03-11
+
+### Added
+
+- Added edwards key support via updating cdp-sdk version
+
+
+## [0.1.5] - 2025-03-07
+
+### Fixed
+
+- Fixed Compound borrow action ([#496](https://github.com/coinbase/agentkit/pull/496))
+
+
 ## [0.1.4] - 2025-02-28
 
 ### Added

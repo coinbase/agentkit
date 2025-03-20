@@ -1,12 +1,6 @@
-import {
-  EVMNetwork,
-  Network,
-  SVMNetwork,
-  WalletProviderChoice,
-  WalletProviderRouteConfiguration,
-} from "./types";
+import { AgentkitRouteConfiguration, MCPRouteConfiguration } from "./types";
 
-export const EVM_NETWORKS: EVMNetwork[] = [
+export const EVM_NETWORKS = [
   "base-mainnet",
   "base-sepolia",
   "ethereum-mainnet",
@@ -17,20 +11,26 @@ export const EVM_NETWORKS: EVMNetwork[] = [
   "optimism-sepolia",
   "polygon-mainnet",
   "polygon-mumbai",
-];
+] as const;
 
-export const SVM_NETWORKS: SVMNetwork[] = ["solana-mainnet", "solana-devnet", "solana-testnet"];
+export type EVMNetwork = (typeof EVM_NETWORKS)[number];
 
-const CDP_SUPPORTED_EVM_WALLET_PROVIDERS: WalletProviderChoice[] = [
-  "CDP",
-  "SmartWallet",
-  "Viem",
-  "Privy",
-];
-const SVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["SolanaKeypair", "Privy"];
-export const NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS: WalletProviderChoice[] = ["Viem", "Privy"];
+export const SVM_NETWORKS = ["solana-mainnet", "solana-devnet", "solana-testnet"] as const;
 
-export const NetworkToWalletProviders: Record<Network, WalletProviderChoice[]> = {
+export type SVMNetwork = (typeof SVM_NETWORKS)[number];
+
+export type Network = EVMNetwork | SVMNetwork;
+
+const CDP_SUPPORTED_EVM_WALLET_PROVIDERS = ["CDP", "SmartWallet", "Viem", "Privy"] as const;
+const SVM_WALLET_PROVIDERS = ["SolanaKeypair", "Privy"] as const;
+export const NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS = ["Viem", "Privy"] as const;
+
+export type WalletProviderChoice =
+  | (typeof CDP_SUPPORTED_EVM_WALLET_PROVIDERS)[number]
+  | (typeof SVM_WALLET_PROVIDERS)[number]
+  | (typeof NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS)[number];
+
+export const NetworkToWalletProviders: Record<Network, readonly WalletProviderChoice[]> = {
   "arbitrum-mainnet": CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
   "arbitrum-sepolia": NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
   "base-mainnet": CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
@@ -56,18 +56,18 @@ export const WalletProviderChoices: WalletProviderChoice[] = [
   ]),
 ];
 
-export const WalletProviderRouteConfigurations: Record<
+export const AgentkitRouteConfigurations: Record<
   "EVM" | "CUSTOM_EVM" | "SVM",
-  Partial<Record<WalletProviderChoice, WalletProviderRouteConfiguration>>
+  Partial<Record<WalletProviderChoice, AgentkitRouteConfiguration>>
 > = {
   EVM: {
     CDP: {
       env: {
         topComments: ["Get keys from CDP Portal: https://portal.cdp.coinbase.com/"],
-        required: ["CDP_API_KEY_NAME=", "CDP_API_KEY_PRIVATE_KEY="],
+        required: ["CDP_API_KEY_NAME", "CDP_API_KEY_PRIVATE_KEY"],
         optional: [],
       },
-      apiRoute: "evm/cdp/route.ts",
+      prepareAgentkitRoute: "evm/cdp/prepare-agentkit.ts",
     },
     Viem: {
       env: {
@@ -75,10 +75,10 @@ export const WalletProviderRouteConfigurations: Record<
           "Export private key from your Ethereum wallet and save",
           "Get keys from CDP Portal: https://portal.cdp.coinbase.com/",
         ],
-        required: ["PRIVATE_KEY="],
-        optional: ["CDP_API_KEY_NAME=", "CDP_API_KEY_PRIVATE_KEY="],
+        required: ["PRIVATE_KEY"],
+        optional: ["CDP_API_KEY_NAME", "CDP_API_KEY_PRIVATE_KEY"],
       },
-      apiRoute: "evm/viem/route.ts",
+      prepareAgentkitRoute: "evm/viem/prepare-agentkit.ts",
     },
     Privy: {
       env: {
@@ -86,17 +86,17 @@ export const WalletProviderRouteConfigurations: Record<
           "Get keys from Privy Dashboard: https://dashboard.privy.io/",
           "Get keys from CDP Portal: https://portal.cdp.coinbase.com/",
         ],
-        required: ["PRIVY_APP_ID=", "PRIVY_APP_SECRET="],
+        required: ["PRIVY_APP_ID", "PRIVY_APP_SECRET"],
         optional: [
-          "CHAIN_ID=",
-          "PRIVY_WALLET_ID=",
-          "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY=",
-          "PRIVY_WALLET_AUTHORIZATION_KEY_ID=",
-          "CDP_API_KEY_NAME=",
-          "CDP_API_KEY_PRIVATE_KEY=",
+          "CHAIN_ID",
+          "PRIVY_WALLET_ID",
+          "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY",
+          "PRIVY_WALLET_AUTHORIZATION_KEY_ID",
+          "CDP_API_KEY_NAME",
+          "CDP_API_KEY_PRIVATE_KEY",
         ],
       },
-      apiRoute: "evm/privy/route.ts",
+      prepareAgentkitRoute: "evm/privy/prepare-agentkit.ts",
     },
     SmartWallet: {
       env: {
@@ -104,10 +104,10 @@ export const WalletProviderRouteConfigurations: Record<
           "Get keys from CDP Portal: https://portal.cdp.coinbase.com/",
           "Optionally provide a private key, otherwise one will be generated",
         ],
-        required: ["CDP_API_KEY_NAME=", "CDP_API_KEY_PRIVATE_KEY="],
-        optional: ["PRIVATE_KEY="],
+        required: ["CDP_API_KEY_NAME", "CDP_API_KEY_PRIVATE_KEY"],
+        optional: ["PRIVATE_KEY"],
       },
-      apiRoute: "evm/smart/route.ts",
+      prepareAgentkitRoute: "evm/smart/prepare-agentkit.ts",
     },
   },
   CUSTOM_EVM: {
@@ -117,10 +117,10 @@ export const WalletProviderRouteConfigurations: Record<
           "Export private key from your Ethereum wallet and save",
           "Get keys from CDP Portal: https://portal.cdp.coinbase.com/",
         ],
-        required: ["PRIVATE_KEY="],
-        optional: ["CDP_API_KEY_NAME=", "CDP_API_KEY_PRIVATE_KEY="],
+        required: ["PRIVATE_KEY"],
+        optional: ["CDP_API_KEY_NAME", "CDP_API_KEY_PRIVATE_KEY"],
       },
-      apiRoute: "custom-evm/viem/route.ts",
+      prepareAgentkitRoute: "custom-evm/viem/prepare-agentkit.ts",
     },
   },
   SVM: {
@@ -130,10 +130,10 @@ export const WalletProviderRouteConfigurations: Record<
           "Export private key from your Solana wallet and save",
           "Get keys from CDP Portal: https://portal.cdp.coinbase.com/",
         ],
-        required: ["SOLANA_PRIVATE_KEY="],
-        optional: ["SOLANA_RPC_URL=", "CDP_API_KEY_NAME=", "CDP_API_KEY_PRIVATE_KEY="],
+        required: ["SOLANA_PRIVATE_KEY"],
+        optional: ["SOLANA_RPC_URL", "CDP_API_KEY_NAME", "CDP_API_KEY_PRIVATE_KEY"],
       },
-      apiRoute: "svm/solanaKeypair/route.ts",
+      prepareAgentkitRoute: "svm/solanaKeypair/prepare-agentkit.ts",
     },
     Privy: {
       env: {
@@ -141,16 +141,88 @@ export const WalletProviderRouteConfigurations: Record<
           "Get keys from Privy Dashboard: https://dashboard.privy.io/",
           "Get keys from CDP Portal: https://portal.cdp.coinbase.com/",
         ],
-        required: ["PRIVY_APP_ID=", "PRIVY_APP_SECRET="],
+        required: ["PRIVY_APP_ID", "PRIVY_APP_SECRET"],
         optional: [
-          "PRIVY_WALLET_ID=",
-          "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY=",
-          "PRIVY_WALLET_AUTHORIZATION_KEY_ID=",
-          "CDP_API_KEY_NAME=",
-          "CDP_API_KEY_PRIVATE_KEY=",
+          "PRIVY_WALLET_ID",
+          "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY",
+          "PRIVY_WALLET_AUTHORIZATION_KEY_ID",
+          "CDP_API_KEY_NAME",
+          "CDP_API_KEY_PRIVATE_KEY",
         ],
       },
-      apiRoute: "svm/privy/route.ts",
+      prepareAgentkitRoute: "svm/privy/prepare-agentkit.ts",
+    },
+  },
+};
+
+export const Frameworks = ["Langchain", "Vercel AI SDK", "Model Context Protocol"] as const;
+
+export type Framework = (typeof Frameworks)[number];
+
+export const Templates = ["next", "mcp"] as const;
+
+export type Template = (typeof Templates)[number];
+
+export const FrameworkToTemplates: Record<Framework, Template[]> = {
+  Langchain: ["next"],
+  "Vercel AI SDK": ["next"],
+  "Model Context Protocol": ["mcp"],
+};
+
+export type NextTemplateRouteConfiguration = {
+  createAgentRoute: `${string}.ts`;
+  apiRoute: `${string}.ts`;
+};
+
+export const NextTemplateRouteConfigurations: Partial<
+  Record<Framework, NextTemplateRouteConfiguration>
+> = {
+  Langchain: {
+    apiRoute: "langchain/route.ts",
+    createAgentRoute: "langchain/create-agent.ts",
+  },
+  "Vercel AI SDK": {
+    apiRoute: "vercel-ai-sdk/route.ts",
+    createAgentRoute: "vercel-ai-sdk/create-agent.ts",
+  },
+};
+
+export const MCPRouteConfigurations: Record<
+  "EVM" | "CUSTOM_EVM" | "SVM",
+  Partial<Record<WalletProviderChoice, MCPRouteConfiguration>>
+> = {
+  EVM: {
+    CDP: {
+      getAgentkitRoute: "evm/cdp/getAgentKit.ts",
+      configRoute: "evm/cdp/claude_desktop_config.json",
+    },
+    Viem: {
+      getAgentkitRoute: "evm/viem/getAgentKit.ts",
+      configRoute: "evm/viem/claude_desktop_config.json",
+    },
+    Privy: {
+      getAgentkitRoute: "evm/privy/getAgentKit.ts",
+      configRoute: "evm/privy/claude_desktop_config.json",
+    },
+    SmartWallet: {
+      getAgentkitRoute: "evm/smart/getAgentKit.ts",
+      configRoute: "evm/smart/claude_desktop_config.json",
+    },
+  },
+  CUSTOM_EVM: {
+    Viem: {
+      getAgentkitRoute: "custom-evm/viem/getAgentKit.ts",
+      configRoute: "custom-evm/viem/claude_desktop_config.json",
+    },
+  },
+  SVM: {
+    SolanaKeypair: {
+      getAgentkitRoute: "svm/solana-keypair/getAgentKit.ts",
+      configRoute: "svm/solana-keypair/claude_desktop_config.json",
+    },
+    Privy: {
+      getAgentkitRoute: "svm/privy/getAgentKit.ts",
+      configRoute: "svm/privy/claude_desktop_config.json",
     },
   },
 };

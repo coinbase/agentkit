@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "agentkit": {
+      "command": "node",
+      "args": ["{absolutePath}/build/index.js"],
+      "env": {
+        "PRIVATE_KEY": "",
+        "RPC_URL": "",
+        "CHAIN_ID": "",
+        "CDP_API_KEY_NAME": "",
+        "CDP_API_KEY_PRIVATE_KEY": ""
+      }
+    }
+  }
+}

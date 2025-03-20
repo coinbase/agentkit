@@ -1,0 +1,106 @@
+# Onchain Agent Powered by AgentKit
+
+This is a Python chatbot project bootstrapped with `create-onchain-agent`.  
+It integrates [AgentKit](https://github.com/coinbase/agentkit) to provide AI-driven interactions with on-chain capabilities.
+
+## Prerequisites
+
+Before using `create-onchain-agent`, ensure you have the following installed:
+
+- **Python** (3.10 - 3.12) – [Download here](https://www.python.org/downloads/)
+- **Poetry** (latest version) – [Installation guide](https://python-poetry.org/docs/#installation)
+
+## Getting Started
+
+First, install dependencies:
+
+`poetry install`
+
+Then, configure your environment variables:
+
+```sh
+mv .env.local .env
+```
+
+Finally, run the chatbot:
+
+`poetry run python chatbot.py`
+
+{% if _framework == "openai_agents" %}Note: If you are seeing the log `OPENAI_API_KEY is not set, skipping trace export`, fix it by exporting the OPENAI_API_KEY in your terminal.
+
+```sh
+export OPENAI_API_KEY=<your-openai-api-key>
+```
+{% endif %}
+## Project Architecture
+
+This template creates a secure AI agent with its own wallet. Let's explore how each component works together:
+
+### 1. Wallet Management (`wallet.py`)
+The wallet system manages two key components:
+- **Your Wallet**: Acts as the controlling wallet (like a parent account)
+- **Agent's Wallet**: A separate smart wallet owned by your wallet
+
+The system persists wallet data between sessions in network-specific files (e.g., `wallet_data_base_sepolia.txt`). This allows you to:
+- Maintain consistent wallet addresses across restarts
+- Use different wallets for different networks
+- Keep control of the agent's wallet through your wallet
+
+### 2. AgentKit Configuration (`prepare_agentkit.py`)
+This file wires together the core building blocks of AgentKit:
+
+1. **Smart Wallet Provider**: Creates a secure setup where:
+   - The agent gets its own wallet
+   - Your wallet maintains control
+   - The agent can't access your wallet
+   
+2. **Action Providers**: Defines the agent's capabilities:
+   - `wallet_action_provider`: Basic wallet operations
+   - `erc20_action_provider`: Token transfers
+   - `weth_action_provider`: WETH operations
+   - `cdp_api_action_provider`: CDP platform interactions
+
+### 3. Agent Creation (`create_agent.py`)
+Bridges AgentKit with your chosen AI framework:
+- Configures the Language Model (LLM)
+- Converts AgentKit tools to framework-compatible format
+- Sets up the agent with instructions and capabilities
+- Manages conversation memory and state
+
+### 4. Application Interface (`chatbot.py`)
+A simple command-line interface demonstrating how to:
+- Initialize the agent
+- Handle user interactions
+- Process agent responses
+- Manage the conversation flow
+
+This serves as a starting point. You can replace it with your own application interface!
+
+## Configuring Your Agent
+
+You can [modify your agent configuration](https://github.com/coinbase/agentkit/tree/main/typescript/agentkit#usage) in the following ways:
+
+### 1. Customize the Wallet Provider  
+Adjust the `SmartWalletProvider` configuration in `prepare_agentkit.py` to:
+- Change networks
+- Add a paymaster for gasless transactions on mainnet
+- Try different wallet providers
+
+### 2. Add Action Providers  
+Extend the agent's capabilities in `prepare_agentkit.py` by:
+- Adding more built-in providers
+- Creating custom providers
+
+## Learn More
+
+- [Learn more about CDP](https://docs.cdp.coinbase.com/)
+- [Learn more about AgentKit](https://docs.cdp.coinbase.com/agentkit/docs/welcome)
+- [Explore Action Providers](https://github.com/coinbase/agentkit/tree/main/python/coinbase-agentkit#create-an-agentkit-instance-with-specified-action-providers)
+- [Create Custom Providers](https://github.com/coinbase/agentkit/tree/main/python/coinbase-agentkit#creating-an-action-provider)
+
+## Contributing
+
+Interested in contributing to AgentKit? Follow the contribution guide:
+
+- [Contribution Guide](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING.md)
+- Join the discussion on [Discord](https://discord.gg/CDP)

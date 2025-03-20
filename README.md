@@ -16,6 +16,7 @@
     Every agent deserves a wallet.
   </p>
 
+[![](https://github.com/coinbase/agentkit/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/coinbase/agentkit/actions/workflows/github-code-scanning/codeql)
 [![pypi downloads](https://img.shields.io/pypi/dm/coinbase-agentkit?label=pypi:coinbase-agentkit&style=flat-square)](https://pypistats.org/packages/coinbase-agentkit)
 [![npm downloads](https://img.shields.io/npm/dm/@coinbase/agentkit?label=npm:@coinbase/agentkit&style=flat-square)](https://www.npmjs.com/package/@coinbase/agentkit)
 [![GitHub star chart](https://img.shields.io/github/stars/coinbase/agentkit?style=flat-square)](https://star-history.com/#coinbase/agentkit)
@@ -149,15 +150,18 @@ agentkit/
 │       ├── langchain-privy-chatbot/
 │       ├── langchain-solana-chatbot/
 │       ├── langchain-twitter-chatbot/
+│       ├── model-context-protocol-cdp-server/
 │       └── vercel-ai-sdk-cdp-chatbot/
 ├── python/
 │   ├── coinbase-agentkit/
 │   ├── create-onchain-agent/
 │   ├── framework-extensions/
-│   │   └── langchain/
+│   │   ├── langchain/
+│   │   └── openai-agents-sdk/
 │   └── examples/
 │       ├── langchain-cdp-chatbot/
-│       └── langchain-twitter-chatbot/
+│       ├── langchain-twitter-chatbot/
+│       └── openai-agents-sdk-cdp-chatbot/
 ```
 
 ## 🤝 Contributing
@@ -245,25 +249,32 @@ AgentKit is proud to have support for the following protocols, frameworks, walle
 
 <a href="https://www.alchemy.com/" target="_blank"><img src="./assets/protocols/alchemy.svg" width="100" height="auto" alt="Alchemy"></a>
 <a href="https://compound.finance/" target="_blank"><img src="./assets/protocols/compound.svg" width="100" height="auto" alt="Compound"></a>
+<a href="https://defillama.com/" target="_blank"><img src="./assets/protocols/defillama.svg" width="100" height="auto" alt="DefiLlama"></a>
 <a href="https://farcaster.xyz" target="_blank"><img src="./assets/protocols/farcaster.svg" width="100" height="auto" alt="Farcaster"></a>
 <a href="https://jup.ag" target="_blank"><img src="./assets/protocols/jupiter.svg" width="100" height="auto" alt="Jupiter"></a>
+<a href="https://hyperbolic.xyz/" target="_blank"><img src="./assets/protocols/hyperbolic.svg" width="100" height="auto" alt="Hyperbolic"></a>
 <a href="https://www.moonwell.fi" target="_blank"><img src="./assets/protocols/moonwell.svg" width="100" height="auto" alt="Moonwell"></a>
 <a href="https://app.morpho.org" target="_blank"><img src="./assets/protocols/morpho.svg" width="100" height="auto" alt="Morpho"></a>
 <a href="https://pyth.network" target="_blank"><img src="./assets/protocols/pyth.svg" width="100" height="auto" alt="Pyth"></a>
+<a href="https://opensea.io" target="_blank"><img src="./assets/protocols/opensea.svg" width="100" height="auto" alt="OpenSea"></a>
 <a href="https://superfluid.org" target="_blank"><img src="./assets/protocols/superfluid.svg" width="100" height="auto" alt="Superfluid"></a>
 <a href="https://zora.co" target="_blank"><img src="./assets/protocols/zora.svg" width="100" height="auto" alt="Zora"></a>
+<a href="https://allora.network" target="_blank"><img src="./assets/protocols/allora.svg" width="100" height="auto" alt="Allora"></a>
 
 ### Frameworks
 
 <a href="https://langchain.com" target="_blank"><img src="./assets/frameworks/langchain.svg" width="100" height="auto" alt="Langchain"></a>
 <a href="https://www.elizaos.ai" target="_blank"><img src="./assets/frameworks/eliza.svg" width="100" height="auto" alt="Eliza"></a>
 <a href="https://sdk.vercel.ai" target="_blank"><img src="./assets/frameworks/vercel.svg" width="100" height="auto" alt="Vercel AI SDK"></a>
+<a href="https://modelcontextprotocol.io/" target="_blank"><img src="./assets/frameworks/modelcontextprotocol.svg" width="100" height="auto" alt="Model Context Protocol"></a>
+<a href="https://platform.openai.com/docs/guides/agents-sdk" target="_blank"><img src="./assets/frameworks/openai.svg" width="100" height="auto" alt="Agents SDK"></a>
 
 ### Networks
 
 <a href="https://base.org" target="_blank"><img src="./assets/networks/base.svg" width="100" height="auto" alt="Base"></a>
 <a href="https://ethereum.org" target="_blank"><img src="./assets/networks/ethereum.svg" width="100" height="auto" alt="Ethereum"></a>
 <a href="https://solana.com" target="_blank"><img src="./assets/networks/solana.svg" width="100" height="auto" alt="Solana"></a>
+
 
 Note: We support all EVM and SVM networks, with deep protocol support for the above networks. Please don't hesitate to make contributions to add more support for your preferred networks.
 

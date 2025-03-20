@@ -1,13 +1,46 @@
 import fs from "fs/promises";
 import path from "path";
-import { EVMNetwork, Network, SVMNetwork, WalletProviderChoice } from "./types";
+import { EVMNetwork, Framework, Network, SVMNetwork, WalletProviderChoice } from "./types";
 import {
   EVM_NETWORKS,
   NetworkToWalletProviders,
   NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS,
   SVM_NETWORKS,
-  WalletProviderRouteConfigurations,
+  AgentkitRouteConfigurations,
+  NextTemplateRouteConfigurations,
+  MCPRouteConfigurations,
 } from "./constants.js";
+
+/**
+ * Copied from `@coinbase/agentkit` so that we don't need to depend on it.
+ * Maps EVM chain IDs to Coinbase network IDs
+ */
+export const CHAIN_ID_TO_NETWORK_ID: Record<number, string> = {
+  1: "ethereum-mainnet",
+  11155111: "ethereum-sepolia",
+  137: "polygon-mainnet",
+  80001: "polygon-mumbai",
+  8453: "base-mainnet",
+  84532: "base-sepolia",
+  42161: "arbitrum-mainnet",
+  421614: "arbitrum-sepolia",
+  10: "optimism-mainnet",
+  11155420: "optimism-sepolia",
+};
+
+/**
+ * Copied from `@coinbase/agentkit` so that we don't need to depend on it.
+ * Maps Coinbase network IDs to EVM chain IDs
+ */
+export const NETWORK_ID_TO_CHAIN_ID: Record<string, string> = Object.entries(
+  CHAIN_ID_TO_NETWORK_ID,
+).reduce(
+  (acc, [chainId, networkId]) => {
+    acc[networkId] = String(chainId);
+    return acc;
+  },
+  {} as Record<string, string>,
+);
 
 /**
  * Determines the network family based on the provided network.
@@ -158,7 +191,7 @@ export function detectPackageManager(): string {
  * @param {Network} [network] - The optional network to get wallet providers for.
  * @returns {WalletProviderChoice[]} An array of wallet providers for the specified network.
  */
-export const getWalletProviders = (network?: Network): WalletProviderChoice[] => {
+export const getWalletProviders = (network?: Network): readonly WalletProviderChoice[] => {
   if (network) {
     return NetworkToWalletProviders[network];
   }
@@ -176,6 +209,7 @@ export const getWalletProviders = (network?: Network): WalletProviderChoice[] =>
  * - Deletes all unselected API routes and cleans up empty directories.
  *
  * @param {string} root - The root directory of the project.
+ * @param {Framework} framework - The selected framework.
  * @param {WalletProviderChoice} walletProvider - The selected wallet provider.
  * @param {Network} [network] - The optional blockchain network.
  * @param {string} [chainId] - The optional chain ID for the network.
@@ -183,13 +217,14 @@ export const getWalletProviders = (network?: Network): WalletProviderChoice[] =>
  * @throws {Error} If neither `network` nor `chainId` are provided, or if the selected combination is invalid.
  * @returns {Promise<void>} A promise that resolves when the selection process is complete.
  */
-export async function handleSelection(
+export async function handleNextSelection(
   root: string,
+  framework: Framework,
   walletProvider: WalletProviderChoice,
   network?: Network,
   chainId?: string,
   rpcUrl?: string,
-) {
+): Promise<void> {
   const agentDir = path.join(root, "app", "api", "agent");
 
   const networkFamily = getNetworkType(network, chainId);
@@ -197,10 +232,15 @@ export async function handleSelection(
     throw new Error("Unsupported network and chainId selected");
   }
 
-  const selectedRouteConfig = WalletProviderRouteConfigurations[networkFamily][walletProvider];
+  const agentkitRouteConfig = AgentkitRouteConfigurations[networkFamily][walletProvider];
+  const frameworkRouteConfig = NextTemplateRouteConfigurations[framework];
 
-  if (!selectedRouteConfig) {
+  if (!agentkitRouteConfig) {
     throw new Error("Selected invalid network & wallet provider combination");
+  }
+
+  if (!frameworkRouteConfig) {
+    throw new Error("Selected invalid framework for this template");
   }
 
   // Create .env file
@@ -209,49 +249,130 @@ export async function handleSelection(
     // Start file with notes regarding .env var setup
     ...[
       "Get keys from OpenAI Platform: https://platform.openai.com/api-keys",
-      ...selectedRouteConfig.env.topComments,
+      ...agentkitRouteConfig.env.topComments,
     ]
       .map(comment => `# ${comment}`)
       .join("\n"),
     // Continue with # Required section
     "\n\n# Required\n",
-    ...["OPENAI_API_KEY=", ...selectedRouteConfig.env.required].join("\n"),
+    ...["OPENAI_API_KEY=", ...agentkitRouteConfig.env.required.map(line => `${line}=`)].join("\n"),
     // Finish with # Optional section
     "\n\n# Optional\n",
     ...[
       `NETWORK_ID=${network ?? ""}`,
       rpcUrl ? `RPC_URL=${rpcUrl}` : null,
       chainId ? `CHAIN_ID=${chainId}` : null,
-      ...selectedRouteConfig.env.optional,
+      ...agentkitRouteConfig.env.optional.map(line => `${line}=`),
     ]
       .filter(Boolean)
       .join("\n"),
   ];
   await fs.writeFile(envPath, envLines);
 
-  // Promote selected route (move `apiRoute` to `api/agent/route.ts`)
-  const selectedRoutePath = path.join(agentDir, selectedRouteConfig.apiRoute);
-  const newRoutePath = path.join(agentDir, "route.ts");
+  // Promose selected routes to
+  const promoteRoute = async (toPromose: string, type: string, to: string) => {
+    const selectedRoutePath = path.join(agentDir, type, toPromose);
+    const newRoutePath = path.join(agentDir, to);
+    await fs.rename(selectedRoutePath, newRoutePath);
+  };
 
-  await fs.rename(selectedRoutePath, newRoutePath);
+  await promoteRoute(agentkitRouteConfig.prepareAgentkitRoute, "agentkit", "prepare-agentkit.ts");
+  await promoteRoute(frameworkRouteConfig.createAgentRoute, "framework", "create-agent.ts");
+  await promoteRoute(frameworkRouteConfig.apiRoute, "framework", "route.ts");
 
-  // Delete all unselected routes
-  const allRouteConfigurations = Object.values(WalletProviderRouteConfigurations)
-    .flatMap(routeConfigurations => Object.values(routeConfigurations))
-    .filter(x => x);
-  const providerRoutes = allRouteConfigurations.map(config => path.join(agentDir, config.apiRoute));
-  for (const routePath of providerRoutes) {
-    // Remove file
-    await fs.rm(routePath, { recursive: true, force: true });
+  // Delete boilerplate routes
+  await fs.rm(path.join(agentDir, "agentkit"), { recursive: true, force: true });
+  await fs.rm(path.join(agentDir, "framework"), { recursive: true, force: true });
+}
 
-    // If directory is empty, remove directory
-    const parentFolder = path.dirname(routePath);
-    const files = await fs.readdir(parentFolder);
-    if (files.length === 0) {
-      await fs.rm(parentFolder, { recursive: true, force: true });
-    }
+/**
+ * Handles the selection of a network and wallet provider, updating the project configuration accordingly.
+ *
+ * This function:
+ * - Determines the network family (`EVM` or `SVM`) based on the provided network or chain ID.
+ * - Retrieves the correct route configuration for the selected wallet provider.
+ * - Creates or updates the `.env.local` file with required and optional environment variables.
+ * - Moves the selected API route file to `api/agent/route.ts`.
+ * - Deletes all unselected API routes and cleans up empty directories.
+ *
+ * @param {string} root - The root directory of the project.
+ * @param {WalletProviderChoice} walletProvider - The selected wallet provider.
+ * @param {Network} [network] - The optional blockchain network.
+ * @param {string} [chainId] - The optional chain ID for the network.
+ * @param {string} [rpcUrl] - The optional RPC URL for the network.
+ *
+ * @returns {Promise<void>} A promise that resolves when the function completes.
+ */
+export async function handleMcpSelection(
+  root: string,
+  walletProvider: WalletProviderChoice,
+  network?: Network,
+  chainId?: string,
+  rpcUrl?: string,
+): Promise<void> {
+  const srcDir = path.join(root, "src");
+
+  const networkFamily = getNetworkType(network, chainId);
+  if (!networkFamily) {
+    throw new Error("Unsupported network and chainId selected");
   }
-  await fs.rm(path.join(agentDir, "evm"), { recursive: true, force: true });
-  await fs.rm(path.join(agentDir, "svm"), { recursive: true, force: true });
-  await fs.rm(path.join(agentDir, "custom-evm"), { recursive: true, force: true });
+
+  const mcpConfig = MCPRouteConfigurations[networkFamily][walletProvider];
+  if (!mcpConfig) {
+    throw new Error("Selected invalid network & wallet provider combination");
+  }
+
+  /**
+   * Copies the claude_desktop_config.json file to the root directory
+   * and replaces the {parentFolderPath} placeholder with the absolute path.
+   */
+  async function copyAndReplaceConfig() {
+    const existingConfig = await fs.readFile(
+      path.join(srcDir, "agentkit", mcpConfig!.configRoute),
+      "utf-8",
+    );
+    const configJson = JSON.parse(existingConfig);
+
+    configJson.mcpServers.agentkit.args[0] = configJson.mcpServers.agentkit.args[0].replace(
+      "{absolutePath}",
+      root,
+    );
+
+    if (network) {
+      // privy uses CHAIN_ID, others use NETWORK_ID
+      if (configJson.mcpServers.agentkit.env.NETWORK_ID) {
+        configJson.mcpServers.agentkit.env.NETWORK_ID = network;
+      }
+
+      if (configJson.mcpServers.agentkit.env.CHAIN_ID) {
+        configJson.mcpServers.agentkit.env.CHAIN_ID = NETWORK_ID_TO_CHAIN_ID[network];
+      }
+    }
+
+    if (chainId) {
+      configJson.mcpServers.agentkit.env.CHAIN_ID = chainId;
+    }
+
+    if (rpcUrl) {
+      configJson.mcpServers.agentkit.env.RPC_URL = rpcUrl;
+    }
+
+    await fs.writeFile(
+      path.join(root, "claude_desktop_config.json"),
+      JSON.stringify(configJson, null, 2),
+    );
+  }
+
+  // Promote selected routes to
+  const promoteRoute = async (toPromote: string, to: string) => {
+    const selectedRoutePath = path.join(srcDir, "agentkit", toPromote);
+    const newRoutePath = path.join(srcDir, to);
+    await fs.rename(selectedRoutePath, newRoutePath);
+  };
+
+  await copyAndReplaceConfig();
+
+  await promoteRoute(mcpConfig.getAgentkitRoute, "getAgentKit.ts");
+
+  await fs.rm(path.join(srcDir, "agentkit"), { recursive: true, force: true });
 }
