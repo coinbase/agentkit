@@ -40,10 +40,10 @@ agentkit generate wallet-provider
 agentkit generate action-provider
 
 # Generate framework-agnostic AgentKit setup.
-agentkit generate agentkit
+agentkit generate prepare
 
 # Generate framework-specific agent creation
-agentkit generate agent
+agentkit generate create-agent
 ```
 
 ## Features

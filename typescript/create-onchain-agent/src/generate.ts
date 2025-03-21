@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 import { createActionProvider } from "./actions/createActionProvider.js";
 import { createAgent } from "./actions/createAgent.js";
-import { createAgentkit } from "./actions/createAgentkit.js";
+import { prepareAgentKit } from "./actions/prepareAgentkit.js";
 import { createWalletProvider } from "./actions/createWalletProvider.js";
 import { initProject } from "./actions/initProject.js";
 
-const VALID_GENERATE_TYPES = ["action-provider", "wallet-provider", "agentkit", "agent"] as const;
+const VALID_GENERATE_TYPES = ["action-provider", "wallet-provider", "prepare", "create-agent"] as const;
 type GenerateType = (typeof VALID_GENERATE_TYPES)[number];
 
 /**
@@ -66,10 +66,10 @@ async function handleArgs() {
         case "wallet-provider":
           await createWalletProvider();
           break;
-        case "agentkit":
-          await createAgentkit();
+        case "prepare":
+          await prepareAgentKit();
           break;
-        case "agent":
+        case "create-agent":
           await createAgent();
           break;
       }

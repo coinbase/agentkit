@@ -15,7 +15,7 @@ import { getNetworkType, getWalletProviders } from "../common/utils.js";
  * Prompts user for network and wallet provider selection, then sets up the prepare-agentkit file
  * by promoting the correct template and cleaning up unused files.
  */
-export async function createAgentkit() {
+export async function prepareAgentKit() {
   let result: prompts.Answers<
     "networkFamily" | "networkType" | "network" | "chainId" | "rpcUrl" | "walletProvider"
   >;
