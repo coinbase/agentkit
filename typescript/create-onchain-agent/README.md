@@ -27,7 +27,8 @@ This command will guide you through setting up an onchain agent project by promp
 - **Supports multiple AI frameworks**.
 - **Supports multiple blockchain networks**.
 - **Select your preferred wallet provider**.
-- **Preconfigured with Next.js, React, Tailwind CSS, and ESLint**.
+- **Supports a preconfigured Next.js project with React, Tailwind CSS, and ESLint**.
+- **Supports a preconfigured Model Context Protocol Server project**.
 - **Automates environment setup**.
 
 ### **Setup Process**

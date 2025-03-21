@@ -12,6 +12,7 @@ import {
   isValidPackageName,
   toValidPackageName,
   getWalletProviders,
+  handleMcpSelection,
 } from "./utils.js";
 import { Frameworks, FrameworkToTemplates } from "./constants.js";
 
@@ -267,6 +268,39 @@ async function init() {
       console.log(pc.gray(" - # Open .env.local and configure your API keys"));
       console.log(" - mv .env.local .env");
       console.log(" - npm run dev");
+      break;
+    case "mcp":
+      await handleMcpSelection(root, walletProvider, network, chainId);
+
+      spinner.succeed();
+      console.log(pc.blueBright(`\nSuccessfully created your AgentKit project in ${root}`));
+
+      console.log(`\nTo get started, run the following commands:\n`);
+      if (root !== process.cwd()) {
+        console.log(` - cd ${path.relative(process.cwd(), root)}`);
+      }
+      console.log(" - npm install");
+      console.log(" - npm run build");
+      console.log(
+        " - cp claude_desktop_config.json ~/Library/Application\\ Support/Claude/claude_desktop_config.json",
+      );
+
+      if (walletProvider === "CDP" || walletProvider === "SmartWallet") {
+        console.log(
+          " - # Make sure to open claude_desktop_config.json and configure your CDP API keys!",
+        );
+      }
+
+      if (walletProvider === "Privy") {
+        console.log(
+          " - # Make sure to open claude_desktop_config.json and configure your Privy API keys!",
+        );
+      }
+
+      console.log(
+        "\nNow open Claude Desktop and start prompting Claude to do things onchain",
+        "\nFor example, ask it to print your wallet details",
+      );
       break;
     default:
       break;

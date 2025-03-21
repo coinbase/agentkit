@@ -1,0 +1,89 @@
+import sys
+{% if _framework == "openai_agents" %}
+import asyncio
+from agents.run import Runner
+{% elif _framework == "langchain" %}
+from langchain_core.messages import HumanMessage
+{% endif %}
+from dotenv import load_dotenv
+
+from create_agent import create_agent
+
+"""
+AgentKit Chatbot Interface
+
+This file provides a command-line interface for interacting with your AgentKit-powered AI agent.
+It supports two modes of operation:
+
+1. Chat Mode:
+   - Interactive conversations with the agent
+   - Direct user input and agent responses
+
+2. Autonomous Mode:
+   - Agent operates independently
+   - Performs periodic blockchain interactions
+   - Useful for automated tasks or monitoring
+
+Use this as a starting point for building your own agent interface or integrate
+the agent into your existing applications.
+
+# Want to contribute?
+Join us in shaping AgentKit! Check out the contribution guide:  
+- https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING.md
+- https://discord.gg/CDP
+"""
+
+load_dotenv()
+
+{% if _framework == "openai_agents" %}
+async def run_chat_mode(agent, config):
+    """Run the agent interactively based on user input."""
+    print("Starting chat mode... Type 'exit' to end.")
+    while True:
+        try:
+            user_input = input("\nPrompt: ")
+            if user_input.lower() == "exit":
+                break
+
+            # Run agent with the user's input in chat mode
+            output = await Runner.run(agent, user_input)
+            print(output.final_output)
+            print("-------------------")
+
+        except KeyboardInterrupt:
+            print("Goodbye Agent!")
+            sys.exit(0)
+
+{% elif _framework == "langchain" %}
+def run_chat_mode(agent_executor, config):
+    """Run the agent interactively based on user input."""
+    print("Starting chat mode... Type 'exit' to end.")
+    while True:
+        try:
+            user_input = input("\nPrompt: ")
+            if user_input.lower() == "exit":
+                break
+
+            # Run agent with the user's input in chat mode
+            for chunk in agent_executor.stream(
+                {"messages": [HumanMessage(content=user_input)]}, config
+            ):
+                if "agent" in chunk:
+                    print(chunk["agent"]["messages"][0].content)
+                elif "tools" in chunk:
+                    print(chunk["tools"]["messages"][0].content)
+                print("-------------------")
+
+        except KeyboardInterrupt:
+            print("Goodbye Agent!")
+            sys.exit(0)
+{% endif %}
+
+{% if _framework == "openai_agents" %}async def main():{% elif _framework == "langchain" %}def main():{% endif %}
+    """Start the chatbot agent."""
+    print("Starting Agent...")
+    agent_executor, config = create_agent()
+    {% if _framework == "openai_agents" %}await run_chat_mode(agent=agent_executor, config=config){% elif _framework == "langchain" %}run_chat_mode(agent_executor=agent_executor, config=config){% endif %}
+
+if __name__ == "__main__":
+    {% if _framework == "openai_agents" %}asyncio.run(main()){% elif _framework == "langchain" %}main(){% endif %}

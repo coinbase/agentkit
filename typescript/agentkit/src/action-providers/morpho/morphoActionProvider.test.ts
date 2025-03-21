@@ -11,6 +11,7 @@ const MOCK_RECEIVER_ID = "0x9876543210987654321098765432109876543210";
 const MOCK_TOKEN_ADDRESS = "0x4200000000000000000000000000000000000006";
 const MOCK_TX_HASH = "0xabcdef1234567890";
 const MOCK_RECEIPT = { status: 1, blockNumber: 1234567 };
+const MOCK_DECIMALS = 18;
 
 jest.mock("../../utils");
 const mockApprove = approve as jest.MockedFunction<typeof approve>;
@@ -25,6 +26,7 @@ describe("Morpho Action Provider", () => {
       getNetwork: jest.fn().mockReturnValue({ protocolFamily: "evm", networkId: "1" }),
       sendTransaction: jest.fn().mockResolvedValue(MOCK_TX_HASH as `0x${string}`),
       waitForTransactionReceipt: jest.fn().mockResolvedValue(MOCK_RECEIPT),
+      readContract: jest.fn().mockResolvedValue(MOCK_DECIMALS),
     } as unknown as jest.Mocked<EvmWalletProvider>;
 
     mockApprove.mockResolvedValue("Approval successful");

@@ -1,3 +1,15 @@
+# Coinbase Create Onchain Agent Changelog
+
+<!-- towncrier release notes start -->
+
+## [0.3.0] - 2025-03-14
+
+### Added
+
+- Added OpenAI Agents SDK support ([#557](https://github.com/coinbase/agentkit/pull/557))
+- Added --beginner flag
+
+
 ## [0.2.0] - 2025-03-07
 
 ### Fixed
@@ -9,8 +21,6 @@
 - Added revised network selection ([#498](https://github.com/coinbase/agentkit/pull/498))
 - Added smart wallet support ([#503](https://github.com/coinbase/agentkit/pull/503))
 
-
-# Coinbase Create Onchain Agent Changelog
 
 ## [0.1.4] - 2025-02-28
 

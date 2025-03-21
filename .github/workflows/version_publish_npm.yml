@@ -1,0 +1,41 @@
+name: Version and Publish NPM
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  version-and-publish:
+    name: Version and Publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          registry-url: "https://registry.npmjs.org"
+          cache: "npm"
+          cache-dependency-path: ./typescript
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./typescript
+
+      - name: Version and/or Publish to NPM
+        uses: changesets/action@06245a4e0a36c064a573d4150030f5ec548e4fcc
+        with:
+          commit: "chore: version packages"
+          title: "chore: version packages"
+          version: npm run changeset:version
+          publish: npm run publish
+          cwd: ./typescript
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

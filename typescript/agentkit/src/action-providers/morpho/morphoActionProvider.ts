@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { Decimal } from "decimal.js";
-import { encodeFunctionData, parseEther } from "viem";
-
+import { encodeFunctionData, Hex, parseUnits } from "viem";
+import { abi } from "../erc20/constants";
 import { ActionProvider } from "../actionProvider";
 import { EvmWalletProvider } from "../../wallet-providers";
 import { CreateAction } from "../actionDecorator";
@@ -59,7 +59,14 @@ Important notes:
     }
 
     try {
-      const atomicAssets = parseEther(args.assets);
+      const decimals = await wallet.readContract({
+        address: args.tokenAddress as Hex,
+        abi,
+        functionName: "decimals",
+        args: [],
+      });
+
+      const atomicAssets = parseUnits(args.assets, decimals);
 
       const approvalResult = await approve(
         wallet,

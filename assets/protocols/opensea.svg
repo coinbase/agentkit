@@ -1,0 +1,59 @@
+<svg id="logo" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <foreignObject width="100%" height="100%">
+        <div xmlns="http://www.w3.org/1999/xhtml">
+            <style>
+                :root {
+                    --border-color: #404040;
+                    --hover-color: #2470FF;
+                    --logo-bg-color: #2081E2;
+                    --logo-fg-color: #FFFFFF;
+                }
+
+                @media (prefers-color-scheme: dark) {
+                    :root {
+                        --border-color: #404040;
+                        --hover-color: #2470FF;
+                        --logo-bg-color: #2081E2;
+                        --logo-fg-color: #FFFFFF;
+                    }
+                }
+
+                @media (prefers-color-scheme: light) {
+                    :root {
+                        --border-color: #e0e0e0;
+                        --hover-color: #2470FF;
+                        --logo-bg-color: #2081E2;
+                        --logo-fg-color: #FFFFFF;
+                    }
+                }
+
+                #container {
+                    box-sizing: border-box;
+                    border: 1px solid var(--border-color);
+                    border-radius: 8px;
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 6px;
+                }
+
+                #logo:hover {
+                    border-color: var(--hover-color);
+                }
+
+                div {
+                    width: 100%;
+                    height: 100%;
+                }
+            </style>
+            <div id="container">
+                <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50.4,0.5C22.8,0.3,0.3,22.8,0.5,50.4c0.2,26.9,22.2,48.8,49.1,49.1c27.7,0.2,50.2-22.3,49.9-49.9 C99.3,22.7,77.3,0.7,50.4,0.5z" fill="var(--logo-bg-color)"/>
+                    <path d="M35.6,25.9c3.1,3.9,4.9,8.8,4.9,14.2c0,4.6-1.4,8.9-3.7,12.5H20.2L35.6,25.9L35.6,25.9z" fill="var(--logo-fg-color)"/>
+                    <path d="M86.3,58.5c0,0.2-0.1,0.4-0.3,0.5c-1.1,0.5-4.8,2.2-6.4,4.4c-4,5.5-7,14.3-13.8,14.3H37.3 c-10.1,0-18.5-8-18.4-18.6c0-0.3,0.2-0.5,0.5-0.5h13.4c0.5,0,0.8,0.4,0.8,0.8v2.6c0,1.4,1.1,2.5,2.5,2.5h10.2v-5.9h-7 c4-5.1,6.4-11.5,6.4-18.5c0-7.8-3-14.9-7.9-20.2c3,0.3,5.8,0.9,8.4,1.7v-1.7c0-1.7,1.4-3.1,3.1-3.1c1.7,0,3.1,1.4,3.1,3.1v4 c9.5,4.4,15.8,11.8,15.8,20.2c0,4.9-2.1,9.5-5.8,13.3c-0.7,0.7-1.7,1.1-2.7,1.1h-7.2v5.9h9c1.9,0,5.4-3.7,7.1-5.9 c0,0,0.1-0.1,0.3-0.2c0.2-0.1,16.6-3.8,16.6-3.8c0.3-0.1,0.7,0.2,0.7,0.5L86.3,58.5L86.3,58.5z" fill="var(--logo-fg-color)"/>
+                </svg>
+            </div>
+        </div>
+    </foreignObject>
+</svg>

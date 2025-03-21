@@ -1,0 +1,26 @@
+{
+  "name": "mcp",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "type": "module",
+  "bin": {
+    "agentkit": "./build/index.js"
+  },
+  "scripts": {
+    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\""
+  },
+  "dependencies": {
+    "@coinbase/agentkit": "^0.4.0",
+    "@coinbase/agentkit-model-context-protocol": "^0.2.0",
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "@solana/web3.js": "^1.98.0",
+    "bs58": "^6.0.0",
+    "viem": "^2.23.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}

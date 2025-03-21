@@ -21,7 +21,7 @@ Below is a list of actions and frameworks we'd love to see open-source contribut
 - [ ] Pond model integrations
 
 ## NFT & Digital Assets
-- [ ] Integrations with OpenSeas
+- [ ] Integrations with OpenSea
 - [ ] MagicEden create collection
 - [ ] Generate image, deploy NFT collection E2E
 

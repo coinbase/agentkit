@@ -1,0 +1,33 @@
+name: Publish Package to NPM
+
+on:
+  workflow_dispatch:
+    inputs:
+      directory:
+        description: "Directory within the 'typescript' folder containing the package to publish (e.g., agentkit)"
+        required: true
+        type: string
+        default: "agentkit"
+
+jobs:
+  deploy-npm-package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          registry-url: "https://registry.npmjs.org"
+          cache: "npm"
+          cache-dependency-path: ./typescript
+      - name: Install, build and publish package
+        working-directory: ./typescript/${{ inputs.directory }}
+        run: |
+          npm ci
+          npm run build
+          npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

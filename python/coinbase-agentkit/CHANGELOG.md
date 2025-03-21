@@ -2,6 +2,19 @@
 
 <!-- towncrier release notes start -->
 
+## [0.2.0] - 2025-03-14
+
+### Fixed
+
+- Fixed bug in Morpho action provider to allow depositing ERC20 tokens of variable decimal precision ([#573](https://github.com/coinbase/agentkit/pull/573))
+
+### Added
+
+- Added Allora Network action provider ([#110](https://github.com/coinbase/agentkit/pull/110))
+- Added Hyperbolic action providers for AI, Billing, Marketplace, and Settings
+- Added SSH action provider for connecting, running remote commands, downloading and uploading
+
+
 ## [0.1.6] - 2025-03-11
 
 ### Added
