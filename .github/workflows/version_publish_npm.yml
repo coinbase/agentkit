@@ -12,6 +12,7 @@ jobs:
   version-and-publish:
     name: Version and Publish
     runs-on: ubuntu-latest
+    environment: npm
     steps:
       - name: Clone repository
         uses: actions/checkout@v4

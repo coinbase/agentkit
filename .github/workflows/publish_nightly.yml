@@ -29,6 +29,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    environment: npm
     steps:
       - uses: actions/checkout@v4
         with:
@@ -101,6 +102,9 @@ jobs:
   publish-pypi-nightly:
     needs: prepare-nightly
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/coinbase-agentkit-langchain
     steps:
       - uses: actions/checkout@v4
         with:
