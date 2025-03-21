@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
-import { EVMNetwork, Framework, Network, SVMNetwork, WalletProviderChoice } from "./types";
+import { EVMNetwork, Framework, Network, SVMNetwork, WalletProviderChoice } from "./types.js";
 import {
   EVM_NETWORKS,
   NetworkToWalletProviders,
@@ -375,4 +375,42 @@ export async function handleMcpSelection(
   await promoteRoute(mcpConfig.getAgentkitRoute, "getAgentKit.ts");
 
   await fs.rm(path.join(srcDir, "agentkit"), { recursive: true, force: true });
+}
+
+/**
+ * Converts a string to camel case
+ *
+ * @param str - The string to convert to camel case
+ * @returns The camel case version of the string
+ */
+export function toCamelCase(str: string): string {
+  // First character should be lowercase
+  return str.charAt(0).toLowerCase() + str.slice(1);
+}
+
+/**
+ * Converts a string to snake case
+ *
+ * @param str - The string to convert to snake case
+ * @returns The snake case version of the string
+ */
+export function toSnakeCase(str: string): string {
+  return str
+    .replace(/([a-z])([A-Z])/g, "$1_$2")
+    .replace(/([A-Z])([A-Z][a-z])/g, "$1_$2")
+    .toLowerCase();
+}
+
+/**
+ * Converts a string to a class name
+ *
+ * @param str - The string to convert to class name
+ * @returns The class name version of the string
+ */
+export function toClassName(str: string): string {
+  // Capitalize first letter of each word, remove any "Provider" suffix
+  return str
+    .split(/(?=[A-Z])|[\s_-]/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join("");
 }
