@@ -33,6 +33,22 @@ type CreatePrivyWalletReturnType = {
 };
 
 /**
+ * Create a Privy client
+ *
+ * @param config - The configuration options for the Privy client
+ * @returns The created Privy client
+ */
+export const createPrivyClient = (config: PrivyWalletConfig) => {
+  return new PrivyClient(config.appId, config.appSecret, {
+    walletApi: config.authorizationPrivateKey
+      ? {
+          authorizationPrivateKey: config.authorizationPrivateKey,
+        }
+      : undefined,
+  });
+};
+
+/**
  * Create a Privy wallet
  *
  * @param config - The configuration options for the Privy wallet

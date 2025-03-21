@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "preserveSymlinks": true,
+    "outDir": "./dist",
+    "rootDir": "../../",
+    "baseUrl": ".",
+    "paths": {
+      "@coinbase/agentkit": ["../../agentkit/src"]
+    }
+  },
+  "include": ["*.ts"]
+}
