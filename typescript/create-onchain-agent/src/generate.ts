@@ -5,7 +5,12 @@ import { prepareAgentKit } from "./actions/prepareAgentkit.js";
 import { createWalletProvider } from "./actions/createWalletProvider.js";
 import { initProject } from "./actions/initProject.js";
 
-const VALID_GENERATE_TYPES = ["action-provider", "wallet-provider", "prepare", "create-agent"] as const;
+const VALID_GENERATE_TYPES = [
+  "action-provider",
+  "wallet-provider",
+  "prepare",
+  "create-agent",
+] as const;
 type GenerateType = (typeof VALID_GENERATE_TYPES)[number];
 
 /**
