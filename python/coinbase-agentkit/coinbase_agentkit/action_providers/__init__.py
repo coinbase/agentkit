@@ -10,6 +10,7 @@ from .basename.basename_action_provider import (
 from .cdp.cdp_api_action_provider import CdpApiActionProvider, cdp_api_action_provider
 from .cdp.cdp_wallet_action_provider import CdpWalletActionProvider, cdp_wallet_action_provider
 from .compound.compound_action_provider import CompoundActionProvider, compound_action_provider
+from .desk.desk_action_provider import DeskActionProvider, desk_action_provider
 from .erc20.erc20_action_provider import ERC20ActionProvider, erc20_action_provider
 from .hyperboliclabs.hyperbolic_action_provider import (
     HyperbolicActionProvider,
@@ -61,4 +62,6 @@ __all__ = [
     "weth_action_provider",
     "WowActionProvider",
     "wow_action_provider",
+    "DeskActionProvider",
+    "desk_action_provider",
 ]

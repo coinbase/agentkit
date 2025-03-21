@@ -1,0 +1,1 @@
+Added: DESK core functionality including get_info, collateral management and trade action
