@@ -1,5 +1,11 @@
 # AgentKit Changelog
 
+## 0.5.0
+
+### Minor Changes
+
+- [#584](https://github.com/coinbase/agentkit/pull/584) [`6d8ac5b`](https://github.com/coinbase/agentkit/commit/6d8ac5b6608fafe1ee4256caac3ad93659d87c8b) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Added gasless transfers for USDC/CBBTC on Base/Base-Sepolia
+
 ## 0.4.0
 
 ### Minor Changes
