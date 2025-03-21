@@ -14,7 +14,7 @@
     "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\""
   },
   "dependencies": {
-    "@coinbase/agentkit": "^0.4.0",
+    "@coinbase/agentkit": "^0.5.0",
     "@coinbase/agentkit-langchain": "^0.3.0",
     "@langchain/langgraph": "^0.2.21",
     "@langchain/openai": "^0.3.14",
