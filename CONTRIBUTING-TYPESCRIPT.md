@@ -12,6 +12,7 @@ This guide covers TypeScript-specific setup and development for AgentKit.
 - [Code Style](#code-style)
 - [Documentation](#documentation)
 - [Changelog](#changelog)
+- [Releasing](#releasing)
 
 ## Development Setup
 
@@ -284,3 +285,7 @@ This will kick off an interactive prompt to help you create the changeset. Use t
 Once complete, a new changeset will be created in the `.changeset` directory, which should be committed along with the changes in your Pull Request.
 
 For more info on adding changelog entries, [see here](https://github.com/changesets/changesets/blob/main/docs/adding-a-changeset.md).
+
+## Releasing
+
+When ready to release the TypeScript packages, just review & merge the changesets PR (look for a PR titled "chore: version typescript packages"). This will automatically kick off the publish in the [changesets action](https://github.com/coinbase/agentkit/tree/main/.github/workflows/version_publish_npm.yml).
