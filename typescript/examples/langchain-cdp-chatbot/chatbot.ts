@@ -10,6 +10,7 @@ import {
   pythActionProvider,
   openseaActionProvider,
   alloraActionProvider,
+  acrossActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -122,6 +123,10 @@ async function initializeAgent() {
             ]
           : []),
         alloraActionProvider(),
+        acrossActionProvider({
+          networkId: walletProvider.getNetwork().networkId,
+          privateKey: await (await walletProvider.getWallet().getDefaultAddress()).export(),
+        }),
       ],
     });
 

@@ -3,6 +3,7 @@ export * from "./actionProvider";
 
 export * from "./customActionProvider";
 
+export * from "./across";
 export * from "./alchemy";
 export * from "./basename";
 export * from "./cdp";

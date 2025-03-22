@@ -40,6 +40,7 @@
     "typescript"
   ],
   "dependencies": {
+    "@across-protocol/app-sdk": "^0.2.0",
     "@alloralabs/allora-sdk": "^0.1.0",
     "@coinbase/coinbase-sdk": "^0.20.0",
     "@jup-ag/api": "^6.0.39",
