@@ -193,7 +193,7 @@ Integrations into AI Agent frameworks are specific to the framework itself, so w
 
 ### Local Testing
 
-A good way to test new actions locally is by using the chatbot example in `python/examples/langchain-cdp-chatbot`. See the [chatbot README](./python/examples/langchain-cdp-chatbot/README.md) for instructions on setting up and running the chatbot.
+A good way to test new actions locally is by using the chatbot example in `python/examples/langchain-smart-wallet-chatbot`. See the [chatbot README](./python/examples/langchain-smart-wallet-chatbot/README.md) for instructions on setting up and running the chatbot.
 
 The flow is:
 
