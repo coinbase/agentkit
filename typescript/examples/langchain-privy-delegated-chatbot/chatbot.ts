@@ -7,8 +7,7 @@ import {
   pythActionProvider,
   cdpApiActionProvider,
   PrivyEvmEmbeddedWalletProvider,
-  cdpWalletActionProvider,
-} from "../../agentkit/src";
+} from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
 import { MemorySaver } from "@langchain/langgraph";
@@ -37,7 +36,7 @@ function validateEnvironment(): void {
     "PRIVY_APP_ID",
     "PRIVY_APP_SECRET",
     "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY",
-    "PRIVY_DELEGATED_WALLET_ID", // Required for embedded wallet
+    "PRIVY_DELEGATED_WALLET_ID",
   ];
 
   requiredVars.forEach(varName => {
@@ -73,10 +72,10 @@ async function initializeAgent() {
 
     let walletProvider: PrivyEvmEmbeddedWalletProvider;
 
-    const networkId = process.env.NETWORK_ID || "base";
+    const networkId = process.env.NETWORK_ID || "base-sepolia";
 
     if (networkId?.includes("solana")) {
-      console.error("Embedded wallet for Solana not implemented in this example");
+      console.error("Embedded wallet for Solana is not implemented in this example");
       process.exit(1);
     } else {
       walletProvider = await PrivyWalletProvider.configureWithWallet({
@@ -84,7 +83,7 @@ async function initializeAgent() {
         appSecret: process.env.PRIVY_APP_SECRET!,
         authorizationPrivateKey: process.env.PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY,
         walletId: process.env.PRIVY_DELEGATED_WALLET_ID,
-        networkId: "base",
+        networkId,
         walletType: "embedded",
       });
     }
@@ -98,10 +97,6 @@ async function initializeAgent() {
         walletActionProvider(),
         erc20ActionProvider(),
         cdpApiActionProvider({
-          apiKeyName: process.env.CDP_API_KEY_NAME as string,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY as string,
-        }),
-        cdpWalletActionProvider({
           apiKeyName: process.env.CDP_API_KEY_NAME as string,
           apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY as string,
         }),
@@ -139,7 +134,6 @@ async function initializeAgent() {
       WALLET_DATA_FILE,
       JSON.stringify({
         ...exportedWallet,
-        walletType: "embedded", // Add this to identify it as an embedded wallet
       }),
     );
 

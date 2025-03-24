@@ -68,7 +68,7 @@ PRIVY_APP_ID=your_privy_app_id
 PRIVY_APP_SECRET=your_privy_app_secret
 PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY=your_privy_authorization_key
 PRIVY_DELEGATED_WALLET_ID=your_delegated_wallet_id
-NETWORK_ID=base  # or another network of your choice
+NETWORK_ID=base-mainnet  # or another network of your choice
 
 # Optional, for CDP actions
 CDP_API_KEY_NAME=your_cdp_key_name
