@@ -32,8 +32,8 @@ jobs:
       - name: Version and/or Publish to NPM
         uses: changesets/action@06245a4e0a36c064a573d4150030f5ec548e4fcc
         with:
-          commit: "chore: version packages"
-          title: "chore: version packages"
+          commit: "chore: version typescript packages"
+          title: "chore: version typescript packages"
           version: npm run changeset:version
           publish: npm run publish
           cwd: ./typescript
