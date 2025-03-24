@@ -1,37 +1,20 @@
-import { CustomActionProvider, {{ walletProvider }}, Network } from "@coinbase/agentkit";
+import { customActionProvider, {{ walletProvider }} } from "@coinbase/agentkit";
 import { {{ schemaName }} } from "./schemas";
 import { z } from "zod";
 
 /**
- * Action provider for {{ className }} operations.
+ * Creates a {{ className }} action provider.
  */
-export class {{ className }} extends CustomActionProvider<{{ walletProvider }}> {
-  /**
-   * Constructs a new {{ className }}.
-   */
-  constructor() {
-    super([{
-      name: "{{ actionName }}",
-      description: `This tool will perform a {{ className }} operation.`,
-      schema: {{ schemaName }},
-      invoke: async (wallet: {{ walletProvider }}, args: z.infer<typeof {{ schemaName }}>) => {
-        try {
-          // Do work here
-          return `Successfully performed {{ actionName }} and returned the response`;
-        } catch (error) {
-          return `Error performing {{ actionName }}: Error: ${error}`;
-        }
-      }
-    }]);
-  }
-
-  /**
-   * Checks if the {{ name }} supports the given network.
-   *
-   * @param network - The network to check.
-   * @returns True if the {{ name }} action provider supports the network, false otherwise.
-   */
-  supportsNetwork = (network: Network) => {{ networkSupport | safe }};
-}
-
-export const {{ name }} = () => new {{ className }}(); 
+export const {{ name }} = () => customActionProvider<{{ walletProvider }}>({
+  name: "{{ actionName }}",
+  description: `This tool will perform a {{ className }} operation.`,
+  schema: {{ schemaName }},
+  invoke: async (wallet: {{ walletProvider }}, args: z.infer<typeof {{ schemaName }}>) => {
+    try {
+      // Do work here
+      return `Successfully performed {{ actionName }} and returned the response`;
+    } catch (error) {
+      return `Error performing {{ actionName }}: Error: ${error}`;
+    }
+  },
+}); 

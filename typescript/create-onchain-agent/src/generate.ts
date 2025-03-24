@@ -1,9 +1,9 @@
 #!/usr/bin/env node
+
 import { createActionProvider } from "./actions/createActionProvider.js";
 import { createAgent } from "./actions/createAgent.js";
 import { prepareAgentKit } from "./actions/prepareAgentkit.js";
 import { createWalletProvider } from "./actions/createWalletProvider.js";
-import { initProject } from "./actions/initProject.js";
 
 const VALID_GENERATE_TYPES = [
   "action-provider",
@@ -20,12 +20,6 @@ type GenerateType = (typeof VALID_GENERATE_TYPES)[number];
  * @returns The command and type
  */
 function findCommands(args: string[]): { command: string | null; type: string | null } {
-  // Handle direct "new" command
-  if (args.includes("new")) {
-    return { command: "new", type: null };
-  }
-
-  // Handle generate commands
   const generateIndex = args.findIndex(arg => arg === "generate");
   if (generateIndex === -1) {
     return { command: null, type: null };
@@ -36,21 +30,27 @@ function findCommands(args: string[]): { command: string | null; type: string | 
 }
 
 /**
+ * Checks if a value is a valid generate type
+ *
+ * @param value - The value to check
+ * @returns True if the value is a valid generate type, false otherwise
+ */
+function isGenerateType(value: string | null): value is GenerateType {
+  return Boolean(value && VALID_GENERATE_TYPES.includes(value as GenerateType));
+}
+
+/**
  * Handles command line arguments and executes the appropriate action
  */
 async function handleArgs() {
   const { command, type } = findCommands(process.argv);
 
   if (!command) {
-    console.error("Error: Please provide a valid command (new or generate)");
+    console.error("Error: Please provide a valid command (generate)");
     process.exit(1);
   }
 
   switch (command) {
-    case "new": {
-      await initProject();
-      return;
-    }
     case "generate": {
       if (!type) {
         console.error("Error: Please specify what to generate");
@@ -58,13 +58,13 @@ async function handleArgs() {
         break;
       }
 
-      if (!VALID_GENERATE_TYPES.includes(type as GenerateType)) {
-        console.error(`Error: Unknown generate type: ${type}`);
+      if (!isGenerateType(type)) {
+        console.error(`Error: Unknown generate argument: ${type}`);
         console.error(`Valid options: ${VALID_GENERATE_TYPES.join(", ")}`);
         break;
       }
 
-      switch (type as GenerateType) {
+      switch (type) {
         case "action-provider":
           await createActionProvider();
           break;

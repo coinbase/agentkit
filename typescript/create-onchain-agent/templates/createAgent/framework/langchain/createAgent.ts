@@ -49,7 +49,6 @@ export async function createAgent(): Promise<ReturnType<typeof createReactAgent>
     const tools = await getLangChainTools(agentkit);
     const memory = new MemorySaver();
 
-    // Initialize Agent
     const canUseFaucet = walletProvider.getNetwork().networkId == "base-sepolia";
     const faucetMessage = `If you ever need funds, you can request them from the faucet.`;
     const cantUseFaucetMessage = `If you need funds, you can provide your wallet details and request funds from the user.`;

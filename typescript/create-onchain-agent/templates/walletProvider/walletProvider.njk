@@ -1,7 +1,7 @@
 import { {{ baseClass }} } from "@coinbase/agentkit";
 import { Network } from "@coinbase/agentkit";
 {% if protocolFamily === "EVM" %}
-import { TransactionRequest, ReadContractParameters, ReadContractReturnType, Abi, ContractFunctionName, ContractFunctionArgs } from "viem";
+import { TransactionRequest, ReadContractParameters, ReadContractReturnType, Abi, ContractFunctionName, ContractFunctionArgs, Hex } from "viem";
 {% else %}
 import { Connection, PublicKey, RpcResponseAndContext, SignatureStatus, SignatureStatusConfig, VersionedTransaction, SignatureResult } from "@solana/web3.js";
 {% endif %}
@@ -49,35 +49,35 @@ export class {{ className }} extends {{ baseClass }} {
   /**
    * Sign a message.
    */
-  async signMessage(message: string | Uint8Array): Promise<`0x${string}`> {
+  async signMessage(message: string | Uint8Array): Promise<Hex> {
     throw new Error("Method not implemented.");
   }
 
   /**
    * Sign typed data.
    */
-  async signTypedData(typedData: any): Promise<`0x${string}`> {
+  async signTypedData(typedData: any): Promise<Hex> {
     throw new Error("Method not implemented.");
   }
 
   /**
    * Sign a transaction.
    */
-  async signTransaction(transaction: TransactionRequest): Promise<`0x${string}`> {
+  async signTransaction(transaction: TransactionRequest): Promise<Hex> {
     throw new Error("Method not implemented.");
   }
 
   /**
    * Send a transaction.
    */
-  async sendTransaction(transaction: TransactionRequest): Promise<`0x${string}`> {
+  async sendTransaction(transaction: TransactionRequest): Promise<Hex> {
     throw new Error("Method not implemented.");
   }
 
   /**
    * Wait for a transaction receipt.
    */
-  async waitForTransactionReceipt(txHash: `0x${string}`): Promise<any> {
+  async waitForTransactionReceipt(txHash: Hex): Promise<any> {
     throw new Error("Method not implemented.");
   }
 
