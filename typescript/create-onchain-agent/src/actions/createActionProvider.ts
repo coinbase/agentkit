@@ -31,12 +31,12 @@ export async function createActionProvider() {
     },
     {
       type: "select",
-      name: "networkFamily",
-      message: "Which network family will this support?",
+      name: "walletProvider",
+      message: "Which wallet provider is expected?",
       choices: [
-        { title: "EVM", value: "EVM" },
-        { title: "SVM", value: "SVM" },
-        { title: "Both", value: "Both" },
+        { title: "EvmWalletProvider (EVM networks)", value: "EvmWalletProvider" },
+        { title: "SvmWalletProvider (Solana networks)", value: "SvmWalletProvider" },
+        { title: "WalletProvider (Any network)", value: "WalletProvider" },
       ],
     },
   ]);
@@ -48,32 +48,13 @@ export async function createActionProvider() {
   const snakeName = toSnakeCase(answers.name);
   const exportName = `${toCamelCase(baseName)}ActionProvider`;
 
-  // Determine wallet provider and networks based on network family
-  let walletProvider = "EvmWalletProvider";
-  let networkSupport = "true";
-
-  switch (answers.networkFamily) {
-    case "EVM":
-      walletProvider = "EvmWalletProvider";
-      networkSupport = 'network.protocolFamily === "EVM"';
-      break;
-    case "SVM":
-      walletProvider = "SvmWalletProvider";
-      networkSupport = 'network.protocolFamily === "SVM"';
-      break;
-    case "Both":
-      walletProvider = "WalletProvider";
-      networkSupport = "true";
-      break;
-  }
+  const walletProvider = answers.walletProvider;
 
   // Generate code using nunjucks
   const generatedCode = nunjucks.render("actionProvider/actionProvider.njk", {
     name: exportName,
     className,
     walletProvider,
-    networks: "[]",
-    networkSupport,
     actionName: `${snakeName}_action`,
     schemaName: `${baseName}ActionSchema`,
   });
