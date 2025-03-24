@@ -20,9 +20,16 @@ for package in "${all_packages[@]}"; do
   fi
 done
 
+rm -f .to-publish-pypi
+touch .to-publish-pypi
+
+ROOT_DIR=$(pwd)
+
 for package in "${changed_packages[@]}"; do
   cd $package
   poetry install
   poetry run -- towncrier build --yes
+  package_and_version=$(poetry version)
+  echo "$package_and_version" >> "${ROOT_DIR}/.to-publish-pypi"
   cd - > /dev/null
 done
