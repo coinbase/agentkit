@@ -16,7 +16,7 @@ import {
   Address,
   Hex,
 } from "viem";
-import { getChain } from "../network/network";
+import { getChain, NETWORK_ID_TO_CHAIN_ID } from "../network/network";
 import { PrivyWalletConfig, PrivyWalletExport, createPrivyClient } from "./privyShared";
 import { createPublicClient, http } from "viem";
 import { WalletWithMetadata } from "@privy-io/server-auth";
@@ -69,7 +69,7 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
     this.#authKey = config.authorizationPrivateKey || "";
 
     const networkId = config.networkId || "base-sepolia";
-    const chainId = config.chainId || this.mapNetworkToChainId(networkId);
+    const chainId = config.chainId || NETWORK_ID_TO_CHAIN_ID["base-sepolia"];
 
     this.#network = {
       protocolFamily: "evm",
@@ -250,7 +250,7 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
     const body = {
       address: this.#address,
       chain_type: "ethereum",
-      chain_id: this.mapNetworkToChainId(this.#network.networkId!),
+      chain_id: NETWORK_ID_TO_CHAIN_ID[this.#network.chainId!],
       ...typedData,
     };
 
@@ -361,7 +361,7 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
     const body = {
       address: this.#address,
       chain_type: "ethereum",
-      chain_id: this.mapNetworkToChainId(this.#network.networkId!),
+      chain_id: NETWORK_ID_TO_CHAIN_ID[this.#network.chainId!],
       contract: {
         address: params.address,
         abi: params.abi,
@@ -394,7 +394,7 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
       address: this.#address,
       chain_type: "ethereum",
       method: "eth_sendTransaction",
-      caip2: `eip155:${this.mapNetworkToChainId(this.#network.networkId!)}`,
+      caip2: `eip155:${NETWORK_ID_TO_CHAIN_ID[this.#network.chainId!]}`,
       params: {
         transaction: {
           to,
