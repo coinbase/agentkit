@@ -34,9 +34,10 @@ export async function createActionProvider() {
       name: "walletProvider",
       message: "Which wallet provider is expected?",
       choices: [
+        { title: "None (No wallet/network required)", value: "none" },
+        { title: "WalletProvider (Any network)", value: "WalletProvider" },
         { title: "EvmWalletProvider (EVM networks)", value: "EvmWalletProvider" },
         { title: "SvmWalletProvider (Solana networks)", value: "SvmWalletProvider" },
-        { title: "WalletProvider (Any network)", value: "WalletProvider" },
       ],
     },
   ]);
