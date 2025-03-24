@@ -105,10 +105,10 @@ jobs:
     strategy:
       matrix:
         package:
-          - ./coinbase-agentkit
-          - ./create-onchain-agent
-          - ./framework-extensions/langchain
-          - ./framework-extensions/openai-agents-sdk
+          - coinbase-agentkit
+          - create-onchain-agent
+          - framework-extensions/langchain
+          - framework-extensions/openai-agents-sdk
     environment:
       name: pypi
       url: https://pypi.org/p/coinbase-agentkit-langchain
@@ -129,7 +129,7 @@ jobs:
 
       - name: Update Python package versions
         run: |
-          cd "python/${{ matrix.package }}""
+          cd "python/${{ matrix.package }}"
           PKG_NAME=$(poetry version | cut -d' ' -f1)
           CURRENT_VERSION=$(poetry version -s)
 
