@@ -13,6 +13,7 @@ import {
   ContractFunctionName,
   TransactionReceipt,
   parseEther,
+  Address,
 } from "viem";
 import { getChain } from "../network/network";
 import { PrivyWalletConfig, PrivyWalletExport, createPrivyClient } from "./privyShared";
@@ -128,15 +129,11 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
           account.type === "wallet" && account.walletClientType === "privy",
       );
 
-      console.log(embeddedWallets, "embedded wallets");
-
       if (embeddedWallets.length === 0) {
         throw new Error(`Could not find wallet address for wallet ID ${config.walletId}`);
       }
 
       const walletAddress = embeddedWallets[0].address;
-
-      console.log(walletAddress, "wallet address");
 
       // Verify the network/chain ID if provided
       if (config.chainId) {
@@ -193,7 +190,7 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
   async getBalance(): Promise<bigint> {
     try {
       const balance = await this.#publicClient.getBalance({
-        address: this.#address as `0x${string}`,
+        address: this.#address as Address,
       });
 
       return balance;
@@ -211,7 +208,7 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
    * @param message - The message to sign.
    * @returns The signed message.
    */
-  async signMessage(message: string): Promise<`0x${string}`> {
+  async signMessage(message: string): Promise<Address> {
     const body = {
       address: this.#address,
       chain_type: "ethereum",
@@ -223,8 +220,7 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
     };
 
     try {
-      const response =
-        await this.executePrivyRequest<PrivyResponse<{ signature: `0x${string}` }>>(body);
+      const response = await this.executePrivyRequest<PrivyResponse<{ signature: Address }>>(body);
       return response.data?.signature;
     } catch (error) {
       if (error instanceof Error) {
@@ -249,7 +245,7 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
     types: Record<string, Array<{ name: string; type: string }>>;
     primaryType: string;
     message: Record<string, unknown>;
-  }): Promise<`0x${string}`> {
+  }): Promise<Address> {
     const body = {
       address: this.#address,
       chain_type: "ethereum",
@@ -258,7 +254,7 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
     };
 
     try {
-      const response = await this.executePrivyRequest<{ signature: `0x${string}` }>({
+      const response = await this.executePrivyRequest<{ signature: Address }>({
         method: "eth_signTypedData_v4",
         params: body,
       });
@@ -277,7 +273,7 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
    * @param transaction - The transaction to sign.
    * @returns The signed transaction.
    */
-  async signTransaction(transaction: TransactionRequest): Promise<`0x${string}`> {
+  async signTransaction(transaction: TransactionRequest): Promise<Address> {
     const body = {
       address: this.#address,
       chain_type: "ethereum",
@@ -292,7 +288,7 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
 
     try {
       const response =
-        await this.executePrivyRequest<PrivyResponse<{ signed_transaction: `0x${string}` }>>(body);
+        await this.executePrivyRequest<PrivyResponse<{ signed_transaction: Address }>>(body);
       return response.data?.signed_transaction;
     } catch (error) {
       if (error instanceof Error) {
@@ -308,7 +304,7 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
    * @param transaction - The transaction to send.
    * @returns The hash of the transaction.
    */
-  async sendTransaction(transaction: TransactionRequest): Promise<`0x${string}`> {
+  async sendTransaction(transaction: TransactionRequest): Promise<Address> {
     const body = {
       address: this.#address,
       chain_type: "ethereum",
@@ -322,7 +318,7 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
     };
 
     try {
-      const response = await this.executePrivyRequest<PrivyResponse<{ hash: `0x${string}` }>>(body);
+      const response = await this.executePrivyRequest<PrivyResponse<{ hash: Address }>>(body);
       return response.data?.hash;
     } catch (error) {
       if (error instanceof Error) {
@@ -338,7 +334,7 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
    * @param txHash - The hash of the transaction to wait for.
    * @returns The transaction receipt.
    */
-  async waitForTransactionReceipt(txHash: `0x${string}`): Promise<TransactionReceipt> {
+  async waitForTransactionReceipt(txHash: Address): Promise<TransactionReceipt> {
     return await this.#publicClient.waitForTransactionReceipt({
       hash: txHash,
     });
@@ -389,7 +385,7 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
    * @param value - The amount to transfer in Wei.
    * @returns The transaction hash.
    */
-  async nativeTransfer(to: string, value: string): Promise<`0x${string}`> {
+  async nativeTransfer(to: string, value: string): Promise<Address> {
     const valueInWei = parseEther(value);
     const valueHex = `0x${valueInWei.toString(16)}`;
 
@@ -407,7 +403,7 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
     };
 
     try {
-      const response = await this.executePrivyRequest<PrivyResponse<{ hash: `0x${string}` }>>(body);
+      const response = await this.executePrivyRequest<PrivyResponse<{ hash: Address }>>(body);
 
       const receipt = await this.waitForTransactionReceipt(response.data.hash);
 
