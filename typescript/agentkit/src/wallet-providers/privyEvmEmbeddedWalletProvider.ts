@@ -436,23 +436,6 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
   }
 
   /**
-   * Map network IDs to their corresponding chain IDs
-   *
-   * @param networkId - The network ID to map
-   * @returns The corresponding chain ID
-   */
-  private mapNetworkToChainId(networkId: string): string {
-    const networkToChainId: Record<string, string> = {
-      base: "8453",
-      "base-sepolia": "84532",
-      "ethereum-mainnet": "1",
-      "ethereum-sepolia": "11155111",
-    };
-
-    return networkToChainId[networkId] || "1";
-  }
-
-  /**
    * Generate Privy authorization signature for API requests
    *
    * @param url - The URL for the request
