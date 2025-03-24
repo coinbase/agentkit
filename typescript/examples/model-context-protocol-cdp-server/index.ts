@@ -1,19 +1,19 @@
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { getMcpTools } from "@coinbase/agentkit-model-context-protocol";
 import {
   AgentKit,
-  CdpWalletProvider,
-  wethActionProvider,
-  walletActionProvider,
+  cdpApiActionProvider,
   erc20ActionProvider,
   erc721ActionProvider,
-  cdpApiActionProvider,
-  cdpWalletActionProvider,
   pythActionProvider,
+  SmartWalletProvider,
+  walletActionProvider,
+  wethActionProvider,
 } from "@coinbase/agentkit";
+import { getMcpTools } from "@coinbase/agentkit-model-context-protocol";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
-
+import { Address, Hex } from "viem";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 /**
  * Validates that required environment variables are set
  */
@@ -57,13 +57,24 @@ async function initializeServer() {
     );
 
     // Configure CDP Wallet Provider
+    const privateKey = (process.env.PRIVATE_KEY || generatePrivateKey()) as Hex;
+    const signer = privateKeyToAccount(privateKey);
+
     const config = {
       apiKeyName: process.env.CDP_API_KEY_NAME!,
       apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY!,
       networkId: process.env.NETWORK_ID || "base-sepolia",
+      smartWalletAddress: process.env.SMART_WALLET_ADDRESS! as Address,
+      signer
     };
 
-    const walletProvider = await CdpWalletProvider.configureWithWallet(config);
+    const walletProvider = await SmartWalletProvider.configureWithWallet(config);
+
+    if (!process.env.PRIVATE_KEY || !process.env.SMART_WALLET_ADDRESS) {
+      console.log("Save your private key and smart wallet address to the environment variables");
+      console.log("PRIVATE_KEY=" + privateKey);
+      console.log("SMART_WALLET_ADDRESS=" + walletProvider.getAddress());
+    }
 
     // Initialize AgentKit
     const agentkit = await AgentKit.from({
@@ -75,10 +86,6 @@ async function initializeServer() {
         erc20ActionProvider(),
         erc721ActionProvider(),
         cdpApiActionProvider({
-          apiKeyName: config.apiKeyName,
-          apiKeyPrivateKey: config.apiKeyPrivateKey,
-        }),
-        cdpWalletActionProvider({
           apiKeyName: config.apiKeyName,
           apiKeyPrivateKey: config.apiKeyPrivateKey,
         }),

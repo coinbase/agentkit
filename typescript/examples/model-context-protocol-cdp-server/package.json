@@ -19,6 +19,7 @@
     "@coinbase/agentkit": "workspace:*",
     "@coinbase/agentkit-model-context-protocol": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.6.1",
+    "viem": "^2.23.14",
     "zod": "^3.22.4"
   },
   "devDependencies": {
