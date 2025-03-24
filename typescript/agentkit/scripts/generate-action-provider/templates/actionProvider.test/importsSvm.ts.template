@@ -1,0 +1,5 @@
+import {
+  SOLANA_MAINNET_NETWORK,
+  SOLANA_TESTNET_NETWORK,
+  SOLANA_DEVNET_NETWORK,
+} from "../../network/svm"; 

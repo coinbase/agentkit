@@ -1,0 +1,19 @@
+/**
+ * {{name_pascal}}ActionProvider provides actions for {{name}} operations.
+ *
+ * @description
+ * This provider is designed to {% if wallet_provider %}work with {{wallet_provider}} for blockchain interactions{% else %}provide blockchain-agnostic operations{% endif %}.
+{% if not protocol_family %}
+ * It supports all blockchain networks.
+{% else %}
+ * It supports all {{protocol_family}} networks.
+{% endif %}
+ */
+export class {{name_pascal}}ActionProvider extends ActionProvider{% if wallet_provider %}<{{wallet_provider}}>{% endif %} {
+  /**
+   * Constructor for the {{name_pascal}}ActionProvider.
+   */
+  constructor() {
+    super("{{name}}", []);
+  }
+} 
