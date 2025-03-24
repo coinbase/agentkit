@@ -112,6 +112,9 @@ jobs:
     environment:
       name: pypi
       url: https://pypi.org/p/coinbase-agentkit-langchain
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
