@@ -30,9 +30,6 @@ This command lets you choose between two project templates:
 After installing the `create-onchain-agent` CLI, you will also have the `agenkit` CLI installed. This allows you to generate components for your project.
 
 ```sh
-# Identical to `npm create onchain-agent`
-agentkit new
-
 # Generate a custom wallet provider
 agentkit generate wallet-provider
 
