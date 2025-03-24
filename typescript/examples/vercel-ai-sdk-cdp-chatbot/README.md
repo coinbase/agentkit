@@ -39,6 +39,7 @@ Once you have them, rename the `.env-local` file to `.env` and make sure you set
 - "CDP_API_KEY_NAME"
 - "CDP_API_KEY_PRIVATE_KEY"
 - "OPENAI_API_KEY"
+- "PRIVATE_KEY" (optional, will generate a new private key if not provided)
 
 ## Running the example
 
