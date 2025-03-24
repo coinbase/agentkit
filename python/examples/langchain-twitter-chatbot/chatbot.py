@@ -6,13 +6,14 @@ import time
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
-    CdpWalletProvider,
-    CdpWalletProviderConfig,
+    SmartWalletProvider,
+    SmartWalletProviderConfig,
     twitter_action_provider,
     wallet_action_provider,
 )
 from coinbase_agentkit_langchain import get_langchain_tools
 from dotenv import load_dotenv
+from eth_account.account import Account
 from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
@@ -29,17 +30,42 @@ def initialize_agent():
     # Initialize LLM
     llm = ChatOpenAI(model="gpt-4o-mini")
 
-    # Initialize CDP Wallet Provider
-    wallet_data = None
+    # Load wallet data from JSON file
+    network_id = os.getenv("NETWORK_ID", "base-sepolia")
+    wallet_data_file = f"wallet_data_{network_id.replace('-', '_')}.txt"
+    wallet_data = {"private_key": None, "smart_wallet_address": None}
     if os.path.exists(wallet_data_file):
-        with open(wallet_data_file) as f:
-            wallet_data = f.read()
+        try:
+            with open(wallet_data_file) as f:
+                wallet_data = json.load(f)
+        except json.JSONDecodeError:
+            print(f"Warning: Invalid wallet data file format for {network_id}. Creating new wallet.")
 
-    cdp_config = None
-    if wallet_data is not None:
-        cdp_config = CdpWalletProviderConfig(wallet_data=wallet_data)
+    # Use private key from env if not in wallet data
+    private_key = wallet_data.get("private_key") or os.getenv("PRIVATE_KEY")
+    if not private_key:
+        acct = Account.create()
+        private_key = acct.key.hex()
 
-    wallet_provider = CdpWalletProvider(cdp_config)
+    signer = Account.from_key(private_key)
+
+    # Initialize Smart Wallet Provider
+    wallet_provider = SmartWalletProvider(
+        SmartWalletProviderConfig(
+            network_id=network_id,
+            signer=signer,
+            smart_wallet_address=wallet_data.get("smart_wallet_address"),
+            paymaster_url=None,  # Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
+        )
+    )
+
+    # Save both private key and smart wallet address
+    wallet_data = {
+        "private_key": private_key,
+        "smart_wallet_address": wallet_provider.get_address(),
+    }
+    with open(wallet_data_file, "w") as f:
+        json.dump(wallet_data, f, indent=2)
 
     agentkit = AgentKit(
         AgentKitConfig(
@@ -50,11 +76,6 @@ def initialize_agent():
             ],
         )
     )
-
-    wallet_data_json = json.dumps(wallet_provider.export_wallet().to_dict())
-
-    with open(wallet_data_file, "w") as f:
-        f.write(wallet_data_json)
 
     # use get_langchain_tools
     tools = get_langchain_tools(agentkit)

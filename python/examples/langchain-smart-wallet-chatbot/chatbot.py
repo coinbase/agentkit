@@ -42,9 +42,9 @@ def initialize_agent():
 
     # Use private key from env if not in wallet data
     private_key = wallet_data.get("private_key") or os.getenv("PRIVATE_KEY")
-
     if not private_key:
-        raise ValueError("PRIVATE_KEY environment variable is required")
+        acct = Account.create()
+        private_key = acct.key.hex()
 
     signer = Account.from_key(private_key)
 
