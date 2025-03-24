@@ -6,9 +6,14 @@ import fs from "fs";
 import path from "path";
 import pc from "picocolors";
 import nunjucks from "nunjucks";
+import { exec } from "child_process";
+import { promisify } from "util";
 
 import { ProviderConfig } from "./types";
 import { AGENTKIT_BANNER, SUCCESS_MESSAGES } from "./constants";
+
+// Convert exec to Promise-based
+const execPromise = promisify(exec);
 
 nunjucks.configure({
   autoescape: false,
@@ -151,6 +156,44 @@ export function addProviderExport(providerName: string): void {
 
   content = content.trimEnd() + `\nexport * from "./${providerName}";\n`;
   fs.writeFileSync(indexPath, content);
+}
+
+/**
+ * Runs ESLint to fix any linting issues in the generated files
+ * 
+ * @param targetDir - The directory containing the generated files
+ */
+export async function runLint(targetDir: string): Promise<void> {
+  try {
+    console.log(pc.blue("Linting generated files..."));
+    
+    const command = `npx eslint -c .eslintrc.json "${targetDir}/**/*.ts" --fix`;
+    await execPromise(command);
+    
+    console.log(pc.green("Linting complete."));
+  } catch (error) {
+    // ESLint returns non-zero exit code if it finds any linting errors
+    console.log(pc.yellow("Linting failed with errors."));
+  }
+}
+
+/**
+ * Runs Prettier to format the generated files
+ * 
+ * @param targetDir - The directory containing the generated files
+ */
+export async function runFormat(targetDir: string): Promise<void> {
+  try {
+    console.log(pc.blue("Formatting generated files..."));
+    
+    const command = `npx prettier -c .prettierrc --write "${targetDir}/**/*.{ts,js,cjs,json,md}"`;
+    await execPromise(command);
+    
+    console.log(pc.green("Formatting complete."));
+  } catch (error) {
+    // Prettier might return non-zero exit code
+    console.log(pc.yellow("Formatting failed with errors."));
+  }
 }
 
 /**

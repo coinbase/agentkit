@@ -1,0 +1,7 @@
+describe("{{action_provider_class}}", () => {
+  // Wallet Provider Setup
+  const walletProvider = new {{wallet_provider}}();
+  const actionProvider = new {{action_provider_class}}(walletProvider);
+  const registry = new Registry();
+  registry.registerActionProvider(actionProvider);
+}) 
