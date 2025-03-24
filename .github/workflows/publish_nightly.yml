@@ -102,6 +102,13 @@ jobs:
   publish-pypi-nightly:
     needs: prepare-nightly
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package:
+          - ./coinbase-agentkit
+          - ./create-onchain-agent
+          - ./framework-extensions/langchain
+          - ./framework-extensions/openai-agents-sdk
     environment:
       name: pypi
       url: https://pypi.org/p/coinbase-agentkit-langchain
@@ -120,62 +127,37 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
 
-      - name: Find Python packages
-        id: find-python-packages
-        run: |
-          cd python
-          PACKAGES=$(find . -name "pyproject.toml" \
-            -not -path "*/examples/*" \
-            -exec dirname {} \; | tr '\n' ' ')
-          echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
-
       - name: Update Python package versions
         run: |
-          cd python
-          for pkg in ${{ steps.find-python-packages.outputs.packages }}; do
-            if [ -f "$pkg/pyproject.toml" ]; then
-              cd $pkg
-              if ! grep -q "private = true" pyproject.toml; then
-                PKG_NAME=$(poetry version | cut -d' ' -f1)
-                CURRENT_VERSION=$(poetry version -s)
-                
-                if [[ $CURRENT_VERSION == *".dev"* ]]; then
-                  NEXT_VERSION=$(echo $CURRENT_VERSION | sed -E 's/\.dev[0-9]+$//')
-                else
-                  MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
-                  MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
-                  PATCH=$(echo $CURRENT_VERSION | cut -d. -f3 | cut -d- -f1 | cut -d+ -f1)
-                  NEXT_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
-                fi
-                
-                TODAY=$(date +%Y%m%d)
-                ALL_VERSIONS=$(curl -s "https://pypi.org/pypi/$PKG_NAME/json" | jq -r '.releases | keys[]')
-                LATEST_NIGHTLY=$(echo "$ALL_VERSIONS" | grep -E "^${NEXT_VERSION}\.dev${TODAY}[0-9]$" | sort -V | tail -n1 || echo "")
-                
-                if [ -z "$LATEST_NIGHTLY" ]; then
-                  poetry version "${NEXT_VERSION}.dev${TODAY}0"
-                else
-                  BUILD_NUM=$(echo $LATEST_NIGHTLY | sed -E "s/.*\.dev${TODAY}([0-9])$/\1/")
-                  NEXT_BUILD=$((BUILD_NUM + 1))
-                  poetry version "${NEXT_VERSION}.dev${TODAY}${NEXT_BUILD}"
-                fi
-              fi
-              cd - > /dev/null
-            fi
-          done
+          cd "python/${{ matrix.package }}""
+          PKG_NAME=$(poetry version | cut -d' ' -f1)
+          CURRENT_VERSION=$(poetry version -s)
+
+          if [[ $CURRENT_VERSION == *".dev"* ]]; then
+            NEXT_VERSION=$(echo $CURRENT_VERSION | sed -E 's/\.dev[0-9]+$//')
+          else
+            MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
+            MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
+            PATCH=$(echo $CURRENT_VERSION | cut -d. -f3 | cut -d- -f1 | cut -d+ -f1)
+            NEXT_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
+          fi
+
+          TODAY=$(date +%Y%m%d)
+          ALL_VERSIONS=$(curl -s "https://pypi.org/pypi/$PKG_NAME/json" | jq -r '.releases | keys[]')
+          LATEST_NIGHTLY=$(echo "$ALL_VERSIONS" | grep -E "^${NEXT_VERSION}\.dev${TODAY}[0-9]$" | sort -V | tail -n1 || echo "")
+
+          if [ -z "$LATEST_NIGHTLY" ]; then
+            poetry version "${NEXT_VERSION}.dev${TODAY}0"
+          else
+            BUILD_NUM=$(echo $LATEST_NIGHTLY | sed -E "s/.*\.dev${TODAY}([0-9])$/\1/")
+            NEXT_BUILD=$((BUILD_NUM + 1))
+            poetry version "${NEXT_VERSION}.dev${TODAY}${NEXT_BUILD}"
+          fi
 
       - name: Build and publish
-        run: |
-          cd python
-          for pkg in ${{ steps.find-python-packages.outputs.packages }}; do
-            if [ -f "$pkg/pyproject.toml" ] && ! grep -q "private = true" "$pkg/pyproject.toml"; then
-              cd $pkg
-              poetry install --only main
-              poetry build
-              poetry publish --username __token__ --password ${{ secrets.PYPI_API_TOKEN }}
-              cd - > /dev/null
-            fi
-          done
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: python/${{ matrix.package }}/dist/
 
   # create-github-release:
   #   needs: [prepare-nightly, publish-npm-nightly, publish-pypi-nightly]
