@@ -53,8 +53,6 @@ function validateEnvironment(): void {
 // Add this right after imports and before any other code
 validateEnvironment();
 
-// Configure a file to persist the agent's CDP Smart Wallet + Private Key data
-const WALLET_DATA_FILE = "wallet_data.txt";
 type WalletData = {
   privateKey: Hex;
   smartWalletAddress: Address;
@@ -72,23 +70,26 @@ async function initializeAgent() {
       model: "gpt-4o-mini",
     });
 
+    const networkId = process.env.NETWORK_ID || 'base-sepolia';
+    const walletDataFile = `wallet_data_${networkId.replace(/-/g, '_')}.txt`;
+    
     let walletData: WalletData | null = null;
     let privateKey: Hex | null = null;
 
     // Read existing wallet data if available
-    if (fs.existsSync(WALLET_DATA_FILE)) {
+    if (fs.existsSync(walletDataFile)) {
       try {
-        walletData = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8")) as WalletData;
+        walletData = JSON.parse(fs.readFileSync(walletDataFile, "utf8")) as WalletData;
         privateKey = walletData.privateKey;
       } catch (error) {
-        console.error("Error reading wallet data:", error);
+        console.error(`Error reading wallet data for ${networkId}:`, error);
         // Continue without wallet data
       }
     }
     if (!privateKey) {
       if (walletData?.smartWalletAddress) {
         throw new Error(
-          `Smart wallet found but no private key provided. Either provide the private key, or delete ${WALLET_DATA_FILE} and try again.`,
+          `Smart wallet found but no private key provided. Either provide the private key, or delete ${walletDataFile} and try again.`,
         );
       }
       privateKey = (process.env.PRIVATE_KEY || generatePrivateKey()) as Hex;
@@ -98,7 +99,7 @@ async function initializeAgent() {
 
     // Configure Smart Wallet Provider
     const walletProvider = await SmartWalletProvider.configureWithWallet({
-      networkId: process.env.NETWORK_ID,
+      networkId,
       signer,
       smartWalletAddress: walletData?.smartWalletAddress,
       paymasterUrl: undefined, // Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
@@ -150,7 +151,7 @@ async function initializeAgent() {
     // Save wallet data
     const smartWalletAddress = await walletProvider.getAddress();
     fs.writeFileSync(
-      WALLET_DATA_FILE,
+      walletDataFile,
       JSON.stringify({
         privateKey,
         smartWalletAddress,

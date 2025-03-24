@@ -22,14 +22,14 @@ from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 
-wallet_data_file = "wallet_data.txt"
-
 load_dotenv()
-
 
 def initialize_agent():
     """Initialize the agent with SmartWalletProvider."""
     llm = ChatOpenAI(model="gpt-4o-mini")
+
+    network_id = os.getenv("NETWORK_ID", "base-sepolia")
+    wallet_data_file = f"wallet_data_{network_id.replace('-', '_')}.txt"
 
     # Load wallet data from JSON file
     wallet_data = {"private_key": None, "smart_wallet_address": None}
@@ -38,7 +38,7 @@ def initialize_agent():
             with open(wallet_data_file) as f:
                 wallet_data = json.load(f)
         except json.JSONDecodeError:
-            print("Warning: Invalid wallet data file format. Creating new wallet.")
+            print(f"Warning: Invalid wallet data file format for {network_id}. Creating new wallet.")
 
     # Use private key from env if not in wallet data
     private_key = wallet_data.get("private_key") or os.getenv("PRIVATE_KEY")
@@ -47,8 +47,6 @@ def initialize_agent():
         raise ValueError("PRIVATE_KEY environment variable is required")
 
     signer = Account.from_key(private_key)
-
-    network_id = os.getenv("NETWORK_ID", "base-sepolia")
 
     # Initialize CDP Wallet Provider
     wallet_provider = SmartWalletProvider(

@@ -16,7 +16,7 @@
 **/__pycache__/
 
 # Wallet data
-**/wallet_data.txt
+**/wallet_data*
 
 # Tools
 **/.pytest_cache
