@@ -239,5 +239,56 @@ describe("SolanaKeypairWalletProvider", () => {
       // Verify the result
       expect(signature).toBe("signature123");
     });
+    
+    it("should handle insufficient balance when transferring", async () => {
+      // Mock a low balance
+      const connection = wallet.getConnection();
+      (connection.getBalance as jest.Mock).mockResolvedValueOnce(100); // Very low balance
+      
+      const destination = "EQJqzeeVEnm8rKWQJ5SMTtQBD4xEgixwgzNWKkpeFRZ9";
+      
+      // Should throw an error about insufficient balance
+      await expect(wallet.nativeTransfer(destination, "1.0")).rejects.toThrow("Insufficient balance");
+    });
+    
+    it("should handle transaction failure when sending", async () => {
+      // Mock sendTransaction to fail
+      const connection = wallet.getConnection();
+      (connection.sendTransaction as jest.Mock).mockRejectedValueOnce(new Error("Transaction failed"));
+      
+      // Create mock transaction with the sign method
+      const mockTransaction = {
+        message: { compiledMessage: Buffer.from([]) },
+        signatures: [],
+        sign: jest.fn(function(signers) {
+          this.signatures = signers.map(() => new Uint8Array(64).fill(1));
+          return this;
+        }),
+      } as unknown as VersionedTransaction;
+      
+      // Should throw an error about transaction failure
+      await expect(wallet.sendTransaction(mockTransaction)).rejects.toThrow("Transaction failed");
+    });
+    
+    it("should handle confirmation timeout", async () => {
+      // Mock confirmTransaction to time out
+      const connection = wallet.getConnection();
+      (connection.confirmTransaction as jest.Mock).mockRejectedValueOnce(
+        new Error("Timed out waiting for confirmation")
+      );
+      
+      // Should throw an error about confirmation timeout
+      await expect(wallet.waitForSignatureResult("signature123")).rejects.toThrow(
+        "Timed out waiting for confirmation"
+      );
+    });
+    
+    it("should handle invalid address when transferring", async () => {
+      // Invalid Solana address
+      const destination = "invalid-address";
+      
+      // Should throw an error about invalid public key
+      await expect(wallet.nativeTransfer(destination, "0.1")).rejects.toThrow();
+    });
   });
 });

@@ -307,12 +307,20 @@ class TestSmartWalletProvider:
                 "outputs": [{"type": "string"}],
             }
         ]
+        args = ["arg1"]
+        block_identifier = "latest"
 
-        result = wallet_provider.read_contract(contract_address, abi, "testFunction", ["arg1"])
+        result = wallet_provider.read_contract(
+            contract_address, abi, "testFunction", args, block_identifier
+        )
 
         assert result == "mock_result"
         mock_web3.return_value.eth.contract.assert_called_once_with(
             address=contract_address, abi=abi
+        )
+        mock_web3.return_value.eth.contract().functions["testFunction"].assert_called_once()
+        mock_web3.return_value.eth.contract().functions["testFunction"]().call.assert_called_once_with(
+            block_identifier=block_identifier
         )
 
     def test_get_balance(self, wallet_provider, mock_web3):

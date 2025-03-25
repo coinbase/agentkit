@@ -314,6 +314,26 @@ class TestEthAccountWalletProvider:
             assert max_fee > max_priority_fee
             assert max_priority_fee == MOCK_PRIORITY_FEE_WEI
 
+    def test_estimate_fees_with_multiplier(self, wallet_provider, mock_web3):
+        """Test estimate_fees method with custom fee multiplier."""
+        # Setup test conditions
+        mock_web3.return_value.eth.get_block.return_value = {"baseFeePerGas": 10**9}  # 1 gwei
+        custom_fee_multiplier = 2.0
+        expected_priority_fee = int(10**9 * custom_fee_multiplier)  # 2 gwei
+        
+        # Set the fee multiplier on the wallet provider instance
+        with patch.object(wallet_provider, "_fee_per_gas_multiplier", custom_fee_multiplier):
+            max_priority_fee, max_fee = wallet_provider.estimate_fees()
+            
+            # Verify results
+            assert max_priority_fee == expected_priority_fee
+            assert max_fee > max_priority_fee
+            # The max fee should be at least (base_fee * 2) + priority_fee based on EIP-1559
+            assert max_fee >= (10**9 * 2) + max_priority_fee
+            
+            # Verify the Web3 method calls
+            mock_web3.return_value.eth.get_block.assert_called_once_with("latest")
+
     def test_native_transfer(self, wallet_provider, mock_web3):
         """Test native_transfer method."""
         to_address = MOCK_ADDRESS_TO

@@ -268,5 +268,99 @@ describe("PrivySvmWalletProvider", () => {
         networkId: "devnet",
       });
     });
+    
+    it("should handle errors when signing transaction", async () => {
+      // Mock the API client to throw an error using a different approach
+      const mockSignTransaction = jest.fn().mockRejectedValueOnce(new Error("Signing failed"));
+      const originalClient = require("@privy-io/server-auth");
+      
+      // Temporarily replace the mockImplementation
+      originalClient.PrivyClient.mockImplementationOnce(() => ({
+        walletApi: {
+          getWallet: jest.fn().mockResolvedValue({
+            id: "test-wallet-id",
+            address: "AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM",
+          }),
+          solana: {
+            signTransaction: mockSignTransaction,
+            signAndSendTransaction: jest.fn(),
+          },
+        },
+      }));
+      
+      // Create a new instance for this test
+      const testProvider = await PrivySvmWalletProvider.configureWithWallet({...MOCK_CONFIG});
+      
+      const mockTransaction = {
+        message: { compiledMessage: Buffer.from([]) },
+        signatures: []
+      } as unknown as VersionedTransaction;
+      
+      await expect(testProvider.signTransaction(mockTransaction)).rejects.toThrow("Signing failed");
+    });
+    
+    it("should handle errors when signing and sending transaction", async () => {
+      // Mock the API client to throw an error using a different approach
+      const mockSignAndSend = jest.fn().mockRejectedValueOnce(new Error("Network error"));
+      const originalClient = require("@privy-io/server-auth");
+      
+      // Temporarily replace the mockImplementation
+      originalClient.PrivyClient.mockImplementationOnce(() => ({
+        walletApi: {
+          getWallet: jest.fn().mockResolvedValue({
+            id: "test-wallet-id",
+            address: "AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM",
+          }),
+          solana: {
+            signTransaction: jest.fn(),
+            signAndSendTransaction: mockSignAndSend,
+          },
+        },
+      }));
+      
+      // Create a new instance for this test
+      const testProvider = await PrivySvmWalletProvider.configureWithWallet({...MOCK_CONFIG});
+      
+      const mockTransaction = {
+        message: { compiledMessage: Buffer.from([]) },
+        signatures: []
+      } as unknown as VersionedTransaction;
+      
+      await expect(testProvider.signAndSendTransaction(mockTransaction)).rejects.toThrow("Failed to send transaction");
+    });
+    
+    it("should handle timeout during transaction signature status check", async () => {
+      // Mock the connection to timeout
+      const connection = provider.getConnection();
+      (connection.getSignatureStatus as jest.Mock).mockRejectedValueOnce(
+        new Error("Request timed out")
+      );
+      
+      await expect(provider.getSignatureStatus("mock-signature")).rejects.toThrow("Request timed out");
+    });
+    
+    it("should handle network errors during balance check", async () => {
+      // Mock the connection to fail during balance check
+      const connection = provider.getConnection();
+      (connection.getBalance as jest.Mock).mockRejectedValueOnce(
+        new Error("RPC endpoint error")
+      );
+      
+      await expect(provider.getBalance()).rejects.toThrow("RPC endpoint error");
+    });
+    
+    it("should handle configuration with invalid network", async () => {
+      // Mock the SOLANA_CLUSTER_ID_BY_NETWORK_ID lookup to return undefined
+      const originalClusterIdByNetworkId = require("../network/svm").SOLANA_CLUSTER_ID_BY_NETWORK_ID;
+      jest.spyOn(require("../network/svm"), "SOLANA_CLUSTER_ID_BY_NETWORK_ID").mockReturnValue({});
+      
+      await expect(PrivySvmWalletProvider.configureWithWallet({
+        ...MOCK_CONFIG,
+        networkId: "non-existent-network",
+      })).rejects.toThrow();
+      
+      // Restore the original
+      jest.spyOn(require("../network/svm"), "SOLANA_CLUSTER_ID_BY_NETWORK_ID").mockReturnValue(originalClusterIdByNetworkId);
+    });
   });
 }); 

@@ -354,5 +354,72 @@ describe("PrivyEvmWalletProvider", () => {
         networkId: "ethereum-mainnet",
       });
     });
+    
+    it("should handle authorization key requirements properly", async () => {
+      const apiKeyName = "test-key";
+      const apiKeyPrivateKey = "test-private-key";
+      const authorizationKeyId = "test-auth-key-id";
+      
+      // Create a mock for the PrivyClient
+      const mockPrivyClient = {
+        walletApi: {
+          create: jest.fn().mockImplementation(({ authorizationKeyIds }) => {
+            // Simulate an error when authorizationKeyIds is present but no authorizationPrivateKey is set
+            if (authorizationKeyIds && authorizationKeyIds.length > 0) {
+              throw new Error("Missing `privy-authorization-signature` header");
+            }
+            return Promise.resolve({
+              id: "test-wallet-id",
+              address: MOCK_ADDRESS
+            });
+          })
+        }
+      };
+      
+      // Save the original mocked PrivyClient implementation
+      const originalMockImplementation = require('@privy-io/server-auth').PrivyClient.getMockImplementation();
+      
+      // Override the mock for PrivyClient to use our custom implementation
+      require('@privy-io/server-auth').PrivyClient.mockImplementation(() => mockPrivyClient);
+      
+      // Should throw a specific error when authorizationKeyId is provided without authorizationPrivateKey
+      await expect(
+        PrivyEvmWalletProvider.configureWithWallet({
+          appId: "test-app-id",
+          appSecret: "test-app-secret",
+          authorizationKeyId,
+          // No authorizationPrivateKey
+        })
+      ).rejects.toThrow("you have an authorization key on your account");
+      
+      // Restore the original implementation
+      require('@privy-io/server-auth').PrivyClient.mockImplementation(originalMockImplementation);
+    });
+    
+    it("should handle wallet creation errors", async () => {
+      // Create a mock for the PrivyClient
+      const mockPrivyClient = {
+        walletApi: {
+          create: jest.fn().mockRejectedValue(new Error("API rate limit exceeded"))
+        }
+      };
+      
+      // Save the original mocked PrivyClient implementation
+      const originalMockImplementation = require('@privy-io/server-auth').PrivyClient.getMockImplementation();
+      
+      // Override the mock for PrivyClient to use our custom implementation
+      require('@privy-io/server-auth').PrivyClient.mockImplementation(() => mockPrivyClient);
+      
+      // Should rethrow the error 
+      await expect(
+        PrivyEvmWalletProvider.configureWithWallet({
+          appId: "test-app-id",
+          appSecret: "test-app-secret",
+        })
+      ).rejects.toThrow("Failed to create wallet");
+      
+      // Restore the original implementation
+      require('@privy-io/server-auth').PrivyClient.mockImplementation(originalMockImplementation);
+    });
   });
 }); 

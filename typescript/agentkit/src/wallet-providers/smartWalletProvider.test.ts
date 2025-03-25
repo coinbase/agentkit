@@ -2,6 +2,15 @@ import { SmartWalletProvider } from "./smartWalletProvider";
 import { Network } from "../network";
 import { TransactionRequest, Hex, Address } from "viem";
 
+// Define an enum for UserOperation Status to match the imported type
+// This is needed because we can't directly import from @coinbase/coinbase-sdk in the test
+enum UserOperationStatus {
+  CREATED = "created",
+  PENDING = "pending",
+  COMPLETE = "complete",
+  FAILED = "failed",
+}
+
 // Define the mock chain
 const mockChain = {
   id: 1,
@@ -341,6 +350,55 @@ describe("SmartWalletProvider", () => {
       
       expect(mockSmartWallet.sendUserOperation).toHaveBeenCalled();
       expect(txHash).toBe(MOCK_TRANSACTION_HASH);
+    });
+
+    it("should handle operation failures when sending transactions", async () => {
+      // Mock the result to simulate a failed transaction
+      const failedUserOperation = {
+        status: UserOperationStatus.FAILED,
+        wait: jest.fn().mockReturnValue({ status: UserOperationStatus.FAILED }),
+      };
+      mockSmartWallet.sendUserOperation.mockReturnValueOnce(failedUserOperation);
+      
+      const transaction: TransactionRequest = {
+        to: "0x1234567890123456789012345678901234567890" as Address,
+        value: BigInt(1000000000000000000),
+      };
+      
+      await expect(provider.sendTransaction(transaction)).rejects.toThrow("Transaction failed");
+      expect(mockSmartWallet.sendUserOperation).toHaveBeenCalled();
+    });
+    
+    it("should handle operation failures when transferring native tokens", async () => {
+      // Mock the result to simulate a failed operation
+      const failedUserOperation = {
+        status: UserOperationStatus.FAILED,
+        wait: jest.fn().mockReturnValue({ status: UserOperationStatus.FAILED }),
+      };
+      mockSmartWallet.sendUserOperation.mockReturnValueOnce(failedUserOperation);
+      
+      const to = "0x1234567890123456789012345678901234567890" as Address;
+      const value = "1.0";
+      
+      await expect(provider.nativeTransfer(to, value)).rejects.toThrow("Transaction failed");
+      expect(mockSmartWallet.sendUserOperation).toHaveBeenCalled();
+    });
+    
+    it("should handle exceptions when sending user operations", async () => {
+      // Mock the send operation to throw an error
+      mockSmartWallet.sendUserOperation.mockRejectedValueOnce(new Error("Network error"));
+      
+      const calls = [{
+        to: "0x1234567890123456789012345678901234567890" as Address,
+        data: "0xabcdef" as Hex,
+        value: BigInt(0)
+      }];
+      
+      await expect(provider.sendUserOperation({ calls })).rejects.toThrow("Failed to send");
+    });
+    
+    it("should throw appropriate error when trying to sign messages", async () => {
+      await expect(provider.signMessage("Test message")).rejects.toThrow("Not implemented");
     });
   });
 }); 

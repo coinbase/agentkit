@@ -577,5 +577,41 @@ describe("CdpWalletProvider", () => {
         gasless: true,
       });
     });
+    
+    it("should handle network errors during transfers", async () => {
+      // Mock a network error for the transfer call
+      mockWalletObj.createTransfer.mockRejectedValueOnce(new Error("Network connection error"));
+      
+      const to = "0x1234567890123456789012345678901234567890" as `0x${string}`;
+      const value = "1.0";
+      
+      // Test that the error is properly caught and re-thrown with a meaningful message
+      await expect(provider.nativeTransfer(to, value)).rejects.toThrow("Failed to transfer");
+    });
+    
+    it("should handle network errors during contract reads", async () => {
+      // Mock a network error for the readContract call
+      mockPublicClient.readContract.mockRejectedValueOnce(new Error("Contract read error"));
+      
+      // Define the ABI with explicit type
+      const abi = [
+        {
+          name: "balanceOf",
+          type: "function",
+          inputs: [{ name: "account", type: "address" }],
+          outputs: [{ name: "balance", type: "uint256" }],
+          stateMutability: "view",
+        },
+      ] as const;
+      
+      // Use any to bypass the strict typing that's causing issues in the test
+      // This is acceptable for tests only
+      await expect(provider.readContract({
+        address: "0x1234567890123456789012345678901234567890" as `0x${string}`,
+        abi,
+        functionName: "balanceOf",
+        args: [MOCK_ADDRESS as `0x${string}`]
+      } as any)).rejects.toThrow("Contract read error");
+    });
   });
 });

@@ -587,3 +587,34 @@ class TestCdpWalletProvider:
         mocked_wallet_provider._wallet = None
         with pytest.raises(Exception, match="Wallet not initialized"):
             mocked_wallet_provider.export_wallet()
+
+    def test_network_error_handling(self, mocked_wallet_provider, mock_wallet):
+        """Test handling of network errors during transactions."""
+        # Mock a network error when attempting to transfer
+        mock_wallet.transfer.side_effect = Exception("Network connection error")
+        
+        # Test that the provider properly wraps and raises the error
+        with pytest.raises(Exception, match="Failed to transfer native tokens"):
+            mocked_wallet_provider.native_transfer("0x1234", Decimal("0.5"))
+        
+        # Test read_contract error handling
+        with patch.object(
+            mocked_wallet_provider._web3.eth, 
+            "contract", 
+            side_effect=Exception("Contract read error")
+        ):
+            with pytest.raises(Exception):
+                mocked_wallet_provider.read_contract(
+                    "0x1234", 
+                    [{"name": "test", "type": "function", "inputs": [], "outputs": [{"type": "string"}]}], 
+                    "test"
+                )
+        
+        # Test wait_for_transaction_receipt error handling
+        with patch.object(
+            mocked_wallet_provider._web3.eth, 
+            "wait_for_transaction_receipt", 
+            side_effect=Exception("Timeout waiting for receipt")
+        ):
+            with pytest.raises(Exception):
+                mocked_wallet_provider.wait_for_transaction_receipt("0x1234")

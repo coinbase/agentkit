@@ -381,5 +381,52 @@ describe("ViemWalletProvider", () => {
       expect(mockPublicClient.waitForTransactionReceipt).toHaveBeenCalled();
       expect(txHash).toBe(MOCK_TRANSACTION_HASH);
     });
+    
+    it("should handle errors during fee estimation", async () => {
+      // Mock an error during fee estimation
+      mockPublicClient.estimateFeesPerGas.mockRejectedValueOnce(new Error("Network congestion"));
+      
+      const transaction: TransactionRequest = {
+        to: "0x1234567890123456789012345678901234567890" as Address,
+        value: BigInt(1000000000000000000),
+      };
+      
+      await expect(provider.sendTransaction(transaction)).rejects.toThrow("Network congestion");
+    });
+    
+    it("should handle errors during gas estimation", async () => {
+      // Mock an error during gas estimation
+      mockPublicClient.estimateGas.mockRejectedValueOnce(new Error("Out of gas"));
+      
+      const transaction: TransactionRequest = {
+        to: "0x1234567890123456789012345678901234567890" as Address,
+        value: BigInt(1000000000000000000),
+      };
+      
+      await expect(provider.sendTransaction(transaction)).rejects.toThrow("Out of gas");
+    });
+    
+    it("should handle errors during native transfer", async () => {
+      // Mock an error during transaction sending
+      mockWalletClient.sendTransaction.mockRejectedValueOnce(new Error("Insufficient funds"));
+      
+      const to = "0x1234567890123456789012345678901234567890" as Address;
+      const value = "1.0";
+      
+      await expect(provider.nativeTransfer(to, value)).rejects.toThrow("Insufficient funds");
+    });
+    
+    it("should handle wait for receipt errors", async () => {
+      // Mock successful tx hash but receipt failure
+      mockPublicClient.waitForTransactionReceipt.mockRejectedValueOnce(
+        new Error("Transaction dropped from mempool")
+      );
+      
+      const txHash = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" as Hex;
+      
+      await expect(provider.waitForTransactionReceipt(txHash)).rejects.toThrow(
+        "Transaction dropped from mempool"
+      );
+    });
   });
 }); 
