@@ -1,4 +1,4 @@
-import { Network } from "./constants";
+import { Network } from "./constants.js";
 
 export type AgentkitRouteConfiguration = {
   env: {
@@ -12,6 +12,10 @@ export type AgentkitRouteConfiguration = {
 export type MCPRouteConfiguration = {
   getAgentkitRoute: `${string}.ts`;
   configRoute: `${string}.json`;
+};
+
+export type PrepareAgentkitRouteConfiguration = {
+  route: `${string}/prepareAgentkit.ts`;
 };
 
 export type NetworkSelection = {
