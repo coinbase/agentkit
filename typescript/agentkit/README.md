@@ -137,6 +137,19 @@ const agent = createReactAgent({
 
 ## Action Providers
 <details>
+<summary><strong>Across</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>bridge_token</code></td>
+    <td width="768">Bridges tokens between supported chains using Across Protocol.</td>
+</tr>
+<tr>
+    <td width="200"><code>check_deposit_status</code></td>
+    <td width="768">Checks the status of a cross-chain bridge deposit on the Across Protocol (mainnet networks only).</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Basename</strong></summary>
 <table width="100%">
 <tr>
