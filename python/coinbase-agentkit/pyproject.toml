@@ -23,7 +23,6 @@ nilql = "^0.0.0a12"
 ecdsa = "^0.19.0"
 pyjwt = {extras = ["crypto"], version = "^2.10.1"}
 jsonschema = "^4.23.0"
-langchain-openai = "^0.3.6"
 
 [tool.poetry.scripts]
 check-description-length = "scripts.check_description_length:main"

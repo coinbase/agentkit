@@ -13,7 +13,6 @@ import nilql
 import requests
 from ecdsa import SECP256k1, SigningKey
 from jsonschema import Draft7Validator, validators
-from langchain_openai import ChatOpenAI
 
 from coinbase_agentkit.action_providers.action_decorator import create_action
 from coinbase_agentkit.action_providers.action_provider import ActionProvider
@@ -29,7 +28,9 @@ from coinbase_agentkit.network import Network
 class NillionActionProvider(ActionProvider):
     """Provides actions for interacting with Nillion SecretVault storage."""
 
-    def __init__(self, org_did: str | None = None, secret_key: str | None = None):
+    def __init__(
+        self, llm: Any, org_did: str | None = None, secret_key: str | None = None
+    ):
         super().__init__("nillion", [])
 
         secret_key = secret_key or os.getenv("NILLION_SECRET_KEY")
@@ -39,8 +40,8 @@ class NillionActionProvider(ActionProvider):
             raise ValueError("NILLION_SECRET_KEY is not configured.")
         if not org_did:
             raise ValueError("NILLION_ORG_ID is not configured.")
-        if not os.getenv("OPENAI_API_KEY"):
-            raise ValueError("OPENAI_API_KEY is not configured.")
+
+        self.llm = llm
 
         """Initialize config with JWTs signed with ES256K for multiple node_ids; Add cluster key."""
         self.org_did = org_did
@@ -72,7 +73,7 @@ class NillionActionProvider(ActionProvider):
             {"nodes": [{}] * len(self.nodes)}, {"store": True}
         )
 
-    def _post(
+    def post(
         self, nodes: list, endpoint: str, payload: dict
     ) -> Generator[requests.Response, Any, Any]:
         """Post payload to nildb nodes."""
@@ -143,7 +144,6 @@ class NillionActionProvider(ActionProvider):
         """Build a validator to validate the candidate document against loaded schema."""
         return validators.extend(Draft7Validator)
 
-
     @create_action(
         name="lookup_schema",
         description="""
@@ -211,8 +211,7 @@ A failure response will return a tuple with empty values
             {json.dumps(schema_list)}
             """
 
-            llm = ChatOpenAI(model="gpt-4o-mini")
-            response = llm.invoke(schema_prompt)
+            response = self.llm.invoke(schema_prompt)
 
             my_uuid = str(response.content)
             my_uuid = re.sub(r"[^0-9a-fA-F-]", "", my_uuid)
@@ -362,8 +361,7 @@ A failure response will return a tuple with empty values
             """
 
             try:
-                llm = ChatOpenAI(model="gpt-4o-mini")
-                response = llm.invoke(schema_prompt)
+                response = self.llm.invoke(schema_prompt)
 
                 schema = json.loads(str(response.content))
 
@@ -374,7 +372,7 @@ A failure response will return a tuple with empty values
                 raise
 
             deque(
-                self._post(self.nodes, "schemas", schema), maxlen=0
+                self.post(self.nodes, "schemas", schema), maxlen=0
             )  # discard results since we throw on err
             print(f'fn:create_schema COMPLETE [{schema["_id"]}]')
             return schema["_id"], schema
@@ -512,7 +510,7 @@ Success will return true, whereas a failure response will return false.
 
 
 def nillion_action_provider(
-    org_did: str | None = None, secret_key: str | None = None
+    llm: Any, org_did: str | None = None, secret_key: str | None = None
 ) -> NillionActionProvider:
     """Create a new Nillion action provider.
 
@@ -520,4 +518,4 @@ def nillion_action_provider(
         NillionActionProvider: A new Nillion action provider instance.
 
     """
-    return NillionActionProvider(org_did=org_did, secret_key=secret_key)
+    return NillionActionProvider(llm=llm, org_did=org_did, secret_key=secret_key)
