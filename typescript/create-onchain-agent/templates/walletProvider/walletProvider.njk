@@ -1,9 +1,24 @@
-import { {{ baseClass }} } from "@coinbase/agentkit";
-import { Network } from "@coinbase/agentkit";
+import { {{ baseClass }}, Network } from "@coinbase/agentkit";
 {% if protocolFamily === "EVM" %}
-import { TransactionRequest, ReadContractParameters, ReadContractReturnType, Abi, ContractFunctionName, ContractFunctionArgs, Hex } from "viem";
+import {
+  TransactionRequest,
+  ReadContractParameters,
+  ReadContractReturnType,
+  Abi,
+  ContractFunctionName,
+  ContractFunctionArgs,
+  Hex,
+} from "viem";
 {% else %}
-import { Connection, PublicKey, RpcResponseAndContext, SignatureStatus, SignatureStatusConfig, VersionedTransaction, SignatureResult } from "@solana/web3.js";
+import {
+  Connection,
+  PublicKey,
+  RpcResponseAndContext,
+  SignatureStatus,
+  SignatureStatusConfig,
+  VersionedTransaction,
+  SignatureResult,
+} from "@solana/web3.js";
 {% endif %}
 
 /**

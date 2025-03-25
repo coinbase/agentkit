@@ -66,6 +66,7 @@ export async function createActionProvider() {
   // Generate schema file using nunjucks with updated schema name
   const schemaCode = nunjucks.render("actionProvider/schema.njk", {
     className: `${baseName}Action`,
+    actionName: `${snakeName}_action`,
   });
 
   await fs.writeFile(`./schemas.ts`, schemaCode);
