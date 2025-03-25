@@ -9,19 +9,40 @@
 
 import { z } from "zod";
 import { ActionProvider } from "../actionProvider";
-import { Network } from "../../network";
+import { Network, NETWORK_ID_TO_VIEM_CHAIN } from "../../network";
 import { CreateAction } from "../actionDecorator";
 import { EvmWalletProvider } from "../../wallet-providers";
-import { encodeFunctionData, decodeEventLog } from "viem";
+import {
+  encodeFunctionData,
+  decodeEventLog,
+  parseEther,
+  createPublicClient,
+  http,
+  zeroAddress,
+  Address,
+  formatEther,
+} from "viem";
 import { base } from "viem/chains";
-import { FlaunchSchema } from "./schemas";
-import { generateTokenUri } from "./utils";
+import { FlaunchSchema, BuyCoinWithETHInputSchema, BuyCoinWithCoinInputSchema } from "./schemas";
+import {
+  ethToMemecoin,
+  generateTokenUri,
+  getAmountWithSlippage,
+  getBuyAmountsFromReceipt,
+} from "./utils";
 import {
   FastFlaunchZapAddress,
   FlaunchPositionManagerAddress,
+  FLETHHooksAddress,
+  FLETHAddress,
+  QuoterAddress,
+  UniversalRouterAddress,
   FAST_FLAUNCH_ZAP_ABI,
   POSITION_MANAGER_ABI,
+  QUOTER_ABI,
+  UNIVERSAL_ROUTER_ABI,
 } from "./constants";
+import { ERC20_ABI } from "../compound/constants";
 
 const SUPPORTED_NETWORKS = ["base-mainnet", "base-sepolia"];
 
@@ -71,7 +92,7 @@ export class FlaunchActionProvider extends ActionProvider<EvmWalletProvider> {
    * Replace it with your actual implementation.
    *
    * @param walletProvider - The wallet provider instance for blockchain interactions
-   * @param args - Arguments defined by ExampleActionSchema
+   * @param args - Arguments defined by FlaunchSchema
    * @returns A promise that resolves to a string describing the action result
    */
   @CreateAction({
@@ -140,7 +161,7 @@ Note:
 
       const receipt = await walletProvider.waitForTransactionReceipt(hash);
 
-      const filteredPoolCreatedEvents = receipt.logs
+      const filteredPoolCreatedEvent = receipt.logs
         .map(log => {
           try {
             if (
@@ -159,15 +180,264 @@ Note:
             return null;
           }
         })
-        .filter((event): event is NonNullable<typeof event> => event !== null);
+        .filter((event): event is NonNullable<typeof event> => event !== null)[0];
 
-      const memecoinAddress = filteredPoolCreatedEvents[0]?._memecoin;
+      const memecoinAddress = filteredPoolCreatedEvent._memecoin;
       const chainSlug = Number(chainId) === base.id ? "base" : "base-sepolia";
 
       return `Flaunched coin ${args.symbol} (${args.name}) with transaction hash: ${hash} on ${chainSlug}\n
       View your coin on Flaunch: [${memecoinAddress}](https://flaunch.gg/${chainSlug}/coin/${memecoinAddress})`;
     } catch (error) {
       return `Error launching coin: ${error}`;
+    }
+  }
+
+  /**
+   * Buys a flaunch coin using ETH input.
+   *
+   * @param walletProvider - The wallet provider instance for blockchain interactions
+   * @param args - Arguments defined by BuyCoinSchema
+   * @returns A promise that resolves to a string describing the transaction result
+   */
+  @CreateAction({
+    name: "buyCoinWithETHInput",
+    description: `
+This tool allows buying a flaunch coin using ETH, when the user has specified the ETH amount to spend.
+
+It takes:
+- coinAddress: The address of the flaunch coin to buy
+- amountIn: The quantity of ETH to spend on the flaunch coin, in whole units
+  Examples:
+  - 0.001 ETH
+  - 0.01 ETH
+  - 1 ETH
+- slippagePercent: (optional) The slippage percentage. Default to 5%
+    `,
+    schema: BuyCoinWithETHInputSchema,
+  })
+  async buyCoinWithETHInput(
+    walletProvider: EvmWalletProvider,
+    args: z.infer<typeof BuyCoinWithETHInputSchema>,
+  ): Promise<string> {
+    let amountIn: bigint | undefined;
+    let amountOutMin: bigint | undefined;
+    const swapType = "EXACT_IN";
+
+    const network = walletProvider.getNetwork();
+    const chainId = network.chainId;
+    const networkId = network.networkId;
+
+    if (!chainId || !networkId) {
+      throw new Error("Chain ID is not set.");
+    }
+
+    try {
+      const viemPublicClient = createPublicClient({
+        chain: NETWORK_ID_TO_VIEM_CHAIN[networkId],
+        transport: http(),
+      });
+
+      amountIn = parseEther(args.amountIn);
+
+      const quoteResult = await viemPublicClient.simulateContract({
+        address: QuoterAddress[chainId],
+        abi: QUOTER_ABI,
+        functionName: "quoteExactInput",
+        args: [
+          {
+            exactAmount: amountIn,
+            exactCurrency: zeroAddress, // ETH
+            path: [
+              {
+                fee: 0,
+                tickSpacing: 60,
+                hookData: "0x",
+                hooks: FLETHHooksAddress[chainId],
+                intermediateCurrency: FLETHAddress[chainId],
+              },
+              {
+                fee: 0,
+                tickSpacing: 60,
+                hooks: FlaunchPositionManagerAddress[chainId],
+                hookData: "0x",
+                intermediateCurrency: args.coinAddress,
+              },
+            ],
+          },
+        ],
+      });
+      amountOutMin = getAmountWithSlippage(
+        quoteResult.result[0], // amountOut
+        (args.slippagePercent / 100).toFixed(18).toString(),
+        swapType,
+      );
+
+      const { commands, inputs } = ethToMemecoin({
+        sender: walletProvider.getAddress() as Address,
+        memecoin: args.coinAddress as Address,
+        chainId: Number(chainId),
+        referrer: zeroAddress,
+        swapType: swapType!,
+        amountIn: amountIn,
+        amountOutMin: amountOutMin,
+      });
+
+      const data = encodeFunctionData({
+        abi: UNIVERSAL_ROUTER_ABI,
+        functionName: "execute",
+        args: [commands, inputs],
+      });
+
+      const hash = await walletProvider.sendTransaction({
+        to: UniversalRouterAddress[chainId],
+        data,
+        value: amountIn,
+      });
+
+      const receipt = await walletProvider.waitForTransactionReceipt(hash);
+      const { coinsBought, ethSold } = getBuyAmountsFromReceipt({
+        receipt,
+        coinAddress: args.coinAddress as Address,
+        chainId: Number(chainId),
+      });
+
+      const coinSymbol = await walletProvider.readContract({
+        address: args.coinAddress as Address,
+        abi: ERC20_ABI,
+        functionName: "symbol",
+      });
+      const chainSlug = Number(chainId) === base.id ? "base" : "base-sepolia";
+
+      return `Bought ${formatEther(coinsBought)} $${coinSymbol} for ${formatEther(ethSold)} ETH\n
+      Tx hash: ${hash} on chain ${chainSlug}`;
+    } catch (error) {
+      return `Error buying coin: ${error}`;
+    }
+  }
+
+  /**
+   * Buys a flaunch coin using Coin input.
+   *
+   * @param walletProvider - The wallet provider instance for blockchain interactions
+   * @param args - Arguments defined by BuyCoinSchema
+   * @returns A promise that resolves to a string describing the transaction result
+   */
+  @CreateAction({
+    name: "buyCoinWithCoinInput",
+    description: `
+This tool allows buying a flaunch coin using ETH, when the user has specified the Coin amount to buy.
+
+It takes:
+- coinAddress: The address of the flaunch coin to buy
+- amountOut: The quantity of the flaunch coin to buy, in whole units
+  Examples:
+  - 1000 coins
+  - 1_000_000 coins
+- slippagePercent: (optional) The slippage percentage. Default to 5%
+    `,
+    schema: BuyCoinWithCoinInputSchema,
+  })
+  async buyCoinWithCoinInput(
+    walletProvider: EvmWalletProvider,
+    args: z.infer<typeof BuyCoinWithCoinInputSchema>,
+  ): Promise<string> {
+    let amountIn: bigint | undefined;
+    let amountOutMin: bigint | undefined;
+    let amountOut: bigint | undefined;
+    let amountInMax: bigint | undefined;
+    const swapType = "EXACT_OUT";
+
+    const network = walletProvider.getNetwork();
+    const chainId = network.chainId;
+    const networkId = network.networkId;
+
+    if (!chainId || !networkId) {
+      throw new Error("Chain ID is not set.");
+    }
+
+    try {
+      const viemPublicClient = createPublicClient({
+        chain: NETWORK_ID_TO_VIEM_CHAIN[networkId],
+        transport: http(),
+      });
+
+      amountOut = parseEther(args.amountOut);
+
+      const quoteResult = await viemPublicClient.simulateContract({
+        address: QuoterAddress[chainId],
+        abi: QUOTER_ABI,
+        functionName: "quoteExactOutput",
+        args: [
+          {
+            path: [
+              {
+                intermediateCurrency: zeroAddress,
+                fee: 0,
+                tickSpacing: 60,
+                hookData: "0x",
+                hooks: FLETHHooksAddress[chainId],
+              },
+              {
+                intermediateCurrency: FLETHAddress[chainId],
+                fee: 0,
+                tickSpacing: 60,
+                hooks: FlaunchPositionManagerAddress[chainId],
+                hookData: "0x",
+              },
+            ],
+            exactCurrency: args.coinAddress as Address,
+            exactAmount: amountOut,
+          },
+        ],
+      });
+      amountInMax = getAmountWithSlippage(
+        quoteResult.result[0], // amountIn
+        (args.slippagePercent / 100).toFixed(18).toString(),
+        swapType,
+      );
+
+      const { commands, inputs } = ethToMemecoin({
+        sender: walletProvider.getAddress() as Address,
+        memecoin: args.coinAddress as Address,
+        chainId: Number(chainId),
+        referrer: zeroAddress,
+        swapType: swapType!,
+        amountIn: amountIn,
+        amountOutMin: amountOutMin,
+        amountOut: amountOut,
+        amountInMax: amountInMax,
+      });
+
+      const data = encodeFunctionData({
+        abi: UNIVERSAL_ROUTER_ABI,
+        functionName: "execute",
+        args: [commands, inputs],
+      });
+
+      const hash = await walletProvider.sendTransaction({
+        to: UniversalRouterAddress[chainId],
+        data,
+        value: amountInMax,
+      });
+
+      const receipt = await walletProvider.waitForTransactionReceipt(hash);
+      const { coinsBought, ethSold } = getBuyAmountsFromReceipt({
+        receipt,
+        coinAddress: args.coinAddress as Address,
+        chainId: Number(chainId),
+      });
+
+      const coinSymbol = await walletProvider.readContract({
+        address: args.coinAddress as Address,
+        abi: ERC20_ABI,
+        functionName: "symbol",
+      });
+      const chainSlug = Number(chainId) === base.id ? "base" : "base-sepolia";
+
+      return `Bought ${formatEther(coinsBought)} $${coinSymbol} for ${formatEther(ethSold)} ETH\n
+      Tx hash: ${hash} on chain ${chainSlug}`;
+    } catch (error) {
+      return `Error buying coin: ${error}`;
     }
   }
 

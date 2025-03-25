@@ -11,43 +11,63 @@ import { z } from "zod";
  * Schema for Flaunch token creation
  */
 export const FlaunchSchema = z.object({
-  /**
-   * Name of the token
-   */
   name: z.string().min(1).describe("The name of the token"),
-
-  /**
-   * Symbol of the token
-   */
   symbol: z.string().min(1).describe("The symbol of the token"),
-
-  /**
-   * URL to the token image
-   */
   imageUrl: z.string().url().describe("The URL to the token image"),
-
-  /**
-   * Description of the token
-   */
   description: z.string().describe("The description of the token"),
-
-  /**
-   * Optional website URL
-   */
   websiteUrl: z.string().url().optional().describe("The (optional) URL to the token website"),
-
-  /**
-   * Optional Discord URL
-   */
   discordUrl: z.string().url().optional().describe("The (optional) URL to the token Discord"),
-
-  /**
-   * Optional Twitter URL
-   */
   twitterUrl: z.string().url().optional().describe("The (optional) URL to the token Twitter"),
-
-  /**
-   * Optional Telegram URL
-   */
   telegramUrl: z.string().url().optional().describe("The (optional) URL to the token Telegram"),
+});
+
+export const BuyCoinWithETHInputSchema = z.object({
+  coinAddress: z
+    .string()
+    .describe("The address of the flaunch coin to buy")
+    .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format"),
+  amountIn: z
+    .string()
+    .regex(/^\d+(\.\d+)?$/, "Must be a valid integer or decimal value")
+    .describe("The quantity of ETH to spend on the flaunch coin, in whole units"),
+  slippagePercent: z
+    .number()
+    .min(0)
+    .max(100)
+    .default(5)
+    .describe("The slippage percentage. Default to 5%"),
+});
+
+export const BuyCoinWithCoinInputSchema = z.object({
+  coinAddress: z
+    .string()
+    .describe("The address of the flaunch coin to buy")
+    .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format"),
+  amountOut: z
+    .string()
+    .regex(/^\d+(\.\d+)?$/, "Must be a valid integer or decimal value")
+    .describe("The quantity of the flaunch coin to buy, in whole units"),
+  slippagePercent: z
+    .number()
+    .min(0)
+    .max(100)
+    .default(5)
+    .describe("The slippage percentage. Default to 5%"),
+});
+
+export const SellCoinSchema = z.object({
+  coinAddress: z
+    .string()
+    .describe("The address of the flaunch coin to buy")
+    .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format"),
+  amountIn: z
+    .string()
+    .regex(/^\d+(\.\d+)?$/, "Must be a valid integer or decimal value")
+    .describe("The quantity of the flaunch coin to sell, in whole units"),
+  slippagePercent: z
+    .number()
+    .min(0)
+    .max(100)
+    .default(5)
+    .describe("The slippage percentage. Default to 5%"),
 });
