@@ -134,9 +134,10 @@ Note:
   ): Promise<string> {
     try {
       const network = walletProvider.getNetwork();
+      const networkId = network.networkId;
       const chainId = network.chainId;
 
-      if (!chainId) {
+      if (!chainId || !networkId) {
         throw new Error("Chain ID is not set.");
       }
 
@@ -197,8 +198,8 @@ Note:
       const memecoinAddress = filteredPoolCreatedEvent._memecoin;
       const chainSlug = Number(chainId) === base.id ? "base" : "base-sepolia";
 
-      return `Flaunched coin ${args.symbol} (${args.name}) with transaction hash: ${hash} on ${chainSlug}\n
-      View your coin on Flaunch: [${memecoinAddress}](https://flaunch.gg/${chainSlug}/coin/${memecoinAddress})`;
+      return `Flaunched $${args.symbol} (${args.name}) with transaction hash: [${hash}](${NETWORK_ID_TO_VIEM_CHAIN[networkId].blockExplorers?.default.url}/tx/${hash})\n
+      View your $${args.symbol} on Flaunch: [${memecoinAddress}](https://flaunch.gg/${chainSlug}/coin/${memecoinAddress})`;
     } catch (error) {
       return `Error launching coin: ${error}`;
     }
