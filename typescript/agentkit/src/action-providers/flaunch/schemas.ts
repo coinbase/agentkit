@@ -58,7 +58,7 @@ export const BuyCoinWithCoinInputSchema = z.object({
 export const SellCoinSchema = z.object({
   coinAddress: z
     .string()
-    .describe("The address of the flaunch coin to buy")
+    .describe("The address of the flaunch coin to sell")
     .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format"),
   amountIn: z
     .string()

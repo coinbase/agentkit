@@ -1,4 +1,5 @@
 import { Address } from "viem";
+import { PERMIT_TYPES } from "./constants";
 
 export interface Addresses {
   [chainId: number]: Address;
@@ -35,4 +36,38 @@ export type PoolSwapEventArgs = {
   uniAmount1: bigint;
   uniFee0: bigint;
   uniFee1: bigint;
+};
+
+export type BuySwapAmounts = {
+  coinsBought: bigint;
+  ethSold: bigint;
+};
+
+export type SellSwapAmounts = {
+  coinsSold: bigint;
+  ethBought: bigint;
+};
+
+export type PermitDetails = {
+  token: Address;
+  amount: bigint;
+  expiration: number;
+  nonce: number;
+};
+
+export type PermitSingle = {
+  details: PermitDetails;
+  spender: Address;
+  sigDeadline: bigint;
+};
+
+export type PermitTypedData = {
+  primaryType: string;
+  domain: {
+    name: string;
+    chainId: number;
+    verifyingContract: Address;
+  };
+  types: typeof PERMIT_TYPES;
+  message: PermitSingle;
 };

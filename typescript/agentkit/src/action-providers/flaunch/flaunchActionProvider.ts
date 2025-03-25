@@ -21,14 +21,22 @@ import {
   zeroAddress,
   Address,
   formatEther,
+  maxUint160,
+  Hex,
 } from "viem";
 import { base } from "viem/chains";
-import { FlaunchSchema, BuyCoinWithETHInputSchema, BuyCoinWithCoinInputSchema } from "./schemas";
+import {
+  FlaunchSchema,
+  BuyCoinWithETHInputSchema,
+  BuyCoinWithCoinInputSchema,
+  SellCoinSchema,
+} from "./schemas";
 import {
   ethToMemecoin,
   generateTokenUri,
   getAmountWithSlippage,
-  getBuyAmountsFromReceipt,
+  getSwapAmountsFromReceipt,
+  memecoinToEthWithPermit2,
 } from "./utils";
 import {
   FastFlaunchZapAddress,
@@ -41,8 +49,12 @@ import {
   POSITION_MANAGER_ABI,
   QUOTER_ABI,
   UNIVERSAL_ROUTER_ABI,
+  Permit2Address,
+  PERMIT2_ABI,
+  PERMIT_TYPES,
 } from "./constants";
 import { ERC20_ABI } from "../compound/constants";
+import { BuySwapAmounts, PermitSingle, SellSwapAmounts } from "./types";
 
 const SUPPORTED_NETWORKS = ["base-mainnet", "base-sepolia"];
 
@@ -295,21 +307,20 @@ It takes:
       });
 
       const receipt = await walletProvider.waitForTransactionReceipt(hash);
-      const { coinsBought, ethSold } = getBuyAmountsFromReceipt({
+      const swapAmounts = getSwapAmountsFromReceipt({
         receipt,
         coinAddress: args.coinAddress as Address,
         chainId: Number(chainId),
-      });
+      }) as BuySwapAmounts;
 
       const coinSymbol = await walletProvider.readContract({
         address: args.coinAddress as Address,
         abi: ERC20_ABI,
         functionName: "symbol",
       });
-      const chainSlug = Number(chainId) === base.id ? "base" : "base-sepolia";
 
-      return `Bought ${formatEther(coinsBought)} $${coinSymbol} for ${formatEther(ethSold)} ETH\n
-      Tx hash: ${hash} on chain ${chainSlug}`;
+      return `Bought ${formatEther(swapAmounts.coinsBought)} $${coinSymbol} for ${formatEther(swapAmounts.ethSold)} ETH\n
+        Tx hash: [${hash}](${NETWORK_ID_TO_VIEM_CHAIN[networkId].blockExplorers?.default.url}/tx/${hash})`;
     } catch (error) {
       return `Error buying coin: ${error}`;
     }
@@ -421,23 +432,186 @@ It takes:
       });
 
       const receipt = await walletProvider.waitForTransactionReceipt(hash);
-      const { coinsBought, ethSold } = getBuyAmountsFromReceipt({
+      const swapAmounts = getSwapAmountsFromReceipt({
         receipt,
         coinAddress: args.coinAddress as Address,
         chainId: Number(chainId),
-      });
+      }) as BuySwapAmounts;
 
       const coinSymbol = await walletProvider.readContract({
         address: args.coinAddress as Address,
         abi: ERC20_ABI,
         functionName: "symbol",
       });
-      const chainSlug = Number(chainId) === base.id ? "base" : "base-sepolia";
 
-      return `Bought ${formatEther(coinsBought)} $${coinSymbol} for ${formatEther(ethSold)} ETH\n
-      Tx hash: ${hash} on chain ${chainSlug}`;
+      return `Bought ${formatEther(swapAmounts.coinsBought)} $${coinSymbol} for ${formatEther(swapAmounts.ethSold)} ETH\n
+        Tx hash: [${hash}](${NETWORK_ID_TO_VIEM_CHAIN[networkId].blockExplorers?.default.url}/tx/${hash})`;
     } catch (error) {
       return `Error buying coin: ${error}`;
+    }
+  }
+
+  /**
+   * Sells a flaunch coin into ETH.
+   *
+   * @param walletProvider - The wallet provider instance for blockchain interactions
+   * @param args - Arguments defined by SellCoinSchema
+   * @returns A promise that resolves to a string describing the transaction result
+   */
+  @CreateAction({
+    name: "sellCoin",
+    description: `
+This tool allows selling a flaunch coin into ETH, when the user has specified the Coin amount to sell.
+
+It takes:
+- coinAddress: The address of the flaunch coin to sell
+- amountIn: The quantity of the flaunch coin to sell, in whole units
+  Examples:
+  - 1000 coins
+  - 1_000_000 coins
+- slippagePercent: (optional) The slippage percentage. Default to 5%
+    `,
+    schema: SellCoinSchema,
+  })
+  async sellCoin(
+    walletProvider: EvmWalletProvider,
+    args: z.infer<typeof SellCoinSchema>,
+  ): Promise<string> {
+    const network = walletProvider.getNetwork();
+    const chainId = network.chainId;
+    const networkId = network.networkId;
+
+    if (!chainId || !networkId) {
+      throw new Error("Chain ID is not set.");
+    }
+
+    try {
+      const amountIn = parseEther(args.amountIn);
+
+      // fetch permit2 allowance
+      const [allowance, nonce] = await walletProvider.readContract({
+        address: Permit2Address[chainId],
+        abi: PERMIT2_ABI,
+        functionName: "allowance",
+        args: [
+          walletProvider.getAddress() as Address,
+          args.coinAddress as Address,
+          UniversalRouterAddress[chainId],
+        ],
+      });
+
+      let signature: Hex | undefined;
+      let permitSingle: PermitSingle | undefined;
+
+      // approve
+      if (allowance < amountIn) {
+        // 10 years in seconds
+        const defaultDeadline = BigInt(Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 365 * 10);
+
+        const domain = {
+          name: "Permit2",
+          chainId: Number(chainId),
+          verifyingContract: Permit2Address[chainId],
+        };
+
+        const message = {
+          details: {
+            token: args.coinAddress as Address,
+            amount: maxUint160,
+            expiration: Number(defaultDeadline),
+            nonce,
+          },
+          spender: UniversalRouterAddress[chainId],
+          sigDeadline: defaultDeadline,
+        } as PermitSingle;
+
+        const typedData = {
+          primaryType: "PermitSingle",
+          domain,
+          types: PERMIT_TYPES,
+          message,
+        } as const;
+
+        signature = await walletProvider.signTypedData(typedData);
+        permitSingle = message;
+      }
+
+      const viemPublicClient = createPublicClient({
+        chain: NETWORK_ID_TO_VIEM_CHAIN[networkId],
+        transport: http(),
+      });
+
+      const quoteResult = await viemPublicClient.simulateContract({
+        address: QuoterAddress[chainId],
+        abi: QUOTER_ABI,
+        functionName: "quoteExactInput",
+        args: [
+          {
+            exactAmount: amountIn,
+            exactCurrency: args.coinAddress as Address,
+            path: [
+              {
+                fee: 0,
+                tickSpacing: 60,
+                hooks: FlaunchPositionManagerAddress[chainId],
+                hookData: "0x",
+                intermediateCurrency: FLETHAddress[chainId],
+              },
+              {
+                fee: 0,
+                tickSpacing: 60,
+                hookData: "0x",
+                hooks: FLETHHooksAddress[chainId],
+                intermediateCurrency: zeroAddress,
+              },
+            ],
+          },
+        ],
+      });
+      const ethOutMin = getAmountWithSlippage(
+        quoteResult.result[0], // amountOut
+        (args.slippagePercent / 100).toFixed(18).toString(),
+        "EXACT_IN",
+      );
+
+      const { commands, inputs } = memecoinToEthWithPermit2({
+        chainId: Number(chainId),
+        memecoin: args.coinAddress as Address,
+        amountIn,
+        ethOutMin,
+        permitSingle,
+        signature,
+        referrer: zeroAddress,
+      });
+
+      const data = encodeFunctionData({
+        abi: UNIVERSAL_ROUTER_ABI,
+        functionName: "execute",
+        args: [commands, inputs],
+      });
+
+      const hash = await walletProvider.sendTransaction({
+        to: UniversalRouterAddress[chainId],
+        data,
+      });
+
+      const receipt = await walletProvider.waitForTransactionReceipt(hash);
+      const swapAmounts = getSwapAmountsFromReceipt({
+        receipt,
+        coinAddress: args.coinAddress as Address,
+        chainId: Number(chainId),
+      }) as SellSwapAmounts;
+
+      const coinSymbol = await walletProvider.readContract({
+        address: args.coinAddress as Address,
+        abi: ERC20_ABI,
+        functionName: "symbol",
+      });
+
+      return `Sold ${formatEther(swapAmounts.coinsSold)} $${coinSymbol} for ${formatEther(swapAmounts.ethBought)} ETH\n
+        Tx hash: [${hash}](${NETWORK_ID_TO_VIEM_CHAIN[networkId].blockExplorers?.default.url}/tx/${hash})`;
+    } catch (error) {
+      return `Error selling coin: ${error}`;
     }
   }
 

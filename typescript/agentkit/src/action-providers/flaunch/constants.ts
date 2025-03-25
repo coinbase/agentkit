@@ -32,6 +32,11 @@ export const UniversalRouterAddress: Addresses = {
   [baseSepolia.id]: "0x492E6456D9528771018DeB9E87ef7750EF184104",
 };
 
+export const Permit2Address: Addresses = {
+  [base.id]: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+  [baseSepolia.id]: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+};
+
 export const FAST_FLAUNCH_ZAP_ABI = [
   {
     type: "function",
@@ -682,3 +687,37 @@ export const UNIVERSAL_ROUTER_ABI = [
   },
   { stateMutability: "payable", type: "receive" },
 ] as const;
+
+export const PERMIT2_ABI = [
+  {
+    inputs: [
+      { internalType: "address", name: "", type: "address" },
+      { internalType: "address", name: "", type: "address" },
+      { internalType: "address", name: "", type: "address" },
+    ],
+    name: "allowance",
+    outputs: [
+      { internalType: "uint160", name: "amount", type: "uint160" },
+      { internalType: "uint48", name: "expiration", type: "uint48" },
+      { internalType: "uint48", name: "nonce", type: "uint48" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+export const PERMIT_DETAILS = [
+  { name: "token", type: "address" },
+  { name: "amount", type: "uint160" },
+  { name: "expiration", type: "uint48" },
+  { name: "nonce", type: "uint48" },
+];
+
+export const PERMIT_TYPES = {
+  PermitSingle: [
+    { name: "details", type: "PermitDetails" },
+    { name: "spender", type: "address" },
+    { name: "sigDeadline", type: "uint256" },
+  ],
+  PermitDetails: PERMIT_DETAILS,
+};

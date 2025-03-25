@@ -21,7 +21,7 @@ import {
   UNIVERSAL_ROUTER_ABI,
   POSITION_MANAGER_ABI,
 } from "./constants";
-import { PoolSwapEventArgs } from "./types";
+import { BuySwapAmounts, SellSwapAmounts, PermitSingle, PoolSwapEventArgs } from "./types";
 
 /**
  * Configuration for Pinata
@@ -453,7 +453,152 @@ export const ethToMemecoin = (params: {
   };
 };
 
-export const getBuyAmountsFromLog = ({
+// @notice Beofre calling the UniversalRouter the user must have:
+// 1. Given the Permit2 contract allowance to spend the memecoin
+export const memecoinToEthWithPermit2 = (params: {
+  chainId: number;
+  memecoin: Address;
+  amountIn: bigint;
+  ethOutMin: bigint;
+  permitSingle: PermitSingle | undefined;
+  signature: Hex | undefined;
+  referrer: Address | null;
+}) => {
+  const flETH = FLETHAddress[params.chainId];
+
+  const flETHHooks = FLETHHooksAddress[params.chainId];
+  const flaunchHooks = FlaunchPositionManagerAddress[params.chainId];
+  const v4Actions = ("0x" +
+    V4Actions.SWAP_EXACT_IN +
+    V4Actions.SETTLE_ALL +
+    V4Actions.TAKE_ALL) as Hex;
+  const v4ExactInputParams = encodeAbiParameters(IV4RouterAbiExactInput, [
+    {
+      currencyIn: params.memecoin,
+      path: [
+        {
+          intermediateCurrency: flETH,
+          fee: 0,
+          tickSpacing: 60,
+          hooks: flaunchHooks,
+          hookData: encodeAbiParameters(
+            [
+              {
+                type: "address",
+                name: "referrer",
+              },
+            ],
+            [params.referrer ?? zeroAddress],
+          ),
+        },
+        {
+          intermediateCurrency: ETH,
+          fee: 0,
+          tickSpacing: 60,
+          hooks: flETHHooks,
+          hookData: "0x",
+        },
+      ],
+      amountIn: params.amountIn,
+      amountOutMinimum: params.ethOutMin,
+    },
+  ]);
+
+  const settleParams = encodeAbiParameters(
+    [
+      {
+        type: "address",
+        name: "currency",
+      },
+      {
+        type: "uint256",
+        name: "maxAmount",
+      },
+    ],
+    [params.memecoin, params.amountIn],
+  );
+
+  const takeParams = encodeAbiParameters(
+    [
+      {
+        type: "address",
+        name: "currency",
+      },
+      {
+        type: "uint256",
+        name: "minAmount",
+      },
+    ],
+    [ETH, params.ethOutMin],
+  );
+
+  const v4RouterData = encodeAbiParameters(
+    [
+      { type: "bytes", name: "actions" },
+      { type: "bytes[]", name: "params" },
+    ],
+    [v4Actions, [v4ExactInputParams, settleParams, takeParams]],
+  );
+
+  if (params.signature && params.permitSingle) {
+    const urCommands = ("0x" + URCommands.PERMIT2_PERMIT + URCommands.V4_SWAP) as Hex;
+
+    const permit2PermitInput = encodeAbiParameters(
+      [
+        {
+          type: "tuple",
+          components: [
+            {
+              type: "tuple",
+              components: [
+                { type: "address", name: "token" },
+                { type: "uint160", name: "amount" },
+                { type: "uint48", name: "expiration" },
+                { type: "uint48", name: "nonce" },
+              ],
+              name: "details",
+            },
+            { type: "address", name: "spender" },
+            { type: "uint256", name: "sigDeadline" },
+          ],
+          name: "PermitSingle",
+        },
+        { type: "bytes", name: "signature" },
+      ],
+      [params.permitSingle, params.signature],
+    );
+
+    const inputs = [permit2PermitInput, v4RouterData];
+    const urExecuteCalldata = encodeFunctionData({
+      abi: UNIVERSAL_ROUTER_ABI,
+      functionName: "execute",
+      args: [urCommands, inputs],
+    });
+
+    return {
+      calldata: urExecuteCalldata,
+      commands: urCommands,
+      inputs,
+    };
+  } else {
+    const urCommands = ("0x" + URCommands.V4_SWAP) as Hex;
+
+    const inputs = [v4RouterData];
+    const urExecuteCalldata = encodeFunctionData({
+      abi: UNIVERSAL_ROUTER_ABI,
+      functionName: "execute",
+      args: [urCommands, inputs],
+    });
+
+    return {
+      calldata: urExecuteCalldata,
+      commands: urCommands,
+      inputs,
+    };
+  }
+};
+
+export const getSwapAmountsFromLog = ({
   filteredPoolSwapEvent,
   coinAddress,
   chainId,
@@ -461,7 +606,7 @@ export const getBuyAmountsFromLog = ({
   filteredPoolSwapEvent: PoolSwapEventArgs;
   coinAddress: Address;
   chainId: number;
-}) => {
+}): BuySwapAmounts | SellSwapAmounts => {
   const {
     flAmount0,
     flAmount1,
@@ -483,11 +628,14 @@ export const getBuyAmountsFromLog = ({
   const currency1Fees = flFee1 + ispFee1 + uniFee1;
 
   let feesIsInFLETH: boolean;
+  let swapType: "BUY" | "SELL";
   const flETHIsCurrencyZero = coinAddress > FLETHAddress[chainId];
 
   if (flETHIsCurrencyZero) {
+    swapType = currency0Delta < 0 ? "BUY" : "SELL";
     feesIsInFLETH = currency0Fees < 0;
   } else {
+    swapType = currency1Delta < 0 ? "BUY" : "SELL";
     feesIsInFLETH = currency1Fees < 0;
   }
 
@@ -507,20 +655,28 @@ export const getBuyAmountsFromLog = ({
         : absCurrency0Fees,
   };
 
-  const coinsBought = flETHIsCurrencyZero
-    ? absCurrency1Delta - (!fees.isInFLETH ? fees.amount : 0n)
-    : absCurrency0Delta - (!fees.isInFLETH ? fees.amount : 0n);
-  const ethSold = flETHIsCurrencyZero
-    ? absCurrency0Delta - (fees.isInFLETH ? fees.amount : 0n)
-    : absCurrency1Delta - (fees.isInFLETH ? fees.amount : 0n);
-
-  return {
-    coinsBought,
-    ethSold,
-  };
+  if (swapType === "BUY") {
+    return {
+      coinsBought: flETHIsCurrencyZero
+        ? absCurrency1Delta - (!fees.isInFLETH ? fees.amount : 0n)
+        : absCurrency0Delta - (!fees.isInFLETH ? fees.amount : 0n),
+      ethSold: flETHIsCurrencyZero
+        ? absCurrency0Delta - (fees.isInFLETH ? fees.amount : 0n)
+        : absCurrency1Delta - (fees.isInFLETH ? fees.amount : 0n),
+    };
+  } else {
+    return {
+      coinsSold: flETHIsCurrencyZero
+        ? absCurrency1Delta - (!fees.isInFLETH ? fees.amount : 0n)
+        : absCurrency0Delta - (!fees.isInFLETH ? fees.amount : 0n),
+      ethBought: flETHIsCurrencyZero
+        ? absCurrency0Delta - (fees.isInFLETH ? fees.amount : 0n)
+        : absCurrency1Delta - (fees.isInFLETH ? fees.amount : 0n),
+    };
+  }
 };
 
-export const getBuyAmountsFromReceipt = ({
+export const getSwapAmountsFromReceipt = ({
   receipt,
   coinAddress,
   chainId,
@@ -548,7 +704,7 @@ export const getBuyAmountsFromReceipt = ({
     })
     .filter((event): event is NonNullable<typeof event> => event !== null)[0];
 
-  return getBuyAmountsFromLog({
+  return getSwapAmountsFromLog({
     filteredPoolSwapEvent,
     coinAddress,
     chainId,
