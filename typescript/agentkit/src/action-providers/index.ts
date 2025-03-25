@@ -22,3 +22,4 @@ export * from "./wallet";
 export * from "./weth";
 export * from "./wow";
 export * from "./allora";
+export * from "./flaunch";
