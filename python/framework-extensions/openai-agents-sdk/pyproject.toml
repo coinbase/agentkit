@@ -10,7 +10,7 @@ packages = [{ include = "coinbase_agentkit_openai_agents_sdk" }]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-coinbase-agentkit = "^0.1.0"
+coinbase-agentkit = "^0.2.0"
 python-dotenv = "^1.0.1"
 pytest-asyncio = "^0.25.3"
 openai-agents = "^0.0.2"
