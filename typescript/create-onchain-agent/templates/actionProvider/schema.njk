@@ -1,0 +1,11 @@
+import { z } from "zod";
+
+/**
+ * Input schema for {{ className }}'s {{ actionName }} action.
+ */
+export const {{ className }}Schema = z
+  .object({
+    payload: z.string().describe("The payload to send to the action provider"),
+  })
+  .strip()
+  .describe("Instructions for {{ actionName }}");

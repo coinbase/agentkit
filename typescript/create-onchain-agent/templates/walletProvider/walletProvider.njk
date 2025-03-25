@@ -1,0 +1,197 @@
+import { {{ baseClass }}, Network } from "@coinbase/agentkit";
+{% if protocolFamily === "EVM" %}
+import {
+  TransactionRequest,
+  ReadContractParameters,
+  ReadContractReturnType,
+  Abi,
+  ContractFunctionName,
+  ContractFunctionArgs,
+  Hex,
+} from "viem";
+{% else %}
+import {
+  Connection,
+  PublicKey,
+  RpcResponseAndContext,
+  SignatureStatus,
+  SignatureStatusConfig,
+  VersionedTransaction,
+  SignatureResult,
+} from "@solana/web3.js";
+{% endif %}
+
+/**
+ * {{ className }} wallet provider.
+ */
+export class {{ className }} extends {{ baseClass }} {
+{% if protocolFamily === "EVM" %}
+  /**
+   * Get the address of the wallet.
+   */
+  getAddress(): string {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Get the current network.
+   */
+  getNetwork(): Network {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Get the name of the wallet provider.
+   */
+  getName(): string {
+    return "{{ name }}";
+  }
+
+  /**
+   * Get the balance of the native asset.
+   */
+  async getBalance(): Promise<bigint> {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Transfer the native asset.
+   */
+  async nativeTransfer(to: string, value: string): Promise<string> {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Sign a message.
+   */
+  async signMessage(message: string | Uint8Array): Promise<Hex> {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Sign typed data.
+   */
+  async signTypedData(typedData: any): Promise<Hex> {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Sign a transaction.
+   */
+  async signTransaction(transaction: TransactionRequest): Promise<Hex> {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Send a transaction.
+   */
+  async sendTransaction(transaction: TransactionRequest): Promise<Hex> {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Wait for a transaction receipt.
+   */
+  async waitForTransactionReceipt(txHash: Hex): Promise<any> {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Read a contract.
+   */
+  async readContract<
+    const abi extends Abi | readonly unknown[],
+    functionName extends ContractFunctionName<abi, "pure" | "view">,
+    const args extends ContractFunctionArgs<abi, "pure" | "view", functionName>,
+  >(params: ReadContractParameters<abi, functionName, args>): Promise<ReadContractReturnType<abi, functionName, args>> {
+    throw new Error("Method not implemented.");
+  }
+{% else %}
+  /**
+   * Get the address of the wallet.
+   */
+  getAddress(): string {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Get the current network.
+   */
+  getNetwork(): Network {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Get the name of the wallet provider.
+   */
+  getName(): string {
+    return "{{ name }}";
+  }
+
+  /**
+   * Get the balance of the native asset.
+   */
+  async getBalance(): Promise<bigint> {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Transfer the native asset.
+   */
+  async nativeTransfer(to: string, value: string): Promise<string> {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Get the connection instance.
+   */
+  getConnection(): Connection {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Get the public key of the wallet.
+   */
+  getPublicKey(): PublicKey {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Sign a transaction.
+   */
+  async signTransaction(transaction: VersionedTransaction): Promise<VersionedTransaction> {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Send a transaction.
+   */
+  async sendTransaction(transaction: VersionedTransaction): Promise<string> {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Sign and send a transaction.
+   */
+  async signAndSendTransaction(transaction: VersionedTransaction): Promise<string> {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Get the status of a transaction.
+   */
+  async getSignatureStatus(
+    signature: string,
+    options?: SignatureStatusConfig
+  ): Promise<RpcResponseAndContext<SignatureStatus | null>> {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Wait for signature receipt.
+   */
+  async waitForSignatureResult(signature: string): Promise<RpcResponseAndContext<SignatureResult>> {
+    throw new Error("Method not implemented.");
+  }
+{% endif %}
+}
