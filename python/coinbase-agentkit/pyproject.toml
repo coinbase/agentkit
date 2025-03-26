@@ -48,6 +48,7 @@ prompt-toolkit = "^3.0.50"
 questionary = "^2.1.0"
 rich = "^13.7.1"
 pillow = "^11.1.0"
+langchain-openai = "^0.2.4"
 
 [build-system]
 requires = ["poetry-core"]
