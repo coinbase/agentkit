@@ -6,7 +6,7 @@ import {
   erc20ActionProvider,
   pythActionProvider,
   cdpApiActionProvider,
-  PrivyEvmEmbeddedWalletProvider,
+  PrivyEvmDelegatedEmbeddedWalletProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -70,7 +70,7 @@ async function initializeAgent() {
       model: "gpt-4o-mini",
     });
 
-    let walletProvider: PrivyEvmEmbeddedWalletProvider;
+    let walletProvider: PrivyEvmDelegatedEmbeddedWalletProvider;
 
     const networkId = process.env.NETWORK_ID || "base-sepolia";
 
