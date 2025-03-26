@@ -7,25 +7,25 @@ This package is an extension used to easily plug [AgentKit](https://docs.cdp.coi
 For a single command to install all necessary dependencies, run:
 
 ```bash
-npm install @coinbase/agentkit-vercel-ai-sdk @coinbase/agentkit ai @ai-sdk/openai
+pnpm add @coinbase/agentkit-vercel-ai-sdk @coinbase/agentkit ai @ai-sdk/openai
 ```
 
 To break it down, this package is:
 
 ```bash
-npm install @coinbase/agentkit-vercel-ai-sdk
+pnpm add @coinbase/agentkit-vercel-ai-sdk
 ```
 
 This package is used alongside AgentKit and AI SDK, so these will need to be installed as well.
 
 ```bash
-npm install @coinbase/agentkit ai
+pnpm add @coinbase/agentkit ai
 ```
 
 Finally, install the model provider you want to use. For example, to use OpenAI, install the `@ai-sdk/openai` package. See [here](https://sdk.vercel.ai/docs/foundations/providers-and-models#ai-sdk-providers) for a list of supported model providers.
 
 ```bash
-npm install @ai-sdk/openai
+pnpm add @ai-sdk/openai
 ```
 
 ## Usage

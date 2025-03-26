@@ -43,10 +43,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "18"
-          cache: "npm"
+          cache: "pnpm"
           cache-dependency-path: ./typescript
+      - name: Install pnpm
+        run: npm install -g pnpm
       - name: Ensure formatting
         working-directory: ./typescript
         run: |
-          npm ci
-          npm run format:check
+          pnpm install --frozen-lockfile
+          pnpm run format:check

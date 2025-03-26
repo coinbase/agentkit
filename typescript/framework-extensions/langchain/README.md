@@ -13,7 +13,7 @@ LangChain extension of AgentKit. Enables agentic workflows to interact with onch
 ### Installation
 
 ```bash
-npm install @coinbase/agentkit-langchain @coinbase/agentkit @langchain @langchain/langgraph @langchain/openai
+pnpm add @coinbase/agentkit-langchain @coinbase/agentkit @langchain @langchain/langgraph @langchain/openai
 ```
 
 ### Environment Setup

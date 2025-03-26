@@ -9,19 +9,21 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Node 18
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "18"
-          cache: "npm"
+          cache: "pnpm"
           cache-dependency-path: ./typescript
+
+      - name: Install pnpm
+        run: npm install -g pnpm
 
       - name: Install and Build JSDocs
         working-directory: ./typescript
         run: |
-          npm ci
-          npm run build
-          npm run docs
+          pnpm install --frozen-lockfile
+          pnpm run build
+          pnpm run docs
 
       - name: Build AgentKit JSDocs
         run: |

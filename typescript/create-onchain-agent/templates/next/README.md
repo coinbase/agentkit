@@ -9,7 +9,7 @@ It integrates [AgentKit](https://github.com/coinbase/agentkit) to provide AI-dri
 First, install dependencies:
 
 ```sh
-npm install
+pnpm install
 ```
 
 Then, configure your environment variables:
@@ -21,7 +21,7 @@ mv .env.local .env
 Run the development server:
 
 ```sh
-npm run dev
+pnpm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser to see the project.

@@ -21,13 +21,13 @@ Before using the example, ensure that you have the correct version of Node.js in
 
 ```bash
 node --version
-npm --version
+pnpm --version
 ```
 
 ## Installation
 
 ```bash
-npm install
+pnpm install
 ```
 
 ## Run the Chatbot

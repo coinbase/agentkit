@@ -30,7 +30,7 @@ See [AgentKit Model Context Protocol](./framework-extensions/model-context-proto
 
 ### `create-onchain-agent`
 
-A quickstart CLI tool to scaffold out a fullstack chatbot application using Coinbase AgentKit. Runnable via `npm create onchain-agent@latest`.
+A quickstart CLI tool to scaffold out a fullstack chatbot application using Coinbase AgentKit. Runnable via `pnpm create onchain-agent@latest`.
 
 See [Create Onchain Agent](./create-onchain-agent/README.md) to get started!
 
