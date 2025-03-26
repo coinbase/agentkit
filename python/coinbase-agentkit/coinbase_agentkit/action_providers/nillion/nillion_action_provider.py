@@ -279,7 +279,6 @@ A failure response will return a tuple with empty values
         """
         try:
             validated_args = NillionCreateSchemaInput(**args)
-            print(f"fn:create_schema [{validated_args.schema_description}]")
 
             # ruff: noqa
             schema_prompt = f"""
@@ -367,7 +366,6 @@ A failure response will return a tuple with empty values
             deque(
                 self.post(self.nodes, "schemas", schema), maxlen=0
             )  # discard results since we throw on err
-            print(f'fn:create_schema COMPLETE [{schema["_id"]}]')
             return schema["_id"], schema
         except Exception as e:
             print(f"Error creating schema: {str(e)}")
@@ -398,7 +396,6 @@ Success will return  a list of created record UUIDs, failure is an empty list.
         """
         try:
             validated_args = NillionDataUploadInput(**args)
-            print(f"fn:data_upload [{validated_args.schema_uuid}] [{validated_args.data_to_store}]")
 
             schema_definition = self.find_schema(validated_args.schema_uuid)
 
@@ -431,7 +428,6 @@ Success will return  a list of created record UUIDs, failure is an empty list.
                 assert response.status_code == 200 and response.json().get("errors", []) == [], (
                     f"upload (host-{idx}) failed: " + response.content.decode("utf8")
                 )
-            print(f"fn:data_upload COMPLETED: {record_uuids}")
             return record_uuids
 
         except Exception as e:
@@ -464,7 +460,6 @@ Success will return true, whereas a failure response will return false.
         """
         try:
             validated_args = NillionDataDownloadInput(**args)
-            print(f"fn:data_download [{validated_args.schema_uuid}]")
 
             shares = defaultdict(list)
             for node in self.nodes:
