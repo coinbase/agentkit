@@ -50,7 +50,7 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
 ## Installation
 
 ```bash
-npm install @coinbase/agentkit
+pnpm add @coinbase/agentkit
 ```
 
 ## Usage
@@ -115,7 +115,7 @@ const agentKit = await AgentKit.from({
 - Set `OPENAI_API_KEY` environment variable.
 
 ```bash
-npm install @langchain @langchain/langgraph @langchain/openai
+pnpm add @langchain @langchain/langgraph @langchain/openai
 ```
 
 ```typescript

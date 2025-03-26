@@ -15,7 +15,6 @@ import {
   SignatureStatus,
   SignatureStatusConfig,
 } from "@solana/web3.js";
-import bs58 from "bs58";
 import {
   SOLANA_CLUSTER,
   SOLANA_DEVNET_GENESIS_BLOCK_HASH,
@@ -34,7 +33,7 @@ import {
  * @augments SvmWalletProvider
  */
 export class SolanaKeypairWalletProvider extends SvmWalletProvider {
-  #keypair: Keypair;
+  #keypair?: Keypair;
   #connection: Connection;
   #genesisHash: string;
 
@@ -57,10 +56,14 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
   }) {
     super();
 
-    this.#keypair =
-      typeof keypair === "string"
-        ? Keypair.fromSecretKey(bs58.decode(keypair))
-        : Keypair.fromSecretKey(keypair);
+    if (typeof keypair === "string") {
+      import("bs58").then(bs58 => {
+        this.#keypair = Keypair.fromSecretKey(bs58.default.decode(keypair));
+      });
+    } else {
+      this.#keypair = Keypair.fromSecretKey(keypair);
+    }
+
     this.#connection = new Connection(rpcUrl);
     if (genesisHash in SOLANA_NETWORKS) {
       this.#genesisHash = genesisHash;
@@ -170,7 +173,7 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
    * @returns The wallet's public key
    */
   getPublicKey(): PublicKey {
-    return this.#keypair.publicKey;
+    return this.#keypair!.publicKey;
   }
 
   /**
@@ -179,7 +182,7 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
    * @returns The base58 encoded address of the wallet
    */
   getAddress(): string {
-    return this.#keypair.publicKey.toBase58();
+    return this.#keypair!.publicKey.toBase58();
   }
 
   /**
@@ -198,7 +201,7 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
    * @returns The signed transaction
    */
   async signTransaction(transaction: VersionedTransaction): Promise<VersionedTransaction> {
-    transaction.sign([this.#keypair]);
+    transaction.sign([this.#keypair!]);
     return transaction;
   }
 
@@ -269,7 +272,7 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
    * @returns The balance of the wallet
    */
   getBalance(): Promise<bigint> {
-    return this.#connection.getBalance(this.#keypair.publicKey).then(balance => BigInt(balance));
+    return this.#connection.getBalance(this.#keypair!.publicKey).then(balance => BigInt(balance));
   }
 
   /**
@@ -302,7 +305,7 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
         units: 2000,
       }),
       SystemProgram.transfer({
-        fromPubkey: this.#keypair.publicKey,
+        fromPubkey: this.#keypair!.publicKey,
         toPubkey: toPubkey,
         lamports: lamports,
       }),
@@ -310,13 +313,13 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
 
     const tx = new VersionedTransaction(
       MessageV0.compile({
-        payerKey: this.#keypair.publicKey,
+        payerKey: this.#keypair!.publicKey,
         instructions: instructions,
         recentBlockhash: (await this.#connection.getLatestBlockhash()).blockhash,
       }),
     );
 
-    tx.sign([this.#keypair]);
+    tx.sign([this.#keypair!]);
 
     const signature = await this.#connection.sendTransaction(tx);
     await this.waitForSignatureResult(signature);
@@ -330,6 +333,6 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
    * @returns A Promise that resolves to the signature of the airdrop
    */
   async requestAirdrop(lamports: number): Promise<string> {
-    return await this.#connection.requestAirdrop(this.#keypair.publicKey, lamports);
+    return await this.#connection.requestAirdrop(this.#keypair!.publicKey, lamports);
   }
 }

@@ -135,3 +135,7 @@ docs/
 !python/framework-extensions/langchain/docs/
 
 .to-publish-pypi
+
+# pnpm
+typescript/.pnpm-store
+typescript/.pnp.*
