@@ -16,7 +16,7 @@ This example demonstrates an agent setup as a terminal style chatbot with access
   - [Poetry Installation Instructions](https://python-poetry.org/docs/#installation)
 - [CDP API Key](https://portal.cdp.coinbase.com/access/api)
 - [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
-- [Nillion SecretVault API Key](https://docs.nillion.com/build/secret-vault)
+- [Nillion SecretVault API Key](https://secret-vault-registration.replit.app)
 
 ### Checking Python Version
 Before using the example, ensure that you have the correct version of Python installed. The example requires Python 3.10 or higher. You can check your Python version by running:
