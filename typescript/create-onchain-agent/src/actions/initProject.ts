@@ -268,10 +268,10 @@ export async function initProject() {
       if (root !== process.cwd()) {
         console.log(` - cd ${path.relative(process.cwd(), root)}`);
       }
-      console.log(" - pnpm install");
+      console.log(" - npm install");
       console.log(pc.gray(" - # Open .env.local and configure your API keys"));
       console.log(" - mv .env.local .env");
-      console.log(" - pnpm run dev");
+      console.log(" - npm run dev");
       break;
     case "mcp":
       await handleMcpSelection(root, walletProvider, network, chainId);
@@ -283,8 +283,8 @@ export async function initProject() {
       if (root !== process.cwd()) {
         console.log(` - cd ${path.relative(process.cwd(), root)}`);
       }
-      console.log(" - pnpm install");
-      console.log(" - pnpm run build");
+      console.log(" - npm install");
+      console.log(" - npm run build");
       console.log(
         " - cp claude_desktop_config.json ~/Library/Application\\ Support/Claude/claude_desktop_config.json",
       );

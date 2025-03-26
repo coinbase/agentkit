@@ -64,7 +64,7 @@ _Prerequisites_:
 
 ```bash
 # Create a new fullstack agent project
-pnpm create onchain-agent@latest
+npm create onchain-agent@latest
 
 # Navigate to your project directory
 cd onchain-agent
@@ -74,10 +74,10 @@ cd onchain-agent
 mv .env.local .env
 
 # Install dependencies
-pnpm install
+npm install
 
 # Run the development server
-pnpm run dev
+npm run dev
 ```
 
 2. Visit `http://localhost:3000` in your browser and start telling your Agent to do things onchain!
@@ -192,7 +192,7 @@ To access the bleeding edge version of AgentKit, you can install the nightly bui
 You can install the latest nightly build with the following command:
 
 ```bash
-pnpm add @coinbase/agentkit@nightly @coinbase/agentkit-langchain@nightly
+npm install @coinbase/agentkit@nightly @coinbase/agentkit-langchain@nightly
 ```
 
 If you're using an AI framework other than Langchain, make sure to install the corresponding package instead of `@coinbase/agentkit-langchain`.
@@ -200,7 +200,7 @@ If you're using an AI framework other than Langchain, make sure to install the c
 To install a specific version of the nightly build, you can specify the exact version. For example, if you want to install the nightly build from February 20th, 2025, you can run the following:
 
 ```bash
-pnpm add @coinbase/agentkit@0.2.3-nightly.20250220.0 @coinbase/agentkit-langchain@0.2.3-nightly.20250220.0
+npm install @coinbase/agentkit@0.2.3-nightly.20250220.0 @coinbase/agentkit-langchain@0.2.3-nightly.20250220.0
 ```
 
 ### Python

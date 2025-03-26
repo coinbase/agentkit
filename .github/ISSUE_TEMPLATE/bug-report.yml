@@ -101,8 +101,8 @@ body:
       For TypeScript:
       ```sh
       node --version
-      pnpm -r list @coinbase/agentkit
-      pnpm -r list @coinbase/agentkit-langchain  # if using LangChain extension
+      npm list @coinbase/agentkit
+      npm list @coinbase/agentkit-langchain  # if using LangChain extension
       ```
   validations:
     required: true
