@@ -28,9 +28,7 @@ from coinbase_agentkit.network import Network
 class NillionActionProvider(ActionProvider):
     """Provides actions for interacting with Nillion SecretVault storage."""
 
-    def __init__(
-        self, llm: Any, org_did: str | None = None, secret_key: str | None = None
-    ):
+    def __init__(self, llm: Any, org_did: str | None = None, secret_key: str | None = None):
         super().__init__("nillion", [])
 
         secret_key = secret_key or os.getenv("NILLION_SECRET_KEY")
@@ -69,9 +67,7 @@ class NillionActionProvider(ActionProvider):
             # Create and sign the JWT
             node["bearer"] = jwt.encode(payload, signer.to_pem(), algorithm="ES256K")
 
-        self.key = nilql.ClusterKey.generate(
-            {"nodes": [{}] * len(self.nodes)}, {"store": True}
-        )
+        self.key = nilql.ClusterKey.generate({"nodes": [{}] * len(self.nodes)}, {"store": True})
 
     def post(
         self, nodes: list, endpoint: str, payload: dict
@@ -102,9 +98,7 @@ class NillionActionProvider(ActionProvider):
             "Content-Type": "application/json",
         }
 
-        response = requests.get(
-            f"{self.nodes[0]['url']}/api/v1/schemas", headers=headers
-        )
+        response = requests.get(f"{self.nodes[0]['url']}/api/v1/schemas", headers=headers)
 
         assert (
             response.status_code == 200 and response.json().get("errors", []) == []
@@ -284,7 +278,6 @@ A failure response will return a tuple with empty values
 
         """
         try:
-
             validated_args = NillionCreateSchemaInput(**args)
             print(f"fn:create_schema [{validated_args.schema_description}]")
 
@@ -405,9 +398,7 @@ Success will return  a list of created record UUIDs, failure is an empty list.
         """
         try:
             validated_args = NillionDataUploadInput(**args)
-            print(
-                f"fn:data_upload [{validated_args.schema_uuid}] [{validated_args.data_to_store}]"
-            )
+            print(f"fn:data_upload [{validated_args.schema_uuid}] [{validated_args.data_to_store}]")
 
             schema_definition = self.find_schema(validated_args.schema_uuid)
 
@@ -421,7 +412,6 @@ Success will return  a list of created record UUIDs, failure is an empty list.
             payloads = nilql.allot(validated_args.data_to_store)
 
             for idx, shard in enumerate(payloads):
-
                 validator.validate(shard)
 
                 node = self.nodes[idx]
@@ -438,10 +428,9 @@ Success will return  a list of created record UUIDs, failure is an empty list.
                     json=body,
                 )
 
-                assert (
-                    response.status_code == 200
-                    and response.json().get("errors", []) == []
-                ), f"upload (host-{idx}) failed: " + response.content.decode("utf8")
+                assert response.status_code == 200 and response.json().get("errors", []) == [], (
+                    f"upload (host-{idx}) failed: " + response.content.decode("utf8")
+                )
             print(f"fn:data_upload COMPLETED: {record_uuids}")
             return record_uuids
 
@@ -494,9 +483,9 @@ Success will return true, whereas a failure response will return false.
                     headers=headers,
                     json=body,
                 )
-                assert (
-                    response.status_code == 200
-                ), "upload failed: " + response.content.decode("utf8")
+                assert response.status_code == 200, "upload failed: " + response.content.decode(
+                    "utf8"
+                )
                 data = response.json().get("data")
                 for d in data:
                     shares[d["_id"]].append(d)

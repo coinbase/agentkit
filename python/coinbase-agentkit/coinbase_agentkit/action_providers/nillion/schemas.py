@@ -13,17 +13,13 @@ class NillionCreateSchemaInput(BaseModel):
 class NillionDataDownloadInput(BaseModel):
     """Input argument schema for data download action."""
 
-    schema_uuid: str = Field(
-        description="the UUID4 obtained from the nildb_schema_lookup_tool"
-    )
+    schema_uuid: str = Field(description="the UUID4 obtained from the nildb_schema_lookup_tool")
 
 
 class NillionDataUploadInput(BaseModel):
     """Input argument schema for data upload action."""
 
-    schema_uuid: str = Field(
-        description="the UUID obtained from the nillion_lookup_schema tool."
-    )
+    schema_uuid: str = Field(description="the UUID obtained from the nillion_lookup_schema tool.")
     data_to_store: list[dict[str, Any]] = Field(
         description="data to store in the database that validates against desired schema"
     )
