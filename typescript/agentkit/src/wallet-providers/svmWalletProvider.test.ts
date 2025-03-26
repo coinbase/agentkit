@@ -10,6 +10,22 @@ import {
 } from "@solana/web3.js";
 import { jest } from "@jest/globals";
 
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({}),
+  } as Response),
+);
+
+// =========================================================
+// mocks
+// =========================================================
+
+const mockSendAnalyticsEvent = jest.fn().mockImplementation(() => Promise.resolve());
+jest.mock("../analytics", () => ({
+  sendAnalyticsEvent: mockSendAnalyticsEvent,
+}));
+
 describe("SvmWalletProvider", () => {
   beforeEach(() => {
     jest.clearAllMocks();

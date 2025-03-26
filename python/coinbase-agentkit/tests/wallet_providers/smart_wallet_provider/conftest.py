@@ -29,9 +29,8 @@ MOCK_ADDRESS_TO = "0x1234567890123456789012345678901234567890"
 
 MOCK_ONE_ETH_WEI = 1000000000000000000
 
-# Additional mock constants for tests
-MOCK_TX_HASH = MOCK_TRANSACTION_HASH  # Alias for consistency with other test files
-MOCK_AMOUNT = MOCK_ONE_ETH_WEI  # Alias for consistency with other test files
+MOCK_TX_HASH = MOCK_TRANSACTION_HASH
+MOCK_AMOUNT = MOCK_ONE_ETH_WEI
 MOCK_TRANSACTION = {"to": MOCK_ADDRESS_TO, "value": MOCK_ONE_ETH_WEI, "data": "0x"}
 
 # =========================================================

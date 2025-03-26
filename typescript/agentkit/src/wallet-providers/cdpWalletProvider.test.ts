@@ -23,6 +23,13 @@ import {
 import { Decimal } from "decimal.js";
 import { jest } from "@jest/globals";
 
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({}),
+  } as Response),
+);
+
 // =========================================================
 // consts
 // =========================================================
@@ -43,8 +50,9 @@ jest.mock("../../package.json", () => ({
   version: "1.0.0",
 }));
 
+const mockSendAnalyticsEvent = jest.fn().mockImplementation(() => Promise.resolve());
 jest.mock("../analytics", () => ({
-  sendAnalyticsEvent: jest.fn(),
+  sendAnalyticsEvent: mockSendAnalyticsEvent,
 }));
 
 jest.mock("viem", () => {

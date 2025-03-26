@@ -25,7 +25,6 @@ const MOCK_NETWORK_ID = "mainnet";
 const MOCK_TRANSACTION_HASH = "0x9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba";
 const MOCK_BALANCE = BigInt(1000000000000000000);
 
-// Create a typed mock for the PublicClient
 const mockPublicClient = {
   waitForTransactionReceipt: jest.fn(),
   readContract: jest.fn(),
@@ -104,6 +103,20 @@ jest.mock("@coinbase/coinbase-sdk", () => {
     createSmartWallet: jest.fn(),
   };
 });
+
+// Mock fetch globally to prevent any actual network requests
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({}),
+  } as Response),
+);
+
+// Enhanced analytics mock to ensure no actual network requests
+const mockSendAnalyticsEvent = jest.fn().mockImplementation(() => Promise.resolve());
+jest.mock("../analytics", () => ({
+  sendAnalyticsEvent: mockSendAnalyticsEvent,
+}));
 
 // =========================================================
 // tests

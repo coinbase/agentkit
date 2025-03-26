@@ -3,6 +3,14 @@ import { Network } from "../network";
 import { jest } from "@jest/globals";
 import { sendAnalyticsEvent } from "../analytics";
 
+// Mock fetch globally to prevent any actual network requests
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({}),
+  } as Response),
+);
+
 const MOCK_ADDRESS = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e";
 const MOCK_NETWORK_ID = "mainnet";
 const MOCK_CHAIN_ID = "1";
@@ -15,8 +23,9 @@ const MOCK_NETWORK: Network = {
   chainId: MOCK_CHAIN_ID,
 };
 
+const mockSendAnalyticsEvent = jest.fn().mockImplementation(() => Promise.resolve());
 jest.mock("../analytics", () => ({
-  sendAnalyticsEvent: jest.fn(),
+  sendAnalyticsEvent: mockSendAnalyticsEvent,
 }));
 
 describe("WalletProvider", () => {

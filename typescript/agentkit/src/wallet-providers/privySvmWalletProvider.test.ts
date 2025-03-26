@@ -2,6 +2,13 @@ import { PrivySvmWalletProvider } from "./privySvmWalletProvider";
 import { Connection, VersionedTransaction, clusterApiUrl as _clusterApiUrl } from "@solana/web3.js";
 import * as solanaNetworks from "../network/svm";
 
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({}),
+  } as Response),
+);
+
 jest.mock("@privy-io/server-auth", () => ({
   PrivyClient: jest.fn().mockImplementation(() => ({
     walletApi: {
@@ -107,8 +114,9 @@ jest.mock("../network/svm", () => {
   };
 });
 
+const mockSendAnalyticsEvent = jest.fn().mockImplementation(() => Promise.resolve());
 jest.mock("../analytics", () => ({
-  sendAnalyticsEvent: jest.fn(),
+  sendAnalyticsEvent: mockSendAnalyticsEvent,
 }));
 
 describe("PrivySvmWalletProvider", () => {
@@ -178,17 +186,14 @@ describe("PrivySvmWalletProvider", () => {
     });
 
     it("should handle configuration with invalid network", async () => {
-      // Create a custom mock implementation just for this test
       const mockClusterApiUrl = jest.fn().mockImplementation(() => {
         throw new Error("Invalid cluster");
       });
 
-      // Override the clusterApiUrl function from the mocked module
       const webThreeJs = jest.requireMock("@solana/web3.js");
       const originalFn = webThreeJs.clusterApiUrl;
       webThreeJs.clusterApiUrl = mockClusterApiUrl;
 
-      // Test that it properly throws an error
       await expect(
         PrivySvmWalletProvider.configureWithWallet({
           ...MOCK_CONFIG,
@@ -196,7 +201,6 @@ describe("PrivySvmWalletProvider", () => {
         }),
       ).rejects.toThrow();
 
-      // Restore the original mock implementation
       webThreeJs.clusterApiUrl = originalFn;
     });
   });

@@ -3,6 +3,7 @@
 from unittest.mock import Mock, patch
 
 import pytest
+from web3.exceptions import ContractLogicError
 
 from .conftest import MOCK_ADDRESS_TO
 
@@ -80,9 +81,6 @@ def test_read_contract_with_contract_logic_error(mocked_wallet_provider):
             "outputs": [{"type": "string"}],
         }
     ]
-
-    # Import Web3 exceptions
-    from web3.exceptions import ContractLogicError
 
     error_message = "execution reverted: Insufficient balance"
 

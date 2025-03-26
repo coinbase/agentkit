@@ -75,7 +75,6 @@ def test_send_transaction_failure(wallet_provider, mock_smart_wallet):
     """Test send_transaction method when transaction fails."""
     transaction = {"to": MOCK_ADDRESS_TO, "value": MOCK_ONE_ETH_WEI, "data": "0x"}
 
-    # Configure mock to simulate failed transaction
     user_operation = Mock(spec=UserOperation)
     result = Mock()
     result.status = UserOperation.Status.FAILED
@@ -90,7 +89,6 @@ def test_send_transaction_with_network_error(wallet_provider, mock_smart_wallet)
     """Test send_transaction method when network connection fails."""
     transaction = {"to": MOCK_ADDRESS_TO, "value": MOCK_ONE_ETH_WEI, "data": "0x"}
 
-    # Configure mock to simulate network error
     mock_smart_wallet.send_user_operation.side_effect = ConnectionError("Network connection error")
 
     with pytest.raises(ConnectionError, match="Network connection error"):
@@ -101,7 +99,6 @@ def test_send_transaction_timeout(wallet_provider, mock_smart_wallet):
     """Test send_transaction method when transaction times out."""
     transaction = {"to": MOCK_ADDRESS_TO, "value": MOCK_ONE_ETH_WEI, "data": "0x"}
 
-    # Configure mock to simulate timeout
     user_operation = Mock(spec=UserOperation)
     user_operation.wait.side_effect = TimeoutError("Transaction timed out")
     mock_smart_wallet.send_user_operation.return_value = user_operation
@@ -114,7 +111,6 @@ def test_send_transaction_other_status(wallet_provider, mock_smart_wallet):
     """Test send_transaction method with non-complete, non-failed status."""
     transaction = {"to": MOCK_ADDRESS_TO, "value": MOCK_ONE_ETH_WEI, "data": "0x"}
 
-    # Configure mock to simulate pending transaction
     user_operation = Mock(spec=UserOperation)
     result = Mock()
     result.status = UserOperation.Status.PENDING

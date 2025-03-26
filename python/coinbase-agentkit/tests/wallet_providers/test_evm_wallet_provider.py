@@ -51,7 +51,6 @@ def test_evm_gas_config_custom_values():
 
 def test_method_signatures():
     """Test that EvmWalletProvider methods have consistent signatures."""
-    # Expected method signatures
     expected_signatures = {
         "sign_message": ["message"],
         "sign_typed_data": ["typed_data"],
@@ -66,24 +65,17 @@ def test_method_signatures():
         "native_transfer": ["to", "value"],
     }
 
-    # Verify each method signature
     for method_name, expected_params in expected_signatures.items():
-        # Get the method from the class
         method = getattr(EvmWalletProvider, method_name)
 
-        # Get the signature
         signature = inspect.signature(method)
-
-        # Extract parameter names (exclude 'self')
         actual_params = [param for param in signature.parameters if param != "self"]
 
-        # Verify that the required parameters are present
         for param in expected_params:
             assert (
                 param in actual_params
             ), f"Method {method_name} is missing required parameter {param}"
 
-        # For methods with default values, check they're properly optional
         for param_name, param in signature.parameters.items():
             if param_name != "self" and param_name not in expected_params:
                 assert (

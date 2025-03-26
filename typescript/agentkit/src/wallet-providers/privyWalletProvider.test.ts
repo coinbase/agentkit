@@ -2,6 +2,18 @@ import { PrivyWalletProvider } from "./privyWalletProvider";
 import { PrivyEvmWalletProvider } from "./privyEvmWalletProvider";
 import { PrivySvmWalletProvider } from "./privySvmWalletProvider";
 
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({}),
+  } as Response),
+);
+
+const mockSendAnalyticsEvent = jest.fn().mockImplementation(() => Promise.resolve());
+jest.mock("../analytics", () => ({
+  sendAnalyticsEvent: mockSendAnalyticsEvent,
+}));
+
 jest.mock("./privyEvmWalletProvider", () => ({
   PrivyEvmWalletProvider: {
     configureWithWallet: jest.fn().mockResolvedValue({

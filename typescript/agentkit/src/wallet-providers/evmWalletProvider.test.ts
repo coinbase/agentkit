@@ -2,6 +2,22 @@ import { EvmWalletProvider } from "./evmWalletProvider";
 import { jest } from "@jest/globals";
 import type { TransactionRequest } from "viem";
 
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({}),
+  } as Response),
+);
+
+// =========================================================
+// mocks
+// =========================================================
+
+const mockSendAnalyticsEvent = jest.fn().mockImplementation(() => Promise.resolve());
+jest.mock("../analytics", () => ({
+  sendAnalyticsEvent: mockSendAnalyticsEvent,
+}));
+
 const EXPECTED_EVM_METHODS = [
   "signMessage",
   "signTypedData",

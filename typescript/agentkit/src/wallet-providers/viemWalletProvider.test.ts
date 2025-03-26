@@ -16,6 +16,13 @@ import { jest } from "@jest/globals";
 
 import * as viem from "viem";
 
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({}),
+  } as Response),
+);
+
 // =========================================================
 // consts
 // =========================================================
@@ -66,8 +73,9 @@ const MOCK_DATA = {
 // mocks
 // =========================================================
 
+const mockSendAnalyticsEvent = jest.fn().mockImplementation(() => Promise.resolve());
 jest.mock("../analytics", () => ({
-  sendAnalyticsEvent: jest.fn(),
+  sendAnalyticsEvent: mockSendAnalyticsEvent,
 }));
 
 jest.mock("../network/network", () => ({
