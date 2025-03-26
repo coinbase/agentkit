@@ -1,1 +1,0 @@
-"""CDP wallet provider tests."""

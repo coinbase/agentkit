@@ -1,1 +1,0 @@
-"""smart wallet provider tests."""
