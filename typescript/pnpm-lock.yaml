@@ -298,11 +298,11 @@ importers:
   examples/langchain-cdp-chatbot:
     dependencies:
       '@coinbase/agentkit':
-        specifier: ^0.4.0
-        version: 0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
+        specifier: workspace:*
+        version: link:../../agentkit
       '@coinbase/agentkit-langchain':
-        specifier: ^0.3.0
-        version: 0.3.0(@coinbase/agentkit@0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))(openai@4.89.1(ws@8.18.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.24.2))
+        specifier: workspace:*
+        version: link:../../framework-extensions/langchain
       '@langchain/core':
         specifier: ^0.3.19
         version: 0.3.30(openai@4.89.1(ws@8.18.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.24.2))
@@ -329,11 +329,11 @@ importers:
   examples/langchain-farcaster-chatbot:
     dependencies:
       '@coinbase/agentkit':
-        specifier: ^0.4.0
-        version: 0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
+        specifier: workspace:*
+        version: link:../../agentkit
       '@coinbase/agentkit-langchain':
-        specifier: ^0.3.0
-        version: 0.3.0(@coinbase/agentkit@0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))(openai@4.89.1(ws@8.18.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.24.2))
+        specifier: workspace:*
+        version: link:../../framework-extensions/langchain
       '@langchain/core':
         specifier: 0.3.30
         version: 0.3.30(openai@4.89.1(ws@8.18.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.24.2))
@@ -360,11 +360,11 @@ importers:
   examples/langchain-privy-chatbot:
     dependencies:
       '@coinbase/agentkit':
-        specifier: ^0.4.0
-        version: 0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
+        specifier: workspace:*
+        version: link:../../agentkit
       '@coinbase/agentkit-langchain':
-        specifier: ^0.3.0
-        version: 0.3.0(@coinbase/agentkit@0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))(openai@4.89.1(ws@8.18.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.24.2))
+        specifier: workspace:*
+        version: link:../../framework-extensions/langchain
       '@langchain/core':
         specifier: ^0.3.19
         version: 0.3.30(openai@4.89.1(ws@8.18.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.24.2))
@@ -391,11 +391,11 @@ importers:
   examples/langchain-smart-wallet-chatbot:
     dependencies:
       '@coinbase/agentkit':
-        specifier: ^0.4.0
-        version: 0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
+        specifier: workspace:*
+        version: link:../../agentkit
       '@coinbase/agentkit-langchain':
-        specifier: ^0.3.0
-        version: 0.3.0(@coinbase/agentkit@0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))(openai@4.89.1(ws@8.18.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.24.2))
+        specifier: workspace:*
+        version: link:../../framework-extensions/langchain
       '@langchain/core':
         specifier: ^0.3.19
         version: 0.3.30(openai@4.89.1(ws@8.18.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.24.2))
@@ -422,11 +422,11 @@ importers:
   examples/langchain-solana-chatbot:
     dependencies:
       '@coinbase/agentkit':
-        specifier: ^0.4.0
-        version: 0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
+        specifier: workspace:*
+        version: link:../../agentkit
       '@coinbase/agentkit-langchain':
-        specifier: ^0.3.0
-        version: 0.3.0(@coinbase/agentkit@0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))(openai@4.89.1(ws@8.18.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.24.2))
+        specifier: workspace:*
+        version: link:../../framework-extensions/langchain
       '@langchain/core':
         specifier: ^0.3.19
         version: 0.3.30(openai@4.89.1(ws@8.18.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.24.2))
@@ -453,11 +453,11 @@ importers:
   examples/langchain-twitter-chatbot:
     dependencies:
       '@coinbase/agentkit':
-        specifier: ^0.4.0
-        version: 0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
+        specifier: workspace:*
+        version: link:../../agentkit
       '@coinbase/agentkit-langchain':
-        specifier: ^0.3.0
-        version: 0.3.0(@coinbase/agentkit@0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))(openai@4.89.1(ws@8.18.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.24.2))
+        specifier: workspace:*
+        version: link:../../framework-extensions/langchain
       '@langchain/core':
         specifier: ^0.3.19
         version: 0.3.30(openai@4.89.1(ws@8.18.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.24.2))
@@ -484,11 +484,11 @@ importers:
   examples/model-context-protocol-cdp-server:
     dependencies:
       '@coinbase/agentkit':
-        specifier: ^0.4.0
-        version: 0.4.0(typescript@5.8.2)
+        specifier: workspace:*
+        version: link:../../agentkit
       '@coinbase/agentkit-model-context-protocol':
-        specifier: ^0.2.0
-        version: 0.2.0(@coinbase/agentkit@0.4.0(typescript@5.8.2))
+        specifier: workspace:*
+        version: link:../../framework-extensions/model-context-protocol
       '@modelcontextprotocol/sdk':
         specifier: ^1.6.1
         version: 1.8.0
@@ -509,11 +509,11 @@ importers:
         specifier: ^1.1.9
         version: 1.3.3(zod@3.24.2)
       '@coinbase/agentkit':
-        specifier: ^0.4.0
-        version: 0.4.0(typescript@5.8.2)
+        specifier: workspace:*
+        version: link:../../agentkit
       '@coinbase/agentkit-vercel-ai-sdk':
-        specifier: ^0.1.0
-        version: 0.1.0(@coinbase/agentkit@0.4.0(typescript@5.8.2))(ai@4.2.6(react@18.3.1)(zod@3.24.2))
+        specifier: workspace:*
+        version: link:../../framework-extensions/vercel-ai-sdk
       ai:
         specifier: ^4.1.16
         version: 4.2.6(react@18.3.1)(zod@3.24.2)
@@ -544,8 +544,8 @@ importers:
         version: 3.24.2
     devDependencies:
       '@coinbase/agentkit':
-        specifier: ^0.4.0
-        version: 0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
+        specifier: workspace:*
+        version: link:../../agentkit
 
   framework-extensions/model-context-protocol:
     dependencies:
@@ -560,8 +560,8 @@ importers:
         version: 3.24.5(zod@3.24.2)
     devDependencies:
       '@coinbase/agentkit':
-        specifier: ^0.4.0
-        version: 0.4.0(typescript@5.8.2)
+        specifier: workspace:*
+        version: link:../../agentkit
 
   framework-extensions/vercel-ai-sdk:
     dependencies:
@@ -573,8 +573,8 @@ importers:
         version: 3.24.2
     devDependencies:
       '@coinbase/agentkit':
-        specifier: 0.4.0
-        version: 0.4.0(typescript@5.8.2)
+        specifier: workspace:*
+        version: link:../../agentkit
 
 packages:
 
@@ -6570,26 +6570,9 @@ snapshots:
     transitivePeerDependencies:
       - openai
 
-  '@coinbase/agentkit-langchain@0.3.0(@coinbase/agentkit@0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))(openai@4.89.1(ws@8.18.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.24.2))':
-    dependencies:
-      '@coinbase/agentkit': 0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
-      '@langchain/core': 0.3.30(openai@4.89.1(ws@8.18.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.24.2))
-      zod: 3.24.2
-    transitivePeerDependencies:
-      - openai
-
   '@coinbase/agentkit-model-context-protocol@0.2.0(@coinbase/agentkit@0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))':
     dependencies:
       '@coinbase/agentkit': 0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
-      '@modelcontextprotocol/sdk': 1.8.0
-      zod: 3.24.2
-      zod-to-json-schema: 3.24.5(zod@3.24.2)
-    transitivePeerDependencies:
-      - supports-color
-
-  '@coinbase/agentkit-model-context-protocol@0.2.0(@coinbase/agentkit@0.4.0(typescript@5.8.2))':
-    dependencies:
-      '@coinbase/agentkit': 0.4.0(typescript@5.8.2)
       '@modelcontextprotocol/sdk': 1.8.0
       zod: 3.24.2
       zod-to-json-schema: 3.24.5(zod@3.24.2)
@@ -6602,12 +6585,6 @@ snapshots:
       ai: 4.2.6(react@18.3.1)(zod@3.24.2)
       zod: 3.24.2
 
-  '@coinbase/agentkit-vercel-ai-sdk@0.1.0(@coinbase/agentkit@0.4.0(typescript@5.8.2))(ai@4.2.6(react@18.3.1)(zod@3.24.2))':
-    dependencies:
-      '@coinbase/agentkit': 0.4.0(typescript@5.8.2)
-      ai: 4.2.6(react@18.3.1)(zod@3.24.2)
-      zod: 3.24.2
-
   '@coinbase/agentkit@0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)':
     dependencies:
       '@alloralabs/allora-sdk': 0.1.0
@@ -6615,28 +6592,6 @@ snapshots:
       '@jup-ag/api': 6.0.40
       '@privy-io/server-auth': 1.19.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)(viem@2.23.15(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.2))
       '@solana/spl-token': 0.4.13(@solana/web3.js@1.98.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.2)(utf-8-validate@5.0.10)
-      '@solana/web3.js': 1.98.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-      md5: 2.3.0
-      opensea-js: 7.1.18(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-      reflect-metadata: 0.2.2
-      twitter-api-v2: 1.22.0
-      viem: 2.23.15(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.2)
-      zod: 3.24.2
-    transitivePeerDependencies:
-      - bufferutil
-      - debug
-      - encoding
-      - fastestsmallesttextencoderdecoder
-      - typescript
-      - utf-8-validate
-
-  '@coinbase/agentkit@0.4.0(typescript@5.8.2)':
-    dependencies:
-      '@alloralabs/allora-sdk': 0.1.0
-      '@coinbase/coinbase-sdk': 0.20.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.2)
-      '@jup-ag/api': 6.0.40
-      '@privy-io/server-auth': 1.19.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)(viem@2.23.15(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.2))
-      '@solana/spl-token': 0.4.13(@solana/web3.js@1.98.0)(typescript@5.8.2)
       '@solana/web3.js': 1.98.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       md5: 2.3.0
       opensea-js: 7.1.18(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -7687,23 +7642,7 @@ snapshots:
       - fastestsmallesttextencoderdecoder
       - typescript
 
-  '@solana/spl-token-group@0.0.7(@solana/web3.js@1.98.0)(typescript@5.8.2)':
-    dependencies:
-      '@solana/codecs': 2.0.0-rc.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.2)
-      '@solana/web3.js': 1.98.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-    transitivePeerDependencies:
-      - fastestsmallesttextencoderdecoder
-      - typescript
-
   '@solana/spl-token-metadata@0.1.6(@solana/web3.js@1.98.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.2)':
-    dependencies:
-      '@solana/codecs': 2.0.0-rc.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.2)
-      '@solana/web3.js': 1.98.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-    transitivePeerDependencies:
-      - fastestsmallesttextencoderdecoder
-      - typescript
-
-  '@solana/spl-token-metadata@0.1.6(@solana/web3.js@1.98.0)(typescript@5.8.2)':
     dependencies:
       '@solana/codecs': 2.0.0-rc.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.2)
       '@solana/web3.js': 1.98.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -7717,21 +7656,6 @@ snapshots:
       '@solana/buffer-layout-utils': 0.2.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       '@solana/spl-token-group': 0.0.7(@solana/web3.js@1.98.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.2)
       '@solana/spl-token-metadata': 0.1.6(@solana/web3.js@1.98.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.2)
-      '@solana/web3.js': 1.98.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-      buffer: 6.0.3
-    transitivePeerDependencies:
-      - bufferutil
-      - encoding
-      - fastestsmallesttextencoderdecoder
-      - typescript
-      - utf-8-validate
-
-  '@solana/spl-token@0.4.13(@solana/web3.js@1.98.0)(typescript@5.8.2)':
-    dependencies:
-      '@solana/buffer-layout': 4.0.1
-      '@solana/buffer-layout-utils': 0.2.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-      '@solana/spl-token-group': 0.0.7(@solana/web3.js@1.98.0)(typescript@5.8.2)
-      '@solana/spl-token-metadata': 0.1.6(@solana/web3.js@1.98.0)(typescript@5.8.2)
       '@solana/web3.js': 1.98.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       buffer: 6.0.3
     transitivePeerDependencies:
@@ -10484,7 +10408,7 @@ snapshots:
 
   isexe@2.0.0: {}
 
-  isomorphic-ws@4.0.1(ws@7.5.10):
+  isomorphic-ws@4.0.1(ws@7.5.10(bufferutil@4.0.9)(utf-8-validate@5.0.10)):
     dependencies:
       ws: 7.5.10(bufferutil@4.0.9)(utf-8-validate@5.0.10)
 
@@ -10492,7 +10416,7 @@ snapshots:
     dependencies:
       ws: 8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
 
-  isows@1.0.6(ws@8.18.1):
+  isows@1.0.6(ws@8.18.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)):
     dependencies:
       ws: 8.18.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
 
@@ -10575,7 +10499,7 @@ snapshots:
       delay: 5.0.0
       es6-promisify: 5.0.0
       eyes: 0.1.8
-      isomorphic-ws: 4.0.1(ws@7.5.10)
+      isomorphic-ws: 4.0.1(ws@7.5.10(bufferutil@4.0.9)(utf-8-validate@5.0.10))
       json-stringify-safe: 5.0.1
       uuid: 8.3.2
       ws: 7.5.10(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -13131,7 +13055,7 @@ snapshots:
       '@scure/bip32': 1.6.2
       '@scure/bip39': 1.5.4
       abitype: 1.0.8(typescript@5.8.2)(zod@3.24.2)
-      isows: 1.0.6(ws@8.18.1)
+      isows: 1.0.6(ws@8.18.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))
       ox: 0.6.9(typescript@5.8.2)(zod@3.24.2)
       ws: 8.18.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
     optionalDependencies:
