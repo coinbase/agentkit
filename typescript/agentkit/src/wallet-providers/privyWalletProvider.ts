@@ -58,21 +58,21 @@ export class PrivyWalletProvider {
   ): Promise<PrivyWalletProviderVariant<T>> {
     // Check for embedded wallet first
     if (config.walletType === "embedded") {
-      return PrivyEvmEmbeddedWalletProvider.configureWithWallet(
+      return (await PrivyEvmEmbeddedWalletProvider.configureWithWallet(
         config as PrivyEvmEmbeddedWalletConfig,
-      ) as unknown as PrivyWalletProviderVariant<T>;
+      )) as PrivyWalletProviderVariant<T>;
     }
 
     // Then check for chain type
     if (config.chainType === "solana") {
-      return PrivySvmWalletProvider.configureWithWallet(
+      return (await PrivySvmWalletProvider.configureWithWallet(
         config as PrivySvmWalletConfig,
-      ) as unknown as PrivyWalletProviderVariant<T>;
+      )) as PrivyWalletProviderVariant<T>;
     }
 
     // Default to EVM server wallet
-    return PrivyEvmWalletProvider.configureWithWallet(
+    return (await PrivyEvmWalletProvider.configureWithWallet(
       config as PrivyEvmWalletConfig,
-    ) as unknown as PrivyWalletProviderVariant<T>;
+    )) as PrivyWalletProviderVariant<T>;
   }
 }
