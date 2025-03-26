@@ -9,7 +9,7 @@ It integrates [AgentKit](https://github.com/coinbase/agentkit) to provide Claude
 First, install dependencies:
 
 ```sh
-pnpm install
+npm install
 ```
 
 Then, configure your environment variables in, `claude_desktop_config.json`, if needed. For example, if you are using CDP, you will need to fill in your CDP API key.
@@ -23,7 +23,7 @@ cp claude_desktop_config.json ~/Library/Application\ Support/Claude/claude_deskt
 Build the server:
 
 ```sh
-pnpm run build
+npm run build
 ```
 
 Open Claude Desktop and start prompting Claude to do things onchain! For example, ask it to print your wallet details.

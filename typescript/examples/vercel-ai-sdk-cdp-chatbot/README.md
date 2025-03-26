@@ -45,16 +45,16 @@ Once you have them, rename the `.env-local` file to `.env` and make sure you set
 From the root directory, run:
 
 ```bash
-pnpm install
-pnpm run build
+npm install
+npm run build
 ```
 
-This will install the dependencies and build the packages locally. The chatbot example uses the local `@coinbase/agentkit-vercel-ai-sdk` and `@coinbase/agentkit` packages. If you make changes to the packages, you can run `pnpm run build` from root again to rebuild the packages, and your changes will be reflected in the chatbot example.
+This will install the dependencies and build the packages locally. The chatbot example uses the local `@coinbase/agentkit-vercel-ai-sdk` and `@coinbase/agentkit` packages. If you make changes to the packages, you can run `npm run build` from root again to rebuild the packages, and your changes will be reflected in the chatbot example.
 
 Now from the `typescript/examples/vercel-ai-sdk-cdp-chatbot` directory, run:
 
 ```bash
-pnpm start
+npm start
 ```
 
 Select "1. chat mode" and start telling your Agent to do things onchain!

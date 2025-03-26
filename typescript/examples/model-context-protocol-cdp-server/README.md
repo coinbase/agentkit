@@ -46,11 +46,11 @@ Then, navigate to the `claude_desktop_config.json` file found in your Claude Des
 From the root directory, run:
 
 ```bash
-pnpm install
-pnpm run build
+npm install
+npm run build
 ```
 
-This will install the dependencies and build the packages locally. The chatbot example uses the local `@coinbase/agentkit-model-context-protocol` and `@coinbase/agentkit` packages. If you make changes to the packages, you can run `pnpm run build` from root again to rebuild the packages, and your changes will be reflected in the chatbot example.
+This will install the dependencies and build the packages locally. The chatbot example uses the local `@coinbase/agentkit-model-context-protocol` and `@coinbase/agentkit` packages. If you make changes to the packages, you can run `npm run build` from root again to rebuild the packages, and your changes will be reflected in the chatbot example.
 
 To use the chatbot, simply open Claude desktop after configuring your API keys. The MCP server will run automatically when you interact with Claude.
 

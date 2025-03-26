@@ -18,7 +18,7 @@ Before using `create-onchain-agent`, ensure you have the following installed:
 To create a new project from scratch:
 
 ```sh
-pnpm create onchain-agent@latest
+npm create onchain-agent@latest
 ```
 
 This command lets you choose between two project templates:

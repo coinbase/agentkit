@@ -12,7 +12,7 @@ Anthropic Model Context Protocol (MCP) extension of AgentKit. Enables agentic wo
 ### Installation
 
 ```bash
-pnpm add @coinbase/agentkit-model-context-protocol @coinbase/agentkit @modelcontextprotocol/sdk
+npm install @coinbase/agentkit-model-context-protocol @coinbase/agentkit @modelcontextprotocol/sdk
 ```
 
 ## Usage
