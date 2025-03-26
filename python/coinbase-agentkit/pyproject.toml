@@ -49,6 +49,7 @@ questionary = "^2.1.0"
 rich = "^13.7.1"
 pillow = "^11.1.0"
 langchain-openai = "^0.2.4"
+coinbase-agentkit-langchain = { path = "../framework-extensions/langchain", develop = true }
 
 [build-system]
 requires = ["poetry-core"]
