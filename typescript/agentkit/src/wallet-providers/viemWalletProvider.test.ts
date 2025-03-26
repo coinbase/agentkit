@@ -23,6 +23,10 @@ global.fetch = jest.fn(() =>
   } as Response),
 );
 
+jest.mock("../analytics", () => ({
+  sendAnalyticsEvent: jest.fn().mockImplementation(() => Promise.resolve()),
+}));
+
 // =========================================================
 // consts
 // =========================================================
@@ -72,11 +76,6 @@ const MOCK_DATA = {
 // =========================================================
 // mocks
 // =========================================================
-
-const mockSendAnalyticsEvent = jest.fn().mockImplementation(() => Promise.resolve());
-jest.mock("../analytics", () => ({
-  sendAnalyticsEvent: mockSendAnalyticsEvent,
-}));
 
 jest.mock("../network/network", () => ({
   CHAIN_ID_TO_NETWORK_ID: {

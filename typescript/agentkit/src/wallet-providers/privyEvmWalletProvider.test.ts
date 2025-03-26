@@ -8,6 +8,10 @@ global.fetch = jest.fn(() =>
   } as Response),
 );
 
+jest.mock("../analytics", () => ({
+  sendAnalyticsEvent: jest.fn().mockImplementation(() => Promise.resolve()),
+}));
+
 const MOCK_ADDRESS = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e";
 const MOCK_WALLET_ID = "test-wallet-id";
 const MOCK_TRANSACTION_HASH = "0xef01";
@@ -146,11 +150,6 @@ jest.mock("viem", () => {
     parseEther: jest.fn().mockReturnValue(BigInt(1000000000000000000)),
   };
 });
-
-const mockSendAnalyticsEvent = jest.fn().mockImplementation(() => Promise.resolve());
-jest.mock("../analytics", () => ({
-  sendAnalyticsEvent: mockSendAnalyticsEvent,
-}));
 
 jest.mock("./privyShared", () => ({
   createPrivyWallet: jest.fn().mockResolvedValue({

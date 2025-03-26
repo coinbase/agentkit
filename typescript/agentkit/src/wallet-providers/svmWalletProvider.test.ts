@@ -17,13 +17,8 @@ global.fetch = jest.fn(() =>
   } as Response),
 );
 
-// =========================================================
-// mocks
-// =========================================================
-
-const mockSendAnalyticsEvent = jest.fn().mockImplementation(() => Promise.resolve());
 jest.mock("../analytics", () => ({
-  sendAnalyticsEvent: mockSendAnalyticsEvent,
+  sendAnalyticsEvent: jest.fn().mockImplementation(() => Promise.resolve()),
 }));
 
 describe("SvmWalletProvider", () => {

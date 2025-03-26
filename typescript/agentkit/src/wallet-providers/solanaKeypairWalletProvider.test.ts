@@ -8,6 +8,17 @@ import {
 } from "@solana/web3.js";
 import { SOLANA_DEVNET_GENESIS_BLOCK_HASH, SOLANA_NETWORKS } from "../network/svm";
 
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({}),
+  } as Response),
+);
+
+jest.mock("../analytics", () => ({
+  sendAnalyticsEvent: jest.fn().mockImplementation(() => Promise.resolve()),
+}));
+
 jest.mock("@solana/web3.js", () => {
   const originalModule = jest.requireActual("@solana/web3.js");
   return {

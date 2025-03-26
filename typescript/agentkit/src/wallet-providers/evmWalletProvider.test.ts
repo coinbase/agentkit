@@ -9,13 +9,8 @@ global.fetch = jest.fn(() =>
   } as Response),
 );
 
-// =========================================================
-// mocks
-// =========================================================
-
-const mockSendAnalyticsEvent = jest.fn().mockImplementation(() => Promise.resolve());
 jest.mock("../analytics", () => ({
-  sendAnalyticsEvent: mockSendAnalyticsEvent,
+  sendAnalyticsEvent: jest.fn().mockImplementation(() => Promise.resolve()),
 }));
 
 const EXPECTED_EVM_METHODS = [

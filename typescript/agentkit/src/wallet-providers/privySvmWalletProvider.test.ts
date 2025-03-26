@@ -9,6 +9,10 @@ global.fetch = jest.fn(() =>
   } as Response),
 );
 
+jest.mock("../analytics", () => ({
+  sendAnalyticsEvent: jest.fn().mockImplementation(() => Promise.resolve()),
+}));
+
 jest.mock("@privy-io/server-auth", () => ({
   PrivyClient: jest.fn().mockImplementation(() => ({
     walletApi: {
@@ -113,11 +117,6 @@ jest.mock("../network/svm", () => {
     },
   };
 });
-
-const mockSendAnalyticsEvent = jest.fn().mockImplementation(() => Promise.resolve());
-jest.mock("../analytics", () => ({
-  sendAnalyticsEvent: mockSendAnalyticsEvent,
-}));
 
 describe("PrivySvmWalletProvider", () => {
   const MOCK_ADDRESS = "AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM";

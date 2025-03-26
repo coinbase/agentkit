@@ -46,13 +46,12 @@ const mockPublicClient = {
 // mocks
 // =========================================================
 
-jest.mock("../../package.json", () => ({
-  version: "1.0.0",
+jest.mock("../analytics", () => ({
+  sendAnalyticsEvent: jest.fn().mockImplementation(() => Promise.resolve()),
 }));
 
-const mockSendAnalyticsEvent = jest.fn().mockImplementation(() => Promise.resolve());
-jest.mock("../analytics", () => ({
-  sendAnalyticsEvent: mockSendAnalyticsEvent,
+jest.mock("../../package.json", () => ({
+  version: "1.0.0",
 }));
 
 jest.mock("viem", () => {

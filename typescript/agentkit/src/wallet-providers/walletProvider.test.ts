@@ -11,6 +11,10 @@ global.fetch = jest.fn(() =>
   } as Response),
 );
 
+jest.mock("../analytics", () => ({
+  sendAnalyticsEvent: jest.fn().mockImplementation(() => Promise.resolve()),
+}));
+
 const MOCK_ADDRESS = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e";
 const MOCK_NETWORK_ID = "mainnet";
 const MOCK_CHAIN_ID = "1";
@@ -22,11 +26,6 @@ const MOCK_NETWORK: Network = {
   networkId: MOCK_NETWORK_ID,
   chainId: MOCK_CHAIN_ID,
 };
-
-const mockSendAnalyticsEvent = jest.fn().mockImplementation(() => Promise.resolve());
-jest.mock("../analytics", () => ({
-  sendAnalyticsEvent: mockSendAnalyticsEvent,
-}));
 
 describe("WalletProvider", () => {
   /**

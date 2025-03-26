@@ -15,6 +15,17 @@ import { jest } from "@jest/globals";
 import * as coinbaseSdk from "@coinbase/coinbase-sdk";
 import { NetworkScopedSmartWallet, SendUserOperationOptions } from "@coinbase/coinbase-sdk";
 
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({}),
+  } as Response),
+);
+
+jest.mock("../analytics", () => ({
+  sendAnalyticsEvent: jest.fn().mockImplementation(() => Promise.resolve()),
+}));
+
 // =========================================================
 // constants
 // =========================================================
@@ -103,20 +114,6 @@ jest.mock("@coinbase/coinbase-sdk", () => {
     createSmartWallet: jest.fn(),
   };
 });
-
-// Mock fetch globally to prevent any actual network requests
-global.fetch = jest.fn(() =>
-  Promise.resolve({
-    ok: true,
-    json: () => Promise.resolve({}),
-  } as Response),
-);
-
-// Enhanced analytics mock to ensure no actual network requests
-const mockSendAnalyticsEvent = jest.fn().mockImplementation(() => Promise.resolve());
-jest.mock("../analytics", () => ({
-  sendAnalyticsEvent: mockSendAnalyticsEvent,
-}));
 
 // =========================================================
 // tests
