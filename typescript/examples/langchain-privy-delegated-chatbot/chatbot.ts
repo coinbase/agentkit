@@ -137,7 +137,6 @@ async function initializeAgent() {
       }),
     );
 
-    console.log("Agent initialized with wallet address:", walletProvider.getAddress());
     return { agent, config: agentConfig };
   } catch (error) {
     console.error("Failed to initialize agent:", error);
