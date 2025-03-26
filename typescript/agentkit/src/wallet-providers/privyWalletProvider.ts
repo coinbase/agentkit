@@ -1,17 +1,17 @@
 import { PrivyEvmWalletProvider, PrivyEvmWalletConfig } from "./privyEvmWalletProvider";
 import { PrivySvmWalletProvider, PrivySvmWalletConfig } from "./privySvmWalletProvider";
 import {
-  PrivyEvmEmbeddedWalletProvider,
-  PrivyEvmEmbeddedWalletConfig,
-} from "./privyEvmEmbeddedWalletProvider";
+  PrivyEvmDelegatedEmbeddedWalletProvider,
+  PrivyEvmDelegatedEmbeddedWalletConfig,
+} from "./privyEvmDelegatedEmbeddedWalletProvider";
 
 export type PrivyWalletConfig =
   | PrivyEvmWalletConfig
   | PrivySvmWalletConfig
-  | PrivyEvmEmbeddedWalletConfig;
+  | PrivyEvmDelegatedEmbeddedWalletConfig;
 
 export type PrivyWalletProviderVariant<T> = T extends { walletType: "embedded" }
-  ? PrivyEvmEmbeddedWalletProvider
+  ? PrivyEvmDelegatedEmbeddedWalletProvider
   : T extends { chainType: "solana" }
     ? PrivySvmWalletProvider
     : PrivyEvmWalletProvider;
@@ -58,8 +58,8 @@ export class PrivyWalletProvider {
   ): Promise<PrivyWalletProviderVariant<T>> {
     // Check for embedded wallet first
     if (config.walletType === "embedded") {
-      return (await PrivyEvmEmbeddedWalletProvider.configureWithWallet(
-        config as PrivyEvmEmbeddedWalletConfig,
+      return (await PrivyEvmDelegatedEmbeddedWalletProvider.configureWithWallet(
+        config as PrivyEvmDelegatedEmbeddedWalletConfig,
       )) as PrivyWalletProviderVariant<T>;
     }
 

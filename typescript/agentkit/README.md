@@ -644,7 +644,7 @@ const config = {
 const walletProvider = await PrivyWalletProvider.configureWithWallet(config);
 ```
 
-#### Embedded Wallet Configuration
+#### Delegated Embedded Wallet Configuration
 
 You can also use Privy's embedded wallets with delegation for agent actions. This allows your agent to use wallets that have been delegated transaction signing authority by users.
 

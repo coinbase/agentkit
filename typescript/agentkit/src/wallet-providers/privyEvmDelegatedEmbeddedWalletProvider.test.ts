@@ -1,11 +1,11 @@
 import axios from "axios";
-import { PrivyEvmEmbeddedWalletProvider } from "./privyEvmEmbeddedWalletProvider";
+import { PrivyEvmDelegatedEmbeddedWalletProvider } from "./privyEvmDelegatedEmbeddedWalletProvider";
 
 // Mock axios
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-describe("PrivyEvmEmbeddedWalletProvider", () => {
+describe("PrivyEvmDelegatedEmbeddedWalletProvider", () => {
   const mockConfig = {
     appId: "test-app-id",
     appSecret: "test-app-secret",
@@ -40,7 +40,8 @@ describe("PrivyEvmEmbeddedWalletProvider", () => {
 
   describe("configureWithWallet", () => {
     it("should fetch wallet address and create provider", async () => {
-      const provider = await PrivyEvmEmbeddedWalletProvider.configureWithWallet(mockConfig);
+      const provider =
+        await PrivyEvmDelegatedEmbeddedWalletProvider.configureWithWallet(mockConfig);
 
       expect(mockedAxios.get).toHaveBeenCalledWith(
         `https://api.privy.io/v1/wallets/${mockConfig.walletId}`,
@@ -55,17 +56,17 @@ describe("PrivyEvmEmbeddedWalletProvider", () => {
     it("should throw an error if wallet address cannot be fetched", async () => {
       mockedAxios.get.mockResolvedValueOnce({ data: {} });
 
-      await expect(PrivyEvmEmbeddedWalletProvider.configureWithWallet(mockConfig)).rejects.toThrow(
-        "Could not find wallet address for wallet ID",
-      );
+      await expect(
+        PrivyEvmDelegatedEmbeddedWalletProvider.configureWithWallet(mockConfig),
+      ).rejects.toThrow("Could not find wallet address for wallet ID");
     });
   });
 
   describe("wallet operations", () => {
-    let provider: PrivyEvmEmbeddedWalletProvider;
+    let provider: PrivyEvmDelegatedEmbeddedWalletProvider;
 
     beforeEach(async () => {
-      provider = await PrivyEvmEmbeddedWalletProvider.configureWithWallet(mockConfig);
+      provider = await PrivyEvmDelegatedEmbeddedWalletProvider.configureWithWallet(mockConfig);
     });
 
     it("should sign messages", async () => {

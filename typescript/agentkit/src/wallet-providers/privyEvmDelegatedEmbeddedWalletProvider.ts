@@ -29,7 +29,7 @@ interface PrivyResponse<T> {
 /**
  * Configuration options for the Privy Embedded Wallet provider.
  */
-export interface PrivyEvmEmbeddedWalletConfig extends PrivyWalletConfig {
+export interface PrivyEvmDelegatedEmbeddedWalletConfig extends PrivyWalletConfig {
   /** The ID of the delegated wallet */
   walletId: string;
 
@@ -45,7 +45,7 @@ export interface PrivyEvmEmbeddedWalletConfig extends PrivyWalletConfig {
  * This provider extends the EvmWalletProvider to provide Privy-specific wallet functionality
  * while maintaining compatibility with the base wallet provider interface.
  */
-export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
+export class PrivyEvmDelegatedEmbeddedWalletProvider extends WalletProvider {
   #walletId: string;
   #address: string;
   #appId: string;
@@ -59,7 +59,7 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
    *
    * @param config - The configuration options for the wallet provider
    */
-  private constructor(config: PrivyEvmEmbeddedWalletConfig & { address: string }) {
+  private constructor(config: PrivyEvmDelegatedEmbeddedWalletConfig & { address: string }) {
     super();
 
     this.#walletId = config.walletId;
@@ -107,11 +107,11 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
    * ```
    */
   public static async configureWithWallet(
-    config: PrivyEvmEmbeddedWalletConfig,
-  ): Promise<PrivyEvmEmbeddedWalletProvider> {
+    config: PrivyEvmDelegatedEmbeddedWalletConfig,
+  ): Promise<PrivyEvmDelegatedEmbeddedWalletProvider> {
     try {
       if (!config.walletId) {
-        throw new Error("walletId is required for PrivyEvmEmbeddedWalletProvider");
+        throw new Error("walletId is required for PrivyEvmDelegatedEmbeddedWalletProvider");
       }
 
       if (!config.appId || !config.appSecret) {
@@ -144,7 +144,7 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
         }
       }
 
-      return new PrivyEvmEmbeddedWalletProvider({
+      return new PrivyEvmDelegatedEmbeddedWalletProvider({
         ...config,
         address: walletAddress as string,
       });
@@ -358,25 +358,7 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
   >(
     params: ReadContractParameters<abi, functionName, args>,
   ): Promise<ReadContractReturnType<abi, functionName, args>> {
-    const body = {
-      address: this.#address,
-      chain_type: "ethereum",
-      chain_id: NETWORK_ID_TO_CHAIN_ID[this.#network.chainId!],
-      contract: {
-        address: params.address,
-        abi: params.abi,
-        functionName: params.functionName,
-        args: params.args,
-      },
-    };
-
-    const response = await this.executePrivyRequest<{
-      result: ReadContractReturnType<abi, functionName, args>;
-    }>({
-      method: "eth_call",
-      params: body,
-    });
-    return response.result;
+    return this.#publicClient.readContract<abi, functionName, args>(params);
   }
 
   /**
@@ -394,7 +376,7 @@ export class PrivyEvmEmbeddedWalletProvider extends WalletProvider {
       address: this.#address,
       chain_type: "ethereum",
       method: "eth_sendTransaction",
-      caip2: `eip155:${NETWORK_ID_TO_CHAIN_ID[this.#network.chainId!]}`,
+      caip2: `eip155:${this.#network.chainId!}`,
       params: {
         transaction: {
           to,
