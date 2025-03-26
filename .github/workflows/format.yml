@@ -40,13 +40,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda
+        with:
+          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: "pnpm"
           cache-dependency-path: ./typescript
-      - name: Install pnpm
-        run: npm install -g pnpm
       - name: Ensure formatting
         working-directory: ./typescript
         run: |
