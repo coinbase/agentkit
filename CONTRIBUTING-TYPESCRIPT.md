@@ -24,7 +24,7 @@ node --version
 pnpm --version
 ```
 
-If the versions are not correct or you don't have Node.js or pnpm installed, download through [nvm](https://github.com/nvm-sh/nvm).
+If the versions are not correct or you don't have Node.js or pnpm installed, download Node.Js through [nvm](https://github.com/nvm-sh/nvm) and then install [pnpm](https://pnpm.io/installation).
 
 Once you have these installed, make sure you install the project dependencies by running `pnpm install` from the root of the TypeScript monorepo, in other words, from the root `typescript/` folder.
 
