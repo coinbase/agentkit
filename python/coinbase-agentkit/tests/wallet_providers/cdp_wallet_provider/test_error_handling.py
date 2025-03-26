@@ -23,8 +23,8 @@ def test_network_error_handling(mocked_wallet_provider, mock_wallet):
             "contract",
             side_effect=Exception("Contract read error"),
         ),
-        pytest.raises(Exception),
-    ):  # noqa: B017
+        pytest.raises(Exception, match="Contract read error"),
+    ):
         mocked_wallet_provider.read_contract(
             "0x1234",
             [
@@ -44,8 +44,8 @@ def test_network_error_handling(mocked_wallet_provider, mock_wallet):
             "wait_for_transaction_receipt",
             side_effect=Exception("Timeout waiting for receipt"),
         ),
-        pytest.raises(Exception),
-    ):  # noqa: B017
+        pytest.raises(Exception, match="Timeout waiting for receipt"),
+    ):
         mocked_wallet_provider.wait_for_transaction_receipt("0x1234")
 
 
@@ -62,14 +62,14 @@ def test_comprehensive_error_handling(mocked_wallet_provider, mock_wallet, mock_
 
     with (
         patch.object(mock_web3.return_value.eth, "contract") as mock_contract_fn,
-        pytest.raises(Exception),  # noqa: B017
+        pytest.raises(Exception, match="Invalid ABI"),
     ):
         mock_contract_fn.side_effect = Exception("Invalid ABI")
         mocked_wallet_provider.read_contract("0x1234", "invalid_abi", "test")
 
     with (
         patch.object(mock_wallet, "deploy_contract") as mock_deploy,
-        pytest.raises(Exception),  # noqa: B017
+        pytest.raises(Exception, match="Invalid constructor arguments"),
     ):
         mock_deploy.side_effect = Exception("Invalid constructor arguments")
         mocked_wallet_provider.deploy_contract("0.8.9", "{}", "TestContract", {"invalid": "args"})

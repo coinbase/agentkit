@@ -6,13 +6,14 @@ import {
   Abi,
   PublicClient,
   WaitForTransactionReceiptReturnType,
-  ReadContractParameters as _ReadContractParameters,
+  ReadContractParameters,
+  ContractFunctionArgs,
+  ContractFunctionName,
 } from "viem";
 import { jest } from "@jest/globals";
 
 import * as coinbaseSdk from "@coinbase/coinbase-sdk";
-import * as _viem from "viem";
-import { UserOperation } from "@coinbase/coinbase-sdk/dist/client/api";
+import { NetworkScopedSmartWallet, SendUserOperationOptions } from "@coinbase/coinbase-sdk";
 
 // =========================================================
 // constants
@@ -24,10 +25,11 @@ const MOCK_NETWORK_ID = "mainnet";
 const MOCK_TRANSACTION_HASH = "0x9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba";
 const MOCK_BALANCE = BigInt(1000000000000000000);
 
+// Create a typed mock for the PublicClient
 const mockPublicClient = {
   waitForTransactionReceipt: jest.fn(),
   readContract: jest.fn(),
-} as unknown as jest.Mocked<PublicClient>;
+} as jest.Mocked<Pick<PublicClient, "waitForTransactionReceipt" | "readContract">>;
 
 enum UserOperationStatus {
   CREATED = "created",
@@ -35,8 +37,25 @@ enum UserOperationStatus {
   COMPLETE = "complete",
 }
 
+interface MockUserOperation {
+  hash: string;
+  wait: () => Promise<{ status: UserOperationStatus | string; transactionHash: string }>;
+}
+
+type UserOperationResult = {
+  status: UserOperationStatus | string;
+  transactionHash: string;
+};
+
+interface MockNetworkScopedSmartWallet {
+  address: string;
+  getBalance: jest.MockedFunction<() => Promise<bigint>>;
+  sendTransaction: jest.MockedFunction<() => Promise<string>>;
+  sendUserOperation: jest.MockedFunction<(options: unknown) => Promise<MockUserOperation>>;
+}
+
 // =========================================================
-// Mock Dependencies
+// mocks
 // =========================================================
 
 jest.mock("viem", () => {
@@ -53,6 +72,10 @@ jest.mock("../network", () => {
       mainnet: "1",
       "base-sepolia": "84532",
     },
+    NETWORK_ID_TO_VIEM_CHAIN: {
+      mainnet: {},
+      "base-sepolia": {},
+    },
   };
 });
 
@@ -67,12 +90,15 @@ jest.mock("@coinbase/coinbase-sdk", () => {
       "base-sepolia": "84532",
     },
     NETWORK_ID_TO_VIEM_CHAIN: {
+      mainnet: {},
       "base-sepolia": {},
     },
     Coinbase: {
       configure: jest.fn(),
       configureFromJson: jest.fn(),
-      networks: {},
+      networks: {
+        BaseSepolia: "base-sepolia",
+      },
     },
     waitForUserOperation: jest.fn(),
     createSmartWallet: jest.fn(),
@@ -80,51 +106,53 @@ jest.mock("@coinbase/coinbase-sdk", () => {
 });
 
 // =========================================================
-// Tests
+// tests
 // =========================================================
 
 describe("SmartWalletProvider", () => {
-  let provider: SmartWalletProvider;
-  let mockNetworkScopedWallet: {
-    address: string;
-    getBalance: jest.Mock;
-    sendTransaction: jest.Mock;
-    sendUserOperation: jest.Mock;
-  };
-  let mockWaitForUserOperation: jest.Mock<
-    () => Promise<{ status: UserOperationStatus; transactionHash: string }>
+  let provider: jest.Mocked<SmartWalletProvider>;
+  let mockNetworkScopedWallet: MockNetworkScopedSmartWallet;
+  let mockWaitForUserOperation: jest.MockedFunction<
+    (op: MockUserOperation) => Promise<UserOperationResult>
   >;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Set up mock network-scoped wallet with explicit type casting
+    const mockGetBalance = jest.fn<() => Promise<bigint>>();
+    mockGetBalance.mockResolvedValue(MOCK_BALANCE);
+
+    const mockSendTransaction = jest.fn<() => Promise<string>>();
+    mockSendTransaction.mockResolvedValue(MOCK_TRANSACTION_HASH);
+
+    const mockSendUserOperation = jest.fn<(options: unknown) => Promise<MockUserOperation>>();
+
     mockNetworkScopedWallet = {
       address: MOCK_ADDRESS,
-      getBalance: jest.fn(),
-      sendTransaction: jest.fn(),
-      sendUserOperation: jest.fn(),
-    } as unknown as jest.Mocked<SmartWalletProvider>;
+      getBalance: mockGetBalance,
+      sendTransaction: mockSendTransaction,
+      sendUserOperation: mockSendUserOperation,
+    };
 
-    // Use separate setup for mock implementations to avoid type errors
-    mockNetworkScopedWallet.getBalance.mockResolvedValue(MOCK_BALANCE);
-    mockNetworkScopedWallet.sendTransaction.mockResolvedValue(MOCK_TRANSACTION_HASH);
-    mockNetworkScopedWallet.sendUserOperation.mockResolvedValue({
+    const mockUserOperationWait = jest.fn<() => Promise<UserOperationResult>>();
+    mockUserOperationWait.mockResolvedValue({
+      status: UserOperationStatus.COMPLETE,
+      transactionHash: MOCK_TRANSACTION_HASH,
+    });
+
+    const mockUserOperation: MockUserOperation = {
       hash: MOCK_TRANSACTION_HASH,
-      wait: jest.fn().mockResolvedValue({
-        status: UserOperationStatus.COMPLETE,
-        transactionHash: MOCK_TRANSACTION_HASH,
-      }),
-    } as unknown as jest.Mocked<UserOperation>);
+      wait: mockUserOperationWait,
+    };
 
-    // Configure Public Client mocks
+    mockNetworkScopedWallet.sendUserOperation.mockResolvedValue(mockUserOperation);
+
     mockPublicClient.waitForTransactionReceipt.mockResolvedValue({
       transactionHash: MOCK_TRANSACTION_HASH,
-    } as unknown as jest.Mocked<WaitForTransactionReceiptReturnType>);
+    } as unknown as WaitForTransactionReceiptReturnType);
 
     mockPublicClient.readContract.mockResolvedValue("mock_result");
 
-    // Create a mock provider object
     provider = {
       sendTransaction: jest.fn(),
       sendUserOperation: jest.fn(),
@@ -138,70 +166,88 @@ describe("SmartWalletProvider", () => {
       getBalance: jest.fn(),
       readContract: jest.fn(),
       nativeTransfer: jest.fn(),
-      _smartWallet: mockNetworkScopedWallet,
-    } as unknown as SmartWalletProvider;
+      _smartWallet: mockNetworkScopedWallet as unknown as NetworkScopedSmartWallet,
+    } as unknown as jest.Mocked<SmartWalletProvider>;
 
-    // Configure mock implementations separately after object creation
-    (provider.getAddress as jest.Mock).mockReturnValue(MOCK_ADDRESS);
-    (provider.getNetwork as jest.Mock).mockReturnValue({
+    provider.getAddress.mockReturnValue(MOCK_ADDRESS);
+    provider.getNetwork.mockReturnValue({
       protocolFamily: "evm",
       networkId: MOCK_NETWORK_ID,
       chainId: MOCK_CHAIN_ID,
     });
-    (provider.getName as jest.Mock).mockReturnValue("smart_wallet_provider");
-    (provider.getBalance as jest.Mock).mockResolvedValue(MOCK_BALANCE);
+    provider.getName.mockReturnValue("smart_wallet_provider");
+    provider.getBalance.mockResolvedValue(MOCK_BALANCE);
 
-    // Configure mock implementations
-    (provider.sendTransaction as jest.Mock).mockImplementation(async tx => {
+    provider.sendTransaction.mockImplementation(async (tx: TransactionRequest): Promise<Hex> => {
       const _result = await mockNetworkScopedWallet.sendUserOperation({ calls: [tx] });
-      return _result.hash;
+      const waitResult = await _result.wait();
+
+      if (waitResult.status === "failed") {
+        throw new Error(`Transaction failed with status ${waitResult.status}`);
+      }
+
+      return _result.hash as Hex;
     });
 
-    (provider.sendUserOperation as jest.Mock).mockImplementation(async op => {
-      const _result = await mockNetworkScopedWallet.sendUserOperation(op);
-      return _result.hash;
-    });
+    provider.sendUserOperation.mockImplementation(
+      async <T extends readonly unknown[]>(
+        op: Omit<SendUserOperationOptions<T>, "chainId" | "paymasterUrl">,
+      ): Promise<Hex> => {
+        const _result = await mockNetworkScopedWallet.sendUserOperation(op);
+        return _result.hash as Hex;
+      },
+    );
 
-    (provider.waitForTransactionReceipt as jest.Mock).mockImplementation(hash =>
+    provider.waitForTransactionReceipt.mockImplementation((hash: Hex) =>
       mockPublicClient.waitForTransactionReceipt({ hash }),
     );
 
-    (provider.readContract as jest.Mock).mockImplementation(params =>
-      mockPublicClient.readContract(params),
+    provider.readContract.mockImplementation(
+      async <
+        const abi extends Abi | readonly unknown[],
+        functionName extends ContractFunctionName<abi, "pure" | "view">,
+        const args extends ContractFunctionArgs<abi, "pure" | "view", functionName>,
+      >(
+        params: ReadContractParameters<abi, functionName, args>,
+      ) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return mockPublicClient.readContract(params as any);
+      },
     );
 
-    // Set up nativeTransfer method
-    (provider.nativeTransfer as jest.Mock).mockImplementation(async (_to, _value) => {
-      const _result = await mockNetworkScopedWallet.sendUserOperation({
-        calls: [
-          {
-            to: _to,
-            value: BigInt(1000000000000000000), // parseEther(value),
-          },
-        ],
-      });
-      return MOCK_TRANSACTION_HASH;
-    });
+    provider.nativeTransfer.mockImplementation(
+      async (to: Address, _value: string): Promise<Hex> => {
+        await mockNetworkScopedWallet.sendUserOperation({
+          calls: [
+            {
+              to,
+              value: BigInt(1000000000000000000),
+            },
+          ],
+        });
+        return MOCK_TRANSACTION_HASH as Hex;
+      },
+    );
 
-    // Set up the sign methods to reject with "Not implemented"
     const notImplementedError = new Error("Not implemented");
-    (provider.signMessage as jest.Mock).mockRejectedValue(notImplementedError);
-    (provider.signTypedData as jest.Mock).mockRejectedValue(notImplementedError);
-    (provider.signTransaction as jest.Mock).mockRejectedValue(notImplementedError);
+    provider.signMessage.mockRejectedValue(notImplementedError);
+    provider.signTypedData.mockRejectedValue(notImplementedError);
+    provider.signTransaction.mockRejectedValue(notImplementedError);
 
-    // Set up waitForUserOperation mock
     mockWaitForUserOperation = jest.fn();
-    mockWaitForUserOperation.mockResolvedValue({
-      status: UserOperationStatus.COMPLETE,
-      transactionHash: MOCK_TRANSACTION_HASH,
+    mockWaitForUserOperation.mockImplementation((operation: MockUserOperation) => {
+      return operation.wait();
     });
 
-    // Assign the mock to coinbaseSdk.waitForUserOperation
-    (coinbaseSdk as unknown).waitForUserOperation = mockWaitForUserOperation;
+    jest
+      .spyOn(coinbaseSdk, "waitForUserOperation")
+      .mockImplementation(
+        mockWaitForUserOperation as unknown as typeof coinbaseSdk.waitForUserOperation,
+      );
   });
 
   // =========================================================
-  // Transaction Operations
+  // transaction operations
   // =========================================================
 
   describe("transaction operations", () => {
@@ -233,7 +279,7 @@ describe("SmartWalletProvider", () => {
     });
 
     it("should wait for transaction receipts", async () => {
-      await provider.waitForTransactionReceipt(MOCK_TRANSACTION_HASH);
+      await provider.waitForTransactionReceipt(MOCK_TRANSACTION_HASH as Hex);
 
       expect(mockPublicClient.waitForTransactionReceipt).toHaveBeenCalled();
     });
@@ -241,7 +287,6 @@ describe("SmartWalletProvider", () => {
     it("should handle transaction failures", async () => {
       mockWaitForUserOperation.mockRejectedValueOnce(new Error("Failed to send transaction"));
 
-      // Make sendUserOperation fail in this case
       mockNetworkScopedWallet.sendUserOperation.mockRejectedValueOnce(
         new Error("Failed to send transaction"),
       );
@@ -268,9 +313,9 @@ describe("SmartWalletProvider", () => {
     });
 
     it("should handle invalid address errors", async () => {
-      mockNetworkScopedWallet.sendUserOperation.mockImplementationOnce(() => {
-        throw new Error("Invalid address format");
-      });
+      mockNetworkScopedWallet.sendUserOperation.mockRejectedValueOnce(
+        new Error("Invalid address format"),
+      );
 
       const invalidAddressHex = "0xinvalid" as unknown as `0x${string}`;
 
@@ -287,21 +332,24 @@ describe("SmartWalletProvider", () => {
         new Error("Receipt retrieval failed"),
       );
 
-      await expect(provider.waitForTransactionReceipt(MOCK_TRANSACTION_HASH)).rejects.toThrow(
-        "Receipt retrieval failed",
-      );
+      await expect(
+        provider.waitForTransactionReceipt(MOCK_TRANSACTION_HASH as Hex),
+      ).rejects.toThrow("Receipt retrieval failed");
     });
 
     it("should handle operation failures when sending transactions", async () => {
-      const failedOperation = {
+      const mockUserOperationWait = jest.fn<() => Promise<UserOperationResult>>();
+      mockUserOperationWait.mockResolvedValue({
+        status: "failed",
+        transactionHash: MOCK_TRANSACTION_HASH,
+      });
+
+      const failedOperation: MockUserOperation = {
         hash: MOCK_TRANSACTION_HASH,
-        wait: jest.fn().mockResolvedValue({
-          status: "failed",
-          transactionHash: MOCK_TRANSACTION_HASH,
-        }),
+        wait: mockUserOperationWait,
       };
 
-      mockNetworkScopedWallet.sendUserOperation.mockResolvedValueOnce(failedOperation as unknown);
+      mockNetworkScopedWallet.sendUserOperation.mockResolvedValueOnce(failedOperation);
 
       const transaction: TransactionRequest = {
         to: "0x1234567890123456789012345678901234567890" as Address,
@@ -328,9 +376,9 @@ describe("SmartWalletProvider", () => {
     });
 
     it("should handle send user operation timeout", async () => {
-      mockNetworkScopedWallet.sendUserOperation.mockImplementationOnce(() => {
-        throw new Error("User operation timed out");
-      });
+      mockNetworkScopedWallet.sendUserOperation.mockRejectedValueOnce(
+        new Error("User operation timed out"),
+      );
 
       const calls = [
         {
@@ -347,74 +395,61 @@ describe("SmartWalletProvider", () => {
   });
 
   // =========================================================
-  // Native Token Transfer Operations
+  // native token transfer operations
   // =========================================================
 
   describe("native token operations", () => {
     it("should transfer native tokens", async () => {
-      if (typeof provider.nativeTransfer === "function") {
-        const to = "0x1234567890123456789012345678901234567890" as Address;
-        const value = "1"; // Use "1" instead of "1.0" for BigInt compatibility
+      const to = "0x1234567890123456789012345678901234567890" as Address;
+      const value = "1";
 
-        const txHash = await provider.nativeTransfer(to, value);
+      const txHash = await provider.nativeTransfer(to, value);
 
-        expect(mockNetworkScopedWallet.sendUserOperation).toHaveBeenCalled();
-        expect(txHash).toBe(MOCK_TRANSACTION_HASH);
-      }
+      expect(mockNetworkScopedWallet.sendUserOperation).toHaveBeenCalled();
+      expect(txHash).toBe(MOCK_TRANSACTION_HASH);
     });
 
     it("should handle operation failures when transferring native tokens", async () => {
-      if (typeof provider.nativeTransfer === "function") {
-        // Set up the nativeTransfer mock to throw for failed operations
-        provider.nativeTransfer.mockRejectedValueOnce(
-          new Error("Transfer failed with status failed"),
-        );
+      provider.nativeTransfer.mockRejectedValueOnce(
+        new Error("Transfer failed with status failed"),
+      );
 
-        const to = "0x1234567890123456789012345678901234567890" as Address;
-        const value = "1";
+      const to = "0x1234567890123456789012345678901234567890" as Address;
+      const value = "1";
 
-        await expect(provider.nativeTransfer(to, value)).rejects.toThrow(
-          "Transfer failed with status failed",
-        );
-      }
+      await expect(provider.nativeTransfer(to, value)).rejects.toThrow(
+        "Transfer failed with status failed",
+      );
     });
 
     it("should handle invalid address format in native transfer", async () => {
-      if (typeof provider.nativeTransfer === "function") {
-        // Override the mock implementation for this test
-        (provider.nativeTransfer as jest.Mock).mockImplementationOnce((_to) => {
-          throw new Error("Invalid address format");
-        });
+      provider.nativeTransfer.mockRejectedValueOnce(new Error("Invalid address format"));
 
-        const invalidAddress = "not_a_valid_address";
+      const invalidAddress = "not_a_valid_address";
 
-        await expect(
-          provider.nativeTransfer(invalidAddress as unknown as Address, "1"),
-        ).rejects.toThrow("Invalid address format");
-      }
+      await expect(
+        provider.nativeTransfer(invalidAddress as unknown as Address, "1"),
+      ).rejects.toThrow("Invalid address format");
     });
 
     it("should handle network errors in native token transfers", async () => {
-      if (typeof provider.nativeTransfer === "function") {
-        // Override the mock implementation for this test
-        provider.nativeTransfer.mockRejectedValueOnce(new Error("Network error"));
+      provider.nativeTransfer.mockRejectedValueOnce(new Error("Network error"));
 
-        await expect(
-          provider.nativeTransfer("0x1234567890123456789012345678901234567890" as Address, "1"),
-        ).rejects.toThrow("Network error");
-      }
+      await expect(
+        provider.nativeTransfer("0x1234567890123456789012345678901234567890" as Address, "1"),
+      ).rejects.toThrow("Network error");
     });
   });
 
   // =========================================================
-  // Contract Interaction Methods
+  // contract interaction methods
   // =========================================================
 
   describe("contract interactions", () => {
     it("should read from contracts", async () => {
       const result = await provider.readContract({
         address: "0x1234567890123456789012345678901234567890" as Address,
-        abi: [],
+        abi: [] as const,
         functionName: "balanceOf",
         args: [MOCK_ADDRESS],
       });
@@ -429,7 +464,7 @@ describe("SmartWalletProvider", () => {
       await expect(
         provider.readContract({
           address: "0x1234567890123456789012345678901234567890" as Address,
-          abi: [],
+          abi: [] as const,
           functionName: "balanceOf",
           args: [MOCK_ADDRESS],
         }),
@@ -454,7 +489,7 @@ describe("SmartWalletProvider", () => {
   });
 
   // =========================================================
-  // Signing Methods (Unsupported Operations)
+  // signing methods (unsupported operations)
   // =========================================================
 
   describe("unsupported operations", () => {
