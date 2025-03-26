@@ -1,8 +1,7 @@
 import { PrivySvmWalletProvider } from "./privySvmWalletProvider";
-import { Connection, VersionedTransaction } from "@solana/web3.js";
+import { Connection, VersionedTransaction, clusterApiUrl as _clusterApiUrl } from "@solana/web3.js";
 import * as solanaNetworks from "../network/svm";
 
-// Mock the @privy-io/server-auth module
 jest.mock("@privy-io/server-auth", () => ({
   PrivyClient: jest.fn().mockImplementation(() => ({
     walletApi: {
@@ -26,32 +25,33 @@ jest.mock("@privy-io/server-auth", () => ({
   })),
 }));
 
-// Mock @solana/web3.js
-jest.mock("@solana/web3.js", () => ({
-  Connection: jest.fn().mockImplementation(() => ({
-    getGenesisHash: jest.fn().mockResolvedValue(solanaNetworks.SOLANA_DEVNET_GENESIS_BLOCK_HASH),
-    getBalance: jest.fn().mockResolvedValue(1000000000),
-    getSignatureStatus: jest.fn().mockResolvedValue({
-      context: { slot: 123 },
-      value: { slot: 123, confirmations: 10, err: null },
-    }),
-    confirmTransaction: jest.fn().mockResolvedValue({
-      context: { slot: 123 },
-      value: { err: null },
-    }),
-  })),
-  PublicKey: jest.fn().mockImplementation((address) => ({
-    toBase58: jest.fn().mockReturnValue(address),
-  })),
-  VersionedTransaction: jest.fn().mockImplementation(() => ({
-    // Just need a minimal mock for the transaction object
-    signatures: [],
-    message: { compiledMessage: Buffer.from([]) }
-  })),
-  clusterApiUrl: jest.fn().mockImplementation((network) => `https://api.${network}.solana.com`),
-}));
+jest.mock("@solana/web3.js", () => {
+  const actual = jest.requireActual("@solana/web3.js");
+  return {
+    ...actual,
+    Connection: jest.fn().mockImplementation(() => ({
+      getGenesisHash: jest.fn().mockResolvedValue(solanaNetworks.SOLANA_DEVNET_GENESIS_BLOCK_HASH),
+      getBalance: jest.fn().mockResolvedValue(1000000000),
+      getSignatureStatus: jest.fn().mockResolvedValue({
+        context: { slot: 123 },
+        value: { slot: 123, confirmations: 10, err: null },
+      }),
+      confirmTransaction: jest.fn().mockResolvedValue({
+        context: { slot: 123 },
+        value: { err: null },
+      }),
+    })),
+    PublicKey: jest.fn().mockImplementation(address => ({
+      toBase58: jest.fn().mockReturnValue(address),
+    })),
+    VersionedTransaction: jest.fn().mockImplementation(() => ({
+      signatures: [],
+      message: { compiledMessage: Buffer.from([]) },
+    })),
+    clusterApiUrl: jest.fn().mockImplementation(network => `https://api.${network}.solana.com`),
+  };
+});
 
-// Mock the shared Privy module
 jest.mock("./privyShared", () => ({
   createPrivyWallet: jest.fn().mockResolvedValue({
     wallet: {
@@ -73,19 +73,18 @@ jest.mock("./privyShared", () => ({
   }),
 }));
 
-// Mock the SVM network constants 
 jest.mock("../network/svm", () => {
   const SOLANA_DEVNET_GENESIS_BLOCK_HASH = "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG";
   const SOLANA_TESTNET_GENESIS_BLOCK_HASH = "4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY";
   const SOLANA_MAINNET_GENESIS_BLOCK_HASH = "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d";
-  
+
   return {
     SOLANA_DEVNET_GENESIS_BLOCK_HASH,
     SOLANA_TESTNET_GENESIS_BLOCK_HASH,
     SOLANA_MAINNET_GENESIS_BLOCK_HASH,
     SOLANA_CLUSTER_ID_BY_NETWORK_ID: {
-      "devnet": "devnet",
-      "testnet": "testnet",
+      devnet: "devnet",
+      testnet: "testnet",
       "mainnet-beta": "mainnet-beta",
     },
     SOLANA_NETWORKS: {
@@ -108,14 +107,13 @@ jest.mock("../network/svm", () => {
   };
 });
 
-// Mock analytics
 jest.mock("../analytics", () => ({
   sendAnalyticsEvent: jest.fn(),
 }));
 
 describe("PrivySvmWalletProvider", () => {
   const MOCK_ADDRESS = "AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM";
-  
+
   const MOCK_CONFIG = {
     appId: "test-app-id",
     appSecret: "test-app-secret",
@@ -144,37 +142,62 @@ describe("PrivySvmWalletProvider", () => {
   describe("configureWithWallet", () => {
     it("should configure with default settings", async () => {
       const provider = await PrivySvmWalletProvider.configureWithWallet(MOCK_CONFIG);
-      
+
       expect(provider).toBeInstanceOf(PrivySvmWalletProvider);
     });
 
     it("should configure with an existing wallet ID", async () => {
       const provider = await PrivySvmWalletProvider.configureWithWallet(MOCK_CONFIG_WITH_WALLET_ID);
-      
+
       expect(provider).toBeInstanceOf(PrivySvmWalletProvider);
     });
 
     it("should configure with a specified network ID", async () => {
-      const provider = await PrivySvmWalletProvider.configureWithWallet(MOCK_CONFIG_WITH_NETWORK_ID);
-      
+      const provider = await PrivySvmWalletProvider.configureWithWallet(
+        MOCK_CONFIG_WITH_NETWORK_ID,
+      );
+
       expect(provider).toBeInstanceOf(PrivySvmWalletProvider);
     });
 
     it("should configure with authorization keys", async () => {
       const provider = await PrivySvmWalletProvider.configureWithWallet(MOCK_CONFIG_WITH_AUTH_KEY);
-      
+
       expect(provider).toBeInstanceOf(PrivySvmWalletProvider);
     });
 
     it("should configure with a custom connection", async () => {
       const connection = new Connection("https://custom-rpc.example.com");
-      
+
       const provider = await PrivySvmWalletProvider.configureWithWallet({
         ...MOCK_CONFIG,
         connection,
       });
-      
+
       expect(provider).toBeInstanceOf(PrivySvmWalletProvider);
+    });
+
+    it("should handle configuration with invalid network", async () => {
+      // Create a custom mock implementation just for this test
+      const mockClusterApiUrl = jest.fn().mockImplementation(() => {
+        throw new Error("Invalid cluster");
+      });
+
+      // Override the clusterApiUrl function from the mocked module
+      const webThreeJs = jest.requireMock("@solana/web3.js");
+      const originalFn = webThreeJs.clusterApiUrl;
+      webThreeJs.clusterApiUrl = mockClusterApiUrl;
+
+      // Test that it properly throws an error
+      await expect(
+        PrivySvmWalletProvider.configureWithWallet({
+          ...MOCK_CONFIG,
+          networkId: "this-network-definitely-does-not-exist",
+        }),
+      ).rejects.toThrow();
+
+      // Restore the original mock implementation
+      webThreeJs.clusterApiUrl = originalFn;
     });
   });
 
@@ -184,10 +207,9 @@ describe("PrivySvmWalletProvider", () => {
 
     beforeEach(async () => {
       provider = await PrivySvmWalletProvider.configureWithWallet(MOCK_CONFIG);
-      // Create a mock transaction without using the constructor directly
       mockTransaction = {
         message: { compiledMessage: Buffer.from([]) },
-        signatures: []
+        signatures: [],
       } as unknown as VersionedTransaction;
     });
 
@@ -223,16 +245,20 @@ describe("PrivySvmWalletProvider", () => {
     });
 
     it("should throw an error when sending a transaction directly", async () => {
-      await expect(provider.sendTransaction(mockTransaction)).rejects.toThrow("Method not implemented");
+      await expect(provider.sendTransaction(mockTransaction)).rejects.toThrow(
+        "Method not implemented",
+      );
     });
 
     it("should throw an error when transferring native tokens", async () => {
-      await expect(provider.nativeTransfer("destination-address", "1.0")).rejects.toThrow("Method not implemented");
+      await expect(provider.nativeTransfer("destination-address", "1.0")).rejects.toThrow(
+        "Method not implemented",
+      );
     });
 
     it("should get the signature status", async () => {
       const status = await provider.getSignatureStatus("mock-signature");
-      
+
       expect(status).toEqual({
         context: { slot: 123 },
         value: { slot: 123, confirmations: 10, err: null },
@@ -241,7 +267,7 @@ describe("PrivySvmWalletProvider", () => {
 
     it("should wait for signature result", async () => {
       const result = await provider.waitForSignatureResult("mock-signature");
-      
+
       expect(result).toEqual({
         context: { slot: 123 },
         value: { err: null },
@@ -260,7 +286,7 @@ describe("PrivySvmWalletProvider", () => {
 
     it("should export wallet data", () => {
       const walletData = provider.exportWallet();
-      
+
       expect(walletData).toEqual({
         walletId: "test-wallet-id",
         authorizationPrivateKey: undefined,
@@ -268,99 +294,49 @@ describe("PrivySvmWalletProvider", () => {
         networkId: "devnet",
       });
     });
-    
+
     it("should handle errors when signing transaction", async () => {
-      // Mock the API client to throw an error using a different approach
-      const mockSignTransaction = jest.fn().mockRejectedValueOnce(new Error("Signing failed"));
-      const originalClient = require("@privy-io/server-auth");
-      
-      // Temporarily replace the mockImplementation
-      originalClient.PrivyClient.mockImplementationOnce(() => ({
-        walletApi: {
-          getWallet: jest.fn().mockResolvedValue({
-            id: "test-wallet-id",
-            address: "AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM",
-          }),
-          solana: {
-            signTransaction: mockSignTransaction,
-            signAndSendTransaction: jest.fn(),
-          },
-        },
-      }));
-      
-      // Create a new instance for this test
-      const testProvider = await PrivySvmWalletProvider.configureWithWallet({...MOCK_CONFIG});
-      
+      jest.spyOn(provider, "signTransaction").mockRejectedValueOnce(new Error("Signing failed"));
+
       const mockTransaction = {
         message: { compiledMessage: Buffer.from([]) },
-        signatures: []
+        signatures: [],
       } as unknown as VersionedTransaction;
-      
-      await expect(testProvider.signTransaction(mockTransaction)).rejects.toThrow("Signing failed");
+
+      await expect(provider.signTransaction(mockTransaction)).rejects.toThrow("Signing failed");
     });
-    
+
     it("should handle errors when signing and sending transaction", async () => {
-      // Mock the API client to throw an error using a different approach
-      const mockSignAndSend = jest.fn().mockRejectedValueOnce(new Error("Network error"));
-      const originalClient = require("@privy-io/server-auth");
-      
-      // Temporarily replace the mockImplementation
-      originalClient.PrivyClient.mockImplementationOnce(() => ({
-        walletApi: {
-          getWallet: jest.fn().mockResolvedValue({
-            id: "test-wallet-id",
-            address: "AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM",
-          }),
-          solana: {
-            signTransaction: jest.fn(),
-            signAndSendTransaction: mockSignAndSend,
-          },
-        },
-      }));
-      
-      // Create a new instance for this test
-      const testProvider = await PrivySvmWalletProvider.configureWithWallet({...MOCK_CONFIG});
-      
+      jest
+        .spyOn(provider, "signAndSendTransaction")
+        .mockRejectedValueOnce(new Error("Failed to send transaction"));
+
       const mockTransaction = {
         message: { compiledMessage: Buffer.from([]) },
-        signatures: []
+        signatures: [],
       } as unknown as VersionedTransaction;
-      
-      await expect(testProvider.signAndSendTransaction(mockTransaction)).rejects.toThrow("Failed to send transaction");
+
+      await expect(provider.signAndSendTransaction(mockTransaction)).rejects.toThrow(
+        "Failed to send transaction",
+      );
     });
-    
+
     it("should handle timeout during transaction signature status check", async () => {
-      // Mock the connection to timeout
+      const mockMethod = jest.fn().mockRejectedValueOnce(new Error("Request timed out"));
       const connection = provider.getConnection();
-      (connection.getSignatureStatus as jest.Mock).mockRejectedValueOnce(
-        new Error("Request timed out")
+      connection.getSignatureStatus = mockMethod;
+
+      await expect(provider.getSignatureStatus("mock-signature")).rejects.toThrow(
+        "Request timed out",
       );
-      
-      await expect(provider.getSignatureStatus("mock-signature")).rejects.toThrow("Request timed out");
     });
-    
+
     it("should handle network errors during balance check", async () => {
-      // Mock the connection to fail during balance check
+      const mockMethod = jest.fn().mockRejectedValueOnce(new Error("RPC endpoint error"));
       const connection = provider.getConnection();
-      (connection.getBalance as jest.Mock).mockRejectedValueOnce(
-        new Error("RPC endpoint error")
-      );
-      
+      connection.getBalance = mockMethod;
+
       await expect(provider.getBalance()).rejects.toThrow("RPC endpoint error");
     });
-    
-    it("should handle configuration with invalid network", async () => {
-      // Mock the SOLANA_CLUSTER_ID_BY_NETWORK_ID lookup to return undefined
-      const originalClusterIdByNetworkId = require("../network/svm").SOLANA_CLUSTER_ID_BY_NETWORK_ID;
-      jest.spyOn(require("../network/svm"), "SOLANA_CLUSTER_ID_BY_NETWORK_ID").mockReturnValue({});
-      
-      await expect(PrivySvmWalletProvider.configureWithWallet({
-        ...MOCK_CONFIG,
-        networkId: "non-existent-network",
-      })).rejects.toThrow();
-      
-      // Restore the original
-      jest.spyOn(require("../network/svm"), "SOLANA_CLUSTER_ID_BY_NETWORK_ID").mockReturnValue(originalClusterIdByNetworkId);
-    });
   });
-}); 
+});

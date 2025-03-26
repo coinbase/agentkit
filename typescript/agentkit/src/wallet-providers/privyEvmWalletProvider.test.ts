@@ -1,33 +1,13 @@
 import { PrivyEvmWalletProvider } from "./privyEvmWalletProvider";
-import { TransactionRequest, Hex, Address, ReadContractParameters } from "viem";
+import { Address, Hex, ReadContractParameters } from "viem";
 
-// Define constants first
 const MOCK_ADDRESS = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e";
 const MOCK_WALLET_ID = "test-wallet-id";
 const MOCK_TRANSACTION_HASH = "0xef01";
 const MOCK_SIGNATURE_HASH_1 = "0x1234";
 const MOCK_SIGNATURE_HASH_2 = "0x5678";
 const MOCK_SIGNATURE_HASH_3 = "0xabcd";
-const MOCK_NETWORK_ID = "ethereum-mainnet";
 
-// Define a mock chain to use consistently
-const MOCK_CHAIN = {
-  id: 1,
-  name: "Ethereum",
-  rpcUrls: {
-    default: { http: ["https://eth.llamarpc.com"] }
-  },
-  nativeCurrency: {
-    name: "Ether",
-    symbol: "ETH",
-    decimals: 18,
-  },
-};
-
-// Mock modules using jest.mock before any test code runs
-// These must be at the top level
-
-// Mock privy server-auth
 jest.mock("@privy-io/server-auth", () => ({
   PrivyClient: jest.fn().mockImplementation(() => ({
     appId: "mock-app-id",
@@ -44,7 +24,6 @@ jest.mock("@privy-io/server-auth", () => ({
   })),
 }));
 
-// Mock Privy server-auth/viem
 jest.mock("@privy-io/server-auth/viem", () => ({
   getWalletClient: jest.fn().mockReturnValue({
     account: {
@@ -54,7 +33,7 @@ jest.mock("@privy-io/server-auth/viem", () => ({
       id: 1,
       name: "Ethereum",
       rpcUrls: {
-        default: { http: ["https://eth.llamarpc.com"] }
+        default: { http: ["https://eth.llamarpc.com"] },
       },
       nativeCurrency: {
         name: "Ether",
@@ -87,13 +66,12 @@ jest.mock("@privy-io/server-auth/viem", () => ({
   }),
 }));
 
-// Mock network
 jest.mock("../network", () => {
   const chain = {
     id: 1,
     name: "Ethereum",
     rpcUrls: {
-      default: { http: ["https://eth.llamarpc.com"] }
+      default: { http: ["https://eth.llamarpc.com"] },
     },
     nativeCurrency: {
       name: "Ether",
@@ -102,7 +80,6 @@ jest.mock("../network", () => {
     },
   };
 
-  // Create our mock module
   return {
     getNetwork: jest.fn().mockReturnValue({
       protocolFamily: "evm",
@@ -110,7 +87,6 @@ jest.mock("../network", () => {
       networkId: "ethereum-mainnet",
     }),
     getChain: jest.fn().mockReturnValue(chain),
-    // Define chain mapping constants directly
     CHAIN_ID_TO_NETWORK_ID: {
       "1": "ethereum-mainnet",
       "5": "ethereum-goerli",
@@ -120,11 +96,10 @@ jest.mock("../network", () => {
       "ethereum-mainnet": "1",
       "ethereum-goerli": "5",
       "ethereum-sepolia": "11155111",
-    }
+    },
   };
 });
 
-// Mock viem
 jest.mock("viem", () => {
   const originalModule = jest.requireActual("viem");
   return {
@@ -148,7 +123,7 @@ jest.mock("viem", () => {
         id: 1,
         name: "Ethereum",
         rpcUrls: {
-          default: { http: ["https://eth.llamarpc.com"] }
+          default: { http: ["https://eth.llamarpc.com"] },
         },
         nativeCurrency: {
           name: "Ether",
@@ -165,12 +140,10 @@ jest.mock("viem", () => {
   };
 });
 
-// Mock analytics
 jest.mock("../analytics", () => ({
   sendAnalyticsEvent: jest.fn(),
 }));
 
-// Mock the privy shared module
 jest.mock("./privyShared", () => ({
   createPrivyWallet: jest.fn().mockResolvedValue({
     wallet: {
@@ -202,7 +175,7 @@ describe("PrivyEvmWalletProvider", () => {
   describe("configureWithWallet", () => {
     it("should configure a wallet with required configuration", async () => {
       const provider = await PrivyEvmWalletProvider.configureWithWallet(MOCK_CONFIG);
-      
+
       expect(provider).toBeInstanceOf(PrivyEvmWalletProvider);
       expect(provider.getNetwork()).toEqual({
         protocolFamily: "evm",
@@ -212,19 +185,16 @@ describe("PrivyEvmWalletProvider", () => {
     });
 
     it("should configure a wallet with chain ID", async () => {
-      // Use the mock from the network module directly
-      const { CHAIN_ID_TO_NETWORK_ID } = require('../network');
-      
       const provider = await PrivyEvmWalletProvider.configureWithWallet({
         ...MOCK_CONFIG,
         chainId: "5",
       });
-      
+
       expect(provider).toBeInstanceOf(PrivyEvmWalletProvider);
       expect(provider.getNetwork()).toEqual({
         protocolFamily: "evm",
-        chainId: "1", // The mock always returns chainId 1 regardless of input
-        networkId: "ethereum-mainnet", // The mock always returns ethereum-mainnet
+        chainId: "1",
+        networkId: "ethereum-mainnet",
       });
     });
 
@@ -233,7 +203,7 @@ describe("PrivyEvmWalletProvider", () => {
         ...MOCK_CONFIG,
         walletId: "existing-wallet-id",
       });
-      
+
       expect(provider).toBeInstanceOf(PrivyEvmWalletProvider);
     });
   });
@@ -273,7 +243,7 @@ describe("PrivyEvmWalletProvider", () => {
         primaryType: "Test",
         message: { test: "test" },
       };
-      
+
       const result = await provider.signTypedData(typedData);
       expect(result).toBe(MOCK_SIGNATURE_HASH_2);
     });
@@ -283,7 +253,7 @@ describe("PrivyEvmWalletProvider", () => {
         to: "0x1234567890123456789012345678901234567890" as Address,
         value: 1000000000000000000n,
       };
-      
+
       const result = await provider.signTransaction(transaction);
       expect(result).toBe(MOCK_SIGNATURE_HASH_3);
     });
@@ -293,7 +263,7 @@ describe("PrivyEvmWalletProvider", () => {
         to: "0x1234567890123456789012345678901234567890" as Address,
         value: 1000000000000000000n,
       };
-      
+
       const result = await provider.sendTransaction(transaction);
       expect(result).toBe(MOCK_TRANSACTION_HASH);
     });
@@ -309,44 +279,39 @@ describe("PrivyEvmWalletProvider", () => {
     });
 
     it("should read contract data", async () => {
-      // Define proper type for the contract params
-      const abi = [{ 
-        name: "balanceOf", 
-        type: "function", 
-        inputs: [{ name: "account", type: "address" }],
-        outputs: [{ name: "balance", type: "uint256" }],
-        stateMutability: "view"
-      }] as const;
-      
+      const abi = [
+        {
+          name: "balanceOf",
+          type: "function",
+          inputs: [{ name: "account", type: "address" }],
+          outputs: [{ name: "balance", type: "uint256" }],
+          stateMutability: "view",
+        },
+      ] as const;
+
       const params: ReadContractParameters = {
         address: "0x1234567890123456789012345678901234567890" as Address,
         abi,
         functionName: "balanceOf",
-        args: [MOCK_ADDRESS as Address]
+        args: [MOCK_ADDRESS as Address],
       };
-      
+
       const result = await provider.readContract(params);
       expect(result).toBe("mock_result");
     });
 
     it("should transfer native tokens", async () => {
-      // Proper definition of TransactionRequest for value transfer
-      const expectedTx: TransactionRequest = {
-        to: "0x1234567890123456789012345678901234567890" as Address,
-        value: BigInt(1000000000000000000),
-      };
-      
       const result = await provider.nativeTransfer(
         "0x1234567890123456789012345678901234567890" as Address,
-        "1.0"
+        "1.0",
       );
-      
+
       expect(result).toBe(MOCK_TRANSACTION_HASH);
     });
 
     it("should export wallet data", () => {
       const exportData = provider.exportWallet();
-      
+
       expect(exportData).toEqual({
         walletId: MOCK_WALLET_ID,
         authorizationPrivateKey: undefined,
@@ -354,72 +319,66 @@ describe("PrivyEvmWalletProvider", () => {
         networkId: "ethereum-mainnet",
       });
     });
-    
+
     it("should handle authorization key requirements properly", async () => {
-      const apiKeyName = "test-key";
-      const apiKeyPrivateKey = "test-private-key";
       const authorizationKeyId = "test-auth-key-id";
-      
-      // Create a mock for the PrivyClient
+
       const mockPrivyClient = {
         walletApi: {
           create: jest.fn().mockImplementation(({ authorizationKeyIds }) => {
-            // Simulate an error when authorizationKeyIds is present but no authorizationPrivateKey is set
             if (authorizationKeyIds && authorizationKeyIds.length > 0) {
               throw new Error("Missing `privy-authorization-signature` header");
             }
             return Promise.resolve({
               id: "test-wallet-id",
-              address: MOCK_ADDRESS
+              address: MOCK_ADDRESS,
             });
-          })
-        }
+          }),
+        },
       };
-      
-      // Save the original mocked PrivyClient implementation
-      const originalMockImplementation = require('@privy-io/server-auth').PrivyClient.getMockImplementation();
-      
-      // Override the mock for PrivyClient to use our custom implementation
-      require('@privy-io/server-auth').PrivyClient.mockImplementation(() => mockPrivyClient);
-      
-      // Should throw a specific error when authorizationKeyId is provided without authorizationPrivateKey
+
+      const privyServerAuth = jest.requireMock("@privy-io/server-auth");
+      const originalMockImplementation = privyServerAuth.PrivyClient.getMockImplementation();
+
+      privyServerAuth.PrivyClient.mockImplementation(() => mockPrivyClient);
+
       await expect(
         PrivyEvmWalletProvider.configureWithWallet({
           appId: "test-app-id",
           appSecret: "test-app-secret",
           authorizationKeyId,
-          // No authorizationPrivateKey
-        })
-      ).rejects.toThrow("you have an authorization key on your account");
-      
-      // Restore the original implementation
-      require('@privy-io/server-auth').PrivyClient.mockImplementation(originalMockImplementation);
+        }),
+      ).rejects.toThrow(
+        "authorizationPrivateKey is required when creating a new wallet with an authorizationKeyId",
+      );
+
+      privyServerAuth.PrivyClient.mockImplementation(originalMockImplementation);
     });
-    
+
     it("should handle wallet creation errors", async () => {
-      // Create a mock for the PrivyClient
       const mockPrivyClient = {
         walletApi: {
-          create: jest.fn().mockRejectedValue(new Error("API rate limit exceeded"))
-        }
+          create: jest.fn().mockRejectedValue(new Error("API rate limit exceeded")),
+        },
       };
-      
-      // Save the original mocked PrivyClient implementation
-      const originalMockImplementation = require('@privy-io/server-auth').PrivyClient.getMockImplementation();
-      
-      // Override the mock for PrivyClient to use our custom implementation
-      require('@privy-io/server-auth').PrivyClient.mockImplementation(() => mockPrivyClient);
-      
-      // Should rethrow the error 
+
+      const privyServerAuth = jest.requireMock("@privy-io/server-auth");
+      const originalMockImplementation = privyServerAuth.PrivyClient.getMockImplementation();
+
+      privyServerAuth.PrivyClient.mockImplementation(() => mockPrivyClient);
+
+      const originalConsoleError = console.error;
+      console.error = jest.fn();
+
       await expect(
         PrivyEvmWalletProvider.configureWithWallet({
           appId: "test-app-id",
           appSecret: "test-app-secret",
-        })
+        }),
       ).rejects.toThrow("Failed to create wallet");
-      
-      // Restore the original implementation
-      require('@privy-io/server-auth').PrivyClient.mockImplementation(originalMockImplementation);
+
+      console.error = originalConsoleError;
+      privyServerAuth.PrivyClient.mockImplementation(originalMockImplementation);
     });
   });
-}); 
+});

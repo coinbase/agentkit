@@ -1,6 +1,6 @@
 """Tests for the base WalletProvider abstract class."""
 
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -26,7 +26,9 @@ def test_required_methods():
 
 def test_track_initialization():
     """Test that track_initialization is called when a provider is instantiated."""
-    with patch("coinbase_agentkit.wallet_providers.wallet_provider.WalletProvider.track_initialization") as mock_track:
+    with patch(
+        "coinbase_agentkit.wallet_providers.wallet_provider.WalletProvider.track_initialization"
+    ) as mock_track:
         mock_instance = Mock()
         mock_track(mock_instance)
         mock_track.assert_called_once_with(mock_instance)
@@ -39,8 +41,10 @@ def test_send_analytics_event():
     mock_instance.get_network.return_value = mock_network
     mock_instance.get_address.return_value = "0x123"
     mock_instance.get_name.return_value = "test_wallet"
-    
-    with patch("coinbase_agentkit.wallet_providers.wallet_provider.send_analytics_event") as mock_send:
+
+    with patch(
+        "coinbase_agentkit.wallet_providers.wallet_provider.send_analytics_event"
+    ) as mock_send:
         WalletProvider.track_initialization(mock_instance)
         mock_send.assert_called_once()
 
@@ -52,7 +56,7 @@ def test_track_initialization_error_handling():
     mock_instance.get_network.return_value = mock_network
     mock_instance.get_address.return_value = "0x123"
     mock_instance.get_name.return_value = "test_wallet"
-    
+
     with (
         patch(
             "coinbase_agentkit.wallet_providers.wallet_provider.send_analytics_event",
@@ -62,4 +66,6 @@ def test_track_initialization_error_handling():
     ):
         WalletProvider.track_initialization(mock_instance)
         mock_print.assert_called_once()
-        assert "Warning: Failed to track wallet provider initialization" in mock_print.call_args[0][0]
+        assert (
+            "Warning: Failed to track wallet provider initialization" in mock_print.call_args[0][0]
+        )

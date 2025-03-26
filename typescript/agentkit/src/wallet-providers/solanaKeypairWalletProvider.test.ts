@@ -5,19 +5,9 @@ import {
   PublicKey,
   VersionedTransaction,
   clusterApiUrl,
-  SystemProgram,
-  VersionedMessage,
-  TransactionMessage
 } from "@solana/web3.js";
-import {
-  SOLANA_DEVNET_GENESIS_BLOCK_HASH,
-  SOLANA_MAINNET_GENESIS_BLOCK_HASH,
-  SOLANA_NETWORKS,
-  SOLANA_TESTNET_GENESIS_BLOCK_HASH,
-  SOLANA_NETWORK_ID,
-} from "../network/svm";
+import { SOLANA_DEVNET_GENESIS_BLOCK_HASH, SOLANA_NETWORKS } from "../network/svm";
 
-// Mock @solana/web3.js
 jest.mock("@solana/web3.js", () => {
   const originalModule = jest.requireActual("@solana/web3.js");
   return {
@@ -54,11 +44,9 @@ jest.mock("@solana/web3.js", () => {
     },
     PublicKey: originalModule.PublicKey,
     VersionedTransaction: jest.fn().mockImplementation(() => ({
-      // Add sign method to make the mock complete
       signatures: [],
       message: { compiledMessage: Buffer.from([]) },
-      sign: jest.fn(function(signers) {
-        // Implementation that updates signatures array
+      sign: jest.fn(function (signers) {
         this.signatures = signers.map(() => new Uint8Array(64).fill(1));
         return this;
       }),
@@ -74,220 +62,208 @@ jest.mock("@solana/web3.js", () => {
       }),
     },
     TransactionMessage: {
-      // Mock as a simple object with properties instead of instance methods
       compile: jest.fn().mockReturnValue({
         compiledMessage: Buffer.from([]),
       }),
     },
-    clusterApiUrl: jest.fn().mockImplementation((network) => `https://api.${network}.solana.com`),
+    clusterApiUrl: jest.fn().mockImplementation(network => `https://api.${network}.solana.com`),
   };
 });
 
 describe("SolanaKeypairWalletProvider", () => {
   let wallet: SolanaKeypairWalletProvider;
-  
+
   beforeEach(async () => {
     const keypair = Keypair.generate();
-    wallet = await SolanaKeypairWalletProvider.fromRpcUrl("https://api.devnet.solana.com", keypair.secretKey);
+    wallet = await SolanaKeypairWalletProvider.fromRpcUrl(
+      "https://api.devnet.solana.com",
+      keypair.secretKey,
+    );
   });
-  
+
   describe("initialization methods", () => {
     it("should initialize from constructor", async () => {
       const keypair = Keypair.generate();
       const rpcUrl = "https://api.devnet.solana.com";
-      
+
       const provider = new SolanaKeypairWalletProvider({
         keypair: keypair.secretKey,
         rpcUrl,
         genesisHash: SOLANA_DEVNET_GENESIS_BLOCK_HASH,
       });
-      
+
       expect(provider).toBeInstanceOf(SolanaKeypairWalletProvider);
       expect(provider.getNetwork()).toEqual(SOLANA_NETWORKS[SOLANA_DEVNET_GENESIS_BLOCK_HASH]);
     });
-    
+
     it("should initialize from RPC URL", async () => {
       const keypair = Keypair.generate();
       const rpcUrl = "https://api.devnet.solana.com";
-      
+
       const provider = await SolanaKeypairWalletProvider.fromRpcUrl(rpcUrl, keypair.secretKey);
-      
+
       expect(provider).toBeInstanceOf(SolanaKeypairWalletProvider);
       expect(provider.getNetwork()).toEqual(SOLANA_NETWORKS[SOLANA_DEVNET_GENESIS_BLOCK_HASH]);
     });
-    
+
     it("should initialize from network ID", async () => {
       const keypair = Keypair.generate();
-      
-      // Use the exported type directly
+
       const networkId = "solana-devnet";
       const wallet = await SolanaKeypairWalletProvider.fromNetwork(networkId, keypair.secretKey);
-      
+
       expect(clusterApiUrl).toHaveBeenCalledWith("devnet");
       expect(wallet.getNetwork()).toEqual(SOLANA_NETWORKS[SOLANA_DEVNET_GENESIS_BLOCK_HASH]);
     });
-    
+
     it("should initialize from connection", async () => {
       const keypair = Keypair.generate();
       const connection = new Connection("https://api.devnet.solana.com");
-      
-      const provider = await SolanaKeypairWalletProvider.fromConnection(connection, keypair.secretKey);
-      
+
+      const provider = await SolanaKeypairWalletProvider.fromConnection(
+        connection,
+        keypair.secretKey,
+      );
+
       expect(provider).toBeInstanceOf(SolanaKeypairWalletProvider);
       expect(provider.getNetwork()).toEqual(SOLANA_NETWORKS[SOLANA_DEVNET_GENESIS_BLOCK_HASH]);
     });
   });
-  
+
   describe("wallet methods", () => {
     it("should get the address", () => {
       expect(wallet.getAddress()).toBe("AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM");
     });
-    
+
     it("should get the public key", () => {
       const publicKey = wallet.getPublicKey();
       expect(publicKey).toBeInstanceOf(PublicKey);
       expect(publicKey.toBase58()).toBe("AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM");
     });
-    
+
     it("should get the network", () => {
       expect(wallet.getNetwork()).toEqual(SOLANA_NETWORKS[SOLANA_DEVNET_GENESIS_BLOCK_HASH]);
     });
-    
+
     it("should get the connection", () => {
       expect(wallet.getConnection()).toBeDefined();
     });
-    
+
     it("should get the balance", async () => {
       const balance = await wallet.getBalance();
       expect(balance).toBe(BigInt(1000000000));
     });
-    
+
     it("should sign a transaction", async () => {
-      // Create mock transaction with the sign method
       const mockTransaction = {
         message: { compiledMessage: Buffer.from([]) },
         signatures: [],
-        sign: jest.fn(function(signers) {
+        sign: jest.fn(function (signers) {
           this.signatures = signers.map(() => new Uint8Array(64).fill(1));
           return this;
         }),
       } as unknown as VersionedTransaction;
-      
+
       const signedTx = await wallet.signTransaction(mockTransaction);
       expect(mockTransaction.sign).toHaveBeenCalled();
       expect(signedTx).toBe(mockTransaction);
     });
-    
+
     it("should send a transaction", async () => {
-      // Create mock transaction with the sign method
       const mockTransaction = {
         message: { compiledMessage: Buffer.from([]) },
         signatures: [],
-        sign: jest.fn(function(signers) {
+        sign: jest.fn(function (signers) {
           this.signatures = signers.map(() => new Uint8Array(64).fill(1));
           return this;
         }),
       } as unknown as VersionedTransaction;
-      
+
       const signature = await wallet.sendTransaction(mockTransaction);
       expect(signature).toBe("signature123");
     });
-    
+
     it("should sign and send a transaction", async () => {
-      // Create mock transaction with the sign method
       const mockTransaction = {
         message: { compiledMessage: Buffer.from([]) },
         signatures: [],
-        sign: jest.fn(function(signers) {
+        sign: jest.fn(function (signers) {
           this.signatures = signers.map(() => new Uint8Array(64).fill(1));
           return this;
         }),
       } as unknown as VersionedTransaction;
-      
+
       const signature = await wallet.signAndSendTransaction(mockTransaction);
       expect(mockTransaction.sign).toHaveBeenCalled();
       expect(signature).toBe("signature123");
     });
-    
+
     it("should get the signature status", async () => {
       const status = await wallet.getSignatureStatus("signature123");
       expect(status.value).toHaveProperty("slot");
       expect(status.value).toHaveProperty("confirmations");
     });
-    
+
     it("should wait for signature result", async () => {
       const result = await wallet.waitForSignatureResult("signature123");
       expect(result.value).toHaveProperty("err");
     });
-    
+
     it("should request an airdrop", async () => {
       const signature = await wallet.requestAirdrop(1000000000);
       expect(signature).toBe("airdrop-signature");
     });
-    
-    it("should transfer native tokens", async () => {
-      // We need to properly mock the classes and methods used in nativeTransfer
-      const { SystemProgram, MessageV0, VersionedTransaction } = jest.requireMock("@solana/web3.js");
-      
-      // Mock the necessary methods and classes for this test
-      const mockVersionedTx = new VersionedTransaction(MessageV0.compile());
 
-      // Use the mock methods created earlier to simulate the transaction creation process
+    it("should transfer native tokens", async () => {
       const destination = "EQJqzeeVEnm8rKWQJ5SMTtQBD4xEgixwgzNWKkpeFRZ9";
       const signature = await wallet.nativeTransfer(destination, "0.1");
-      
-      // Verify the result
+
       expect(signature).toBe("signature123");
     });
-    
+
     it("should handle insufficient balance when transferring", async () => {
-      // Mock a low balance
       const connection = wallet.getConnection();
-      (connection.getBalance as jest.Mock).mockResolvedValueOnce(100); // Very low balance
-      
+      (connection.getBalance as jest.Mock).mockResolvedValueOnce(100);
+
       const destination = "EQJqzeeVEnm8rKWQJ5SMTtQBD4xEgixwgzNWKkpeFRZ9";
-      
-      // Should throw an error about insufficient balance
-      await expect(wallet.nativeTransfer(destination, "1.0")).rejects.toThrow("Insufficient balance");
+
+      await expect(wallet.nativeTransfer(destination, "1.0")).rejects.toThrow(
+        "Insufficient balance",
+      );
     });
-    
+
     it("should handle transaction failure when sending", async () => {
-      // Mock sendTransaction to fail
       const connection = wallet.getConnection();
-      (connection.sendTransaction as jest.Mock).mockRejectedValueOnce(new Error("Transaction failed"));
-      
-      // Create mock transaction with the sign method
+      (connection.sendTransaction as jest.Mock).mockRejectedValueOnce(
+        new Error("Transaction failed"),
+      );
+
       const mockTransaction = {
         message: { compiledMessage: Buffer.from([]) },
         signatures: [],
-        sign: jest.fn(function(signers) {
+        sign: jest.fn(function (signers) {
           this.signatures = signers.map(() => new Uint8Array(64).fill(1));
           return this;
         }),
       } as unknown as VersionedTransaction;
-      
-      // Should throw an error about transaction failure
+
       await expect(wallet.sendTransaction(mockTransaction)).rejects.toThrow("Transaction failed");
     });
-    
+
     it("should handle confirmation timeout", async () => {
-      // Mock confirmTransaction to time out
       const connection = wallet.getConnection();
       (connection.confirmTransaction as jest.Mock).mockRejectedValueOnce(
-        new Error("Timed out waiting for confirmation")
+        new Error("Timed out waiting for confirmation"),
       );
-      
-      // Should throw an error about confirmation timeout
+
       await expect(wallet.waitForSignatureResult("signature123")).rejects.toThrow(
-        "Timed out waiting for confirmation"
+        "Timed out waiting for confirmation",
       );
     });
-    
+
     it("should handle invalid address when transferring", async () => {
-      // Invalid Solana address
       const destination = "invalid-address";
-      
-      // Should throw an error about invalid public key
+
       await expect(wallet.nativeTransfer(destination, "0.1")).rejects.toThrow();
     });
   });

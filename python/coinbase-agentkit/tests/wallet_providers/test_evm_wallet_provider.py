@@ -1,7 +1,8 @@
 """Tests for the EvmWalletProvider abstract class."""
 
-import pytest
 import inspect
+
+import pytest
 
 from coinbase_agentkit.wallet_providers.evm_wallet_provider import EvmGasConfig, EvmWalletProvider
 from coinbase_agentkit.wallet_providers.wallet_provider import WalletProvider
@@ -64,26 +65,27 @@ def test_method_signatures():
         "get_name": [],
         "native_transfer": ["to", "value"],
     }
-    
+
     # Verify each method signature
     for method_name, expected_params in expected_signatures.items():
         # Get the method from the class
         method = getattr(EvmWalletProvider, method_name)
-        
+
         # Get the signature
         signature = inspect.signature(method)
-        
+
         # Extract parameter names (exclude 'self')
-        actual_params = [
-            param for param in signature.parameters 
-            if param != "self"
-        ]
-        
+        actual_params = [param for param in signature.parameters if param != "self"]
+
         # Verify that the required parameters are present
         for param in expected_params:
-            assert param in actual_params, f"Method {method_name} is missing required parameter {param}"
-            
+            assert (
+                param in actual_params
+            ), f"Method {method_name} is missing required parameter {param}"
+
         # For methods with default values, check they're properly optional
         for param_name, param in signature.parameters.items():
             if param_name != "self" and param_name not in expected_params:
-                assert param.default != inspect.Parameter.empty, f"Non-required parameter {param_name} in {method_name} should have a default value"
+                assert (
+                    param.default != inspect.Parameter.empty
+                ), f"Non-required parameter {param_name} in {method_name} should have a default value"
