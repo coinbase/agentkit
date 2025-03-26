@@ -4,7 +4,7 @@ import json
 from typing import Any
 
 from coinbase_agentkit import Action, AgentKit
-from agents import FunctionTool, RunContextWrapper
+from agents import FunctionTool, RunContextWrapper, WebSearchTool
 
 def _fix_schema_for_openai(schema: dict) -> None:
     """Recursively fix schema to meet OpenAI's requirements."""
@@ -61,5 +61,5 @@ def get_openai_agents_sdk_tools(agent_kit: AgentKit) -> list[FunctionTool]:
         )
         tools.append(tool)
 
+    tools.append(WebSearchTool())
     return tools
-
