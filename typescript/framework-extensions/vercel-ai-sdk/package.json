@@ -18,8 +18,6 @@
     "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\"",
     "check": "tsc --noEmit",
     "test": "npx jest --no-cache --testMatch='**/*.test.ts'",
-    "test:dry-run": "pnpm install --frozen-lockfile && pnpm publish --dry-run",
-    "test:e2e": "npx jest --no-cache --testMatch=**/e2e.ts --coverageThreshold '{}'",
     "test:types": "tsd --files src/tests/types.test-d.ts",
     "clean": "rm -rf dist/*",
     "prepack": "tsc",
