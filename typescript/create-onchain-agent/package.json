@@ -6,7 +6,7 @@
   "author": "Coinbase Inc.",
   "license": "Apache-2.0",
   "scripts": {
-    "build": "npm run clean && npm run build:esm+types",
+    "build": "pnpm run clean && pnpm run build:esm+types",
     "build:esm+types": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationMap --declarationDir ./dist/types",
     "format": "prettier -c .prettierrc --write \"**/*.{ts,js,cjs,json,md}\"",
     "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\"",

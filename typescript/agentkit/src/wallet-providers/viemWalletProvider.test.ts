@@ -12,7 +12,6 @@ import {
   Account,
   ContractFunctionName,
 } from "viem";
-import { jest } from "@jest/globals";
 
 import * as viem from "viem";
 

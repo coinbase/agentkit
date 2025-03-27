@@ -1,6 +1,5 @@
 import { WalletProvider } from "./walletProvider";
 import { Network } from "../network";
-import { jest } from "@jest/globals";
 import { sendAnalyticsEvent } from "../analytics";
 
 // Mock fetch globally to prevent any actual network requests

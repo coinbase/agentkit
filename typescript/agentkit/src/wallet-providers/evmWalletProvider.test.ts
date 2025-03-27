@@ -1,6 +1,4 @@
 import { EvmWalletProvider } from "./evmWalletProvider";
-import { jest } from "@jest/globals";
-import type { TransactionRequest } from "viem";
 
 global.fetch = jest.fn(() =>
   Promise.resolve({
@@ -34,23 +32,24 @@ describe("EvmWalletProvider", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    EvmWalletProvider.prototype.signMessage = jest.fn() as jest.Mock<
-      (message: string | Uint8Array) => Promise<`0x${string}`>
+    EvmWalletProvider.prototype.signMessage = jest.fn() as jest.MockedFunction<
+      typeof EvmWalletProvider.prototype.signMessage
     >;
-    EvmWalletProvider.prototype.signTypedData = jest.fn() as jest.Mock<
-      (typedData: unknown) => Promise<`0x${string}`>
+    EvmWalletProvider.prototype.signTypedData = jest.fn() as jest.MockedFunction<
+      typeof EvmWalletProvider.prototype.signTypedData
     >;
-    EvmWalletProvider.prototype.signTransaction = jest.fn() as jest.Mock<
-      (transaction: TransactionRequest) => Promise<`0x${string}`>
+    EvmWalletProvider.prototype.signTransaction = jest.fn() as jest.MockedFunction<
+      typeof EvmWalletProvider.prototype.signTransaction
     >;
-    EvmWalletProvider.prototype.sendTransaction = jest.fn() as jest.Mock<
-      (transaction: TransactionRequest) => Promise<`0x${string}`>
+    EvmWalletProvider.prototype.sendTransaction = jest.fn() as jest.MockedFunction<
+      typeof EvmWalletProvider.prototype.sendTransaction
     >;
-    EvmWalletProvider.prototype.waitForTransactionReceipt = jest.fn() as jest.Mock<
-      (txHash: `0x${string}`) => Promise<unknown>
+    EvmWalletProvider.prototype.waitForTransactionReceipt = jest.fn() as jest.MockedFunction<
+      typeof EvmWalletProvider.prototype.waitForTransactionReceipt
     >;
-    // @ts-expect-error: complex generic signature
-    EvmWalletProvider.prototype.readContract = jest.fn();
+    EvmWalletProvider.prototype.readContract = jest.fn() as jest.MockedFunction<
+      typeof EvmWalletProvider.prototype.readContract
+    >;
   });
 
   it("should define abstract methods (TypeScript only - not a runtime check)", () => {
