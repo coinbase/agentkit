@@ -20,7 +20,7 @@
     "@langchain/langgraph": "^0.2.21",
     "@langchain/openai": "^0.3.14",
     "@solana/web3.js": "^1.98.0",
-    "bs58": "^6.0.0",
+    "bs58": "^4.0.1",
     "dotenv": "^16.4.5",
     "zod": "^3.22.4"
   },

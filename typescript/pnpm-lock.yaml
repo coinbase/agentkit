@@ -455,8 +455,8 @@ importers:
         specifier: ^1.98.0
         version: 1.98.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       bs58:
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^4.0.1
+        version: 4.0.1
       dotenv:
         specifier: ^16.4.5
         version: 16.4.7

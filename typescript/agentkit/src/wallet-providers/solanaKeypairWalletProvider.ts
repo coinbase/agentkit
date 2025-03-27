@@ -57,11 +57,7 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
   }) {
     super();
 
-    if (typeof keypair === "string") {
-      this.#keypair = Keypair.fromSecretKey(bs58.decode(keypair));
-    } else {
-      this.#keypair = Keypair.fromSecretKey(keypair);
-    }
+    this.#keypair = typeof keypair === "string" ? Keypair.fromSecretKey(bs58.decode(keypair)) : Keypair.fromSecretKey(keypair);
 
     this.#connection = new Connection(rpcUrl);
     if (genesisHash in SOLANA_NETWORKS) {
@@ -172,9 +168,6 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
    * @returns The wallet's public key
    */
   getPublicKey(): PublicKey {
-    if (!this.#keypair) {
-      throw new Error("Keypair not initialized");
-    }
     return this.#keypair.publicKey;
   }
 
@@ -184,7 +177,7 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
    * @returns The base58 encoded address of the wallet
    */
   getAddress(): string {
-    return this.#keypair?.publicKey.toBase58() ?? "";
+    return this.#keypair.publicKey.toBase58();
   }
 
   /**
