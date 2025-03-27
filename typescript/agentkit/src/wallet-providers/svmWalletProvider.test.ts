@@ -1,14 +1,4 @@
 import { SvmWalletProvider } from "./svmWalletProvider";
-// We need these types for typing our mocks, prefix with _ to indicate they're only used for types
-import {
-  Connection,
-  PublicKey,
-  RpcResponseAndContext,
-  SignatureStatus,
-  VersionedTransaction,
-  SignatureResult,
-} from "@solana/web3.js";
-import { jest } from "@jest/globals";
 
 global.fetch = jest.fn(() =>
   Promise.resolve({
@@ -26,34 +16,38 @@ describe("SvmWalletProvider", () => {
     jest.clearAllMocks();
 
     if (!SvmWalletProvider.prototype.getConnection) {
-      SvmWalletProvider.prototype.getConnection = jest.fn() as jest.Mock<() => Connection>;
+      SvmWalletProvider.prototype.getConnection = jest.fn() as jest.MockedFunction<
+        typeof SvmWalletProvider.prototype.getConnection
+      >;
     }
     if (!SvmWalletProvider.prototype.getPublicKey) {
-      SvmWalletProvider.prototype.getPublicKey = jest.fn() as jest.Mock<() => PublicKey>;
+      SvmWalletProvider.prototype.getPublicKey = jest.fn() as jest.MockedFunction<
+        typeof SvmWalletProvider.prototype.getPublicKey
+      >;
     }
     if (!SvmWalletProvider.prototype.signTransaction) {
-      SvmWalletProvider.prototype.signTransaction = jest.fn() as jest.Mock<
-        (_transaction: VersionedTransaction) => Promise<VersionedTransaction>
+      SvmWalletProvider.prototype.signTransaction = jest.fn() as jest.MockedFunction<
+        typeof SvmWalletProvider.prototype.signTransaction
       >;
     }
     if (!SvmWalletProvider.prototype.sendTransaction) {
-      SvmWalletProvider.prototype.sendTransaction = jest.fn() as jest.Mock<
-        (_transaction: VersionedTransaction) => Promise<string>
+      SvmWalletProvider.prototype.sendTransaction = jest.fn() as jest.MockedFunction<
+        typeof SvmWalletProvider.prototype.sendTransaction
       >;
     }
     if (!SvmWalletProvider.prototype.signAndSendTransaction) {
-      SvmWalletProvider.prototype.signAndSendTransaction = jest.fn() as jest.Mock<
-        (_transaction: VersionedTransaction) => Promise<string>
+      SvmWalletProvider.prototype.signAndSendTransaction = jest.fn() as jest.MockedFunction<
+        typeof SvmWalletProvider.prototype.signAndSendTransaction
       >;
     }
     if (!SvmWalletProvider.prototype.getSignatureStatus) {
-      SvmWalletProvider.prototype.getSignatureStatus = jest.fn() as jest.Mock<
-        (_signature: string) => Promise<RpcResponseAndContext<SignatureStatus | null>>
+      SvmWalletProvider.prototype.getSignatureStatus = jest.fn() as jest.MockedFunction<
+        typeof SvmWalletProvider.prototype.getSignatureStatus
       >;
     }
     if (!SvmWalletProvider.prototype.waitForSignatureResult) {
-      SvmWalletProvider.prototype.waitForSignatureResult = jest.fn() as jest.Mock<
-        (_signature: string) => Promise<RpcResponseAndContext<SignatureResult>>
+      SvmWalletProvider.prototype.waitForSignatureResult = jest.fn() as jest.MockedFunction<
+        typeof SvmWalletProvider.prototype.waitForSignatureResult
       >;
     }
   });
