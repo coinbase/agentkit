@@ -502,7 +502,7 @@ importers:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.13.13)(typescript@5.8.2)
 
-  examples/model-context-protocol-cdp-server:
+  examples/model-context-protocol-smart-wallet-server:
     dependencies:
       '@coinbase/agentkit':
         specifier: workspace:*
@@ -513,6 +513,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.6.1
         version: 1.8.0
+      viem:
+        specifier: ^2.23.14
+        version: 2.24.1(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.2)
       zod:
         specifier: ^3.22.4
         version: 3.24.2
@@ -524,7 +527,7 @@ importers:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.13.13)(typescript@5.8.2)
 
-  examples/vercel-ai-sdk-cdp-chatbot:
+  examples/vercel-ai-sdk-smart-wallet-chatbot:
     dependencies:
       '@ai-sdk/openai':
         specifier: ^1.1.9
@@ -7570,7 +7573,7 @@ snapshots:
   '@safe-global/safe-apps-sdk@9.1.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.2)':
     dependencies:
       '@safe-global/safe-gateway-typescript-sdk': 3.22.9
-      viem: 2.23.15(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.2)
+      viem: 2.24.1(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.2)
     transitivePeerDependencies:
       - bufferutil
       - typescript

@@ -65,7 +65,7 @@ async function initializeServer() {
       apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY!,
       networkId: process.env.NETWORK_ID || "base-sepolia",
       smartWalletAddress: process.env.SMART_WALLET_ADDRESS! as Address,
-      signer
+      signer,
     };
 
     const walletProvider = await SmartWalletProvider.configureWithWallet(config);

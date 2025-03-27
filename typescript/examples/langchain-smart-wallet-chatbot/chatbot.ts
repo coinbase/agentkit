@@ -70,9 +70,9 @@ async function initializeAgent() {
       model: "gpt-4o-mini",
     });
 
-    const networkId = process.env.NETWORK_ID || 'base-sepolia';
-    const walletDataFile = `wallet_data_${networkId.replace(/-/g, '_')}.txt`;
-    
+    const networkId = process.env.NETWORK_ID || "base-sepolia";
+    const walletDataFile = `wallet_data_${networkId.replace(/-/g, "_")}.txt`;
+
     let walletData: WalletData | null = null;
     let privateKey: Hex | null = null;
 
