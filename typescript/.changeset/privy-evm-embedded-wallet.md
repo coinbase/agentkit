@@ -2,7 +2,7 @@
 "@coinbase/agentkit": minor
 ---
 
-Add support for Privy Evm embedded wallets with delegation.
+Add support for Privy Evm embedded wallets with delegation. (Thanks @njokuScript!)
 
 This change introduces a new wallet provider, `PrivyEvmEmbeddedWalletProvider`, which allows AgentKit to use Privy's embedded wallets that have been delegated to a server. This enables autonomous agents to perform onchain actions on behalf of users who have delegated transaction signing authority to the agent.
 
