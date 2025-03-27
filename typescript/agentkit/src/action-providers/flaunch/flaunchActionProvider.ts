@@ -52,8 +52,8 @@ import {
   Permit2Address,
   PERMIT2_ABI,
   PERMIT_TYPES,
+  ERC20_ABI,
 } from "./constants";
-import { ERC20_ABI } from "../compound/constants";
 import { BuySwapAmounts, PermitSingle, SellSwapAmounts } from "./types";
 
 const SUPPORTED_NETWORKS = ["base-mainnet", "base-sepolia"];

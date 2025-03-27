@@ -1,6 +1,10 @@
 import { parseAbi, zeroAddress } from "viem";
 import { base, baseSepolia } from "viem/chains";
 import { Addresses } from "./types";
+import { abi as ERC20_ABI } from "../erc20/constants";
+
+// Re-export the ERC20 ABI from the erc20 action provider constants
+export { ERC20_ABI };
 
 export const FastFlaunchZapAddress: Addresses = {
   [base.id]: zeroAddress, // FIXME: update with real address when deployed
