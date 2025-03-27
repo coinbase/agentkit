@@ -10,6 +10,7 @@ import {
   PrivySvmWalletProvider,
   cdpApiActionProvider,
   splActionProvider,
+  PrivyEvmDelegatedEmbeddedWalletProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -66,7 +67,7 @@ async function initializeAgent() {
       model: "gpt-4o-mini",
     });
 
-    let walletProvider: PrivyEvmWalletProvider | PrivySvmWalletProvider;
+    let walletProvider: PrivyEvmWalletProvider | PrivySvmWalletProvider | PrivyEvmDelegatedEmbeddedWalletProvider;
 
     const networkId = process.env.NETWORK_ID;
 
@@ -90,7 +91,6 @@ async function initializeAgent() {
       }
 
       walletProvider = await PrivyWalletProvider.configureWithWallet(config);
-      walletProvider = await PrivyWalletProvider.configureWithWallet(config);
     } else {
       const config: PrivyWalletConfig = {
         appId: process.env.PRIVY_APP_ID as string,
@@ -99,7 +99,7 @@ async function initializeAgent() {
         walletId: process.env.PRIVY_WALLET_ID as string,
         authorizationPrivateKey: process.env.PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY,
         authorizationKeyId: process.env.PRIVY_WALLET_AUTHORIZATION_KEY_ID,
-        chainType: "ethereum",
+        // walletType: "embedded", // Uncomment to use delegated embedded wallets (makes walletId required)
       };
 
       // Try to load saved wallet data
