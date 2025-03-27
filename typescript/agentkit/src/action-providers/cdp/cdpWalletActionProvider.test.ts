@@ -1,6 +1,6 @@
-import { CdpWalletProvider } from "../../wallet-providers";
-import { CdpWalletActionProvider } from "./cdpWalletActionProvider";
-import { DeployNftSchema, DeployTokenSchema, DeployContractSchema } from "./schemas";
+import { CdpWalletProvider } from "../../wallet-providers/index.js";
+import { CdpWalletActionProvider } from "./cdpWalletActionProvider.js";
+import { DeployNftSchema, DeployTokenSchema, DeployContractSchema } from "./schemas.js";
 import { SmartContract, Trade } from "@coinbase/coinbase-sdk";
 
 // Mock the entire module

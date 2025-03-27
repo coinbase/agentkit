@@ -1,13 +1,14 @@
 {
   "compilerOptions": {
-    "target": "es2020",
-    "module": "commonjs",
+    "isolatedModules": true,
+    "target": "es2024",
+    "module": "nodenext",
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "moduleResolution": "node16",
+    "moduleResolution": "nodenext",
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,

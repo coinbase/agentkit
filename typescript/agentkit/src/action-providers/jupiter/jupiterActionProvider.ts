@@ -1,9 +1,9 @@
-import { ActionProvider } from "../actionProvider";
-import { Network } from "../../network";
-import { SvmWalletProvider } from "../../wallet-providers/svmWalletProvider";
+import { ActionProvider } from "../actionProvider.js";
+import { Network } from "../../network/index.js";
+import { SvmWalletProvider } from "../../wallet-providers/svmWalletProvider.js";
 import { z } from "zod";
-import { CreateAction } from "../actionDecorator";
-import { SwapTokenSchema } from "./schemas";
+import { CreateAction } from "../actionDecorator.js";
+import { SwapTokenSchema } from "./schemas.js";
 import { PublicKey, VersionedTransaction } from "@solana/web3.js";
 import { createJupiterApiClient, SwapRequest } from "@jup-ag/api";
 

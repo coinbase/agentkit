@@ -1,2 +1,2 @@
-export * from "./schemas";
-export * from "./morphoActionProvider";
+export * from "./schemas.js";
+export * from "./morphoActionProvider.js";

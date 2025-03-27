@@ -1,11 +1,13 @@
-import { version } from "../../../package.json";
+import pkg from "../../../package.json" with { type: "json" };
 import { Coinbase, ExternalAddress } from "@coinbase/coinbase-sdk";
 import { z } from "zod";
-import { CreateAction } from "../actionDecorator";
-import { ActionProvider } from "../actionProvider";
-import { Network } from "../../network";
-import { CdpProviderConfig, WalletProvider } from "../../wallet-providers";
-import { AddressReputationSchema, RequestFaucetFundsSchema } from "./schemas";
+import { CreateAction } from "../actionDecorator.js";
+import { ActionProvider } from "../actionProvider.js";
+import { Network } from "../../network/index.js";
+import { CdpProviderConfig, WalletProvider } from "../../wallet-providers/index.js";
+import { AddressReputationSchema, RequestFaucetFundsSchema } from "./schemas.js";
+
+const { version } = pkg;
 
 /**
  * CdpApiActionProvider is an action provider for CDP API.

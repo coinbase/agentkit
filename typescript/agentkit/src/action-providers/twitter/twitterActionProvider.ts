@@ -1,14 +1,14 @@
 import { z } from "zod";
-import { ActionProvider } from "../actionProvider";
-import { CreateAction } from "../actionDecorator";
+import { ActionProvider } from "../actionProvider.js";
+import { CreateAction } from "../actionDecorator.js";
 import { TwitterApi, TwitterApiTokens } from "twitter-api-v2";
-import { Network } from "../../network";
+import { Network } from "../../network/index.js";
 import {
   TwitterAccountDetailsSchema,
   TwitterAccountMentionsSchema,
   TwitterPostTweetSchema,
   TwitterPostTweetReplySchema,
-} from "./schemas";
+} from "./schemas.js";
 
 /**
  * Configuration options for the TwitterActionProvider.

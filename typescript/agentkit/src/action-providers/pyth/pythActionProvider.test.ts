@@ -1,4 +1,4 @@
-import { pythActionProvider } from "./pythActionProvider";
+import { pythActionProvider } from "./pythActionProvider.js";
 
 describe("PythActionProvider", () => {
   const fetchMock = jest.fn();

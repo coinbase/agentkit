@@ -1,1 +1,1 @@
-export * from "./jupiterActionProvider";
+export * from "./jupiterActionProvider.js";

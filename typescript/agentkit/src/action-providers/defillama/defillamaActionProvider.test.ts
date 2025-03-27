@@ -1,5 +1,5 @@
-import { defillamaActionProvider } from "./defillamaActionProvider";
-import { Protocol } from "./types";
+import { defillamaActionProvider } from "./defillamaActionProvider.js";
+import { Protocol } from "./types.js";
 
 describe("DefiLlamaActionProvider", () => {
   const fetchMock = jest.fn();

@@ -1,5 +1,5 @@
-import { Network } from "../network";
-import { sendAnalyticsEvent } from "../analytics";
+import { Network } from "../network/index.js";
+import { sendAnalyticsEvent } from "../analytics/index.js";
 
 /**
  * WalletProvider is the abstract base class for all wallet providers.

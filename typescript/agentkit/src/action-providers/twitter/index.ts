@@ -1,2 +1,2 @@
-export * from "./schemas";
-export * from "./twitterActionProvider";
+export * from "./schemas.js";
+export * from "./twitterActionProvider.js";

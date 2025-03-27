@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { ActionProvider } from "../actionProvider";
-import { Network } from "../../network";
-import { CreateAction } from "../actionDecorator";
-import { FarcasterAccountDetailsSchema, FarcasterPostCastSchema } from "./schemas";
+import { ActionProvider } from "../actionProvider.js";
+import { Network } from "../../network/index.js";
+import { CreateAction } from "../actionDecorator.js";
+import { FarcasterAccountDetailsSchema, FarcasterPostCastSchema } from "./schemas.js";
 
 /**
  * Configuration options for the FarcasterActionProvider.

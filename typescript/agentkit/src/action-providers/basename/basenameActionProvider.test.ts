@@ -1,6 +1,6 @@
 import { encodeFunctionData, namehash, parseEther } from "viem";
 
-import { basenameActionProvider } from "./basenameActionProvider";
+import { basenameActionProvider } from "./basenameActionProvider.js";
 import {
   BASENAMES_REGISTRAR_CONTROLLER_ADDRESS_MAINNET,
   REGISTRATION_DURATION,
@@ -9,9 +9,9 @@ import {
   REGISTRAR_ABI,
   BASENAMES_REGISTRAR_CONTROLLER_ADDRESS_TESTNET,
   L2_RESOLVER_ADDRESS_TESTNET,
-} from "./constants";
-import { RegisterBasenameSchema } from "./schemas";
-import { EvmWalletProvider } from "../../wallet-providers";
+} from "./constants.js";
+import { RegisterBasenameSchema } from "./schemas.js";
+import { EvmWalletProvider } from "../../wallet-providers/index.js";
 import { Coinbase } from "@coinbase/coinbase-sdk";
 
 const MOCK_AMOUNT = "0.123";

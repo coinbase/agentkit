@@ -1,10 +1,10 @@
 import { Decimal } from "decimal.js";
 import { Address, formatUnits } from "viem";
 
-import { EvmWalletProvider } from "../../wallet-providers";
-import { ERC20_ABI, COMET_ABI, PRICE_FEED_ABI } from "./constants";
-import { Network } from "../../network";
-import { COMET_ADDRESSES, ASSET_ADDRESSES } from "./constants";
+import { EvmWalletProvider } from "../../wallet-providers/index.js";
+import { ERC20_ABI, COMET_ABI, PRICE_FEED_ABI } from "./constants.js";
+import { Network } from "../../network/index.js";
+import { COMET_ADDRESSES, ASSET_ADDRESSES } from "./constants.js";
 
 /**
  * Get token decimals from contract

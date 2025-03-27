@@ -33,4 +33,4 @@ export type {
   WalletProviderChoice,
   Framework,
   Template,
-} from "./constants";
+} from "./constants.js";

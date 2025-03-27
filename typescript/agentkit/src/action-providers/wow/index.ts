@@ -1,2 +1,2 @@
-export * from "./schemas";
-export * from "./wowActionProvider";
+export * from "./schemas.js";
+export * from "./wowActionProvider.js";

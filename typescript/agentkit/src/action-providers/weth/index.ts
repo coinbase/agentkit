@@ -1,1 +1,1 @@
-export * from "./wethActionProvider";
+export * from "./wethActionProvider.js";

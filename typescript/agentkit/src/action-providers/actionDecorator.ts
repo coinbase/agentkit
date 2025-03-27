@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { WalletProvider } from "../wallet-providers";
-import { sendAnalyticsEvent } from "../analytics";
+import { WalletProvider } from "../wallet-providers/index.js";
+import { sendAnalyticsEvent } from "../analytics/index.js";
 
 import "reflect-metadata";
 

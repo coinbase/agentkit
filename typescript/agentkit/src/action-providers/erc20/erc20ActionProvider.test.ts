@@ -1,8 +1,8 @@
-import { erc20ActionProvider } from "./erc20ActionProvider";
-import { TransferSchema } from "./schemas";
-import { EvmWalletProvider } from "../../wallet-providers";
+import { erc20ActionProvider } from "./erc20ActionProvider.js";
+import { TransferSchema } from "./schemas.js";
+import { EvmWalletProvider } from "../../wallet-providers/index.js";
 import { encodeFunctionData, Hex } from "viem";
-import { abi } from "./constants";
+import { abi } from "./constants.js";
 
 const MOCK_AMOUNT = 15;
 const MOCK_DECIMALS = 6;

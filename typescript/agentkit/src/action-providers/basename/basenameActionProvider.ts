@@ -1,8 +1,8 @@
 import { encodeFunctionData, Hex, namehash, parseEther } from "viem";
 import { z } from "zod";
-import { ActionProvider } from "../actionProvider";
-import { Network } from "../../network";
-import { CreateAction } from "../actionDecorator";
+import { ActionProvider } from "../actionProvider.js";
+import { Network } from "../../network/index.js";
+import { CreateAction } from "../actionDecorator.js";
 import {
   L2_RESOLVER_ADDRESS_MAINNET,
   L2_RESOLVER_ADDRESS_TESTNET,
@@ -11,9 +11,9 @@ import {
   BASENAMES_REGISTRAR_CONTROLLER_ADDRESS_MAINNET,
   BASENAMES_REGISTRAR_CONTROLLER_ADDRESS_TESTNET,
   REGISTRAR_ABI,
-} from "./constants";
-import { RegisterBasenameSchema } from "./schemas";
-import { EvmWalletProvider } from "../../wallet-providers";
+} from "./constants.js";
+import { RegisterBasenameSchema } from "./schemas.js";
+import { EvmWalletProvider } from "../../wallet-providers/index.js";
 
 /**
  * Action provider for registering Basenames.

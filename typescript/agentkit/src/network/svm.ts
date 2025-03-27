@@ -1,4 +1,4 @@
-import { Network } from "./types";
+import { Network } from "./types.js";
 
 // CDP Network IDs
 export const SOLANA_MAINNET_NETWORK_ID = "solana-mainnet";

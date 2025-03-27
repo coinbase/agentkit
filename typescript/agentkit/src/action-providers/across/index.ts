@@ -1,1 +1,1 @@
-export * from "./acrossActionProvider";
+export * from "./acrossActionProvider.js";

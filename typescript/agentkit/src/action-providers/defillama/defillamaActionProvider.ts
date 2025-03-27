@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { ActionProvider } from "../actionProvider";
-import { CreateAction } from "../actionDecorator";
-import { GetTokenPricesSchema, GetProtocolSchema, SearchProtocolsSchema } from "./schemas";
-import { DEFILLAMA_BASE_URL, DEFILLAMA_PRICES_URL } from "./constants";
-import { Protocol, ProtocolResponse } from "./types";
-import { pruneGetProtocolResponse } from "./utils";
+import { ActionProvider } from "../actionProvider.js";
+import { CreateAction } from "../actionDecorator.js";
+import { GetTokenPricesSchema, GetProtocolSchema, SearchProtocolsSchema } from "./schemas.js";
+import { DEFILLAMA_BASE_URL, DEFILLAMA_PRICES_URL } from "./constants.js";
+import { Protocol, ProtocolResponse } from "./types.js";
+import { pruneGetProtocolResponse } from "./utils.js";
 
 /**
  * DefiLlamaActionProvider is an action provider for DefiLlama API interactions.

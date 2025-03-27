@@ -1,9 +1,9 @@
 import { PrivyClient } from "@privy-io/server-auth";
 import { createViemAccount } from "@privy-io/server-auth/viem";
-import { ViemWalletProvider } from "./viemWalletProvider";
+import { ViemWalletProvider } from "./viemWalletProvider.js";
 import { createWalletClient, http, WalletClient } from "viem";
-import { getChain } from "../network/network";
-import { PrivyWalletConfig, PrivyWalletExport } from "./privyShared";
+import { getChain } from "../network/network.js";
+import { PrivyWalletConfig, PrivyWalletExport } from "./privyShared.js";
 
 /**
  * Configuration options for the Privy wallet provider.

@@ -1,19 +1,19 @@
 import { z } from "zod";
 import { encodeFunctionData, formatUnits, parseUnits } from "viem";
 
-import { ActionProvider } from "../actionProvider";
-import { EvmWalletProvider } from "../../wallet-providers";
-import { CreateAction } from "../actionDecorator";
-import { approve } from "../../utils";
-import { Network } from "../../network";
-import { COMET_ABI } from "./constants";
+import { ActionProvider } from "../actionProvider.js";
+import { EvmWalletProvider } from "../../wallet-providers/index.js";
+import { CreateAction } from "../actionDecorator.js";
+import { approve } from "../../utils.js";
+import { Network } from "../../network/index.js";
+import { COMET_ABI } from "./constants.js";
 import {
   CompoundSupplySchema,
   CompoundWithdrawSchema,
   CompoundBorrowSchema,
   CompoundRepaySchema,
   CompoundPortfolioSchema,
-} from "./schemas";
+} from "./schemas.js";
 import {
   getCollateralBalance,
   getHealthRatio,
@@ -26,7 +26,7 @@ import {
   getCometAddress,
   getAssetAddress,
   getBaseTokenAddress,
-} from "./utils";
+} from "./utils.js";
 
 /**
  * CompoundActionProvider is an action provider for Compound protocol interactions.

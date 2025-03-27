@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { SolidityVersions } from "./constants";
+import { SolidityVersions } from "./constants.js";
 
 /**
  * Input schema for address reputation check.

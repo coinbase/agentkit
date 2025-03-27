@@ -1,1 +1,1 @@
-export * from "./walletActionProvider";
+export * from "./walletActionProvider.js";

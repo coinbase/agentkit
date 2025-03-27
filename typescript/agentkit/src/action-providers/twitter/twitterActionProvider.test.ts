@@ -1,5 +1,5 @@
 import { TwitterApi, TwitterApiv2 } from "twitter-api-v2";
-import { TwitterActionProvider } from "./twitterActionProvider";
+import { TwitterActionProvider } from "./twitterActionProvider.js";
 import { TweetUserMentionTimelineV2Paginator } from "twitter-api-v2";
 
 const MOCK_CONFIG = {

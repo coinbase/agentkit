@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getLangChainTools } from "./index";
+import { getLangChainTools } from "./index.js";
 import { AgentKit, Action } from "@coinbase/agentkit";
 
 // Mocking the Action class

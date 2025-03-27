@@ -1,6 +1,6 @@
-import { acrossActionProvider } from "./acrossActionProvider";
-import { EvmWalletProvider } from "../../wallet-providers";
-import { Network } from "../../network";
+import { acrossActionProvider } from "./acrossActionProvider.js";
+import { EvmWalletProvider } from "../../wallet-providers/index.js";
+import { Network } from "../../network/index.js";
 import { createPublicClient, PublicClient } from "viem";
 
 // Mock the necessary imports and modules

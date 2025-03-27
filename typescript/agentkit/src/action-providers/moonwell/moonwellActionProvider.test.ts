@@ -1,16 +1,16 @@
 import { encodeFunctionData, parseEther, parseUnits } from "viem";
-import { EvmWalletProvider } from "../../wallet-providers";
-import { approve } from "../../utils";
-import { MoonwellActionProvider } from "./moonwellActionProvider";
+import { EvmWalletProvider } from "../../wallet-providers/index.js";
+import { approve } from "../../utils.js";
+import { MoonwellActionProvider } from "./moonwellActionProvider.js";
 import {
   MTOKEN_ABI,
   ETH_ROUTER_ABI,
   WETH_ROUTER_ADDRESS,
   MOONWELL_BASE_ADDRESSES,
   MTOKENS_UNDERLYING_DECIMALS,
-} from "./constants";
-import { MintSchema, RedeemSchema } from "./schemas";
-import { Network } from "../../network";
+} from "./constants.js";
+import { MintSchema, RedeemSchema } from "./schemas.js";
+import { Network } from "../../network/index.js";
 
 const MOCK_MTOKEN_ADDRESS = "0x73902f619CEB9B31FD8EFecf435CbDf89E369Ba6";
 const MOCK_ATOMIC_ASSETS = "1000000000000000000";
@@ -20,7 +20,7 @@ const MOCK_TX_HASH = "0xabcdef1234567890";
 const MOCK_RECEIPT = { status: "success", blockNumber: 1234567 };
 const WETH_MTOKEN = "0x628ff693426583D9a7FB391E54366292F509D457";
 
-jest.mock("../../utils");
+jest.mock("../../utils.js");
 const mockApprove = approve as jest.MockedFunction<typeof approve>;
 
 describe("Moonwell Action Provider", () => {

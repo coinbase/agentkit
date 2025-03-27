@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { WalletProvider } from "./walletProvider";
+import { WalletProvider } from "./walletProvider.js";
 import {
   Connection,
   PublicKey,

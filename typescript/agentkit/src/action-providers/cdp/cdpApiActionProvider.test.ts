@@ -1,6 +1,6 @@
-import { EvmWalletProvider } from "../../wallet-providers";
-import { CdpApiActionProvider } from "./cdpApiActionProvider";
-import { AddressReputationSchema, RequestFaucetFundsSchema } from "./schemas";
+import { EvmWalletProvider } from "../../wallet-providers/index.js";
+import { CdpApiActionProvider } from "./cdpApiActionProvider.js";
+import { AddressReputationSchema, RequestFaucetFundsSchema } from "./schemas.js";
 
 jest.mock("@coinbase/coinbase-sdk");
 

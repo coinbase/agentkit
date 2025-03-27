@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { z } from "zod";
-import { CreateAction } from "./actionDecorator";
-import { ActionProvider } from "./actionProvider";
-import { Network } from "../network";
-import { WalletProvider } from "../wallet-providers";
+import { CreateAction } from "./actionDecorator.js";
+import { ActionProvider } from "./actionProvider.js";
+import { Network } from "../network/index.js";
+import { WalletProvider } from "../wallet-providers/index.js";
 
 interface CustomActionProviderOptions<TWalletProvider extends WalletProvider> {
   name: string;

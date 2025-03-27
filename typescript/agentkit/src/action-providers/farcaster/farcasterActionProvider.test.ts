@@ -1,5 +1,5 @@
-import { FarcasterActionProvider } from "./farcasterActionProvider";
-import { FarcasterAccountDetailsSchema, FarcasterPostCastSchema } from "./schemas";
+import { FarcasterActionProvider } from "./farcasterActionProvider.js";
+import { FarcasterAccountDetailsSchema, FarcasterPostCastSchema } from "./schemas.js";
 
 // Mock fetch globally
 const mockFetch = jest.fn();

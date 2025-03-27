@@ -1,6 +1,6 @@
 import { encodeFunctionData } from "viem";
-import { EvmWalletProvider } from "./wallet-providers";
-import { approve } from "./utils";
+import { EvmWalletProvider } from "./wallet-providers/index.js";
+import { approve } from "./utils.js";
 
 const MOCK_TOKEN_ADDRESS = "0x1234567890123456789012345678901234567890";
 const MOCK_SPENDER_ADDRESS = "0x9876543210987654321098765432109876543210";

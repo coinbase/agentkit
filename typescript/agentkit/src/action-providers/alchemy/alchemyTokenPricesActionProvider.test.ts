@@ -1,7 +1,7 @@
 import {
   alchemyTokenPricesActionProvider,
   AlchemyTokenPricesActionProvider,
-} from "./alchemyTokenPricesActionProvider";
+} from "./alchemyTokenPricesActionProvider.js";
 
 const MOCK_API_KEY = "alch-demo";
 

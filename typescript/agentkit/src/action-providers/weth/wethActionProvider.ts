@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { ActionProvider } from "../actionProvider";
-import { Network } from "../../network";
-import { CreateAction } from "../actionDecorator";
-import { WrapEthSchema } from "./schemas";
-import { WETH_ABI, WETH_ADDRESS } from "./constants";
+import { ActionProvider } from "../actionProvider.js";
+import { Network } from "../../network/index.js";
+import { CreateAction } from "../actionDecorator.js";
+import { WrapEthSchema } from "./schemas.js";
+import { WETH_ABI, WETH_ADDRESS } from "./constants.js";
 import { encodeFunctionData, Hex } from "viem";
-import { EvmWalletProvider } from "../../wallet-providers";
+import { EvmWalletProvider } from "../../wallet-providers/index.js";
 
 /**
  * WethActionProvider is an action provider for WETH.

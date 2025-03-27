@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { ActionProvider } from "../actionProvider";
-import { Network } from "../../network";
-import { CreateAction } from "../actionDecorator";
-import { GetBalanceSchema, TransferSchema } from "./schemas";
-import { abi, BaseTokenToAssetId, BaseSepoliaTokenToAssetId } from "./constants";
+import { ActionProvider } from "../actionProvider.js";
+import { Network } from "../../network/index.js";
+import { CreateAction } from "../actionDecorator.js";
+import { GetBalanceSchema, TransferSchema } from "./schemas.js";
+import { abi, BaseTokenToAssetId, BaseSepoliaTokenToAssetId } from "./constants.js";
 import { encodeFunctionData, formatUnits, Hex, getAddress } from "viem";
-import { EvmWalletProvider, CdpWalletProvider } from "../../wallet-providers";
+import { EvmWalletProvider, CdpWalletProvider } from "../../wallet-providers/index.js";
 
 /**
  * ERC20ActionProvider is an action provider for ERC20 tokens.
