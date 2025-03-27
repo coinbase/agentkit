@@ -1,8 +1,8 @@
 import { messariActionProvider, MessariActionProvider } from "./messariActionProvider";
+import { API_KEY_MISSING_ERROR } from "./constants";
 
 const MOCK_API_KEY = "messari-test-key";
 
-// Sample response for the research question action
 const MOCK_RESEARCH_RESPONSE = {
   data: {
     messages: [
@@ -15,7 +15,6 @@ const MOCK_RESEARCH_RESPONSE = {
   },
 };
 
-// Sample error response in Messari format
 const MOCK_ERROR_RESPONSE = {
   error: "Internal server error, please try again. If the problem persists, please contact support",
   data: null,
@@ -49,7 +48,7 @@ describe("MessariActionProvider", () => {
 
     it("should throw error if API key is not provided", () => {
       delete process.env.MESSARI_API_KEY;
-      expect(() => messariActionProvider()).toThrow("MESSARI_API_KEY is not configured.");
+      expect(() => messariActionProvider()).toThrow(API_KEY_MISSING_ERROR);
     });
   });
 
@@ -63,14 +62,11 @@ describe("MessariActionProvider", () => {
       const question = "What is the current price of Ethereum?";
       const response = await provider.researchQuestion({ question });
 
-      // Verify the API was called with the correct parameters
       expect(fetchMock).toHaveBeenCalled();
       const [url, options] = fetchMock.mock.calls[0];
 
-      // Check URL
       expect(url).toBe("https://api.messari.io/ai/v1/chat/completions");
 
-      // Check request options
       expect(options).toEqual(
         expect.objectContaining({
           method: "POST",
@@ -89,7 +85,6 @@ describe("MessariActionProvider", () => {
         }),
       );
 
-      // Check response formatting
       expect(response).toContain("Messari Research Results:");
       expect(response).toContain(MOCK_RESEARCH_RESPONSE.data.messages[0].content);
     });
@@ -108,9 +103,8 @@ describe("MessariActionProvider", () => {
         question: "What is the current price of Bitcoin?",
       });
 
-      // Should use the structured error message from the response
       expect(response).toContain("Messari API Error: Internal server error");
-      expect(response).not.toContain("500"); // Should not include technical details when we have a structured error
+      expect(response).not.toContain("500");
     });
 
     it("should handle non-ok response with non-JSON error format", async () => {
@@ -127,7 +121,6 @@ describe("MessariActionProvider", () => {
         question: "What is the current price of Bitcoin?",
       });
 
-      // Should fall back to detailed error format
       expect(response).toContain("Messari API Error:");
       expect(response).toContain("429");
       expect(response).toContain("Too Many Requests");
@@ -153,7 +146,7 @@ describe("MessariActionProvider", () => {
     it("should handle invalid response format", async () => {
       jest.spyOn(global, "fetch").mockResolvedValue({
         ok: true,
-        json: async () => ({ data: { messages: [] } }), // Empty messages array
+        json: async () => ({ data: { messages: [] } }),
       } as Response);
 
       const response = await provider.researchQuestion({
@@ -177,7 +170,6 @@ describe("MessariActionProvider", () => {
     });
 
     it("should handle string error with JSON content", async () => {
-      // This simulates a case where an error might be stringified JSON
       const stringifiedError = JSON.stringify(MOCK_ERROR_RESPONSE);
       jest.spyOn(global, "fetch").mockRejectedValue(stringifiedError);
 
@@ -185,7 +177,6 @@ describe("MessariActionProvider", () => {
         question: "What is the market cap of Solana?",
       });
 
-      // Should parse the JSON string and extract the error message
       expect(response).toContain("Messari API Error: Internal server error");
     });
   });

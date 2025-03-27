@@ -1,34 +1,24 @@
 # Messari Action Provider
 
-The Messari Action Provider enables AI agents to query the [Messari AI toolkit](https://messari.io/) for crypto market research data. This provider allows agents to ask research questions about market data, statistics, rankings, historical trends, and information about specific protocols, tokens, or platforms.
+This directory contains the Messari action provider implementation, which provides actions to interact with the Messari AI toolkit for fetching DeFi research, market information, and protocol details.
 
-## Getting an API Key
+## Getting Started
 
 To use the Messari Action Provider, you need to obtain a Messari API key by following these steps:
 
-1. Sign up for a Messari account at [messari.io](https://messari.io/)
-2. After signing up, navigate to [messari.io/account/api](https://messari.io/account/api)
+1. Sign up for a [Messari account](https://messari.io/)
+2. Navigate to [messari.io/account/api](https://messari.io/account/api)
 3. Generate your API key from the account dashboard
 
 For more detailed information about authentication, refer to the [Messari API Authentication documentation](https://docs.messari.io/reference/authentication).
 
-Different subscription tiers provide different levels of access to the API. See the [Rate Limiting](#rate-limiting) section for details.
+### Environment Variables
 
-## Configuration
-
-Once you have your Messari API key, you can configure the provider in two ways:
-
-### 1. Environment Variable
-
-Set the `MESSARI_API_KEY` environment variable:
-
-```bash
-MESSARI_API_KEY=your_messari_api_key
+```
+MESSARI_API_KEY
 ```
 
-### 2. Direct Configuration
-
-Pass the API key directly when initializing the provider:
+Alternatively you can configure the provider directly during initializing:
 
 ```typescript
 import { messariActionProvider } from "@coinbase/agentkit";
@@ -37,6 +27,28 @@ const provider = messariActionProvider({
   apiKey: "your_messari_api_key",
 });
 ```
+
+## Directory Structure
+
+```
+messari/
+├── constants.ts                   # API endpoints and other constants
+├── messariActionProvider.test.ts  # Tests for the provider
+├── messariActionProvider.ts       # Main provider with Messari API functionality
+├── index.ts                       # Main exports
+├── README.md                      # Documentation
+├── schemas.ts                     # Messari action schemas
+├── types.ts                       # Type definitions
+└── utils.ts                       # Utility functions
+```
+
+## Actions
+
+- `research_question`: Query the Messari AI toolkit with a research question
+  - Submit natural language questions about crypto markets, protocols, or tokens
+  - Returns detailed research information compiled from Messari's data sources
+  - Handles various question types including market data, tokenomics, and project analysis
+  - Returns formatted results or descriptive error messages
 
 ## Rate Limiting
 
@@ -49,55 +61,129 @@ The Messari API has rate limits based on your subscription tier:
 | Pro               | 20 requests per day |
 | Enterprise        | 50 requests per day |
 
-If you need more than 50 requests per day, you can contact Messari's sales team to discuss a custom credit allocation system for your specific needs.
+Contact Messari's sales team for custom rate limits above 50 requests per day.
 
-## Actions
+## Examples
 
-### `research_question`
+### Token Market Data
 
-This action allows the agent to query the Messari AI toolkit with a research question about crypto markets, protocols, or tokens.
+*What is the current price of Ethereum?*
 
-#### Input Schema
-
-| Parameter | Type   | Description                                                  |
-|-----------|--------|--------------------------------------------------------------|
-| question  | string | The research question about crypto markets, protocols, or tokens |
-
-#### Example Usage
-
-```typescript
-import { AgentKit, messariActionProvider } from "@coinbase/agentkit";
-import { getLangChainTools } from "@coinbase/agentkit-langchain";
-import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import { ChatOpenAI } from "@langchain/openai";
-
-// Initialize AgentKit with the Messari action provider
-const agentkit = await AgentKit.from({
-  actionProviders: [messariActionProvider()],
-});
-
-// Get LangChain tools from AgentKit
-const tools = await getLangChainTools(agentkit);
-
-// Create a LangChain agent with the tools
-const llm = new ChatOpenAI({ model: "gpt-4o-mini" });
-const agent = createReactAgent({
-  llm,
-  tools,
-});
-
-// The agent can now use the Messari research_question action
-// Example prompt: "What is the current price of Ethereum?"
-```
-
-#### Example Response
+<details>
+<summary>Tool Output</summary>
 
 ```
 Messari Research Results:
 
-Ethereum (ETH) has shown strong performance over the past month with a 15% price increase. The current price is approximately $3,500, up from $3,000 at the beginning of the month. Trading volume has also increased by 20% in the same period.
+As of March 26, 2025, the current metrics for Ethereum (ETH) across major cryptocurrency exchanges are as follows:
+
+- **Current Price**: $2,012.99
+- **24-hour Price Change**:
+  - **Absolute Value**: -$55.31
+  - **Percentage**: -2.67%
+- **Current Market Capitalization**: $242,471,578,768
+- **24-hour Trading Volume**: $7,011,385,937.27
+- **Circulating Supply**: 120,639,295.2 ETH
+
+The data is based on the latest available information from our asset data sources as of the specified date.
 ```
+</details>
 
-## Network Support
+<details>
+<summary>Agent Output</summary>
 
-The Messari Action Provider is network-agnostic, meaning it supports all networks. The research capabilities are not tied to any specific blockchain network. 
+```
+As of March 26, 2025, the current price of Ethereum (ETH) is **$2,012.99**. Here are some additional metrics:
+
+- **24-hour Price Change**: 
+  - Absolute Value: -$55.31 
+  - Percentage: -2.67%
+- **Current Market Capitalization**: $242,471,578,768
+- **24-hour Trading Volume**: $7,011,385,937.27
+- **Circulating Supply**: 120,639,295.2 ETH
+
+If you need more information or assistance, feel free to ask!
+```
+</details>
+
+### Protocol News
+
+*Tell me about the recent news regarding the Hyperliquid token vault HLP that caused some commotion?*
+
+<details>
+<summary>Tool Output</summary>
+
+```
+Messari Research Results:
+
+Over the past few months, Hyperliquid's HLP vault has faced significant challenges due to a few critical incidents. Here's a detailed overview:
+
+### Recent Events and Incidents
+
+1. **Exploit Incident**:
+   - **Date**: Around March 11-12, 2025.
+   - **Details**: A significant exploit occurred where a whale managed to manipulate the liquidity mechanics, resulting in a $4 million loss for Hyperliquid's HLP vault. The whale executed a $340 million Ethereum position and, through strategic margin withdrawals, triggered a forced liquidation. Although initially mistaken for a hack, the event was confirmed not to be a protocol exploit.
+   - **Platform Response**: Hyperliquid implemented changes to its margin requirements and reduced the maximum leverage limits on Bitcoin and Ethereum to prevent similar incidents in the future [News Sources].
+
+2. **Price Impact**:
+   - **HYPE Token**: The HYPE token associated with the platform dropped significantly by around 8.5% immediately following the incident, reflecting investor anxiety and loss of confidence. Although it recovered slightly, it's been noted that there has been a decline of about 44% over the month even before the incident [Price Impact].
+
+### Function of HLP in Hyperliquid Ecosystem
+
+- **Role**: The HLP (Hyperliquidity Provider) vault is a crucial component of Hyperliquid, supporting high-throughput financial operations. It allows users to deposit USDC in exchange for potential profit sharing, effectively underwriting a portion of the platform's trading risk.
+- **Performance**: Despite the recent setback, the HLP vault had maintained a strong risk-adjusted performance with an average annual return of 12.07%, continuing to be a high-performing asset on a volatility-adjusted basis.
+
+### Governance and Parameter Changes
+
+- **Governance Response**: To mitigate future risks, Hyperliquid's governance team has quickly responded with parameter changes, including increasing maintenance margins and lowering leverage caps to ensure a more stable operational environment [Governance Sources].
+
+### Community and User Sentiment
+
+- **Concerns and Discussions**: The losses triggered debates over the inherent risks associated with active liquidity management models like HLP, compared to passive models. Discussions have focused on the need for robust risk management strategies within DeFi platforms [Community Discussions].
+
+### Credibility of Sources
+
+The information is gathered from credible news articles published on established DeFi and cryptocurrency media outlets. The citations used for these details are among recognized sources that specialize in blockchain and financial technology reporting.
+
+Overall, the series of incidents has negatively impacted Hyperliquid's market perception and investor confidence in the short term, though the platform has taken decisive steps to address vulnerabilities and reassure its user base.
+```
+</details>
+
+<details>
+<summary>Agent Output</summary>
+
+```
+The recent news surrounding Hyperliquid's HLP (Hyperliquidity Provider) vault highlights a significant incident that stirred commotion in the community:
+
+### Key Events
+
+1. **Exploit Incident**:
+   - **Date**: Around March 11-12, 2025.
+   - **Details**: A whale manipulated liquidity mechanics, leading to a $4 million loss for the HLP vault. The manipulative action involved a $340 million Ethereum position and strategically timed margin withdrawals that caused forced liquidations. This event was initially feared as a protocol exploit but was later confirmed not to be so.
+   - **Response**: In reaction to the incident, Hyperliquid adjusted its margin requirements and lowered maximum leverage limits on Ethereum and Bitcoin to mitigate future risks.
+
+2. **Price Impact**:
+   - Following the incident, the HYPE token experienced an immediate dip of approximately 8.5%. Over the month leading up to the incident, the token had already seen a decline of about 44%, reflecting broader concerns among investors.
+
+### HLP Vault's Role
+The HLP vault is critical within Hyperliquid's ecosystem, allowing users to deposit USDC in exchange for potential profit sharing, thus underwriting a portion of the liquidity risk associated with trading on the platform. Despite recent setbacks, it had a solid average annual return of 12.07%.
+
+### Governance Actions
+The governance team promptly responded to the situation by enhancing the platform's risk parameters, including increasing maintenance margins and reducing leverage thresholds to stabilize operations.
+
+### Community Sentiment
+The incident has sparked discussions within the community about the risks associated with active liquidity management models and the necessity for robust risk management strategies in DeFi platforms.
+
+These events have adversely affected Hyperliquid's standing in the market, though the platform has taken proactive steps to address vulnerabilities and restore confidence among its users.
+```
+</details>
+
+## Adding New Actions
+
+To add new Messari actions:
+
+1. Define your schema in `schemas.ts`
+2. Implement your action in `messariActionProvider.ts`
+3. Add corresponding tests in `messariActionProvider.test.ts`
+
+The provider is network-agnostic and can be used with any blockchain network.
