@@ -28,20 +28,20 @@ export class PrivyWalletProvider {
    *
    * @example
    * ```typescript
-   *  For EVM server wallets (default)
+   * // For EVM server wallets (default)
    * const evmWallet = await PrivyWalletProvider.configureWithWallet({
    *   appId: "your-app-id",
    *   appSecret: "your-app-secret"
    * });
    *
-   * For Solana
+   * // For Solana server wallets
    * const solanaWallet = await PrivyWalletProvider.configureWithWallet({
    *   appId: "your-app-id",
    *   appSecret: "your-app-secret",
    *   chainType: "solana"
    * });
    *
-   * For Embedded Wallet
+   * // For Ethereum embedded wallets
    * const embeddedWallet = await PrivyWalletProvider.configureWithWallet({
    *   appId: "your-app-id",
    *   appSecret: "your-app-secret",
@@ -56,23 +56,39 @@ export class PrivyWalletProvider {
       walletType?: "server" | "embedded";
     },
   ): Promise<PrivyWalletProviderVariant<T>> {
-    // Check for embedded wallet first
-    if (config.walletType === "embedded") {
-      return (await PrivyEvmDelegatedEmbeddedWalletProvider.configureWithWallet(
-        config as PrivyEvmDelegatedEmbeddedWalletConfig,
-      )) as PrivyWalletProviderVariant<T>;
-    }
+    const chainType = config.chainType || "ethereum";
+    const walletType = config.walletType || "server";
 
-    // Then check for chain type
-    if (config.chainType === "solana") {
-      return (await PrivySvmWalletProvider.configureWithWallet(
-        config as PrivySvmWalletConfig,
-      )) as PrivyWalletProviderVariant<T>;
+    switch(chainType) {
+      case "ethereum": {
+        switch(walletType) {
+          case "server":
+            return (await PrivyEvmWalletProvider.configureWithWallet(
+              config as PrivyEvmWalletConfig,
+            )) as PrivyWalletProviderVariant<T>;
+          case "embedded":
+            return (await PrivyEvmDelegatedEmbeddedWalletProvider.configureWithWallet(
+              config as PrivyEvmDelegatedEmbeddedWalletConfig,
+            )) as PrivyWalletProviderVariant<T>;
+          default:
+            throw new Error("Invalid wallet type");
+        }
+      }
+      case "solana": {
+        switch(walletType) {
+          case "server":
+            return (await PrivySvmWalletProvider.configureWithWallet(
+              config as PrivySvmWalletConfig,
+            )) as PrivyWalletProviderVariant<T>;
+          case "embedded":
+            throw new Error("Embedded wallets are not supported for Solana");
+          default:
+            throw new Error("Invalid wallet type");
+        }
+      }
+      default: {
+        throw new Error("Invalid chain type");
+      }
     }
-
-    // Default to EVM server wallet
-    return (await PrivyEvmWalletProvider.configureWithWallet(
-      config as PrivyEvmWalletConfig,
-    )) as PrivyWalletProviderVariant<T>;
   }
 }

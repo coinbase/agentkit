@@ -18,6 +18,8 @@ export interface PrivyWalletConfig {
   authorizationKeyId?: string;
   /** The chain type to create the wallet on */
   chainType?: "ethereum" | "solana";
+  /** The type of wallet to use */
+  walletType?: "server" | "embedded";
 }
 
 export type PrivyWalletExport = {
