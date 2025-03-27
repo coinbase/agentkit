@@ -376,14 +376,16 @@ A failure response will return a tuple with empty values
         description="""
 Upload specified data into your privacy preserving database, called the Nillion SecretVault 
 (or nildb), using the specified schema UUID. The data must exactly fit the requirements of
-the desired schema itself.
+the desired schema itself. If you do not have the schema UUID you must use the lookup_schema
+action of the NillionActionProvider.
+
 
 Success will return  a list of created record UUIDs, failure is an empty list.
     """,
         schema=NillionDataUploadInput,
     )
     def data_upload(self, args: dict[str, Any]) -> list[str]:
-        """Create a schema in your privacy preserving database, called the Nillion SecretVault
+        """Upload data into my privacy preserving database, called the Nillion SecretVault
         (or nildb), based on a natural language description. Do not use this tool for any other
         purpose.
 
@@ -447,7 +449,7 @@ Success will return true, whereas a failure response will return false.
         schema=NillionDataDownloadInput,
     )
     def data_download(self, args: dict[str, Any]) -> list[dict]:
-        """Create a schema in your privacy preserving database, called the Nillion SecretVault
+        """Download data from my privacy preserving database, called the Nillion SecretVault
         (or nildb), based on a natural language description. Do not use this tool for any other
         purpose.
 
