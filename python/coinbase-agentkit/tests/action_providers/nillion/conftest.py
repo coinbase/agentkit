@@ -4,7 +4,6 @@ import json
 from unittest.mock import MagicMock, patch
 
 import pytest
-from langchain.schema import AIMessage
 
 TEST_SCHEMA_ID = "1f105829-2698-47e5-8f35-c1665895f501"
 TEST_SCHEMA_DEF = """{
@@ -30,6 +29,38 @@ TEST_SCHEMA_DEF = """{
     }
   }
 }"""
+
+
+class DummyChatOpenAIContent:
+    """Placeholder class to mock LLM."""
+
+    def __init__(self, content):
+        """Provide content."""
+        self.content = content
+
+
+class DummyChatOpenAI:
+    """Placeholder class to mock LLM."""
+
+    def invoke(self, *args, **kwargs):
+        """Provide output."""
+        return "dummy"
+
+
+class DummyChatOpenAISchema:
+    """Placeholder class to mock LLM."""
+
+    def invoke(self, *args, **kwargs):
+        """Provide output."""
+        return DummyChatOpenAIContent(TEST_SCHEMA_DEF)
+
+
+class DummyChatOpenAILookup:
+    """Placeholder class to mock LLM."""
+
+    def invoke(self, *args, **kwargs):
+        """Provide output."""
+        return DummyChatOpenAIContent(TEST_SCHEMA_ID)
 
 
 @pytest.fixture
@@ -121,29 +152,5 @@ def mock_api_calls():
 @pytest.fixture(autouse=False)
 def mock_chat_openai_basic():
     """Mock LLM object."""
-    with patch("langchain_openai.ChatOpenAI", autospec=True) as mock:
-        mock_instance = MagicMock()
-        mock.return_value = mock_instance
-        yield mock_instance
-
-
-@pytest.fixture(autouse=False)
-def mock_chat_openai_schema_create():
-    """Mock schema generation LLM result."""
-    with patch("langchain_openai.ChatOpenAI") as mock:
-        mock_instance = MagicMock()
-        mock_instance.invoke.return_value = AIMessage(content=TEST_SCHEMA_DEF)
-        mock.return_value = mock_instance
-        mock_instance = mock.return_value
-        yield mock_instance
-
-
-@pytest.fixture(autouse=False)
-def mock_chat_openai_schema_lookup():
-    """Mock schema generation LLM result."""
-    with patch("langchain_openai.ChatOpenAI") as mock:
-        mock_instance = MagicMock()
-        mock_instance.invoke.return_value = AIMessage(content=TEST_SCHEMA_ID)
-        mock.return_value = mock_instance
-        mock_instance = mock.return_value
-        yield mock_instance
+    with patch("tests.action_providers.nillion.conftest.DummyChatOpenAI", autospec=True) as mock:
+        yield mock
