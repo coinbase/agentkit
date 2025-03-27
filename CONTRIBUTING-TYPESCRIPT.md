@@ -26,6 +26,11 @@ pnpm --version
 
 If the versions are not correct or you don't have Node.js or pnpm installed, download Node.Js through [fnm](https://github.com/Schniz/fnm) and then install [pnpm](https://pnpm.io/installation).
 
+> **Note for existing contributors**: If you previously contributed when this was an npm turbo monorepo, you'll need to remove existing node_modules directories and reinstall dependencies with pnpm. From the `typescript/` directory, run:
+> ```bash
+> find . -name "node_modules" -type d -exec rm -rf {} + && pnpm i
+> ```
+
 Once you have these installed, make sure you install the project dependencies by running `pnpm install` from the root of the TypeScript monorepo, in other words, from the root `typescript/` folder.
 
 ## Adding an Action Provider
