@@ -1,4 +1,4 @@
-import { parseAbi, zeroAddress } from "viem";
+import { parseAbi } from "viem";
 import { base, baseSepolia } from "viem/chains";
 import { Addresses } from "./types";
 import { abi as ERC20_ABI } from "../erc20/constants";
