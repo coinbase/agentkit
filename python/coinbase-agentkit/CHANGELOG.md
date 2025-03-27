@@ -1,6 +1,12 @@
 # Coinbase AgentKit Changelog
 
-<!-- towncrier release notes start -->
+## Unreleased
+- Added `read_eth_usdt_one_hour_volatility_forecast` to read live volatility forecasts using OpenGradient's ML workflow
+- Added `read_btc_one_hour_price_forecast` to read live Bitcoin price forecasts using OpenGradient's ML workflow
+- Added `read_eth_one_hour_price_forecast` to read live Ethereum price forecasts using OpenGradient's ML workflow
+- Added `read_sol_one_hour_price_forecast` to read live Solana price forecasts using OpenGradient's ML workflow
+- Added `prompt_dobby` to prompt the LLM `SentientAGI/Dobby-Mini-Unhinged-Llama-3.1-8B` through OpenGradient's network
+- Added `prompt_qwen` to prompt the LLM `Qwen/Qwen2.5-72B-Instruct` through OpenGradient's network
 
 ## [0.2.0] - 2025-03-14
 
