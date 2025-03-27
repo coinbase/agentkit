@@ -21,7 +21,6 @@ import {
   WalletData,
 } from "@coinbase/coinbase-sdk";
 import { Decimal } from "decimal.js";
-import { jest } from "@jest/globals";
 
 global.fetch = jest.fn(() =>
   Promise.resolve({
