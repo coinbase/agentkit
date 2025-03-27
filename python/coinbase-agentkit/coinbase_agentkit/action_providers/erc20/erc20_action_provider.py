@@ -91,7 +91,7 @@ class ERC20ActionProvider(ActionProvider[EvmWalletProvider]):
             w3 = Web3()
             checksum_contract = w3.to_checksum_address(validated_args.contract_address)
             checksum_destination = w3.to_checksum_address(validated_args.destination)
-            
+
             contract = w3.eth.contract(address=checksum_contract, abi=ERC20_ABI)
             data = contract.encode_abi(
                 "transfer", [checksum_destination, int(validated_args.amount)]
