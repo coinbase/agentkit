@@ -173,7 +173,10 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
    * @returns The wallet's public key
    */
   getPublicKey(): PublicKey {
-    return this.#keypair!.publicKey;
+    if (!this.#keypair) {
+      throw new Error("Keypair not initialized");
+    }
+    return this.#keypair.publicKey;
   }
 
   /**
@@ -182,7 +185,7 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
    * @returns The base58 encoded address of the wallet
    */
   getAddress(): string {
-    return this.#keypair!.publicKey.toBase58();
+    return this.#keypair?.publicKey.toBase58() ?? "";
   }
 
   /**

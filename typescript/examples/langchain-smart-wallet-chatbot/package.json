@@ -16,10 +16,11 @@
   "dependencies": {
     "@coinbase/agentkit": "workspace:*",
     "@coinbase/agentkit-langchain": "workspace:*",
+    "@langchain/core": "^0.3.19",
     "@langchain/langgraph": "^0.2.21",
     "@langchain/openai": "^0.3.14",
-    "@langchain/core": "^0.3.19",
     "dotenv": "^16.4.5",
+    "viem": "^2.24.1",
     "zod": "^3.22.4"
   },
   "devDependencies": {
