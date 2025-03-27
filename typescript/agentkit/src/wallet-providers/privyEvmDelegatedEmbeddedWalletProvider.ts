@@ -1,25 +1,24 @@
-import { Network } from "../network";
+import { WalletWithMetadata } from "@privy-io/server-auth";
 import axios from "axios";
 import canonicalize from "canonicalize";
 import crypto from "crypto";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import {
-  TransactionRequest,
-  PublicClient,
   Abi,
-  ReadContractParameters,
-  ReadContractReturnType,
+  Address,
   ContractFunctionArgs,
   ContractFunctionName,
-  TransactionReceipt,
-  parseEther,
-  Address,
   Hex,
+  PublicClient,
+  ReadContractParameters,
+  ReadContractReturnType,
+  TransactionReceipt,
+  TransactionRequest,
+  createPublicClient, http,
+  parseEther,
 } from "viem";
-import { getChain, NETWORK_ID_TO_CHAIN_ID } from "../network/network";
+import { Network } from "../network";
+import { NETWORK_ID_TO_CHAIN_ID, getChain } from "../network/network";
 import { PrivyWalletConfig, PrivyWalletExport, createPrivyClient } from "./privyShared";
-import { createPublicClient, http } from "viem";
-import { WalletWithMetadata } from "@privy-io/server-auth";
 import { WalletProvider } from "./walletProvider";
 
 interface PrivyResponse<T> {
@@ -69,7 +68,7 @@ export class PrivyEvmDelegatedEmbeddedWalletProvider extends WalletProvider {
     this.#authKey = config.authorizationPrivateKey || "";
 
     const networkId = config.networkId || "base-sepolia";
-    const chainId = config.chainId || NETWORK_ID_TO_CHAIN_ID["base-sepolia"];
+    const chainId = config.chainId || NETWORK_ID_TO_CHAIN_ID[networkId];
 
     this.#network = {
       protocolFamily: "evm",
@@ -250,7 +249,7 @@ export class PrivyEvmDelegatedEmbeddedWalletProvider extends WalletProvider {
     const body = {
       address: this.#address,
       chain_type: "ethereum",
-      chain_id: NETWORK_ID_TO_CHAIN_ID[this.#network.chainId!],
+      chain_id: this.#network.chainId,
       ...typedData,
     };
 
@@ -310,6 +309,7 @@ export class PrivyEvmDelegatedEmbeddedWalletProvider extends WalletProvider {
       address: this.#address,
       chain_type: "ethereum",
       method: "eth_sendTransaction",
+      caip2: `eip155:${this.#network.chainId!}`, 
       params: {
         transaction: {
           ...transaction,
