@@ -25,7 +25,7 @@ export type SVMNetwork = (typeof SVM_NETWORKS)[number];
 
 export type Network = EVMNetwork | SVMNetwork;
 
-const CDP_SUPPORTED_EVM_WALLET_PROVIDERS = ["CDP", "SmartWallet", "Viem", "Privy"] as const;
+const CDP_SUPPORTED_EVM_WALLET_PROVIDERS = ["SmartWallet", "CDP", "Viem", "Privy"] as const;
 const SVM_WALLET_PROVIDERS = ["SolanaKeypair", "Privy"] as const;
 export const NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS = ["Viem", "Privy"] as const;
 
