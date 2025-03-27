@@ -265,6 +265,15 @@ const agent = createReactAgent({
 </table>
 </details>
 <details>
+<summary><strong>Messari</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>research_question</code></td>
+    <td width="768">Queries Messari AI for comprehensive crypto research across news, market data, protocol information, and more.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Morpho</strong></summary>
 <table width="100%">
 <tr>
