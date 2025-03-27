@@ -2,10 +2,10 @@ import { z } from "zod";
 import { Decimal } from "decimal.js";
 import { encodeFunctionData, parseEther, parseUnits } from "viem";
 
-import { ActionProvider } from "../actionProvider";
-import { EvmWalletProvider } from "../../wallet-providers";
-import { CreateAction } from "../actionDecorator";
-import { approve } from "../../utils";
+import { ActionProvider } from "../actionProvider.js";
+import { EvmWalletProvider } from "../../wallet-providers/index.js";
+import { CreateAction } from "../actionDecorator.js";
+import { approve } from "../../utils.js";
 import {
   MTOKEN_ABI,
   MOONWELL_BASE_ADDRESSES,
@@ -14,9 +14,9 @@ import {
   MOONWELL_BASE_SEPOLIA_ADDRESSES,
   MTOKENS_UNDERLYING_DECIMALS,
   TOKEN_DECIMALS,
-} from "./constants";
-import { MintSchema, RedeemSchema } from "./schemas";
-import { Network } from "../../network";
+} from "./constants.js";
+import { MintSchema, RedeemSchema } from "./schemas.js";
+import { Network } from "../../network/index.js";
 
 export const SUPPORTED_NETWORKS = ["base-mainnet", "base-sepolia"];
 

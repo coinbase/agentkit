@@ -1,5 +1,5 @@
-import { pruneGetProtocolResponse } from "./utils";
-import { ProtocolResponse, TimeSeriesDataPoint, TokenTimeSeriesDataPoint } from "./types";
+import { pruneGetProtocolResponse } from "./utils.js";
+import { ProtocolResponse, TimeSeriesDataPoint, TokenTimeSeriesDataPoint } from "./types.js";
 
 describe("DefiLlama Utilities", () => {
   describe("pruneGetProtocolResponse", () => {

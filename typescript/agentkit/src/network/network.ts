@@ -65,6 +65,6 @@ export const NETWORK_ID_TO_VIEM_CHAIN: Record<string, Chain> = {
  * @returns The chain
  */
 export const getChain = (id: string): Chain => {
-  const chainList = Object.values(chains);
+  const chainList = Object.values(chains) as Chain[];
   return chainList.find(chain => chain.id === parseInt(id)) as Chain;
 };

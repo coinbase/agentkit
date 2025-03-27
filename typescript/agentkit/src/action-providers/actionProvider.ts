@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { WalletProvider } from "../wallet-providers";
-import { Network } from "../network";
-import { StoredActionMetadata, ACTION_DECORATOR_KEY } from "./actionDecorator";
+import { WalletProvider } from "../wallet-providers/index.js";
+import { Network } from "../network/index.js";
+import { StoredActionMetadata, ACTION_DECORATOR_KEY } from "./actionDecorator.js";
 
 /**
  * Action is the interface for all actions.

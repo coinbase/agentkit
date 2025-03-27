@@ -1,6 +1,6 @@
 import { OpenSeaSDK } from "opensea-js";
-import { openseaActionProvider } from "./openseaActionProvider";
-import { Network } from "../../network";
+import { openseaActionProvider } from "./openseaActionProvider.js";
+import { Network } from "../../network/index.js";
 
 jest.mock("opensea-js");
 

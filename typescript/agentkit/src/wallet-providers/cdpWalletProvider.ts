@@ -1,4 +1,4 @@
-import { version } from "../../package.json";
+import pkg from "../../package.json" with { type: "json" };
 import { Decimal } from "decimal.js";
 import {
   createPublicClient,
@@ -17,8 +17,8 @@ import {
   Address,
   Hex,
 } from "viem";
-import { EvmWalletProvider } from "./evmWalletProvider";
-import { Network } from "../network";
+import { EvmWalletProvider } from "./evmWalletProvider.js";
+import { Network } from "../network/index.js";
 import {
   Coinbase,
   CreateERC20Options,
@@ -31,8 +31,10 @@ import {
   hashTypedDataMessage,
   hashMessage,
 } from "@coinbase/coinbase-sdk";
-import { NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_VIEM_CHAIN } from "../network/network";
-import { applyGasMultiplier } from "../utils";
+import { NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_VIEM_CHAIN } from "../network/network.js";
+import { applyGasMultiplier } from "../utils.js";
+
+const { version } = pkg;
 
 /**
  * Configuration options for the CDP Providers.

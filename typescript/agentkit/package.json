@@ -7,6 +7,7 @@
   "license": "Apache-2.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "type": "module",
   "files": [
     "dist"
   ],
@@ -48,7 +49,7 @@
     "@solana/web3.js": "^1.98.0",
     "bs58": "^6.0.0",
     "decimal.js": "^10.5.0",
-    "ethers": "^6.13.5",
+    "ethers": "^5.8.0",
     "md5": "^2.3.0",
     "opensea-js": "^7.1.18",
     "reflect-metadata": "^0.2.2",
@@ -79,6 +80,22 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./wallet-providers": {
+      "types": "./dist/wallet-providers/index.d.ts",
+      "default": "./dist/wallet-providers/index.js"
+    },
+    "./action-providers": {
+      "types": "./dist/action-providers/index.d.ts",
+      "default": "./dist/action-providers/index.js"
+    },
+    "./network": {
+      "types": "./dist/network/index.d.ts",
+      "default": "./dist/network/index.js"
+    },
+    "./utils": {
+      "types": "./dist/utils.d.ts",
+      "default": "./dist/utils.js"
     }
   }
 }

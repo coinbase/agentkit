@@ -1,1 +1,1 @@
-export * from "./openseaActionProvider";
+export * from "./openseaActionProvider.js";

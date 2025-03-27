@@ -1,8 +1,8 @@
-import { WrapEthSchema } from "./schemas";
-import { EvmWalletProvider } from "../../wallet-providers";
+import { WrapEthSchema } from "./schemas.js";
+import { EvmWalletProvider } from "../../wallet-providers/index.js";
 import { encodeFunctionData } from "viem";
-import { WETH_ABI, WETH_ADDRESS } from "./constants";
-import { wethActionProvider } from "./wethActionProvider";
+import { WETH_ABI, WETH_ADDRESS } from "./constants.js";
+import { wethActionProvider } from "./wethActionProvider.js";
 
 const MOCK_AMOUNT = "15";
 const MOCK_ADDRESS = "0x1234567890123456789012345678901234543210";

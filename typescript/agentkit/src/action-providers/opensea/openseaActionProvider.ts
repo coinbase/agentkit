@@ -1,12 +1,13 @@
 import { z } from "zod";
-import { ActionProvider } from "../actionProvider";
-import { CreateAction } from "../actionDecorator";
-import { ListNftSchema, GetNftsByAccountSchema } from "./schemas";
+import { ActionProvider } from "../actionProvider.js";
+import { CreateAction } from "../actionDecorator.js";
+import { ListNftSchema, GetNftsByAccountSchema } from "./schemas.js";
 import { OpenSeaSDK } from "opensea-js";
-import { Network, NETWORK_ID_TO_CHAIN_ID } from "../../network";
+import { Network, NETWORK_ID_TO_CHAIN_ID } from "../../network/index.js";
 import { Wallet, ethers } from "ethers";
-import { EvmWalletProvider } from "../../wallet-providers";
-import { chainIdToOpenseaChain, supportedChains } from "./utils";
+import { EvmWalletProvider } from "../../wallet-providers/index.js";
+import { chainIdToOpenseaChain, supportedChains } from "./utils.js";
+
 /**
  * Configuration options for the OpenseaActionProvider.
  */
@@ -55,7 +56,8 @@ export class OpenseaActionProvider extends ActionProvider<EvmWalletProvider> {
     const walletWithProvider = new Wallet(config.privateKey!, provider);
     this.walletWithProvider = walletWithProvider;
 
-    const openseaSDK = new OpenSeaSDK(walletWithProvider, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const openseaSDK = new OpenSeaSDK(walletWithProvider as any, {
       chain: chainIdToOpenseaChain(chainId),
       apiKey: this.apiKey,
     });

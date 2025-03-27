@@ -1,7 +1,7 @@
 import { encodeFunctionData } from "viem";
-import { erc721ActionProvider } from "./erc721ActionProvider";
-import { ERC721_ABI } from "./constants";
-import { EvmWalletProvider } from "../../wallet-providers";
+import { erc721ActionProvider } from "./erc721ActionProvider.js";
+import { ERC721_ABI } from "./constants.js";
+import { EvmWalletProvider } from "../../wallet-providers/index.js";
 
 describe("ERC721 Action Provider", () => {
   const MOCK_ADDRESS = "0xe6b2af36b3bb8d47206a129ff11d5a2de2a63c83";

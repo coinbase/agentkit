@@ -1,6 +1,6 @@
 import { Connection, PublicKey } from "@solana/web3.js";
-import { SvmWalletProvider } from "../../wallet-providers/svmWalletProvider";
-import { JupiterActionProvider } from "./jupiterActionProvider";
+import { SvmWalletProvider } from "../../wallet-providers/svmWalletProvider.js";
+import { JupiterActionProvider } from "./jupiterActionProvider.js";
 import { createJupiterApiClient } from "@jup-ag/api";
 
 // Default SPL token decimals for tests

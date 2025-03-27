@@ -1,3 +1,3 @@
-export * from "./network";
-export * from "./svm";
-export * from "./types";
+export * from "./network.js";
+export * from "./svm.js";
+export * from "./types.js";

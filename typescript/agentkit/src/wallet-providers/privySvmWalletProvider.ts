@@ -1,5 +1,5 @@
 import { PrivyClient } from "@privy-io/server-auth";
-import { SvmWalletProvider } from "./svmWalletProvider";
+import { SvmWalletProvider } from "./svmWalletProvider.js";
 import {
   RpcResponseAndContext,
   SignatureStatus,
@@ -9,9 +9,9 @@ import {
   SignatureResult,
   clusterApiUrl,
 } from "@solana/web3.js";
-import { SOLANA_NETWORKS, SOLANA_CLUSTER_ID_BY_NETWORK_ID } from "../network/svm";
-import { Network } from "../network/types";
-import { createPrivyWallet, PrivyWalletConfig, PrivyWalletExport } from "./privyShared";
+import { SOLANA_NETWORKS, SOLANA_CLUSTER_ID_BY_NETWORK_ID } from "../network/svm.js";
+import { Network } from "../network/types.js";
+import { createPrivyWallet, PrivyWalletConfig, PrivyWalletExport } from "./privyShared.js";
 
 /**
  * Configuration options for the Privy Svm wallet provider.

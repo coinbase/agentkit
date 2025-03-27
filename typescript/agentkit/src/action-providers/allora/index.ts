@@ -1,2 +1,2 @@
-export * from "./alloraActionProvider";
-export * from "./schemas";
+export * from "./alloraActionProvider.js";
+export * from "./schemas.js";

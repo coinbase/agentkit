@@ -1,2 +1,2 @@
-export * from "./schemas";
-export * from "./farcasterActionProvider";
+export * from "./schemas.js";
+export * from "./farcasterActionProvider.js";

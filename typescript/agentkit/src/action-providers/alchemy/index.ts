@@ -1,2 +1,2 @@
-export * from "./alchemyTokenPricesActionProvider";
-export * from "./schemas";
+export * from "./alchemyTokenPricesActionProvider.js";
+export * from "./schemas.js";

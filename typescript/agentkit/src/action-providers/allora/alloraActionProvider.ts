@@ -1,5 +1,5 @@
-import { ActionProvider } from "../actionProvider";
-import { CreateAction } from "../actionDecorator";
+import { ActionProvider } from "../actionProvider.js";
+import { CreateAction } from "../actionDecorator.js";
 import {
   AlloraAPIClient,
   AlloraAPIClientConfig,
@@ -12,7 +12,7 @@ import {
   GetAllTopicsSchema,
   GetInferenceByTopicIdSchema,
   GetPriceInferenceSchema,
-} from "./schemas";
+} from "./schemas.js";
 
 /**
  * Action provider for interacting with Allora Network

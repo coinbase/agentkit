@@ -2,6 +2,7 @@
   "name": "agentkit-typescript-monorepo",
   "private": true,
   "packageManager": "pnpm@10.7.0",
+  "type": "module",
   "scripts": {
     "build": "turbo run build",
     "changeset": "changeset",

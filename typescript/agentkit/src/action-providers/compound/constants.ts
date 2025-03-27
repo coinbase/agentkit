@@ -1,5 +1,5 @@
 import { Address } from "viem";
-import { abi as ERC20_ABI } from "../erc20/constants";
+import { abi as ERC20_ABI } from "../erc20/constants.js";
 
 export const SUPPORTED_NETWORKS = ["base-mainnet", "base-sepolia"];
 

@@ -1,1 +1,1 @@
-export * from "./sendAnalyticsEvent";
+export * from "./sendAnalyticsEvent.js";

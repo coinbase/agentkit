@@ -1,13 +1,18 @@
 import { z } from "zod";
 import { parseUnits, Hex, createWalletClient, http, formatUnits, encodeFunctionData } from "viem";
-import { ActionProvider } from "../actionProvider";
-import { CHAIN_ID_TO_NETWORK_ID, Network, NETWORK_ID_TO_VIEM_CHAIN, getChain } from "../../network";
-import { CreateAction } from "../actionDecorator";
-import { BridgeTokenSchema, CheckDepositStatusSchema } from "./schemas";
-import { EvmWalletProvider } from "../../wallet-providers";
-import { isAcrossSupportedTestnet } from "./utils";
+import { ActionProvider } from "../actionProvider.js";
+import {
+  CHAIN_ID_TO_NETWORK_ID,
+  Network,
+  NETWORK_ID_TO_VIEM_CHAIN,
+  getChain,
+} from "../../network/index.js";
+import { CreateAction } from "../actionDecorator.js";
+import { BridgeTokenSchema, CheckDepositStatusSchema } from "./schemas.js";
+import { EvmWalletProvider } from "../../wallet-providers/index.js";
+import { isAcrossSupportedTestnet } from "./utils.js";
 import { privateKeyToAccount } from "viem/accounts";
-import { abi as ERC20_ABI } from "../erc20/constants";
+import { abi as ERC20_ABI } from "../erc20/constants.js";
 /**
  * Configuration options for the SafeWalletProvider.
  */

@@ -1,19 +1,19 @@
 import { z } from "zod";
-import { ActionProvider } from "../actionProvider";
-import { EvmWalletProvider } from "../../wallet-providers";
-import { CreateAction } from "../actionDecorator";
-import { Network } from "../../network";
+import { ActionProvider } from "../actionProvider.js";
+import { EvmWalletProvider } from "../../wallet-providers/index.js";
+import { CreateAction } from "../actionDecorator.js";
+import { Network } from "../../network/index.js";
 import {
   SUPPORTED_NETWORKS,
   WOW_ABI,
   WOW_FACTORY_ABI,
   GENERIC_TOKEN_METADATA_URI,
   getFactoryAddress,
-} from "./constants";
-import { getBuyQuote, getSellQuote } from "./utils";
-import { getHasGraduated } from "./uniswap/utils";
+} from "./constants.js";
+import { getBuyQuote, getSellQuote } from "./utils.js";
+import { getHasGraduated } from "./uniswap/utils.js";
 import { encodeFunctionData } from "viem";
-import { WowBuyTokenInput, WowCreateTokenInput, WowSellTokenInput } from "./schemas";
+import { WowBuyTokenInput, WowCreateTokenInput, WowSellTokenInput } from "./schemas.js";
 
 /**
  * WowActionProvider is an action provider for Wow protocol interactions.

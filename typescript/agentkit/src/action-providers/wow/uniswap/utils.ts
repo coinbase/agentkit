@@ -1,7 +1,7 @@
 import { formatEther, getAddress } from "viem";
-import { EvmWalletProvider } from "../../../wallet-providers";
-import { ADDRESSES, WOW_ABI } from "../constants";
-import { UNISWAP_QUOTER_ABI, UNISWAP_V3_ABI } from "./constants";
+import { EvmWalletProvider } from "../../../wallet-providers/index.js";
+import { ADDRESSES, WOW_ABI } from "../constants.js";
+import { UNISWAP_QUOTER_ABI, UNISWAP_V3_ABI } from "./constants.js";
 
 export interface PriceInfo {
   eth: string;

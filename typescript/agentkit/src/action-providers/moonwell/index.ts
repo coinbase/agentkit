@@ -1,1 +1,1 @@
-export { moonwellActionProvider } from "./moonwellActionProvider";
+export { moonwellActionProvider } from "./moonwellActionProvider.js";

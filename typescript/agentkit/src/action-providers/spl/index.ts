@@ -1,1 +1,1 @@
-export * from "./splActionProvider";
+export * from "./splActionProvider.js";

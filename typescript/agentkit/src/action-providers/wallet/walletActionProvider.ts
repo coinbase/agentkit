@@ -1,11 +1,11 @@
 import { z } from "zod";
 
-import { CreateAction } from "../actionDecorator";
-import { ActionProvider } from "../actionProvider";
-import { WalletProvider } from "../../wallet-providers";
-import { Network } from "../../network";
+import { CreateAction } from "../actionDecorator.js";
+import { ActionProvider } from "../actionProvider.js";
+import { WalletProvider } from "../../wallet-providers/index.js";
+import { Network } from "../../network/index.js";
 
-import { NativeTransferSchema, GetWalletDetailsSchema } from "./schemas";
+import { NativeTransferSchema, GetWalletDetailsSchema } from "./schemas.js";
 
 const PROTOCOL_FAMILY_TO_TERMINOLOGY: Record<
   string,

@@ -1,11 +1,11 @@
 import { clusterApiUrl, Keypair } from "@solana/web3.js";
-import { SolanaKeypairWalletProvider } from "./solanaKeypairWalletProvider";
+import { SolanaKeypairWalletProvider } from "./solanaKeypairWalletProvider.js";
 import {
   SOLANA_DEVNET_GENESIS_BLOCK_HASH,
   SOLANA_MAINNET_GENESIS_BLOCK_HASH,
   SOLANA_NETWORKS,
   SOLANA_TESTNET_GENESIS_BLOCK_HASH,
-} from "../network/svm";
+} from "../network/svm.js";
 
 describe("Solana Keypair Wallet", () => {
   it("should initialize correctly via convenience getters", async () => {

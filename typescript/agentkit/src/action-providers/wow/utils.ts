@@ -1,6 +1,6 @@
-import { EvmWalletProvider } from "../../wallet-providers";
-import { WOW_ABI } from "./constants";
-import { getHasGraduated, getUniswapQuote } from "./uniswap/utils";
+import { EvmWalletProvider } from "../../wallet-providers/index.js";
+import { WOW_ABI } from "./constants.js";
+import { getHasGraduated, getUniswapQuote } from "./uniswap/utils.js";
 
 /**
  * Gets the current supply of a token.

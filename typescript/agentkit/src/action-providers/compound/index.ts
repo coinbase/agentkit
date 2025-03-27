@@ -1,1 +1,1 @@
-export * from "./compoundActionProvider";
+export * from "./compoundActionProvider.js";

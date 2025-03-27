@@ -1,6 +1,6 @@
-import { WalletProvider } from "../../wallet-providers";
-import { walletActionProvider } from "./walletActionProvider";
-import { NativeTransferSchema } from "./schemas";
+import { WalletProvider } from "../../wallet-providers/index.js";
+import { walletActionProvider } from "./walletActionProvider.js";
+import { NativeTransferSchema } from "./schemas.js";
 
 describe("Wallet Action Provider", () => {
   const MOCK_ADDRESS = "0xe6b2af36b3bb8d47206a129ff11d5a2de2a63c83";

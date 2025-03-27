@@ -1,14 +1,14 @@
 import { z } from "zod";
 import { Decimal } from "decimal.js";
 import { encodeFunctionData, Hex, parseUnits } from "viem";
-import { abi } from "../erc20/constants";
-import { ActionProvider } from "../actionProvider";
-import { EvmWalletProvider } from "../../wallet-providers";
-import { CreateAction } from "../actionDecorator";
-import { approve } from "../../utils";
-import { METAMORPHO_ABI } from "./constants";
-import { DepositSchema, WithdrawSchema } from "./schemas";
-import { Network } from "../../network";
+import { abi } from "../erc20/constants.js";
+import { ActionProvider } from "../actionProvider.js";
+import { EvmWalletProvider } from "../../wallet-providers/index.js";
+import { CreateAction } from "../actionDecorator.js";
+import { approve } from "../../utils.js";
+import { METAMORPHO_ABI } from "./constants.js";
+import { DepositSchema, WithdrawSchema } from "./schemas.js";
+import { Network } from "../../network/index.js";
 
 export const SUPPORTED_NETWORKS = ["base-mainnet", "base-sepolia"];
 

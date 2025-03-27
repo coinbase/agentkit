@@ -1,2 +1,2 @@
-export * from "./basenameActionProvider";
-export * from "./schemas";
+export * from "./basenameActionProvider.js";
+export * from "./schemas.js";

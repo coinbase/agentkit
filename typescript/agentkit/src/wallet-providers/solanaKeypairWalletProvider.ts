@@ -1,5 +1,5 @@
-import { SvmWalletProvider } from "./svmWalletProvider";
-import { Network } from "../network";
+import { SvmWalletProvider } from "./svmWalletProvider.js";
+import { Network } from "../network/index.js";
 import {
   Connection,
   Keypair,
@@ -25,7 +25,7 @@ import {
   SOLANA_NETWORKS,
   SOLANA_TESTNET_GENESIS_BLOCK_HASH,
   SOLANA_TESTNET_NETWORK_ID,
-} from "../network/svm";
+} from "../network/svm.js";
 
 /**
  * SolanaKeypairWalletProvider is a wallet provider that uses a local Solana keypair.

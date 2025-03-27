@@ -14,10 +14,10 @@ import {
   ContractFunctionName,
   ContractFunctionArgs,
 } from "viem";
-import { EvmWalletProvider } from "./evmWalletProvider";
-import { Network } from "../network";
-import { CHAIN_ID_TO_NETWORK_ID } from "../network/network";
-import { applyGasMultiplier } from "../utils";
+import { EvmWalletProvider } from "./evmWalletProvider.js";
+import { Network } from "../network/index.js";
+import { CHAIN_ID_TO_NETWORK_ID } from "../network/network.js";
+import { applyGasMultiplier } from "../utils.js";
 
 /**
  * Configuration for gas multipliers.

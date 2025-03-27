@@ -1,1 +1,1 @@
-export * from "./erc721ActionProvider";
+export * from "./erc721ActionProvider.js";

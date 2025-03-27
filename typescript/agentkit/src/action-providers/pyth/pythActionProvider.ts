@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { ActionProvider } from "../actionProvider";
-import { CreateAction } from "../actionDecorator";
-import { PythFetchPriceFeedIDSchema, PythFetchPriceSchema } from "./schemas";
+import { ActionProvider } from "../actionProvider.js";
+import { CreateAction } from "../actionDecorator.js";
+import { PythFetchPriceFeedIDSchema, PythFetchPriceSchema } from "./schemas.js";
 
 /**
  * PythActionProvider is an action provider for Pyth.

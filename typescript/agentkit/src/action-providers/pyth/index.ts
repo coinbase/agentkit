@@ -1,2 +1,2 @@
-export * from "./pythActionProvider";
-export * from "./schemas";
+export * from "./pythActionProvider.js";
+export * from "./schemas.js";

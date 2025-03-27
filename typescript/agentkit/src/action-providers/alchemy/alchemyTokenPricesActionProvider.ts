@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { ActionProvider } from "../actionProvider";
-import { CreateAction } from "../actionDecorator";
-import { AlchemyTokenPricesBySymbolSchema, AlchemyTokenPricesByAddressSchema } from "./schemas";
+import { ActionProvider } from "../actionProvider.js";
+import { CreateAction } from "../actionDecorator.js";
+import { AlchemyTokenPricesBySymbolSchema, AlchemyTokenPricesByAddressSchema } from "./schemas.js";
 
 /**
  * Configuration options for the AlchemyTokenPricesActionProvider.

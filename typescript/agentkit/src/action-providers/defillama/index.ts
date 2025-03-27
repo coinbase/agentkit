@@ -1,1 +1,1 @@
-export * from "./defillamaActionProvider";
+export * from "./defillamaActionProvider.js";

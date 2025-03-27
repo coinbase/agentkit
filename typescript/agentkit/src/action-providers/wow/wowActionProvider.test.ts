@@ -1,12 +1,12 @@
 import { encodeFunctionData } from "viem";
-import { EvmWalletProvider } from "../../wallet-providers";
-import { WowActionProvider } from "./wowActionProvider";
-import { WOW_ABI, WOW_FACTORY_ABI, GENERIC_TOKEN_METADATA_URI } from "./constants";
-import { getBuyQuote, getSellQuote } from "./utils";
-import { getHasGraduated } from "./uniswap/utils";
-import { WowBuyTokenInput, WowCreateTokenInput, WowSellTokenInput } from "./schemas";
+import { EvmWalletProvider } from "../../wallet-providers/index.js";
+import { WowActionProvider } from "./wowActionProvider.js";
+import { WOW_ABI, WOW_FACTORY_ABI, GENERIC_TOKEN_METADATA_URI } from "./constants.js";
+import { getBuyQuote, getSellQuote } from "./utils.js";
+import { getHasGraduated } from "./uniswap/utils.js";
+import { WowBuyTokenInput, WowCreateTokenInput, WowSellTokenInput } from "./schemas.js";
 
-jest.mock("./utils", () => ({
+jest.mock("./utils.js", () => ({
   getBuyQuote: jest.fn(),
   getSellQuote: jest.fn(),
 }));

@@ -1,4 +1,4 @@
-import { ProtocolResponse, PrunedProtocolResponse } from "./types";
+import { ProtocolResponse, PrunedProtocolResponse } from "./types.js";
 
 /**
  * Represents a data point in a time-series array with a date property

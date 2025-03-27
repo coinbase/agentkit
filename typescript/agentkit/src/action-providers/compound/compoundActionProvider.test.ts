@@ -1,9 +1,9 @@
 import { parseEther, parseUnits, encodeFunctionData, Hex, Address } from "viem";
-import { EvmWalletProvider } from "../../wallet-providers/evmWalletProvider";
-import { CompoundActionProvider } from "./compoundActionProvider";
-import { COMET_ABI, COMET_ADDRESSES, ASSET_ADDRESSES } from "./constants";
-import { Network } from "../../network";
-import { approve } from "../../utils";
+import { EvmWalletProvider } from "../../wallet-providers/evmWalletProvider.js";
+import { CompoundActionProvider } from "./compoundActionProvider.js";
+import { COMET_ABI, COMET_ADDRESSES, ASSET_ADDRESSES } from "./constants.js";
+import { Network } from "../../network/index.js";
+import { approve } from "../../utils.js";
 
 jest.mock("../../utils");
 const mockApprove = approve as jest.MockedFunction<typeof approve>;

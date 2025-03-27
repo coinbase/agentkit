@@ -6,9 +6,9 @@ import {
   PublicKey,
 } from "@solana/web3.js";
 
-import { SplActionProvider } from "./splActionProvider";
-import { SvmWalletProvider } from "../../wallet-providers/svmWalletProvider";
-import { Network } from "../../network";
+import { SplActionProvider } from "./splActionProvider.js";
+import { SvmWalletProvider } from "../../wallet-providers/svmWalletProvider.js";
+import { Network } from "../../network/index.js";
 
 type Mint = {
   decimals: number;

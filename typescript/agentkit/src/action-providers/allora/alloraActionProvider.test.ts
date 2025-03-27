@@ -1,4 +1,4 @@
-import { AlloraActionProvider } from "./alloraActionProvider";
+import { AlloraActionProvider } from "./alloraActionProvider.js";
 import { AlloraAPIClient, ChainSlug, PriceInferenceToken } from "@alloralabs/allora-sdk";
 
 jest.mock("@alloralabs/allora-sdk");
