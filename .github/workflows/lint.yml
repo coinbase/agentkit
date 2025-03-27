@@ -52,35 +52,44 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda
+        with:
+          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: "18"
-          cache: "npm"
+          cache: "pnpm"
           cache-dependency-path: ./typescript
       - name: Ensure Linting
         working-directory: ./typescript
         run: |
-          npm ci
-          npm run lint
+          pnpm install --frozen-lockfile
+          pnpm run lint
 
   check-package-lock:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - uses: actions/setup-node@v4
         with:
           node-version: "18"
-          cache: "npm"
+          cache: "pnpm"
           cache-dependency-path: ./typescript
 
-      - name: Check if package-lock.json changed
+      - name: Check if pnpm-lock.yaml changed
         working-directory: ./typescript
         run: |
-          npm install
-          if [ -n "$(git diff package-lock.json)" ]; then
-            echo "Error: package-lock.json was modified after running npm install. Please commit the updated package-lock.json file."
-            git diff package-lock.json
+          pnpm install
+          if [ -n "$(git diff pnpm-lock.yaml)" ]; then
+            echo "Error: pnpm-lock.yaml was modified after running pnpm install. Please commit the updated pnpm-lock.yaml file."
+            git diff pnpm-lock.yaml
             exit 1
           fi
 

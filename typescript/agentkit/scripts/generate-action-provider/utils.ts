@@ -189,7 +189,7 @@ export function displaySuccessMessage(providerName: string): void {
   );
 
   console.log(SUCCESS_MESSAGES.REMINDERS);
-  console.log("• Run npm run test to verify your implementation");
-  console.log("• Run npm run format to format your code");
-  console.log("• Run npm run lint to ensure code style");
+  console.log("• Run pnpm run test to verify your implementation");
+  console.log("• Run pnpm run format to format your code");
+  console.log("• Run pnpm run lint to ensure code style");
 }

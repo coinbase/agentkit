@@ -10,7 +10,6 @@ import {
   ContractFunctionArgs,
   ContractFunctionName,
 } from "viem";
-import { jest } from "@jest/globals";
 
 import * as coinbaseSdk from "@coinbase/coinbase-sdk";
 import { NetworkScopedSmartWallet, SendUserOperationOptions } from "@coinbase/coinbase-sdk";
@@ -129,13 +128,15 @@ describe("SmartWalletProvider", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    const mockGetBalance = jest.fn<() => Promise<bigint>>();
+    const mockGetBalance = jest.fn() as jest.MockedFunction<() => Promise<bigint>>;
     mockGetBalance.mockResolvedValue(MOCK_BALANCE);
 
-    const mockSendTransaction = jest.fn<() => Promise<string>>();
+    const mockSendTransaction = jest.fn() as jest.MockedFunction<() => Promise<string>>;
     mockSendTransaction.mockResolvedValue(MOCK_TRANSACTION_HASH);
 
-    const mockSendUserOperation = jest.fn<(options: unknown) => Promise<MockUserOperation>>();
+    const mockSendUserOperation = jest.fn() as jest.MockedFunction<
+      (options: unknown) => Promise<MockUserOperation>
+    >;
 
     mockNetworkScopedWallet = {
       address: MOCK_ADDRESS,
@@ -144,7 +145,9 @@ describe("SmartWalletProvider", () => {
       sendUserOperation: mockSendUserOperation,
     };
 
-    const mockUserOperationWait = jest.fn<() => Promise<UserOperationResult>>();
+    const mockUserOperationWait = jest.fn() as jest.MockedFunction<
+      () => Promise<UserOperationResult>
+    >;
     mockUserOperationWait.mockResolvedValue({
       status: UserOperationStatus.COMPLETE,
       transactionHash: MOCK_TRANSACTION_HASH,
@@ -348,7 +351,9 @@ describe("SmartWalletProvider", () => {
     });
 
     it("should handle operation failures when sending transactions", async () => {
-      const mockUserOperationWait = jest.fn<() => Promise<UserOperationResult>>();
+      const mockUserOperationWait = jest.fn() as jest.MockedFunction<
+        () => Promise<UserOperationResult>
+      >;
       mockUserOperationWait.mockResolvedValue({
         status: "failed",
         transactionHash: MOCK_TRANSACTION_HASH,
