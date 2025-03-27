@@ -59,9 +59,9 @@ export class PrivyWalletProvider {
     const chainType = config.chainType || "ethereum";
     const walletType = config.walletType || "server";
 
-    switch(chainType) {
+    switch (chainType) {
       case "ethereum": {
-        switch(walletType) {
+        switch (walletType) {
           case "server":
             return (await PrivyEvmWalletProvider.configureWithWallet(
               config as PrivyEvmWalletConfig,
@@ -75,7 +75,7 @@ export class PrivyWalletProvider {
         }
       }
       case "solana": {
-        switch(walletType) {
+        switch (walletType) {
           case "server":
             return (await PrivySvmWalletProvider.configureWithWallet(
               config as PrivySvmWalletConfig,

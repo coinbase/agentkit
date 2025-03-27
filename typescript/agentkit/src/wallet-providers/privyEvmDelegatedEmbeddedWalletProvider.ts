@@ -13,7 +13,8 @@ import {
   ReadContractReturnType,
   TransactionReceipt,
   TransactionRequest,
-  createPublicClient, http,
+  createPublicClient,
+  http,
   parseEther,
 } from "viem";
 import { Network } from "../network";
@@ -309,7 +310,7 @@ export class PrivyEvmDelegatedEmbeddedWalletProvider extends WalletProvider {
       address: this.#address,
       chain_type: "ethereum",
       method: "eth_sendTransaction",
-      caip2: `eip155:${this.#network.chainId!}`, 
+      caip2: `eip155:${this.#network.chainId!}`,
       params: {
         transaction: {
           ...transaction,

@@ -67,7 +67,10 @@ async function initializeAgent() {
       model: "gpt-4o-mini",
     });
 
-    let walletProvider: PrivyEvmWalletProvider | PrivySvmWalletProvider | PrivyEvmDelegatedEmbeddedWalletProvider;
+    let walletProvider:
+      | PrivyEvmWalletProvider
+      | PrivySvmWalletProvider
+      | PrivyEvmDelegatedEmbeddedWalletProvider;
 
     const networkId = process.env.NETWORK_ID;
 
