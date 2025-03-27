@@ -12,7 +12,6 @@ This guide covers Python-specific setup and development for AgentKit.
 - [Code Style](#code-style)
 - [Documentation](#documentation)
 - [Changelog](#changelog)
-- [Releasing](#releasing)
 
 ## Development Setup
 
@@ -265,18 +264,3 @@ The types of changes you can add are:
 
 - `feature`
 - `bugfix`
-
-## Releasing
-
-When ready to release the Python packages, follow these steps.
-
-1. From the `python/` folder, run: `./scripts/version.sh`
-   - This creates a file `.to-publish-pypi` containing which packages have changes, and the new version that will be published. This file is automatically used in step 5.
-2. Commit the changes and open a PR with message: `chore: version python packages`
-3. Get PR reviewed and merge to `main`
-4. Run GitHub Actions to release changed packages
-   - [Publish AgentKit Core Action](https://github.com/coinbase/agentkit/actions/workflows/publish_pypi_coinbase_agentkit.yml)
-   - [Publish Create Onchain Agent Action](https://github.com/coinbase/agentkit/actions/workflows/publish_pypi_create_onchain_agent.yml)
-   - [Publish Agentkit Langchain Action](https://github.com/coinbase/agentkit/actions/workflows/publish_pypi_coinbase_agentkit_langchain.yml)
-   - [Publish Open AI Extension](https://github.com/coinbase/agentkit/actions/workflows/publish_pypi_coinbase_agentkit_openai_agents_sdk.yml)
-5. After all changed packages have been published, rebase `main` and, from the `python/` folder, run the following command to automatically create and push tags for changed packages: `./scripts/tag.sh`
