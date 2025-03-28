@@ -59,13 +59,7 @@ export const createPrivyClient = (config: PrivyWalletConfig) => {
 export async function createPrivyWallet(
   config: PrivyWalletConfig,
 ): Promise<CreatePrivyWalletReturnType> {
-  const privy = new PrivyClient(config.appId, config.appSecret, {
-    walletApi: config.authorizationPrivateKey
-      ? {
-          authorizationPrivateKey: config.authorizationPrivateKey,
-        }
-      : undefined,
-  });
+  const privy = createPrivyClient(config);
 
   if (config.walletId) {
     const wallet = await privy.walletApi.getWallet({ id: config.walletId });

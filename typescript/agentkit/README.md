@@ -699,7 +699,7 @@ For more information on setting up Privy and enabling delegated actions, see [Pr
 
 ### Supported Operations
 
-The `PrivyEvmEmbeddedWalletProvider` supports all standard wallet operations including transaction signing, message signing, and native transfers, using the wallet that was delegated to your server.
+The `PrivyEvmDelegatedEmbeddedWalletProvider` supports all standard wallet operations including transaction signing, message signing, and native transfers, using the wallet that was delegated to your server.
 
 #### Authorization Keys
 

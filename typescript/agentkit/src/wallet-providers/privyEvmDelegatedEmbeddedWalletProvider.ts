@@ -90,14 +90,14 @@ export class PrivyEvmDelegatedEmbeddedWalletProvider extends WalletProvider {
   }
 
   /**
-   * Creates and configures a new PrivyEvmEmbeddedWalletProvider instance.
+   * Creates and configures a new PrivyEvmDelegatedEmbeddedWalletProvider instance.
    *
    * @param config - The configuration options for the Privy wallet
-   * @returns A configured PrivyEvmEmbeddedWalletProvider instance
+   * @returns A configured PrivyEvmDelegatedEmbeddedWalletProvider instance
    *
    * @example
    * ```typescript
-   * const provider = await PrivyEvmEmbeddedWalletProvider.configureWithWallet({
+   * const provider = await PrivyEvmDelegatedEmbeddedWalletProvider.configureWithWallet({
    *   appId: "your-app-id",
    *   appSecret: "your-app-secret",
    *   authorizationPrivateKey: "your-auth-key",
@@ -115,11 +115,11 @@ export class PrivyEvmDelegatedEmbeddedWalletProvider extends WalletProvider {
       }
 
       if (!config.appId || !config.appSecret) {
-        throw new Error("appId and appSecret are required for PrivyEvmEmbeddedWalletProvider");
+        throw new Error("appId and appSecret are required for PrivyEvmDelegatedEmbeddedWalletProvider");
       }
 
       if (!config.authorizationPrivateKey) {
-        throw new Error("authorizationPrivateKey is required for PrivyEvmEmbeddedWalletProvider");
+        throw new Error("authorizationPrivateKey is required for PrivyEvmDelegatedEmbeddedWalletProvider");
       }
 
       const privyClient = createPrivyClient(config);
