@@ -3,7 +3,7 @@
 From the `python` folder, run:
 
 ```
-./scripts/version.sh
+python ./scripts/version.py
 ```
 
 This will consume changelogs in each Python package, determine the new version, update the version in all relevant files, and produce updates to all relevant CHANGELOG.md files.
