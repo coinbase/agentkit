@@ -646,23 +646,60 @@ const walletProvider = new ViemWalletProvider(client, {
 
 ### PrivyWalletProvider
 
-The `PrivyWalletProvider` is a wallet provider that uses [Privy Server Wallets](https://docs.privy.io/guide/server-wallets/). This implementation extends the `ViemWalletProvider`.
+The `PrivyWalletProvider` is a wallet provider that uses [Privy Server Wallets](https://docs.privy.io/guide/server-wallets/) or [Privy Embedded Wallets](https://docs.privy.io/guide/embedded-wallets/). This implementation extends the `EvmWalletProvider`.
+
+#### Server Wallet Configuration
 
 ```typescript
-import { PrivyWalletProvider, PrivyWalletConfig } from "@coinbase/agentkit";
+import { PrivyWalletProvider } from "@coinbase/agentkit";
 
-// Configure Wallet Provider
-const config: PrivyWalletConfig = {
+// Configure Server Wallet Provider
+const config = {
     appId: "PRIVY_APP_ID",
     appSecret: "PRIVY_APP_SECRET",
     chainId: "84532", // base-sepolia
     walletId: "PRIVY_WALLET_ID", // optional, otherwise a new wallet will be created
-    authorizationPrivateKey: PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY, // optional, required if your account is using authorization keys
-    authorizationKeyId: PRIVY_WALLET_AUTHORIZATION_KEY_ID, // optional, only required to create a new wallet if walletId is not provided
+    authorizationPrivateKey: "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY", // optional, required if your account is using authorization keys
+    authorizationKeyId: "PRIVY_WALLET_AUTHORIZATION_KEY_ID", // optional, only required to create a new wallet if walletId is not provided
 };
 
 const walletProvider = await PrivyWalletProvider.configureWithWallet(config);
 ```
+
+#### Delegated Embedded Wallet Configuration
+
+You can also use Privy's embedded wallets with delegation for agent actions. This allows your agent to use wallets that have been delegated transaction signing authority by users.
+
+```typescript
+import { PrivyWalletProvider } from "@coinbase/agentkit";
+
+// Configure Embedded Wallet Provider
+const config = {
+    appId: "PRIVY_APP_ID",
+    appSecret: "PRIVY_APP_SECRET",
+    authorizationPrivateKey: "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY",
+    walletId: "PRIVY_DELEGATED_WALLET_ID", // The ID of the wallet that was delegated to your server
+    networkId: "base-mainnet", // or any supported network
+    walletType: "embedded" // Specify "embedded" to use the embedded wallet provider
+};
+
+const walletProvider = await PrivyWalletProvider.configureWithWallet(config);
+```
+
+### Prerequisites
+
+Before using this wallet provider, you need to:
+
+1. Set up Privy in your application
+2. Enable server delegated actions
+3. Have users delegate permissions to your server
+4. Obtain the delegated wallet ID
+
+For more information on setting up Privy and enabling delegated actions, see [Privy's documentation](https://docs.privy.io/guide/embedded/server-delegated-actions).
+
+### Supported Operations
+
+The `PrivyEvmDelegatedEmbeddedWalletProvider` supports all standard wallet operations including transaction signing, message signing, and native transfers, using the wallet that was delegated to your server.
 
 #### Authorization Keys
 
@@ -679,10 +716,17 @@ The `PrivyWalletProvider` can export wallet information by calling the `exportWa
 ```typescript
 const walletData = await walletProvider.exportWallet();
 
-// walletData will be in the following format:
+// For server wallets, walletData will be in the following format:
 {
     walletId: string;
     authorizationKey: string | undefined;
+    chainId: string | undefined;
+}
+
+// For embedded wallets, walletData will be in the following format:
+{
+    walletId: string;
+    networkId: string;
     chainId: string | undefined;
 }
 ```
