@@ -38,6 +38,8 @@ You'll need to configure the Claude desktop config file with your CDP API keys. 
 2. Set your CDP API keys in the `env` section:
    - "CDP_API_KEY_NAME"
    - "CDP_API_KEY_PRIVATE_KEY"
+   - "PRIVATE_KEY" (optional, will generate a new private key if not provided)
+   - "SMART_WALLET_ADDRESS" (optional, will generate a new smart wallet address if not provided)
 
 Then, navigate to the `claude_desktop_config.json` file found in your Claude Desktop apps' settings and update it's contents to the contents of our `claude_desktop_config.json` file.
 

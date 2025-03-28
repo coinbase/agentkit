@@ -150,8 +150,8 @@ agentkit/
 │       ├── langchain-privy-chatbot/
 │       ├── langchain-solana-chatbot/
 │       ├── langchain-twitter-chatbot/
-│       ├── model-context-protocol-cdp-server/
-│       └── vercel-ai-sdk-cdp-chatbot/
+│       ├── model-context-protocol-smart-wallet-server/
+│       └── vercel-ai-sdk-smart-wallet-chatbot/
 ├── python/
 │   ├── coinbase-agentkit/
 │   ├── create-onchain-agent/
@@ -161,7 +161,7 @@ agentkit/
 │   └── examples/
 │       ├── langchain-cdp-chatbot/
 │       ├── langchain-twitter-chatbot/
-│       └── openai-agents-sdk-cdp-chatbot/
+│       └── openai-agents-sdk-smart-wallet-chatbot/
 ```
 
 ## 🤝 Contributing

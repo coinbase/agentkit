@@ -16,7 +16,7 @@
     "@modelcontextprotocol/sdk": "^1.6.1",
     "@solana/web3.js": "^1.98.0",
     "bs58": "^6.0.0",
-    "viem": "^2.23.7"
+    "viem": "^2.24.1"
   },
   "devDependencies": {
     "@types/node": "^22.13.9",
