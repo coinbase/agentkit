@@ -102,7 +102,7 @@ async function initializeAgent() {
         walletId: process.env.PRIVY_WALLET_ID as string,
         authorizationPrivateKey: process.env.PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY,
         authorizationKeyId: process.env.PRIVY_WALLET_AUTHORIZATION_KEY_ID,
-        walletType: "embedded", // Uncomment to use delegated embedded wallets (makes walletId required)
+        // walletType: "embedded", // Uncomment to use delegated embedded wallets (makes walletId required)
       };
 
       // Try to load saved wallet data
