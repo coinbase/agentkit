@@ -1,0 +1,34 @@
+{
+  "name": "@coinbase/zerodev-cdp-wallet-example",
+  "description": "Example of using ZeroDevWalletProvider with CDP Wallet as signer",
+  "version": "1.0.0",
+  "private": true,
+  "author": "Coinbase Inc.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "NODE_OPTIONS='--no-warnings' ts-node ./index.ts",
+    "dev": "nodemon ./index.ts",
+    "lint": "eslint -c .eslintrc.json *.ts",
+    "lint:fix": "eslint -c .eslintrc.json *.ts --fix",
+    "format": "prettier --write \"**/*.{ts,js,cjs,json,md}\"",
+    "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\""
+  },
+  "dependencies": {
+    "@coinbase/agentkit": "^0.4.0",
+    "@coinbase/agentkit-langchain": "^0.3.0",
+    "@langchain/core": "^0.3.19",
+    "@langchain/openai": "^0.3.14",
+    "@langchain/langgraph": "^0.2.21",
+    "@zerodev/intent": "^0.0.24",
+    "dotenv": "^16.4.5",
+    "viem": "^2.22.16",
+    "zod": "^3.23.8",
+    "reflect-metadata": "^0.2.2"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.18",
+    "nodemon": "^3.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}
