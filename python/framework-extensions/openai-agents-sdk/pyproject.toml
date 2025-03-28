@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "coinbase-agentkit-openai-agents-sdk"
-version = "0.1.0"
+version = "0.2.0"
 description = "Coinbase AgentKit OpenAI Agents SDK extension"
 authors = ["John Peterson <john.peterson@coinbase.com>"]
 readme = "README.md"
