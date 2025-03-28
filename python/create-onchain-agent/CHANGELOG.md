@@ -2,6 +2,13 @@
 
 <!-- towncrier release notes start -->
 
+## [0.4.0] - 2025-03-28
+
+### Added
+
+- Updated default wallet provider to SmartWalletProvider ([#622](https://github.com/coinbase/agentkit/pull/622))
+
+
 ## [0.3.0] - 2025-03-14
 
 ### Added
