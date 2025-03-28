@@ -17,6 +17,7 @@
   </p>
 
 [![](https://github.com/coinbase/agentkit/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/coinbase/agentkit/actions/workflows/github-code-scanning/codeql)
+[![](https://github.com/coinbase/agentkit/actions/workflows/lint.yml/badge.svg)](https://github.com/coinbase/agentkit/actions/workflows/lint.yml)
 [![pypi downloads](https://img.shields.io/pypi/dm/coinbase-agentkit?label=pypi:coinbase-agentkit&style=flat-square)](https://pypistats.org/packages/coinbase-agentkit)
 [![npm downloads](https://img.shields.io/npm/dm/@coinbase/agentkit?label=npm:@coinbase/agentkit&style=flat-square)](https://www.npmjs.com/package/@coinbase/agentkit)
 [![GitHub star chart](https://img.shields.io/github/stars/coinbase/agentkit?style=flat-square)](https://star-history.com/#coinbase/agentkit)
