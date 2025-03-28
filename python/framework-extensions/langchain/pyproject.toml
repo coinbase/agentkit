@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "coinbase-agentkit-langchain"
-version = "0.1.0"
+version = "0.2.0"
 description = "Coinbase AgentKit LangChain extension"
 authors = ["John Peterson <john.peterson@coinbase.com>"]
 readme = "README.md"
