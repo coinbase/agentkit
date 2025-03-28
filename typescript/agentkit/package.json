@@ -2,7 +2,7 @@
   "name": "@coinbase/agentkit",
   "description": "Coinbase AgentKit core primitives",
   "repository": "https://github.com/coinbase/agentkit",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "author": "Coinbase Inc.",
   "license": "Apache-2.0",
   "main": "dist/index.js",
