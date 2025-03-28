@@ -3,29 +3,23 @@ name: Publish Nightly Builds
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * *" # Run daily at midnight UTC
+    - cron: "0 21 * * *" # Run daily at 9 PM UTC / 5 PM EST
 
 jobs:
-  prepare-nightly:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-
-      - name: Configure Git
-        run: |
-          git config user.name "GitHub Actions Bot"
-          git config user.email "actions@github.com"
-
   publish-npm-nightly:
-    needs: prepare-nightly
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
     environment: npm
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
       - name: Setup pnpm
         uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda
         with:
@@ -46,10 +40,10 @@ jobs:
           pnpm changeset version --snapshot nightly
           pnpm changeset publish --tag nightly
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-pypi-nightly:
-    needs: prepare-nightly
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -66,8 +60,11 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: nightly
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
 
       - uses: actions/setup-python@v4
         with:
@@ -113,88 +110,3 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: python/${{ matrix.package }}/dist/
-
-  # create-github-release:
-  #   needs: [prepare-nightly, publish-npm-nightly, publish-pypi-nightly]
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: write
-  #   outputs:
-  #     release_id: ${{ steps.create_release.outputs.id }}
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         ref: nightly
-
-  #     - name: Install Poetry
-  #       uses: snok/install-poetry@v1
-
-  #     - name: Generate Release Notes
-  #       id: release_notes
-  #       run: |
-  #         TODAY=$(date +%Y%m%d)
-  #         TODAY_FORMATTED=$(date +%Y-%m-%d)
-  #         echo "TODAY=$TODAY" >> $GITHUB_OUTPUT
-  #         echo "TODAY_FORMATTED=$TODAY_FORMATTED" >> $GITHUB_OUTPUT
-
-  #         {
-  #           extract_unreleased() {
-  #             local file=$1 package=$2 version=$3
-  #             if [ -f "$file" ]; then
-  #               if [[ $package == @* ]]; then
-  #                 local url="https://www.npmjs.com/package/$package"
-  #                 [[ $version != "latest" ]] && url="$url/v/$version"
-  #               else
-  #                 local url="https://pypi.org/project/$package"
-  #                 [[ $version != "latest" ]] && url="$url/$version"
-  #               fi
-  #               echo "## [📦 $package]($url)"
-  #               echo ""
-  #               awk '/^## Unreleased$/{p=1;next}/^## /{p=0}p' "$file" | grep -v '^$' || echo "No unreleased changes"
-  #               echo ""
-  #             fi
-  #           }
-
-  #           cd typescript
-  #           for pkg in $(find . -name "package.json" -not -path "*/node_modules/*" -not -path "./typescript/package.json" -not -path "*/examples/*" -not -path "*/create-onchain-agent/templates/*" -not -path "*/dist/*" -exec dirname {} \;); do
-  #             if [ -f "$pkg/package.json" ] && ! grep -q '"private": true' "$pkg/package.json"; then
-  #               PKG_NAME=$(node -p "require('$pkg/package.json').name")
-  #               CHANGELOG="$pkg/CHANGELOG.md"
-  #               extract_unreleased "$CHANGELOG" "$PKG_NAME" \
-  #                 $(npm view "$PKG_NAME" versions --json | jq -r '.[]' | grep -E "nightly\.${TODAY}\.[0-9]$" | sort -V | tail -n1 || echo "latest")
-  #             fi
-  #           done
-
-  #           cd - > /dev/null
-
-  #           cd python
-  #           for pkg in $(find . -name "pyproject.toml" -not -path "*/examples/*" -exec dirname {} \;); do
-  #             if [ -f "$pkg/pyproject.toml" ] && ! grep -q "private = true" "$pkg/pyproject.toml"; then
-  #               cd $pkg
-  #               PKG_NAME=$(poetry version | cut -d' ' -f1)
-  #               cd - > /dev/null
-  #               CHANGELOG="$pkg/CHANGELOG.md"
-  #               extract_unreleased "$CHANGELOG" "$PKG_NAME" \
-  #                 $(curl -s "https://pypi.org/pypi/$PKG_NAME/json" | jq -r '.releases | keys[]' | grep -E "\.dev${TODAY}[0-9]$" | sort -V | tail -n1 || echo "latest")
-  #             fi
-  #           done
-
-  #           cd - > /dev/null
-  #         } > release_notes.md
-
-  #         echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
-  #         cat release_notes.md >> $GITHUB_OUTPUT
-  #         echo "EOF" >> $GITHUB_OUTPUT
-
-  # - name: Create Release
-  #   id: create_release
-  #   uses: actions/create-release@v1
-  #   env:
-  #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #     TODAY: ${{ steps.release_notes.outputs.TODAY }}
-  #   with:
-  #     tag_name: nightly-${{ env.TODAY }}
-  #     release_name: "🌙 Nightly Build ${{ steps.release_notes.outputs.TODAY_FORMATTED }}"
-  #     body: ${{ steps.release_notes.outputs.RELEASE_NOTES }}
-  #     draft: false
-  #     prerelease: true
