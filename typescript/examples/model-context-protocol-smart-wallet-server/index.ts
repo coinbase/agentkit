@@ -64,7 +64,7 @@ async function initializeServer() {
       apiKeyName: process.env.CDP_API_KEY_NAME!,
       apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY!,
       networkId: process.env.NETWORK_ID || "base-sepolia",
-      smartWalletAddress: process.env.SMART_WALLET_ADDRESS! as Address,
+      smartWalletAddress: process.env.SMART_WALLET_ADDRESS as Address,
       signer,
     };
 
