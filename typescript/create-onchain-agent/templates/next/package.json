@@ -24,7 +24,7 @@
     "react": "^18",
     "react-dom": "^18",
     "react-markdown": "^10.0.0",
-    "viem": "^2.17.4",
+    "viem": "^2.24.1",
     "wagmi": "^2.11.0"
   },
   "devDependencies": {
