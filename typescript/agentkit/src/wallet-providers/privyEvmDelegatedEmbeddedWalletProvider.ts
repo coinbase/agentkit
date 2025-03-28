@@ -1,5 +1,4 @@
 import { WalletWithMetadata } from "@privy-io/server-auth";
-import axios from "axios";
 import canonicalize from "canonicalize";
 import crypto from "crypto";
 import {
@@ -115,11 +114,15 @@ export class PrivyEvmDelegatedEmbeddedWalletProvider extends WalletProvider {
       }
 
       if (!config.appId || !config.appSecret) {
-        throw new Error("appId and appSecret are required for PrivyEvmDelegatedEmbeddedWalletProvider");
+        throw new Error(
+          "appId and appSecret are required for PrivyEvmDelegatedEmbeddedWalletProvider",
+        );
       }
 
       if (!config.authorizationPrivateKey) {
-        throw new Error("authorizationPrivateKey is required for PrivyEvmDelegatedEmbeddedWalletProvider");
+        throw new Error(
+          "authorizationPrivateKey is required for PrivyEvmDelegatedEmbeddedWalletProvider",
+        );
       }
 
       const privyClient = createPrivyClient(config);
@@ -488,8 +491,19 @@ export class PrivyEvmDelegatedEmbeddedWalletProvider extends WalletProvider {
     const headers = this.getPrivyHeaders(url, body);
 
     try {
-      const response = await axios.post<T>(url, body, { headers });
-      return response.data;
+      const response = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body, (_key, value) =>
+          typeof value === "bigint" ? value.toString() : value,
+        ),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
     } catch (error) {
       if (error instanceof Error) {
         throw new Error("Privy request failed: " + error.message);

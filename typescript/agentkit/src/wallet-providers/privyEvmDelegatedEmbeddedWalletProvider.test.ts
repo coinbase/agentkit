@@ -4,12 +4,47 @@ import {
 } from "./privyEvmDelegatedEmbeddedWalletProvider";
 import { Address, Hex } from "viem";
 
-global.fetch = jest.fn(() =>
-  Promise.resolve({
+global.fetch = jest.fn().mockImplementation(async (url, init) => {
+  if (!init?.headers?.["privy-authorization-signature"]) {
+    throw new Error("Missing privy-authorization-signature header");
+  }
+  if (!init?.headers?.["privy-app-id"]) {
+    throw new Error("Missing privy-app-id header");
+  }
+
+  const body = JSON.parse(init.body as string);
+
+  if (url.includes("wallets/rpc")) {
+    if (body.method === "personal_sign") {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ data: { signature: "0x1234" } }),
+      } as Response);
+    }
+    if (body.method === "eth_signTypedData_v4") {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ signature: "0x1234" }),
+      } as Response);
+    }
+    if (body.method === "eth_signTransaction") {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ data: { signed_transaction: "0x1234" } }),
+      } as Response);
+    }
+    if (body.method === "eth_sendTransaction") {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ data: { hash: "0xef01" } }),
+      } as Response);
+    }
+  }
+  return Promise.resolve({
     ok: true,
     json: () => Promise.resolve({}),
-  } as Response),
-);
+  } as Response);
+});
 
 jest.mock("../analytics", () => ({
   sendAnalyticsEvent: jest.fn().mockImplementation(() => Promise.resolve()),
@@ -19,33 +54,6 @@ const MOCK_ADDRESS = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e";
 const MOCK_WALLET_ID = "test-wallet-id";
 const MOCK_TRANSACTION_HASH = "0xef01";
 const MOCK_SIGNATURE = "0x1234";
-
-jest.mock("axios", () => ({
-  post: jest.fn().mockImplementation((url, body, config) => {
-    if (!config?.headers?.["privy-authorization-signature"]) {
-      throw new Error("Missing privy-authorization-signature header");
-    }
-    if (!config?.headers?.["privy-app-id"]) {
-      throw new Error("Missing privy-app-id header");
-    }
-
-    if (url.includes("wallets/rpc")) {
-      if (body.method === "personal_sign") {
-        return Promise.resolve({ data: { data: { signature: "0x1234" } } });
-      }
-      if (body.method === "eth_signTypedData_v4") {
-        return Promise.resolve({ data: { signature: "0x1234" } });
-      }
-      if (body.method === "eth_signTransaction") {
-        return Promise.resolve({ data: { data: { signed_transaction: "0x1234" } } });
-      }
-      if (body.method === "eth_sendTransaction") {
-        return Promise.resolve({ data: { data: { hash: "0xef01" } } });
-      }
-    }
-    return Promise.resolve({ data: {} });
-  }),
-}));
 
 jest.mock("../network", () => {
   const chain = {
@@ -295,14 +303,16 @@ describe("PrivyEvmDelegatedEmbeddedWalletProvider", () => {
 
         await provider.sendTransaction(transaction);
 
-        const { post: axiosPost } = jest.requireMock("axios");
-        const lastCall = axiosPost.mock.calls[axiosPost.mock.calls.length - 1];
-        const [_url, _body, config] = lastCall;
+        expect(global.fetch).toHaveBeenCalled();
+        const lastCall = (global.fetch as jest.Mock).mock.calls[
+          (global.fetch as jest.Mock).mock.calls.length - 1
+        ];
+        const [_url, init] = lastCall;
 
-        expect(config.headers).toBeDefined();
-        expect(config.headers["privy-authorization-signature"]).toBeDefined();
-        expect(config.headers["privy-app-id"]).toBe("test-app-id");
-        expect(config.headers["Authorization"]).toBeDefined();
+        expect(init.headers).toBeDefined();
+        expect(init.headers["privy-authorization-signature"]).toBeDefined();
+        expect(init.headers["privy-app-id"]).toBe("test-app-id");
+        expect(init.headers["Authorization"]).toBeDefined();
       });
 
       it("should handle signature generation errors", async () => {
@@ -316,6 +326,24 @@ describe("PrivyEvmDelegatedEmbeddedWalletProvider", () => {
 
         await expect(provider.sendTransaction(transaction)).rejects.toThrow(
           "Error generating Privy authorization signature",
+        );
+      });
+
+      it("should handle HTTP errors", async () => {
+        (global.fetch as jest.Mock).mockImplementationOnce(() =>
+          Promise.resolve({
+            ok: false,
+            status: 400,
+          } as Response),
+        );
+
+        const transaction = {
+          to: "0x1234567890123456789012345678901234567890" as Address,
+          value: BigInt(1000000000000000000),
+        };
+
+        await expect(provider.sendTransaction(transaction)).rejects.toThrow(
+          "Privy request failed: HTTP error! status: 400",
         );
       });
     });
