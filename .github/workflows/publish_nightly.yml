@@ -18,11 +18,6 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
 
-      - name: Update nightly branch
-        run: |
-          git checkout -B nightly
-          git push origin nightly --force
-
   publish-npm-nightly:
     needs: prepare-nightly
     runs-on: ubuntu-latest
@@ -31,10 +26,6 @@ jobs:
       id-token: write
     environment: npm
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: nightly
-
       - name: Setup pnpm
         uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda
         with:
@@ -47,60 +38,13 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: ./typescript
 
-      - name: Install jq
-        run: sudo apt-get install jq
-
-      - name: Install dependencies and build packages
+      - name: Install, build and publish
+        working-directory: ./typescript
         run: |
-          cd typescript
           pnpm install --frozen-lockfile
           pnpm run build
-
-      - name: Find NPM packages
-        id: find-npm-packages
-        run: |
-          cd typescript
-          PACKAGES=$(find . -name "package.json" \
-            -not -path "*/node_modules/*" \
-            -not -path "./package.json" \
-            -not -path "*/examples/*" \
-            -not -path "*/create-onchain-agent/templates/*" \
-            -not -path "*/dist/*" \
-            -exec dirname {} \; | tr '\n' ' ')
-          echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
-
-      - name: Update NPM package versions
-        run: |
-          cd typescript
-          for pkg in ${{ steps.find-npm-packages.outputs.packages }}; do
-            if [ -f "$pkg/package.json" ]; then
-              cd $pkg
-              if ! grep -q '"private": true' package.json; then
-                PKG_NAME=$(node -p "require('./package.json').name")
-                ALL_VERSIONS=$(npm view "$PKG_NAME" versions --all --json 2>/dev/null || echo "[]")
-                LATEST_NIGHTLY=$(echo "$ALL_VERSIONS" | jq -r '.[]' 2>/dev/null | grep -E "nightly\.[0-9]{8}\.[0-9]+$" | sort -V | tail -n1 || echo "")
-                TODAY=$(date +%Y%m%d)
-                if [ -z "$LATEST_NIGHTLY" ]; then
-                  pnpm version prerelease --preid=nightly.$TODAY --no-git-tag-version
-                else
-                  BUILD_NUM=$(echo $LATEST_NIGHTLY | grep -Eo '[0-9]+$')
-                  NEXT_BUILD=$((BUILD_NUM + 1))
-                  pnpm version "$(echo $LATEST_NIGHTLY | cut -d'-' -f1)-nightly.$TODAY.$NEXT_BUILD" --no-git-tag-version
-                fi
-              fi
-              cd - > /dev/null
-            fi
-          done
-
-      - name: Publish packages
-        run: |
-          cd typescript
-          for pkg in ${{ steps.find-npm-packages.outputs.packages }}; do
-            if [ -f "$pkg/package.json" ] && ! grep -q '"private": true' "$pkg/package.json"; then
-              cd $pkg && pnpm publish --tag nightly --provenance --access public
-              cd - > /dev/null
-            fi
-          done
+          pnpm changeset version --snapshot nightly
+          pnpm changeset publish --tag nightly
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
