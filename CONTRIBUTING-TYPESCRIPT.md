@@ -224,13 +224,13 @@ Integrations into AI Agent frameworks are specific to the framework itself, so w
 
 ### Local Testing
 
-A good way to test new actions locally is by using the chatbot example in `typescript/examples/langchain-cdp-chatbot`. See the [chatbot README](https://github.com/coinbase/agentkit/blob/master/typescript/examples/langchain-cdp-chatbot/README.md) for instructions on setting up and running the chatbot.
+A good way to test new actions locally is by using the chatbot example in `typescript/examples/langchain-smart-wallet-chatbot`. See the [chatbot README](https://github.com/coinbase/agentkit/blob/master/typescript/examples/langchain-smart-wallet-chatbot/README.md) for instructions on setting up and running the chatbot.
 
 The flow is:
 
 1. Make your change as described in the [Adding an Agentic Action](#adding-an-agentic-action) section
-2. From `typescript/`, run `pnpm run build && pnpm i`
-3. In `typescript/examples/langchain-cdp-chatbot`, run `pnpm run start`
+2. From `typescript/`, run `pnpm i && pnpm build`
+3. In `typescript/examples/langchain-smart-wallet-chatbot`, run `pnpm run start`
 4. You can now interact with your new action via the chatbot!
 
 ### Running Tests

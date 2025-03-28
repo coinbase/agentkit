@@ -4,7 +4,7 @@ import {
   erc721ActionProvider,
   pythActionProvider,
   walletActionProvider,
-  CdpWalletProvider,
+  SmartWalletProvider,
 } from "@coinbase/agentkit";
 import { getVercelAITools } from "@coinbase/agentkit-vercel-ai-sdk";
 import { openai } from "@ai-sdk/openai";
@@ -12,8 +12,15 @@ import { generateId, Message, streamText, ToolSet } from "ai";
 import * as dotenv from "dotenv";
 import * as readline from "readline";
 import * as fs from "fs";
+import { Address, Hex } from "viem";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 dotenv.config();
+
+type WalletData = {
+  privateKey: Hex;
+  smartWalletAddress: Address;
+};
 
 /**
  * Validates that required environment variables are set
@@ -50,9 +57,6 @@ function validateEnvironment(): void {
 // Add this right after imports and before any other code
 validateEnvironment();
 
-// Configure a file to persist the agent's CDP MPC Wallet Data
-const WALLET_DATA_FILE = "wallet_data.txt";
-
 const system = `You are a helpful agent that can interact onchain using the Coinbase Developer Platform AgentKit. You are
 empowered to interact onchain using your tools. If you ever need funds, you can request them from the
 faucet if you are on network ID 'base-sepolia'. If not, you can provide your wallet details and request
@@ -71,23 +75,40 @@ restating your tools' descriptions unless it is explicitly requested.`;
  */
 async function initializeAgent() {
   try {
-    let walletDataStr: string | null = null;
+    const networkId = process.env.NETWORK_ID || "base-sepolia";
+    const walletDataFile = `wallet_data_${networkId.replace(/-/g, "_")}.txt`;
+
+    let walletData: WalletData | null = null;
+    let privateKey: Hex | null = null;
 
     // Read existing wallet data if available
-    if (fs.existsSync(WALLET_DATA_FILE)) {
+    if (fs.existsSync(walletDataFile)) {
       try {
-        walletDataStr = fs.readFileSync(WALLET_DATA_FILE, "utf8");
+        walletData = JSON.parse(fs.readFileSync(walletDataFile, "utf8")) as WalletData;
+        privateKey = walletData.privateKey;
       } catch (error) {
-        console.error("Error reading wallet data:", error);
+        console.error(`Error reading wallet data for ${networkId}:`, error);
         // Continue without wallet data
       }
     }
 
-    const walletProvider = await CdpWalletProvider.configureWithWallet({
-      apiKeyName: process.env.CDP_API_KEY_NAME,
-      apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-      cdpWalletData: walletDataStr || undefined,
-      networkId: process.env.NETWORK_ID || "base-sepolia",
+    if (!privateKey) {
+      if (walletData?.smartWalletAddress) {
+        throw new Error(
+          `Smart wallet found but no private key provided. Either provide the private key, or delete ${walletDataFile} and try again.`,
+        );
+      }
+      privateKey = (process.env.PRIVATE_KEY || generatePrivateKey()) as Hex;
+    }
+
+    const signer = privateKeyToAccount(privateKey);
+
+    // Configure Smart Wallet Provider
+    const walletProvider = await SmartWalletProvider.configureWithWallet({
+      networkId,
+      signer,
+      smartWalletAddress: walletData?.smartWalletAddress,
+      paymasterUrl: undefined, // Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
     });
 
     const agentKit = await AgentKit.from({
@@ -102,6 +123,16 @@ async function initializeAgent() {
         walletActionProvider(),
       ],
     });
+
+    // Save wallet data
+    const smartWalletAddress = await walletProvider.getAddress();
+    fs.writeFileSync(
+      walletDataFile,
+      JSON.stringify({
+        privateKey,
+        smartWalletAddress,
+      } as WalletData),
+    );
 
     const tools = getVercelAITools(agentKit);
     return { tools };
