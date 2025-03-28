@@ -1,4 +1,7 @@
-import { PrivyEvmDelegatedEmbeddedWalletProvider } from "./privyEvmDelegatedEmbeddedWalletProvider";
+import {
+  PrivyEvmDelegatedEmbeddedWalletConfig,
+  PrivyEvmDelegatedEmbeddedWalletProvider,
+} from "./privyEvmDelegatedEmbeddedWalletProvider";
 import { Address, Hex } from "viem";
 
 global.fetch = jest.fn(() =>
@@ -77,9 +80,9 @@ jest.mock("viem", () => {
     ...originalModule,
     createPublicClient: jest.fn().mockReturnValue({
       getBalance: jest.fn().mockResolvedValue(BigInt(1000000000000000000)),
-      waitForTransactionReceipt: jest.fn().mockResolvedValue({ 
+      waitForTransactionReceipt: jest.fn().mockResolvedValue({
         transactionHash: "0xef01",
-        status: "success" 
+        status: "success",
       }),
       readContract: jest.fn().mockResolvedValue("mock_result"),
     }),
@@ -101,24 +104,23 @@ jest.mock("./privyShared", () => ({
   }),
 }));
 
-jest.mock('canonicalize', () => 
-  jest.fn().mockImplementation((obj) => {
-    // Helper function to handle BigInt serialization
-    const replacer = (key: string, value: any) => {
-      if (typeof value === 'bigint') {
+jest.mock("canonicalize", () => {
+  const mockFn = jest.fn().mockImplementation((obj: unknown) => {
+    const replacer = (key: string, value: unknown) => {
+      if (typeof value === "bigint") {
         return value.toString();
       }
       return value;
     };
     return JSON.stringify(obj, replacer);
-  })
-);
+  });
+  return mockFn;
+});
 
-jest.mock('crypto', () => ({
+jest.mock("crypto", () => ({
   createPrivateKey: jest.fn().mockImplementation(() => ({})),
-  sign: jest.fn().mockImplementation(() => Buffer.from('mock-signature')),
+  sign: jest.fn().mockImplementation(() => Buffer.from("mock-signature")),
 }));
-
 
 describe("PrivyEvmDelegatedEmbeddedWalletProvider", () => {
   const MOCK_CONFIG = {
@@ -135,7 +137,8 @@ describe("PrivyEvmDelegatedEmbeddedWalletProvider", () => {
 
   describe("configureWithWallet", () => {
     it("should configure with required configuration", async () => {
-      const provider = await PrivyEvmDelegatedEmbeddedWalletProvider.configureWithWallet(MOCK_CONFIG);
+      const provider =
+        await PrivyEvmDelegatedEmbeddedWalletProvider.configureWithWallet(MOCK_CONFIG);
 
       expect(provider).toBeInstanceOf(PrivyEvmDelegatedEmbeddedWalletProvider);
       expect(provider.getNetwork()).toEqual({
@@ -146,23 +149,27 @@ describe("PrivyEvmDelegatedEmbeddedWalletProvider", () => {
     });
 
     it("should throw error if walletId is missing", async () => {
-      const { walletId, ...configWithoutWalletId } = MOCK_CONFIG;
+      const { walletId: _walletId, ...configWithoutWalletId } = MOCK_CONFIG;
       await expect(
-        PrivyEvmDelegatedEmbeddedWalletProvider.configureWithWallet(configWithoutWalletId as any),
+        PrivyEvmDelegatedEmbeddedWalletProvider.configureWithWallet(
+          configWithoutWalletId as PrivyEvmDelegatedEmbeddedWalletConfig,
+        ),
       ).rejects.toThrow("walletId is required");
     });
 
     it("should throw error if appId or appSecret is missing", async () => {
-      const { appId, ...configWithoutAppId } = MOCK_CONFIG;
+      const { appId: _appId, ...configWithoutAppId } = MOCK_CONFIG;
       await expect(
-        PrivyEvmDelegatedEmbeddedWalletProvider.configureWithWallet(configWithoutAppId as any),
+        PrivyEvmDelegatedEmbeddedWalletProvider.configureWithWallet(
+          configWithoutAppId as PrivyEvmDelegatedEmbeddedWalletConfig,
+        ),
       ).rejects.toThrow("appId and appSecret are required");
     });
 
     it("should throw error if authorizationPrivateKey is missing", async () => {
-      const { authorizationPrivateKey, ...configWithoutAuthKey } = MOCK_CONFIG;
+      const { authorizationPrivateKey: _authKey, ...configWithoutAuthKey } = MOCK_CONFIG;
       await expect(
-        PrivyEvmDelegatedEmbeddedWalletProvider.configureWithWallet(configWithoutAuthKey as any),
+        PrivyEvmDelegatedEmbeddedWalletProvider.configureWithWallet(configWithoutAuthKey),
       ).rejects.toThrow("authorizationPrivateKey is required");
     });
   });
@@ -234,9 +241,9 @@ describe("PrivyEvmDelegatedEmbeddedWalletProvider", () => {
 
     it("should wait for transaction receipt", async () => {
       const receipt = await provider.waitForTransactionReceipt(MOCK_TRANSACTION_HASH as Hex);
-      expect(receipt).toEqual({ 
+      expect(receipt).toEqual({
         transactionHash: MOCK_TRANSACTION_HASH,
-        status: "success"
+        status: "success",
       });
     });
 
@@ -288,9 +295,9 @@ describe("PrivyEvmDelegatedEmbeddedWalletProvider", () => {
 
         await provider.sendTransaction(transaction);
 
-        const axiosPost = require("axios").post;
+        const { post: axiosPost } = jest.requireMock("axios");
         const lastCall = axiosPost.mock.calls[axiosPost.mock.calls.length - 1];
-        const [url, body, config] = lastCall;
+        const [_url, _body, config] = lastCall;
 
         expect(config.headers).toBeDefined();
         expect(config.headers["privy-authorization-signature"]).toBeDefined();
@@ -299,7 +306,7 @@ describe("PrivyEvmDelegatedEmbeddedWalletProvider", () => {
       });
 
       it("should handle signature generation errors", async () => {
-        const canonicalize = require("canonicalize");
+        const canonicalize = jest.requireMock("canonicalize");
         canonicalize.mockImplementationOnce(() => null); // Force canonicalization failure
 
         const transaction = {
@@ -308,7 +315,7 @@ describe("PrivyEvmDelegatedEmbeddedWalletProvider", () => {
         };
 
         await expect(provider.sendTransaction(transaction)).rejects.toThrow(
-          "Error generating Privy authorization signature"
+          "Error generating Privy authorization signature",
         );
       });
     });
