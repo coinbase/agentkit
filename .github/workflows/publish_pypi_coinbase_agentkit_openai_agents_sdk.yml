@@ -17,27 +17,37 @@ jobs:
       id-token: write
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
 
-    - name: Install Poetry
-      uses: snok/install-poetry@v1
-      with:
-        version: latest
-        virtualenvs-create: true
-        virtualenvs-in-project: true
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
 
-    - name: Install dependencies
-      run: poetry install --only main
+      - name: Install dependencies
+        run: poetry install --only main
 
-    - name: Build package
-      run: poetry build
+      - name: Build package
+        id: build
+        run: |
+          poetry build
+          echo "version=$(poetry version --short)" >> $GITHUB_OUTPUT
 
-    - name: Publish package
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        packages-dir: python/framework-extensions/openai-agents-sdk/dist/
+      - name: Publish package
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: python/framework-extensions/openai-agents-sdk/dist/
+
+      - name: Tag package
+        run: |
+          TAG="coinbase-agentkit-openai-agents-sdk@${{ steps.build.outputs.version }}"
+          MESSAGE="Release coinbase-agentkit-openai-agents-sdk version ${{ steps.build.outputs.version }}"
+          git tag -a $TAG -m "$MESSAGE"
+          git push origin $TAG
