@@ -10,6 +10,7 @@ import {
   pythActionProvider,
   openseaActionProvider,
   alloraActionProvider,
+  flaunchActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -122,6 +123,9 @@ async function initializeAgent() {
             ]
           : []),
         alloraActionProvider(),
+        flaunchActionProvider({
+          pinataJwt: process.env.PINATA_JWT,
+        }),
       ],
     });
 
