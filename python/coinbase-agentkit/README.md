@@ -410,6 +410,16 @@ This section provides a detailed list of all available action providers and thei
 </details>
 
 <details>
+<summary><strong>Onramp</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_onramp_buy_url</code></td>
+    <td width="768">Gets a URL to purchase cryptocurrency from Coinbase via Debit card or other payment methods.</td>
+</tr>
+</table>
+</details>
+
+<details>
 <summary><strong>Pyth</strong></summary>
 <table width="100%">
 <tr>
