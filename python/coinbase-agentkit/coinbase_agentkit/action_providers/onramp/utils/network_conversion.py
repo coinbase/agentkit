@@ -1,7 +1,6 @@
 """Network conversion utilities for the Onramp action provider."""
 
 
-
 def convert_network_id_to_onramp_network_id(network_id: str) -> str | None:
     """Convert internal network IDs to Coinbase Onramp network IDs.
 
