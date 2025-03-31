@@ -1,5 +1,11 @@
 # AgentKit Changelog
 
+## 0.5.1
+
+### Added
+
+- [#562](https://github.com/coinbase/agentkit/pull/562/) - Added NEAR protocol chain signatures support
+
 ## 0.5.0
 
 ### Minor Changes
