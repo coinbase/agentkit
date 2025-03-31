@@ -52,57 +52,40 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Load cached venv for CDP AgentKit Core Python
-        id: cached-poetry-dependencies-core
-        uses: actions/cache@v3
-        with:
-          path: ./python/coinbase-agentkit/.venv
-          key: venv-agentkit-${{ runner.os }}-3.10-${{ hashFiles('python/coinbase-agentkit/poetry.lock') }}
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       - name: Install dependencies for Coinbase AgentKit Python
-        if: steps.cached-poetry-dependencies-core.outputs.cache-hit != 'true'
         run: |
           cd python/coinbase-agentkit
-          poetry install --with dev
+          uv sync --all-extras --dev
           cd ..
 
       - name: Build Sphinx Documentation for Coinbase AgentKit Python
         run: |
           cd python/coinbase-agentkit
-          poetry run make docs
+          make docs
           cd docs
-          poetry run make html
+          make html
           cd ../../..
           mkdir -p docs/coinbase-agentkit/python
           cp -r python/coinbase-agentkit/docs/_build/html/* docs/coinbase-agentkit/python
 
-      - name: Load cached venv for CDP LangChain Python
-        id: cached-poetry-dependencies-langchain
-        uses: actions/cache@v3
-        with:
-          path: ./python/cdp-langchain/.venv
-          key: venv-langchain-${{ runner.os }}-3.10-${{ hashFiles('python/cdp-langchain/poetry.lock') }}
-
       - name: Install dependencies for Coinbase AgentKit LangChain Python
-        if: steps.cached-poetry-dependencies-langchain.outputs.cache-hit != 'true'
         run: |
           cd python/framework-extensions/langchain
-          poetry install --with dev
+          uv sync --all-extras --dev
           cd ../..
 
       - name: Build Sphinx Documentation for Coinbase AgentKit LangChain Python
         run: |
           cd python/framework-extensions/langchain
-          poetry run make docs
+          make docs
           cd docs
-          poetry run make html
+          make html
           cd ../../../..
           mkdir -p docs/coinbase-agentkit-langchain/python
           cp -r python/framework-extensions/langchain/docs/_build/html/* docs/coinbase-agentkit-langchain/python

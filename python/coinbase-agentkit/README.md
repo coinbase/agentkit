@@ -107,7 +107,7 @@ _Prerequisites_:
 - Set `OPENAI_API_KEY` environment variable
 
 ```bash
-poetry add coinbase-agentkit-langchain langchain-openai langgraph
+pip install coinbase-agentkit-langchain langchain-openai langgraph
 ```
 
 ```python

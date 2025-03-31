@@ -1,26 +1,26 @@
 .PHONY: install
 install:
-	poetry install
+	uv sync
 
 .PHONY: format
 format:
-	poetry run ruff format .
+	uv run ruff format .
 
 .PHONY: format-check
 format-check:
-	poetry run ruff format . --check
+	uv run ruff format . --check
 
 .PHONY: lint
 lint:
-	poetry run ruff check .
+	uv run ruff check .
 
 .PHONY: lint-fix
 lint-fix:
-	poetry run ruff check . --fix
+	uv run ruff check . --fix
 
 .PHONY: docs
 docs:
-	poetry run sphinx-apidoc -f -o ./docs ./coinbase_agentkit_langchain
+	uv run sphinx-apidoc -f -o ./docs ./coinbase_agentkit_langchain
 
 .PHONY: local-docs
 local-docs: docs
@@ -28,4 +28,4 @@ local-docs: docs
 
 .PHONY: test
 test:
-	poetry run pytest
+	uv run pytest

@@ -9,8 +9,8 @@ This example demonstrates an agent setup as a terminal style chatbot with access
 
 ## Requirements
 - Python 3.10+
-- Poetry for package management and tooling
-  - [Poetry Installation Instructions](https://python-poetry.org/docs/#installation)
+- uv for package management and tooling
+  - [uv Installation Instructions](https://github.com/astral-sh/uv?tab=readme-ov-file#installation)
 - [CDP API Key](https://portal.cdp.coinbase.com/access/api)
 - [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
 
@@ -19,12 +19,12 @@ Before using the example, ensure that you have the correct version of Python ins
 
 ```bash
 python --version
-poetry --version
+uv --version
 ```
 
 ## Installation
 ```bash
-poetry install
+uv install
 ```
 
 ## Run the Chatbot
@@ -47,5 +47,5 @@ Once you have them, rename the `.env.local` file to `.env` and make sure you set
   - `NETWORK_ID=` *(defaults to base-sepolia if not set)*
 
 ```bash
-poetry run python chatbot.py
+uv run chatbot.py
 ``` 

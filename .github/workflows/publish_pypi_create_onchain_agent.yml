@@ -24,21 +24,20 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: true
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       - name: Install dependencies
-        run: poetry install --only main
+        run: uv sync
 
       - name: Build package
         id: build
         run: |
-          poetry build
-          echo "version=$(poetry version --short)" >> $GITHUB_OUTPUT
+          uv build
+          echo "version=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml)" >> $GITHUB_OUTPUT
 
       - name: Publish package
         uses: pypa/gh-action-pypi-publish@release/v1
