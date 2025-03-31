@@ -8,7 +8,7 @@ When ready to release the TypeScript packages, just review & merge the changeset
 
 When ready to release the Python packages, follow these steps.
 
-1. From the `python/` folder, run: `python ./scripts/version.py`
+1. From the `python/` folder, run: `./scripts/version.sh`
 2. Commit the changes and open a PR with message: `chore: version python packages`
 3. Get PR reviewed and merge to `main`
 4. Run GitHub Actions to release changed packages
