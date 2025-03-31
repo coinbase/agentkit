@@ -12,8 +12,8 @@ This example demonstrates an agent setup as a terminal style chatbot with access
 ## Requirements
 
 - Python 3.10+
-- Poetry for package management and tooling
-  - [Poetry Installation Instructions](https://python-poetry.org/docs/#installation)
+- uv for package management and tooling
+  - [uv Installation Instructions](https://github.com/astral-sh/uv?tab=readme-ov-file#installation)
 - [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
 - [Twitter (X) API Key's](https://developer.x.com/en/portal/dashboard)
 
@@ -34,7 +34,7 @@ This example demonstrates an agent setup as a terminal style chatbot with access
 
 ```bash
 python --version
-poetry --version
+uv --version
 ```
 
 ## Run the Chatbot

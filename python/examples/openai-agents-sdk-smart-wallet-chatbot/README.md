@@ -10,8 +10,8 @@ This example demonstrates an agent setup as a terminal style chatbot using the O
 
 ## Requirements
 - Python 3.10+
-- Poetry for package management and tooling
-  - [Poetry Installation Instructions](https://python-poetry.org/docs/#installation)
+- uv for package management and tooling
+  - [uv Installation Instructions](https://github.com/astral-sh/uv?tab=readme-ov-file#installation)
 - [CDP API Key](https://portal.cdp.coinbase.com/access/api)
 - [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
 
@@ -20,12 +20,12 @@ Before using the example, ensure that you have the correct version of Python ins
 
 ```bash
 python --version
-poetry --version
+uv --version
 ```
 
 ## Installation
 ```bash
-poetry install
+uv sync
 ```
 
 ## Run the Chatbot
@@ -39,7 +39,7 @@ poetry install
   - "NETWORK_ID" (Defaults to `base-sepolia`)
 
 ```bash
-poetry run python chatbot.py
+uv run chatbot.py
 ``` 
 
 Note: If you are seeing the log `OPENAI_API_KEY is not set, skipping trace export`, fix it by exporting the OPENAI_API_KEY in your terminal.

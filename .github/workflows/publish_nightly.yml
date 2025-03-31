@@ -73,14 +73,17 @@ jobs:
       - name: Install jq
         run: sudo apt-get install jq
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       - name: Version and Build Python package versions
         run: |
           cd "python/${{ matrix.package }}"
-          PKG_NAME=$(poetry version | cut -d' ' -f1)
-          CURRENT_VERSION=$(poetry version -s)
+          PKG_NAME=$(grep -m 1 '^name = ' pyproject.toml | cut -d '"' -f2)
+          CURRENT_VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml)
 
           if [[ $CURRENT_VERSION == *".dev"* ]]; then
             NEXT_VERSION=$(echo $CURRENT_VERSION | sed -E 's/\.dev[0-9]+$//')
@@ -96,15 +99,15 @@ jobs:
           LATEST_NIGHTLY=$(echo "$ALL_VERSIONS" | grep -E "^${NEXT_VERSION}\.dev${TODAY}[0-9]$" | sort -V | tail -n1 || echo "")
 
           if [ -z "$LATEST_NIGHTLY" ]; then
-            poetry version "${NEXT_VERSION}.dev${TODAY}0"
+            sed -i 's/^version=".*"/version = "'${NEXT_VERSION}.dev${TODAY}0'"/' pyproject.toml
           else
             BUILD_NUM=$(echo $LATEST_NIGHTLY | sed -E "s/.*\.dev${TODAY}([0-9])$/\1/")
             NEXT_BUILD=$((BUILD_NUM + 1))
-            poetry version "${NEXT_VERSION}.dev${TODAY}${NEXT_BUILD}"
+            sed -i 's/^version=".*"/version = "'${NEXT_VERSION}.dev${TODAY}${NEXT_BUILD}'"/' pyproject.toml
           fi
 
-          poetry install --only main
-          poetry build
+          uv sync
+          uv build
 
       - name: Publish Python packages
         uses: pypa/gh-action-pypi-publish@release/v1
