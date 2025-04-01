@@ -30,7 +30,7 @@ import { sepolia } from "viem/chains";
 dotenv.config();
 
 // Storage constants
-const XMTP_STORAGE_DIR = ".data/xmtp";
+const STORAGE_DIR = ".data/wallets";
 
 // Global stores for memory and agent instances
 const memoryStore: Record<string, MemorySaver> = {};
@@ -48,8 +48,8 @@ type Agent = ReturnType<typeof createReactAgent>;
  * Ensure local storage directory exists
  */
 function ensureLocalStorage() {
-  if (!fs.existsSync(XMTP_STORAGE_DIR)) {
-    fs.mkdirSync(XMTP_STORAGE_DIR, { recursive: true });
+  if (!fs.existsSync(STORAGE_DIR)) {
+    fs.mkdirSync(STORAGE_DIR, { recursive: true });
   }
 }
 
@@ -60,7 +60,7 @@ function ensureLocalStorage() {
  * @param walletData - The wallet data to be saved
  */
 async function saveWalletData(userId: string, walletData: string) {
-  const localFilePath = `${XMTP_STORAGE_DIR}/${userId}.json`;
+  const localFilePath = `${STORAGE_DIR}/${userId}.json`;
   try {
     fs.writeFileSync(localFilePath, walletData);
   } catch (error) {
@@ -75,7 +75,7 @@ async function saveWalletData(userId: string, walletData: string) {
  * @returns The wallet data as a string, or null if not found
  */
 async function getWalletData(userId: string): Promise<string | null> {
-  const localFilePath = `${XMTP_STORAGE_DIR}/${userId}.json`;
+  const localFilePath = `${STORAGE_DIR}/${userId}.json`;
   try {
     if (fs.existsSync(localFilePath)) {
       return fs.readFileSync(localFilePath, "utf8");
@@ -143,17 +143,15 @@ async function initializeXmtpClient() {
   const encryptionKey = getEncryptionKeyFromHex(ENCRYPTION_KEY);
   const env: XmtpEnv = XMTP_ENV as XmtpEnv;
 
-  console.log(`Creating XMTP client on the '${env}' network...`);
   const client = await Client.create(signer, encryptionKey, { env });
 
-  console.log("Syncing conversations...");
   await client.conversations.sync();
 
   const identifier = await signer.getIdentifier();
   const address = identifier.identifier;
 
   console.log(
-    `Agent initialized on ${address}\nSend a message on http://xmtp.chat/dm/${address}?env=${env}`,
+    `Agent initialized on ${env} network\nSend a message on http://xmtp.chat/dm/${address}?env=${env}`,
   );
 
   return client;
@@ -175,14 +173,15 @@ async function initializeAgent(userId: string): Promise<{ agent: Agent; config: 
       return { agent: agentStore[userId], config: agentConfig };
     }
 
-    console.log(`Creating new agent for user: ${userId}`);
-
     const llm = new ChatOpenAI({
       model: "gpt-4o-mini",
     });
 
     const storedWalletData = await getWalletData(userId);
-    console.log(`Wallet data for ${userId}: ${storedWalletData ? "Found" : "Not found"}`);
+
+    console.log(
+      `Creating new agent for user: ${userId}, wallet data: ${storedWalletData ? "Found" : "Not found"}`,
+    );
 
     const config = {
       apiKeyName: process.env.CDP_API_KEY_NAME,
@@ -214,8 +213,6 @@ async function initializeAgent(userId: string): Promise<{ agent: Agent; config: 
     if (!memoryStore[userId]) {
       console.log(`Creating new memory store for user: ${userId}`);
       memoryStore[userId] = new MemorySaver();
-    } else {
-      console.log(`Using existing memory store for user: ${userId}`);
     }
 
     const agentConfig: AgentConfig = {
@@ -236,7 +233,7 @@ async function initializeAgent(userId: string): Promise<{ agent: Agent; config: 
         3. For mainnet operations, provide wallet details and request funds from the user
 
         Your default network is Base Sepolia testnet.
-        Your primary token for transactions is USDC.
+        Your main and only token for transactions is USDC. Token address is 0x036CbD53842c5426634e7929541eC2318f3dCF7e. USDC is gasless on Base.
 
         You can only perform payment and wallet-related tasks. For other requests, politely explain that you're 
         specialized in processing payments and can't assist with other tasks.
