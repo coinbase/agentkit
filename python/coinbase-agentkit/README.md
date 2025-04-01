@@ -388,6 +388,28 @@ This section provides a detailed list of all available action providers and thei
 </details>
 
 <details>
+<summary><strong>Nillion</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>lookup_schema</code></td>
+    <td width="768">Looks up a schema by description and returns both the schema UUID and corresponding JSON schema.</td>
+</tr>
+<tr>
+    <td width="200"><code>create_schema</code></td>
+    <td width="768">Creates a new schema in the Nillion SecretVault based on a natural language description.</td>
+</tr>
+<tr>
+    <td width="200"><code>data_upload</code></td>
+    <td width="768">Uploads data into the Nillion SecretVault using a specified schema UUID.</td>
+</tr>
+<tr>
+    <td width="200"><code>data_download</code></td>
+    <td width="768">Downloads all data from the Nillion SecretVault for a specified schema UUID.</td>
+</tr>
+</table>
+</details>
+
+<details>
 <summary><strong>Pyth</strong></summary>
 <table width="100%">
 <tr>
