@@ -1,7 +1,6 @@
 import {
   AgentKit,
   cdpApiActionProvider,
-  cdpWalletActionProvider,
   erc20ActionProvider,
   pythActionProvider,
   SmartWalletProvider,
@@ -114,10 +113,6 @@ async function initializeAgent() {
         walletActionProvider(),
         erc20ActionProvider(),
         cdpApiActionProvider({
-          apiKeyName: process.env.CDP_API_KEY_NAME,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
-        }),
-        cdpWalletActionProvider({
           apiKeyName: process.env.CDP_API_KEY_NAME,
           apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
         }),
