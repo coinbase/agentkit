@@ -1,16 +1,13 @@
 """Onramp action provider for cryptocurrency purchases."""
 
-import json
 from typing import Any
-from urllib.parse import urlencode
 
 from ...network import Network
 from ...wallet_providers.evm_wallet_provider import EvmWalletProvider
 from ..action_decorator import create_action
 from ..action_provider import ActionProvider
 from .schemas import GetOnrampBuyUrlSchema
-from .utils.constants import ONRAMP_BUY_URL, VERSION
-from .utils.network_conversion import convert_network_id_to_onramp_network_id
+from .utils import convert_network_id_to_onramp_network_id, get_onramp_buy_url
 
 
 class OnrampActionProvider(ActionProvider[EvmWalletProvider]):
@@ -44,12 +41,14 @@ The URL will direct to a secure Coinbase-powered purchase interface.
 """,
         schema=GetOnrampBuyUrlSchema,
     )
-    def get_onramp_buy_url(self, wallet_provider: EvmWalletProvider, args: dict[str, Any]) -> str:
+    def get_onramp_buy_url(
+        self, wallet_provider: EvmWalletProvider, args: dict[str, Any]
+    ) -> str:
         """Get a URL for purchasing cryptocurrency through Coinbase's onramp service.
 
         Args:
             wallet_provider: The wallet provider instance
-            args: Action arguments containing the asset to purchase
+            args: Action arguments (unused)
 
         Returns:
             The URL for purchasing cryptocurrency
@@ -66,21 +65,11 @@ The URL will direct to a secure Coinbase-powered purchase interface.
         if not network:
             raise ValueError("Network ID is not supported")
 
-        # Build URL parameters
-        params = {
-            "appId": self.project_id,
-            "addresses": json.dumps({wallet_provider.get_address(): [network]}),
-            "defaultAsset": args["asset"],
-            "defaultNetwork": network,
-            "sdkVersion": f"onchainkit@{VERSION}",
-        }
-
-        # Remove None values and convert all values to strings
-        cleaned_params = {k: str(v) for k, v in params.items() if v is not None}
-
-        # Build and return URL
-        query = urlencode(sorted(cleaned_params.items()))
-        return f"{ONRAMP_BUY_URL}?{query}"
+        return get_onramp_buy_url(
+            project_id=self.project_id,
+            address=wallet_provider.get_address(),
+            network=network,
+        )
 
     def supports_network(self, network: Network) -> bool:
         """Check if the network is supported by this provider.

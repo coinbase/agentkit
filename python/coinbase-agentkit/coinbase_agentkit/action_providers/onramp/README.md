@@ -6,13 +6,11 @@ This directory contains the **OnrampActionProvider** implementation, which provi
 
 ```
 onramp/
-├── utils/                          # Utility functions and constants
-│   ├── constants.py               # Version and URL constants
-│   ├── network_conversion.py      # Network ID conversion utilities
-│   └── __init__.py               # Utils exports
-├── onramp_action_provider.py      # Main provider implementation
-├── schemas.py                     # Onramp action schemas
 ├── __init__.py                    # Package exports
+├── constants.py                   # Version and URL constants
+├── onramp_action_provider.py      # Main provider implementation
+├── utils.py                       # Utility functions
+├── schemas.py                     # Onramp action schemas
 └── README.md                      # This file
 ```
 
@@ -21,14 +19,10 @@ onramp/
 ### get_onramp_buy_url
 
 - **Purpose**: Generates a URL for purchasing cryptocurrency through Coinbase's onramp service
-- **Input**:
-  - `asset`: The cryptocurrency to purchase (Enum: "ETH" or "USDC", defaults to "ETH")
 - **Output**: String containing the URL to the Coinbase-powered purchase interface
 - **Example**:
   ```python
-  result = await provider.get_onramp_buy_url(wallet_provider, {
-      "asset": "ETH"
-  })
+  result = await provider.get_onramp_buy_url(wallet_provider, {})
   ```
 
 Use this action when:
@@ -42,14 +36,11 @@ Supported assets:
 
 ## Network Support
 
-The provider supports all EVM-compatible networks, with specific support for:
-- Base Mainnet (`base-mainnet`)
-- Base Sepolia (`base-sepolia`)
+The provider supports all EVM-compatible networks
 
 ## Implementation Details
 
 ### Key Components
-- Uses Pydantic for schema validation
 - Supports URL parameter generation and encoding
 - Includes network ID conversion for Coinbase Onramp compatibility
 
