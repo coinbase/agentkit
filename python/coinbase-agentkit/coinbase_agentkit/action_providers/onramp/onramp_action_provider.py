@@ -63,7 +63,7 @@ The URL will direct to a secure Coinbase-powered purchase interface.
 
         network = convert_network_id_to_onramp_network_id(network_id)
         if not network:
-            raise ValueError("Network ID is not supported")
+            raise ValueError("Network ID is not supported. Make sure you are using a supported mainnet network.")
 
         return get_onramp_buy_url(
             project_id=self.project_id,

@@ -71,7 +71,7 @@ def test_get_onramp_buy_url_unsupported_network(mock_wallet):
     )
     provider = onramp_action_provider(MOCK_PROJECT_ID)
 
-    with pytest.raises(ValueError, match="Network ID is not supported"):
+    with pytest.raises(ValueError, match="Network ID is not supported. Make sure you are using a supported mainnet network."):
         provider.get_onramp_buy_url(mock_wallet, {})
 
 
