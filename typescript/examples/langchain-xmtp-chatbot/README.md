@@ -39,8 +39,8 @@ Once you have them, rename the `.env-local` file to `.env` and make sure you set
 - "CDP_API_KEY_PRIVATE_KEY"
 - "OPENAI_API_KEY"
 - "XMTP_ENV" # defaults to "dev"
-- "WALLET_KEY" # Optional, use `yarn gen:keys` to generate a random wallet key
-- "ENCRYPTION_KEY" # Optional, use `yarn gen:keys` to generate a random encryption key
+- "WALLET_KEY" # Optional, use `npm run gen:keys` to generate a random wallet key
+- "ENCRYPTION_KEY" # Optional, use `npm run gen:keys` to generate a random encryption key
 
 ## Running the example
 
