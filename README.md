@@ -151,6 +151,7 @@ agentkit/
 │       ├── langchain-solana-chatbot/
 │       ├── langchain-twitter-chatbot/
 │       ├── model-context-protocol-smart-wallet-server/
+│       ├── langchain-xmtp-chatbot/
 │       └── vercel-ai-sdk-smart-wallet-chatbot/
 ├── python/
 │   ├── coinbase-agentkit/
