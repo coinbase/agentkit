@@ -2,6 +2,13 @@
 
 This directory contains the **OnrampActionProvider** implementation, which provides actions for cryptocurrency onramp operations - specifically helping users purchase cryptocurrency using fiat currency (regular money like USD).
 
+### Environment Variables
+```
+CDP_PROJECT_ID
+```
+
+Creating the OnrampActionProvider requires a CDP project ID. You can create one at https://portal.cdp.coinbase.com/
+
 ## Directory Structure
 
 ```
