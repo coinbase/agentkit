@@ -41,9 +41,7 @@ The URL will direct to a secure Coinbase-powered purchase interface.
 """,
         schema=GetOnrampBuyUrlSchema,
     )
-    def get_onramp_buy_url(
-        self, wallet_provider: EvmWalletProvider, args: dict[str, Any]
-    ) -> str:
+    def get_onramp_buy_url(self, wallet_provider: EvmWalletProvider, args: dict[str, Any]) -> str:
         """Get a URL for purchasing cryptocurrency through Coinbase's onramp service.
 
         Args:
@@ -63,7 +61,9 @@ The URL will direct to a secure Coinbase-powered purchase interface.
 
         network = convert_network_id_to_onramp_network_id(network_id)
         if not network:
-            raise ValueError("Network ID is not supported. Make sure you are using a supported mainnet network.")
+            raise ValueError(
+                "Network ID is not supported. Make sure you are using a supported mainnet network."
+            )
 
         return get_onramp_buy_url(
             project_id=self.project_id,
@@ -78,10 +78,14 @@ The URL will direct to a secure Coinbase-powered purchase interface.
             network: The network to check
 
         Returns:
-            True if the network is supported (EVM networks only)
+            True if the network is supported (must be EVM network with supported network ID)
 
         """
-        return network.protocol_family == "evm"
+        return bool(
+            network.network_id
+            and convert_network_id_to_onramp_network_id(network.network_id) is not None
+            and network.protocol_family == "evm"
+        )
 
 
 def onramp_action_provider(project_id: str) -> OnrampActionProvider:

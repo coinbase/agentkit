@@ -43,7 +43,7 @@ Supported assets:
 
 ## Network Support
 
-The provider supports all EVM-compatible networks
+The provider supports base, ethereum, polygon, optimism, and arbitrum mainnet networks.
 
 ## Implementation Details
 
