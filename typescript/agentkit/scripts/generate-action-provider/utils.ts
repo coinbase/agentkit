@@ -6,7 +6,7 @@ import fs from "fs";
 import path from "path";
 import pc from "picocolors";
 import nunjucks from "nunjucks";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import { promisify } from "util";
 
 import { ProviderConfig } from "./types";
@@ -14,6 +14,50 @@ import { AGENTKIT_BANNER, SUCCESS_MESSAGES } from "./constants";
 
 // Convert exec to Promise-based
 const execPromise = promisify(exec);
+
+async function runCommandSpawn(
+  command: string,
+  args: string[],
+  cwd: string,
+  description: string,
+): Promise<void> {
+  console.log(pc.blue(`\n${description}...`));
+  return new Promise((resolve, reject) => {
+    const process = spawn(command, args, { cwd, shell: true, stdio: "pipe" });
+    let stderr = "";
+    let stdout = "";
+
+    process.stdout?.on("data", data => {
+      stdout += data.toString();
+    });
+
+    process.stderr?.on("data", data => {
+      stderr += data.toString();
+    });
+
+    process.on("close", code => {
+      if (code === 0) {
+        // console.log(stdout); // Optional: log stdout on success
+        console.log(pc.green(`${description} complete.`));
+        resolve();
+      } else {
+        console.log(pc.yellow(`Warning: ${description} failed.`));
+        console.log(pc.yellow(`Command: ${command} ${args.join(" ")}`));
+        console.log(pc.yellow(`Return code: ${code}`));
+        console.log(pc.yellow(`Output:\n${stderr || stdout}`));
+        // resolve even on error for lint/format, as they might fail non-critically
+        resolve();
+      }
+    });
+
+    process.on("error", err => {
+      console.log(pc.yellow(`Warning: Failed to start command for ${description}.`));
+      console.log(pc.yellow(err.message));
+      // Resolve even on error
+      resolve();
+    });
+  });
+}
 
 // Configure Nunjucks environment ONCE, pointing to the base templates directory
 const templateBaseDir = path.join(__dirname, "templates");
@@ -172,17 +216,7 @@ export function addProviderExport(providerName: string): void {
  * @param targetDir - The directory containing the generated files
  */
 export async function runLint(targetDir: string): Promise<void> {
-  try {
-    console.log(pc.blue("Linting generated files..."));
-
-    const command = `npx eslint -c .eslintrc.json "${targetDir}/**/*.ts" --fix`;
-    await execPromise(command);
-
-    console.log(pc.green("Linting complete."));
-  } catch (error) {
-    // ESLint returns non-zero exit code if it finds any linting errors
-    console.log(pc.yellow("Linting failed with errors."));
-  }
+  await runCommandSpawn("pnpm", ["run", "lint:fix"], process.cwd(), "Linting generated files");
 }
 
 /**
@@ -191,17 +225,7 @@ export async function runLint(targetDir: string): Promise<void> {
  * @param targetDir - The directory containing the generated files
  */
 export async function runFormat(targetDir: string): Promise<void> {
-  try {
-    console.log(pc.blue("Formatting generated files..."));
-
-    const command = `npx prettier -c .prettierrc --write "${targetDir}/**/*.{ts,js,cjs,json,md}"`;
-    await execPromise(command);
-
-    console.log(pc.green("Formatting complete."));
-  } catch (error) {
-    // Prettier might return non-zero exit code
-    console.log(pc.yellow("Formatting failed with errors."));
-  }
+  await runCommandSpawn("pnpm", ["run", "format"], process.cwd(), "Formatting generated files");
 }
 
 /**
