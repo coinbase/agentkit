@@ -36,6 +36,7 @@ agentkit/
 │       ├── langchain-privy-chatbot/
 │       ├── langchain-solana-chatbot/
 │       ├── langchain-twitter-chatbot/
+│       ├── langchain-xmtp-chatbot/
 │       ├── model-context-protocol-smart-wallet-server/
 │       └── vercel-ai-sdk-smart-wallet-chatbot/
 ├── python/
