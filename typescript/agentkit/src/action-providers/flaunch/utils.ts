@@ -1,4 +1,3 @@
-import axios from "axios";
 import {
   parseEther,
   encodeAbiParameters,
@@ -133,24 +132,29 @@ const uploadImageToIPFS = async (params: {
     };
     formData.append("pinataOptions", JSON.stringify(pinataOptions));
 
-    const response = await axios.post("https://api.pinata.cloud/pinning/pinFileToIPFS", formData, {
+    const response = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
+      method: "POST",
       headers: {
         Authorization: `Bearer ${params.pinataConfig.jwt}`,
-        "Content-Type": "multipart/form-data",
       },
+      body: formData,
     });
 
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`Failed to upload image to IPFS: ${error.message || response.statusText}`);
+    }
+
+    const data = await response.json();
     return {
-      IpfsHash: response.data.IpfsHash,
-      PinSize: response.data.PinSize,
-      Timestamp: response.data.Timestamp,
-      isDuplicate: response.data.isDuplicate || false,
+      IpfsHash: data.IpfsHash,
+      PinSize: data.PinSize,
+      Timestamp: data.Timestamp,
+      isDuplicate: data.isDuplicate || false,
     };
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw new Error(
-        `Failed to upload image to IPFS: ${error.response?.data?.message || error.message}`,
-      );
+    if (error instanceof Error) {
+      throw new Error(`Failed to upload image to IPFS: ${error.message}`);
     }
     throw error;
   }
@@ -184,28 +188,30 @@ const uploadJsonToIPFS = async (params: {
       pinataContent: params.json,
     };
 
-    const response = await axios.post(
-      "https://api.pinata.cloud/pinning/pinJSONToIPFS",
-      requestBody,
-      {
-        headers: {
-          Authorization: `Bearer ${params.pinataConfig.jwt}`,
-          "Content-Type": "application/json",
-        },
+    const response = await fetch("https://api.pinata.cloud/pinning/pinJSONToIPFS", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${params.pinataConfig.jwt}`,
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify(requestBody),
+    });
 
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`Failed to upload JSON to IPFS: ${error.message || response.statusText}`);
+    }
+
+    const data = await response.json();
     return {
-      IpfsHash: response.data.IpfsHash,
-      PinSize: response.data.PinSize,
-      Timestamp: response.data.Timestamp,
-      isDuplicate: response.data.isDuplicate || false,
+      IpfsHash: data.IpfsHash,
+      PinSize: data.PinSize,
+      Timestamp: data.Timestamp,
+      isDuplicate: data.isDuplicate || false,
     };
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw new Error(
-        `Failed to upload JSON to IPFS: ${error.response?.data?.message || error.message}`,
-      );
+    if (error instanceof Error) {
+      throw new Error(`Failed to upload JSON to IPFS: ${error.message}`);
     }
     throw error;
   }
@@ -240,10 +246,14 @@ const generateTokenUriBase64Image = async (name: string, params: IPFSParams) => 
 
 export const generateTokenUri = async (name: string, params: TokenUriParams) => {
   // 1. get base64Image from imageUrl
-  const imageRes = await axios.get(params.metadata.imageUrl, {
-    responseType: "arraybuffer",
-  });
-  const base64Image = Buffer.from(imageRes.data).toString("base64");
+  const response = await fetch(params.metadata.imageUrl);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image: ${response.statusText}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  const base64Image = Buffer.from(arrayBuffer).toString("base64");
 
   // 2. generate token uri
   const tokenUri = await generateTokenUriBase64Image(name, {
