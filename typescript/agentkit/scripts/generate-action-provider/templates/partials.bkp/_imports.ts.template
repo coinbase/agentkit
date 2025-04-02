@@ -1,8 +1,0 @@
-import { z } from "zod";
-import { ActionProvider } from "../actionProvider";
-import { Network } from "../../network";
-import { CreateAction } from "../actionDecorator";
-{% if wallet_provider %}
-import { {{wallet_provider}} } from "../../wallet-providers";
-{% endif %}
-import { ExampleActionSchema } from "./schemas"; 

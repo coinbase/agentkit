@@ -1,0 +1,3 @@
+import { {{name_pascal}}ActionProvider } from "./{{name}}ActionProvider";
+import { ExampleActionSchema } from "./schemas";
+import { {{wallet_provider}} } from "../../wallet-providers";

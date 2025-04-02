@@ -1,0 +1,23 @@
+describe("schema validation", () => {
+  it("should validate example action schema", () => {
+    const validInput = {
+      fieldName: "test",
+      amount: "1.0",
+    };
+    const parseResult = ExampleActionSchema.safeParse(validInput);
+    expect(parseResult.success).toBe(true);
+    if (parseResult.success) {
+      expect(parseResult.data.fieldName).toBe("test");
+      expect(parseResult.data.amount).toBe("1.0");
+    }
+  });
+
+  it("should reject invalid example action input", () => {
+    const invalidInput = {
+      fieldName: "",
+      amount: "invalid",
+    };
+    const parseResult = ExampleActionSchema.safeParse(invalidInput);
+    expect(parseResult.success).toBe(false);
+  });
+});

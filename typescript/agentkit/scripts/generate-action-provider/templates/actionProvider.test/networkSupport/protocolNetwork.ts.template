@@ -1,0 +1,37 @@
+it("should support configured networks", () => {
+  {% for networkId in networkIds %}
+  {% if protocol_family == "evm" %}
+  {
+    const chainId = Object.keys(CHAIN_ID_TO_NETWORK_ID).find(key => CHAIN_ID_TO_NETWORK_ID[key as keyof typeof CHAIN_ID_TO_NETWORK_ID] === "{{networkId}}");
+    expect(
+      provider.supportsNetwork({
+        networkId: "{{networkId}}",
+        protocolFamily: "{{protocol_family}}",
+        chainId: chainId,
+      } as Network),
+    ).toBe(true);
+  }
+  {% elif protocol_family == "svm" %}
+  {
+    const network = [
+      SOLANA_MAINNET_NETWORK,
+      SOLANA_TESTNET_NETWORK,
+      SOLANA_DEVNET_NETWORK,
+    ].find(n => n.networkId === "{{networkId}}");
+    if (!network) {
+      throw new Error("Network not found: {{networkId}}");
+    }
+    expect(provider.supportsNetwork(network)).toBe(true);
+  }
+  {% endif %}
+  {% endfor %}
+});
+
+it("should not support other networks", () => {
+  expect(
+    provider.supportsNetwork({
+      networkId: "other-network-id",
+      protocolFamily: "{{protocol_family}}",
+    } as Network),
+  ).toBe(false);
+});

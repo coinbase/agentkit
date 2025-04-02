@@ -1,0 +1,15 @@
+it("should support the protocol family", () => {
+  expect(
+    provider.supportsNetwork({
+      protocolFamily: "{{protocol_family}}",
+    } as Network),
+  ).toBe(true);
+});
+
+it("should not support other protocol families", () => {
+  expect(
+    provider.supportsNetwork({
+      protocolFamily: "other-protocol-family",
+    } as Network),
+  ).toBe(false);
+});

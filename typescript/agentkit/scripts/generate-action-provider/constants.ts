@@ -167,13 +167,17 @@ export const SUCCESS_MESSAGES = {
     DIR: `  src/action-providers/${name}/`,
     PROVIDER: `    ├── ${name}ActionProvider.ts`,
     TEST: `    ├── ${name}ActionProvider.test.ts`,
+    EXAMPLE_TEST: `    ├── exampleAction.test.ts`,
     SCHEMAS: `    ├── schemas.ts`,
+    INDEX: `    ├── index.ts`,
     README: `    └── README.md`,
   }),
   DESCRIPTIONS: {
     PROVIDER: "(main provider implementation)",
-    TEST: "(test suite)",
+    TEST: "(provider test suite)",
+    EXAMPLE_TEST: "(example action test suite)",
     SCHEMAS: "(action schemas and types)",
+    INDEX: "(package exports)",
     README: "(documentation)",
   },
 };

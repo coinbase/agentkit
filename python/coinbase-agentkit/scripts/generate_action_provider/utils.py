@@ -2,6 +2,7 @@
 
 import os
 import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -106,14 +107,18 @@ def add_provider_files(config: ProviderConfig, provider_dir: Path, test_dir: Pat
         "name": config.name,
         "name_pascal": format_pascal_case(config.name),
         "protocol_family": config.protocol_family,
+        "provider_key": config.provider_key,
         "network_ids": config.network_ids,
         "wallet_provider": config.wallet_provider,
     }
 
     template_dir = Path(__file__).parent / "templates"
 
+    provider_init_template_path = template_dir / "action_provider/__init__.py.template"
+    provider_init_output_path = provider_dir / "__init__.py"
+    process_template(str(provider_init_template_path), str(provider_init_output_path), context)
+
     provider_templates = {
-        "__init__.py": "__init__.py.template",
         f"{config.name}_action_provider.py": "action_provider.py.template",
         "schemas.py": "schemas.py.template",
         "README.md": "README.md.template",
@@ -124,14 +129,17 @@ def add_provider_files(config: ProviderConfig, provider_dir: Path, test_dir: Pat
         output_path = provider_dir / output_file
         process_template(str(template_path), str(output_path), context)
 
-    (test_dir / "__init__.py").touch()
-    template_path = template_dir / "conftest.py.template"
-    output_path = test_dir / "conftest.py"
-    process_template(str(template_path), str(output_path), context)
+    init_template_path = template_dir / "tests/__init__.py.template"
+    init_output_path = test_dir / "__init__.py"
+    process_template(str(init_template_path), str(init_output_path), context)
+
+    conftest_template_path = template_dir / "tests/conftest.py.template"
+    conftest_output_path = test_dir / "conftest.py"
+    process_template(str(conftest_template_path), str(conftest_output_path), context)
 
     test_templates = {
-        "test_action_provider.py": "action_provider_test.py.template",
-        "test_example_action.py": "test_example_action.py.template",
+        "test_action_provider.py": "tests/action_provider_test.py.template",
+        "test_example_action.py": "tests/example_action_test.py.template",
     }
 
     for output_file, template_file in test_templates.items():
@@ -239,6 +247,31 @@ def update_agentkit_init(config: ProviderConfig) -> None:
 
     with open(init_path, "w", encoding="utf-8") as f:
         f.writelines(lines)
+
+
+def run_command(command: list[str], cwd: str, description: str) -> None:
+    """Run a shell command using subprocess and handle output."""
+    print(f"\n{description}...")
+    try:
+        subprocess.run(command, cwd=cwd, check=True, capture_output=True, text=True)
+        print(f"[green] {description} complete.[/green]")
+    except FileNotFoundError:
+        print(f"[yellow]Warning: Command '{' '.join(command)}' not found. Skipping.[/yellow]")
+    except subprocess.CalledProcessError as e:
+        print(f"[yellow]Warning: {description} failed.[/yellow]")
+        print(f"[yellow]Command: {' '.join(e.cmd)}[/yellow]")
+        print(f"[yellow]Return code: {e.returncode}[/yellow]")
+        print(f"[yellow]Output:\n{e.stderr or e.stdout}[/yellow]")
+
+
+def run_format(workspace_root: str) -> None:
+    """Run the formatter."""
+    run_command(["make", "format"], cwd=workspace_root, description="Formatting generated files")
+
+
+def run_lint_fix(workspace_root: str) -> None:
+    """Run the linter with auto-fix."""
+    run_command(["make", "lint-fix"], cwd=workspace_root, description="Linting generated files")
 
 
 def display_success_message(provider_name: str) -> None:

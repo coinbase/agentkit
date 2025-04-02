@@ -1,5 +1,0 @@
-import { {{action_provider_class}} } from "../{{action_provider}}";
-import { DEFAULT_ACTION_EXECUTION_OPTIONS } from "../../executeAction";
-import { UnsupportedNetwork } from "../../errors";
-import { Registry } from "../../registry";
-import { ajv } from "../../../jsonschema/ajv"; 

@@ -15,13 +15,13 @@ import pc from "picocolors";
 
 import { parseCliArgs } from "./args";
 import { prepareProviderConfig } from "./config";
-import { 
-  addProviderExport, 
-  addProviderFiles, 
-  displayBanner, 
-  displaySuccessMessage, 
+import {
+  addProviderExport,
+  addProviderFiles,
+  displayBanner,
+  displaySuccessMessage,
   runLint,
-  runFormat
+  runFormat,
 } from "./utils";
 
 /**
@@ -46,11 +46,11 @@ async function createActionProvider() {
     addProviderExport(config.name);
 
     spinner.succeed(pc.green("Action provider created successfully!"));
-    
+
     // Run formatting and linting on the generated files
     await runFormat(targetDir);
     await runLint(targetDir);
-    
+
     displaySuccessMessage(config.name);
   } catch (error) {
     spinner.fail(pc.red("Failed to create action provider"));

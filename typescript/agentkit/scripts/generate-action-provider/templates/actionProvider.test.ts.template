@@ -2,26 +2,27 @@
  * {{name_pascal}}ActionProvider Tests
  */
 
-{% if wallet_provider %}
-{% include "scripts/generate-action-provider/templates/actionProvider.test/importsWallet.ts.template" %}
-{% else %}
-{% include "scripts/generate-action-provider/templates/actionProvider.test/importsBase.ts.template" %}
-{% endif %}
+{# include header #}
+{% include "actionProvider.test/header/default.ts.template" %}
 
-{% if protocol_family == "evm" and networkIds|length %}
-{% include "scripts/generate-action-provider/templates/actionProvider.test/importsEvm.ts.template" %}
-{% endif %}
+{# action provider tests #}
+describe("{{name_pascal}}ActionProvider", () => {
 
-{% if protocol_family == "svm" and networkIds|length %}
-{% include "scripts/generate-action-provider/templates/actionProvider.test/importsSvm.ts.template" %}
-{% endif %}
+  {# include setup #}
+  {% include "actionProvider.test/setup/default.ts.template" %}
 
-{% include "scripts/generate-action-provider/templates/actionProvider.test/setup.ts.template" %}
+  {# include network support tests conditionally #}
+  {% if not protocol_family %}
+    {% include "actionProvider.test/networkSupport/default.ts.template" %}
+  {% elif protocol_family != "all" and networkIds|length == 0 %}
+    {% include "actionProvider.test/networkSupport/protocol.ts.template" %}
+  {% elif protocol_family != "all" and networkIds|length > 0 %}
+    {% include "actionProvider.test/networkSupport/protocolNetwork.ts.template" %}
+  {% endif %}
 
-{% include "scripts/generate-action-provider/templates/actionProvider.test/networkSupportTests.ts.template" %}
+  {# always include invalid tests if protocol is specified #}
+  {% if protocol_family %}
+    {% include "actionProvider.test/networkSupport/invalid.ts.template" %}
+  {% endif %}
 
-{% include "scripts/generate-action-provider/templates/actionProvider.test/schemaValidationTests.ts.template" %}
-
-{% include "scripts/generate-action-provider/templates/actionProvider.test/executionTests.ts.template" %}
-
-{% include "scripts/generate-action-provider/templates/actionProvider.test/closing.ts.template" %}
+});

@@ -1,0 +1,6 @@
+/**
+ * Factory function to create a new {{name_pascal}}ActionProvider instance.
+ *
+ * @returns A new {{name_pascal}}ActionProvider instance
+ */
+export const {{name}}ActionProvider = () => new {{name_pascal}}ActionProvider();

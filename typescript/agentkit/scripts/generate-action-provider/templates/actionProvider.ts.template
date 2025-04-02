@@ -7,37 +7,29 @@
  * @module {{name}}
  */
 
-{% if wallet_provider %}
-  {% include "scripts/generate-action-provider/templates/actionProvider/headerWallet.ts.template" %}
-{% else %}
-  {% include "scripts/generate-action-provider/templates/actionProvider/headerBase.ts.template" %}
-{% endif %}
+{# include header #}
+{% set header_template = "actionProvider/header/" + provider_key + ".ts.template" %}
+{% include header_template %}
+
+{# include class definition #}
+{% set class_template = "actionProvider/class/" + provider_key + ".ts.template" %}
+{% include class_template %}
 {
-  /**
-   * Constructor for the {{name_pascal}}ActionProvider.
-   */
-  constructor() {
-    super("{{name}}", []);
-  }
+  {# include constructor #}
+  {% include "actionProvider/constructor/default.ts.template" %}
 
-  {% if wallet_provider %}
-    {% include "scripts/generate-action-provider/templates/actionProvider/exampleActionWallet.ts.template" %}
-  {% else %}
-    {% include "scripts/generate-action-provider/templates/actionProvider/exampleActionBase.ts.template" %}
-  {% endif %}
+  {# include actions via root action template #}
+  {% include "action.ts.template" %}
 
+  {# include network support logic #}
   {% if not protocol_family %}
-    {% include "scripts/generate-action-provider/templates/actionProvider/networkSupportAll.ts.template" %}
+    {% include "actionProvider/networkSupport/networkSupportAll.ts.template" %}
   {% elif protocol_family != "all" and networkIds|length == 0 %}
-    {% include "scripts/generate-action-provider/templates/actionProvider/networkSupportProtocol.ts.template" %}
+    {% include "actionProvider/networkSupport/networkSupportProtocol.ts.template" %}
   {% elif protocol_family != "all" and networkIds|length > 0 %}
-    {% include "scripts/generate-action-provider/templates/actionProvider/networkSupportProtocolNetwork.ts.template" %}
+    {% include "actionProvider/networkSupport/networkSupportProtocolNetwork.ts.template" %}
   {% endif %}
 }
 
-/**
- * Factory function to create a new {{name_pascal}}ActionProvider instance.
- *
- * @returns A new {{name_pascal}}ActionProvider instance
- */
-export const {{name}}ActionProvider = () => new {{name_pascal}}ActionProvider();
+{# include factory function #}
+{% include "actionProvider/factory/default.ts.template" %}

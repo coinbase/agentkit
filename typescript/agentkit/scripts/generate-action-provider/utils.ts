@@ -15,7 +15,10 @@ import { AGENTKIT_BANNER, SUCCESS_MESSAGES } from "./constants";
 // Convert exec to Promise-based
 const execPromise = promisify(exec);
 
-nunjucks.configure({
+// Configure Nunjucks environment ONCE, pointing to the base templates directory
+const templateBaseDir = path.join(__dirname, "templates");
+const env = nunjucks.configure(templateBaseDir, {
+  // Pass base path here
   autoescape: false,
   trimBlocks: true,
   lstripBlocks: true,
@@ -83,14 +86,15 @@ export function networkIdToDisplayName(networkId: string): string {
 }
 
 /**
- * Replaces template variables in a file
+ * Renders a template file with the given configuration context.
  *
- * @param content - The template content to process
- * @param config - The provider configuration
- * @returns The processed content with variables replaced
+ * @param templateName - The name of the template file relative to the base templates directory.
+ * @param config - The provider configuration object for context.
+ * @returns The processed template content as a string.
+ * @throws Throws an error if template rendering fails.
  */
-function processTemplate(content: string, config: ProviderConfig): string {
-  const { name, protocolFamily, networkIds, walletProvider } = config;
+function processTemplate(templateName: string, config: ProviderConfig): string {
+  const { name, protocolFamily, networkIds, walletProvider, providerKey } = config;
   const namePascal = name.charAt(0).toUpperCase() + name.slice(1);
 
   const context = {
@@ -99,12 +103,15 @@ function processTemplate(content: string, config: ProviderConfig): string {
     protocol_family: protocolFamily,
     networkIds,
     wallet_provider: walletProvider,
+    provider_key: providerKey,
   };
 
   try {
-    return nunjucks.renderString(content, context);
+    // Use env.render with the relative template name
+    return env.render(templateName, context);
   } catch (error) {
-    throw error;
+    console.error(`Error rendering template ${templateName}:`, error);
+    throw error; // Re-throw after logging
   }
 }
 
@@ -117,25 +124,26 @@ function processTemplate(content: string, config: ProviderConfig): string {
 export function addProviderFiles(config: ProviderConfig, targetDir: string): void {
   fs.mkdirSync(targetDir, { recursive: true });
 
-  const templateDir = path.join(__dirname, "templates");
+  // Template Map: Source Template Name (relative to base) -> Output Filename
   const templates = {
     "actionProvider.ts.template": `${config.name}ActionProvider.ts`,
     "actionProvider.test.ts.template": `${config.name}ActionProvider.test.ts`,
-    "schemas.ts.template": "schemas.ts",
-    "README.md.template": "README.md",
-    "index.ts.template": "index.ts",
+    "action.test.ts.template": `exampleAction.test.ts`,
+    "schemas.ts.template": `schemas.ts`,
+    "README.md.template": `README.md`,
+    "index.ts.template": `index.ts`,
   };
 
-  for (const [template, outputFile] of Object.entries(templates)) {
-    const templatePath = path.join(templateDir, template);
-    const templateContent = fs.readFileSync(templatePath, "utf-8");
+  for (const [templateName, outputFile] of Object.entries(templates)) {
     try {
-      const processedContent = processTemplate(templateContent, config);
+      // Call processTemplate with the template name (relative to base dir)
+      const processedContent = processTemplate(templateName, config);
       const outputPath = path.join(targetDir, outputFile);
       fs.writeFileSync(outputPath, processedContent);
     } catch (error) {
-      console.error(`Error processing template ${template}:`, error);
-      throw error;
+      // Error already logged in processTemplate, indicate failure point
+      console.error(`Failed to process template ${templateName} for output file ${outputFile}`);
+      throw error; // Stop the process if a template fails
     }
   }
 }
@@ -160,16 +168,16 @@ export function addProviderExport(providerName: string): void {
 
 /**
  * Runs ESLint to fix any linting issues in the generated files
- * 
+ *
  * @param targetDir - The directory containing the generated files
  */
 export async function runLint(targetDir: string): Promise<void> {
   try {
     console.log(pc.blue("Linting generated files..."));
-    
+
     const command = `npx eslint -c .eslintrc.json "${targetDir}/**/*.ts" --fix`;
     await execPromise(command);
-    
+
     console.log(pc.green("Linting complete."));
   } catch (error) {
     // ESLint returns non-zero exit code if it finds any linting errors
@@ -179,16 +187,16 @@ export async function runLint(targetDir: string): Promise<void> {
 
 /**
  * Runs Prettier to format the generated files
- * 
+ *
  * @param targetDir - The directory containing the generated files
  */
 export async function runFormat(targetDir: string): Promise<void> {
   try {
     console.log(pc.blue("Formatting generated files..."));
-    
+
     const command = `npx prettier -c .prettierrc --write "${targetDir}/**/*.{ts,js,cjs,json,md}"`;
     await execPromise(command);
-    
+
     console.log(pc.green("Formatting complete."));
   } catch (error) {
     // Prettier might return non-zero exit code
@@ -210,13 +218,15 @@ export function displaySuccessMessage(providerName: string): void {
   const maxLength = Math.max(
     files.PROVIDER.length,
     files.TEST.length,
+    files.EXAMPLE_TEST.length,
     files.SCHEMAS.length,
+    files.INDEX.length,
     files.README.length,
   );
 
   console.log(SUCCESS_MESSAGES.FILES_CREATED);
   console.log(pc.dim(files.DIR));
-  for (const key of ["PROVIDER", "TEST", "SCHEMAS", "README"] as const) {
+  for (const key of ["PROVIDER", "TEST", "EXAMPLE_TEST", "SCHEMAS", "INDEX", "README"] as const) {
     console.log(pc.green(files[key].padEnd(maxLength + 2)) + pc.dim(desc[key]));
   }
 

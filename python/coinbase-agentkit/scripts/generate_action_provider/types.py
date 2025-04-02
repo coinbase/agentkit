@@ -16,6 +16,7 @@ class ProviderConfig:
     protocol_family: ProtocolFamily
     network_ids: list[NetworkId]
     wallet_provider: WalletProvider | None = None
+    provider_key: str = "default"
 
 
 class PromptResult(TypedDict, total=False):

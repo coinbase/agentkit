@@ -1,0 +1,8 @@
+/**
+ * {{name_pascal}}ActionProvider provides actions for {{name}} operations.
+ *
+ * @description
+ * This provider is designed to provide blockchain-agnostic operations.
+ * It supports all blockchain networks.
+ */
+export class {{name_pascal}}ActionProvider extends ActionProvider
