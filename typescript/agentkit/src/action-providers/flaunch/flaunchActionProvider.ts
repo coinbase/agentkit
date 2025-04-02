@@ -198,8 +198,14 @@ Note:
       const memecoinAddress = filteredPoolCreatedEvent._memecoin;
       const chainSlug = Number(chainId) === base.id ? "base" : "base-sepolia";
 
-      return `Flaunched $${args.symbol} (${args.name}) with transaction hash: [${hash}](${NETWORK_ID_TO_VIEM_CHAIN[networkId].blockExplorers?.default.url}/tx/${hash})\n
-      View your $${args.symbol} on Flaunch: [${memecoinAddress}](https://flaunch.gg/${chainSlug}/coin/${memecoinAddress})`;
+      return `Flaunched\n ${JSON.stringify({
+        coinSymbol: `$${args.symbol}`,
+        coinName: args.name,
+        coinAddress: memecoinAddress,
+        flaunchCoinUrl: `https://flaunch.gg/${chainSlug}/coin/${memecoinAddress}`,
+        transactionHash: hash,
+        transactionUrl: `${NETWORK_ID_TO_VIEM_CHAIN[networkId].blockExplorers?.default.url}/tx/${hash}`,
+      })}`;
     } catch (error) {
       return `Error launching coin: ${error}`;
     }
