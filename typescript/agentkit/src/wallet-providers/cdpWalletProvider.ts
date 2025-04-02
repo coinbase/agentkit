@@ -114,6 +114,7 @@ export class CdpWalletProvider extends EvmWalletProvider {
   #publicClient: PublicClient;
   #gasLimitMultiplier: number;
   #feePerGasMultiplier: number;
+  #transactionQueue: Promise<void> | undefined;
 
   /**
    * Constructs a new CdpWalletProvider.
@@ -276,23 +277,31 @@ export class CdpWalletProvider extends EvmWalletProvider {
       throw new Error("Wallet not initialized");
     }
 
-    const preparedTransaction = await this.prepareTransaction(
-      transaction.to!,
-      transaction.value!,
-      transaction.data!,
-    );
+    const sendPromise = (async () => {
+      if (this.#transactionQueue) await this.#transactionQueue;
 
-    const signature = await this.signTransaction({
-      ...preparedTransaction,
-    } as TransactionRequest);
+      const preparedTransaction = await this.prepareTransaction(
+        transaction.to!,
+        transaction.value!,
+        transaction.data!,
+      );
 
-    const signedPayload = await this.addSignatureAndSerialize(preparedTransaction, signature);
+      const signature = await this.signTransaction({
+        ...preparedTransaction,
+      } as TransactionRequest);
 
-    const externalAddress = new ExternalAddress(this.#cdpWallet.getNetworkId(), this.#address!);
+      const signedPayload = await this.addSignatureAndSerialize(preparedTransaction, signature);
 
-    const tx = await externalAddress.broadcastExternalTransaction(signedPayload.slice(2));
+      const externalAddress = new ExternalAddress(this.#cdpWallet!.getNetworkId(), this.#address!);
 
-    return tx.transactionHash as `0x${string}`;
+      const tx = await externalAddress.broadcastExternalTransaction(signedPayload.slice(2));
+
+      return tx.transactionHash as `0x${string}`;
+    })();
+    this.#transactionQueue = sendPromise
+      .then(txHash => this.waitForTransactionReceipt(txHash))
+      .catch(() => {});
+    return await sendPromise;
   }
 
   /**
@@ -314,6 +323,7 @@ export class CdpWalletProvider extends EvmWalletProvider {
 
     const nonce = await this.#publicClient!.getTransactionCount({
       address: this.#address! as `0x${string}`,
+      blockTag: "pending",
     });
 
     const feeData = await this.#publicClient.estimateFeesPerGas();
