@@ -42,7 +42,7 @@
 
 ## 📖 Overview
 
-AgentKit is [Coinbase Developer Platform's](https://docs.cdp.coinbase.com) framework for easily enabling AI agents to take actions onchain. It is designed to be framework-agnostic, so you can use it with any AI framework, and wallet-agnostic, so you can use it with any wallet. AgentKit is actively being built out, and [welcomes community contributions!](#contributing)
+AgentKit is [Coinbase Developer Platform's](https://docs.cdp.coinbase.com) framework for easily enabling AI agents to take actions onchain. It is designed to be framework-agnostic, so you can use it with any AI framework, and wallet-agnostic, so you can use it with any wallet. AgentKit is actively being built out, and [welcomes community contributions!](#-contributing)
 
 <div align="center">
   <a href="https://www.youtube.com/watch?v=-R_mKpdepRE">
@@ -150,8 +150,9 @@ agentkit/
 │       ├── langchain-privy-chatbot/
 │       ├── langchain-solana-chatbot/
 │       ├── langchain-twitter-chatbot/
-│       ├── model-context-protocol-cdp-server/
-│       └── vercel-ai-sdk-cdp-chatbot/
+│       ├── langchain-xmtp-chatbot/
+│       ├── model-context-protocol-smart-wallet-server/
+│       └── vercel-ai-sdk-smart-wallet-chatbot/
 ├── python/
 │   ├── coinbase-agentkit/
 │   ├── create-onchain-agent/
@@ -161,7 +162,7 @@ agentkit/
 │   └── examples/
 │       ├── langchain-cdp-chatbot/
 │       ├── langchain-twitter-chatbot/
-│       └── openai-agents-sdk-cdp-chatbot/
+│       └── openai-agents-sdk-smart-wallet-chatbot/
 ```
 
 ## 🤝 Contributing

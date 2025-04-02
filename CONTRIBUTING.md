@@ -2,6 +2,15 @@
 
 Thank you for your interest in contributing to AgentKit! We welcome all contributions, no matter how big or small.
 
+## Contents
+
+- [Repository Structure](#repository-structure)
+- [Language-Specific Guides](#language-specific-guides)
+- [Contributing Workflow](#contributing-workflow)
+- [Releasing](#releasing)
+- [Getting Help](#getting-help)
+- [Monorepo Development Tips](#monorepo-development-tips)
+
 ## Repository Structure
 
 The AgentKit repository is organized as two [monorepos](https://vercel.com/docs/vercel-platform/glossary#monorepo), one for Python and one for TypeScript. The TypeScript side is organized as a [multi-package workspace](https://vercel.com/docs/vercel-platform/glossary#multi-package-workspace) and is managed with [Turborepo](https://turbo.build/repo/docs), while the Python side is simply a collection of Python packages. A Python package is a single subfolder with a `pyproject.toml` file, along with related code and files that are published together to PyPI, whereas a TypeScript [package](https://vercel.com/docs/vercel-platform/glossary#package) is a single subfolder with a `package.json` and related code that is published to NPM. For example, the `typescript/agentkit` subfolder is a TypeScript package, and the `python/coinbase-agentkit` subfolder is a Python package.
@@ -27,8 +36,9 @@ agentkit/
 │       ├── langchain-privy-chatbot/
 │       ├── langchain-solana-chatbot/
 │       ├── langchain-twitter-chatbot/
-│       ├── model-context-protocol-cdp-server/
-│       └── vercel-ai-sdk-cdp-chatbot/
+│       ├── langchain-xmtp-chatbot/
+│       ├── model-context-protocol-smart-wallet-server/
+│       └── vercel-ai-sdk-smart-wallet-chatbot/
 ├── python/
 │   ├── coinbase-agentkit/
 │   ├── create-onchain-agent/
@@ -38,7 +48,7 @@ agentkit/
 │   └── examples/
 │       ├── langchain-cdp-chatbot/
 │       ├── langchain-twitter-chatbot/
-│       └── openai-agents-sdk-cdp-chatbot/
+│       └── openai-agents-sdk-smart-wallet-chatbot/
 ```
 
 ## Language-Specific Guides
@@ -90,6 +100,11 @@ Current list of maintainers:
 - [@rohan-agarwal-coinbase](https://github.com/rohan-agarwal-coinbase)
 - [@0xRAG](https://github.com/0xRAG)
 - [@yuga-cb](https://github.com/yuga-cb)
+
+## Releasing
+
+- For TypeScript, see [TypeScript Development Guide](./CONTRIBUTING-TYPESCRIPT.md#releasing)
+- For Python, see [Python Development Guide](./CONTRIBUTING-PYTHON.md#releasing)
 
 ## Getting Help
 

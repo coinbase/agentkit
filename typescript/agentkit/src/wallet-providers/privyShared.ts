@@ -18,6 +18,8 @@ export interface PrivyWalletConfig {
   authorizationKeyId?: string;
   /** The chain type to create the wallet on */
   chainType?: "ethereum" | "solana";
+  /** The type of wallet to use */
+  walletType?: "server" | "embedded";
 }
 
 export type PrivyWalletExport = {
@@ -33,6 +35,22 @@ type CreatePrivyWalletReturnType = {
 };
 
 /**
+ * Create a Privy client
+ *
+ * @param config - The configuration options for the Privy client
+ * @returns The created Privy client
+ */
+export const createPrivyClient = (config: PrivyWalletConfig) => {
+  return new PrivyClient(config.appId, config.appSecret, {
+    walletApi: config.authorizationPrivateKey
+      ? {
+          authorizationPrivateKey: config.authorizationPrivateKey,
+        }
+      : undefined,
+  });
+};
+
+/**
  * Create a Privy wallet
  *
  * @param config - The configuration options for the Privy wallet
@@ -41,13 +59,7 @@ type CreatePrivyWalletReturnType = {
 export async function createPrivyWallet(
   config: PrivyWalletConfig,
 ): Promise<CreatePrivyWalletReturnType> {
-  const privy = new PrivyClient(config.appId, config.appSecret, {
-    walletApi: config.authorizationPrivateKey
-      ? {
-          authorizationPrivateKey: config.authorizationPrivateKey,
-        }
-      : undefined,
-  });
+  const privy = createPrivyClient(config);
 
   if (config.walletId) {
     const wallet = await privy.walletApi.getWallet({ id: config.walletId });

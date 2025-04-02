@@ -17,9 +17,8 @@
     "format": "prettier -c .prettierrc --write \"**/*.{ts,js,cjs,json,md}\"",
     "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\"",
     "check": "tsc --noEmit",
-    "test": "npx jest --no-cache --testMatch='**/*.test.ts'",
-    "test:dry-run": "npm install && npm ci && npm publish --dry-run",
-    "test:e2e": "npx jest --no-cache --testMatch=**/e2e.ts --coverageThreshold '{}'",
+    "test": "jest --no-cache --testMatch='**/*.test.ts'",
+    "test:e2e": "jest --no-cache --testMatch=**/e2e.ts --coverageThreshold '{}'",
     "test:types": "tsd --files src/tests/types.test-d.ts",
     "clean": "rm -rf dist/*",
     "prepack": "tsc",
@@ -45,7 +44,7 @@
     "zod-to-json-schema": "^3.24.3"
   },
   "devDependencies": {
-    "@coinbase/agentkit": "^0.4.0"
+    "@coinbase/agentkit": "workspace:*"
   },
   "peerDependencies": {
     "@coinbase/agentkit": ">=0.1.0"

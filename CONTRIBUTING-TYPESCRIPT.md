@@ -15,18 +15,23 @@ This guide covers TypeScript-specific setup and development for AgentKit.
 
 ## Development Setup
 
-AgentKit uses Node.js v18.x or higher and npm 8.x or higher.
+AgentKit uses Node.js v18.x or higher and pnpm 10.7.x or higher.
 
-You can run the following commands in your terminal to check your local Node.js and npm versions:
+You can run the following commands in your terminal to check your local Node.js and pnpm versions:
 
 ```bash
 node --version
-npm --version
+pnpm --version
 ```
 
-If the versions are not correct or you don't have Node.js or npm installed, download through [nvm](https://github.com/nvm-sh/nvm).
+If the versions are not correct or you don't have Node.js or pnpm installed, download Node.Js through [fnm](https://github.com/Schniz/fnm) and then install [pnpm](https://pnpm.io/installation).
 
-Once you have these installed, make sure you install the project dependencies by running `npm install` from the root of the TypeScript monorepo, in other words, from the root `typescript/` folder.
+Once you have these installed, make sure you install the project dependencies by running `pnpm install` from the root of the TypeScript monorepo, in other words, from the root `typescript/` folder.
+
+> **Note for existing contributors**: If you previously contributed when this was an npm turbo monorepo, you'll need to remove existing node_modules directories and reinstall dependencies with pnpm. From the `typescript/` directory, run:
+> ```bash
+> find . -name "node_modules" -type d -exec rm -rf {} + && pnpm i
+> ```
 
 ## Adding an Action Provider
 
@@ -184,7 +189,7 @@ You can then run the unit tests with the following command:
 
 ```bash
 cd typescript/agentkit
-npm test
+pnpm test
 ```
 
 Check out the [Testing](#testing) section to learn how to manually test your new action provider.
@@ -219,13 +224,13 @@ Integrations into AI Agent frameworks are specific to the framework itself, so w
 
 ### Local Testing
 
-A good way to test new actions locally is by using the chatbot example in `typescript/examples/langchain-cdp-chatbot`. See the [chatbot README](https://github.com/coinbase/agentkit/blob/master/typescript/examples/langchain-cdp-chatbot/README.md) for instructions on setting up and running the chatbot.
+A good way to test new actions locally is by using the chatbot example in `typescript/examples/langchain-smart-wallet-chatbot`. See the [chatbot README](https://github.com/coinbase/agentkit/blob/master/typescript/examples/langchain-smart-wallet-chatbot/README.md) for instructions on setting up and running the chatbot.
 
 The flow is:
 
 1. Make your change as described in the [Adding an Agentic Action](#adding-an-agentic-action) section
-2. From `typescript/`, run `npm run build && npm i`
-3. In `typescript/examples/langchain-cdp-chatbot`, run `npm run start`
+2. From `typescript/`, run `pnpm i && pnpm build`
+3. In `typescript/examples/langchain-smart-wallet-chatbot`, run `pnpm run start`
 4. You can now interact with your new action via the chatbot!
 
 ### Running Tests
@@ -233,14 +238,14 @@ The flow is:
 From the package you are working in, you can run:
 
 ```bash
-npm test
+pnpm test
 ```
 
 For example, to run all tests in the `@coinbase/agentkit` package, you can run:
 
 ```bash
 cd typescript/agentkit
-npm test
+pnpm test
 ```
 
 ## Code Style
@@ -249,13 +254,13 @@ We use ESLint and Prettier for linting and formatting. Run:
 
 ```bash
 # Format code
-npm run format
+pnpm run format
 
 # Lint code
-npm run lint
+pnpm run lint
 
 # Fix linting issues
-npm run lint:fix
+pnpm run lint:fix
 ```
 
 ## Documentation
@@ -276,7 +281,7 @@ Changesets are stored in the `.changeset` directory. Each changeset is stored as
 To add a changeset, use `changesets` to create it for you:
 
 ```bash
-npm run changeset
+pnpm run changeset
 ```
 
 This will kick off an interactive prompt to help you create the changeset. Use the arrow keys to navigate the different options, and press the `Space` key to select an option. You should select the package(s) you are making a change to – most of the time this will be `@coinbase/agentkit`. Once selected, hit `Enter`. You'll then be prompted to specify the type of change you are making (major, minor or patch), starting with major. Most of the time you will not be making a major change, so hitting `Enter` will progress to the next step. If you're adding a new feature, you should select `minor`. If you're fixing a bug, you should select `patch`. Once selected, you will be prompted to provide a summary of your changes. This should be a short, specific description in the past tense (see above for examples).

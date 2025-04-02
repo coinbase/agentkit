@@ -1,6 +1,13 @@
 # Coinbase AgentKit Framework Extension - Langchain Changelog
 
-## Unreleased
+<!-- towncrier release notes start -->
+
+## [0.2.0] - 2025-03-28
+
+### Added
+
+- Bump coinbase-agentkit to 0.2.0 ([#608](https://github.com/coinbase/agentkit/pull/608))
+
 
 ## [0.1.0] - 2025-02-12
 

@@ -107,7 +107,7 @@ _Prerequisites_:
 - Set `OPENAI_API_KEY` environment variable
 
 ```bash
-poetry add coinbase-agentkit-langchain langchain-openai langgraph
+pip install coinbase-agentkit-langchain langchain-openai langgraph
 ```
 
 ```python
@@ -383,6 +383,28 @@ This section provides a detailed list of all available action providers and thei
 <tr>
     <td width="200"><code>withdraw</code></td>
     <td width="768">Withdraws a specified amount of assets from a designated Morpho Vault.</td>
+</tr>
+</table>
+</details>
+
+<details>
+<summary><strong>Nillion</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>lookup_schema</code></td>
+    <td width="768">Looks up a schema by description and returns both the schema UUID and corresponding JSON schema.</td>
+</tr>
+<tr>
+    <td width="200"><code>create_schema</code></td>
+    <td width="768">Creates a new schema in the Nillion SecretVault based on a natural language description.</td>
+</tr>
+<tr>
+    <td width="200"><code>data_upload</code></td>
+    <td width="768">Uploads data into the Nillion SecretVault using a specified schema UUID.</td>
+</tr>
+<tr>
+    <td width="200"><code>data_download</code></td>
+    <td width="768">Downloads all data from the Nillion SecretVault for a specified schema UUID.</td>
 </tr>
 </table>
 </details>

@@ -1,36 +1,52 @@
-[tool.poetry]
+[project]
 name = "coinbase-agentkit-langchain"
-version = "0.1.0"
+version = "0.2.0"
 description = "Coinbase AgentKit LangChain extension"
-authors = ["John Peterson <john.peterson@coinbase.com>"]
+authors = [{ name = "John Peterson", email = "john.peterson@coinbase.com" }]
+requires-python = "~=3.10"
 readme = "README.md"
 license = "Apache-2.0"
-keywords = ["coinbase", "sdk", "crypto", "cdp", "langchain", "agentkit", "ai", "agent"]
-packages = [{ include = "coinbase_agentkit_langchain" }]
+keywords = [
+    "coinbase",
+    "sdk",
+    "crypto",
+    "cdp",
+    "langchain",
+    "agentkit",
+    "ai",
+    "agent",
+]
+dependencies = [
+    "coinbase-agentkit>=0.3.0,<0.4",
+    "langchain>=0.3.4,<0.4",
+    "python-dotenv>=1.0.1,<2",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-coinbase-agentkit = "^0.1.0"
-langchain = "^0.3.4"
-python-dotenv = "^1.0.1"
+[dependency-groups]
+dev = [
+    "ruff>=0.7.1,<0.8",
+    "mypy>=1.13.0,<2",
+    "pytest>=8.3.3,<9",
+    "pytest-cov>=6.0.0,<7",
+    "sphinx>=8.0.2,<9",
+    "sphinx-autobuild>=2024.9.19,<2025",
+    "sphinxcontrib-napoleon>=0.7,<0.8",
+    "sphinx-autodoc-typehints>=2.4.4,<3",
+    "myst-parser>=4.0.0,<5",
+    "ruff-lsp>=0.0.58,<0.0.59",
+    "python-lsp-server>=1.12.0,<2",
+    "towncrier>=24.8.0,<25",
+]
 
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.7.1"
-mypy = "^1.13.0"
-pytest = "^8.3.3"
-pytest-cov = "^6.0.0"
-sphinx = "^8.0.2"
-sphinx-autobuild = "^2024.9.19"
-sphinxcontrib-napoleon = "^0.7"
-sphinx-autodoc-typehints = "^2.4.4"
-myst-parser = "^4.0.0"
-ruff-lsp = "^0.0.58"
-python-lsp-server = "^1.12.0"
-towncrier = "^24.8.0"
+[tool.hatch.build.targets.sdist]
+include = ["coinbase_agentkit_langchain"]
+
+[tool.hatch.build.targets.wheel]
+include = ["coinbase_agentkit_langchain"]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.mypy]
 python_version = "3.10"
