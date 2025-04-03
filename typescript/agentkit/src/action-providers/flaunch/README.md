@@ -5,9 +5,18 @@ This directory contains the **FlaunchActionProvider** implementation, which prov
 ## Overview
 
 The FlaunchActionProvider is designed to work with EvmWalletProvider for blockchain interactions. It provides a set of actions that enable:
+
 - Launching new memecoin tokens
 - Buying memecoin tokens with ETH
 - Selling memecoin tokens for ETH
+
+### Environment Variables
+
+```
+PINATA_JWT
+```
+
+Creating the flaunchActionProvider requires Pinata JWT. You can create one at https://app.pinata.cloud/developers/api-keys
 
 ## Directory Structure
 
@@ -25,6 +34,7 @@ flaunch/
 ## Actions
 
 ### Launch Memecoin
+
 - `flaunch`: Create a new memecoin token
   - **Purpose**: Launch a new memecoin with customizable metadata
   - **Input**:
@@ -43,12 +53,14 @@ flaunch/
       name: "My Memecoin",
       symbol: "MEME",
       imageUrl: "https://example.com/image.png",
-      description: "A fun memecoin for the community"
+      description: "A fun memecoin for the community",
     });
     ```
 
 ### Buy Memecoin with ETH
+
 - `buyCoinWithETHInput`: Buy memecoin tokens by specifying ETH input amount
+
   - **Purpose**: Purchase memecoin tokens with a specified amount of ETH
   - **Input**:
     - `coinAddress` (string): The address of the flaunch coin to buy
@@ -65,6 +77,7 @@ flaunch/
   - **Output**: String describing the swap result with amounts and transaction hash
 
 ### Sell Memecoin
+
 - `sellCoin`: Sell memecoin tokens for ETH
   - **Purpose**: Sell memecoin tokens back to ETH
   - **Input**:
@@ -76,25 +89,33 @@ flaunch/
 ## Implementation Details
 
 ### Network Support
+
 This provider supports the following networks:
+
 - Base Mainnet (`base-mainnet`)
 - Base Sepolia (`base-sepolia`)
 
 ### Dependencies
+
 The provider requires:
+
 - A Pinata JWT for IPFS uploads (used for token metadata)
 - Access to Base network RPC endpoints
 
 ### Configuration
+
 When initializing the provider:
+
 ```typescript
 const provider = new FlaunchActionProvider({
-  pinataJwt: "your-pinata-jwt" // Required for IPFS uploads
+  pinataJwt: "your-pinata-jwt", // Required for IPFS uploads
 });
 ```
 
 ### Key Contracts
+
 The provider interacts with several key contracts:
+
 - FastFlaunchZap: For launching new tokens
 - FlaunchPositionManager: For managing liquidity positions
 - UniversalRouter: For executing swaps
