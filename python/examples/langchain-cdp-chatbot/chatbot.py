@@ -23,6 +23,9 @@ from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 
+from coinbase_agentkit.action_providers import compass_action_provider
+from coinbase_agentkit.action_providers.compass.compass_action_provider import CompassActionProvider
+
 # Configure a file to persist the agent's CDP API Wallet Data.
 wallet_data_file = "wallet_data.txt"
 
@@ -40,9 +43,12 @@ def initialize_agent():
         with open(wallet_data_file) as f:
             wallet_data = f.read()
 
+    print("wallet_data", wallet_data)
     cdp_config = None
     if wallet_data is not None:
         cdp_config = CdpWalletProviderConfig(wallet_data=wallet_data)
+    else:
+        raise ValueError("aa")
 
     wallet_provider = CdpWalletProvider(cdp_config)
 
@@ -57,6 +63,7 @@ def initialize_agent():
                 wallet_action_provider(),
                 weth_action_provider(),
                 allora_action_provider(),
+                compass_action_provider()
             ],
         )
     )
@@ -68,6 +75,9 @@ def initialize_agent():
 
     # use get_langchain_tools
     tools = get_langchain_tools(agentkit)
+    for tool in tools:
+        print(tool)
+        print("---")
 
     # Store buffered conversation history in memory.
     memory = MemorySaver()
