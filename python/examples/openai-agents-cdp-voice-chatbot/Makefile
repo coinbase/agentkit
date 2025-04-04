@@ -10,7 +10,7 @@ install:
 
 .PHONY: run
 run:
-	uv run chatbot.py
+	uv run main.py
 
 .PHONY: format
 format:
