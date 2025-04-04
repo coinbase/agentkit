@@ -657,7 +657,7 @@ wheels = [
 
 [[package]]
 name = "coinbase-agentkit"
-version = "0.3.0"
+version = "0.4.0"
 source = { editable = "../../coinbase-agentkit" }
 dependencies = [
     { name = "allora-sdk" },
@@ -713,7 +713,7 @@ dev = [
 
 [[package]]
 name = "coinbase-agentkit-langchain"
-version = "0.2.0"
+version = "0.3.0"
 source = { editable = "../../framework-extensions/langchain" }
 dependencies = [
     { name = "coinbase-agentkit" },
@@ -723,7 +723,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "coinbase-agentkit", specifier = ">=0.3.0,<0.4" },
+    { name = "coinbase-agentkit", specifier = ">=0.3.0,<0.5" },
     { name = "langchain", specifier = ">=0.3.4,<0.4" },
     { name = "python-dotenv", specifier = ">=1.0.1,<2" },
 ]

@@ -2,6 +2,13 @@
 
 <!-- towncrier release notes start -->
 
+## [0.4.0] - 2025-04-04
+
+### Added
+
+- Added OnrampActionProvider to enable cryptocurrency purchases ([#639](https://github.com/coinbase/agentkit/pull/639))
+
+
 ## [0.3.0] - 2025-03-28
 
 ### Fixed

@@ -1,6 +1,6 @@
 [project]
 name = "coinbase-agentkit"
-version = "0.3.0"
+version = "0.4.0"
 description = "Coinbase AgentKit"
 authors = [{ name = "John Peterson", email = "john.peterson@coinbase.com" }]
 requires-python = "~=3.10"
