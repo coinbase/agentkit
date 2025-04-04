@@ -26,3 +26,4 @@ export * from "./wow";
 export * from "./allora";
 export * from "./flaunch";
 export * from "./onramp";
+export * from "./vaultsfyi";
