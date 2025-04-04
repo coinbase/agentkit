@@ -694,7 +694,7 @@ wheels = [
 
 [[package]]
 name = "coinbase-agentkit-langchain"
-version = "0.2.0"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "coinbase-agentkit" },
@@ -721,7 +721,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "coinbase-agentkit", specifier = ">=0.3.0,<0.4" },
+    { name = "coinbase-agentkit", specifier = ">=0.3.0,<0.5" },
     { name = "langchain", specifier = ">=0.3.4,<0.4" },
     { name = "python-dotenv", specifier = ">=1.0.1,<2" },
 ]

@@ -9,11 +9,11 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.10"
 python-dotenv = "^1.0.1"
-coinbase-agentkit = "^0.3.0"
+coinbase-agentkit = "^0.4.0"
 {% if _framework == "langchain" %}langchain-openai = "^0.2.4"
 langgraph = "^0.2.39"
-coinbase-agentkit-langchain = "0.2.0"{% elif _framework == "openai_agents" %}openai-agents = "0.0.2"
-coinbase-agentkit-openai-agents-sdk = "0.2.0"
+coinbase-agentkit-langchain = "0.3.0"{% elif _framework == "openai_agents" %}openai-agents = "0.0.2"
+coinbase-agentkit-openai-agents-sdk = "0.3.0"
 openai = "1.66.0"{% endif %}
 
 [tool.poetry.scripts]
