@@ -44,6 +44,10 @@ test-e2e:
 test-integration:
 	uv run pytest -m integration
 
+.PHONY: changelog
+changelog:
+	uv run towncrier create
+
 .PHONY: check-description-length
 check-description-length:
 	uv run check-description-length

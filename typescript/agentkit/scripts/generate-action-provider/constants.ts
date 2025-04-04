@@ -118,6 +118,11 @@ const EVM_WALLET_PROVIDERS = [
     description: "Privy's server wallet API provider for EVM networks",
   },
   {
+    title: "PrivyEvmDelegatedWalletProvider",
+    value: "PrivyEvmDelegatedWalletProvider",
+    description: "Privy's delegated embedded wallet provider for EVM networks",
+  },
+  {
     title: "ViemWalletProvider",
     value: "ViemWalletProvider",
     description: "Viem-based wallet provider for EVM networks",

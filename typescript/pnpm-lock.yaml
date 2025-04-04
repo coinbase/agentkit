@@ -165,6 +165,9 @@ importers:
       typescript:
         specifier: ^5.7.2
         version: 5.8.2
+      yargs:
+        specifier: ^17.7.2
+        version: 17.7.2
 
   create-onchain-agent:
     dependencies:

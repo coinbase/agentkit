@@ -19,7 +19,7 @@ console = Console()
 
 def display_banner() -> None:
     """Display the AgentKit banner."""
-    console.print(Panel.fit(AGENTKIT_BANNER, border_style="blue"))
+    console.print(Panel.fit(f"[blue]{AGENTKIT_BANNER}[/blue]"))
 
 
 def provider_exists(name: str) -> bool:
