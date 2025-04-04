@@ -82,7 +82,7 @@ describe("PrivyWalletProvider", () => {
     expect(PrivyEvmWalletProvider.configureWithWallet).toHaveBeenCalledWith(MOCK_EVM_CONFIG);
     expect(PrivySvmWalletProvider.configureWithWallet).not.toHaveBeenCalled();
     expect(PrivyEvmDelegatedEmbeddedWalletProvider.configureWithWallet).not.toHaveBeenCalled();
-    
+
     expect(provider.getAddress()).toBe("0x742d35Cc6634C0532925a3b844Bc454e4438f44e");
     expect(provider.getNetwork().protocolFamily).toBe("evm");
   });

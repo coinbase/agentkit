@@ -5,10 +5,11 @@ import {
   PrivyEvmDelegatedEmbeddedWalletConfig,
 } from "./privyEvmDelegatedEmbeddedWalletProvider";
 
-type PrivyWalletConfig =
-  (PrivyEvmWalletConfig
+type PrivyWalletConfig = (
+  | PrivyEvmWalletConfig
   | PrivySvmWalletConfig
-  | PrivyEvmDelegatedEmbeddedWalletConfig) & {
+  | PrivyEvmDelegatedEmbeddedWalletConfig
+) & {
   chainType?: "ethereum" | "solana";
   walletType?: "server" | "embedded";
 };
