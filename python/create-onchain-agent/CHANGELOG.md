@@ -1,6 +1,11 @@
 # Coinbase Create Onchain Agent Changelog
 
 <!-- towncrier release notes start -->
+## [0.5.0] - 2025-04-04
+
+### Added
+
+- Bump in templates coinbase-agentkit to 0.4.0, coinbase-agentkit-langchain to 0.3.0 and coinbase-agentkit-openai-agents-sdk to 0.3.0
 
 ## [0.4.0] - 2025-03-28
 
