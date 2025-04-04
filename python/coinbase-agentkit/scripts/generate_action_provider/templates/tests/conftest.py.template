@@ -6,7 +6,7 @@ import pytest
 
 from coinbase_agentkit.action_providers.{{ name }}.{{ name }}_action_provider import {{ name_pascal }}ActionProvider
 from coinbase_agentkit.network import NETWORK_ID_TO_CHAIN_ID, Network
-{% if wallet_provider %}
+{% if provider_key == 'wallet_provider' %}
 from coinbase_agentkit.wallet_providers import {{ wallet_provider }}
 {% endif %}
 
@@ -25,22 +25,10 @@ MOCK_NETWORK = Network(
     network_id=SELECTED_NETWORK if SELECTED_NETWORK != "None" else None
 )
 
-@pytest.fixture
-def provider():
-    """Create a {{ name_pascal }}ActionProvider instance."""
-    return {{ name_pascal }}ActionProvider()
+# Include fixture definitions from templates
+{% include "action_provider_test/fixtures/provider.py.template" %}
 
-@pytest.fixture
-def {{ name }}_action_provider():
-    """Create a {{ name }} action provider instance."""
-    return {{ name_pascal }}ActionProvider()
-
-@pytest.fixture
-def mock_wallet_provider():
-    """Create a mock wallet provider with common methods."""
-    provider = Mock(spec={{ wallet_provider }})
-    provider.name = MOCK_PROVIDER_NAME
-    provider.get_address.return_value = MOCK_ADDRESS
-    provider.get_balance.return_value = MOCK_BALANCE
-    provider.get_network.return_value = MOCK_NETWORK
-    return provider
+{% if provider_key != 'default' %}
+{% set fixture_template = "action_provider_test/fixtures/" + provider_key + ".py.template" %}
+{% include fixture_template %}
+{% endif %}

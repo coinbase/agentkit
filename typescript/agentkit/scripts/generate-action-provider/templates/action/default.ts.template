@@ -1,0 +1,32 @@
+/**
+ * Example action implementation.
+ * Replace or modify this with your actual action.
+ *
+ * @description
+ * This is a template action that demonstrates the basic structure.
+ * Replace it with your actual implementation.
+ *
+ * @param args - Arguments defined by ExampleActionSchema
+ * @returns A promise that resolves to a string describing the action result
+ */
+@CreateAction({
+  name: "example_action",
+  description: `
+    Example action for {{name}} provider.
+
+    This action demonstrates the basic structure of an action implementation.
+    Replace this description with your actual action's purpose and behavior.
+
+    Include:
+    - What the action does
+    - Required inputs and their format
+    - Expected outputs
+    - Any important considerations or limitations
+  `,
+  schema: ExampleActionSchema,
+})
+async exampleAction(args: z.infer<typeof ExampleActionSchema>): Promise<string> {
+  // TODO: Implement your action logic here
+  // Example implementation:
+  return `Example action called with ${args.fieldName}`;
+} 

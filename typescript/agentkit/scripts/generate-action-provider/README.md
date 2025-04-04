@@ -53,6 +53,7 @@ Located in `src/action-providers/{name}/`:
 ```
 ├── {name}ActionProvider.ts       # Main provider implementation
 ├── {name}ActionProvider.test.ts  # Provider test suite
+├── exampleAction.test.ts         # Example action test suite
 ├── schemas.ts                    # Action schemas and types
 ├── index.ts                      # Package exports
 └── README.md                     # Provider documentation
