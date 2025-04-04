@@ -37,6 +37,9 @@ export interface PrivyEvmDelegatedEmbeddedWalletConfig extends PrivyWalletConfig
 
   /** The chain ID to connect to */
   chainId?: string;
+
+  /** The wallet type to use */
+  walletType: "embedded";
 }
 
 /**
