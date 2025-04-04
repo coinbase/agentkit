@@ -18,7 +18,7 @@ keywords = [
 dependencies = [
     "cdp-sdk==0.21.0",
     "pydantic~=2.0",
-    "web3>=7.6.0,<8",
+    "web3>=7.10.0,<8",
     "python-dotenv>=1.0.1,<2",
     "requests>=2.31.0,<3",
     "allora-sdk>=0.2.0,<0.3",
