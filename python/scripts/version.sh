@@ -22,7 +22,7 @@ done
 
 for package in "${changed_packages[@]}"; do
   cd $package
-  poetry install
-  poetry run -- towncrier build --yes
+  uv sync
+  uv run -- towncrier build --yes
   cd - > /dev/null
 done
