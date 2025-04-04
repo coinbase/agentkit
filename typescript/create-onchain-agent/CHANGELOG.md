@@ -1,5 +1,11 @@
 # Coinbase Create Onchain Agent Changelog
 
+## 0.3.1
+
+### Patch Changes
+
+- [#642](https://github.com/coinbase/agentkit/pull/642) [`9a946f2`](https://github.com/coinbase/agentkit/commit/9a946f241897bbd1f8fc394861cdbe9e8b6b4e6f) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Removed CdpWalletActionProvider from smart wallet action provider lists
+
 ## 0.3.0
 
 ### Minor Changes
