@@ -5,10 +5,13 @@ import {
   PrivyEvmDelegatedEmbeddedWalletConfig,
 } from "./privyEvmDelegatedEmbeddedWalletProvider";
 
-export type PrivyWalletConfig =
-  | PrivyEvmWalletConfig
+type PrivyWalletConfig =
+  (PrivyEvmWalletConfig
   | PrivySvmWalletConfig
-  | PrivyEvmDelegatedEmbeddedWalletConfig;
+  | PrivyEvmDelegatedEmbeddedWalletConfig) & {
+  chainType?: "ethereum" | "solana";
+  walletType?: "server" | "embedded";
+};
 
 export type PrivyWalletProviderVariant<T> = T extends { walletType: "embedded" }
   ? PrivyEvmDelegatedEmbeddedWalletProvider
@@ -51,10 +54,7 @@ export class PrivyWalletProvider {
    * ```
    */
   static async configureWithWallet<T extends PrivyWalletConfig>(
-    config: T & {
-      chainType?: "ethereum" | "solana";
-      walletType?: "server" | "embedded";
-    },
+    config: T,
   ): Promise<PrivyWalletProviderVariant<T>> {
     const chainType = config.chainType || "ethereum";
     const walletType = config.walletType || "server";
