@@ -32,10 +32,10 @@ def read_version(file_path: str, version_key: str) -> str:
         content = file.read()
 
     for line in content.split("\n"):
-        match = re.match(rf'{version_key}\s*=\s*(.+?)(?:\{{|$)', line)
+       match = re.match(rf'^{version_key}\s*=\s*(.+?)(?:\{{|$)', line)
 
         if match:
-            return match.group(1).strip().replace('"', '').replace("'", "")
+            return match.group(1).strip().replace('"', '').replace("'", "").replace('\n', '')
 
 def determine_new_version(version_type: str, version: str) -> str:
     """
