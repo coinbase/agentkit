@@ -25,6 +25,9 @@ done
 
 # Only perform git operations if --prod flag is set
 if [ "$IS_PROD" = true ]; then
+    # Run sync_examples.sh
+    ./sync_examples.sh
+
     # Stage and commit changes
     git add --all
     git commit -m "$PR_TITLE"
