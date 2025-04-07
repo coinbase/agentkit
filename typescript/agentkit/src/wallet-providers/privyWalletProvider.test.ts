@@ -1,6 +1,7 @@
 import { PrivyWalletProvider } from "./privyWalletProvider";
 import { PrivyEvmWalletProvider } from "./privyEvmWalletProvider";
 import { PrivySvmWalletProvider } from "./privySvmWalletProvider";
+import { PrivyEvmDelegatedEmbeddedWalletProvider } from "./privyEvmDelegatedEmbeddedWalletProvider";
 
 global.fetch = jest.fn(() =>
   Promise.resolve({
@@ -39,6 +40,19 @@ jest.mock("./privySvmWalletProvider", () => ({
   },
 }));
 
+jest.mock("./privyEvmDelegatedEmbeddedWalletProvider", () => ({
+  PrivyEvmDelegatedEmbeddedWalletProvider: {
+    configureWithWallet: jest.fn().mockResolvedValue({
+      getAddress: jest.fn().mockReturnValue("0x324335Cc6634C0532925a3b844Bc454e4438d22g"),
+      getNetwork: jest.fn().mockReturnValue({
+        protocolFamily: "evm",
+        chainId: "1",
+        networkId: "mainnet",
+      }),
+    }),
+  },
+}));
+
 describe("PrivyWalletProvider", () => {
   const MOCK_EVM_CONFIG = {
     appId: "test-app-id",
@@ -51,6 +65,13 @@ describe("PrivyWalletProvider", () => {
     chainType: "solana" as const,
   };
 
+  const MOCK_EVM_EMBEDDED_WALLET_CONFIG = {
+    ...MOCK_EVM_CONFIG,
+    authorizationPrivateKey: "test-auth-key",
+    walletId: "test-wallet-id",
+    walletType: "embedded" as const,
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -60,6 +81,7 @@ describe("PrivyWalletProvider", () => {
 
     expect(PrivyEvmWalletProvider.configureWithWallet).toHaveBeenCalledWith(MOCK_EVM_CONFIG);
     expect(PrivySvmWalletProvider.configureWithWallet).not.toHaveBeenCalled();
+    expect(PrivyEvmDelegatedEmbeddedWalletProvider.configureWithWallet).not.toHaveBeenCalled();
 
     expect(provider.getAddress()).toBe("0x742d35Cc6634C0532925a3b844Bc454e4438f44e");
     expect(provider.getNetwork().protocolFamily).toBe("evm");
@@ -75,6 +97,7 @@ describe("PrivyWalletProvider", () => {
 
     expect(PrivyEvmWalletProvider.configureWithWallet).toHaveBeenCalledWith(config);
     expect(PrivySvmWalletProvider.configureWithWallet).not.toHaveBeenCalled();
+    expect(PrivyEvmDelegatedEmbeddedWalletProvider.configureWithWallet).not.toHaveBeenCalled();
 
     expect(provider.getAddress()).toBe("0x742d35Cc6634C0532925a3b844Bc454e4438f44e");
     expect(provider.getNetwork().protocolFamily).toBe("evm");
@@ -85,9 +108,23 @@ describe("PrivyWalletProvider", () => {
 
     expect(PrivySvmWalletProvider.configureWithWallet).toHaveBeenCalledWith(MOCK_SVM_CONFIG);
     expect(PrivyEvmWalletProvider.configureWithWallet).not.toHaveBeenCalled();
+    expect(PrivyEvmDelegatedEmbeddedWalletProvider.configureWithWallet).not.toHaveBeenCalled();
 
     expect(provider.getAddress()).toBe("AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM");
     expect(provider.getNetwork().protocolFamily).toBe("solana");
+  });
+
+  it("should create an EVM embedded wallet provider when embedded is specified", async () => {
+    const provider = await PrivyWalletProvider.configureWithWallet(MOCK_EVM_EMBEDDED_WALLET_CONFIG);
+
+    expect(PrivyEvmDelegatedEmbeddedWalletProvider.configureWithWallet).toHaveBeenCalledWith(
+      MOCK_EVM_EMBEDDED_WALLET_CONFIG,
+    );
+    expect(PrivyEvmWalletProvider.configureWithWallet).not.toHaveBeenCalled();
+    expect(PrivySvmWalletProvider.configureWithWallet).not.toHaveBeenCalled();
+
+    expect(provider.getAddress()).toBe("0x324335Cc6634C0532925a3b844Bc454e4438d22g");
+    expect(provider.getNetwork().protocolFamily).toBe("evm");
   });
 
   it("should pass through all config properties", async () => {
