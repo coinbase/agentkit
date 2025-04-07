@@ -35,7 +35,7 @@ function validateEnvironment(): void {
     "OPENAI_API_KEY",
     "CDP_API_KEY_NAME",
     "CDP_API_KEY_PRIVATE_KEY",
-    "ZERODEV_PROJECT_ID"
+    "ZERODEV_PROJECT_ID",
   ];
 
   requiredVars.forEach(varName => {

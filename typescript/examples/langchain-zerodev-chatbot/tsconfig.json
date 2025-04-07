@@ -3,9 +3,8 @@
   "compilerOptions": {
     "preserveSymlinks": true,
     "outDir": "./dist",
-    "rootDir": "."
+    "rootDir": ".",
+    "module": "Node16"
   },
-  "include": [
-    "*.ts"
-  ]
+  "include": ["*.ts"]
 }
