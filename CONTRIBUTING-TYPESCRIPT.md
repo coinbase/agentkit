@@ -213,7 +213,7 @@ Non-EVM Wallet Providers are housed in `typescript/agentkit/src/wallet-providers
 
 ## Integrating into an AI Agent Framework
 
-Actions are necessary building blocks powering onchain AI applications, but they're just one piece of the puzzle. To make them truly useful, they must be integrated into an AI Agent framework such as [LangChain](https://www.langchain.com/) or [Eliza](https://elizaos.github.io/eliza/), among others.
+Actions are necessary building blocks powering onchain AI applications, but they're just one piece of the puzzle. To make them truly useful, they must be integrated into an AI Agent framework such as [LangChain](https://www.langchain.com/) or [Eliza](https://eliza.how/), among others.
 
 Integrations into AI Agent frameworks are specific to the framework itself, so we can't go into specific implementation details here, but we can offer up some examples and tips.
 
