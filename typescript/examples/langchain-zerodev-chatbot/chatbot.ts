@@ -8,6 +8,9 @@ import {
   cdpApiActionProvider,
   cdpWalletActionProvider,
   pythActionProvider,
+  ViemWalletProvider,
+  NETWORK_ID_TO_VIEM_CHAIN,
+  EvmWalletProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { ZeroDevWalletProvider } from "@coinbase/agentkit";
@@ -18,7 +21,8 @@ import { ChatOpenAI } from "@langchain/openai";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as readline from "readline";
-
+import { privateKeyToAccount } from "viem/accounts";
+import { type Hex, createWalletClient, http } from "viem";
 dotenv.config();
 
 /**
@@ -33,9 +37,9 @@ function validateEnvironment(): void {
   // Check required variables
   const requiredVars = [
     "OPENAI_API_KEY",
+    "ZERODEV_PROJECT_ID",
     "CDP_API_KEY_NAME",
     "CDP_API_KEY_PRIVATE_KEY",
-    "ZERODEV_PROJECT_ID",
   ];
 
   requiredVars.forEach(varName => {
@@ -55,7 +59,7 @@ function validateEnvironment(): void {
 
   // Warn about optional NETWORK_ID
   if (!process.env.NETWORK_ID) {
-    console.warn("Warning: NETWORK_ID not set, defaulting to base-sepolia testnet");
+    console.warn("Warning: NETWORK_ID not set, defaulting to base-mainnet testnet");
   }
 }
 
@@ -89,25 +93,45 @@ async function initializeAgent() {
       }
     }
 
-    // Configure CDP Wallet Provider
-    const cdpConfig = {
-      apiKeyName: process.env.CDP_API_KEY_NAME!,
-      apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY!,
-      cdpWalletData: walletDataStr || undefined,
-      networkId: process.env.NETWORK_ID || "base-sepolia",
-    };
+    // Get network ID from environment variable
+    const networkId = process.env.NETWORK_ID || "base-mainnet";
 
-    // Initialize CDP Wallet Provider
-    const cdpWalletProvider = await CdpWalletProvider.configureWithWallet(cdpConfig);
-    console.log(`CDP Wallet Address: ${cdpWalletProvider.getAddress()}`);
+    // Initialize Viem/CDP Wallet Provider
+    let evmWalletProvider: EvmWalletProvider;
+    let cdpWalletProvider: CdpWalletProvider | undefined;
+
+    if (process.env.PRIVATE_KEY) {
+      // Configure Viem Wallet Provider
+      evmWalletProvider = new ViemWalletProvider(
+        createWalletClient({
+          chain: NETWORK_ID_TO_VIEM_CHAIN[networkId],
+          account: privateKeyToAccount(process.env.PRIVATE_KEY as Hex),
+          transport: http(),
+        }),
+      );
+      console.log(`Viem Wallet Address: ${evmWalletProvider.getAddress()}`);
+    } else if (process.env.CDP_API_KEY_NAME && process.env.CDP_API_KEY_PRIVATE_KEY) {
+      // Configure CDP Wallet Provider
+      const cdpConfig = {
+        apiKeyName: process.env.CDP_API_KEY_NAME!,
+        apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY!,
+        cdpWalletData: walletDataStr || undefined,
+        networkId: networkId,
+      };
+      cdpWalletProvider = evmWalletProvider =
+        await CdpWalletProvider.configureWithWallet(cdpConfig);
+      console.log(`CDP Wallet Address: ${evmWalletProvider.getAddress()}`);
+    } else {
+      throw new Error("No wallet provider configured");
+    }
 
     // Configure ZeroDev Wallet Provider with CDP Wallet as signer
     const zeroDevConfig = {
-      signer: cdpWalletProvider,
+      signer: evmWalletProvider,
       projectId: process.env.ZERODEV_PROJECT_ID!,
       entryPointVersion: "0.7" as const,
       // Use the same network as the CDP wallet
-      network: cdpWalletProvider.getNetwork(),
+      network: evmWalletProvider.getNetwork(),
     };
 
     // Initialize ZeroDev Wallet Provider
@@ -162,8 +186,10 @@ async function initializeAgent() {
     });
 
     // Save wallet data
-    const exportedWallet = await cdpWalletProvider.exportWallet();
-    fs.writeFileSync(WALLET_DATA_FILE, JSON.stringify(exportedWallet));
+    if (cdpWalletProvider) {
+      const exportedWallet = await cdpWalletProvider.exportWallet();
+      fs.writeFileSync(WALLET_DATA_FILE, JSON.stringify(exportedWallet));
+    }
 
     return { agent, config: agentConfig };
   } catch (error) {

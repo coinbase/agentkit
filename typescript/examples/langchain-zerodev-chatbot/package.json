@@ -19,9 +19,7 @@
     "@langchain/core": "^0.3.19",
     "@langchain/openai": "^0.3.14",
     "@langchain/langgraph": "^0.2.21",
-    "@zerodev/intent": "^0.0.24",
     "dotenv": "^16.4.5",
-    "viem": "^2.22.16",
     "zod": "^3.23.8",
     "reflect-metadata": "^0.2.2"
   },
@@ -30,5 +28,8 @@
     "nodemon": "^3.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2"
+  },
+  "peerDependencies": {
+    "viem": "2.23.15"
   }
 }
