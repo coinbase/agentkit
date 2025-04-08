@@ -1,5 +1,11 @@
 # Coinbase Create Onchain Agent Changelog
 
+## 0.3.2
+
+### Patch Changes
+
+- [#663](https://github.com/coinbase/agentkit/pull/663) [`d038cc9`](https://github.com/coinbase/agentkit/commit/d038cc9670c5e59678adc47f0b40da92cac55cc7) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Bump agentkit dependency to 0.6.0 in templates
+
 ## 0.3.1
 
 ### Patch Changes

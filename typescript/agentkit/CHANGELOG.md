@@ -1,5 +1,11 @@
 # AgentKit Changelog
 
+## 0.6.1
+
+### Patch Changes
+
+- [#656](https://github.com/coinbase/agentkit/pull/656) [`8465c35`](https://github.com/coinbase/agentkit/commit/8465c355a648601e2de8ea858d3571922eb3ec52) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Fixed Privy dependency on @privy-io/public-api
+
 ## 0.6.0
 
 ### Minor Changes
