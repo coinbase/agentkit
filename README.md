@@ -41,8 +41,8 @@
 AgentKit is [Coinbase Developer Platform's](https://docs.cdp.coinbase.com) toolkit for giving AI agents a crypto wallet and onchain interactions. It is designed to be framework-agnostic, so you can use it with any AI framework, and wallet-agnostic, so you can use it with any wallet. With AgentKit, you can enable fee-free stablecoin payments and monetize your AI agents seamlessly. AgentKit is actively being built out, and [welcomes community contributions!](#-contributing)
 
 <div align="center">
-  <a href="https://www.youtube.com/watch?v=-R_mKpdepRE">
-    <img src="https://img.youtube.com/vi/-R_mKpdepRE/maxresdefault.jpg" alt="Video Title" style="max-width: 600px;">
+  <a href="https://youtu.be/hw-PuogqLR0">
+    <img src="https://img.youtube.com/vi/hw-PuogqLR0/maxresdefault.jpg" alt="Video Title" style="max-width: 600px;">
   <p align="center">
     Watch our welcome guide above to understand what AgentKit is, learn how to navigate this repository, and get started building your first onchain AI agent.
   </p>
@@ -144,6 +144,7 @@ agentkit/
 │   │           ├── cdp/
 │   │           ├── privy/
 │   │           └── viem/
+│   │       └── scripts/generate-action-provider/ # use this to create new actions
 │   ├── create-onchain-agent/
 │   ├── framework-extensions/
 │   │   ├── langchain/
