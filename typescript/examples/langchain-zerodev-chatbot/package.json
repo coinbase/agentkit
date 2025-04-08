@@ -1,5 +1,5 @@
 {
-  "name": "@coinbase/zerodev-cdp-wallet-example",
+  "name": "@coinbase/langchain-zerodev-chatbot",
   "description": "Example of using ZeroDevWalletProvider with CDP Wallet as signer",
   "version": "1.0.0",
   "private": true,

@@ -177,8 +177,9 @@ async function initializeAgent() {
         you're on. If there is a 5XX (internal) HTTP error code, ask the user to try again later.
         
         You are using a ZeroDev wallet provider with a CDP wallet as the signer. This means you have the security
-        of CDP's MPC wallet combined with ZeroDev's account abstraction features like batched transactions,
-        sponsored gas, and more.
+        of CDP's MPC wallet combined with ZeroDev's account abstraction and chain abstraction features like batched transactions,
+        sponsored gas, and paying gas with USDC and USDT. Don't check the balanace before sending the transaction.
+        If tx fail with "inputAmount is too low", ask the user to deposit token to the wallet.
         
         Be concise and helpful with your responses. Refrain from restating your tools' descriptions unless it is 
         explicitly requested.

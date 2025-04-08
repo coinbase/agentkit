@@ -59,7 +59,7 @@ npm run build
 
 This will install the dependencies and build the packages locally. The example uses the local `@coinbase/agentkit` and `@coinbase/agentkit-langchain` packages. If you make changes to the packages, you can run `npm run build` from root again to rebuild the packages, and your changes will be reflected in the example.
 
-Now from the `typescript/examples/zerodev-cdp-wallet-example` directory, run:
+Now from the `typescript/examples/langchain-zerodev-chatbot` directory, run:
 
 ```bash
 npm install
