@@ -209,11 +209,11 @@ importers:
   create-onchain-agent/templates/mcp:
     dependencies:
       '@coinbase/agentkit':
-        specifier: ^0.4.0
-        version: 0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
+        specifier: ^0.6.0
+        version: 0.6.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
       '@coinbase/agentkit-model-context-protocol':
         specifier: ^0.2.0
-        version: 0.2.0(@coinbase/agentkit@0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))
+        version: 0.2.0(@coinbase/agentkit@0.6.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))
       '@modelcontextprotocol/sdk':
         specifier: ^1.6.1
         version: 1.8.0
@@ -243,14 +243,14 @@ importers:
         specifier: ^1.2.1
         version: 1.3.3(zod@3.24.2)
       '@coinbase/agentkit':
-        specifier: ^0.4.0
-        version: 0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
+        specifier: ^0.6.0
+        version: 0.6.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
       '@coinbase/agentkit-langchain':
         specifier: ^0.3.0
-        version: 0.3.0(@coinbase/agentkit@0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))(openai@4.89.1(ws@8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.24.2))
+        version: 0.3.0(@coinbase/agentkit@0.6.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))(openai@4.89.1(ws@8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.24.2))
       '@coinbase/agentkit-vercel-ai-sdk':
         specifier: ^0.1.0
-        version: 0.1.0(@coinbase/agentkit@0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))(ai@4.2.6(react@18.3.1)(zod@3.24.2))
+        version: 0.1.0(@coinbase/agentkit@0.6.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))(ai@4.2.6(react@18.3.1)(zod@3.24.2))
       '@langchain/core':
         specifier: ^0.3.19
         version: 0.3.30(openai@4.89.1(ws@8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.24.2))
@@ -961,8 +961,8 @@ packages:
       '@coinbase/agentkit': '>=0.1.0'
       ai: ^4.1.16
 
-  '@coinbase/agentkit@0.4.0':
-    resolution: {integrity: sha512-jh7hzDfBfHvhwU3cQ4CkhzA0NY4RvmZNjJ9lipk+y6k1RCCfAnqMq/w/3XDPN7fqr+La0O3Phw3KNZ0jAFadEg==}
+  '@coinbase/agentkit@0.6.0':
+    resolution: {integrity: sha512-4LaHYAGJdKURp2fQFG4jdfFX+PhyNEGvVaPhP7nkZ7Ro3IB1Wp6Ij3YUCIIpYP1C1Kt2X4NlypPT3l8TwjahfQ==}
 
   '@coinbase/coinbase-sdk@0.20.0':
     resolution: {integrity: sha512-OoMMktKbjmeEwtwQCK3kIIoX5M+hNelxAGX5Llymvw6bmyrMDaEBZ/Myga9kaLJ+7Hi5Y4jPDy4Cy2MGxxXg6w==}
@@ -6346,6 +6346,10 @@ snapshots:
     dependencies:
       viem: 2.23.15(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.2)
 
+  '@across-protocol/app-sdk@0.2.0(viem@2.24.1(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.2))':
+    dependencies:
+      viem: 2.24.1(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.2)
+
   '@adraffy/ens-normalize@1.10.1': {}
 
   '@adraffy/ens-normalize@1.11.0': {}
@@ -6746,37 +6750,42 @@ snapshots:
       human-id: 4.1.1
       prettier: 2.8.8
 
-  '@coinbase/agentkit-langchain@0.3.0(@coinbase/agentkit@0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))(openai@4.89.1(ws@8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.24.2))':
+  '@coinbase/agentkit-langchain@0.3.0(@coinbase/agentkit@0.6.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))(openai@4.89.1(ws@8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.24.2))':
     dependencies:
-      '@coinbase/agentkit': 0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
+      '@coinbase/agentkit': 0.6.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
       '@langchain/core': 0.3.30(openai@4.89.1(ws@8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.24.2))
       zod: 3.24.2
     transitivePeerDependencies:
       - openai
 
-  '@coinbase/agentkit-model-context-protocol@0.2.0(@coinbase/agentkit@0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))':
+  '@coinbase/agentkit-model-context-protocol@0.2.0(@coinbase/agentkit@0.6.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))':
     dependencies:
-      '@coinbase/agentkit': 0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
+      '@coinbase/agentkit': 0.6.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
       '@modelcontextprotocol/sdk': 1.8.0
       zod: 3.24.2
       zod-to-json-schema: 3.24.5(zod@3.24.2)
     transitivePeerDependencies:
       - supports-color
 
-  '@coinbase/agentkit-vercel-ai-sdk@0.1.0(@coinbase/agentkit@0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))(ai@4.2.6(react@18.3.1)(zod@3.24.2))':
+  '@coinbase/agentkit-vercel-ai-sdk@0.1.0(@coinbase/agentkit@0.6.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))(ai@4.2.6(react@18.3.1)(zod@3.24.2))':
     dependencies:
-      '@coinbase/agentkit': 0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
+      '@coinbase/agentkit': 0.6.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
       ai: 4.2.6(react@18.3.1)(zod@3.24.2)
       zod: 3.24.2
 
-  '@coinbase/agentkit@0.4.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)':
+  '@coinbase/agentkit@0.6.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)':
     dependencies:
+      '@across-protocol/app-sdk': 0.2.0(viem@2.24.1(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.2))
       '@alloralabs/allora-sdk': 0.1.0
       '@coinbase/coinbase-sdk': 0.20.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.2)
       '@jup-ag/api': 6.0.40
       '@privy-io/server-auth': 1.19.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)(viem@2.24.1(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.2))
       '@solana/spl-token': 0.4.13(@solana/web3.js@1.98.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.2)(utf-8-validate@5.0.10)
       '@solana/web3.js': 1.98.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      bs58: 4.0.1
+      canonicalize: 2.1.0
+      decimal.js: 10.5.0
+      ethers: 6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       md5: 2.3.0
       opensea-js: 7.1.18(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       reflect-metadata: 0.2.2
