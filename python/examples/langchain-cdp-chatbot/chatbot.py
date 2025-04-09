@@ -43,12 +43,9 @@ def initialize_agent():
         with open(wallet_data_file) as f:
             wallet_data = f.read()
 
-    print("wallet_data", wallet_data)
     cdp_config = None
     if wallet_data is not None:
         cdp_config = CdpWalletProviderConfig(wallet_data=wallet_data)
-    else:
-        raise ValueError("aa")
 
     wallet_provider = CdpWalletProvider(cdp_config)
 
@@ -75,9 +72,6 @@ def initialize_agent():
 
     # use get_langchain_tools
     tools = get_langchain_tools(agentkit)
-    for tool in tools:
-        print(tool)
-        print("---")
 
     # Store buffered conversation history in memory.
     memory = MemorySaver()
