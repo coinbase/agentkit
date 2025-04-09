@@ -1,9 +1,9 @@
-# ZeroDev Wallet Provider with CDP Wallet Example
+# ZeroDev Wallet Provider with EVM Wallet Example
 
-This example demonstrates an agent setup using the ZeroDevWalletProvider with a CDP wallet as the signer. It shows how to:
+This example demonstrates an agent setup using the ZeroDevWalletProvider with a EVM wallet as the signer. It shows how to:
 
-1. Initialize a CDP wallet provider
-2. Use the CDP wallet as a signer for the ZeroDev wallet provider
+1. Initialize a Viem/PrivyEvm/CDP wallet provider
+2. Use the EVM wallet as a signer for the ZeroDev wallet provider
 3. Create an AgentKit instance with the ZeroDev wallet provider
 4. Set up LangChain tools using the AgentKit instance
 5. Create a LangChain agent that uses those tools
@@ -70,17 +70,17 @@ Select "1. chat mode" and start telling your Agent to do things onchain!
 
 ## How it works
 
-The example demonstrates how to use a CDP wallet as the signer for a ZeroDev wallet provider. This allows you to leverage the benefits of both wallet providers:
+The example demonstrates how to use a EVM wallet provider as the signer for a ZeroDev wallet provider. This allows you to leverage the benefits of both wallet providers:
 
 - CDP wallet provides secure key management through Coinbase's MPC infrastructure
 - ZeroDev wallet provides account abstraction features like batched transactions, sponsored gas, and more
 
-The key part of the example is the configuration of the ZeroDev wallet provider with the CDP wallet as the signer:
+The key part of the example is the configuration of the ZeroDev wallet provider with the privateKey Privy CDP wallet as the signer:
 
 ```typescript
 // Configure ZeroDev Wallet Provider with CDP Wallet as signer
 const zeroDevConfig = {
-  signer: cdpWalletProvider,
+  signer: evmWalletProvider,
   projectId: process.env.ZERODEV_PROJECT_ID!,
   entryPointVersion: "0.7" as const,
   // Use the same network as the CDP wallet

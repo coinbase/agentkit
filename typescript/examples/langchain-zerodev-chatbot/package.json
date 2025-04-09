@@ -1,6 +1,6 @@
 {
-  "name": "@coinbase/langchain-zerodev-chatbot",
-  "description": "Example of using ZeroDevWalletProvider with CDP Wallet as signer",
+  "name": "@coinbase/langchain-zerodev-chatbot-example",
+  "description": "ZeroDev Agentkit LangChain Extension Chatbot Example",
   "version": "1.0.0",
   "private": true,
   "author": "Coinbase Inc.",

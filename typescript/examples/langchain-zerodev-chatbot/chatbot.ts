@@ -11,6 +11,7 @@ import {
   ViemWalletProvider,
   NETWORK_ID_TO_VIEM_CHAIN,
   EvmWalletProvider,
+  PrivyEvmWalletProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { ZeroDevWalletProvider } from "@coinbase/agentkit";
@@ -110,6 +111,14 @@ async function initializeAgent() {
         }),
       );
       console.log(`Viem Wallet Address: ${evmWalletProvider.getAddress()}`);
+    } else if (process.env.PRIVY_APP_ID && process.env.PRIVY_APP_SECRET) {
+      // Configure Privy Wallet Provider
+      const privyConfig = {
+        appId: process.env.PRIVY_APP_ID!,
+        appSecret: process.env.PRIVY_APP_SECRET!,
+        chainId: NETWORK_ID_TO_VIEM_CHAIN[networkId].id.toString(),
+      };
+      evmWalletProvider = await PrivyEvmWalletProvider.configureWithWallet(privyConfig);
     } else if (process.env.CDP_API_KEY_NAME && process.env.CDP_API_KEY_PRIVATE_KEY) {
       // Configure CDP Wallet Provider
       const cdpConfig = {
