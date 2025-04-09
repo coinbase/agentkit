@@ -41,7 +41,7 @@ def compass_action_provider() -> CompassActionProvider:
     """Create a new Compass action provider.
 
     Returns:
-        MorphoActionProvider: A new Morpho action provider instance.
+        CompassActionProvider: A new Compass action provider instance.
 
     """
     return CompassActionProvider()
