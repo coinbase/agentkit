@@ -16,4 +16,3 @@ actions = compass_action_provider().get_actions(wallet_provider=mock_wallet)
 def test_compass_tools(action):
     """Test calls every single tool with default args."""
     action.invoke(input=action.example_args)
-    # assert 1 == 2
