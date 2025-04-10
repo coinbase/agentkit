@@ -1,11 +1,10 @@
 import { ActionProvider } from "../actionProvider";
 import { CreateAction } from "../actionDecorator";
 import { Network } from "../../network";
-import { Blockchain, MagicEdenClient, MagicEdenSDK, BuyParams, SolanaNftService } from "@magiceden/magiceden-sdk";
+import { Blockchain, MagicEdenClient, MagicEdenSDK, BuyParams, SolanaNftService, EvmNftService } from "@magiceden/magiceden-sdk";
 import { getMagicEdenChainFromNetworkId, isSupportedNetwork } from "./utils";
 import { Keypair } from "@solana/web3.js";
 import bs58 from "bs58";
-import { EvmNftService } from "@magiceden/magiceden-sdk/dist/services/nft/evm";
 
 /**
  * Configuration options for the MagicEdenActionProvider.
