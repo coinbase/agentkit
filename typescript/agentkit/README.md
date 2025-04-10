@@ -330,6 +330,47 @@ const agent = createReactAgent({
 </table>
 </details>
 <details>
+<summary><strong>Magic Eden</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>createLaunchpad</code></td>
+    <td width="768">Creates a new NFT launchpad on Magic Eden with customizable parameters like name, symbol, royalties, and mint stages.</td>
+</tr>
+<tr>
+    <td width="200"><code>publishLaunchpad</code></td>
+    <td width="768">Publishes a previously created Solana launchpad, making it visible to the public on Magic Eden.</td>
+</tr>
+<tr>
+    <td width="200"><code>updateLaunchpad</code></td>
+    <td width="768">Updates an existing NFT launchpad's parameters such as name, description, royalties, or mint stages.</td>
+</tr>
+<tr>
+    <td width="200"><code>listNft</code></td>
+    <td width="768">Lists an NFT for sale on the Magic Eden marketplace with specified price and optional expiration.</td>
+</tr>
+<tr>
+    <td width="200"><code>cancelListing</code></td>
+    <td width="768">Cancels an existing NFT listing on the Magic Eden marketplace.</td>
+</tr>
+<tr>
+    <td width="200"><code>makeItemOffer</code></td>
+    <td width="768">Makes an offer on an NFT listed on Magic Eden with specified price and optional expiration.</td>
+</tr>
+<tr>
+    <td width="200"><code>takeItemOffer</code></td>
+    <td width="768">Accepts an existing offer on an NFT listed on Magic Eden.</td>
+</tr>
+<tr>
+    <td width="200"><code>cancelItemOffer</code></td>
+    <td width="768">Cancels an existing offer on an NFT on the Magic Eden marketplace.</td>
+</tr>
+<tr>
+    <td width="200"><code>buy</code></td>
+    <td width="768">Buys one or more NFTs directly from the Magic Eden marketplace at listed prices.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Pyth</strong></summary>
 <table width="100%">
 <tr>

@@ -1,0 +1,104 @@
+# Magic Eden Action Provider
+
+This directory contains the **MagicEdenActionProvider** implementation, which provides actions to interact with the **Magic Eden NFT marketplace** across multiple blockchains (Solana and EVM chains).
+
+## Directory Structure
+
+```
+magiceden/
+├── magicEdenActionProvider.ts         # Main provider implementation
+├── magicEdenActionProvider.test.ts    # Test file for provider
+├── schemas.ts                         # Action parameter schemas
+├── utils.ts                           # Utility functions and network mappings
+├── index.ts                           # Main exports
+└── README.md                          # This file
+```
+
+## Actions
+
+### NFT Trading
+- `buy`: Buy one or more NFTs at listed prices
+- `listNft`: List an NFT for sale with specified price
+- `cancelListing`: Cancel an existing NFT listing
+- `makeItemOffer`: Make an offer on a listed NFT
+- `takeItemOffer`: Accept an existing offer on your NFT
+- `cancelItemOffer`: Cancel an existing offer you made
+
+### Launchpad Management
+- `createLaunchpad`: Create a new NFT launchpad with customizable parameters
+- `publishLaunchpad`: Publish a Solana launchpad (required after creation)
+- `updateLaunchpad`: Update an existing launchpad's parameters
+
+## Network Support
+
+The Magic Eden provider supports the following networks:
+
+### EVM Networks
+- Ethereum
+- Base
+- Polygon
+- Sei
+- Arbitrum
+- ApeChain
+- BeraChain
+- Monad Testnet
+- Abstract
+
+### Solana Networks
+- Solana Mainnet
+
+## Configuration
+
+The provider requires the following configuration:
+
+```typescript
+interface MagicEdenActionProviderConfig {
+  apiKey?: string;        // Magic Eden API key
+  networkId?: string;     // Network identifier
+  privateKey?: string;    // Wallet private key
+  rpcUrl?: string;        // RPC URL (required for Solana)
+}
+```
+
+Configuration can be provided via:
+- Environment variable: `MAGICEDEN_API_KEY`
+- Provider configuration: `apiKey` parameter
+
+## Usage Examples
+
+### Listing an NFT
+```typescript
+const result = await provider.listNft({
+  token: "0x1234...5678:1",  // EVM: contract:tokenId
+  price: "1000000000"        // Price in wei/lamports
+});
+```
+
+### Making an Offer
+```typescript
+const result = await provider.makeItemOffer({
+  token: "0x1234...5678:1",
+  price: "900000000"
+});
+```
+
+### Creating a Launchpad
+```typescript
+const result = await provider.createLaunchpad({
+  chain: "solana",
+  name: "My Collection",
+  symbol: "MYCOL",
+  // ... other parameters
+});
+```
+
+For complete examples, see the [magicEdenActionProvider.test.ts](magicEdenActionProvider.test.ts) file or the README file in the [Magic Eden SDK GitHub](https://github.com/magiceden/magiceden-sdk).
+
+## Notes
+
+- For Solana operations, a valid RPC URL must be provided
+- EVM operations support batch transactions for multiple NFTs
+- Launchpad creation on Solana requires a separate publish step
+- All prices should be in the chain's smallest unit (wei/lamports)
+
+For more information on the Magic Eden API, visit [Magic Eden Developer Documentation](https://docs.magiceden.io//) or visit the [Magic Eden SDK GitHub](https://github.com/magiceden/magiceden-sdk).
