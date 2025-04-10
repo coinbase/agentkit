@@ -70,10 +70,10 @@ export const getMagicEdenChainFromNetworkId = (networkId: string): Blockchain =>
     return chainFromNetworkId;
   }
 
-  // If the chain is not found in the network ID, try to get the chain from the chain ID
+  // If the chain is not found from the network ID, try to get the chain from the chain ID
   // Chain IDs always stay the same
-  // If Coinbase Agentkit supports a new chain, it will be supported by MagicEden through the chain ID
-  // (currently there are some chains MagicEden supports which Coinbase Agentkit does not)
+  // If Coinbase Agentkit supports a new EVM chain, it will be supported by MagicEden through the chain ID
+  // (currently there are some EVM chains MagicEden supports which Coinbase Agentkit does not)
   const chainId = NETWORK_ID_TO_CHAIN_ID[networkId];
   if (!chainId) {
     throw new Error(`Could not find chain ID for network ID: ${networkId}`);
