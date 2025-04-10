@@ -137,6 +137,19 @@ const agent = createReactAgent({
 
 ## Action Providers
 <details>
+<summary><strong>Across</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>bridge_token</code></td>
+    <td width="768">Bridges tokens between supported chains using Across Protocol.</td>
+</tr>
+<tr>
+    <td width="200"><code>check_deposit_status</code></td>
+    <td width="768">Checks the status of a cross-chain bridge deposit on the Across Protocol (mainnet networks only).</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Basename</strong></summary>
 <table width="100%">
 <tr>
@@ -252,6 +265,36 @@ const agent = createReactAgent({
 </table>
 </details>
 <details>
+<summary><strong>Flaunch</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>flaunch</code></td>
+    <td width="768">Launches a new memecoin token with customizable name, symbol, image, and metadata.</td>
+</tr>
+<tr>
+    <td width="200"><code>buyCoinWithETHInput</code></td>
+    <td width="768">Purchases Flaunch memecoin tokens by specifying ETH input amount with configurable slippage.</td>
+</tr>
+<tr>
+    <td width="200"><code>buyCoinWithCoinInput</code></td>
+    <td width="768">Purchases Flaunch memecoin tokens by specifying desired token output amount with configurable slippage.</td>
+</tr>
+<tr>
+    <td width="200"><code>sellCoin</code></td>
+    <td width="768">Sells Flaunch memecoin tokens back to ETH with configurable slippage.</td>
+</tr>
+</table>
+</details>
+<details>
+<summary><strong>Messari</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>research_question</code></td>
+    <td width="768">Queries Messari AI for comprehensive crypto research across news, market data, protocol information, and more.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Morpho</strong></summary>
 <table width="100%">
 <tr>
@@ -261,6 +304,15 @@ const agent = createReactAgent({
 <tr>
     <td width="200"><code>withdraw</code></td>
     <td width="768">Withdraws a specified amount of assets from a designated Morpho Vault.</td>
+</tr>
+</table>
+</details>
+<details>
+<summary><strong>Onramp</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_onramp_buy_url</code></td>
+    <td width="768">Gets a URL to purchase cryptocurrency from Coinbase via Debit card or other payment methods.</td>
 </tr>
 </table>
 </details>
@@ -624,23 +676,60 @@ const walletProvider = new ViemWalletProvider(client, {
 
 ### PrivyWalletProvider
 
-The `PrivyWalletProvider` is a wallet provider that uses [Privy Server Wallets](https://docs.privy.io/guide/server-wallets/). This implementation extends the `ViemWalletProvider`.
+The `PrivyWalletProvider` is a wallet provider that uses [Privy Server Wallets](https://docs.privy.io/guide/server-wallets/) or [Privy Embedded Wallets](https://docs.privy.io/guide/embedded-wallets/). This implementation extends the `EvmWalletProvider`.
+
+#### Server Wallet Configuration
 
 ```typescript
-import { PrivyWalletProvider, PrivyWalletConfig } from "@coinbase/agentkit";
+import { PrivyWalletProvider } from "@coinbase/agentkit";
 
-// Configure Wallet Provider
-const config: PrivyWalletConfig = {
+// Configure Server Wallet Provider
+const config = {
     appId: "PRIVY_APP_ID",
     appSecret: "PRIVY_APP_SECRET",
     chainId: "84532", // base-sepolia
     walletId: "PRIVY_WALLET_ID", // optional, otherwise a new wallet will be created
-    authorizationPrivateKey: PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY, // optional, required if your account is using authorization keys
-    authorizationKeyId: PRIVY_WALLET_AUTHORIZATION_KEY_ID, // optional, only required to create a new wallet if walletId is not provided
+    authorizationPrivateKey: "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY", // optional, required if your account is using authorization keys
+    authorizationKeyId: "PRIVY_WALLET_AUTHORIZATION_KEY_ID", // optional, only required to create a new wallet if walletId is not provided
 };
 
 const walletProvider = await PrivyWalletProvider.configureWithWallet(config);
 ```
+
+#### Delegated Embedded Wallet Configuration
+
+You can also use Privy's embedded wallets with delegation for agent actions. This allows your agent to use wallets that have been delegated transaction signing authority by users.
+
+```typescript
+import { PrivyWalletProvider } from "@coinbase/agentkit";
+
+// Configure Embedded Wallet Provider
+const config = {
+    appId: "PRIVY_APP_ID",
+    appSecret: "PRIVY_APP_SECRET",
+    authorizationPrivateKey: "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY",
+    walletId: "PRIVY_DELEGATED_WALLET_ID", // The ID of the wallet that was delegated to your server
+    networkId: "base-mainnet", // or any supported network
+    walletType: "embedded" // Specify "embedded" to use the embedded wallet provider
+};
+
+const walletProvider = await PrivyWalletProvider.configureWithWallet(config);
+```
+
+### Prerequisites
+
+Before using this wallet provider, you need to:
+
+1. Set up Privy in your application
+2. Enable server delegated actions
+3. Have users delegate permissions to your server
+4. Obtain the delegated wallet ID
+
+For more information on setting up Privy and enabling delegated actions, see [Privy's documentation](https://docs.privy.io/guide/embedded/server-delegated-actions).
+
+### Supported Operations
+
+The `PrivyEvmDelegatedEmbeddedWalletProvider` supports all standard wallet operations including transaction signing, message signing, and native transfers, using the wallet that was delegated to your server.
 
 #### Authorization Keys
 
@@ -657,10 +746,17 @@ The `PrivyWalletProvider` can export wallet information by calling the `exportWa
 ```typescript
 const walletData = await walletProvider.exportWallet();
 
-// walletData will be in the following format:
+// For server wallets, walletData will be in the following format:
 {
     walletId: string;
     authorizationKey: string | undefined;
+    chainId: string | undefined;
+}
+
+// For embedded wallets, walletData will be in the following format:
+{
+    walletId: string;
+    networkId: string;
     chainId: string | undefined;
 }
 ```

@@ -2,11 +2,11 @@
   "name": "create-onchain-agent",
   "description": "Instantly create onchain-agent applications with Coinbase AgentKit.",
   "repository": "https://github.com/coinbase/agentkit",
-  "version": "0.2.0",
+  "version": "0.3.2",
   "author": "Coinbase Inc.",
   "license": "Apache-2.0",
   "scripts": {
-    "build": "npm run clean && npm run build:esm+types",
+    "build": "pnpm run clean && pnpm run build:esm+types",
     "build:esm+types": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationMap --declarationDir ./dist/types",
     "format": "prettier -c .prettierrc --write \"**/*.{ts,js,cjs,json,md}\"",
     "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\"",
@@ -25,7 +25,8 @@
     "templates/**"
   ],
   "bin": {
-    "create-onchain-agent": "./dist/esm/cli.js"
+    "create-onchain-agent": "./dist/esm/create.js",
+    "agentkit": "./dist/esm/generate.js"
   },
   "sideEffects": false,
   "type": "module",
@@ -33,8 +34,10 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
+    "@types/nunjucks": "^3.2.6",
     "cac": "^6.7.14",
     "cross-spawn": "^7.0.3",
+    "nunjucks": "^3.2.4",
     "ora": "^8.1.0",
     "picocolors": "^1.1.0",
     "prompts": "^2.4.2"

@@ -61,6 +61,7 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
       typeof keypair === "string"
         ? Keypair.fromSecretKey(bs58.decode(keypair))
         : Keypair.fromSecretKey(keypair);
+
     this.#connection = new Connection(rpcUrl);
     if (genesisHash in SOLANA_NETWORKS) {
       this.#genesisHash = genesisHash;

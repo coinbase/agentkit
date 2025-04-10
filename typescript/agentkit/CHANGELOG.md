@@ -1,5 +1,45 @@
 # AgentKit Changelog
 
+## 0.6.1
+
+### Patch Changes
+
+- [#656](https://github.com/coinbase/agentkit/pull/656) [`8465c35`](https://github.com/coinbase/agentkit/commit/8465c355a648601e2de8ea858d3571922eb3ec52) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Fixed Privy dependency on @privy-io/public-api
+
+## 0.6.0
+
+### Minor Changes
+
+- [#641](https://github.com/coinbase/agentkit/pull/641) [`03ea0e5`](https://github.com/coinbase/agentkit/commit/03ea0e541cb0b76fefcc15fe9d74297ac809801d) Thanks [@pawelpolak2](https://github.com/pawelpolak2)! - Added transaction queue to the cdp wallet provider to avoid nonce collisions.
+
+- [#617](https://github.com/coinbase/agentkit/pull/617) [`d64b11c`](https://github.com/coinbase/agentkit/commit/d64b11cb8a7f795e5c33e45c70eec8153977783d) Thanks [@apoorvlathey](https://github.com/apoorvlathey)! - Added a new action provider to interact with Flaunch protocol
+
+- [#638](https://github.com/coinbase/agentkit/pull/638) [`4d4b031`](https://github.com/coinbase/agentkit/commit/4d4b031242d6760a089b300d8f135110dd8d467d) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Added OnrampActionProvider to enable cryptocurrency purchases
+
+## 0.5.0
+
+### Minor Changes
+
+- [#584](https://github.com/coinbase/agentkit/pull/584) [`6d8ac5b`](https://github.com/coinbase/agentkit/commit/6d8ac5b6608fafe1ee4256caac3ad93659d87c8b) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Added gasless transfers for USDC/CBBTC on Base/Base-Sepolia
+
+- [#566](https://github.com/coinbase/agentkit/pull/566) [`bfd6442`](https://github.com/coinbase/agentkit/commit/bfd6442df09247efe2b3d378ca3e49c123b19f8c) Thanks [@phdargen](https://github.com/phdargen)! - Added AcrossActionProvider to allow bridging tokens using the Across protocol
+
+  - `bridge_token` action to bridge native and ERC20 tokens
+  - `check_deposit_status` action to check the status of bridge deposits
+
+- [#618](https://github.com/coinbase/agentkit/pull/618) [`155d468`](https://github.com/coinbase/agentkit/commit/155d468ec5973a5bd3ab9c66e7981aaa544f6717) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Added support for Privy Evm embedded wallets with delegation. (Thanks @njokuScript!)
+
+  This change introduces a new wallet provider, `PrivyEvmDelegatedEmbeddedWalletProvider`, which allows AgentKit to use Privy's embedded wallets that have been delegated to a server. This enables autonomous agents to perform onchain actions on behalf of users who have delegated transaction signing authority to the agent.
+
+  Key changes:
+
+  - Add `PrivyEvmDelegatedEmbeddedWalletProvider` class extending the `EvmWalletProvider` base class
+  - Update the `PrivyWalletProvider` factory to support embedded wallets via a new `walletType` option
+
+### Patch Changes
+
+- [#619](https://github.com/coinbase/agentkit/pull/619) [`6514e0c`](https://github.com/coinbase/agentkit/commit/6514e0c2fd561525092deafc231853182d9a7d1e) Thanks [@stat](https://github.com/stat)! - Add a new Messari action provider that enables AI agents to query the Messari AI toolkit for crypto market research data.
+
 ## 0.4.0
 
 ### Minor Changes

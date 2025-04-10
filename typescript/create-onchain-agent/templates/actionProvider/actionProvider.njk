@@ -1,0 +1,22 @@
+import { customActionProvider{% if walletProvider !== "none" %}, {{ walletProvider }}{% endif %} } from "@coinbase/agentkit";
+import { {{ schemaName }} } from "./schemas";
+import { z } from "zod";
+
+/**
+ * Creates a {{ className }} action provider.
+ * To create multiple actions, pass in an array of actions to createActionProvider.
+ */
+export const {{ name }} = () =>
+  customActionProvider{% if walletProvider !== "none" %}<{{ walletProvider }}>{% endif %}({
+    name: "{{ actionName }}",
+    description: `This tool will perform a {{ className }} operation.`,
+    schema: {{ schemaName }},
+    invoke: async ({% if walletProvider !== "none" %}wallet: {{ walletProvider }}, {% endif %}args: z.infer<typeof {{ schemaName }}>) => {
+      try {
+        // Do work here
+        return `Successfully performed {{ actionName }} and returned the response`;
+      } catch (error) {
+          return `Error performing {{ actionName }}: Error: ${error}`;
+        }
+      },
+  });

@@ -2,6 +2,24 @@
 
 <!-- towncrier release notes start -->
 
+## [0.4.0] - 2025-04-04
+
+### Added
+
+- Added OnrampActionProvider to enable cryptocurrency purchases ([#639](https://github.com/coinbase/agentkit/pull/639))
+
+
+## [0.3.0] - 2025-03-28
+
+### Fixed
+
+- Fixed ERC20 transfer checksum validation by properly converting both contract and destination addresses to EIP-55 format to prevent Web3.py validation errors. ([#514](https://github.com/coinbase/agentkit/pull/514))
+
+### Added
+
+- Added Nillion SecretVault action ([#279](https://github.com/coinbase/agentkit/pull/279))
+
+
 ## [0.2.0] - 2025-03-14
 
 ### Fixed

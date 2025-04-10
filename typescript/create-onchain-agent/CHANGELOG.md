@@ -1,5 +1,32 @@
 # Coinbase Create Onchain Agent Changelog
 
+## 0.3.2
+
+### Patch Changes
+
+- [#663](https://github.com/coinbase/agentkit/pull/663) [`d038cc9`](https://github.com/coinbase/agentkit/commit/d038cc9670c5e59678adc47f0b40da92cac55cc7) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Bump agentkit dependency to 0.6.0 in templates
+
+## 0.3.1
+
+### Patch Changes
+
+- [#642](https://github.com/coinbase/agentkit/pull/642) [`9a946f2`](https://github.com/coinbase/agentkit/commit/9a946f241897bbd1f8fc394861cdbe9e8b6b4e6f) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Removed CdpWalletActionProvider from smart wallet action provider lists
+
+## 0.3.0
+
+### Minor Changes
+
+- [#622](https://github.com/coinbase/agentkit/pull/622) [`1076bb6`](https://github.com/coinbase/agentkit/commit/1076bb661ad6ff533006777ec658547d5a15f1b1) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Updated default wallet provider to SmartWalletProvider
+
+- [#589](https://github.com/coinbase/agentkit/pull/589) [`3aa7931`](https://github.com/coinbase/agentkit/commit/3aa793137c1d7ff0a57fb68be0a97cc1978b51d8) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Added code generation for individual building blocks
+
+  Projects bootstrapped with the `create-onchain-agent` CLI will also have the `agenkit` CLI installed.
+
+  - `agentkit generate wallet-provider`: Generate a custom wallet provider
+  - `agentkit generate action-provider`: Generate a custom action provider
+  - `agentkit generate prepare`: Generate framework-agnostic AgentKit setup
+  - `agentkit generate create-agent`: Generate framework-specific agent creation
+
 ## 0.2.0
 
 ### Minor Changes

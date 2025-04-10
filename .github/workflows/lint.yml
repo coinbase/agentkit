@@ -27,64 +27,64 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
-        with:
-          path: python/${{ matrix.package }}/.venv
-          key: venv-${{ matrix.package }}-${{ runner.os }}-${{ hashFiles(format('python/{0}/poetry.lock', matrix.package)) }}
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --with dev
+        run: uv sync --all-extras --dev
 
       - name: Ensure linting
-        run: poetry run make lint
+        run: make lint
 
   lint-typescript:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda
+        with:
+          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: "18"
-          cache: "npm"
+          cache: "pnpm"
           cache-dependency-path: ./typescript
       - name: Ensure Linting
         working-directory: ./typescript
         run: |
-          npm ci
-          npm run lint
+          pnpm install --frozen-lockfile
+          pnpm run lint
 
   check-package-lock:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - uses: actions/setup-node@v4
         with:
           node-version: "18"
-          cache: "npm"
+          cache: "pnpm"
           cache-dependency-path: ./typescript
 
-      - name: Check if package-lock.json changed
+      - name: Check if pnpm-lock.yaml changed
         working-directory: ./typescript
         run: |
-          npm install
-          if [ -n "$(git diff package-lock.json)" ]; then
-            echo "Error: package-lock.json was modified after running npm install. Please commit the updated package-lock.json file."
-            git diff package-lock.json
+          pnpm install
+          if [ -n "$(git diff pnpm-lock.yaml)" ]; then
+            echo "Error: pnpm-lock.yaml was modified after running pnpm install. Please commit the updated pnpm-lock.yaml file."
+            git diff pnpm-lock.yaml
             exit 1
           fi
 
-  check-poetry-locks:
+  check-uv-locks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -94,22 +94,21 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: true
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-      - name: Check poetry.lock files
+      - name: Check uv.lock files
         run: |
           for dir in $(find . -name pyproject.toml -exec dirname {} \;); do
             echo "Checking $dir..."
             cd $dir
-            poetry install
-            if [ -n "$(git diff poetry.lock)" ]; then
-              echo "Error: poetry.lock in $dir was modified after running poetry install. Please commit the updated poetry.lock file."
-              git diff poetry.lock
+            uv sync
+            if [ -n "$(git diff uv.lock)" ]; then
+              echo "Error: uv.lock in $dir was modified after running uv sync. Please commit the updated uv.lock file."
+              git diff uv.lock
               exit 1
             fi
             cd - > /dev/null
