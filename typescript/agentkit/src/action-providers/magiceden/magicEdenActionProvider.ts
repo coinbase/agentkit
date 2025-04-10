@@ -1,7 +1,17 @@
 import { ActionProvider } from "../actionProvider";
 import { CreateAction } from "../actionDecorator";
 import { Network } from "../../network";
-import { Blockchain, MagicEdenClient, MagicEdenSDK, BuyParams, SolanaNftService, EvmNftService } from "@magiceden/magiceden-sdk";
+import {
+  Blockchain,
+  MagicEdenClient,
+  MagicEdenSDK,
+  BuyParams,
+  SolanaNftService,
+  EvmNftService,
+  EvmBuyParams,
+  SolanaBuyParams,
+  TransactionResponse,
+} from "@magiceden/magiceden-sdk";
 import { getMagicEdenChainFromNetworkId, isSupportedNetwork } from "./utils";
 import { Keypair } from "@solana/web3.js";
 import bs58 from "bs58";
@@ -37,7 +47,7 @@ export interface MagicEdenActionProviderConfig {
 export class MagicEdenActionProvider extends ActionProvider {
   private readonly solClient?: MagicEdenClient<SolanaNftService>;
   private readonly evmClient?: MagicEdenClient<EvmNftService>;
-  
+
   /**
    * Constructor for the MagicEdenActionProvider class.
    */
@@ -47,7 +57,7 @@ export class MagicEdenActionProvider extends ActionProvider {
     const apiKey = config.apiKey || process.env.MAGICEDEN_API_KEY;
     if (!apiKey) {
       throw new Error("MAGICEDEN_API_KEY is not configured.");
-    }    
+    }
 
     const chain = getMagicEdenChainFromNetworkId(config.networkId || "base-mainnet");
     switch (chain) {
@@ -74,9 +84,8 @@ export class MagicEdenActionProvider extends ActionProvider {
   }
 
   /**
-   * Buys an NFT from the Magic Eden marketplace.
+   * Buys one or more NFTs from the Magic Eden marketplace.
    *
-   * @param walletProvider - The wallet provider for executing the buy.
    * @param args - Input parameters conforming to the BuySchema.
    * @returns A success message or error string.
    */
@@ -88,7 +97,22 @@ export class MagicEdenActionProvider extends ActionProvider {
     schema: BuyParams,
   })
   public async buy(args: BuyParams): Promise<string> {
-    throw new Error("Not implemented");
+    try {
+      const response = this.solClient
+        ? await this.solClient?.nft.buy(args as SolanaBuyParams)
+        : await this.evmClient?.nft.buy(args as EvmBuyParams);
+      
+      const failures = response?.filter((r) => r.status === "failed" || r.error);
+      if (failures?.length) {
+        return `Failed to buy NFT: ${failures.map((f) => f.error).join(", ")}`;
+      }
+
+      const transactionResponse = response?.map((r) => r as TransactionResponse).filter((r) => r !== undefined);
+      
+      return `Successfully bought NFT.\nTransactions: [${transactionResponse?.map((r) => r.txId).join(", ")}]`;
+    } catch (error) {
+      return `Error buying NFT: ${error}`;
+    }
   }
 
   /**

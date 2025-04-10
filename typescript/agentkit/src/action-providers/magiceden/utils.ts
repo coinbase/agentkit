@@ -1,5 +1,5 @@
 import { Network, NETWORK_ID_TO_CHAIN_ID } from "../../network";
-import { Blockchain } from "@temp-magiceden/magiceden-sdk";
+import { Blockchain } from "@magiceden/magiceden-sdk";
 
 /**
  * Maps a network ID to the corresponding MagicEden blockchain.
