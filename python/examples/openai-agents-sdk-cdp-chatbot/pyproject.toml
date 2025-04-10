@@ -1,0 +1,47 @@
+[project]
+name = "openai-agents-sdk-chatbot-python"
+version = "0.0.1"
+description = "OpenAI Agents SDK Example Chatbot"
+authors = [{ name = "John Peterson", email = "john.peterson@coinbase.com" }]
+requires-python = "~=3.10"
+readme = "README.md"
+dependencies = [
+    "python-dotenv>=1.0.1,<2",
+    "coinbase-agentkit",
+    "coinbase-agentkit-openai-agents-sdk",
+]
+
+[dependency-groups]
+dev = ["ruff>=0.7.1,<0.8"]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+coinbase-agentkit = { path = "../../../python/coinbase-agentkit", editable = true }
+coinbase-agentkit-openai-agents-sdk = { path = "../../../python/framework-extensions/openai-agents-sdk", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.openai-agents-sdk-chatbot]
+private = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = ["./build/**", "./dist/**", "./docs/**"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "D", "UP", "B", "C4", "SIM", "RUF"]
+ignore = ["D213", "D203", "D100", "D104", "D107", "E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+known-first-party = ["coinbase_agentkit, cdp"]
