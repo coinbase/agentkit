@@ -1,5 +1,21 @@
 # AgentKit Changelog
 
+## 0.6.1
+
+### Patch Changes
+
+- [#656](https://github.com/coinbase/agentkit/pull/656) [`8465c35`](https://github.com/coinbase/agentkit/commit/8465c355a648601e2de8ea858d3571922eb3ec52) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Fixed Privy dependency on @privy-io/public-api
+
+## 0.6.0
+
+### Minor Changes
+
+- [#641](https://github.com/coinbase/agentkit/pull/641) [`03ea0e5`](https://github.com/coinbase/agentkit/commit/03ea0e541cb0b76fefcc15fe9d74297ac809801d) Thanks [@pawelpolak2](https://github.com/pawelpolak2)! - Added transaction queue to the cdp wallet provider to avoid nonce collisions.
+
+- [#617](https://github.com/coinbase/agentkit/pull/617) [`d64b11c`](https://github.com/coinbase/agentkit/commit/d64b11cb8a7f795e5c33e45c70eec8153977783d) Thanks [@apoorvlathey](https://github.com/apoorvlathey)! - Added a new action provider to interact with Flaunch protocol
+
+- [#638](https://github.com/coinbase/agentkit/pull/638) [`4d4b031`](https://github.com/coinbase/agentkit/commit/4d4b031242d6760a089b300d8f135110dd8d467d) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Added OnrampActionProvider to enable cryptocurrency purchases
+
 ## 0.5.0
 
 ### Minor Changes

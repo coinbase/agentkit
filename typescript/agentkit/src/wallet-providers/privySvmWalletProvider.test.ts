@@ -124,6 +124,7 @@ describe("PrivySvmWalletProvider", () => {
   const MOCK_CONFIG = {
     appId: "test-app-id",
     appSecret: "test-app-secret",
+    walletType: "server" as const,
   };
 
   const MOCK_CONFIG_WITH_WALLET_ID = {

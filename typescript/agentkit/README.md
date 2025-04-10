@@ -265,6 +265,27 @@ const agent = createReactAgent({
 </table>
 </details>
 <details>
+<summary><strong>Flaunch</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>flaunch</code></td>
+    <td width="768">Launches a new memecoin token with customizable name, symbol, image, and metadata.</td>
+</tr>
+<tr>
+    <td width="200"><code>buyCoinWithETHInput</code></td>
+    <td width="768">Purchases Flaunch memecoin tokens by specifying ETH input amount with configurable slippage.</td>
+</tr>
+<tr>
+    <td width="200"><code>buyCoinWithCoinInput</code></td>
+    <td width="768">Purchases Flaunch memecoin tokens by specifying desired token output amount with configurable slippage.</td>
+</tr>
+<tr>
+    <td width="200"><code>sellCoin</code></td>
+    <td width="768">Sells Flaunch memecoin tokens back to ETH with configurable slippage.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Messari</strong></summary>
 <table width="100%">
 <tr>

@@ -1,0 +1,2 @@
+// default setup: instantiate the provider
+const provider = new {{name_pascal}}ActionProvider();

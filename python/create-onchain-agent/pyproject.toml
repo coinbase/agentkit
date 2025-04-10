@@ -1,6 +1,6 @@
 [project]
 name = "create-onchain-agent"
-version = "0.4.0"
+version = "0.5.0"
 description = "CLI to create an onchain agent project"
 authors = [{ name = "Carson Roscoe", email = "carsonroscoe7@gmail.com" }]
 requires-python = ">=3.10"
