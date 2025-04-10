@@ -125,7 +125,7 @@ describe("MagicEden Action Provider", () => {
       const response = await actionProvider.createLaunchpad(args);
 
       expect(mockCreateLaunchpad).toHaveBeenCalledWith(args);
-      expect(response).toBe("Successfully created launchpad.\nTransactions: [solana-tx-id]");
+      expect(response).toBe("Successfully executed MagicEden 'createLaunchpad' action.\nTransactions: [solana-tx-id]");
     });
 
     it("should successfully create a launchpad on EVM", async () => {
@@ -186,7 +186,7 @@ describe("MagicEden Action Provider", () => {
       const response = await actionProvider.createLaunchpad(args);
 
       expect(mockCreateLaunchpad).toHaveBeenCalledWith(args);
-      expect(response).toBe("Successfully created launchpad.\nTransactions: [evm-tx-id]");
+      expect(response).toBe("Successfully executed MagicEden 'createLaunchpad' action.\nTransactions: [evm-tx-id]");
     });
   });
 
@@ -230,7 +230,7 @@ describe("MagicEden Action Provider", () => {
       const response = await actionProvider.updateLaunchpad(args);
 
       expect(mockUpdateLaunchpad).toHaveBeenCalledWith(args);
-      expect(response).toBe("Successfully updated launchpad.\nTransactions: [solana-tx-id]");
+      expect(response).toBe("Successfully executed MagicEden 'updateLaunchpad' action.\nTransactions: [solana-tx-id]");
     });
 
     it("should successfully update a launchpad on EVM", async () => {
@@ -262,7 +262,7 @@ describe("MagicEden Action Provider", () => {
       const response = await actionProvider.updateLaunchpad(args);
 
       expect(mockUpdateLaunchpad).toHaveBeenCalledWith(args);
-      expect(response).toBe("Successfully updated launchpad.\nTransactions: [evm-tx-id]");
+      expect(response).toBe("Successfully executed MagicEden 'updateLaunchpad' action.\nTransactions: [evm-tx-id]");
     });
   });
 
@@ -292,7 +292,7 @@ describe("MagicEden Action Provider", () => {
       const response = await actionProvider.listNft(args);
 
       expect(mockList).toHaveBeenCalledWith(args);
-      expect(response).toBe("Successfully listed NFT.\nTransactions: [solana-tx-id]");
+      expect(response).toBe("Successfully executed MagicEden 'listNft' action.\nTransactions: [solana-tx-id]");
     });
 
     it("should successfully list an NFT on EVM", async () => {
@@ -324,7 +324,7 @@ describe("MagicEden Action Provider", () => {
       const response = await actionProvider.listNft(args);
 
       expect(mockList).toHaveBeenCalledWith(args);
-      expect(response).toBe("Successfully listed NFT.\nTransactions: [evm-tx-id]");
+      expect(response).toBe("Successfully executed MagicEden 'listNft' action.\nTransactions: [evm-tx-id]");
     });
   });
 
@@ -354,7 +354,7 @@ describe("MagicEden Action Provider", () => {
       const response = await actionProvider.cancelListing(args);
 
       expect(mockCancelListing).toHaveBeenCalledWith(args);
-      expect(response).toBe("Successfully canceled listing.\nTransactions: [solana-tx-id]");
+      expect(response).toBe("Successfully executed MagicEden 'cancelListing' action.\nTransactions: [solana-tx-id]");
     });
 
     it("should successfully cancel a listing on EVM", async () => {
@@ -381,7 +381,7 @@ describe("MagicEden Action Provider", () => {
       const response = await actionProvider.cancelListing(args);
 
       expect(mockCancelListing).toHaveBeenCalledWith(args);
-      expect(response).toBe("Successfully canceled listing.\nTransactions: [evm-tx-id]");
+      expect(response).toBe("Successfully executed MagicEden 'cancelListing' action.\nTransactions: [evm-tx-id]");
     });
   });
 
@@ -411,7 +411,7 @@ describe("MagicEden Action Provider", () => {
       const response = await actionProvider.makeItemOffer(args);
 
       expect(mockMakeOffer).toHaveBeenCalledWith(args);
-      expect(response).toBe("Successfully made item offer.\nTransactions: [solana-tx-id]");
+      expect(response).toBe("Successfully executed MagicEden 'makeItemOffer' action.\nTransactions: [solana-tx-id]");
     });
 
     it("should successfully make an offer on EVM", async () => {
@@ -443,7 +443,7 @@ describe("MagicEden Action Provider", () => {
       const response = await actionProvider.makeItemOffer(args);
 
       expect(mockMakeOffer).toHaveBeenCalledWith(args);
-      expect(response).toBe("Successfully made item offer.\nTransactions: [evm-tx-id]");
+      expect(response).toBe("Successfully executed MagicEden 'makeItemOffer' action.\nTransactions: [evm-tx-id]");
     });
   });
 
@@ -475,7 +475,7 @@ describe("MagicEden Action Provider", () => {
       const response = await actionProvider.takeItemOffer(args);
 
       expect(mockTakeOffer).toHaveBeenCalledWith(args);
-      expect(response).toBe("Successfully took item offer.\nTransactions: [solana-tx-id]");
+      expect(response).toBe("Successfully executed MagicEden 'takeItemOffer' action.\nTransactions: [solana-tx-id]");
     });
 
     it("should successfully take an offer on EVM", async () => {
@@ -508,7 +508,7 @@ describe("MagicEden Action Provider", () => {
       const response = await actionProvider.takeItemOffer(args);
 
       expect(mockTakeOffer).toHaveBeenCalledWith(args);
-      expect(response).toBe("Successfully took item offer.\nTransactions: [evm-tx-id]");
+      expect(response).toBe("Successfully executed MagicEden 'takeItemOffer' action.\nTransactions: [evm-tx-id]");
     });
   });
 
@@ -538,7 +538,7 @@ describe("MagicEden Action Provider", () => {
       const response = await actionProvider.cancelItemOffer(args);
 
       expect(mockCancelOffer).toHaveBeenCalledWith(args);
-      expect(response).toBe("Successfully canceled item offer.\nTransactions: [solana-tx-id]");
+      expect(response).toBe("Successfully executed MagicEden 'cancelItemOffer' action.\nTransactions: [solana-tx-id]");
     });
 
     it("should successfully cancel an offer on EVM", async () => {
@@ -565,7 +565,7 @@ describe("MagicEden Action Provider", () => {
       const response = await actionProvider.cancelItemOffer(args);
 
       expect(mockCancelOffer).toHaveBeenCalledWith(args);
-      expect(response).toBe("Successfully canceled item offer.\nTransactions: [evm-tx-id]");
+      expect(response).toBe("Successfully executed MagicEden 'cancelItemOffer' action.\nTransactions: [evm-tx-id]");
     });
   });
 
@@ -596,7 +596,7 @@ describe("MagicEden Action Provider", () => {
       const response = await actionProvider.buy(args);
 
       expect(mockBuy).toHaveBeenCalledWith(args);
-      expect(response).toBe("Successfully bought NFT.\nTransactions: [solana-tx-id]");
+      expect(response).toBe("Successfully executed MagicEden 'buy' action.\nTransactions: [solana-tx-id]");
     });
 
     it("should successfully buy an NFT on EVM", async () => {
@@ -628,7 +628,7 @@ describe("MagicEden Action Provider", () => {
       const response = await actionProvider.buy(args);
 
       expect(mockBuy).toHaveBeenCalledWith(args);
-      expect(response).toBe("Successfully bought NFT.\nTransactions: [evm-tx-id]");
+      expect(response).toBe("Successfully executed MagicEden 'buy' action.\nTransactions: [evm-tx-id]");
     });
 
     it("should handle failed transactions", async () => {
@@ -660,7 +660,7 @@ describe("MagicEden Action Provider", () => {
       const response = await actionProvider.buy(args);
 
       expect(mockBuy).toHaveBeenCalledWith(args);
-      expect(response).toBe("Failed to buy NFT: Insufficient funds");
+      expect(response).toBe("Failed to execute MagicEden 'buy' action: Insufficient funds");
     });
 
     it("should handle errors during buy operation", async () => {
@@ -692,7 +692,7 @@ describe("MagicEden Action Provider", () => {
       const response = await actionProvider.buy(args);
 
       expect(mockBuy).toHaveBeenCalledWith(args);
-      expect(response).toBe("Error buying NFT: Error: API error");
+      expect(response).toBe("Error executing MagicEden 'buy' action: Error: API error");
     });
   });
 

@@ -39,6 +39,7 @@ import {
   MAX_ROYALTY_BPS,
   MAX_SYMBOL_LENGTH,
   MAX_NAME_LENGTH,
+  OperationResponse,
 } from "@magiceden/magiceden-sdk";
 import { getMagicEdenChainFromNetworkId, isSupportedNetwork } from "./utils";
 import { Keypair } from "@solana/web3.js";
@@ -165,20 +166,9 @@ export class MagicEdenActionProvider extends ActionProvider {
         ? await this.solClient?.nft.createLaunchpad(args as SolanaCreateLaunchpadParams)
         : await this.evmClient?.nft.createLaunchpad(args as EvmCreateLaunchpadParams);
 
-      const failures = response?.filter(
-        r => r.status === "failed" || r.status === undefined || r.error,
-      );
-      if (failures?.length) {
-        return `Failed to create launchpad: ${failures.map(f => f.error).join(", ")}`;
-      }
-
-      const transactionResponse = response
-        ?.map(r => r as TransactionResponse)
-        .filter(r => r !== undefined);
-
-      return `Successfully created launchpad.\nTransactions: [${transactionResponse?.map(r => r.txId).join(", ")}]`;
+      return this.handleTransactionResponse(response, "createLaunchpad");
     } catch (error) {
-      return `Error creating launchpad: ${error}`;
+      return `Error executing MagicEden 'createLaunchpad' action: ${error}`;
     }
   }
 
@@ -219,13 +209,14 @@ export class MagicEdenActionProvider extends ActionProvider {
       const response = await this.solClient?.nft.publishLaunchpad(
         args as SolanaPublishLaunchpadParams,
       );
+      
       if (!response) {
-        return `Failed to publish launchpad`;
+        return `Failed to execute MagicEden 'publishLaunchpad' action`;
       }
 
-      return `Successfully published launchpad.`;
+      return `Successfully executed MagicEden 'publishLaunchpad' action.`;
     } catch (error) {
-      return `Error publishing launchpad: ${error}`;
+      return `Error executing MagicEden 'publishLaunchpad' action: ${error}`;
     }
   }
 
@@ -286,20 +277,9 @@ export class MagicEdenActionProvider extends ActionProvider {
         ? await this.solClient?.nft.updateLaunchpad(args as SolanaUpdateLaunchpadParams)
         : await this.evmClient?.nft.updateLaunchpad(args as EvmUpdateLaunchpadParams);
 
-      const failures = response?.filter(
-        r => r.status === "failed" || r.status === undefined || r.error,
-      );
-      if (failures?.length) {
-        return `Failed to update launchpad: ${failures.map(f => f.error).join(", ")}`;
-      }
-
-      const transactionResponse = response
-        ?.map(r => r as TransactionResponse)
-        .filter(r => r !== undefined);
-
-      return `Successfully updated launchpad.\nTransactions: [${transactionResponse?.map(r => r.txId).join(", ")}]`;
+      return this.handleTransactionResponse(response, "updateLaunchpad");
     } catch (error) {
-      return `Error updating launchpad: ${error}`;
+      return `Error executing MagicEden 'updateLaunchpad' action: ${error}`;
     }
   }
 
@@ -358,20 +338,9 @@ export class MagicEdenActionProvider extends ActionProvider {
         ? await this.solClient?.nft.list(args as SolanaListParams)
         : await this.evmClient?.nft.list(args as EvmListParams);
 
-      const failures = response?.filter(
-        r => r.status === "failed" || r.status === undefined || r.error,
-      );
-      if (failures?.length) {
-        return `Failed to list NFT: ${failures.map(f => f.error).join(", ")}`;
-      }
-
-      const transactionResponse = response
-        ?.map(r => r as TransactionResponse)
-        .filter(r => r !== undefined);
-
-      return `Successfully listed NFT.\nTransactions: [${transactionResponse?.map(r => r.txId).join(", ")}]`;
+      return this.handleTransactionResponse(response, "listNft");
     } catch (error) {
-      return `Error listing NFT: ${error}`;
+      return `Error executing MagicEden 'listNft' action: ${error}`;
     }
   }
 
@@ -429,20 +398,9 @@ export class MagicEdenActionProvider extends ActionProvider {
         ? await this.solClient?.nft.cancelListing(args as SolanaCancelListingParams)
         : await this.evmClient?.nft.cancelListing(args as EvmCancelListingParams);
 
-      const failures = response?.filter(
-        r => r.status === "failed" || r.status === undefined || r.error,
-      );
-      if (failures?.length) {
-        return `Failed to cancel listing: ${failures.map(f => f.error).join(", ")}`;
-      }
-
-      const transactionResponse = response
-        ?.map(r => r as TransactionResponse)
-        .filter(r => r !== undefined);
-
-      return `Successfully canceled listing.\nTransactions: [${transactionResponse?.map(r => r.txId).join(", ")}]`;
+      return this.handleTransactionResponse(response, "cancelListing");
     } catch (error) {
-      return `Error canceling listing: ${error}`;
+      return `Error executing MagicEden 'cancelListing' action: ${error}`;
     }
   }
 
@@ -504,20 +462,9 @@ export class MagicEdenActionProvider extends ActionProvider {
         ? await this.solClient?.nft.makeItemOffer(args as SolanaMakeItemOfferParams)
         : await this.evmClient?.nft.makeItemOffer(args as EvmMakeItemOfferParams);
 
-      const failures = response?.filter(
-        r => r.status === "failed" || r.status === undefined || r.error,
-      );
-      if (failures?.length) {
-        return `Failed to make item offer: ${failures.map(f => f.error).join(", ")}`;
-      }
-
-      const transactionResponse = response
-        ?.map(r => r as TransactionResponse)
-        .filter(r => r !== undefined);
-
-      return `Successfully made item offer.\nTransactions: [${transactionResponse?.map(r => r.txId).join(", ")}]`;
+      return this.handleTransactionResponse(response, "makeItemOffer");
     } catch (error) {
-      return `Error making item offer: ${error}`;
+      return `Error executing MagicEden 'makeItemOffer' action: ${error}`;
     }
   }
 
@@ -581,20 +528,9 @@ export class MagicEdenActionProvider extends ActionProvider {
         ? await this.solClient?.nft.takeItemOffer(args as SolanaTakeItemOfferParams)
         : await this.evmClient?.nft.takeItemOffer(args as EvmTakeItemOfferParams);
 
-      const failures = response?.filter(
-        r => r.status === "failed" || r.status === undefined || r.error,
-      );
-      if (failures?.length) {
-        return `Failed to take item offer: ${failures.map(f => f.error).join(", ")}`;
-      }
-
-      const transactionResponse = response
-        ?.map(r => r as TransactionResponse)
-        .filter(r => r !== undefined);
-
-      return `Successfully took item offer.\nTransactions: [${transactionResponse?.map(r => r.txId).join(", ")}]`;
+      return this.handleTransactionResponse(response, "takeItemOffer");
     } catch (error) {
-      return `Error taking item offer: ${error}`;
+      return `Error executing MagicEden 'takeItemOffer' action: ${error}`;
     }
   }
 
@@ -651,20 +587,9 @@ export class MagicEdenActionProvider extends ActionProvider {
         ? await this.solClient?.nft.cancelItemOffer(args as SolanaCancelItemOfferParams)
         : await this.evmClient?.nft.cancelItemOffer(args as EvmCancelItemOfferParams);
 
-      const failures = response?.filter(
-        r => r.status === "failed" || r.status === undefined || r.error,
-      );
-      if (failures?.length) {
-        return `Failed to cancel item offer: ${failures.map(f => f.error).join(", ")}`;
-      }
-
-      const transactionResponse = response
-        ?.map(r => r as TransactionResponse)
-        .filter(r => r !== undefined);
-
-      return `Successfully canceled item offer.\nTransactions: [${transactionResponse?.map(r => r.txId).join(", ")}]`;
+      return this.handleTransactionResponse(response, "cancelItemOffer");
     } catch (error) {
-      return `Error canceling item offer: ${error}`;
+      return `Error executing MagicEden 'cancelItemOffer' action: ${error}`;
     }
   }
 
@@ -731,20 +656,9 @@ export class MagicEdenActionProvider extends ActionProvider {
         ? await this.solClient?.nft.buy(args as SolanaBuyParams)
         : await this.evmClient?.nft.buy(args as EvmBuyParams);
 
-      const failures = response?.filter(
-        r => r.status === "failed" || r.status === undefined || r.error,
-      );
-      if (failures?.length) {
-        return `Failed to buy NFT: ${failures.map(f => f.error).join(", ")}`;
-      }
-
-      const transactionResponse = response
-        ?.map(r => r as TransactionResponse)
-        .filter(r => r !== undefined);
-
-      return `Successfully bought NFT.\nTransactions: [${transactionResponse?.map(r => r.txId).join(", ")}]`;
+      return this.handleTransactionResponse(response, "buy");
     } catch (error) {
-      return `Error buying NFT: ${error}`;
+      return `Error executing MagicEden 'buy' action: ${error}`;
     }
   }
 
@@ -755,6 +669,28 @@ export class MagicEdenActionProvider extends ActionProvider {
    * @returns True if supported, false otherwise.
    */
   public supportsNetwork = (network: Network): boolean => isSupportedNetwork(network);
+
+  private handleTransactionResponse(
+    response: OperationResponse[] | undefined,
+    action: string
+  ): string {
+    if (!response) {
+      return `Failed to ${action}`;
+    }
+
+    const failures = response.filter(
+      r => r.status === "failed" || r.status === undefined || r.error
+    );
+    if (failures.length) {
+      return `Failed to execute MagicEden '${action}' action: ${failures.map(f => f.error).join(", ")}`;
+    }
+
+    const transactionResponse = response
+      .filter(r => r !== undefined)
+      .map(r => r as TransactionResponse);
+
+    return `Successfully executed MagicEden '${action}' action.\nTransactions: [${transactionResponse.map(r => r.txId).join(", ")}]`;
+  }
 }
 
 export const magicEdenActionProvider = (config: MagicEdenActionProviderConfig) =>
