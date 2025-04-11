@@ -43,6 +43,7 @@
     "@alloralabs/allora-sdk": "^0.1.0",
     "@coinbase/coinbase-sdk": "^0.20.0",
     "@jup-ag/api": "^6.0.39",
+    "@magiceden/magiceden-sdk": "1.0.0-beta.3",
     "@privy-io/public-api": "^2.18.5",
     "@privy-io/server-auth": "^1.18.4",
     "@solana/spl-token": "^0.4.12",
