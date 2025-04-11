@@ -1,5 +1,11 @@
 # AgentKit Changelog
 
+## 0.6.2
+
+### Patch Changes
+
+- [#645](https://github.com/coinbase/agentkit/pull/645) [`8fdb847`](https://github.com/coinbase/agentkit/commit/8fdb847c32cc90b1500d3883cc2f68b97b90ba86) Thanks [@pawelpolak2](https://github.com/pawelpolak2)! - Add vaults.fyi provider
+
 ## 0.6.1
 
 ### Patch Changes
