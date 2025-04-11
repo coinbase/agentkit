@@ -124,32 +124,34 @@ export class MagicEdenActionProvider extends ActionProvider {
     This tool will create a new NFT launchpad on Magic Eden. Both Solana and EVM chains are supported.
     
     It takes the following inputs:
-    - chain: The blockchain to deploy on (e.g., "solana", "base", "ethereum")
-    - protocol: The NFT standard to use (Solana: "metaplex", EVM: "erc721" or "erc1155")
+    - chain: The blockchain to deploy on, one of ["solana", "ethereum", "base", "polygon", "sei", "arbitrum", "apechain", "berachain", "monad_testnet", "bsc", "abstract"]
+    - protocol: The NFT standard to use (Solana: "METAPLEX_CORE", EVM: "ERC721" or "ERC1155")
     - creator: The wallet address that will be the creator of the collection
-    - name: The name of the collection
+    - name: The name of the collection (max ${MAX_NAME_LENGTH} characters, ${SOL_MAX_NAME_LENGTH} for Solana)
     - symbol: The symbol for the collection (max ${MAX_SYMBOL_LENGTH} characters)
     - imageUrl: (Optional) URL pointing to the collection's image
     - description: (Optional) Description of the collection
     - royaltyBps: Royalty basis points (between ${MIN_ROYALTY_BPS} and ${MAX_ROYALTY_BPS})
-    - royaltyRecipients: Array of recipients and their shares (must sum to 100%)
+    - royaltyRecipients: Array of {address, share} (shares must sum to 100%) (maximum of 4 royalty recipients for Solana)
     - payoutRecipient: Wallet address to receive mint proceeds
     - nftMetadataUrl: (Optional) URL to metadata JSON files
     - tokenImageUrl: (Optional) URL for token image in open editions
-    - mintStages: Configuration for the minting phases
-    
-    Solana-specific requirements:
-    - creator: Must be a valid Solana address
-    - payoutRecipient: Must be a valid Solana address
-    - social: (Optional) Social media links (Discord, Twitter, etc.)
+    - mintStages: Configuration for the minting phases, containing:
+      • stages: (Optional) Array of mint stages, minimum 1 stage. Each stage has:
+        - kind: Type of mint stage ("public" or "allowlist")
+        - price: Object with {currency: string, raw: string} for mint price
+        - startTime: Start time in ISO format (YYYY-MM-DDTHH:MM:SS.MSZ)
+        - endTime: End time in ISO format (YYYY-MM-DDTHH:MM:SS.MSZ)
+        - walletLimit: (Optional) Max mints per wallet (0-10000)
+        - maxSupply: (Optional) Max supply for this stage (1-uint256)
+        - allowlist: (Optional, for allowlist kind) Array of allowed wallet addresses (2-2500 addresses)
+      • tokenId: (Optional) Token ID for ERC1155 collections
+      • walletLimit: (Optional) Default wallet limit if no stages defined (0-10000)
+      • maxSupply: (Optional) Total items available for minting (1-uint256)
+
+    Solana-specific parameters:
     - isOpenEdition: Whether the collection is an open edition
-    - Maximum 4 royalty recipients
-    - Name must be max ${SOL_MAX_NAME_LENGTH} characters
-    
-    EVM-specific requirements:
-    - Uses contract:tokenId format for token identifiers
-    - Supports both ERC721 and ERC1155 standards
-    - Prices in wei
+    - social: (Optional) Social media links (Discord, Twitter, etc.)
     
     Important notes:
     - Creating a launchpad requires approval transactions and will incur gas fees
@@ -157,6 +159,8 @@ export class MagicEdenActionProvider extends ActionProvider {
     - Royalty recipients' shares must sum to exactly 100%
     - All URLs should be publicly accessible
     - For non-open editions, metadata JSON files should follow the 0.json, 1.json naming pattern
+    - Mint stages must not overlap in time
+    - For Solana, if no stages are defined but walletLimit is set, it becomes the default public mint stage limit
     `,
     schema: CreateLaunchpadParams,
   })
@@ -231,35 +235,50 @@ export class MagicEdenActionProvider extends ActionProvider {
     description: `
     This tool will update an existing NFT launchpad on Magic Eden. Both Solana and EVM chains are supported.
     
-    It takes the following required inputs:
-    - chain: The blockchain where the collection is deployed
-    - protocol: The NFT standard (Solana: "metaplex", EVM: "erc721" or "erc1155")
+    All chains take the following inputs:
+    - chain: The blockchain to update on, one of ["solana", "ethereum", "base", "polygon", "sei", "arbitrum", "apechain", "berachain", "monad_testnet", "bsc", "abstract"]
+    - protocol: The NFT standard (e.g., "METAPLEX_CORE" for Solana, "ERC721" or "ERC1155" for EVM)
     - collectionId: The collection address/ID to update
     - owner: The owner wallet address
+    - name: (Optional) Collection name (max ${MAX_NAME_LENGTH} chars, ${SOL_MAX_NAME_LENGTH} for Solana)
+    - imageUrl: (Optional) URL pointing to collection image
+    - description: (Optional) Collection description
+    - royaltyBps: (Optional) Royalty basis points (${MIN_ROYALTY_BPS}-${MAX_ROYALTY_BPS})
+    - royaltyRecipients: (Optional) Array of {address, share} (shares must sum to 100%)
+    - payoutRecipient: (Optional) Wallet to receive mint proceeds
+    - nftMetadataUrl: (Optional) URL to metadata JSON files
+    - tokenImageUrl: (Optional) URL for token image (open editions)
+    - mintStages: (Optional) Configuration for minting phases, containing:
+      • stages: (Optional) Array of mint stages, minimum 1 stage. Each stage has:
+        - kind: Type of mint stage ("public" or "allowlist")
+        - price: Object with {currency: string, raw: string} for mint price
+        - startTime: Start time in ISO format (YYYY-MM-DDTHH:MM:SS.MSZ)
+        - endTime: End time in ISO format (YYYY-MM-DDTHH:MM:SS.MSZ)
+        - walletLimit: (Optional) Max mints per wallet (0-10000)
+        - maxSupply: (Optional) Max supply for this stage (1-uint256)
+        - allowlist: (Optional, for allowlist kind) Array of allowed wallet addresses (2-2500 addresses)
+      • tokenId: (Optional) Token ID for ERC1155 collections
+      • walletLimit: (Optional) Default wallet limit if no stages defined (0-10000)
+      • maxSupply: (Optional) Total items available for minting (1-uint256)
     
-    Optional parameters for both chains:
-    - name: Collection name (max ${MAX_NAME_LENGTH} chars, ${SOL_MAX_NAME_LENGTH} for Solana)
-    - imageUrl: URL pointing to collection image
-    - description: Collection description
-    - royaltyBps: Royalty basis points (${MIN_ROYALTY_BPS}-${MAX_ROYALTY_BPS})
-    - royaltyRecipients: Array of {address, share} (shares must sum to 100%)
-    - payoutRecipient: Wallet to receive mint proceeds
-    - nftMetadataUrl: URL to metadata JSON files
-    - tokenImageUrl: URL for token image (open editions)
-    - mintStages: Configuration for minting phases
-    
+    EVM-specific parameters:
+    - tokenId: (Optional) Token ID for ERC1155 collections, required if protocol is "ERC1155"
+    - collectionId must be a valid EVM address
+    - Uses contract:tokenId format for tokens
+
     Solana-specific parameters:
     - payer: Address paying for transaction fees
     - candyMachineId: The Candy Machine address
     - symbol: Current collection symbol
+    - name: Current collection name (required on Solana)
+    - royaltyRecipients: Array of {address, share} (shares must sum to 100%) (required on Solana) (maximum of 4 royalty recipients)
+    - payoutRecipient: Wallet to receive mint proceeds (required on Solana)
     - newSymbol: (Optional) New symbol to update to
-    - social: Optional social media links (Discord, Twitter, etc.)
-    - Maximum 4 royalty recipients
-    
-    EVM-specific parameters:
-    - tokenId: Required for ERC1155 collections
-    - collectionId must be a valid EVM address
-    - Uses contract:tokenId format for tokens
+    - social: (Optional) Social media links (Discord, Twitter, etc.)
+      • discordUrl: (Optional) Discord URL
+      • twitterUsername: (Optional) Twitter username
+      • telegramUrl: (Optional) Telegram URL
+      • externalUrl: (Optional) External URL
     
     Important notes:
     - Updates require approval transactions and will incur gas fees
@@ -294,24 +313,17 @@ export class MagicEdenActionProvider extends ActionProvider {
     description: `
     This tool will list an NFT for sale on the Magic Eden marketplace. Both Solana and EVM chains are supported.
     
-    Required inputs for all chains:
-    - token: The NFT identifier
-      • For EVM: Use format "contractAddress:tokenId"
-      • For Solana: Use the NFT's mint address
-    - price: The listing price
-      • For EVM: Amount in wei (smallest unit)
-      • For Solana: Amount in lamports
-    - expiry: (Optional) Unix timestamp in seconds for when the listing should expire
-    
     EVM-specific parameters:
-    - chain: The blockchain to list on (e.g., "base", "ethereum")
+    - chain: The blockchain to list on, one of ["ethereum", "base", "polygon", "sei", "arbitrum", "apechain", "berachain", "monad_testnet", "bsc", "abstract"]
     - params: Array of listings, each containing:
-      • token: Contract and token ID (e.g., "0x1234...abcd:123")
+      • token: Contract and token ID in format "contractAddress:tokenId"
       • price: Amount in wei
-      • expiry: (Optional) Expiration timestamp
+      • expiry: (Optional) Expiration Unix timestamp in seconds for when the listing should expire
     
     Solana-specific parameters:
-    - auctionHouseAddress: (Optional) Custom auction house address
+    - token: The NFT's mint address
+    - price: The listing price in lamports
+    - expiry: (Optional) Expiration Unix timestamp in seconds for when the listing should expire
     - tokenAccount: (Optional) Required only for legacy NFTs
     - splPrice: (Optional) Details for SPL token pricing
     - sellerReferral: (Optional) Referral address
@@ -364,18 +376,14 @@ export class MagicEdenActionProvider extends ActionProvider {
       • Multiple listings can be canceled in one transaction
     
     Solana-specific parameters:
-    Required:
     - token: The NFT's mint address
     - price: The listing price that was used (in lamports)
-    
-    Optional:
-    - tokenAccount: Required only for legacy NFTs
-    - auctionHouseAddress: Custom auction house address
-    - sellerReferral: Referral address
-    - expiry: Original listing expiration timestamp
-    - prioFeeMicroLamports: Priority fee in micro lamports
-    - maxPrioFeeLamports: Maximum priority fee
-    - exactPrioFeeLamports: Exact priority fee
+    - tokenAccount: (Optional) Required only for legacy NFTs
+    - sellerReferral: (Optional) Referral address
+    - expiry: (Optional) Original listing expiration Unix timestamp in seconds
+    - prioFeeMicroLamports: (Optional) Priority fee in micro lamports
+    - maxPrioFeeLamports: (Optional) Maximum priority fee
+    - exactPrioFeeLamports: (Optional) Exact priority fee
     
     Important notes:
     - Only the wallet that created the listing can cancel it
@@ -415,25 +423,21 @@ export class MagicEdenActionProvider extends ActionProvider {
     description: `
     This tool will make an offer on an NFT listed on the Magic Eden marketplace. Both Solana and EVM chains are supported.
     
-    Required inputs for all chains:
-    - token: The NFT identifier
-      • For EVM: Use format "contractAddress:tokenId"
-      • For Solana: Use the NFT's mint address
-    - price: The offer amount
-      • For EVM: Amount in wei (smallest unit)
-      • For Solana: Amount in lamports
-    - expiry: (Optional) Unix timestamp in seconds for when the offer should expire
-    
     EVM-specific parameters:
-    - chain: The blockchain to make the offer on (e.g., "base", "ethereum")
+    - chain: The blockchain to make the offer on, one of ["ethereum", "base", "polygon", "sei", "arbitrum", "apechain", "berachain", "monad_testnet", "bsc", "abstract"]
     - params: Array of offers, each containing:
+      • token: Contract and token ID in format "contractAddress:tokenId"
+      • price: The offer amount in wei (smallest unit)
+      • expiry: (Optional) Offer expiration Unix timestamp in seconds
       • quantity: (Optional) Number of NFTs to bid on
       • automatedRoyalties: (Optional) Auto-set royalty amounts and recipients
       • royaltyBps: (Optional) Maximum royalty basis points to pay (1 BPS = 0.01%)
       • currency: (Optional) Token address for payment (defaults to wrapped native token)
     
     Solana-specific parameters:
-    - auctionHouseAddress: (Optional) Custom auction house address
+    - token: The NFT's mint address
+    - price: The offer amount in lamports
+    - expiry: (Optional) Offer expiration Unix timestamp in seconds
     - buyerReferral: (Optional) Referral address
     - useBuyV2: (Optional) Whether to use buy v2 protocol
     - buyerCreatorRoyaltyPercent: (Optional) Buyer's share of creator royalties
@@ -478,33 +482,26 @@ export class MagicEdenActionProvider extends ActionProvider {
     name: "takeItemOffer",
     description: `
     This tool will accept an existing offer on an NFT listed on the Magic Eden marketplace. Both Solana and EVM chains are supported.
-    
-    Required inputs for all chains:
-    - token: The NFT identifier
-      • For EVM: Use format "contractAddress:tokenId"
-      • For Solana: Use the NFT's mint address
-    
+
     EVM-specific parameters:
-    - chain: The blockchain where the offer exists (e.g., "base", "ethereum")
+    - chain: The blockchain where the offer exists, one of ["ethereum", "base", "polygon", "sei", "arbitrum", "apechain", "berachain", "monad_testnet", "bsc", "abstract"]
     - items: Array of offers to accept, each containing:
+      • token: Contract and token ID in format "contractAddress:tokenId"
       • quantity: (Optional) Number of tokens to sell
       • orderId: (Optional) Specific order ID to accept
     
     Solana-specific parameters:
-    Required:
+    - token: The NFT's mint address
     - buyer: The wallet address of the offer maker
     - price: The original offer price in lamports
     - newPrice: The price at which to accept the offer
-    
-    Optional:
-    - auctionHouseAddress: Custom auction house address
-    - buyerReferral: Buyer's referral address
-    - sellerReferral: Seller's referral address
-    - buyerExpiry: Buyer's offer expiration timestamp
-    - sellerExpiry: Seller's acceptance expiration timestamp
-    - prioFeeMicroLamports: Priority fee in micro lamports
-    - maxPrioFeeLamports: Maximum priority fee
-    - exactPrioFeeLamports: Exact priority fee
+    - buyerReferral: (Optional) Buyer's referral address
+    - sellerReferral: (Optional) Seller's referral address
+    - buyerExpiry: (Optional) Buyer's offer expiration Unix timestamp in seconds
+    - sellerExpiry: (Optional) Seller's acceptance expiration Unix timestamp in seconds
+    - prioFeeMicroLamports: (Optional) Priority fee in micro lamports
+    - maxPrioFeeLamports: (Optional) Maximum priority fee
+    - exactPrioFeeLamports: (Optional) Exact priority fee
     
     Important notes:
     - Only the NFT owner can accept offers
@@ -548,23 +545,19 @@ export class MagicEdenActionProvider extends ActionProvider {
     Required inputs differ by chain:
     
     EVM-specific parameters:
-    - chain: The blockchain where the offer exists (e.g., "base", "ethereum")
+    - chain: The blockchain where the offer exists, one of ["ethereum", "base", "polygon", "sei", "arbitrum", "apechain", "berachain", "monad_testnet", "bsc", "abstract"]
     - orderIds: Array of order IDs to cancel
       • Each ID represents a specific offer to cancel
       • Multiple offers can be canceled in one transaction
     
     Solana-specific parameters:
-    Required:
     - token: The NFT's mint address
     - price: The original offer price in lamports
-    
-    Optional:
-    - expiry: Original offer expiration timestamp
-    - auctionHouseAddress: Custom auction house address
-    - buyerReferral: Referral address
-    - prioFeeMicroLamports: Priority fee in micro lamports
-    - maxPrioFeeLamports: Maximum priority fee
-    - exactPrioFeeLamports: Exact priority fee
+    - expiry: (Optional) Original offer expiration Unix timestamp in seconds
+    - buyerReferral: (Optional) Referral address
+    - prioFeeMicroLamports: (Optional) Priority fee in micro lamports
+    - maxPrioFeeLamports: (Optional) Maximum priority fee
+    - exactPrioFeeLamports: (Optional) Exact priority fee
     
     Important notes:
     - Only the wallet that made the offer can cancel it
@@ -604,34 +597,26 @@ export class MagicEdenActionProvider extends ActionProvider {
     description: `
     This tool will buy one or more NFTs from the Magic Eden marketplace. Both Solana and EVM chains are supported.
     
-    Required inputs for all chains:
-    - token: The NFT identifier
-      • For EVM: Use format "contractAddress:tokenId"
-      • For Solana: Use the NFT's mint address
-    
     EVM-specific parameters:
-    - chain: The blockchain to buy on (e.g., "base", "ethereum")
+    - chain: The blockchain to buy on, one of ["ethereum", "base", "polygon", "sei", "arbitrum", "apechain", "berachain", "monad_testnet", "bsc", "abstract"]
     - currency: (Optional) Token address to use for payment
     - currencyChainId: (Optional) Chain ID of the payment token
     - items: Array of NFTs to buy, each containing:
-      • token: Contract and token ID
+      • token: Contract and token ID in format "contractAddress:tokenId"
       • collection: (Optional) Collection address
       • quantity: (Optional) Number of NFTs to buy
       • orderId: (Optional) Specific listing to buy from
     
     Solana-specific parameters:
-    Required:
+    - token: The NFT's mint address
     - seller: The wallet address of the NFT seller
     - price: The purchase price in lamports
-    
-    Optional:
-    - auctionHouseAddress: Custom auction house address
-    - buyerReferral: Buyer's referral address
-    - sellerReferral: Seller's referral address
-    - buyerExpiry: Buyer's purchase expiration timestamp
-    - sellerExpiry: Seller's listing expiration timestamp
-    - buyerCreatorRoyaltyPercent: Buyer's share of creator royalties
-    - splPrice: Details for SPL token purchases
+    - buyerReferral: (Optional) Buyer's referral address
+    - sellerReferral: (Optional) Seller's referral address
+    - buyerExpiry: (Optional) Buyer's purchase expiration Unix timestamp in seconds
+    - sellerExpiry: (Optional) Seller's listing expiration Unix timestamp in seconds
+    - buyerCreatorRoyaltyPercent: (Optional) Buyer's share of creator royalties
+    - splPrice: (Optional) Details for SPL token purchases
     
     Important notes:
     - The wallet must have sufficient funds to cover the purchase
