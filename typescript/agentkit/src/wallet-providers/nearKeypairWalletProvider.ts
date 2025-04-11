@@ -18,6 +18,13 @@ export interface SendTransactionOptions {
   nodeUrl: string;
 }
 
+export interface AccessKeyInfo {
+  block_hash: string;
+  block_height: number;
+  nonce: number;
+  permission: string;
+}
+
 const DEFAULT_OPTIONS: SendTransactionOptions = {
   until: "EXECUTED_OPTIMISTIC",
   retryCount: 3,
@@ -186,12 +193,11 @@ export class NearKeypairWalletProvider extends NEARWalletProvider {
     const accessKey = (await connection.provider.query(
       `access_key/${accountId}/${publicKey.toString()}`,
       "",
-    )) as unknown as {
-      block_hash: string;
-      block_height: number;
-      nonce: number;
-      permission: string;
-    };
+    )) as AccessKeyInfo;
+
+    if (!accessKey) {
+      throw new Error("Access key not found");
+    }
 
     const recentBlockHash = nearUtils.serialize.base_decode(accessKey.block_hash);
 
