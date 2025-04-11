@@ -137,6 +137,7 @@ describe("PrivyEvmDelegatedEmbeddedWalletProvider", () => {
     authorizationPrivateKey: "wallet-auth:test-auth-key",
     walletId: MOCK_WALLET_ID,
     networkId: "base-sepolia",
+    walletType: "embedded" as const,
   };
 
   beforeEach(() => {

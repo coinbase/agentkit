@@ -37,6 +37,7 @@ export async function prepareProviderConfig(args: CliArgs): Promise<ProviderConf
     protocolFamily: args.protocolFamily ?? null,
     networkIds: args.networks || [],
     walletProvider: args.walletProvider || undefined,
+    providerKey: "default",
   };
 
   // set default wallet providers by protocol
@@ -61,14 +62,14 @@ export async function prepareProviderConfig(args: CliArgs): Promise<ProviderConf
   }
 
   // handle wallet provider in interactive mode
-  if (!config.walletProvider && config.protocolFamily !== "none") {
+  if (config.protocolFamily && config.protocolFamily !== "none" && !config.walletProvider) {
     if (config.protocolFamily !== "all" && (await shouldPromptForWalletProvider())) {
       config.walletProvider = await promptForWalletProvider(config.protocolFamily);
     } else if (config.protocolFamily === "evm") {
       config.walletProvider = "EvmWalletProvider";
     } else if (config.protocolFamily === "svm") {
       config.walletProvider = "SvmWalletProvider";
-    } else {
+    } else if (config.protocolFamily !== "all") {
       config.walletProvider = "WalletProvider";
     }
   }
@@ -77,6 +78,9 @@ export async function prepareProviderConfig(args: CliArgs): Promise<ProviderConf
   if (config.protocolFamily === "all" || config.protocolFamily === "none") {
     config.protocolFamily = null;
   }
+
+  // Set provider key
+  config.providerKey = config.walletProvider ? "walletProvider" : "default";
 
   return config;
 }

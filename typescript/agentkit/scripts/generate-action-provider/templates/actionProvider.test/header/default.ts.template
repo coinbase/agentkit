@@ -1,0 +1,14 @@
+import { {{name_pascal}}ActionProvider } from "./{{name}}ActionProvider";
+import { Network } from "../../network";
+
+{% if networkIds|length > 0 %}
+  {% if protocol_family == "evm" %}
+    import { CHAIN_ID_TO_NETWORK_ID } from "../../network/network";
+  {% elif protocol_family == "svm" %}
+    import {
+      SOLANA_MAINNET_NETWORK,
+      SOLANA_TESTNET_NETWORK,
+      SOLANA_DEVNET_NETWORK,
+    } from "../../network/svm";
+  {% endif %}
+{% endif %}

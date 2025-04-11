@@ -1,0 +1,11 @@
+describe("example action execution", () => {
+  it("should execute example action with wallet provider", async () => {
+    const args = {
+      fieldName: "test",
+      amount: "1.0",
+    };
+    const result = await provider.exampleAction(mockWalletProvider, args);
+    expect(result).toContain(args.fieldName);
+    expect(mockWalletProvider.getNetwork).toHaveBeenCalled();
+  });
+});

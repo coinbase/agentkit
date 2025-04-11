@@ -5,8 +5,8 @@ import {
   EstimateFeesPerGasReturnType,
   PublicClient,
   ReadContractParameters,
+  TransactionReceipt,
   TransactionRequest,
-  WaitForTransactionReceiptReturnType,
 } from "viem";
 import {
   Coinbase,
@@ -165,6 +165,9 @@ const MOCK_NETWORK: Network = {
   protocolFamily: "evm",
   networkId: MOCK_NETWORK_ID,
 };
+const MOCK_TRANSACTION_RECEIPT = {
+  transactionHash: MOCK_TRANSACTION_HASH,
+} as unknown as TransactionReceipt;
 
 describe("CdpWalletProvider", () => {
   let provider: CdpWalletProvider;
@@ -207,9 +210,7 @@ describe("CdpWalletProvider", () => {
     jest.spyOn(Wallet, "import").mockResolvedValue(mockWalletObj);
     jest.spyOn(Wallet, "create").mockResolvedValue(mockWalletObj);
 
-    mockPublicClient.waitForTransactionReceipt.mockResolvedValue({
-      transactionHash: MOCK_TRANSACTION_HASH,
-    } as unknown as jest.Mocked<WaitForTransactionReceiptReturnType>);
+    mockPublicClient.waitForTransactionReceipt.mockResolvedValue(MOCK_TRANSACTION_RECEIPT);
     mockPublicClient.readContract.mockResolvedValue("mock_result" as string);
     mockPublicClient.getTransactionCount.mockResolvedValue(1);
     mockPublicClient.estimateFeesPerGas.mockResolvedValue({
@@ -419,6 +420,46 @@ describe("CdpWalletProvider", () => {
       const txHash = await provider.sendTransaction(transaction);
       expect(mockWalletObj.createPayloadSignature).toHaveBeenCalled();
       expect(txHash).toBe(MOCK_TRANSACTION_HASH);
+    });
+
+    it("should wait for the first transfer before sending another one", async () => {
+      const validSignature = "0x" + "1".repeat(64) + "2".repeat(64) + "01"; // r, s, v format (130 chars + 0x prefix)
+      const mockSignature = {
+        model: {},
+        getId: jest.fn().mockReturnValue("signature-id"),
+        getWalletId: jest.fn().mockReturnValue("mock-wallet-id"),
+        getAddressId: jest.fn().mockReturnValue(MOCK_ADDRESS),
+        getNetworkId: jest.fn().mockReturnValue(MOCK_NETWORK_ID),
+        getSignature: jest.fn().mockReturnValue(validSignature),
+        getPayload: jest.fn().mockReturnValue("0xpayload"),
+        getEncodedPayload: jest.fn().mockReturnValue("0xencodedpayload"),
+        getStatus: jest.fn().mockReturnValue("completed"),
+      } as unknown as jest.Mocked<PayloadSignature>;
+
+      mockWalletObj.createPayloadSignature.mockResolvedValue(mockSignature);
+
+      const transaction: TransactionRequest = {
+        to: "0x1234567890123456789012345678901234567890" as `0x${string}`,
+        value: BigInt(1000000000000000000),
+      };
+
+      mockPublicClient.waitForTransactionReceipt.mockImplementationOnce(async () => {
+        await new Promise(resolve => setTimeout(resolve, 20));
+        return MOCK_TRANSACTION_RECEIPT;
+      });
+
+      const txHash1 = await provider.sendTransaction(transaction);
+      expect(mockWalletObj.createPayloadSignature).toHaveBeenCalledTimes(1);
+      expect(txHash1).toBe(MOCK_TRANSACTION_HASH);
+
+      expect(mockPublicClient.waitForTransactionReceipt).toHaveBeenCalledTimes(1);
+      const awaitReceiptPromise = mockPublicClient.waitForTransactionReceipt.mock.results[0]
+        .value as Promise<jest.Mocked<TransactionReceipt>>;
+
+      const secondTxHashPromise = provider.sendTransaction(transaction);
+      const race = Promise.race([awaitReceiptPromise, secondTxHashPromise]);
+      expect(await race).toStrictEqual(MOCK_TRANSACTION_RECEIPT);
+      expect(await secondTxHashPromise).toBe(MOCK_TRANSACTION_HASH);
     });
 
     it("should execute a native transfer", async () => {
