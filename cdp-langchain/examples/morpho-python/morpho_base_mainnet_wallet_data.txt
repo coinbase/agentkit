@@ -1,0 +1,1 @@
+{"wallet_id": "XXX", "seed": "XXX", "network_id": "base-mainnet", "default_address_id": "XXX"}
