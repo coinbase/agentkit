@@ -13,12 +13,12 @@ import {
   VOTING_ESCROW_ADDRESS,
   VOTER_ADDRESS,
   ROUTER_ADDRESS,
+  ZERO_ADDRESS,
 } from "./constants";
 import { CreateLockSchema, VoteSchema, SwapExactTokensSchema } from "./schemas";
 import { Network } from "../../network";
 
 export const SUPPORTED_NETWORKS = ["base-mainnet"];
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const SECONDS_IN_WEEK = BigInt(604800);
 const MIN_LOCK_DURATION = SECONDS_IN_WEEK; // 1 week
 const MAX_LOCK_DURATION = BigInt(126144000); // 4 years

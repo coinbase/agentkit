@@ -5,7 +5,7 @@
 import { encodeFunctionData, parseUnits, ReadContractParameters, Abi } from "viem";
 import { EvmWalletProvider } from "../../wallet-providers";
 import { approve } from "../../utils";
-import { AerodromeActionProvider } from "./aerodomeActionProvider";
+import { AerodromeActionProvider } from "./aerodromeActionProvider";
 import { Network } from "../../network";
 import {
   ERC20_ABI,
