@@ -142,10 +142,10 @@ describe("ZeroDevWalletProvider", () => {
     });
 
     // Create provider instance
-    provider = await ZeroDevWalletProvider.configureWithSigner({
+    provider = await ZeroDevWalletProvider.configureWithWallet({
       signer: mockEvmWalletProvider,
       projectId: MOCK_PROJECT_ID,
-      network: MOCK_NETWORK,
+      networkId: MOCK_NETWORK_ID,
       entryPointVersion: "0.7",
     });
   });
@@ -165,30 +165,30 @@ describe("ZeroDevWalletProvider", () => {
 
     it("should throw error when signer is not provided", async () => {
       await expect(
-        ZeroDevWalletProvider.configureWithSigner({
+        ZeroDevWalletProvider.configureWithWallet({
           signer: undefined as unknown as EvmWalletProvider,
           projectId: MOCK_PROJECT_ID,
-          network: MOCK_NETWORK,
+          networkId: MOCK_NETWORK_ID,
         }),
       ).rejects.toThrow("Signer is required");
     });
 
     it("should throw error when project ID is not provided", async () => {
       await expect(
-        ZeroDevWalletProvider.configureWithSigner({
+        ZeroDevWalletProvider.configureWithWallet({
           signer: mockEvmWalletProvider,
           projectId: "",
-          network: MOCK_NETWORK,
+          networkId: MOCK_NETWORK_ID,
         }),
       ).rejects.toThrow("ZeroDev project ID is required");
     });
 
     it("should initialize with a specific address if provided", async () => {
       const customAddress = "0xCustomAddress";
-      await ZeroDevWalletProvider.configureWithSigner({
+      await ZeroDevWalletProvider.configureWithWallet({
         signer: mockEvmWalletProvider,
         projectId: MOCK_PROJECT_ID,
-        network: MOCK_NETWORK,
+        networkId: MOCK_NETWORK_ID,
         address: customAddress,
       });
 
@@ -490,10 +490,10 @@ describe("ZeroDevWalletProvider", () => {
       );
 
       await expect(
-        ZeroDevWalletProvider.configureWithSigner({
+        ZeroDevWalletProvider.configureWithWallet({
           signer: mockEvmWalletProvider,
           projectId: MOCK_PROJECT_ID,
-          network: MOCK_NETWORK,
+          networkId: MOCK_NETWORK_ID,
         }),
       ).rejects.toThrow("Intent client initialization failed");
     });
@@ -504,10 +504,10 @@ describe("ZeroDevWalletProvider", () => {
       );
 
       await expect(
-        ZeroDevWalletProvider.configureWithSigner({
+        ZeroDevWalletProvider.configureWithWallet({
           signer: mockEvmWalletProvider,
           projectId: MOCK_PROJECT_ID,
-          network: MOCK_NETWORK,
+          networkId: MOCK_NETWORK_ID,
         }),
       ).rejects.toThrow("Kernel account initialization failed");
     });

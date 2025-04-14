@@ -84,11 +84,11 @@ const zeroDevConfig = {
   projectId: process.env.ZERODEV_PROJECT_ID!,
   entryPointVersion: "0.7" as const,
   // Use the same network as the CDP wallet
-  network: cdpWalletProvider.getNetwork(),
+  networkId: process.env.NETWORK_ID || "base-mainnet",
 };
 
 // Initialize ZeroDev Wallet Provider
-const zeroDevWalletProvider = await ZeroDevWalletProvider.configureWithSigner(zeroDevConfig);
+const zeroDevWalletProvider = await ZeroDevWalletProvider.configureWithWallet(zeroDevConfig);
 ```
 
 The agent is then initialized with the ZeroDev wallet provider, allowing it to use ZeroDev's account abstraction features while still leveraging CDP's secure key management.

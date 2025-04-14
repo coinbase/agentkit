@@ -110,7 +110,6 @@ async function initializeAgent() {
           transport: http(),
         }),
       );
-      console.log(`Viem Wallet Address: ${evmWalletProvider.getAddress()}`);
     } else if (process.env.PRIVY_APP_ID && process.env.PRIVY_APP_SECRET) {
       // Configure Privy Wallet Provider
       const privyConfig = {
@@ -129,10 +128,10 @@ async function initializeAgent() {
       };
       cdpWalletProvider = evmWalletProvider =
         await CdpWalletProvider.configureWithWallet(cdpConfig);
-      console.log(`CDP Wallet Address: ${evmWalletProvider.getAddress()}`);
     } else {
       throw new Error("No wallet provider configured");
     }
+    console.log(`EVM Wallet Address: ${evmWalletProvider.getAddress()}`);
 
     // Configure ZeroDev Wallet Provider with CDP Wallet as signer
     const zeroDevConfig = {
@@ -140,11 +139,11 @@ async function initializeAgent() {
       projectId: process.env.ZERODEV_PROJECT_ID!,
       entryPointVersion: "0.7" as const,
       // Use the same network as the CDP wallet
-      network: evmWalletProvider.getNetwork(),
+      networkId: evmWalletProvider.getNetwork().networkId,
     };
 
     // Initialize ZeroDev Wallet Provider
-    const zeroDevWalletProvider = await ZeroDevWalletProvider.configureWithSigner(zeroDevConfig);
+    const zeroDevWalletProvider = await ZeroDevWalletProvider.configureWithWallet(zeroDevConfig);
     console.log(`ZeroDev Wallet Address: ${zeroDevWalletProvider.getAddress()}`);
 
     // Initialize AgentKit with ZeroDev Wallet Provider

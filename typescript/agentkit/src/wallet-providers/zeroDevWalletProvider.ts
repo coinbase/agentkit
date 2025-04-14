@@ -15,12 +15,12 @@ import {
   TransactionRequest,
   Hex,
   zeroAddress,
+  Hash,
 } from "viem";
 import { toAccount } from "viem/accounts";
 import { SmartAccount } from "viem/account-abstraction";
 import { EvmWalletProvider } from "./evmWalletProvider";
-import { Network } from "../network";
-import { NETWORK_ID_TO_VIEM_CHAIN } from "../network/network";
+import { NETWORK_ID_TO_VIEM_CHAIN, type Network } from "../network";
 
 /**
  * Configuration options for the ZeroDev Wallet Provider.
@@ -43,15 +43,15 @@ export interface ZeroDevWalletProviderConfig {
   entryPointVersion?: "0.6" | "0.7";
 
   /**
-   * The network of the wallet.
+   * The network ID of the wallet.
    */
-  network: Network;
+  networkId?: string;
 
   /**
    * The address of the wallet.
    * If not provided, it will be computed from the signer.
    */
-  address?: string;
+  address?: Address;
 }
 
 /**
@@ -61,7 +61,7 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
   #signer: EvmWalletProvider;
   #projectId: string;
   #network: Network;
-  #address: string;
+  #address: Address;
   #publicClient: PublicClient;
   #kernelAccount: SmartAccount<KernelSmartAccountImplementation>;
   #intentClient: Awaited<ReturnType<typeof createIntentClient>>;
@@ -82,7 +82,11 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
 
     this.#signer = config.signer;
     this.#projectId = config.projectId;
-    this.#network = config.network;
+    this.#network = {
+      protocolFamily: "evm",
+      networkId: config.networkId!,
+      chainId: NETWORK_ID_TO_VIEM_CHAIN[config.networkId!].id.toString(),
+    };
     this.#address = kernelAccount.address;
     this.#kernelAccount = kernelAccount;
     this.#intentClient = intentClient;
@@ -100,7 +104,7 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
    * @param config - The configuration options for the ZeroDevWalletProvider.
    * @returns A Promise that resolves to a new ZeroDevWalletProvider instance.
    */
-  public static async configureWithSigner(
+  public static async configureWithWallet(
     config: ZeroDevWalletProviderConfig,
   ): Promise<ZeroDevWalletProvider> {
     if (!config.signer) {
@@ -110,9 +114,9 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
     if (!config.projectId) {
       throw new Error("ZeroDev project ID is required");
     }
+    const networkId = config.networkId || "base-mainnet";
 
-    const network = config.network;
-    const chain = NETWORK_ID_TO_VIEM_CHAIN[network.networkId!];
+    const chain = NETWORK_ID_TO_VIEM_CHAIN[networkId];
     const bundlerRpc = `https://rpc.zerodev.app/api/v3/bundler/${config.projectId}`;
 
     // Create public client
@@ -122,7 +126,7 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
     });
 
     // Create a Viem account from the EVM wallet provider
-    const address = config.signer.getAddress() as `0x${string}`;
+    const address = config.signer.getAddress() as Address;
     const viemSigner = toAccount({
       address,
       // Pass through signing requests directly to the EVM wallet provider
@@ -152,7 +156,7 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
       },
       entryPoint,
       kernelVersion: KERNEL_V3_2,
-      address: config.address as `0x${string}` | undefined,
+      address: config.address as Address | undefined,
       initConfig: [installIntentExecutor(INTENT_V0_3)],
     });
 
@@ -177,7 +181,7 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
    * @param message - The message to sign.
    * @returns The signed message.
    */
-  async signMessage(message: string | Uint8Array): Promise<`0x${string}`> {
+  async signMessage(message: string | Uint8Array): Promise<Hex> {
     // Convert Uint8Array to string if needed
     const messageStr = typeof message === "string" ? message : new TextDecoder().decode(message);
 
@@ -193,7 +197,7 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
    * @returns The signed typed data object.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async signTypedData(typedData: any): Promise<`0x${string}`> {
+  async signTypedData(typedData: any): Promise<Hex> {
     return this.#kernelAccount.signTypedData(typedData);
   }
 
@@ -203,7 +207,7 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
    * @param _transaction - The transaction to sign.
    * @returns The signed transaction.
    */
-  async signTransaction(_transaction: TransactionRequest): Promise<`0x${string}`> {
+  async signTransaction(_transaction: TransactionRequest): Promise<Hex> {
     throw new Error("signTransaction is not supported for ZeroDev Wallet Provider");
   }
 
@@ -213,9 +217,9 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
    * @param transaction - The transaction to send.
    * @returns The hash of the transaction.
    */
-  async sendTransaction(transaction: TransactionRequest): Promise<`0x${string}`> {
+  async sendTransaction(transaction: TransactionRequest): Promise<Hex> {
     // Get the chain ID from the network
-    const chainId = parseInt(this.#network.chainId || "1");
+    const chainId = parseInt(this.#network.chainId!);
 
     // Determine if this is a native token transfer
     const isNativeTransfer =
@@ -246,7 +250,7 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
         uiHash: intent.outputUiHash.uiHash,
       });
 
-      return (receipt?.receipt.transactionHash as `0x${string}`) || "0x";
+      return (receipt?.receipt.transactionHash as Hash) || "0x";
     }
 
     const intent = await this.#intentClient.sendUserIntent({
@@ -264,7 +268,7 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
       uiHash: intent.outputUiHash.uiHash,
     });
 
-    return (receipt?.receipt.transactionHash as `0x${string}`) || "0x";
+    return (receipt?.receipt.transactionHash as Hash) || "0x";
   }
 
   /**
@@ -273,7 +277,7 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
    * @param txHash - The hash of the transaction to wait for.
    * @returns The transaction receipt.
    */
-  async waitForTransactionReceipt(txHash: `0x${string}`): Promise<unknown> {
+  async waitForTransactionReceipt(txHash: Hash): Promise<unknown> {
     return this.#publicClient.waitForTransactionReceipt({ hash: txHash });
   }
 
@@ -298,7 +302,7 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
    *
    * @returns The address of the wallet.
    */
-  getAddress(): string {
+  getAddress(): Address {
     return this.#address;
   }
 
@@ -327,7 +331,7 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
    */
   async getBalance(): Promise<bigint> {
     return this.#publicClient.getBalance({
-      address: this.#address as `0x${string}`,
+      address: this.#address as Address,
     });
   }
 
@@ -368,15 +372,6 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
 
     return receipt?.receipt.transactionHash || "";
   }
-
-  /**
-   * Gets the underlying signer.
-   *
-   * @returns The underlying signer.
-   */
-  // getSigner(): EvmWalletProvider {
-  //   return this.#signer;
-  // }
 
   /**
    * Gets the ZeroDev Kernel account.
