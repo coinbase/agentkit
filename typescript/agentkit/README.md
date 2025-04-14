@@ -790,7 +790,11 @@ const walletProvider = await SmartWalletProvider.configureWithWallet({
 
 ### ZeroDevWalletProvider
 
-The `ZeroDevWalletProvider` is a wallet provider that uses [ZeroDev's account abstraction](https://docs.zerodev.app/) to enable smart account functionality. It supports features like chain abstraction, gasless transactions, batched transactions, and more.
+The `ZeroDevWalletProvider` is a wallet provider that uses [ZeroDev](https://docs.zerodev.app/) smart accounts.  It supports features like chain abstraction, gasless transactions, batched transactions, and more.
+
+In the context of Agent Kit, "chain abstraction" means that the agent can spend funds across chains without explicitly bridging.  For example, if you send funds to the agent's address on Base, the agent will be able to spend the funds on any supported EVM chains such as Arbitrum and Optimism.
+
+The ZeroDev wallet provider does not itself manage keys.  Rather, it can be used with any EVM wallet provider (e.g. CDP/Privy/Viem) which serves as the "signer" for the ZeroDev smart account.
 
 #### Configuring from CdpWalletProvider
 
