@@ -31,6 +31,10 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
     - [Authorization Keys](#authorization-keys)
     - [Exporting Privy Wallet information](#exporting-privy-wallet-information)
   - [SmartWalletProvider](#smartwalletprovider)
+  - [ZeroDevWalletProvider](#zerodevwalletprovider)
+    - [Configuring from CdpWalletProvider](#configuring-from-cdpwalletprovider)
+    - [Configuring from PrivyWalletProvider](#configuring-from-privywalletprovider)
+    - [Configuring from ViemWalletProvider](#configuring-from-viemwalletprovider)
 - [SVM Wallet Providers](#svm-wallet-providers)
   - [SolanaKeypairWalletProvider](#solanakeypairwalletprovider)
     - [Network Configuration](#solana-network-configuration)
@@ -527,6 +531,7 @@ EVM:
 - [CdpWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/cdpWalletProvider.ts)
 - [ViemWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/viemWalletProvider.ts)
 - [PrivyWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/privyWalletProvider.ts)
+- [ZeroDevWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/zeroDevWalletProvider.ts)
 
 ### CdpWalletProvider
 
@@ -780,6 +785,80 @@ const walletProvider = await SmartWalletProvider.configureWithWallet({
   signer,
   smartWalletAddress: undefined, // If not provided a new smart wallet will be created
   paymasterUrl: undefined, // Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
+});
+```
+
+### ZeroDevWalletProvider
+
+The `ZeroDevWalletProvider` is a wallet provider that uses [ZeroDev's account abstraction](https://docs.zerodev.app/) to enable smart account functionality. It supports features like chain abstraction, gasless transactions, batched transactions, and more.
+
+#### Configuring from CdpWalletProvider
+
+```typescript
+import { ZeroDevWalletProvider, CdpWalletProvider } from "@coinbase/agentkit";
+
+// First create a CDP wallet provider as the signer
+const signer = await CdpWalletProvider.configureWithWallet({
+    apiKeyName: "CDP API KEY NAME",
+    apiKeyPrivate: "CDP API KEY PRIVATE KEY",
+    networkId: "base-mainnet",
+});
+
+// Configure ZeroDev Wallet Provider with CDP signer
+const walletProvider = await ZeroDevWalletProvider.configureWithWallet({
+    signer,
+    projectId: "ZERODEV_PROJECT_ID",
+    entryPointVersion: "0.7" as const,
+    networkId: "base-mainnet",
+});
+```
+
+#### Configuring from PrivyWalletProvider
+
+```typescript
+import { ZeroDevWalletProvider, PrivyWalletProvider } from "@coinbase/agentkit";
+
+// First create a Privy wallet provider as the signer
+const signer = await PrivyWalletProvider.configureWithWallet({
+    appId: "PRIVY_APP_ID",
+    appSecret: "PRIVY_APP_SECRET",
+    chainId: "8453", // base-mainnet
+});
+
+// Configure ZeroDev Wallet Provider with Privy signer
+const walletProvider = await ZeroDevWalletProvider.configureWithWallet({
+    signer,
+    projectId: "ZERODEV_PROJECT_ID",
+    entryPointVersion: "0.7" as const,
+    networkId: "base-mainnet",
+});
+```
+
+#### Configuring from ViemWalletProvider
+
+```typescript
+import { ZeroDevWalletProvider, ViemWalletProvider } from "@coinbase/agentkit";
+import { privateKeyToAccount } from "viem/accounts";
+import { base } from "viem/chains";
+import { createWalletClient, http } from "viem";
+
+// First create a Viem wallet provider as the signer
+const account = privateKeyToAccount("PRIVATE_KEY");
+
+const signer = new ViemWalletProvider(
+  createWalletClient({
+    account,
+    chain: base,
+    transport: http(),
+  })
+);
+
+// Configure ZeroDev Wallet Provider with Viem signer
+const walletProvider = await ZeroDevWalletProvider.configureWithWallet({
+    signer,
+    projectId: "ZERODEV_PROJECT_ID",
+    entryPointVersion: "0.7" as const,
+    networkId: "base-mainnet",
 });
 ```
 
