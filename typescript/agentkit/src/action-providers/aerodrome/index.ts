@@ -10,8 +10,6 @@
 
 export { AerodromeActionProvider, aerodromeActionProvider } from "./aerodromeActionProvider";
 
-// Re-export schemas for consumers who need them
 export * from "./schemas";
 
-// Re-export constants for any external code that might need them
 export * from "./constants";
