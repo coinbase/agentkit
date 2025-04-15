@@ -50,7 +50,7 @@ mainnet = Chain(
     native_currency={"name": "Ether", "symbol": "ETH", "decimals": 18},
     rpc_urls={
         "default": {
-            "http": ["https://eth.merkle.io"],
+            "http": ["https://merkle.io/ethereum-rpc"],
         },
     },
     block_explorers={
