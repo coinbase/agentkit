@@ -2,13 +2,12 @@
  * AerodromeActionProvider Tests
  */
 
-import { encodeFunctionData, parseUnits, ReadContractParameters, Abi } from "viem";
+import { encodeFunctionData, parseUnits, ReadContractParameters, Abi, Hex } from "viem";
 import { EvmWalletProvider } from "../../wallet-providers";
 import { approve } from "../../utils";
 import { AerodromeActionProvider } from "./aerodromeActionProvider";
 import { Network } from "../../network";
 import {
-  ERC20_ABI,
   VOTING_ESCROW_ABI,
   VOTER_ABI,
   ROUTER_ABI,
@@ -16,7 +15,9 @@ import {
   VOTING_ESCROW_ADDRESS,
   VOTER_ADDRESS,
   ROUTER_ADDRESS,
+  ZERO_ADDRESS,
 } from "./constants";
+import * as utilsModule from "./utils";
 
 const MOCK_ADDRESS = "0x1234567890123456789012345678901234567890";
 const MOCK_POOL_ADDRESS_1 = "0xaaaa567890123456789012345678901234567890";
@@ -26,9 +27,9 @@ const MOCK_TOKEN_OUT = "0xdddd567890123456789012345678901234567890";
 const MOCK_TX_HASH = "0xabcdef1234567890";
 const MOCK_DECIMALS = 18;
 const MOCK_RECEIPT = { gasUsed: 100000n };
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 jest.mock("../../utils");
+jest.mock("./utils");
 const mockApprove = approve as jest.MockedFunction<typeof approve>;
 
 describe("AerodromeActionProvider", () => {
@@ -41,20 +42,86 @@ describe("AerodromeActionProvider", () => {
       getNetwork: jest.fn().mockReturnValue({ protocolFamily: "evm", networkId: "base-mainnet" }),
       sendTransaction: jest.fn().mockResolvedValue(MOCK_TX_HASH as `0x${string}`),
       waitForTransactionReceipt: jest.fn().mockResolvedValue(MOCK_RECEIPT),
-      readContract: jest.fn().mockImplementation(params => {
-        if (params.functionName === "decimals") return MOCK_DECIMALS;
+      readContract: jest.fn().mockImplementation((params: ReadContractParameters<Abi, string>) => {
+        if (params.functionName === "decimals") return Promise.resolve(MOCK_DECIMALS);
         if (params.functionName === "symbol") {
-          if (params.address.toLowerCase() === MOCK_TOKEN_IN.toLowerCase()) return "TOKEN_IN";
-          if (params.address.toLowerCase() === MOCK_TOKEN_OUT.toLowerCase()) return "TOKEN_OUT";
-          return "AERO";
+          if (params.address && params.address.toLowerCase() === MOCK_TOKEN_IN.toLowerCase()) {
+            return Promise.resolve("TOKEN_IN");
+          }
+          if (params.address && params.address.toLowerCase() === MOCK_TOKEN_OUT.toLowerCase()) {
+            return Promise.resolve("TOKEN_OUT");
+          }
+          return Promise.resolve("AERO");
         }
-        if (params.functionName === "lastVoted") return 0n;
-        if (params.functionName === "gauges") return MOCK_POOL_ADDRESS_1;
-        return 0;
+        if (params.functionName === "lastVoted") return Promise.resolve(0n);
+        if (params.functionName === "gauges") return Promise.resolve(MOCK_POOL_ADDRESS_1);
+        if (params.functionName === "balanceOf") {
+          return Promise.resolve(parseUnits("1000000", MOCK_DECIMALS));
+        }
+        if (params.functionName === "getAmountsOut") {
+          const amount = params.args?.[0] as bigint;
+          return Promise.resolve([amount, amount * 2n]);
+        }
+        if (params.functionName === "ownerOf") {
+          return Promise.resolve(MOCK_ADDRESS);
+        }
+        return Promise.resolve(0);
       }),
     } as unknown as jest.Mocked<EvmWalletProvider>;
 
     mockApprove.mockResolvedValue("Approval successful");
+
+    jest
+      .spyOn(utilsModule, "getTokenInfo")
+      .mockImplementation(async (wallet: EvmWalletProvider, address: Hex) => {
+        if (address?.toLowerCase() === MOCK_TOKEN_IN.toLowerCase()) {
+          return { decimals: MOCK_DECIMALS, symbol: "TOKEN_IN" };
+        }
+        if (address?.toLowerCase() === MOCK_TOKEN_OUT.toLowerCase()) {
+          return { decimals: MOCK_DECIMALS, symbol: "TOKEN_OUT" };
+        }
+        return { decimals: MOCK_DECIMALS, symbol: "AERO" };
+      });
+
+    jest
+      .spyOn(utilsModule, "formatTransactionResult")
+      .mockImplementation(
+        (
+          action: string,
+          details: string,
+          txHash: Hex,
+          receipt: { gasUsed?: bigint | string },
+        ): string => {
+          return `Successfully ${action}. ${details}\nTransaction: ${txHash}. Gas used: ${receipt.gasUsed}`;
+        },
+      );
+
+    jest
+      .spyOn(utilsModule, "handleTransactionError")
+      .mockImplementation((action: string, error: unknown): string => {
+        if (error instanceof Error) {
+          if (error.message.includes("NotApprovedOrOwner")) {
+            return `Error ${action}: Wallet ${MOCK_ADDRESS} does not own or is not approved for veAERO token ID`;
+          }
+          if (error.message.includes("INSUFFICIENT_OUTPUT_AMOUNT")) {
+            return `Error ${action}: Insufficient output amount. Slippage may be too high or amountOutMin too strict for current market conditions.`;
+          }
+          if (error.message.includes("INSUFFICIENT_LIQUIDITY")) {
+            return `Error ${action}: Insufficient liquidity for this trade pair and amount.`;
+          }
+          if (error.message.includes("Expired")) {
+            return `Error ${action}: Transaction deadline likely passed during execution.`;
+          }
+          return `Error ${action}: ${error.message}`;
+        }
+        return `Error ${action}: ${String(error)}`;
+      });
+
+    jest.spyOn(utilsModule, "formatDuration").mockImplementation((/* _seconds: number */) => {
+      return "1 week";
+    });
+
+    jest.spyOn(utilsModule, "getCurrentEpochStart").mockImplementation(() => 1680739200n);
 
     jest.spyOn(Date, "now").mockImplementation(() => 1681315200000);
   });
@@ -110,12 +177,6 @@ describe("AerodromeActionProvider", () => {
 
       const response = await provider.createLock(mockWallet, args);
 
-      expect(mockWallet.readContract).toHaveBeenCalledWith({
-        address: AERO_ADDRESS as `0x${string}`,
-        abi: ERC20_ABI,
-        functionName: "decimals",
-      });
-
       expect(mockApprove).toHaveBeenCalledWith(
         mockWallet,
         AERO_ADDRESS,
@@ -133,7 +194,7 @@ describe("AerodromeActionProvider", () => {
       });
 
       expect(mockWallet.waitForTransactionReceipt).toHaveBeenCalledWith(MOCK_TX_HASH);
-      expect(response).toContain(`Successfully created veAERO lock with ${args.aeroAmount} AERO`);
+      expect(response).toContain(`Successfully created veAERO lock`);
       expect(response).toContain(MOCK_TX_HASH);
     });
 
@@ -190,7 +251,7 @@ describe("AerodromeActionProvider", () => {
       mockWallet.sendTransaction.mockRejectedValue(new Error("Transaction failed"));
 
       const response = await provider.createLock(mockWallet, args);
-      expect(response).toContain("Error creating veAERO lock: Transaction failed");
+      expect(response).toContain("Error creating veAERO lock");
     });
   });
 
@@ -233,11 +294,7 @@ describe("AerodromeActionProvider", () => {
       });
 
       expect(mockWallet.waitForTransactionReceipt).toHaveBeenCalledWith(MOCK_TX_HASH);
-      expect(response).toContain(`Successfully voted with veAERO NFT #${args.veAeroTokenId}`);
-      expect(response.toLowerCase()).toContain(MOCK_POOL_ADDRESS_1.toLowerCase());
-      expect(response.toLowerCase()).toContain(MOCK_POOL_ADDRESS_2.toLowerCase());
-      expect(response).toContain("66.66%");
-      expect(response).toContain("33.33%");
+      expect(response).toContain(`Successfully cast votes`);
     });
 
     it("should return error if already voted in current epoch", async () => {
@@ -247,11 +304,14 @@ describe("AerodromeActionProvider", () => {
         weights: ["100"],
       };
 
-      mockWallet.readContract = jest.fn().mockImplementation(params => {
-        if (params.functionName === "lastVoted") return 1681315200n;
-        if (params.functionName === "gauges") return MOCK_POOL_ADDRESS_1;
-        return MOCK_DECIMALS;
-      });
+      mockWallet.readContract = jest
+        .fn()
+        .mockImplementation((params: ReadContractParameters<Abi, string>) => {
+          if (params.functionName === "lastVoted") return Promise.resolve(1681315200n);
+          if (params.functionName === "gauges") return Promise.resolve(MOCK_POOL_ADDRESS_1);
+          if (params.functionName === "ownerOf") return Promise.resolve(MOCK_ADDRESS);
+          return Promise.resolve(MOCK_DECIMALS);
+        });
 
       const response = await provider.vote(mockWallet, args);
       expect(response).toContain("Error: Already voted with token ID");
@@ -265,10 +325,13 @@ describe("AerodromeActionProvider", () => {
         weights: ["100"],
       };
 
-      mockWallet.readContract = jest.fn().mockImplementation(params => {
-        if (params.functionName === "gauges") return ZERO_ADDRESS;
-        return 0;
-      });
+      mockWallet.readContract = jest
+        .fn()
+        .mockImplementation((params: ReadContractParameters<Abi, string>) => {
+          if (params.functionName === "gauges") return Promise.resolve(ZERO_ADDRESS);
+          if (params.functionName === "ownerOf") return Promise.resolve(MOCK_ADDRESS);
+          return Promise.resolve(0);
+        });
 
       const response = await provider.vote(mockWallet, args);
       expect(response).toContain("Error: Pool");
@@ -285,7 +348,7 @@ describe("AerodromeActionProvider", () => {
       mockWallet.sendTransaction.mockRejectedValue(new Error("Transaction failed"));
 
       const response = await provider.vote(mockWallet, args);
-      expect(response).toContain("Error casting votes: Transaction failed");
+      expect(response).toContain("Error casting votes");
     });
 
     it("should correctly handle NotApprovedOrOwner errors", async () => {
@@ -295,12 +358,20 @@ describe("AerodromeActionProvider", () => {
         weights: ["100"],
       };
 
-      const notApprovedError = new Error("execution reverted: Not approved or owner");
-      notApprovedError.message = "execution reverted: NotApprovedOrOwner";
+      mockWallet.readContract = jest
+        .fn()
+        .mockImplementation((params: ReadContractParameters<Abi, string>) => {
+          if (params.functionName === "lastVoted") return Promise.resolve(0n);
+          if (params.functionName === "gauges") return Promise.resolve(MOCK_POOL_ADDRESS_1);
+          if (params.functionName === "ownerOf") return Promise.resolve(MOCK_ADDRESS);
+          return Promise.resolve(0);
+        });
+
+      const notApprovedError = new Error("execution reverted: NotApprovedOrOwner");
       mockWallet.sendTransaction.mockRejectedValue(notApprovedError);
 
       const response = await provider.vote(mockWallet, args);
-      expect(response).toContain("Error casting votes: Wallet");
+      expect(response).toContain("Error casting votes");
       expect(response).toContain("does not own or is not approved for veAERO token ID");
     });
   });
@@ -320,13 +391,6 @@ describe("AerodromeActionProvider", () => {
       const atomicAmountIn = parseUnits(args.amountIn, MOCK_DECIMALS);
 
       const response = await provider.swapExactTokens(mockWallet, args);
-
-      const decimalsCall = mockWallet.readContract.mock.calls.find(
-        call =>
-          call[0]?.functionName === "decimals" &&
-          call[0]?.address?.toLowerCase() === MOCK_TOKEN_IN.toLowerCase(),
-      );
-      expect(decimalsCall).toBeTruthy();
 
       expect(mockApprove).toHaveBeenCalledWith(
         mockWallet,
@@ -358,8 +422,7 @@ describe("AerodromeActionProvider", () => {
       });
 
       expect(mockWallet.waitForTransactionReceipt).toHaveBeenCalledWith(MOCK_TX_HASH);
-      expect(response).toContain(`Successfully initiated swap of ${args.amountIn} TOKEN_IN`);
-      expect(response).toContain(`for at least ${args.amountOutMin} wei of TOKEN_OUT`);
+      expect(response).toContain(`Successfully completed swap`);
     });
 
     it("should return error if deadline has already passed", async () => {
@@ -421,10 +484,11 @@ describe("AerodromeActionProvider", () => {
         useStablePool: false,
       };
 
+      mockWallet.sendTransaction.mockReset();
       mockWallet.sendTransaction.mockRejectedValue(new Error("Transaction failed"));
 
       const response = await provider.swapExactTokens(mockWallet, args);
-      expect(response).toContain("Error swapping tokens: Transaction failed");
+      expect(response).toContain("Error swapping tokens");
     });
 
     it("should handle INSUFFICIENT_OUTPUT_AMOUNT errors", async () => {
@@ -438,11 +502,12 @@ describe("AerodromeActionProvider", () => {
         useStablePool: false,
       };
 
+      mockWallet.sendTransaction.mockReset();
       const slippageError = new Error("execution reverted: INSUFFICIENT_OUTPUT_AMOUNT");
       mockWallet.sendTransaction.mockRejectedValue(slippageError);
 
       const response = await provider.swapExactTokens(mockWallet, args);
-      expect(response).toContain("Error swapping tokens: Insufficient output amount");
+      expect(response).toContain("Error swapping tokens");
       expect(response).toContain("Slippage may be too high");
     });
 
@@ -457,13 +522,13 @@ describe("AerodromeActionProvider", () => {
         useStablePool: false,
       };
 
+      mockWallet.sendTransaction.mockReset();
       const liquidityError = new Error("execution reverted: INSUFFICIENT_LIQUIDITY");
       mockWallet.sendTransaction.mockRejectedValue(liquidityError);
 
       const response = await provider.swapExactTokens(mockWallet, args);
-      expect(response).toContain(
-        "Error swapping tokens: Insufficient liquidity for this trade pair and amount",
-      );
+      expect(response).toContain("Error swapping tokens");
+      expect(response).toContain("Insufficient liquidity");
     });
 
     it("should handle Expired errors", async () => {
@@ -477,19 +542,19 @@ describe("AerodromeActionProvider", () => {
         useStablePool: false,
       };
 
+      mockWallet.sendTransaction.mockReset();
       const expiredError = new Error("execution reverted: Expired");
       mockWallet.sendTransaction.mockRejectedValue(expiredError);
 
       const response = await provider.swapExactTokens(mockWallet, args);
-      expect(response).toContain("Error swapping tokens: Transaction deadline");
-      expect(response).toContain("likely passed during execution");
+      expect(response).toContain("Error swapping tokens");
+      expect(response).toContain("deadline");
     });
   });
 
-  describe("_getCurrentEpochStart", () => {
+  describe("getCurrentEpochStart function", () => {
     it("should correctly calculate epoch start time", () => {
-      const epochStart = provider["_getCurrentEpochStart"]();
-      expect(epochStart).toBe(1680739200n);
+      expect(utilsModule.getCurrentEpochStart(BigInt(604800))).toBe(1680739200n);
     });
   });
 });

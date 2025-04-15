@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { encodeFunctionData, Hex, parseUnits, getAddress } from "viem";
+import { encodeFunctionData, Hex, parseUnits, getAddress, formatUnits } from "viem";
 import { ActionProvider } from "../actionProvider";
 import { EvmWalletProvider } from "../../wallet-providers";
 import { CreateAction } from "../actionDecorator";
@@ -14,14 +14,22 @@ import {
   VOTER_ADDRESS,
   ROUTER_ADDRESS,
   ZERO_ADDRESS,
+  MIN_LOCK_DURATION,
+  MAX_LOCK_DURATION,
+  WEEK_SECONDS,
 } from "./constants";
 import { CreateLockSchema, VoteSchema, SwapExactTokensSchema } from "./schemas";
 import { Network } from "../../network";
+import {
+  getTokenInfo,
+  formatTransactionResult,
+  handleTransactionError,
+  formatDuration,
+  getCurrentEpochStart,
+} from "./utils";
 
 export const SUPPORTED_NETWORKS = ["base-mainnet"];
-const SECONDS_IN_WEEK = BigInt(604800);
-const MIN_LOCK_DURATION = SECONDS_IN_WEEK; // 1 week
-const MAX_LOCK_DURATION = BigInt(126144000); // 4 years
+const SECONDS_IN_WEEK = BigInt(WEEK_SECONDS);
 
 /**
  * AerodromeActionProvider enables AI agents to interact with Aerodrome Finance on Base Mainnet.
@@ -67,20 +75,25 @@ export class AerodromeActionProvider extends ActionProvider<EvmWalletProvider> {
         return `Error: Lock duration (${lockDurationSeconds}s) cannot exceed 4 years (${MAX_LOCK_DURATION}s)`;
       }
 
-      const decimals = await wallet.readContract({
-        address: AERO_ADDRESS as Hex,
-        abi: ERC20_ABI,
-        functionName: "decimals",
-      });
+      const { decimals, symbol } = await getTokenInfo(wallet, AERO_ADDRESS as Hex);
 
       const atomicAmount = parseUnits(args.aeroAmount, decimals);
       if (atomicAmount <= 0n) {
         return "Error: AERO amount must be greater than 0";
       }
 
-      console.log(`
-        [Aerodrome Provider] Approving ${atomicAmount} AERO wei for VotingEscrow (${VOTING_ESCROW_ADDRESS})...
-      `);
+      const balance = await wallet.readContract({
+        address: AERO_ADDRESS as Hex,
+        abi: ERC20_ABI,
+        functionName: "balanceOf",
+        args: [ownerAddress as Hex],
+      });
+
+      if (BigInt(balance) < atomicAmount) {
+        return `Error: Insufficient AERO balance. You have ${formatUnits(BigInt(balance), decimals)} ${symbol}, but attempted to lock ${args.aeroAmount} ${symbol}.`;
+      }
+
+      console.log(`[Aerodrome Provider] Approving ${atomicAmount} AERO wei for VotingEscrow...`);
       const approvalResult = await approve(
         wallet,
         AERO_ADDRESS,
@@ -92,31 +105,29 @@ export class AerodromeActionProvider extends ActionProvider<EvmWalletProvider> {
         console.error("[Aerodrome Provider] Approval Error:", approvalResult);
         return `Error approving VotingEscrow contract: ${approvalResult}`;
       }
-      console.log("[Aerodrome Provider] Approval successful or already sufficient.");
 
-      console.log(`[Aerodrome Provider] Encoding create_lock transaction...`);
       const data = encodeFunctionData({
         abi: VOTING_ESCROW_ABI,
         functionName: "create_lock",
         args: [atomicAmount, lockDurationSeconds],
       });
 
-      console.log(`
-        [Aerodrome Provider] Sending create_lock transaction to ${VOTING_ESCROW_ADDRESS}...
-      `);
       const txHash = await wallet.sendTransaction({
         to: VOTING_ESCROW_ADDRESS as Hex,
         data,
       });
-      console.log(`[Aerodrome Provider] Transaction sent: ${txHash}. Waiting for receipt...`);
-
       const receipt = await wallet.waitForTransactionReceipt(txHash);
-      console.log(`[Aerodrome Provider] Transaction confirmed. Gas used: ${receipt.gasUsed}`);
 
-      return `Successfully created veAERO lock with ${args.aeroAmount} AERO for ${args.lockDurationSeconds} seconds. Transaction: ${txHash}. Gas used: ${receipt.gasUsed}`;
+      const durationText = formatDuration(Number(lockDurationSeconds));
+
+      return formatTransactionResult(
+        "created veAERO lock",
+        `Locked ${args.aeroAmount} ${symbol} for ${durationText}.`,
+        txHash,
+        receipt,
+      );
     } catch (error: unknown) {
-      console.error("[Aerodrome Provider] Error creating veAERO lock:", error);
-      return `Error creating veAERO lock: ${error instanceof Error ? error.message : String(error)}`;
+      return handleTransactionError("creating veAERO lock", error);
     }
   }
 
@@ -138,22 +149,33 @@ export class AerodromeActionProvider extends ActionProvider<EvmWalletProvider> {
     if (!ownerAddress || ownerAddress === ZERO_ADDRESS) {
       return "Error: Wallet address is not available.";
     }
-    console.log(`[Aerodrome Provider] Executing vote for ${ownerAddress} with args:`, args);
+    console.log(`[Aerodrome Provider] Executing vote with args:`, args);
 
     try {
       const tokenId = BigInt(args.veAeroTokenId);
       const poolAddresses = args.poolAddresses.map(addr => getAddress(addr) as Hex);
       const weights = args.weights.map(w => BigInt(w));
 
-      const currentEpochStart = this._getCurrentEpochStart();
-      console.log(`[Aerodrome Provider] Current epoch start timestamp: ${currentEpochStart}`);
+      const ownerOf = await wallet
+        .readContract({
+          address: VOTING_ESCROW_ADDRESS as Hex,
+          abi: VOTING_ESCROW_ABI,
+          functionName: "ownerOf",
+          args: [tokenId],
+        })
+        .catch(() => ZERO_ADDRESS);
+
+      if (ownerOf !== ownerAddress) {
+        return `Error: Wallet ${ownerAddress} does not own veAERO token ID ${args.veAeroTokenId}.`;
+      }
+
+      const currentEpochStart = getCurrentEpochStart(SECONDS_IN_WEEK);
       const lastVotedTs = await wallet.readContract({
         address: VOTER_ADDRESS as Hex,
         abi: VOTER_ABI,
         functionName: "lastVoted",
         args: [tokenId],
       });
-      console.log(`[Aerodrome Provider] Last voted timestamp for token ${tokenId}: ${lastVotedTs}`);
 
       if (lastVotedTs >= currentEpochStart) {
         const nextEpochTime = new Date(
@@ -164,36 +186,41 @@ export class AerodromeActionProvider extends ActionProvider<EvmWalletProvider> {
         ).toISOString()}). You can vote again after ${nextEpochTime}.`;
       }
 
+      const votingPower = await wallet.readContract({
+        address: VOTING_ESCROW_ADDRESS as Hex,
+        abi: VOTING_ESCROW_ABI,
+        functionName: "balanceOfNFT",
+        args: [tokenId],
+      });
+
+      console.log(`[Aerodrome Provider] veAERO #${tokenId} has voting power: ${votingPower}`);
+
       console.log("[Aerodrome Provider] Verifying gauges for provided pools...");
-      for (const poolAddress of poolAddresses) {
+      for (let i = 0; i < poolAddresses.length; i++) {
         const gauge = await wallet.readContract({
           address: VOTER_ADDRESS as Hex,
           abi: VOTER_ABI,
           functionName: "gauges",
-          args: [poolAddress],
+          args: [poolAddresses[i]],
         });
+
         if (gauge === ZERO_ADDRESS) {
-          return `Error: Pool ${poolAddress} does not have a registered gauge. Only pools with gauges can receive votes.`;
+          return `Error: Pool ${poolAddresses[i]} does not have a registered gauge. Only pools with gauges can receive votes.`;
         }
       }
-      console.log("[Aerodrome Provider] All specified pools have valid gauges.");
 
-      console.log(`[Aerodrome Provider] Encoding vote transaction...`);
       const data = encodeFunctionData({
         abi: VOTER_ABI,
         functionName: "vote",
         args: [tokenId, poolAddresses, weights],
       });
 
-      console.log(`[Aerodrome Provider] Sending vote transaction to ${VOTER_ADDRESS}...`);
       const txHash = await wallet.sendTransaction({
         to: VOTER_ADDRESS as Hex,
         data,
       });
-      console.log(`[Aerodrome Provider] Transaction sent: ${txHash}. Waiting for receipt...`);
 
       const receipt = await wallet.waitForTransactionReceipt(txHash);
-      console.log(`[Aerodrome Provider] Transaction confirmed. Gas used: ${receipt.gasUsed}`);
 
       let voteAllocation = "";
       const totalWeight = weights.reduce((sum, w) => sum + w, BigInt(0));
@@ -204,23 +231,25 @@ export class AerodromeActionProvider extends ActionProvider<EvmWalletProvider> {
             : "N/A";
         voteAllocation += `\n  - Pool ${poolAddresses[i]}: ${weights[i]} weight (~${percentage}%)`;
       }
-      const responseMessage = `Successfully voted with veAERO NFT #${args.veAeroTokenId}. Vote allocation: ${voteAllocation}\nTransaction: ${txHash}. Gas used: ${receipt.gasUsed}`;
-      return responseMessage;
+
+      return formatTransactionResult(
+        "cast votes",
+        `Voted with veAERO NFT #${args.veAeroTokenId} (voting power: ${votingPower}).${voteAllocation}`,
+        txHash,
+        receipt,
+      );
     } catch (error: unknown) {
-      console.error("[Aerodrome Provider] Error casting votes:", error);
-      if (error instanceof Error && error.message?.includes("NotApprovedOrOwner")) {
-        return `Error casting votes: Wallet ${ownerAddress} does not own or is not approved for veAERO token ID ${args.veAeroTokenId}.`;
-      }
-      return `Error casting votes: ${error instanceof Error ? error.message : String(error)}`;
+      return handleTransactionError("casting votes", error);
     }
   }
 
   /**
-   * Swaps an exact amount of input tokens for a minimum amount of output tokens on Aerodrome (Base Mainnet).
+   * Swaps an exact amount of one token for a minimum amount of another token
+   * through the Aerodrome Router on Base Mainnet.
    *
-   * @param wallet - The EVM wallet provider used to execute the transaction
-   * @param args - Parameters for the swap as defined in SwapExactTokensSchema
-   * @returns A promise resolving to the transaction result as a string
+   * @param wallet - The EVM wallet provider to use for the transaction
+   * @param args - The swap parameters
+   * @returns A formatted string with the transaction result or an error message
    */
   @CreateAction({
     name: "swapExactTokensForTokens",
@@ -235,10 +264,7 @@ export class AerodromeActionProvider extends ActionProvider<EvmWalletProvider> {
     if (!ownerAddress || ownerAddress === ZERO_ADDRESS) {
       return "Error: Wallet address is not available.";
     }
-    console.log(`
-      [Aerodrome Provider] Executing swapExactTokens for ${ownerAddress} with args:
-      ${JSON.stringify(args, null, 2)}
-    `);
+    console.log(`[Aerodrome Provider] Executing swapExactTokens with args:`, args);
 
     try {
       const tokenIn = getAddress(args.tokenInAddress);
@@ -252,95 +278,124 @@ export class AerodromeActionProvider extends ActionProvider<EvmWalletProvider> {
         return `Error: Deadline (${args.deadline}) has already passed (Current time: ${currentTimestamp}). Please provide a future timestamp.`;
       }
 
-      const [decimals, tokenInSymbol, tokenOutSymbol] = await Promise.all([
-        wallet.readContract({ address: tokenIn, abi: ERC20_ABI, functionName: "decimals" }),
-        wallet.readContract({ address: tokenIn, abi: ERC20_ABI, functionName: "symbol" }),
-        wallet.readContract({ address: tokenOut, abi: ERC20_ABI, functionName: "symbol" }),
+      const [tokenInInfo, tokenOutInfo] = await Promise.all([
+        getTokenInfo(wallet, tokenIn as Hex),
+        getTokenInfo(wallet, tokenOut as Hex),
       ]);
 
-      const atomicAmountIn = parseUnits(args.amountIn, decimals);
+      const atomicAmountIn = parseUnits(args.amountIn, tokenInInfo.decimals);
       if (atomicAmountIn <= 0n) {
         return "Error: Swap amount must be greater than 0";
       }
-      const amountOutMin = BigInt(args.amountOutMin);
 
-      console.log(`
-        [Aerodrome Provider] Approving ${atomicAmountIn} ${tokenInSymbol} wei for Router (${ROUTER_ADDRESS})...
-      `);
-      const approvalResult = await approve(wallet, tokenIn, ROUTER_ADDRESS, atomicAmountIn);
+      const balance = await wallet.readContract({
+        address: tokenIn as Hex,
+        abi: ERC20_ABI,
+        functionName: "balanceOf",
+        args: [ownerAddress as Hex],
+      });
 
-      if (approvalResult.startsWith("Error")) {
-        console.error("[Aerodrome Provider] Approval Error:", approvalResult);
-        return `Error approving Router contract: ${approvalResult}`;
+      if (BigInt(balance) < atomicAmountIn) {
+        return `Error: Insufficient ${tokenInInfo.symbol} balance. You have ${formatUnits(BigInt(balance), tokenInInfo.decimals)} ${tokenInInfo.symbol}, but attempted to swap ${args.amountIn} ${tokenInInfo.symbol}.`;
       }
-      console.log("[Aerodrome Provider] Approval successful or already sufficient.");
 
       const route = [
         {
-          from: tokenIn,
-          to: tokenOut,
+          from: tokenIn as Hex,
+          to: tokenOut as Hex,
           stable: useStable,
           factory: ZERO_ADDRESS as Hex,
         },
       ];
-      console.log(`
-        [Aerodrome Provider] Using route: ${tokenInSymbol} -> ${tokenOutSymbol} (Stable: ${useStable})
-      `);
 
-      console.log(`[Aerodrome Provider] Encoding swapExactTokensForTokens transaction...`);
+      let estimatedOutput;
+      try {
+        const amountsOut = await wallet.readContract({
+          address: ROUTER_ADDRESS as Hex,
+          abi: ROUTER_ABI,
+          functionName: "getAmountsOut",
+          args: [atomicAmountIn, route],
+        });
+
+        estimatedOutput = amountsOut[1];
+
+        const amountOutMin = BigInt(args.amountOutMin);
+        if (estimatedOutput > 0n && amountOutMin < (estimatedOutput * 95n) / 100n) {
+          console.log(
+            `[Aerodrome Provider] Warning: amountOutMin (${amountOutMin}) is more than 5% lower than estimated output (${estimatedOutput}). This allows for high slippage.`,
+          );
+        }
+
+        if (amountOutMin > estimatedOutput) {
+          console.log(
+            `[Aerodrome Provider] Warning: amountOutMin (${amountOutMin}) is higher than estimated output (${estimatedOutput}). Transaction is likely to fail.`,
+          );
+        }
+      } catch (error) {
+        console.error("[Aerodrome Provider] Error getting price quote:", error);
+        console.log("[Aerodrome Provider] Continuing with swap attempt without quote...");
+      }
+
+      console.log(
+        `[Aerodrome Provider] Approving ${atomicAmountIn} ${tokenInInfo.symbol} for Router...`,
+      );
+      const approvalResult = await approve(wallet, tokenIn, ROUTER_ADDRESS, atomicAmountIn);
+      if (approvalResult.startsWith("Error")) {
+        return `Error approving Router contract: ${approvalResult}`;
+      }
+
       const data = encodeFunctionData({
         abi: ROUTER_ABI,
         functionName: "swapExactTokensForTokens",
-        args: [atomicAmountIn, amountOutMin, route, recipient, deadline],
+        args: [atomicAmountIn, BigInt(args.amountOutMin), route, recipient as Hex, deadline],
       });
 
-      console.log(`[Aerodrome Provider] Sending swap transaction to ${ROUTER_ADDRESS}...`);
       const txHash = await wallet.sendTransaction({
         to: ROUTER_ADDRESS as Hex,
         data,
       });
-      console.log(`[Aerodrome Provider] Transaction sent: ${txHash}. Waiting for receipt...`);
 
       const receipt = await wallet.waitForTransactionReceipt(txHash);
-      console.log(`[Aerodrome Provider] Transaction confirmed. Gas used: ${receipt.gasUsed}`);
 
-      return `Successfully initiated swap of ${args.amountIn} ${tokenInSymbol} for at least ${args.amountOutMin} wei of ${tokenOutSymbol}. Recipient: ${recipient}\nTransaction: ${txHash}. Gas used: ${receipt.gasUsed}`;
+      let outputDetails = `${args.amountIn} ${tokenInInfo.symbol} for at least ${args.amountOutMin} wei of ${tokenOutInfo.symbol}`;
+      if (estimatedOutput) {
+        outputDetails += ` (estimated output: ${estimatedOutput} wei)`;
+      }
+
+      return formatTransactionResult(
+        "completed swap",
+        `Swapped ${outputDetails}. Recipient: ${recipient}`,
+        txHash,
+        receipt,
+      );
     } catch (error: unknown) {
-      console.error("[Aerodrome Provider] Error swapping tokens:", error);
-      if (error instanceof Error && error.message?.includes("INSUFFICIENT_OUTPUT_AMOUNT")) {
-        return "Error swapping tokens: Insufficient output amount. Slippage may be too high or amountOutMin too strict for current market conditions.";
-      }
-      if (error instanceof Error && error.message?.includes("INSUFFICIENT_LIQUIDITY")) {
-        return "Error swapping tokens: Insufficient liquidity for this trade pair and amount.";
-      }
-      if (error instanceof Error && error.message?.includes("Expired")) {
-        return `Error swapping tokens: Transaction deadline (${args.deadline}) likely passed during execution.`;
-      }
-      return `Error swapping tokens: ${error instanceof Error ? error.message : String(error)}`;
+      return handleTransactionError("swapping tokens", error);
     }
   }
 
   /**
-   * Checks if the Aerodrome action provider supports the given network.
-   * Currently supports Base Mainnet ONLY.
+   * Checks if the action provider supports the given network.
    *
-   * @param network - The network to check for support
-   * @returns True if the network is supported, false otherwise
+   * @param network - The network to check.
+   * @returns True if the action provider supports the network, false otherwise.
    */
-  supportsNetwork = (network: Network) =>
-    network.protocolFamily === "evm" && SUPPORTED_NETWORKS.includes(network.networkId!);
+  supportsNetwork(network: Network): boolean {
+    return (
+      network.protocolFamily === "evm" &&
+      !!network.networkId &&
+      SUPPORTED_NETWORKS.includes(network.networkId)
+    );
+  }
 
   /**
-   * Helper to get the start of the current epoch.
+   * Private method to get the start timestamp for the current voting epoch
+   * Used for testing.
    *
-   * @returns The timestamp (in seconds) of the start of the current week's epoch as a bigint
+   * @returns The timestamp (seconds since epoch) of the current epoch start
    */
   private _getCurrentEpochStart(): bigint {
-    const nowSeconds = BigInt(Math.floor(Date.now() / 1000));
-    // Unix epoch (Jan 1 1970) was a Thursday, so simple division works.
-    const epochStart = (nowSeconds / SECONDS_IN_WEEK) * SECONDS_IN_WEEK;
-    return epochStart;
+    return getCurrentEpochStart(SECONDS_IN_WEEK);
   }
 }
 
-export const aerodromeActionProvider = () => new AerodromeActionProvider();
+export const aerodromeActionProvider = (): AerodromeActionProvider => new AerodromeActionProvider();
