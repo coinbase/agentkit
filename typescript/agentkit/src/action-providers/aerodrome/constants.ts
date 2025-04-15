@@ -7,6 +7,11 @@ export const ROUTER_ADDRESS = "0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43";
 
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
+// Constants for veAERO lock durations
+export const WEEK_SECONDS = 604800;
+export const MIN_LOCK_DURATION = BigInt(WEEK_SECONDS); // 1 week
+export const MAX_LOCK_DURATION = BigInt(126144000); // 4 years
+
 // --- ABIs ---
 
 export const AERO_ABI = [
