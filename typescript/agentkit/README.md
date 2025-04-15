@@ -364,6 +364,19 @@ const agent = createReactAgent({
 </table>
 </details>
 <details>
+<summary><strong>TrueMarkets</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_active_markets</code></td>
+    <td width="768">Retrieves active prediction markets from Truemarkets with pagination and sorting options.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_market_details</code></td>
+    <td width="768">Fetches comprehensive details for a specific Truemarkets prediction market including question, status, prices, and liquidity.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Wallet</strong></summary>
 <table width="100%">
 <tr>
