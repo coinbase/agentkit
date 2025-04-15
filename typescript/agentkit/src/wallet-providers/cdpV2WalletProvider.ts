@@ -5,6 +5,7 @@ import {
   ContractFunctionArgs,
   ContractFunctionName,
   createPublicClient,
+  createWalletClient,
   Hex,
   http,
   PublicClient,
@@ -18,6 +19,7 @@ import {
 import { Network, NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_VIEM_CHAIN } from "../network";
 import { applyGasMultiplier } from "../utils";
 import { EvmWalletProvider } from "./evmWalletProvider";
+import { toAccount } from "viem/accounts";
 
 export interface CdpV2ProviderConfig {
   /**
@@ -226,21 +228,32 @@ export class CdpV2WalletProvider extends EvmWalletProvider {
    * @returns The hash of the transaction.
    */
   async sendTransaction(transaction: TransactionRequest): Promise<Hex> {
-    const preparedTransaction = await this.#prepareTransaction(
-      transaction.to! as Address,
-      transaction.value! as bigint,
-      transaction.data! as Hex,
-    );
+    const viemAccount = toAccount({
+      address: this.#serverAccount.address,
+      signMessage: async ({ message }) => {
+        throw new Error("Not implemented")
+      },
+      signTransaction: async (transaction) => {
+        const result = await this.#cdpClient.evm.signTransaction({
+          address: this.#serverAccount.address,
+          transaction: serializeTransaction(transaction as TransactionSerializable),
+        });
+        return result.signature as Hex;
+      },
+      signTypedData: async (typedData) => {
+        throw new Error("Not implemented")
+      },
+    })
 
-    const signature = await this.signTransaction({
-      ...preparedTransaction,
-    } as TransactionRequest);
-
-    const serializedTransaction = await this.#addSignatureAndSerialize(preparedTransaction, signature) as Hex;
-
-    return await this.#publicClient.sendRawTransaction({
-      serializedTransaction
-    });
+    return await createWalletClient({
+      chain: NETWORK_ID_TO_VIEM_CHAIN[this.#network.networkId!],
+      transport: http()
+    }).sendTransaction({
+      account: viemAccount,
+      to: transaction.to as Address,
+      value: transaction.value as bigint,
+      data: transaction.data as Hex,
+    })
   }
 
 
