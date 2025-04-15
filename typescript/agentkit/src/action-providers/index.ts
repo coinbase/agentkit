@@ -7,6 +7,7 @@ export * from "./across";
 export * from "./alchemy";
 export * from "./basename";
 export * from "./cdp";
+export * from "./cdp-v2";
 export * from "./compound";
 export * from "./defillama";
 export * from "./erc20";
