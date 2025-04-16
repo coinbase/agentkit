@@ -10,13 +10,13 @@ jest.mock("@near-js/utils", () => ({
   ...jest.requireActual("@near-js/utils"),
   getTransactionLastResult: jest.fn().mockReturnValue({
     big_r: {
-      affine_point: "02ACE91E6368E5859640CB8E988D70E6C1551E3B8AEC897084C5A2797EF606CCE8"
+      affine_point: "02ACE91E6368E5859640CB8E988D70E6C1551E3B8AEC897084C5A2797EF606CCE8",
     },
     s: {
-      scalar: "3A84B3C0C157FFE0AC271A07F6ABB4BA8821E010F359FAEE05D82796122926F2"
+      scalar: "3A84B3C0C157FFE0AC271A07F6ABB4BA8821E010F359FAEE05D82796122926F2",
     },
-    recovery_id: 0
-  })
+    recovery_id: 0,
+  }),
 }));
 
 describe("NearActionProvider", () => {
@@ -33,17 +33,17 @@ describe("NearActionProvider", () => {
   const ACCOUNT_ID = "jsvm.testnet";
   const MOCK_SIGNATURE = {
     big_r: {
-      affine_point: "02ACE91E6368E5859640CB8E988D70E6C1551E3B8AEC897084C5A2797EF606CCE8"
+      affine_point: "02ACE91E6368E5859640CB8E988D70E6C1551E3B8AEC897084C5A2797EF606CCE8",
     },
     s: {
-      scalar: "3A84B3C0C157FFE0AC271A07F6ABB4BA8821E010F359FAEE05D82796122926F2"
+      scalar: "3A84B3C0C157FFE0AC271A07F6ABB4BA8821E010F359FAEE05D82796122926F2",
     },
-    recovery_id: 0
+    recovery_id: 0,
   };
 
   beforeEach(() => {
     mockProvider = new JsonRpcProvider({
-      url: "https://rpc.testnet.near.org"
+      url: "https://rpc.testnet.near.org",
     }) as jest.Mocked<JsonRpcProvider>;
     mockSigner = new InMemoryKeyStore();
     mockConnection = new Connection(NEAR_MAINNET_NETWORK, mockProvider, mockSigner, ACCOUNT_ID);
@@ -142,7 +142,7 @@ describe("NearActionProvider", () => {
 
     beforeEach(() => {
       jest.spyOn(MpcContract.prototype, "getExperimentalSignatureDeposit").mockResolvedValue("1");
-    })
+    });
 
     it("should sign a payload when passing non mandatory fields", async () => {
       const args = {
