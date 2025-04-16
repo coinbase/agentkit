@@ -1,15 +1,28 @@
 import { Connection } from "@near-js/accounts";
-import { Provider, JsonRpcProvider } from "@near-js/providers";
+import { JsonRpcProvider } from "@near-js/providers";
 import { InMemoryKeyStore } from "@near-js/keyStores";
 import { NEAR_MAINNET_NETWORK, NEAR_MAINNET_NETWORK_ID, NEAR_NETWORK_ID } from "../../network";
 import { NEARWalletProvider } from "../../wallet-providers";
 import { NearActionProvider } from "./nearActionProvider";
 import { MpcContract } from "./utils";
 
+jest.mock("@near-js/utils", () => ({
+  ...jest.requireActual("@near-js/utils"),
+  getTransactionLastResult: jest.fn().mockReturnValue({
+    big_r: {
+      affine_point: "02ACE91E6368E5859640CB8E988D70E6C1551E3B8AEC897084C5A2797EF606CCE8"
+    },
+    s: {
+      scalar: "3A84B3C0C157FFE0AC271A07F6ABB4BA8821E010F359FAEE05D82796122926F2"
+    },
+    recovery_id: 0
+  })
+}));
+
 describe("NearActionProvider", () => {
   const actionProvider = new NearActionProvider();
   let mockWallet: jest.Mocked<NEARWalletProvider>;
-  let mockProvider: jest.Mocked<Provider>;
+  let mockProvider: jest.Mocked<JsonRpcProvider>;
   let mockConnection: jest.Mocked<Connection>;
   let mockSigner: jest.Mocked<InMemoryKeyStore>;
 
@@ -18,9 +31,20 @@ describe("NearActionProvider", () => {
   const MOCK_DESTINATION = "destination.near";
   const MOCK_TX_HASH = "5j2XGJZXq8McE9x4Y8EJ3f9tVQvFfY6zK7k1d9QXp6Bq";
   const ACCOUNT_ID = "jsvm.testnet";
+  const MOCK_SIGNATURE = {
+    big_r: {
+      affine_point: "02ACE91E6368E5859640CB8E988D70E6C1551E3B8AEC897084C5A2797EF606CCE8"
+    },
+    s: {
+      scalar: "3A84B3C0C157FFE0AC271A07F6ABB4BA8821E010F359FAEE05D82796122926F2"
+    },
+    recovery_id: 0
+  };
 
   beforeEach(() => {
-    mockProvider = new JsonRpcProvider("https://rpc.testnet.near.org");
+    mockProvider = new JsonRpcProvider({
+      url: "https://rpc.testnet.near.org"
+    }) as jest.Mocked<JsonRpcProvider>;
     mockSigner = new InMemoryKeyStore();
     mockConnection = new Connection(NEAR_MAINNET_NETWORK, mockProvider, mockSigner, ACCOUNT_ID);
 
@@ -112,13 +136,13 @@ describe("NearActionProvider", () => {
   });
 
   describe("signPayload", () => {
-    const big_r = "02BD88787CCA562EC7A1B9F1B0DBD64BD06E585722346EA5B99D32AF8CD3B98546";
-    const big_s = "548A7CDCAA8116A5920E45E092C831647BFF00415BEFB39FF8A44C57A798CF65";
-    const recoveryId = 0;
+    const big_r = MOCK_SIGNATURE.big_r.affine_point;
+    const big_s = MOCK_SIGNATURE.s.scalar;
+    const recoveryId = MOCK_SIGNATURE.recovery_id;
 
     beforeEach(() => {
       jest.spyOn(MpcContract.prototype, "getExperimentalSignatureDeposit").mockResolvedValue("1");
-    });
+    })
 
     it("should sign a payload when passing non mandatory fields", async () => {
       const args = {
