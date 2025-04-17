@@ -38,8 +38,8 @@ The Aave provider currently supports:
 ## Supported Assets
 
 ### Base Mainnet
-- Supply/Collateral Assets: USDC, WETH, cbETH available on Aave V3 Base
-- Borrow Assets: Most assets supported by Aave V3 on Base
+- Supply/Collateral Assets: USDC, WETH, cbETH 
+- Borrow Assets: USDC
 
 ## Notes
 
