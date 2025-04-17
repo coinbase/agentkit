@@ -415,6 +415,15 @@ const agent = createReactAgent({
 </tr>
 </table>
 </details>
+<details>
+<summary><strong>ZeroDev Wallet</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>getCAB</code></td>
+    <td width="768">Retrieves chain abstracted balances (CAB) for specified tokens across multiple networks.</td>
+</tr>
+</table>
+</details>
 
 ## Creating an Action Provider
 

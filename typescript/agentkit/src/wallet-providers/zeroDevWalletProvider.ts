@@ -1,7 +1,13 @@
 import { createKernelAccount, KernelSmartAccountImplementation } from "@zerodev/sdk";
 import { KERNEL_V3_2, getEntryPoint } from "@zerodev/sdk/constants";
 import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
-import { createIntentClient, installIntentExecutor, INTENT_V0_3 } from "@zerodev/intent";
+import {
+  createIntentClient,
+  type GetCABParameters,
+  type GetCABResult,
+  installIntentExecutor,
+  INTENT_V0_3,
+} from "@zerodev/intent";
 import {
   Abi,
   Address,
@@ -389,5 +395,15 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
    */
   getIntentClient(): Awaited<ReturnType<typeof createIntentClient>> {
     return this.#intentClient;
+  }
+
+  /**
+   * Gets chain abstracted balance.
+   *
+   * @param options - The options for the get CAB.
+   * @returns The chain abstracted balance.
+   */
+  async getCAB(options: GetCABParameters): Promise<GetCABResult> {
+    return this.#intentClient.getCAB(options);
   }
 }

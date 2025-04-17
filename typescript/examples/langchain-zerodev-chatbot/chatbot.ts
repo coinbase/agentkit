@@ -12,9 +12,10 @@ import {
   NETWORK_ID_TO_VIEM_CHAIN,
   EvmWalletProvider,
   PrivyEvmWalletProvider,
+  zeroDevWalletActionProvider,
+  ZeroDevWalletProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
-import { ZeroDevWalletProvider } from "@coinbase/agentkit";
 import { HumanMessage } from "@langchain/core/messages";
 import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
@@ -163,6 +164,7 @@ async function initializeAgent() {
           apiKeyName: process.env.CDP_API_KEY_NAME!,
           apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY!,
         }),
+        zeroDevWalletActionProvider(),
       ],
     });
 
@@ -186,9 +188,11 @@ async function initializeAgent() {
         
         You are using a ZeroDev wallet provider with a CDP wallet as the signer. This means you have the security
         of CDP's MPC wallet combined with ZeroDev's account abstraction and chain abstraction features like batched transactions,
-        sponsored gas, and paying gas with USDC and USDT. Don't check the balanace before sending the transaction.
-        If tx fail with "inputAmount is too low", ask the user to deposit token to the wallet.
+        sponsored gas, and paying gas with USDC and USDT. 
         
+        Don't use **ERC20ActionProvider_get_balance** and don't check account's balance when transferring tokens and send the tx even if the balance is low.
+        If tx fail with "inputAmount is too low", ask the user to deposit token to the wallet. When reading the USDC/USDT/ETH balance of the wallet, use the **ZeroDevWalletActionProvider_getCAB** tool.
+
         Be concise and helpful with your responses. Refrain from restating your tools' descriptions unless it is 
         explicitly requested.
         `,

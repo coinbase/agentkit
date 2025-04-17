@@ -12,7 +12,12 @@ import {
 } from "viem";
 import { createKernelAccount, KernelSmartAccountImplementation } from "@zerodev/sdk";
 import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
-import { createIntentClient, SendUserIntentResult, IntentExecutionReceipt } from "@zerodev/intent";
+import {
+  createIntentClient,
+  type SendUserIntentResult,
+  type IntentExecutionReceipt,
+  type GetCABParameters,
+} from "@zerodev/intent";
 import { SmartAccount } from "viem/account-abstraction";
 
 // =========================================================
@@ -476,6 +481,42 @@ describe("ZeroDevWalletProvider", () => {
           args: [MOCK_ADDRESS as `0x${string}`],
         } as unknown as ReadContractParameters),
       ).rejects.toThrow("Contract read failed");
+    });
+  });
+
+  // =========================================================
+  // Chain Abstracted Balance Tests
+  // =========================================================
+
+  describe("chain abstracted balance", () => {
+    it("should get chain abstracted balance", async () => {
+      const mockCABResult = {
+        balance: BigInt(1000000000000000000),
+        tokenAddress: "0x1234567890123456789012345678901234567890" as `0x${string}`,
+      };
+
+      mockIntentClient.getCAB = jest.fn().mockResolvedValue(mockCABResult);
+
+      const options: GetCABParameters = {
+        tokenTickers: ["USDC"],
+        networks: [1],
+      };
+
+      const result = await provider.getCAB(options);
+
+      expect(mockIntentClient.getCAB).toHaveBeenCalledWith(options);
+      expect(result).toEqual(mockCABResult);
+    });
+
+    it("should handle getCAB failures", async () => {
+      mockIntentClient.getCAB = jest.fn().mockRejectedValue(new Error("CAB check failed"));
+
+      const options: GetCABParameters = {
+        tokenTickers: ["USDC"],
+        networks: [1234],
+      };
+
+      await expect(provider.getCAB(options)).rejects.toThrow("CAB check failed");
     });
   });
 
