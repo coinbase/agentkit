@@ -1,8 +1,5 @@
 import { CdpClient } from "@coinbase/cdp-sdk";
 import { clusterApiUrl, ComputeBudgetProgram, Connection, LAMPORTS_PER_SOL, MessageV0, PublicKey, RpcResponseAndContext, SignatureResult, SignatureStatus, SignatureStatusConfig, SystemProgram, VersionedTransaction } from "@solana/web3.js";
-import {
-  Address
-} from "viem";
 import { Network } from "../network";
 import {
   SOLANA_DEVNET_GENESIS_BLOCK_HASH,
@@ -15,28 +12,9 @@ import {
   SOLANA_TESTNET_NETWORK,
   SOLANA_TESTNET_NETWORK_ID,
 } from "../network/svm";
-import { CdpV2ProviderConfig } from "./cdpV2WalletProvider";
+import { CdpV2WalletProviderConfig } from "./cdpV2Shared";
 import { SvmWalletProvider } from "./svmWalletProvider";
 
-/**
- * Configuration options for the CDP Providers.
- */
-export interface CdpV2SolanaWalletProviderConfig extends CdpV2ProviderConfig {
-  /**
-   * The address of the wallet.
-   */
-  address?: Address;
-
-  /**
-   * The network of the wallet.
-   */
-  networkId?: string;
-
-  /**
-   * The idempotency key of the wallet. Only used when creating a new account.
-   */
-  idempotencyKey?: string;
-}
 
 interface ConfigureCdpV2WalletProviderWithWalletOptions {
   /**
@@ -91,7 +69,7 @@ export class CdpV2SolanaWalletProvider extends SvmWalletProvider {
    * @throws Error if required environment variables are missing or wallet initialization fails
    */
   public static async configureWithWallet(
-    config: CdpV2SolanaWalletProviderConfig = {},
+    config: CdpV2WalletProviderConfig = {},
   ): Promise<CdpV2SolanaWalletProvider> {
     const apiKeyId = config.apiKeyId || process.env.CDP_API_KEY_ID;
     const apiKeySecret = config.apiKeySecret || process.env.CDP_API_KEY_SECRET;

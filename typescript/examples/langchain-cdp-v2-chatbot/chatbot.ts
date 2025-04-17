@@ -9,6 +9,9 @@ import {
   pythActionProvider,
   openseaActionProvider,
   alloraActionProvider,
+  CdpV2EvmWalletProvider,
+  CdpV2SolanaWalletProvider,
+  splActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -57,6 +60,26 @@ function validateEnvironment(): void {
 validateEnvironment();
 
 /**
+ * Type guard to check if the wallet provider is an EVM provider
+ *
+ * @param walletProvider - The wallet provider to check
+ * @returns True if the wallet provider is an EVM provider, false otherwise
+ */
+function isEvmWalletProvider(walletProvider: CdpV2WalletProvider): walletProvider is CdpV2EvmWalletProvider {
+  return walletProvider instanceof CdpV2EvmWalletProvider;
+}
+
+/**
+ * Type guard to check if the wallet provider is a Solana provider
+ *
+ * @param walletProvider - The wallet provider to check
+ * @returns True if the wallet provider is a Solana provider, false otherwise
+ */
+function isSolanaWalletProvider(walletProvider: CdpV2WalletProvider): walletProvider is CdpV2SolanaWalletProvider {
+  return walletProvider instanceof CdpV2SolanaWalletProvider;
+}
+
+/**
  * Initialize the agent with CDP Agentkit
  *
  * @returns Agent executor and config
@@ -82,21 +105,25 @@ async function initializeAgent() {
       networkId: process.env.NETWORK_ID,
     };
 
-
     const walletProvider = await CdpV2WalletProvider.configureWithWallet(cdpWalletConfig);
+    const actionProviders = [
+      walletActionProvider(),
+      cdpApiV2ActionProvider(cdpConfig),
+      ...isEvmWalletProvider(walletProvider) ? 
+      [
+        wethActionProvider(),
+        erc20ActionProvider(),
+        erc721ActionProvider(),
+      ] : isSolanaWalletProvider(walletProvider) ? 
+      [
+        splActionProvider(),
+      ] : []
+    ]
 
     // Initialize AgentKit
     const agentkit = await AgentKit.from({
       walletProvider,
-      actionProviders: [
-        wethActionProvider(),
-        pythActionProvider(),
-        walletActionProvider(),
-        erc20ActionProvider(),
-        erc721ActionProvider(),
-        cdpApiV2ActionProvider(cdpConfig),
-        alloraActionProvider(),
-      ],
+      actionProviders,
     });
 
     const tools = await getLangChainTools(agentkit);

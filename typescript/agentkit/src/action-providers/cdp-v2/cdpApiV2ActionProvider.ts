@@ -2,7 +2,7 @@ import { z } from "zod";
 import { CreateAction } from "../actionDecorator";
 import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
-import { CdpV2ProviderConfig, WalletProvider } from "../../wallet-providers";
+import { CdpV2WalletProviderConfig, WalletProvider } from "../../wallet-providers";
 import { RequestFaucetFundsV2Schema } from "./schemas";
 import { CdpClient } from "@coinbase/cdp-sdk";
 
@@ -19,7 +19,7 @@ export class CdpApiV2ActionProvider extends ActionProvider<WalletProvider> {
    *
    * @param config - The configuration options for the CdpApiActionProvider.
    */
-  constructor(config: CdpV2ProviderConfig = {}) {
+  constructor(config: CdpV2WalletProviderConfig = {}) {
     super("cdp_api", []);
 
     const apiKeyId = config.apiKeyId || process.env.CDP_API_KEY_ID;
@@ -105,5 +105,5 @@ from another wallet and provide the user with your wallet details.`,
   supportsNetwork = (_: Network) => true;
 }
 
-export const cdpApiV2ActionProvider = (config: CdpV2ProviderConfig = {}) =>
+export const cdpApiV2ActionProvider = (config: CdpV2WalletProviderConfig = {}) =>
   new CdpApiV2ActionProvider(config);
