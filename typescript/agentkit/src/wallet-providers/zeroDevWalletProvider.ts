@@ -22,11 +22,12 @@ import {
   Hex,
   zeroAddress,
   Hash,
+  Account,
 } from "viem";
-import { toAccount } from "viem/accounts";
 import { SmartAccount } from "viem/account-abstraction";
 import { EvmWalletProvider } from "./evmWalletProvider";
 import { NETWORK_ID_TO_VIEM_CHAIN, type Network } from "../network";
+import { Signer } from "@zerodev/sdk/types";
 
 /**
  * Configuration options for the ZeroDev Wallet Provider.
@@ -35,7 +36,7 @@ export interface ZeroDevWalletProviderConfig {
   /**
    * The underlying EVM wallet provider to use as a signer.
    */
-  signer: EvmWalletProvider;
+  signer: Account;
 
   /**
    * The ZeroDev project ID.
@@ -64,7 +65,7 @@ export interface ZeroDevWalletProviderConfig {
  * A wallet provider that uses ZeroDev's account abstraction.
  */
 export class ZeroDevWalletProvider extends EvmWalletProvider {
-  #signer: EvmWalletProvider;
+  #signer: Account;
   #projectId: string;
   #network: Network;
   #address: Address;
@@ -131,26 +132,10 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
       transport: http(),
     });
 
-    // Create a Viem account from the EVM wallet provider
-    const address = config.signer.getAddress() as Address;
-    const viemSigner = toAccount({
-      address,
-      // Pass through signing requests directly to the EVM wallet provider
-      signMessage: async ({ message }) => {
-        return config.signer.signMessage(message as string | Uint8Array);
-      },
-      signTransaction: async transaction => {
-        return config.signer.signTransaction(transaction as TransactionRequest);
-      },
-      signTypedData: async typedData => {
-        return config.signer.signTypedData(typedData);
-      },
-    });
-
     // Create ECDSA validator
     const entryPoint = getEntryPoint(config.entryPointVersion || "0.7");
     const ecdsaValidator = await signerToEcdsaValidator(publicClient, {
-      signer: viemSigner,
+      signer: config.signer as Signer,
       entryPoint,
       kernelVersion: KERNEL_V3_2,
     });

@@ -136,7 +136,7 @@ async function initializeAgent() {
 
     // Configure ZeroDev Wallet Provider with CDP Wallet as signer
     const zeroDevConfig = {
-      signer: evmWalletProvider,
+      signer: evmWalletProvider.toSigner(),
       projectId: process.env.ZERODEV_PROJECT_ID!,
       entryPointVersion: "0.7" as const,
       // Use the same network as the CDP wallet

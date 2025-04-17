@@ -811,7 +811,7 @@ The ZeroDev wallet provider does not itself manage keys.  Rather, it can be used
 import { ZeroDevWalletProvider, CdpWalletProvider } from "@coinbase/agentkit";
 
 // First create a CDP wallet provider as the signer
-const signer = await CdpWalletProvider.configureWithWallet({
+const cdpWalletProvider = await CdpWalletProvider.configureWithWallet({
     apiKeyName: "CDP API KEY NAME",
     apiKeyPrivate: "CDP API KEY PRIVATE KEY",
     networkId: "base-mainnet",
@@ -819,7 +819,7 @@ const signer = await CdpWalletProvider.configureWithWallet({
 
 // Configure ZeroDev Wallet Provider with CDP signer
 const walletProvider = await ZeroDevWalletProvider.configureWithWallet({
-    signer,
+    signer: cdpWalletProvider.toSigner(),
     projectId: "ZERODEV_PROJECT_ID",
     entryPointVersion: "0.7" as const,
     networkId: "base-mainnet",
@@ -832,7 +832,7 @@ const walletProvider = await ZeroDevWalletProvider.configureWithWallet({
 import { ZeroDevWalletProvider, PrivyWalletProvider } from "@coinbase/agentkit";
 
 // First create a Privy wallet provider as the signer
-const signer = await PrivyWalletProvider.configureWithWallet({
+const privyWalletProvider = await PrivyWalletProvider.configureWithWallet({
     appId: "PRIVY_APP_ID",
     appSecret: "PRIVY_APP_SECRET",
     chainId: "8453", // base-mainnet
@@ -840,7 +840,7 @@ const signer = await PrivyWalletProvider.configureWithWallet({
 
 // Configure ZeroDev Wallet Provider with Privy signer
 const walletProvider = await ZeroDevWalletProvider.configureWithWallet({
-    signer,
+    signer: privyWalletProvider.toSigner(),
     projectId: "ZERODEV_PROJECT_ID",
     entryPointVersion: "0.7" as const,
     networkId: "base-mainnet",
@@ -858,7 +858,7 @@ import { createWalletClient, http } from "viem";
 // First create a Viem wallet provider as the signer
 const account = privateKeyToAccount("PRIVATE_KEY");
 
-const signer = new ViemWalletProvider(
+const viemWalletProvider = new ViemWalletProvider(
   createWalletClient({
     account,
     chain: base,
@@ -868,7 +868,7 @@ const signer = new ViemWalletProvider(
 
 // Configure ZeroDev Wallet Provider with Viem signer
 const walletProvider = await ZeroDevWalletProvider.configureWithWallet({
-    signer,
+    signer: viemWalletProvider.toSigner(),
     projectId: "ZERODEV_PROJECT_ID",
     entryPointVersion: "0.7" as const,
     networkId: "base-mainnet",

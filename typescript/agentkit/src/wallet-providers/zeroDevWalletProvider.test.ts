@@ -9,6 +9,7 @@ import {
   Address,
   zeroAddress,
   Hex,
+  Account,
 } from "viem";
 import { createKernelAccount, KernelSmartAccountImplementation } from "@zerodev/sdk";
 import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
@@ -106,6 +107,12 @@ const mockEvmWalletProvider = {
   signTransaction: jest.fn(),
   signTypedData: jest.fn(),
   getNetwork: jest.fn().mockReturnValue(MOCK_NETWORK),
+  toSigner: jest.fn().mockReturnValue({
+    address: MOCK_ADDRESS,
+    signMessage: jest.fn(),
+    signTransaction: jest.fn(),
+    signTypedData: jest.fn(),
+  } as unknown as Account),
 } as unknown as jest.Mocked<EvmWalletProvider>;
 
 // =========================================================
@@ -148,7 +155,7 @@ describe("ZeroDevWalletProvider", () => {
 
     // Create provider instance
     provider = await ZeroDevWalletProvider.configureWithWallet({
-      signer: mockEvmWalletProvider,
+      signer: mockEvmWalletProvider.toSigner(),
       projectId: MOCK_PROJECT_ID,
       networkId: MOCK_NETWORK_ID,
       entryPointVersion: "0.7",
@@ -171,7 +178,7 @@ describe("ZeroDevWalletProvider", () => {
     it("should throw error when signer is not provided", async () => {
       await expect(
         ZeroDevWalletProvider.configureWithWallet({
-          signer: undefined as unknown as EvmWalletProvider,
+          signer: undefined as unknown as Account,
           projectId: MOCK_PROJECT_ID,
           networkId: MOCK_NETWORK_ID,
         }),
@@ -181,7 +188,7 @@ describe("ZeroDevWalletProvider", () => {
     it("should throw error when project ID is not provided", async () => {
       await expect(
         ZeroDevWalletProvider.configureWithWallet({
-          signer: mockEvmWalletProvider,
+          signer: mockEvmWalletProvider.toSigner(),
           projectId: "",
           networkId: MOCK_NETWORK_ID,
         }),
@@ -191,7 +198,7 @@ describe("ZeroDevWalletProvider", () => {
     it("should initialize with a specific address if provided", async () => {
       const customAddress = "0xCustomAddress";
       await ZeroDevWalletProvider.configureWithWallet({
-        signer: mockEvmWalletProvider,
+        signer: mockEvmWalletProvider.toSigner(),
         projectId: MOCK_PROJECT_ID,
         networkId: MOCK_NETWORK_ID,
         address: customAddress,
@@ -532,7 +539,7 @@ describe("ZeroDevWalletProvider", () => {
 
       await expect(
         ZeroDevWalletProvider.configureWithWallet({
-          signer: mockEvmWalletProvider,
+          signer: mockEvmWalletProvider.toSigner(),
           projectId: MOCK_PROJECT_ID,
           networkId: MOCK_NETWORK_ID,
         }),
@@ -546,7 +553,7 @@ describe("ZeroDevWalletProvider", () => {
 
       await expect(
         ZeroDevWalletProvider.configureWithWallet({
-          signer: mockEvmWalletProvider,
+          signer: mockEvmWalletProvider.toSigner(),
           projectId: MOCK_PROJECT_ID,
           networkId: MOCK_NETWORK_ID,
         }),
