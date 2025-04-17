@@ -23,6 +23,9 @@ from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 
+from coinbase_agentkit.action_providers import compass_action_provider
+from coinbase_agentkit.action_providers.compass.compass_action_provider import CompassActionProvider
+
 # Configure a file to persist the agent's CDP API Wallet Data.
 wallet_data_file = "wallet_data.txt"
 
@@ -57,6 +60,7 @@ def initialize_agent():
                 wallet_action_provider(),
                 weth_action_provider(),
                 allora_action_provider(),
+                compass_action_provider()
             ],
         )
     )
