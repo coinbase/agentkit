@@ -121,7 +121,7 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
     if (!config.projectId) {
       throw new Error("ZeroDev project ID is required");
     }
-    const networkId = config.networkId || "base-mainnet";
+    const networkId = config.networkId || "base-sepolia";
 
     const chain = NETWORK_ID_TO_VIEM_CHAIN[networkId];
     const bundlerRpc = `https://rpc.zerodev.app/api/v3/bundler/${config.projectId}`;
