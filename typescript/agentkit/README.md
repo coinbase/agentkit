@@ -411,6 +411,19 @@ const agent = createReactAgent({
 </tr>
 </table>
 </details>
+<summary><strong>ZeroX</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_swap_price_quote_from_0x</code></td>
+    <td width="768">Fetches a price quote for swapping between two tokens using the 0x API.</td>
+</tr>
+<tr>
+    <td width="200"><code>execute_swap_on_0x</code></td>
+    <td width="768">Executes a token swap between two tokens using the 0x API.</td>
+</tr>
+</table>
+</details>
+<details>
 
 ## Creating an Action Provider
 
