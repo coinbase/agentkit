@@ -62,6 +62,7 @@ jest.mock("viem", () => {
     parseEther: jest.fn((_value: string) => BigInt(1000000000000000000)),
     keccak256: jest.fn((_value: string) => "0xmockhash"),
     serializeTransaction: jest.fn((_tx: string) => "0xserialized"),
+    hashMessage: jest.fn((_message: string) => "0xmockhashmessage"),
   };
 });
 
