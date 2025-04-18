@@ -139,3 +139,6 @@ docs/
 # pnpm
 typescript/.pnpm-store
 typescript/.pnp.*
+
+# Near keytore
+.near-credentials
