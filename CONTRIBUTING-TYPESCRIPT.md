@@ -177,7 +177,7 @@ Do not use the contract address as the destination address. If you are unsure of
 
 Notice the return value contains useful information for the user, such as the transaction hash and link. It's important to include this information in the return value so that the user can easily see the result of the action.
 
-This class is then exported out of [typescript/agentkit/src/action-providers/erc721/index.ts](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/action-providers/erc721/index.ts) so that is is consumable by users of the `@coinbase/agentkit` package.
+This class is then exported out of [typescript/agentkit/src/action-providers/erc721/index.ts](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/action-providers/erc721/index.ts) so that is consumable by users of the `@coinbase/agentkit` package.
 
 ### Testing the action provider
 
