@@ -463,7 +463,7 @@ export const ethToMemecoin = (params: {
   };
 };
 
-// @notice Beofre calling the UniversalRouter the user must have:
+// @notice Before calling the UniversalRouter the user must have:
 // 1. Given the Permit2 contract allowance to spend the memecoin
 export const memecoinToEthWithPermit2 = (params: {
   chainId: number;
