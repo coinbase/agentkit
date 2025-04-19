@@ -133,6 +133,7 @@ A failure response will return a message with the Farcaster API request error:
         body: JSON.stringify({
           signer_uuid: this.signerUuid,
           text: args.castText,
+          embeds: args.embeds,
         }),
       });
       const data = await response.json();
