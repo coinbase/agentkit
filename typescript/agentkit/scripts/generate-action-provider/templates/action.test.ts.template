@@ -1,0 +1,26 @@
+/**
+ * ExampleAction Tests
+ */
+
+{# include header for example action tests #}
+{% set header_template = "action.test/header/" + provider_key + ".ts.template" %}
+{% include header_template %}
+
+{# example action tests #}
+describe("Example Action", () => {
+  {# include default setup #}
+  {% include "action.test/setup/default.ts.template" %}
+
+  {# Conditionally include the specific setup for the provider key (e.g., mock wallet) #}
+  {% if provider_key != 'default' %}
+    {% set setup_template = "action.test/setup/" + provider_key + ".ts.template" %}
+    {% include setup_template %}
+  {% endif %}
+
+  {# include schema validation tests #}
+  {% include "action.test/testSchema/default.ts.template" %}
+
+  {# include execution tests #}
+  {% set execution_test_template = "action.test/testAction/" + provider_key + ".ts.template" %}
+  {% include execution_test_template %}
+});

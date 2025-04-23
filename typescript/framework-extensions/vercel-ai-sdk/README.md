@@ -66,7 +66,7 @@ const { text } = await generateText({
 console.log(text);
 ```
 
-For a full example, see the [AgentKit AI SDK Chatbot Example](https://github.com/coinbase/agentkit/tree/main/typescript/examples/vercel-ai-sdk-cdp-chatbot).
+For a full example, see the [AgentKit AI SDK Chatbot Example](https://github.com/coinbase/agentkit/tree/main/typescript/examples/vercel-ai-sdk-smart-wallet-chatbot).
 
 ## Contributing
 

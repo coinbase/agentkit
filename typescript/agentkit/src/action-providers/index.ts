@@ -3,6 +3,7 @@ export * from "./actionProvider";
 
 export * from "./customActionProvider";
 
+export * from "./across";
 export * from "./alchemy";
 export * from "./basename";
 export * from "./cdp";
@@ -12,6 +13,7 @@ export * from "./erc20";
 export * from "./erc721";
 export * from "./farcaster";
 export * from "./jupiter";
+export * from "./messari";
 export * from "./pyth";
 export * from "./moonwell";
 export * from "./morpho";
@@ -22,4 +24,8 @@ export * from "./wallet";
 export * from "./weth";
 export * from "./wow";
 export * from "./allora";
+export * from "./flaunch";
+export * from "./onramp";
+export * from "./vaultsfyi";
+export * from "./zerodev";
 export * from "./okx";

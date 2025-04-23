@@ -2,7 +2,7 @@
 
 ## Overview
 
-`create-onchain-agent` is a CLI tool powered by [AgentKit](https://github.com/coinbase/agentkit) that allows developers to quickly scaffold an **onchain agent** project. This tool simplifies the setup process by generating a project with predefined configurations, including blockchain network selection, wallet providers, and framework setup.
+`create-onchain-agent` is a CLI tool powered by [AgentKit](https://github.com/coinbase/agentkit) that provides multiple utilities for creating and integrating onchain agents into your projects. Whether you're starting a new project or adding AgentKit to an existing application, this tool offers flexible options to meet your needs.
 
 ## Prerequisites
 
@@ -13,61 +13,52 @@ Before using `create-onchain-agent`, ensure you have the following installed:
 
 ## Usage
 
-To use `create-onchain-agent`, simply run:
+### Quickstart Templates
+
+To create a new project from scratch:
 
 ```sh
 npm create onchain-agent@latest
 ```
 
-This command will guide you through setting up an onchain agent project by prompting for necessary configuration options.
+This command lets you choose between two project templates:
+- **Next.js Template**: A full-stack web application with React, Tailwind CSS, and ESLint
+- **MCP Template**: A Model Context Protocol server project
+
+### Component Generation
+
+After installing the `create-onchain-agent` CLI, you will also have the `agenkit` CLI installed. This allows you to generate components for your project.
+
+```sh
+# Generate a custom wallet provider
+agentkit generate wallet-provider
+
+# Generate a custom action provider
+agentkit generate action-provider
+
+# Generate framework-agnostic AgentKit setup.
+agentkit generate prepare
+
+# Generate framework-specific agent creation
+agentkit generate create-agent
+```
+
+> **Note**: If the above commands print the error `agentkit: not found`, ensure the agentkit cli is installed by running the following command:
+> ```bash
+> npm install -g create-onchain-agent/@latest
+> ```
 
 ## Features
 
-- **Guided setup**: Interactive prompts help configure the project.
-- **Supports multiple AI frameworks**.
-- **Supports multiple blockchain networks**.
-- **Select your preferred wallet provider**.
-- **Supports a preconfigured Next.js project with React, Tailwind CSS, and ESLint**.
-- **Supports a preconfigured Model Context Protocol Server project**.
-- **Automates environment setup**.
-
-### **Setup Process**
-The CLI will prompt you for the following details:
-
-1. **Project Name**: The name of your new onchain agent project.
-2. **Package Name**: The npm package name (auto-formatted if needed).
-3. **Framework**: Choose from available AI frameworks.
-4. **Network**: Choose from available blockchain networks.
-5. **Chain ID**: Specify if using a custom network.
-6. **Wallet Provider**: Select a preferred method for wallet management.
-
-After answering the prompts, the CLI will:
-
-- Generate the project structure.
-- Copy necessary template files.
-- Configure the selected settings.
-- Display next steps to get started.
-
-## Getting Started
-
-Once your project is created, navigate into the directory and install dependencies:
-
-```sh
-cd my-project
-npm install
-```
-
-Then, configure your environment variables:
-
-```sh
-mv .env.local .env
-```
-
-Run the development server:
-
-```sh
-npm run dev
-```
+- **Multiple project templates**:
+  - Next.js template for web applications
+  - MCP template for Model Context Protocol servers
+- **Component generators** for existing projects
+- **Guided setup** with interactive prompts
+- **Support for multiple AI frameworks**
+- **Support for multiple blockchain networks**
+- **Flexible wallet provider options**
+- **Automated environment setup**
 
 ## Documentation & Support
 

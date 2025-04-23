@@ -36,8 +36,9 @@ agentkit/
 │       ├── langchain-privy-chatbot/
 │       ├── langchain-solana-chatbot/
 │       ├── langchain-twitter-chatbot/
-│       ├── model-context-protocol-cdp-server/
-│       └── vercel-ai-sdk-cdp-chatbot/
+│       ├── langchain-xmtp-chatbot/
+│       ├── model-context-protocol-smart-wallet-server/
+│       └── vercel-ai-sdk-smart-wallet-chatbot/
 ├── python/
 │   ├── coinbase-agentkit/
 │   ├── create-onchain-agent/
@@ -46,8 +47,11 @@ agentkit/
 │   │   └── openai-agents-sdk/
 │   └── examples/
 │       ├── langchain-cdp-chatbot/
+│       ├── langchain-eth-account-chatbot/
+│       ├── langchain-smart-wallet-chatbot/
 │       ├── langchain-twitter-chatbot/
-│       └── openai-agents-sdk-cdp-chatbot/
+│       └── openai-agents-cdp-voice-chatbot/
+│       └── openai-agents-sdk-smart-wallet-chatbot/
 ```
 
 ## Language-Specific Guides

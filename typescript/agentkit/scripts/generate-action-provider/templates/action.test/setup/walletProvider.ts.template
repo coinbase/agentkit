@@ -1,0 +1,15 @@
+// mock wallet provider setup
+let mockWalletProvider: jest.Mocked<{{wallet_provider}}>;
+
+beforeEach(() => {
+  mockWalletProvider = {
+    getAddress: jest.fn(),
+    getBalance: jest.fn(),
+    getName: jest.fn(),
+    getNetwork: jest.fn().mockReturnValue({
+      protocolFamily: "{{protocol_family}}",
+      networkId: {% if networkIds|length %}"{{networkIds[0]}}"{% else %}"test-network"{% endif %},
+    }),
+    nativeTransfer: jest.fn(),
+  } as unknown as jest.Mocked<{{wallet_provider}}>;
+}); 

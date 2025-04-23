@@ -6,11 +6,63 @@ import fs from "fs";
 import path from "path";
 import pc from "picocolors";
 import nunjucks from "nunjucks";
+import { exec, spawn } from "child_process";
+import { promisify } from "util";
 
 import { ProviderConfig } from "./types";
 import { AGENTKIT_BANNER, SUCCESS_MESSAGES } from "./constants";
 
-nunjucks.configure({
+// Convert exec to Promise-based
+const execPromise = promisify(exec);
+
+async function runCommandSpawn(
+  command: string,
+  args: string[],
+  cwd: string,
+  description: string,
+): Promise<void> {
+  console.log(pc.blue(`\n${description}...`));
+  return new Promise((resolve, reject) => {
+    const process = spawn(command, args, { cwd, shell: true, stdio: "pipe" });
+    let stderr = "";
+    let stdout = "";
+
+    process.stdout?.on("data", data => {
+      stdout += data.toString();
+    });
+
+    process.stderr?.on("data", data => {
+      stderr += data.toString();
+    });
+
+    process.on("close", code => {
+      if (code === 0) {
+        // console.log(stdout); // Optional: log stdout on success
+        console.log(pc.green(`${description} complete.`));
+        resolve();
+      } else {
+        console.log(pc.yellow(`Warning: ${description} failed.`));
+        console.log(pc.yellow(`Command: ${command} ${args.join(" ")}`));
+        console.log(pc.yellow(`Return code: ${code}`));
+        console.log(pc.yellow(`Output:\n${stderr || stdout}`));
+        // resolve even on error for lint/format, as they might fail non-critically
+        resolve();
+      }
+    });
+
+    process.on("error", err => {
+      console.log(pc.yellow(`Warning: Failed to start command for ${description}.`));
+      console.log(pc.yellow(err.message));
+      // Resolve even on error
+      resolve();
+    });
+  });
+}
+
+// Configure Nunjucks environment ONCE, pointing to the base templates directory
+const templateBaseDir = path.join(__dirname, "templates");
+const env = nunjucks.configure(templateBaseDir, {
+  // Pass base path here
   autoescape: false,
   trimBlocks: true,
   lstripBlocks: true,
@@ -78,14 +130,15 @@ export function networkIdToDisplayName(networkId: string): string {
 }
 
 /**
- * Replaces template variables in a file
+ * Renders a template file with the given configuration context.
  *
- * @param content - The template content to process
- * @param config - The provider configuration
- * @returns The processed content with variables replaced
+ * @param templateName - The name of the template file relative to the base templates directory.
+ * @param config - The provider configuration object for context.
+ * @returns The processed template content as a string.
+ * @throws Throws an error if template rendering fails.
  */
-function processTemplate(content: string, config: ProviderConfig): string {
-  const { name, protocolFamily, networkIds, walletProvider } = config;
+function processTemplate(templateName: string, config: ProviderConfig): string {
+  const { name, protocolFamily, networkIds, walletProvider, providerKey } = config;
   const namePascal = name.charAt(0).toUpperCase() + name.slice(1);
 
   const context = {
@@ -94,12 +147,15 @@ function processTemplate(content: string, config: ProviderConfig): string {
     protocol_family: protocolFamily,
     networkIds,
     wallet_provider: walletProvider,
+    provider_key: providerKey,
   };
 
   try {
-    return nunjucks.renderString(content, context);
+    // Use env.render with the relative template name
+    return env.render(templateName, context);
   } catch (error) {
-    throw error;
+    console.error(`Error rendering template ${templateName}:`, error);
+    throw error; // Re-throw after logging
   }
 }
 
@@ -112,25 +168,26 @@ function processTemplate(content: string, config: ProviderConfig): string {
 export function addProviderFiles(config: ProviderConfig, targetDir: string): void {
   fs.mkdirSync(targetDir, { recursive: true });
 
-  const templateDir = path.join(__dirname, "templates");
+  // Template Map: Source Template Name (relative to base) -> Output Filename
   const templates = {
     "actionProvider.ts.template": `${config.name}ActionProvider.ts`,
     "actionProvider.test.ts.template": `${config.name}ActionProvider.test.ts`,
-    "schemas.ts.template": "schemas.ts",
-    "README.md.template": "README.md",
-    "index.ts.template": "index.ts",
+    "action.test.ts.template": `exampleAction.test.ts`,
+    "schemas.ts.template": `schemas.ts`,
+    "README.md.template": `README.md`,
+    "index.ts.template": `index.ts`,
   };
 
-  for (const [template, outputFile] of Object.entries(templates)) {
-    const templatePath = path.join(templateDir, template);
-    const templateContent = fs.readFileSync(templatePath, "utf-8");
+  for (const [templateName, outputFile] of Object.entries(templates)) {
     try {
-      const processedContent = processTemplate(templateContent, config);
+      // Call processTemplate with the template name (relative to base dir)
+      const processedContent = processTemplate(templateName, config);
       const outputPath = path.join(targetDir, outputFile);
       fs.writeFileSync(outputPath, processedContent);
     } catch (error) {
-      console.error(`Error processing template ${template}:`, error);
-      throw error;
+      // Error already logged in processTemplate, indicate failure point
+      console.error(`Failed to process template ${templateName} for output file ${outputFile}`);
+      throw error; // Stop the process if a template fails
     }
   }
 }
@@ -154,6 +211,24 @@ export function addProviderExport(providerName: string): void {
 }
 
 /**
+ * Runs ESLint to fix any linting issues in the generated files
+ *
+ * @param targetDir - The directory containing the generated files
+ */
+export async function runLint(targetDir: string): Promise<void> {
+  await runCommandSpawn("pnpm", ["run", "lint:fix"], process.cwd(), "Linting generated files");
+}
+
+/**
+ * Runs Prettier to format the generated files
+ *
+ * @param targetDir - The directory containing the generated files
+ */
+export async function runFormat(targetDir: string): Promise<void> {
+  await runCommandSpawn("pnpm", ["run", "format"], process.cwd(), "Formatting generated files");
+}
+
+/**
  * Display success message and next steps after provider creation.
  * Shows the created file structure, next steps to implement the provider,
  * and important reminders for the developer.
@@ -167,13 +242,15 @@ export function displaySuccessMessage(providerName: string): void {
   const maxLength = Math.max(
     files.PROVIDER.length,
     files.TEST.length,
+    files.EXAMPLE_TEST.length,
     files.SCHEMAS.length,
+    files.INDEX.length,
     files.README.length,
   );
 
   console.log(SUCCESS_MESSAGES.FILES_CREATED);
   console.log(pc.dim(files.DIR));
-  for (const key of ["PROVIDER", "TEST", "SCHEMAS", "README"] as const) {
+  for (const key of ["PROVIDER", "TEST", "EXAMPLE_TEST", "SCHEMAS", "INDEX", "README"] as const) {
     console.log(pc.green(files[key].padEnd(maxLength + 2)) + pc.dim(desc[key]));
   }
 
@@ -189,7 +266,7 @@ export function displaySuccessMessage(providerName: string): void {
   );
 
   console.log(SUCCESS_MESSAGES.REMINDERS);
-  console.log("• Run npm run test to verify your implementation");
-  console.log("• Run npm run format to format your code");
-  console.log("• Run npm run lint to ensure code style");
+  console.log("• Run pnpm run test to verify your implementation");
+  console.log("• Run pnpm run format to format your code");
+  console.log("• Run pnpm run lint to ensure code style");
 }

@@ -37,7 +37,7 @@ Prompt: <prompt>
 For example:
 
 ```
-Chatbot: typescript/examples/langchain-cdp-chatbot/chatbot.ts
+Chatbot: typescript/examples/langchain-smart-wallet-chatbot/chatbot.ts
 Network: Base Sepolia
 Setup: Fauceted with 1 USDC
 

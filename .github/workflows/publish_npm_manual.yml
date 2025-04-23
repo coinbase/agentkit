@@ -18,17 +18,24 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda
+        with:
+          version: 10
+
       - uses: actions/setup-node@v4
         with:
           node-version: "18"
           registry-url: "https://registry.npmjs.org"
-          cache: "npm"
+          cache: "pnpm"
           cache-dependency-path: ./typescript
+
       - name: Install, build and publish package
         working-directory: ./typescript/${{ inputs.directory }}
         run: |
-          npm ci
-          npm run build
-          npm publish --provenance --access public
+          pnpm install --frozen-lockfile
+          pnpm run build
+          pnpm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
