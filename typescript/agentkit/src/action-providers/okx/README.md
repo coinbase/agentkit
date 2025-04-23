@@ -48,4 +48,4 @@ Requires the following environment variables or configuration options:
 - `OKX_API_PASSPHRASE`: Your OKX API passphrase
 - `OKX_PROJECT_ID`: Your OKX project ID
 
-Visit the [OKX DEX Documentation](https://www.okx.com/docs-v5/en/) for more information on obtaining API credentials and usage details.
+Visit the [OKX DEX Documentation](https://web3.okx.com/build/docs/waas/dex-introduction) for more information on obtaining API credentials and usage details.

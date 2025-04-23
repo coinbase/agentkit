@@ -4,6 +4,7 @@ import { CreateAction } from "../actionDecorator";
 import { OKXDexClient } from "@okx-dex/okx-dex-sdk";
 import { OKXDexQuoteSchema } from "./schemas";
 import { Network } from "../../network";
+import { WalletProvider } from "../../wallet-providers";
 
 /**
  * Configuration options for the OKXDexActionProvider.
@@ -34,7 +35,7 @@ export interface OKXDexActionProviderConfig {
  * OKXDexActionProvider is an action provider for interacting with the OKX DEX API.
  * This provider enables querying for token swap quotes and other DEX operations.
  */
-export class OKXDexActionProvider extends ActionProvider {
+export class OKXDexActionProvider extends ActionProvider<WalletProvider> {
   private readonly client: OKXDexClient;
   
   /**
