@@ -27,7 +27,9 @@ export class CdpApiV2ActionProvider extends ActionProvider<WalletProvider> {
     const walletSecret = config.walletSecret || process.env.CDP_WALLET_SECRET;
 
     if (!apiKeyId || !apiKeySecret || !walletSecret) {
-      throw new Error("Missing required environment variables. CDP_API_KEY_ID, CDP_API_KEY_SECRET, CDP_WALLET_SECRET are required.");
+      throw new Error(
+        "Missing required environment variables. CDP_API_KEY_ID, CDP_API_KEY_SECRET, CDP_WALLET_SECRET are required.",
+      );
     }
 
     this.#cdpClient = new CdpClient({
@@ -63,14 +65,16 @@ from another wallet and provide the user with your wallet details.`,
 
     if (network.protocolFamily == "evm") {
       if (networkId != "base-sepolia" && networkId != "ethereum-sepolia") {
-        throw new Error("Faucet is only supported on 'base-sepolia' or 'ethereum-sepolia' evm networks.");
+        throw new Error(
+          "Faucet is only supported on 'base-sepolia' or 'ethereum-sepolia' evm networks.",
+        );
       }
 
       const faucetTx = await this.#cdpClient.evm.requestFaucet({
         address: walletProvider.getAddress(),
         token: (args.assetId || "eth") as "eth" | "usdc" | "eurc" | "cbbtc",
-        network: networkId
-      })
+        network: networkId,
+      });
 
       return `Received ${
         args.assetId || "ETH"
@@ -83,13 +87,12 @@ from another wallet and provide the user with your wallet details.`,
       const faucetTx = await this.#cdpClient.solana.requestFaucet({
         address: walletProvider.getAddress(),
         token: (args.assetId || "sol") as "sol" | "usdc",
-      })
+      });
 
       return `Received ${
         args.assetId || "SOL"
       } from the faucet. Transaction signature hash: ${faucetTx.signature}`;
-    }
-    else {
+    } else {
       throw new Error("Faucet is only supported on Ethereum and Solana protocol families.");
     }
   }

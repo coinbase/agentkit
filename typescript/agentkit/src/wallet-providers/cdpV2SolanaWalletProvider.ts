@@ -1,20 +1,29 @@
 import { CdpClient } from "@coinbase/cdp-sdk";
-import { clusterApiUrl, ComputeBudgetProgram, Connection, LAMPORTS_PER_SOL, MessageV0, PublicKey, RpcResponseAndContext, SignatureResult, SignatureStatus, SignatureStatusConfig, SystemProgram, VersionedTransaction } from "@solana/web3.js";
+import {
+  clusterApiUrl,
+  ComputeBudgetProgram,
+  Connection,
+  LAMPORTS_PER_SOL,
+  MessageV0,
+  PublicKey,
+  RpcResponseAndContext,
+  SignatureResult,
+  SignatureStatus,
+  SignatureStatusConfig,
+  SystemProgram,
+  VersionedTransaction,
+} from "@solana/web3.js";
 import { Network } from "../network";
 import {
-  SOLANA_DEVNET_GENESIS_BLOCK_HASH,
   SOLANA_DEVNET_NETWORK,
   SOLANA_DEVNET_NETWORK_ID,
-  SOLANA_MAINNET_GENESIS_BLOCK_HASH,
   SOLANA_MAINNET_NETWORK,
   SOLANA_MAINNET_NETWORK_ID,
-  SOLANA_TESTNET_GENESIS_BLOCK_HASH,
   SOLANA_TESTNET_NETWORK,
   SOLANA_TESTNET_NETWORK_ID,
 } from "../network/svm";
 import { CdpV2WalletProviderConfig } from "./cdpV2Shared";
 import { SvmWalletProvider } from "./svmWalletProvider";
-
 
 interface ConfigureCdpV2WalletProviderWithWalletOptions {
   /**
@@ -77,28 +86,26 @@ export class CdpV2SolanaWalletProvider extends SvmWalletProvider {
     const idempotencyKey = config.idempotencyKey || process.env.IDEMPOTENCY_KEY;
 
     if (!apiKeyId || !apiKeySecret || !walletSecret) {
-      throw new Error("Missing required environment variables. CDP_API_KEY_ID, CDP_API_KEY_SECRET, CDP_WALLET_SECRET are required.");
+      throw new Error(
+        "Missing required environment variables. CDP_API_KEY_ID, CDP_API_KEY_SECRET, CDP_WALLET_SECRET are required.",
+      );
     }
 
     const networkId: string = config.networkId || process.env.NETWORK_ID || "solana-devnet";
 
     let network: Network;
-    let genesisHash: string;
     let rpcUrl: string;
     switch (networkId) {
       case SOLANA_MAINNET_NETWORK_ID:
         network = SOLANA_MAINNET_NETWORK;
-        genesisHash = SOLANA_MAINNET_GENESIS_BLOCK_HASH;
         rpcUrl = clusterApiUrl("mainnet-beta");
         break;
       case SOLANA_DEVNET_NETWORK_ID:
         network = SOLANA_DEVNET_NETWORK;
-        genesisHash = SOLANA_DEVNET_GENESIS_BLOCK_HASH;
         rpcUrl = clusterApiUrl("devnet");
         break;
       case SOLANA_TESTNET_NETWORK_ID:
         network = SOLANA_TESTNET_NETWORK;
-        genesisHash = SOLANA_TESTNET_GENESIS_BLOCK_HASH;
         rpcUrl = clusterApiUrl("testnet");
         break;
       default:
@@ -109,18 +116,20 @@ export class CdpV2SolanaWalletProvider extends SvmWalletProvider {
       apiKeyId,
       apiKeySecret,
       walletSecret,
-    })
+    });
 
     const connection = new Connection(rpcUrl);
 
-    const serverAccount = await (config.address ? cdpClient.solana.getAccount({ address: config.address }) : cdpClient.solana.createAccount({idempotencyKey}))
+    const serverAccount = await (config.address
+      ? cdpClient.solana.getAccount({ address: config.address })
+      : cdpClient.solana.createAccount({ idempotencyKey }));
 
     return new CdpV2SolanaWalletProvider({
       connection,
       cdpClient,
       serverAccount,
       network,
-    })
+    });
   }
 
   /**
@@ -181,8 +190,11 @@ export class CdpV2SolanaWalletProvider extends SvmWalletProvider {
     const signedTransaction = await this.#cdpClient.solana.signTransaction({
       transaction: encodedSerializedTransaction,
       address: this.#serverAccount.address,
-    })
-    transaction.addSignature(this.getPublicKey(), Buffer.from(signedTransaction.signature, "base64"));
+    });
+    transaction.addSignature(
+      this.getPublicKey(),
+      Buffer.from(signedTransaction.signature, "base64"),
+    );
 
     return transaction;
   }
@@ -248,7 +260,6 @@ export class CdpV2SolanaWalletProvider extends SvmWalletProvider {
     return this.#connection.getBalance(this.getPublicKey()).then(balance => BigInt(balance));
   }
 
-
   /**
    * Transfer SOL from the wallet to another address
    *
@@ -295,7 +306,7 @@ export class CdpV2SolanaWalletProvider extends SvmWalletProvider {
 
     const signature = await this.signAndSendTransaction(tx);
     await this.waitForSignatureResult(signature);
-    
+
     return signature;
   }
 }

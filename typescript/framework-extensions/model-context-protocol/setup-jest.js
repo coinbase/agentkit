@@ -1,1 +1,1 @@
-jest.mock('jose', () => ({}));
+jest.mock("jose", () => ({}));

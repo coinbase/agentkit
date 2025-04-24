@@ -5,22 +5,18 @@ import {
   ContractFunctionArgs,
   ContractFunctionName,
   createPublicClient,
-  createWalletClient,
   Hex,
   http,
   PublicClient,
   ReadContractParameters,
   ReadContractReturnType,
   serializeTransaction,
-  Signature,
   TransactionRequest,
-  TransactionSerializable
+  TransactionSerializable,
 } from "viem";
 import { Network, NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_VIEM_CHAIN } from "../network";
 import { EvmWalletProvider } from "./evmWalletProvider";
-import { toAccount } from "viem/accounts";
 import { CdpV2WalletProviderConfig } from "./cdpV2Shared";
-
 
 interface ConfigureCdpV2EvmWalletProviderWithWalletOptions {
   /**
@@ -83,7 +79,9 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider {
     const idempotencyKey = config.idempotencyKey || process.env.IDEMPOTENCY_KEY;
 
     if (!apiKeyId || !apiKeySecret || !walletSecret) {
-      throw new Error("Missing required environment variables. CDP_API_KEY_ID, CDP_API_KEY_SECRET, CDP_WALLET_SECRET are required.");
+      throw new Error(
+        "Missing required environment variables. CDP_API_KEY_ID, CDP_API_KEY_SECRET, CDP_WALLET_SECRET are required.",
+      );
     }
 
     const networkId: string = config.networkId || process.env.NETWORK_ID || "base-sepolia";
@@ -97,9 +95,11 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider {
       apiKeyId,
       apiKeySecret,
       walletSecret,
-    })
+    });
 
-    const serverAccount = await (config.address ? cdpClient.evm.getAccount({ address: config.address as Address }) : cdpClient.evm.createAccount({ idempotencyKey }))
+    const serverAccount = await (config.address
+      ? cdpClient.evm.getAccount({ address: config.address as Address })
+      : cdpClient.evm.createAccount({ idempotencyKey }));
 
     const publicClient = createPublicClient({
       chain: NETWORK_ID_TO_VIEM_CHAIN[networkId],
@@ -111,7 +111,7 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider {
       cdpClient,
       serverAccount,
       network,
-    })
+    });
   }
 
   /**
@@ -146,7 +146,7 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider {
     const signedTx = await this.#cdpClient.evm.signTransaction({
       address: this.#serverAccount.address,
       transaction: serializedTx,
-    })
+    });
 
     return signedTx.signature;
   }
@@ -158,32 +158,12 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider {
    * @returns The hash of the transaction.
    */
   async sendTransaction(transaction: TransactionRequest): Promise<Hex> {
-    const viemAccount = toAccount({
+    const result = await this.#cdpClient.evm.sendTransaction({
       address: this.#serverAccount.address,
-      signMessage: async ({ message }) => {
-        throw new Error("Not implemented")
-      },
-      signTransaction: async (transaction) => {
-        const result = await this.#cdpClient.evm.signTransaction({
-          address: this.#serverAccount.address,
-          transaction: serializeTransaction(transaction as TransactionSerializable),
-        });
-        return result.signature as Hex;
-      },
-      signTypedData: async (typedData) => {
-        throw new Error("Not implemented")
-      },
-    })
-
-    return await createWalletClient({
-      chain: NETWORK_ID_TO_VIEM_CHAIN[this.#network.networkId!],
-      transport: http()
-    }).sendTransaction({
-      account: viemAccount,
-      to: transaction.to as Address,
-      value: transaction.value as bigint,
-      data: transaction.data as Hex,
-    })
+      transaction: serializeTransaction(transaction as TransactionSerializable),
+      network: this.#getCdpSdkNetwork(),
+    });
+    return result.transactionHash;
   }
 
   /**
@@ -262,5 +242,22 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider {
       value: BigInt(value),
       data: "0x",
     });
+  }
+
+  /**
+   * Converts the internal network ID to the format expected by the CDP SDK.
+   *
+   * @returns The network ID in CDP SDK format ("base-sepolia" or "base")
+   * @throws Error if the network is not supported
+   */
+  #getCdpSdkNetwork(): "base-sepolia" | "base" {
+    switch (this.#network.networkId) {
+      case "base-sepolia":
+        return "base-sepolia";
+      case "base-mainnet":
+        return "base";
+      default:
+        throw new Error(`Unsupported network: ${this.#network.networkId}`);
+    }
   }
 }

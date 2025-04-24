@@ -1,6 +1,6 @@
 import { CdpV2EvmWalletProvider } from "./cdpV2EvmWalletProvider";
 import { CdpV2SolanaWalletProvider } from "./cdpV2SolanaWalletProvider";
-import { CdpV2WalletProviderConfig } from "./cdpV2Shared"
+import { CdpV2WalletProviderConfig } from "./cdpV2Shared";
 import { SOLANA_NETWORK_ID, SOLANA_NETWORK_IDS } from "../network";
 
 export type CdpV2WalletProviderVariant = CdpV2SolanaWalletProvider | CdpV2EvmWalletProvider;
@@ -37,7 +37,8 @@ export class CdpV2WalletProvider {
   static async configureWithWallet<T extends CdpV2WalletProviderConfig>(
     config: T,
   ): Promise<CdpV2WalletProviderVariant> {
-    const useSolana = config.networkId && SOLANA_NETWORK_IDS.includes(config.networkId as SOLANA_NETWORK_ID);
+    const useSolana =
+      config.networkId && SOLANA_NETWORK_IDS.includes(config.networkId as SOLANA_NETWORK_ID);
 
     const walletProviderClass = useSolana ? CdpV2SolanaWalletProvider : CdpV2EvmWalletProvider;
 

@@ -6,9 +6,6 @@ import {
   erc20ActionProvider,
   erc721ActionProvider,
   cdpApiV2ActionProvider,
-  pythActionProvider,
-  openseaActionProvider,
-  alloraActionProvider,
   CdpV2EvmWalletProvider,
   CdpV2SolanaWalletProvider,
   splActionProvider,
@@ -19,7 +16,6 @@ import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 import * as dotenv from "dotenv";
-import * as fs from "fs";
 import * as readline from "readline";
 
 dotenv.config();
@@ -34,7 +30,12 @@ function validateEnvironment(): void {
   const missingVars: string[] = [];
 
   // Check required variables
-  const requiredVars = ["OPENAI_API_KEY", "CDP_API_KEY_ID", "CDP_API_KEY_SECRET", "CDP_WALLET_SECRET"];
+  const requiredVars = [
+    "OPENAI_API_KEY",
+    "CDP_API_KEY_ID",
+    "CDP_API_KEY_SECRET",
+    "CDP_WALLET_SECRET",
+  ];
   requiredVars.forEach(varName => {
     if (!process.env[varName]) {
       missingVars.push(varName);
@@ -65,7 +66,9 @@ validateEnvironment();
  * @param walletProvider - The wallet provider to check
  * @returns True if the wallet provider is an EVM provider, false otherwise
  */
-function isEvmWalletProvider(walletProvider: CdpV2WalletProvider): walletProvider is CdpV2EvmWalletProvider {
+function isEvmWalletProvider(
+  walletProvider: CdpV2WalletProvider,
+): walletProvider is CdpV2EvmWalletProvider {
   return walletProvider instanceof CdpV2EvmWalletProvider;
 }
 
@@ -75,7 +78,9 @@ function isEvmWalletProvider(walletProvider: CdpV2WalletProvider): walletProvide
  * @param walletProvider - The wallet provider to check
  * @returns True if the wallet provider is a Solana provider, false otherwise
  */
-function isSolanaWalletProvider(walletProvider: CdpV2WalletProvider): walletProvider is CdpV2SolanaWalletProvider {
+function isSolanaWalletProvider(
+  walletProvider: CdpV2WalletProvider,
+): walletProvider is CdpV2SolanaWalletProvider {
   return walletProvider instanceof CdpV2SolanaWalletProvider;
 }
 
@@ -96,7 +101,7 @@ async function initializeAgent() {
       apiKeyId: process.env.CDP_API_KEY_ID,
       apiKeySecret: process.env.CDP_API_KEY_SECRET,
       walletSecret: process.env.CDP_WALLET_SECRET,
-    }
+    };
 
     const cdpWalletConfig = {
       ...cdpConfig,
@@ -109,16 +114,12 @@ async function initializeAgent() {
     const actionProviders = [
       walletActionProvider(),
       cdpApiV2ActionProvider(cdpConfig),
-      ...isEvmWalletProvider(walletProvider) ? 
-      [
-        wethActionProvider(),
-        erc20ActionProvider(),
-        erc721ActionProvider(),
-      ] : isSolanaWalletProvider(walletProvider) ? 
-      [
-        splActionProvider(),
-      ] : []
-    ]
+      ...(isEvmWalletProvider(walletProvider)
+        ? [wethActionProvider(), erc20ActionProvider(), erc721ActionProvider()]
+        : isSolanaWalletProvider(walletProvider)
+          ? [splActionProvider()]
+          : []),
+    ];
 
     // Initialize AgentKit
     const agentkit = await AgentKit.from({

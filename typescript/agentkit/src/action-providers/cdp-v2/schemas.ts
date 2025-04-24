@@ -9,4 +9,3 @@ export const RequestFaucetFundsV2Schema = z
   })
   .strip()
   .describe("Instructions for requesting faucet funds");
-
