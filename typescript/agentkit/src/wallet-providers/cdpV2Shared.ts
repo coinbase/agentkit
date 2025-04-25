@@ -1,3 +1,5 @@
+import { CdpClient } from "@coinbase/cdp-sdk";
+
 export interface CdpV2ProviderConfig {
   /**
    * The CDP API Key ID.
@@ -33,4 +35,14 @@ export interface CdpV2WalletProviderConfig extends CdpV2ProviderConfig {
    * The idempotency key of the wallet. Only used when creating a new account.
    */
   idempotencyKey?: string;
+}
+
+/**
+ * A wallet provider that can be used to interact with the CDP.
+ */
+export interface WalletProviderWithClient {
+  /**
+   * Gets the CDP client.
+   */
+  getClient(): CdpClient;
 }

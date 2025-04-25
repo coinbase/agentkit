@@ -22,7 +22,7 @@ import {
   SOLANA_TESTNET_NETWORK,
   SOLANA_TESTNET_NETWORK_ID,
 } from "../network/svm";
-import { CdpV2WalletProviderConfig } from "./cdpV2Shared";
+import { WalletProviderWithClient, CdpV2WalletProviderConfig } from "./cdpV2Shared";
 import { SvmWalletProvider } from "./svmWalletProvider";
 
 interface ConfigureCdpV2WalletProviderWithWalletOptions {
@@ -50,7 +50,10 @@ interface ConfigureCdpV2WalletProviderWithWalletOptions {
 /**
  * A wallet provider that uses the Coinbase SDK.
  */
-export class CdpV2SolanaWalletProvider extends SvmWalletProvider {
+export class CdpV2SolanaWalletProvider
+  extends SvmWalletProvider
+  implements WalletProviderWithClient
+{
   #connection: Connection;
   #serverAccount: Awaited<ReturnType<typeof CdpClient.prototype.solana.createAccount>>;
   #cdpClient: CdpClient;
@@ -258,6 +261,15 @@ export class CdpV2SolanaWalletProvider extends SvmWalletProvider {
    */
   getBalance(): Promise<bigint> {
     return this.#connection.getBalance(this.getPublicKey()).then(balance => BigInt(balance));
+  }
+
+  /**
+   * Gets the CDP client.
+   *
+   * @returns The CDP client.
+   */
+  getClient(): CdpClient {
+    return this.#cdpClient;
   }
 
   /**

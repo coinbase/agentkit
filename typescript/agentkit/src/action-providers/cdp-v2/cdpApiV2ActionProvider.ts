@@ -1,42 +1,24 @@
 import { z } from "zod";
+import { Network } from "../../network";
+import { WalletProvider } from "../../wallet-providers";
+import { WalletProviderWithClient } from "../../wallet-providers/cdpV2Shared";
 import { CreateAction } from "../actionDecorator";
 import { ActionProvider } from "../actionProvider";
-import { Network } from "../../network";
-import { CdpV2WalletProviderConfig, WalletProvider } from "../../wallet-providers";
 import { RequestFaucetFundsV2Schema } from "./schemas";
-import { CdpClient } from "@coinbase/cdp-sdk";
+
+type CdpV2WalletProviderWithClient = WalletProvider & WalletProviderWithClient;
 
 /**
  * CdpApiActionProvider is an action provider for CDP API.
  *
  * This provider is used for any action that uses the CDP API, but does not require a CDP Wallet.
  */
-export class CdpApiV2ActionProvider extends ActionProvider<WalletProvider> {
-  #cdpClient: CdpClient;
-
+export class CdpApiV2ActionProvider extends ActionProvider<CdpV2WalletProviderWithClient> {
   /**
    * Constructor for the CdpApiActionProvider class.
-   *
-   * @param config - The configuration options for the CdpApiActionProvider.
    */
-  constructor(config: CdpV2WalletProviderConfig = {}) {
+  constructor() {
     super("cdp_api", []);
-
-    const apiKeyId = config.apiKeyId || process.env.CDP_API_KEY_ID;
-    const apiKeySecret = config.apiKeySecret || process.env.CDP_API_KEY_SECRET;
-    const walletSecret = config.walletSecret || process.env.CDP_WALLET_SECRET;
-
-    if (!apiKeyId || !apiKeySecret || !walletSecret) {
-      throw new Error(
-        "Missing required environment variables. CDP_API_KEY_ID, CDP_API_KEY_SECRET, CDP_WALLET_SECRET are required.",
-      );
-    }
-
-    this.#cdpClient = new CdpClient({
-      apiKeyId,
-      apiKeySecret,
-      walletSecret,
-    });
   }
 
   /**
@@ -57,20 +39,20 @@ from another wallet and provide the user with your wallet details.`,
     schema: RequestFaucetFundsV2Schema,
   })
   async faucet(
-    walletProvider: WalletProvider,
+    walletProvider: CdpV2WalletProviderWithClient,
     args: z.infer<typeof RequestFaucetFundsV2Schema>,
   ): Promise<string> {
     const network = walletProvider.getNetwork();
     const networkId = network.networkId!;
 
-    if (network.protocolFamily == "evm") {
-      if (networkId != "base-sepolia" && networkId != "ethereum-sepolia") {
+    if (network.protocolFamily === "evm") {
+      if (networkId !== "base-sepolia" && networkId !== "ethereum-sepolia") {
         throw new Error(
           "Faucet is only supported on 'base-sepolia' or 'ethereum-sepolia' evm networks.",
         );
       }
 
-      const faucetTx = await this.#cdpClient.evm.requestFaucet({
+      const faucetTx = await walletProvider.getClient().evm.requestFaucet({
         address: walletProvider.getAddress(),
         token: (args.assetId || "eth") as "eth" | "usdc" | "eurc" | "cbbtc",
         network: networkId,
@@ -79,12 +61,12 @@ from another wallet and provide the user with your wallet details.`,
       return `Received ${
         args.assetId || "ETH"
       } from the faucet. Transaction hash: ${faucetTx.transactionHash}`;
-    } else if (network.protocolFamily == "svm") {
+    } else if (network.protocolFamily === "svm") {
       if (networkId != "solana-devnet") {
         throw new Error("Faucet is only supported on 'solana-devnet' solana networks.");
       }
 
-      const faucetTx = await this.#cdpClient.solana.requestFaucet({
+      const faucetTx = await walletProvider.getClient().solana.requestFaucet({
         address: walletProvider.getAddress(),
         token: (args.assetId || "sol") as "sol" | "usdc",
       });
@@ -108,5 +90,4 @@ from another wallet and provide the user with your wallet details.`,
   supportsNetwork = (_: Network) => true;
 }
 
-export const cdpApiV2ActionProvider = (config: CdpV2WalletProviderConfig = {}) =>
-  new CdpApiV2ActionProvider(config);
+export const cdpApiV2ActionProvider = new CdpApiV2ActionProvider();

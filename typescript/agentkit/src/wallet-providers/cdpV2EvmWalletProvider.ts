@@ -16,7 +16,7 @@ import {
 } from "viem";
 import { Network, NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_VIEM_CHAIN } from "../network";
 import { EvmWalletProvider } from "./evmWalletProvider";
-import { CdpV2WalletProviderConfig } from "./cdpV2Shared";
+import { WalletProviderWithClient, CdpV2WalletProviderConfig } from "./cdpV2Shared";
 
 interface ConfigureCdpV2EvmWalletProviderWithWalletOptions {
   /**
@@ -43,7 +43,7 @@ interface ConfigureCdpV2EvmWalletProviderWithWalletOptions {
 /**
  * A wallet provider that uses the Coinbase SDK.
  */
-export class CdpV2EvmWalletProvider extends EvmWalletProvider {
+export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletProviderWithClient {
   #publicClient: PublicClient;
   #serverAccount: EvmServerAccount;
   #cdpClient: CdpClient;
@@ -191,6 +191,15 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider {
    */
   getName(): string {
     return "cdp_v2_wallet_provider";
+  }
+
+  /**
+   * Gets the CDP client.
+   *
+   * @returns The CDP client.
+   */
+  getClient(): CdpClient {
+    return this.#cdpClient;
   }
 
   /**
