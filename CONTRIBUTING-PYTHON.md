@@ -12,25 +12,24 @@ This guide covers Python-specific setup and development for AgentKit.
 - [Code Style](#code-style)
 - [Documentation](#documentation)
 - [Changelog](#changelog)
-- [Releasing](#releasing)
 
 ## Development Setup
 
-AgentKit uses Python 3.10 or higher and Poetry 1.8.5 or higher.
+AgentKit uses Python 3.10 or higher and uv 0.6.0 or higher.
 
-You can run the following commands in your terminal to check your local Python and Poetry versions:
+You can run the following commands in your terminal to check your local Python and uv versions:
 
 ```bash
 python --version
-poetry --version
+uv --version
 ```
 
-If the versions are not correct or you don't have Python or Poetry installed, download and follow their setup instructions:
+If the versions are not correct or you don't have Python or uv installed, download and follow their setup instructions:
 
 - Python: install with [pyenv](https://github.com/pyenv/pyenv)
-- Poetry: follow the official [Poetry installation instructions](https://python-poetry.org/docs/#installation)
+- uv: follow the official [uv installation instructions](https://github.com/astral-sh/uv?tab=readme-ov-file#installation)
 
-Once you have these installed, make sure you install the project dependencies by running `poetry install` from the package directory.
+Once you have these installed, make sure you install the project dependencies by running `uv sync` from the package directory.
 
 ## Adding an Action Provider
 
@@ -194,12 +193,12 @@ Integrations into AI Agent frameworks are specific to the framework itself, so w
 
 ### Local Testing
 
-A good way to test new actions locally is by using the chatbot example in `python/examples/langchain-cdp-chatbot`. See the [chatbot README](./python/examples/langchain-cdp-chatbot/README.md) for instructions on setting up and running the chatbot.
+A good way to test new actions locally is by using the chatbot example in `python/examples/langchain-smart-wallet-chatbot`. See the [chatbot README](./python/examples/langchain-smart-wallet-chatbot/README.md) for instructions on setting up and running the chatbot.
 
 The flow is:
 
 1. Make your change as described in the [Adding an Action Provider](#adding-an-action-provider) section
-2. In the example directory, run `poetry install && poetry run python chatbot.py`
+2. In the example directory, run `uv sync && uv run chatbot.py`
 3. You can now interact with your new action via the chatbot!
 
 ### Running Tests
@@ -253,10 +252,10 @@ To add a changelog entry, you can create the changelog entry file yourself, or u
 cd python/coinbase-agentkit
 
 # Create a new changelog entry file for a bugfix relating to issue #123
-poetry run towncrier create --content "Fixed a bug" 123.bugfix.md
+uv run towncrier create --content "Fixed a bug" 123.bugfix.md
 
 # Or, create a new changelog entry for a feature relating to issue #124
-poetry run towncrier create --content "Added a new feature" 124.feature.md
+uv run towncrier create --content "Added a new feature" 124.feature.md
 ```
 
 This will create a new changelog entry in the `changelog.d` directory, which should be committed along with the changes in your Pull Request.
@@ -265,18 +264,3 @@ The types of changes you can add are:
 
 - `feature`
 - `bugfix`
-
-## Releasing
-
-When ready to release the Python packages, follow these steps.
-
-1. From the `python/` folder, run: `./scripts/version.sh`
-   - This creates a file `.to-publish-pypi` containing which packages have changes, and the new version that will be published. This file is automatically used in step 5.
-2. Commit the changes and open a PR with message: `chore: version python packages`
-3. Get PR reviewed and merge to `main`
-4. Run GitHub Actions to release changed packages
-   - [Publish AgentKit Core Action](https://github.com/coinbase/agentkit/actions/workflows/publish_pypi_coinbase_agentkit.yml)
-   - [Publish Create Onchain Agent Action](https://github.com/coinbase/agentkit/actions/workflows/publish_pypi_create_onchain_agent.yml)
-   - [Publish Agentkit Langchain Action](https://github.com/coinbase/agentkit/actions/workflows/publish_pypi_coinbase_agentkit_langchain.yml)
-   - [Publish Open AI Extension](https://github.com/coinbase/agentkit/actions/workflows/publish_pypi_coinbase_agentkit_openai_agents_sdk.yml)
-5. After all changed packages have been published, rebase `main` and, from the `python/` folder, run the following command to automatically create and push tags for changed packages: `./scripts/tag.sh`

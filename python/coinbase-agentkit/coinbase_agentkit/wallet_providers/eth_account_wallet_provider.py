@@ -108,7 +108,7 @@ class EthAccountWalletProvider(EvmWalletProvider):
             str: The string 'eth_account_wallet_provider'
 
         """
-        return "eth-account"
+        return "eth_account_wallet_provider"
 
     def sign_message(self, message: str | bytes) -> HexStr:
         """Sign a message using the wallet's private key.

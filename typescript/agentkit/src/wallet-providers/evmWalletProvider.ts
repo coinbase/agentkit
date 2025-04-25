@@ -1,6 +1,7 @@
 // TODO: Improve type safety
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { toAccount } from "viem/accounts";
 import { WalletProvider } from "./walletProvider";
 import {
   TransactionRequest,
@@ -9,6 +10,8 @@ import {
   ContractFunctionName,
   Abi,
   ContractFunctionArgs,
+  Address,
+  Account,
 } from "viem";
 
 /**
@@ -17,6 +20,26 @@ import {
  * @abstract
  */
 export abstract class EvmWalletProvider extends WalletProvider {
+  /**
+   * Convert the wallet provider to a Signer.
+   *
+   * @returns The signer.
+   */
+  toSigner(): Account {
+    return toAccount({
+      address: this.getAddress() as Address,
+      signMessage: async ({ message }) => {
+        return this.signMessage(message as string | Uint8Array);
+      },
+      signTransaction: async transaction => {
+        return this.signTransaction(transaction as TransactionRequest);
+      },
+      signTypedData: async typedData => {
+        return this.signTypedData(typedData);
+      },
+    });
+  }
+
   /**
    * Sign a message.
    *

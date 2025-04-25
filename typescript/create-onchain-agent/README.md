@@ -43,6 +43,11 @@ agentkit generate prepare
 agentkit generate create-agent
 ```
 
+> **Note**: If the above commands print the error `agentkit: not found`, ensure the agentkit cli is installed by running the following command:
+> ```bash
+> npm install -g create-onchain-agent/@latest
+> ```
+
 ## Features
 
 - **Multiple project templates**:
