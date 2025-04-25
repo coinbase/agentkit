@@ -29,7 +29,7 @@ interface ConfigureCdpV2WalletProviderWithWalletOptions {
   /**
    * The CDP client of the wallet.
    */
-  cdpClient: CdpClient;
+  cdp: CdpClient;
 
   /**
    * The server account of the wallet.
@@ -56,7 +56,7 @@ export class CdpV2SolanaWalletProvider
 {
   #connection: Connection;
   #serverAccount: Awaited<ReturnType<typeof CdpClient.prototype.solana.createAccount>>;
-  #cdpClient: CdpClient;
+  #cdp: CdpClient;
   #network: Network;
 
   /**
@@ -68,7 +68,7 @@ export class CdpV2SolanaWalletProvider
     super();
 
     this.#serverAccount = config.serverAccount;
-    this.#cdpClient = config.cdpClient;
+    this.#cdp = config.cdp;
     this.#connection = config.connection;
     this.#network = config.network;
   }
@@ -129,7 +129,7 @@ export class CdpV2SolanaWalletProvider
 
     return new CdpV2SolanaWalletProvider({
       connection,
-      cdpClient,
+      cdp: cdpClient,
       serverAccount,
       network,
     });
@@ -190,7 +190,7 @@ export class CdpV2SolanaWalletProvider
     const serializedTransaction = transaction.serialize();
     const encodedSerializedTransaction = Buffer.from(serializedTransaction).toString("base64");
 
-    const signedTransaction = await this.#cdpClient.solana.signTransaction({
+    const signedTransaction = await this.#cdp.solana.signTransaction({
       transaction: encodedSerializedTransaction,
       address: this.#serverAccount.address,
     });
@@ -269,7 +269,7 @@ export class CdpV2SolanaWalletProvider
    * @returns The CDP client.
    */
   getClient(): CdpClient {
-    return this.#cdpClient;
+    return this.#cdp;
   }
 
   /**

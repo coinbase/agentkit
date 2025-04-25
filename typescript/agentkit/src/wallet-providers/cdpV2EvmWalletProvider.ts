@@ -22,7 +22,7 @@ interface ConfigureCdpV2EvmWalletProviderWithWalletOptions {
   /**
    * The CDP client of the wallet.
    */
-  cdpClient: CdpClient;
+  cdp: CdpClient;
 
   /**
    * The server account of the wallet.
@@ -46,7 +46,7 @@ interface ConfigureCdpV2EvmWalletProviderWithWalletOptions {
 export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletProviderWithClient {
   #publicClient: PublicClient;
   #serverAccount: EvmServerAccount;
-  #cdpClient: CdpClient;
+  #cdp: CdpClient;
   #network: Network;
 
   /**
@@ -58,7 +58,7 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletP
     super();
 
     this.#serverAccount = config.serverAccount;
-    this.#cdpClient = config.cdpClient;
+    this.#cdp = config.cdp;
     this.#publicClient = config.publicClient;
     this.#network = config.network;
   }
@@ -108,7 +108,7 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletP
 
     return new CdpV2EvmWalletProvider({
       publicClient,
-      cdpClient,
+      cdp: cdpClient,
       serverAccount,
       network,
     });
@@ -143,7 +143,7 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletP
    */
   async signTransaction(transaction: TransactionRequest): Promise<Hex> {
     const serializedTx = serializeTransaction(transaction as TransactionSerializable);
-    const signedTx = await this.#cdpClient.evm.signTransaction({
+    const signedTx = await this.#cdp.evm.signTransaction({
       address: this.#serverAccount.address,
       transaction: serializedTx,
     });
@@ -158,7 +158,7 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletP
    * @returns The hash of the transaction.
    */
   async sendTransaction(transaction: TransactionRequest): Promise<Hex> {
-    const result = await this.#cdpClient.evm.sendTransaction({
+    const result = await this.#cdp.evm.sendTransaction({
       address: this.#serverAccount.address,
       transaction: serializeTransaction(transaction as TransactionSerializable),
       network: this.#getCdpSdkNetwork(),
@@ -199,7 +199,7 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletP
    * @returns The CDP client.
    */
   getClient(): CdpClient {
-    return this.#cdpClient;
+    return this.#cdp;
   }
 
   /**
@@ -208,7 +208,7 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletP
    * @returns The balance of the wallet in wei
    */
   async getBalance(): Promise<bigint> {
-    return await this.#publicClient!.getBalance({ address: this.#serverAccount.address });
+    return await this.#publicClient.getBalance({ address: this.#serverAccount.address });
   }
 
   /**
@@ -219,7 +219,7 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletP
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async waitForTransactionReceipt(txHash: Hex): Promise<any> {
-    return await this.#publicClient!.waitForTransactionReceipt({ hash: txHash });
+    return await this.#publicClient.waitForTransactionReceipt({ hash: txHash });
   }
 
   /**
@@ -235,7 +235,7 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletP
   >(
     params: ReadContractParameters<abi, functionName, args>,
   ): Promise<ReadContractReturnType<abi, functionName, args>> {
-    return this.#publicClient!.readContract<abi, functionName, args>(params);
+    return this.#publicClient.readContract<abi, functionName, args>(params);
   }
 
   /**

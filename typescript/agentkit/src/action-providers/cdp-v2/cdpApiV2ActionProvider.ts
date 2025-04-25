@@ -18,7 +18,7 @@ export class CdpApiV2ActionProvider extends ActionProvider<CdpV2WalletProviderWi
    * Constructor for the CdpApiActionProvider class.
    */
   constructor() {
-    super("cdp_api", []);
+    super("cdp_api_v2", []);
   }
 
   /**
@@ -62,7 +62,7 @@ from another wallet and provide the user with your wallet details.`,
         args.assetId || "ETH"
       } from the faucet. Transaction hash: ${faucetTx.transactionHash}`;
     } else if (network.protocolFamily === "svm") {
-      if (networkId != "solana-devnet") {
+      if (networkId !== "solana-devnet") {
         throw new Error("Faucet is only supported on 'solana-devnet' solana networks.");
       }
 
@@ -90,4 +90,4 @@ from another wallet and provide the user with your wallet details.`,
   supportsNetwork = (_: Network) => true;
 }
 
-export const cdpApiV2ActionProvider = new CdpApiV2ActionProvider();
+export const cdpApiV2ActionProvider = () => new CdpApiV2ActionProvider();
