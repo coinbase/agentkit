@@ -1,59 +1,127 @@
 import { z } from "zod";
 
 /**
- * Input schema for getting a swap quote from OKX DEX.
+ * Schema definition for OKX DEX quote request parameters
+ * Based on the OKX DEX API documentation
  */
-export const OKXDexQuoteSchema = z
-  .object({
-    chainId: z
-      .string()
-      .describe("Blockchain network ID (e.g., '1' for Ethereum mainnet, '56' for BSC)"),
-    
-    fromTokenAddress: z
-      .string()
-      .describe("Source token contract address (use 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE for native token)"),
-    
-    toTokenAddress: z
-      .string()
-      .describe("Destination token contract address"),
-    
-    amount: z
-      .string()
-      .describe("Amount of source token in wei format (with all decimals)"),
-    
-    slippage: z
-      .string()
-      .describe("Maximum acceptable slippage percentage (e.g., '0.5' for 0.5%)")
-      .optional()
-      .default("0.5"),
-    
-    // Additional optional parameters
-    userAddress: z
-      .string()
-      .describe("User wallet address for quotes that require it")
-      .optional(),
-    
-    excludeDexes: z
-      .array(z.string())
-      .describe("List of DEXes to exclude from routing")
-      .optional(),
-    
-    includeDexes: z
-      .array(z.string())
-      .describe("List of DEXes to include in routing (if provided, only these will be used)")
-      .optional(),
-  })
-  .describe("Input schema for fetching swap quotes from OKX DEX");
+export const OKXDexQuoteSchema = z.object({
+  /**
+   * Chain ID (e.g., 501 for Solana)
+   * @required
+   */
+  chainId: z.string().default("501").describe("Chain ID (defaults to 501 for Solana)"),
+  
+  /**
+   * The input amount of a token to be sold in minimal divisible units
+   * e.g., 1.00 USDT as 1000000, 1.00 DAI as 1000000000000000000
+   * @required
+   */
+  amount: z.string().describe("The input amount in minimal divisible units"),
+  
+  /**
+   * The contract address of a token to be sold
+   * e.g., 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee for native token
+   * @required
+   */
+  fromTokenAddress: z.string().describe("The contract address of the token to be sold"),
+  
+  /**
+   * The contract address of a token to be bought
+   * @required
+   */
+  toTokenAddress: z.string().describe("The contract address of the token to be bought"),
+  
+  /**
+   * DexId of the liquidity pool for limited quotes
+   * Multiple combinations separated by commas (e.g., 1,50,180)
+   * @optional
+   */
+  dexIds: z.string().optional().describe("DexId of the liquidity pool, comma-separated"),
+  
+  /**
+   * When enabled, Direct Routes restrict routing to a single liquidity pool only
+   * Currently only active for Solana swaps
+   * @optional Default: false
+   */
+  directRoute: z.boolean().optional().describe("Restrict to a single liquidity pool"),
+  
+  /**
+   * The percentage (between 0 - 1.0) of the price impact allowed
+   * Returns error if estimated price impact is above this percentage
+   * @optional Default: 0.9 (90%)
+   */
+  priceImpactProtectionPercentage: z.string().optional().describe("The percentage (0-1.0) of price impact allowed"),
+  
+  /**
+   * The percentage of fromTokenAmount that will be sent to the referrer's address
+   * Min: 0, Max: 3, up to 2 decimal places
+   * @optional
+   */
+  feePercent: z.string().optional().describe("Percentage of token amount sent to referrer (0-3%)"),
+});
 
 /**
- * Input schema for executing a swap on OKX DEX.
- * This will be implemented in future versions.
+ * Type definition for the OKX DEX quote response
+ * Based on the OKX DEX API documentation
  */
-export const OKXDexSwapSchema = z
-  .object({
-    chainId: z.string().describe("Blockchain network ID"),
-    quoteId: z.string().describe("Quote ID from a previous getQuote call"),
-    userAddress: z.string().describe("User wallet address that will execute the swap"),
-    // Additional parameters to be added based on OKX DEX swap requirements
-  })
-  .describe("Input schema for executing token swaps via OKX DEX");
+export interface OKXDexQuoteResponse {
+  code: string;
+  data: Array<{
+    chainId: string;
+    dexRouterList: Array<{
+      router: string;
+      routerPercent: string;
+      subRouterList: Array<{
+        dexProtocol: Array<{
+          dexName: string;
+          percent: string;
+        }>;
+        fromToken: {
+          decimal: string;
+          isHoneyPot: boolean;
+          taxRate: string;
+          tokenContractAddress: string;
+          tokenSymbol: string;
+          tokenUnitPrice: string;
+        };
+        toToken: {
+          decimal: string;
+          isHoneyPot: boolean;
+          taxRate: string;
+          tokenContractAddress: string;
+          tokenSymbol: string;
+          tokenUnitPrice: string;
+        };
+      }>;
+    }>;
+    estimateGasFee: string;
+    fromToken: {
+      decimal: string;
+      isHoneyPot: boolean;
+      taxRate: string;
+      tokenContractAddress: string;
+      tokenSymbol: string;
+      tokenUnitPrice: string;
+    };
+    fromTokenAmount: string;
+    originToTokenAmount: string;
+    priceImpactPercentage: string;
+    quoteCompareList: Array<{
+      amountOut: string;
+      dexLogo: string;
+      dexName: string;
+      tradeFee: string;
+    }>;
+    toToken: {
+      decimal: string;
+      isHoneyPot: boolean;
+      taxRate: string;
+      tokenContractAddress: string;
+      tokenSymbol: string;
+      tokenUnitPrice: string;
+    };
+    toTokenAmount: string;
+    tradeFee: string;
+  }>;
+  msg: string;
+}

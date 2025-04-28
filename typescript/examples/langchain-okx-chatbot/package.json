@@ -6,7 +6,7 @@
   "author": "OKX",
   "license": "Apache-2.0",
   "scripts": {
-    "start": "NODE_OPTIONS='--no-warnings' tsx ./chatbot.ts",
+    "start": "NODE_OPTIONS='--no-warnings' ts-node ./chatbot.ts",
     "dev": "nodemon ./chatbot.ts",
     "lint": "eslint -c .eslintrc.json *.ts",
     "lint:fix": "eslint -c .eslintrc.json *.ts --fix",
@@ -29,6 +29,5 @@
     "nodemon": "^3.1.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.3"
-  },
-  "type": "module"
+  }
 }

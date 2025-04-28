@@ -2,9 +2,9 @@ import {
   AgentKit,
   SOLANA_NETWORK_ID,
   SolanaKeypairWalletProvider,
+  okxDexActionProvider,
   ActionProvider,
-  WalletProvider,
-  okxDexActionProvider
+  Network
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -12,15 +12,12 @@ import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 import { Keypair } from "@solana/web3.js";
-import bs58 from "bs58";
 import * as dotenv from "dotenv";
 import * as readline from "readline";
 import * as fs from "fs";
+import("bs58")
 
 dotenv.config();
-
-// Constants for Solana network
-const SOLANA_NETWORK = "solana-mainnet";
 
 /**
  * Validates that required environment variables are set
@@ -48,6 +45,13 @@ function validateEnvironment(): void {
     process.exit(1);
   }
 
+  // Warn about optional SOLANA_RPC_URL & NETWORK_ID
+  if (!process.env.SOLANA_RPC_URL && !process.env.NETWORK_ID) {
+    console.warn(
+      "Warning: SOLANA_RPC_URL and NETWORK_ID both are unset, defaulting to solana-devnet",
+    );
+  }
+
   // Check OKX API credentials
   const okxVars = ["OKX_API_KEY", "OKX_SECRET_KEY", "OKX_API_PASSPHRASE", "OKX_PROJECT_ID"];
   const missingOkxVars = okxVars.filter(varName => !process.env[varName]);
@@ -65,7 +69,7 @@ function validateEnvironment(): void {
 validateEnvironment();
 
 /**
- * Initialize the agent with OKX DEX provider for Solana network
+ * Initialize the agent with CDP Agentkit and OKX DEX
  *
  * @returns Agent executor and config
  */
@@ -77,26 +81,14 @@ async function initializeAgent() {
     });
 
     // Configure Solana Keypair Wallet Provider
-    let solanaPrivateKey = process.env.SOLANA_PRIVATE_KEY as string;
-    if (!solanaPrivateKey) {
-      console.log(`No Solana account detected. Generating a wallet...`);
-      const keypair = Keypair.generate();
-      solanaPrivateKey = bs58.encode(keypair.secretKey);
-      fs.appendFileSync(".env", `SOLANA_PRIVATE_KEY=${solanaPrivateKey}\n`);
-      console.log(`Created Solana wallet: ${keypair.publicKey.toBase58()}`);
-      console.log("The private key for this wallet has been automatically saved to your .env file");
+    const privateKey = process.env.SOLANA_PRIVATE_KEY as string;
+    if (!privateKey) {
+      throw new Error("SOLANA_PRIVATE_KEY environment variable is required");
     }
+    const network = "solana-mainnet" as SOLANA_NETWORK_ID;
+    const walletProvider = await SolanaKeypairWalletProvider.fromNetwork(network, privateKey);
 
-    const rpcUrl = process.env.SOLANA_RPC_URL;
-    let walletProvider: SolanaKeypairWalletProvider;
-    if (rpcUrl) {
-      walletProvider = await SolanaKeypairWalletProvider.fromRpcUrl(rpcUrl, solanaPrivateKey);
-    } else {
-      const network = (process.env.NETWORK_ID ?? "solana-devnet") as SOLANA_NETWORK_ID;
-      walletProvider = await SolanaKeypairWalletProvider.fromNetwork(network, solanaPrivateKey);
-    }
-
-    // Initialize action providers array
+    // Initialize action providers array with only OKX DEX
     const actionProviders: ActionProvider[] = [];
 
     // Add OKX DEX provider if credentials are available
@@ -107,12 +99,26 @@ async function initializeAgent() {
     
     if (okxCredentialsAvailable) {
       try {
-        const okxProvider = okxDexActionProvider();
+        console.log("Initializing OKX DEX provider...");
+        const okxProvider = okxDexActionProvider({
+          apiKey: process.env.OKX_API_KEY,
+          secretKey: process.env.OKX_SECRET_KEY,
+          apiPassphrase: process.env.OKX_API_PASSPHRASE,
+          projectId: process.env.OKX_PROJECT_ID
+        });
+        
+        // Override the supportsNetwork method to always return true for Solana
+        okxProvider.supportsNetwork = (network: Network) => {
+          return network.protocolFamily === 'svm' && network.networkId === 'solana-mainnet';
+        };
+        
         actionProviders.push(okxProvider);
-        console.log("OKX DEX provider initialized successfully");
+        console.log("OKX DEX provider added successfully");
       } catch (error) {
         console.warn("Failed to initialize OKX DEX provider:", error);
       }
+    } else {
+      console.log("OKX DEX provider not initialized due to missing credentials");
     }
 
     // Initialize AgentKit
@@ -125,15 +131,17 @@ async function initializeAgent() {
 
     // Store buffered conversation history in memory
     const memory = new MemorySaver();
-    const agentConfig = { configurable: { thread_id: "Solana OKX DEX AgentKit Chatbot!" } };
+    const agentConfig = { configurable: { thread_id: "Solana AgentKit Chatbot with OKX DEX!" } };
 
-    // Create React Agent using the LLM and AgentKit tools
+    // Create React Agent using the LLM and Solana AgentKit tools
     const agent = createReactAgent({
       llm,
       tools,
       checkpointSaver: memory,
       messageModifier: `
-        You are a helpful agent specialized in performing DEX operations on the Solana network using OKX DEX.
+        You are a helpful agent that can interact onchain on Solana using the Coinbase Developer Platform AgentKit.
+        
+        You also have access to OKX DEX operations on Solana if the credentials are properly configured.
         
         For OKX DEX operations on Solana:
         - You can get swap quotes for tokens on the Solana network
@@ -141,9 +149,11 @@ async function initializeAgent() {
         - Focus primarily on Solana tokens and pairs
         
         Common Solana token addresses:
-        - SOL (Native): So11111111111111111111111111111111111111112
+        - SOL (Native): 11111111111111111111111111111111
         - USDC: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
         - USDT: Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB
+
+        If a user says they want to swap SOL to USDC or USDC, then refrence the addresses above
         
         When using the get_swap_quote action, ensure you always use these parameters:
         - fromTokenAddress: The token address you're swapping from
@@ -151,14 +161,15 @@ async function initializeAgent() {
         - amount: Amount in lamports (for SOL) or token decimals
         - slippage: Optional parameter specifying maximum acceptable slippage (default "0.5")
         
-        If there is a 5XX (internal) HTTP error code, ask the user to try again later.
-        
-        If someone asks you to do something you can't do with your currently available tools, you must say so,
-        and encourage them to implement it themselves using the OKX DEX API.
-        Recommend they go to the OKX DEX documentation for more information.
-        
-        Be concise and helpful with your responses. Refrain from restating your tools' descriptions unless
-        it is explicitly requested.
+        If there is a 5XX (internal) HTTP error code, ask the user to try again later. If someone 
+        asks you to do something you can't do with your currently available tools, you must say so, and 
+        encourage them to implement it themselves using the CDP SDK + Agentkit, recommend they go to 
+        docs.cdp.coinbase.com for more information. Be concise and helpful with your responses. Refrain from 
+        restating your tools' descriptions unless it is explicitly requested.
+
+        Summarize complex JSON data into a human readable format 
+        The user just needs to know the exchange rate and the out amount
+        For Gas Fee Estimate use SOL converted from Lamports and then in USDC
         `,
     });
 
@@ -217,6 +228,12 @@ async function runAutonomousMode(agent: any, config: any, interval = 10) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function runChatMode(agent: any, config: any) {
   console.log("Starting chat mode... Type 'exit' to end.");
+  console.log("-------------------");
+  console.log("Welcome to the Solana AgentKit Chatbot with OKX DEX support!");
+  console.log("You can ask me to perform various operations on the Solana network.");
+  console.log("Examples:");
+  console.log("- 'Get a swap quote for SOL to USDC for 10 SOL'");
+  console.log("-------------------");
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -312,7 +329,7 @@ async function main() {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (require.main === module) {
   console.log("Starting Agent...");
   main().catch(error => {
     console.error("Fatal error:", error);
