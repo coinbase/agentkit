@@ -8,6 +8,7 @@ export interface ProviderConfig {
   protocolFamily: ProtocolFamily | null;
   networkIds: NetworkId[];
   walletProvider?: WalletProvider;
+  providerKey: "default" | "walletProvider";
 }
 
 /**

@@ -1,25 +1,31 @@
-[tool.poetry]
+[project]
 name = "chatbot-python"
 version = "0.0.1"
 description = "CDP AgentKit Example Chatbot"
-authors = ["John Peterson <john.peterson@coinbase.com>"]
+authors = [{ name = "John Peterson", email = "john.peterson@coinbase.com" }]
+requires-python = "~=3.10"
 readme = "README.md"
-package-mode = false
+dependencies = [
+    "python-dotenv>=1.0.1,<2",
+    "langchain-openai>=0.2.4,<0.3",
+    "langgraph>=0.2.39,<0.3",
+    "coinbase-agentkit",
+    "coinbase-agentkit-langchain",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-python-dotenv = "^1.0.1"
-langchain-openai = "^0.2.4"
-langgraph = "^0.2.39"
-coinbase-agentkit = { path = "../../../python/coinbase-agentkit", develop = true }
-coinbase-agentkit-langchain = { path = "../../../python/framework-extensions/langchain", develop = true }
+[dependency-groups]
+dev = ["ruff>=0.7.1,<0.8"]
 
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.7.1"
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+coinbase-agentkit = { path = "../../../python/coinbase-agentkit", editable = true }
+coinbase-agentkit-langchain = { path = "../../../python/framework-extensions/langchain", editable = true }
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api" 
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.ruff]
 line-length = 100

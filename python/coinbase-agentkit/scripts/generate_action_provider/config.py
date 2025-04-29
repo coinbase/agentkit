@@ -81,4 +81,8 @@ def prepare_provider_config(
     if config.protocol_family in ("all", "none"):
         config.protocol_family = None
 
+    # set provider key
+    if config.wallet_provider:
+        config.provider_key = "wallet_provider"
+
     return config

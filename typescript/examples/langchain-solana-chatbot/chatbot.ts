@@ -12,10 +12,10 @@ import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 import { Keypair } from "@solana/web3.js";
-import bs58 from "bs58";
 import * as dotenv from "dotenv";
 import * as readline from "readline";
 import * as fs from "fs";
+import bs58 from "bs58";
 
 dotenv.config();
 

@@ -1,3 +1,19 @@
+# Coinbase Create Onchain Agent Changelog
+
+<!-- towncrier release notes start -->
+## [0.5.0] - 2025-04-04
+
+### Added
+
+- Bump in templates coinbase-agentkit to 0.4.0, coinbase-agentkit-langchain to 0.3.0 and coinbase-agentkit-openai-agents-sdk to 0.3.0
+
+## [0.4.0] - 2025-03-28
+
+### Added
+
+- Updated default wallet provider to SmartWalletProvider ([#622](https://github.com/coinbase/agentkit/pull/622))
+
+
 ## [0.3.0] - 2025-03-14
 
 ### Added
@@ -17,8 +33,6 @@
 - Added revised network selection ([#498](https://github.com/coinbase/agentkit/pull/498))
 - Added smart wallet support ([#503](https://github.com/coinbase/agentkit/pull/503))
 
-
-# Coinbase Create Onchain Agent Changelog
 
 ## [0.1.4] - 2025-02-28
 

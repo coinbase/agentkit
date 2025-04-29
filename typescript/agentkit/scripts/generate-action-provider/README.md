@@ -6,13 +6,13 @@ This script helps you create new action providers with all necessary files and b
 
 ```bash
 # Interactive mode
-npm run generate:action-provider
+pnpm run generate:action-provider
 
 # CLI mode with arguments (note the -- before flags)
-npm run generate:action-provider -- [options]
+pnpm run generate:action-provider -- [options]
 
 # Hybrid mode with arguments (note the -- before flags)
-npm run generate:action-provider -- [options] -i
+pnpm run generate:action-provider -- [options] -i
 ```
 
 ## Options
@@ -27,19 +27,19 @@ npm run generate:action-provider -- [options] -i
 Create a provider for all networks:
 
 ```bash
-npm run generate:action-provider -- -n example -p all
+pnpm run generate:action-provider -- -n example -p all
 ```
 
 Create a Evm provider for Evm networks:
 
 ```bash
-npm run generate:action-provider -- -n example -p evm
+pnpm run generate:action-provider -- -n example -p evm
 ```
 
 Create an Evm provider with CDP wallet provider:
 
 ```bash
-npm run generate:action-provider -- -n example -p evm -w CdpWalletProvider
+pnpm run generate:action-provider -- -n example -p evm -w CdpWalletProvider
 ```
 
 ## Generated Files
@@ -53,6 +53,7 @@ Located in `src/action-providers/{name}/`:
 ```
 ├── {name}ActionProvider.ts       # Main provider implementation
 ├── {name}ActionProvider.test.ts  # Provider test suite
+├── exampleAction.test.ts         # Example action test suite
 ├── schemas.ts                    # Action schemas and types
 ├── index.ts                      # Package exports
 └── README.md                     # Provider documentation

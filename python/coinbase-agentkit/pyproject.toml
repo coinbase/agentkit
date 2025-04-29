@@ -1,53 +1,70 @@
-[tool.poetry]
+[project]
 name = "coinbase-agentkit"
-version = "0.2.0"
+version = "0.4.0"
 description = "Coinbase AgentKit"
-authors = ["John Peterson <john.peterson@coinbase.com>"]
+authors = [{ name = "John Peterson", email = "john.peterson@coinbase.com" }]
+requires-python = "~=3.10"
 readme = "README.md"
 license = "Apache-2.0"
-keywords = ["coinbase", "sdk", "crypto", "cdp", "agentkit", "ai", "agent"]
-packages = [
-    { include = "coinbase_agentkit" },
+keywords = [
+    "coinbase",
+    "sdk",
+    "crypto",
+    "cdp",
+    "agentkit",
+    "ai",
+    "agent",
+]
+dependencies = [
+    "cdp-sdk==0.21.0",
+    "pydantic~=2.0",
+    "web3>=7.10.0,<8",
+    "python-dotenv>=1.0.1,<2",
+    "requests>=2.31.0,<3",
+    "allora-sdk>=0.2.0,<0.3",
+    "paramiko>=3.5.1,<4",
+    "nilql>=0.0.0a12,<0.0.1",
+    "ecdsa>=0.19.0,<0.20",
+    "pyjwt[crypto]>=2.10.1,<3",
+    "jsonschema>=4.23.0,<5",
 ]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-cdp-sdk = "0.21.0"
-pydantic = "^2.0"
-web3 = "^7.6.0"
-python-dotenv = "^1.0.1"
-requests = "^2.31.0"
-allora-sdk = "^0.2.0"
-paramiko = "^3.5.1"
-
-[tool.poetry.scripts]
+[project.scripts]
 check-description-length = "scripts.check_description_length:main"
 generate-action-provider = "scripts.generate_action_provider.main:main"
 
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.7.1"
-mypy = "^1.13.0"
-pytest = "^8.3.3"
-pytest-cov = "^6.0.0"
-sphinx = "^8.0.2"
-sphinx-autobuild = "^2024.9.19"
-sphinxcontrib-napoleon = "^0.7"
-sphinx-autodoc-typehints = "^2.4.4"
-myst-parser = "^4.0.0"
-ruff-lsp = "^0.0.58"
-python-lsp-server = "^1.12.0"
-tweepy = "^4.15.0"
-towncrier = "^24.8.0"
-jinja2 = "^3.1.3"
-typer = "^0.9.0"
-prompt-toolkit = "^3.0.50"
-questionary = "^2.1.0"
-rich = "^13.7.1"
-pillow = "^11.1.0"
+[dependency-groups]
+dev = [
+    "ruff>=0.7.1,<0.8",
+    "mypy>=1.13.0,<2",
+    "pytest>=8.3.3,<9",
+    "pytest-cov>=6.0.0,<7",
+    "sphinx>=8.0.2,<9",
+    "sphinx-autobuild>=2024.9.19,<2025",
+    "sphinxcontrib-napoleon>=0.7,<0.8",
+    "sphinx-autodoc-typehints>=2.4.4,<3",
+    "myst-parser>=4.0.0,<5",
+    "ruff-lsp>=0.0.58,<0.0.59",
+    "python-lsp-server>=1.12.0,<2",
+    "tweepy>=4.15.0,<5",
+    "towncrier>=24.8.0,<25",
+    "jinja2>=3.1.3,<4",
+    "typer>=0.9.0,<0.10",
+    "prompt-toolkit>=3.0.50,<4",
+    "questionary>=2.1.0,<3",
+    "rich>=13.7.1,<14",
+    "pillow>=11.1.0,<12",
+]
+
+[tool.hatch.build.targets.sdist]
+include = ["coinbase_agentkit"]
+
+[tool.hatch.build.targets.wheel]
+include = ["coinbase_agentkit"]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.mypy]
 python_version = "3.10"

@@ -16,6 +16,8 @@ from .utils import (
     add_provider_files,
     display_banner,
     display_success_message,
+    run_format,
+    run_lint_fix,
     update_action_providers_init,
     update_agentkit_init,
 )
@@ -35,11 +37,17 @@ def create_action_provider() -> None:
             interactive=interactive,
         )
 
-        provider_dir = Path("coinbase_agentkit/action_providers") / config.name
-        test_dir = Path("tests/action_providers") / config.name
+        workspace_root = Path.cwd()
+
+        provider_dir = workspace_root / "coinbase_agentkit/action_providers" / config.name
+        test_dir = workspace_root / "tests/action_providers" / config.name
+
         add_provider_files(config, provider_dir, test_dir)
         update_action_providers_init(config)
         update_agentkit_init(config)
+
+        run_format(str(workspace_root))
+        run_lint_fix(str(workspace_root))
 
         display_success_message(config.name)
 

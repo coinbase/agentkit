@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.2.1",
-    "@coinbase/agentkit": "^0.4.0",
+    "@coinbase/agentkit": "^0.6.0",
     "@coinbase/agentkit-langchain": "^0.3.0",
     "@coinbase/agentkit-vercel-ai-sdk": "^0.1.0",
     "@langchain/core": "^0.3.19",
@@ -24,7 +24,7 @@
     "react": "^18",
     "react-dom": "^18",
     "react-markdown": "^10.0.0",
-    "viem": "^2.17.4",
+    "viem": "^2.24.1",
     "wagmi": "^2.11.0"
   },
   "devDependencies": {

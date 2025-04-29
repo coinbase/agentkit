@@ -1,0 +1,9 @@
+it("should handle invalid network objects", () => {
+  expect(provider.supportsNetwork({ protocolFamily: "invalid-protocol" } as Network)).toBe(false);
+  expect(provider.supportsNetwork({} as Network)).toBe(false);
+
+  {% if networkIds|length > 0 %}
+  expect(provider.supportsNetwork({ protocolFamily: "{{protocol_family}}" } as Network)).toBe(false);
+  expect(provider.supportsNetwork({ networkId: "{{ networkIds[0] }}" } as Network)).toBe(false);
+  {% endif %}
+});

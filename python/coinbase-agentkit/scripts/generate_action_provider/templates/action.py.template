@@ -1,0 +1,2 @@
+{% set action_template = "action/" + provider_key + ".py.template" %}
+{% include action_template %}

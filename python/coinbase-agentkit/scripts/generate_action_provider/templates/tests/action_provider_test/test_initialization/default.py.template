@@ -1,0 +1,4 @@
+def test_initialization(provider):
+    """Test provider initialization."""
+    assert isinstance(provider, {{ name_pascal }}ActionProvider)
+    assert provider.name == "{{ name }}" 

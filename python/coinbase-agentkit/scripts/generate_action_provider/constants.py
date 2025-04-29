@@ -1,6 +1,6 @@
 """Constants for the action provider generator script."""
 
-# ASCII art banner for AgentKit
+# ascii art banner for AgentKit
 AGENTKIT_BANNER = """
  █████   ██████  ███████ ███    ██ ████████    ██   ██ ██ ████████
 ██   ██ ██       ██      ████   ██    ██       ██  ██  ██    ██
@@ -9,7 +9,7 @@ AGENTKIT_BANNER = """
 ██   ██  ██████  ███████ ██   ████    ██       ██   ██ ██    ██
 """
 
-# Protocol families with descriptions
+# protocol families with descriptions
 PROTOCOL_FAMILIES = [
     {
         "title": "No Protocols",
@@ -28,7 +28,7 @@ PROTOCOL_FAMILIES = [
     },
 ]
 
-# Network options organized by protocol family
+# network options organized by protocol family
 NETWORKS_BY_PROTOCOL = {
     "all": [
         {
@@ -66,7 +66,7 @@ NETWORKS_BY_PROTOCOL = {
     ],
 }
 
-# Base wallet provider configuration
+# base wallet provider configuration
 BASE_WALLET_PROVIDERS = {
     "all": [
         {
@@ -77,7 +77,7 @@ BASE_WALLET_PROVIDERS = {
     ],
 }
 
-# EVM wallet provider configuration
+# evm wallet provider configuration
 EVM_WALLET_PROVIDERS = [
     {
         "title": "EvmWalletProvider",
@@ -96,13 +96,13 @@ EVM_WALLET_PROVIDERS = [
     },
 ]
 
-# Available wallet providers organized by protocol
+# available wallet providers organized by protocol
 WALLET_PROVIDERS_BY_PROTOCOL = {
     **BASE_WALLET_PROVIDERS,
     "evm": EVM_WALLET_PROVIDERS,
 }
 
-# Success message templates
+# success message templates
 SUCCESS_MESSAGES = {
     "FILES_CREATED": "\nFiles created:",
     "NEXT_STEPS": "\nNext steps:",

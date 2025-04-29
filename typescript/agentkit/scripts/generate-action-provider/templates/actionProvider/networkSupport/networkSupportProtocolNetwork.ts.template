@@ -1,0 +1,23 @@
+/**
+ * Supported network IDs for this provider
+ */
+const SUPPORTED_NETWORK_IDS: string[] = [{% for id in networkIds %}"{{id}}"{% if not loop.last %}, {% endif %}{% endfor %}];
+
+/**
+ * Checks if this provider supports the given network.
+ *
+ * @param network - The network to check support for
+ * @returns True if the network is supported
+ */
+supportsNetwork(network: Network): boolean {
+  // specific protocol networks
+  if (network.protocolFamily !== "{{protocol_family}}") {
+    return false;
+  }
+
+  if (!network.networkId) {
+    return false;
+  }
+
+  return SUPPORTED_NETWORK_IDS.includes(network.networkId);
+} 

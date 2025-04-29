@@ -8,10 +8,6 @@
     AgentKit
   </h1>
 
-  <p>
-    <img src="./agent_k.webp" width="300"/>
-  </p>
-
   <p style="font-size: 1.2em; max-width: 600px; margin: 0 auto 20px;">
     Every agent deserves a wallet.
   </p>
@@ -36,17 +32,20 @@
 - [🌙 Nightly Builds](#-nightly-builds)
 - [🚨 Security and bug reports](#-security-and-bug-reports)
 - [📧 Contact](#-contact)
-- [🔗 Supported Protocols](#-supported-protocols)
+- [🔗 Supported Wallets, Protocols, and Frameworks](#-supported-wallets-protocols-and-frameworks)
 - [📝 License](#-license)
 - [🔒 Legal and Privacy](#-legal-and-privacy)
 
 ## 📖 Overview
 
-AgentKit is [Coinbase Developer Platform's](https://docs.cdp.coinbase.com) framework for easily enabling AI agents to take actions onchain. It is designed to be framework-agnostic, so you can use it with any AI framework, and wallet-agnostic, so you can use it with any wallet. AgentKit is actively being built out, and [welcomes community contributions!](#contributing)
+AgentKit is [Coinbase Developer Platform's](https://docs.cdp.coinbase.com) toolkit for giving AI agents a crypto wallet and onchain interactions. It is designed to be framework-agnostic, so you can use it with any AI framework, and wallet-agnostic, so you can use it with any wallet. With AgentKit, you can enable fee-free stablecoin payments and monetize your AI agents seamlessly. AgentKit is actively being built out, and [welcomes community contributions!](#-contributing)
 
 <div align="center">
-  <a href="https://www.youtube.com/watch?v=-R_mKpdepRE">
-    <img src="https://img.youtube.com/vi/-R_mKpdepRE/maxresdefault.jpg" alt="Video Title" style="max-width: 600px;">
+  <a href="https://youtu.be/hw-PuogqLR0">
+    <img src="https://img.youtube.com/vi/hw-PuogqLR0/maxresdefault.jpg" alt="Video Title" style="max-width: 600px;">
+  <p align="center">
+    Watch our welcome guide above to understand what AgentKit is, learn how to navigate this repository, and get started building your first onchain AI agent.
+  </p>
   </a>
 </div>
 
@@ -139,6 +138,13 @@ AgentKit is organized as two monorepos, one for Python and one for Typescript, e
 agentkit/
 ├── typescript/
 │   ├── agentkit/
+│   │   └── src/
+│   │       ├── action-providers/ # find 50+ actions in here
+│   │       └── wallet-providers/
+│   │           ├── cdp/
+│   │           ├── privy/
+│   │           └── viem/
+│   │       └── scripts/generate-action-provider/ # use this to create new actions
 │   ├── create-onchain-agent/
 │   ├── framework-extensions/
 │   │   ├── langchain/
@@ -146,22 +152,33 @@ agentkit/
 │   │   └── model-context-protocol/
 │   └── examples/
 │       ├── langchain-cdp-chatbot/
+│       ├── langchain-cdp-v2-chatbot/
 │       ├── langchain-farcaster-chatbot/
 │       ├── langchain-privy-chatbot/
 │       ├── langchain-solana-chatbot/
 │       ├── langchain-twitter-chatbot/
-│       ├── model-context-protocol-cdp-server/
-│       └── vercel-ai-sdk-cdp-chatbot/
+│       ├── langchain-xmtp-chatbot/
+│       ├── model-context-protocol-smart-wallet-server/
+│       └── vercel-ai-sdk-smart-wallet-chatbot/
 ├── python/
 │   ├── coinbase-agentkit/
+│   │   └── coinbase_agentkit/
+│   │       ├── action_providers/  # find 30+ actions in here
+│   │       └── wallet_providers/
+│   │           ├── cdp/
+│   │           ├── privy/
+│   │           └── viem/
 │   ├── create-onchain-agent/
 │   ├── framework-extensions/
 │   │   ├── langchain/
 │   │   └── openai-agents-sdk/
 │   └── examples/
 │       ├── langchain-cdp-chatbot/
+│       ├── langchain-eth-account-chatbot/
+│       ├── langchain-smart-wallet-chatbot/
 │       ├── langchain-twitter-chatbot/
-│       └── openai-agents-sdk-cdp-chatbot/
+│       └── openai-agents-cdp-voice-chatbot/
+│       └── openai-agents-sdk-smart-wallet-chatbot/
 ```
 
 ## 🤝 Contributing
@@ -235,9 +252,14 @@ See [SECURITY.md](SECURITY.md) for more information.
 For feature requests, feedback, or questions, please reach out to us via the
 [Coinbase Developer Platform Discord](https://discord.com/channels/1220414409550336183/1304126107876069376).
 
-## 🔗 Supported Protocols
+## 🔗 Supported Wallets, Protocols, and Frameworks
 
-AgentKit is proud to have support for the following protocols, frameworks, wallets and networks:
+AgentKit is proud to have support for the following protocols, frameworks, wallets and networks. For detailed documentation on supported providers, see:
+
+- [Action Providers (TypeScript)](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/action-providers)
+- [Action Providers (Python)](https://github.com/coinbase/agentkit/blob/main/python/coinbase-agentkit/coinbase_agentkit/action_providers)
+- [Wallet Providers (TypeScript)](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers)
+- [Wallet Providers (Python)](https://github.com/coinbase/agentkit/blob/main/python/coinbase-agentkit/coinbase_agentkit/wallet_providers)
 
 ### Wallets
 

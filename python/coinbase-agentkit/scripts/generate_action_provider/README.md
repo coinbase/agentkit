@@ -6,13 +6,13 @@ This script helps you create new action providers with all necessary files and b
 
 ```bash
 # Interactive mode
-poetry run generate-action-provider
+uv run generate-action-provider
 
 # CLI mode with arguments
-poetry run generate-action-provider [options]
+uv run generate-action-provider [options]
 
 # Hybrid mode with arguments
-poetry run generate-action-provider [options] -i
+uv run generate-action-provider [options] -i
 ```
 
 ## Options
@@ -27,19 +27,19 @@ poetry run generate-action-provider [options] -i
 Create a provider for all networks:
 
 ```bash
-poetry run generate-action-provider -n example -p all
+uv run generate-action-provider -n example -p all
 ```
 
 Create an Evm provider:
 
 ```bash
-poetry run generate-action-provider -n example -p evm
+uv run generate-action-provider -n example -p evm
 ```
 
 Create an Evm provider with CDP wallet provider:
 
 ```bash
-poetry run generate-action-provider -n example -p evm -w CdpWalletProvider
+uv run generate-action-provider -n example -p evm -w CdpWalletProvider
 ```
 
 ## Generated Files

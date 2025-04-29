@@ -1,0 +1,12 @@
+/**
+ * {{name_pascal}}ActionProvider provides actions for {{name}} operations.
+ *
+ * @description
+ * This provider is designed to work with {{wallet_provider}} for blockchain interactions.
+{% if networkIds|length == 0 %}
+ * It supports all {{protocol_family}} networks.
+{% else %}
+ * It supports {{protocol_family}} networks: {% for networkId in networkIds %}{{networkId}}{% if not loop.last %}, {% endif %}{% endfor %}.
+{% endif %}
+ */
+export class {{name_pascal}}ActionProvider extends ActionProvider<{{wallet_provider}}>

@@ -238,14 +238,14 @@ def create_advanced_project(templates_path: str | None = None):
     if network:
         if network in CDP_SUPPORTED_NETWORKS:
             wallet_choices = [
-                "CDP Wallet Provider",
                 "Smart Wallet Provider",
+                "CDP Wallet Provider",
                 "Ethereum Account Wallet Provider",
             ]
             wallet_selection = questionary.select(
                 "Select a wallet provider:",
                 choices=wallet_choices,
-                default="CDP Wallet Provider",
+                default="Smart Wallet Provider",
                 style=custom_style,
             ).ask()
 
