@@ -1,5 +1,11 @@
 # Coinbase Create Onchain Agent Changelog
 
+## 0.3.3
+
+### Patch Changes
+
+- [`76329d9`](https://github.com/coinbase/agentkit/commit/76329d944ff56a147c49e728da5efdc939e4a709) - Fixed build setup for mcp server templates
+
 ## 0.3.2
 
 ### Patch Changes

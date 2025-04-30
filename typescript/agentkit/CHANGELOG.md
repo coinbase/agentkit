@@ -1,5 +1,13 @@
 # AgentKit Changelog
 
+## 0.7.0
+
+### Minor Changes
+
+- [`76329d9`](https://github.com/coinbase/agentkit/commit/76329d944ff56a147c49e728da5efdc939e4a709) - Added ZeroDevWalletProvider powered by ZeroDev smart account
+
+  This change introduced a new wallet provider, `ZeroDevWalletProvider` which allows AgentKit to use ZeroDev's chain-abstracted smart account with any EvmWalletProvider like cdpWalletProvider or privyEvmWalletProvider as the signer.
+
 ## 0.6.2
 
 ### Patch Changes
