@@ -1,51 +1,114 @@
-# OKX DEX Action Provider
+# OKX DEX Integration
 
-This directory contains the **OKXDexActionProvider** implementation, which provides actions to interact with **OKX's DEX API** for token swaps and related operations.
+This package provides integration with OKX DEX for token swaps and quotes on various blockchain networks, including Solana and EVM chains.
 
-## Directory Structure
+## Features
 
+- Get real-time swap quotes for token pairs
+- Execute token swaps with configurable slippage
+- Support for multiple networks (Solana, Ethereum, BSC, Polygon, etc.)
+- Automatic transaction signing and broadcasting
+- Configurable compute units and gas settings
+
+## Supported Networks
+
+- Solana (chainId: "501")
+- Ethereum (chainId: "1")
+- BNB Smart Chain (chainId: "56")
+- Polygon (chainId: "137")
+- Arbitrum One (chainId: "42161")
+- Optimism (chainId: "10")
+- Avalanche C-Chain (chainId: "43114")
+- Base (chainId: "8453")
+- Polygon zkEVM (chainId: "1101")
+
+## Setup
+
+1. Install required dependencies:
+```bash
+npm install @coinbase/agentkit @solana/web3.js bs58
 ```
-okx/
-├── OKXDexActionProvider.ts         # Main provider with OKX DEX functionality
-├── OKX_Quote.test.ts              # Test file for OKX DEX provider
-├── schemas.ts                      # Quote action schemas
-├── index.ts                        # Main exports
-└── README.md                       # This file
+
+2. Configure environment variables:
+```bash
+# Required
+OKX_API_KEY=your_api_key
+OKX_SECRET_KEY=your_secret_key
+OKX_API_PASSPHRASE=your_passphrase
+OKX_PROJECT_ID=your_project_id
+
+# Optional
+SOLANA_RPC_URL=your_solana_rpc_url  # Defaults to mainnet-beta
 ```
 
-## Actions
+## Usage
 
-- `get_swap_quote`: Get token swap quotes from OKX DEX
-  - Returns quote details for swapping one token for another
-  - Includes exchange rate, expected output, gas estimates, and price impact
-  - Supports multiple EVM chains including Ethereum, BSC, Polygon, etc.
+### Initialize Provider
 
-## Network Support
+```typescript
+import { okxDexActionProvider } from '@coinbase/agentkit';
 
-The OKX DEX API supports the following EVM networks:
-- Ethereum (Chain ID: 1)
-- BSC (Chain ID: 56)
-- Polygon (Chain ID: 137)
-- Arbitrum (Chain ID: 42161)
-- Optimism (Chain ID: 10)
-- Avalanche (Chain ID: 43114)
-- Base (Chain ID: 8453)
-- Polygon zkEVM (Chain ID: 1101)
+const provider = okxDexActionProvider({
+  apiKey: process.env.OKX_API_KEY,
+  secretKey: process.env.OKX_SECRET_KEY,
+  apiPassphrase: process.env.OKX_API_PASSPHRASE,
+  projectId: process.env.OKX_PROJECT_ID,
+  solanaRpcUrl: process.env.SOLANA_RPC_URL
+});
+```
 
-## Adding New Actions
+### Get Swap Quote
 
-To add new OKX DEX actions:
+```typescript
+const quote = await provider.getSwapQuote({
+  chainId: "501", // Solana
+  fromTokenAddress: "So11111111111111111111111111111111111111112", // SOL
+  toTokenAddress: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+  amount: "1000000000", // 1 SOL in lamports
+  slippage: "0.5" // 0.5% slippage
+});
+```
 
-1. Define your action schema in `schemas.ts`
-2. Implement the action in `OKXDexActionProvider.ts`
-3. Add tests in `OKX_Quote.test.ts`
+### Execute Swap
 
-## Configuration
+```typescript
+const result = await provider.swapTokens({
+  chainId: "501",
+  fromTokenAddress: "So11111111111111111111111111111111111111112",
+  toTokenAddress: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  amount: "1000000000",
+  slippage: "0.5",
+  userWalletAddress: "your_wallet_address"
+});
+```
 
-Requires the following environment variables or configuration options:
-- `OKX_API_KEY`: Your OKX API key
-- `OKX_SECRET_KEY`: Your OKX secret key
-- `OKX_API_PASSPHRASE`: Your OKX API passphrase
-- `OKX_PROJECT_ID`: Your OKX project ID
+## Token Decimals
 
-Visit the [OKX DEX Documentation](https://web3.okx.com/build/docs/waas/dex-introduction) for more information on obtaining API credentials and usage details.
+Common token decimals for reference:
+- SOL: 9 decimals (1 SOL = 1,000,000,000 lamports)
+- USDC: 6 decimals (1 USDC = 1,000,000 units)
+- USDT: 6 decimals (1 USDT = 1,000,000 units)
+- BONK: 5 decimals (1 BONK = 100,000 units)
+- JUP: 6 decimals (1 JUP = 1,000,000 units)
+- ORCA: 6 decimals (1 ORCA = 1,000,000 units)
+
+## Error Handling
+
+The provider includes comprehensive error handling for:
+- API errors
+- Network issues
+- Transaction failures
+- Blockhash expiration
+- Invalid configurations
+
+## Best Practices
+
+1. Always get a quote before executing a swap
+2. Use appropriate slippage based on market conditions
+3. Monitor gas fees and adjust compute units if needed
+4. Handle transaction timeouts and retries appropriately
+5. Verify transaction status using the provided explorer links
+
+## License
+
+This package is part of the AgentKit project and is subject to its licensing terms.

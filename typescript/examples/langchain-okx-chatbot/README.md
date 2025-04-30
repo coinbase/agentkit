@@ -1,4 +1,4 @@
-# Solana AgentKit LangChain Extension Examples - Chatbot Typescript
+# OKX LangChain Extension Examples - Chatbot Typescript
 
 This example demonstrates an agent setup as a terminal style chatbot with access to the full set of Solana AgentKit actions.
 
@@ -33,8 +33,12 @@ You'll need the following API keys:
 Once you have them, rename the `.env-local` file to `.env` and make sure you set the API keys to their corresponding environment variables:
 
 - "OPENAI_API_KEY" **(required)**
-- "SOLANA_PRIVATE_KEY" *(optional)*
-- "SOLANA_RPC_URL" *(optional)*
+- "SOLANA_PRIVATE_KEY" **(required)**
+- "SOLANA_RPC_URL" **(required)**
+- "OKX_API_KEY" **(required)**
+- "OKX_SECRET_KEY" **(required)**
+- "OKX_API_PASSPHRASE" **(required)**
+- "OKX_PROJECT_ID" **(required)**
 - "NETWORK_ID" *(optional)*
 - CDP_API_KEY_NAME=[optional. If you'd like to use the CDP API, for example to faucet funds, set this to the name of the CDP API key]
 - CDP_API_KEY_PRIVATE_KEY=[optional. If you'd like to use the CDP API, for example to faucet funds, set this to the private key of the CDP API key]
