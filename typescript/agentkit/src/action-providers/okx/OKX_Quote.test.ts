@@ -74,7 +74,12 @@ describe("OKXDexActionProvider", () => {
       fromTokenAddress: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", // ETH
       toTokenAddress: "0xdAC17F958D2ee523a2206206994597C13D831ec7", // USDT
       amount: "10000000000000000000", // 10 ETH
-      slippage: "0.1"
+      slippage: "0.1",
+      dexIds: null,
+      directRoute: null,
+      priceImpactProtectionPercentage: null,
+      autoSlippage: null,
+      maxAutoSlippage: null
     };
 
     it("should successfully fetch a swap quote", async () => {
