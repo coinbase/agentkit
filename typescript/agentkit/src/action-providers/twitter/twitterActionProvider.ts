@@ -41,7 +41,8 @@ export interface TwitterActionProviderConfig {
  * @augments ActionProvider
  */
 export class TwitterActionProvider extends ActionProvider {
-  private readonly client: TwitterApi;
+  private client: TwitterApi | null = null;
+  private config: TwitterActionProviderConfig;
 
   /**
    * Constructor for the TwitterActionProvider class.
@@ -51,30 +52,28 @@ export class TwitterActionProvider extends ActionProvider {
   constructor(config: TwitterActionProviderConfig = {}) {
     super("twitter", []);
 
-    config.apiKey ||= process.env.TWITTER_API_KEY;
-    config.apiSecret ||= process.env.TWITTER_API_SECRET;
-    config.accessToken ||= process.env.TWITTER_ACCESS_TOKEN;
-    config.accessTokenSecret ||= process.env.TWITTER_ACCESS_TOKEN_SECRET;
+    // Store config for later use but don't initialize the client yet
+    this.config = { ...config };
 
-    if (!config.apiKey) {
+    // Set defaults from environment variables
+    this.config.apiKey ||= process.env.TWITTER_API_KEY;
+    this.config.apiSecret ||= process.env.TWITTER_API_SECRET;
+    this.config.accessToken ||= process.env.TWITTER_ACCESS_TOKEN;
+    this.config.accessTokenSecret ||= process.env.TWITTER_ACCESS_TOKEN_SECRET;
+
+    // Validate config
+    if (!this.config.apiKey) {
       throw new Error("TWITTER_API_KEY is not configured.");
     }
-    if (!config.apiSecret) {
+    if (!this.config.apiSecret) {
       throw new Error("TWITTER_API_SECRET is not configured.");
     }
-    if (!config.accessToken) {
+    if (!this.config.accessToken) {
       throw new Error("TWITTER_ACCESS_TOKEN is not configured.");
     }
-    if (!config.accessTokenSecret) {
+    if (!this.config.accessTokenSecret) {
       throw new Error("TWITTER_ACCESS_TOKEN_SECRET is not configured.");
     }
-
-    this.client = new TwitterApi({
-      appKey: config.apiKey,
-      appSecret: config.apiSecret,
-      accessToken: config.accessToken,
-      accessSecret: config.accessTokenSecret,
-    } as TwitterApiTokens);
   }
 
   /**
@@ -97,7 +96,7 @@ A failure response will return a message with a Twitter API request error:
   })
   async accountDetails(_: z.infer<typeof TwitterAccountDetailsSchema>): Promise<string> {
     try {
-      const response = await this.client.v2.me();
+      const response = await this.getClient().v2.me();
       response.data.url = `https://x.com/${response.data.username}`;
       return `Successfully retrieved authenticated user account details:\n${JSON.stringify(
         response,
@@ -127,7 +126,7 @@ A failure response will return a message with the Twitter API request error:
   })
   async accountMentions(args: z.infer<typeof TwitterAccountMentionsSchema>): Promise<string> {
     try {
-      const response = await this.client.v2.userMentionTimeline(args.userId);
+      const response = await this.getClient().v2.userMentionTimeline(args.userId);
       return `Successfully retrieved account mentions:\n${JSON.stringify(response)}`;
     } catch (error) {
       return `Error retrieving authenticated account mentions: ${error}`;
@@ -154,7 +153,7 @@ A failure response will return a message with the Twitter API request error:
   })
   async postTweet(args: z.infer<typeof TwitterPostTweetSchema>): Promise<string> {
     try {
-      const response = await this.client.v2.tweet(args.tweet);
+      const response = await this.getClient().v2.tweet(args.tweet);
       return `Successfully posted to Twitter:\n${JSON.stringify(response)}`;
     } catch (error) {
       return `Error posting to Twitter:\n${error}`;
@@ -181,7 +180,7 @@ A failure response will return a message with the Twitter API request error:
   })
   async postTweetReply(args: z.infer<typeof TwitterPostTweetReplySchema>): Promise<string> {
     try {
-      const response = await this.client.v2.tweet(args.tweetReply, {
+      const response = await this.getClient().v2.tweet(args.tweetReply, {
         reply: { in_reply_to_tweet_id: args.tweetId },
       });
 
@@ -200,6 +199,25 @@ A failure response will return a message with the Twitter API request error:
    */
   supportsNetwork(_: Network): boolean {
     return true;
+  }
+
+  /**
+   * Get the Twitter API client, initializing it if needed
+   *
+   * @returns The Twitter API client
+   */
+  private getClient(): TwitterApi {
+    if (!this.client) {
+      // Initialize client only when needed
+      const tokens: TwitterApiTokens = {
+        appKey: this.config.apiKey!,
+        appSecret: this.config.apiSecret!,
+        accessToken: this.config.accessToken!,
+        accessSecret: this.config.accessTokenSecret!,
+      };
+      this.client = new TwitterApi(tokens);
+    }
+    return this.client;
   }
 }
 
