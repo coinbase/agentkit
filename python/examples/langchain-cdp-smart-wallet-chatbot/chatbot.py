@@ -6,8 +6,8 @@ import time
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
-    SmartWalletProvider,
-    SmartWalletProviderConfig,
+    CdpEvmSmartWalletProvider,
+    CdpEvmSmartWalletProviderConfig,
     cdp_api_action_provider,
     erc20_action_provider,
     pyth_action_provider,
@@ -25,46 +25,48 @@ from langgraph.prebuilt import create_react_agent
 load_dotenv()
 
 def initialize_agent():
-    """Initialize the agent with SmartWalletProvider."""
+    """Initialize the agent with CdpEvmSmartWalletProvider."""
     llm = ChatOpenAI(model="gpt-4o-mini")
 
+    # Load required environment variables
     network_id = os.getenv("NETWORK_ID", "base-sepolia")
-    wallet_data_file = f"wallet_data_{network_id.replace('-', '_')}.txt"
+    private_key = os.getenv("PRIVATE_KEY")
+    smart_wallet_address = os.getenv("SMART_WALLET_ADDRESS")
+    idempotency_key = os.getenv("IDEMPOTENCY_KEY")
+    cdp_api_key_id = os.getenv("CDP_API_KEY_ID")
+    cdp_api_key_secret = os.getenv("CDP_API_KEY_SECRET")
+    cdp_wallet_secret = os.getenv("CDP_WALLET_SECRET")
 
-    # Load wallet data from JSON file
-    wallet_data = {"private_key": None, "smart_wallet_address": None}
-    if os.path.exists(wallet_data_file):
-        try:
-            with open(wallet_data_file) as f:
-                wallet_data = json.load(f)
-        except json.JSONDecodeError:
-            print(f"Warning: Invalid wallet data file format for {network_id}. Creating new wallet.")
-
-    # Use private key from env if not in wallet data
-    private_key = wallet_data.get("private_key") or os.getenv("PRIVATE_KEY")
+    # Validate required environment variables
     if not private_key:
-        acct = Account.create()
-        private_key = acct.key.hex()
+        raise ValueError("PRIVATE_KEY environment variable is required")
+    if not cdp_api_key_id:
+        raise ValueError("CDP_API_KEY_ID environment variable is required")
+    if not cdp_api_key_secret:
+        raise ValueError("CDP_API_KEY_SECRET environment variable is required")
+    if not cdp_wallet_secret:
+        raise ValueError("CDP_WALLET_SECRET environment variable is required")
+    if not smart_wallet_address and not idempotency_key:
+        raise ValueError("SMART_WALLET_ADDRESS or IDEMPOTENCY_KEY environment variable is required")
 
     signer = Account.from_key(private_key)
 
-    # Initialize CDP Wallet Provider
-    wallet_provider = SmartWalletProvider(
-        SmartWalletProviderConfig(
+    # Initialize CDP Smart Wallet Provider
+    wallet_provider = CdpEvmSmartWalletProvider(
+        CdpEvmSmartWalletProviderConfig(
             network_id=network_id,
-            signer=signer,
-            smart_wallet_address=wallet_data.get("smart_wallet_address"),
+            address=smart_wallet_address,
+            idempotency_key=idempotency_key,
+            api_key_id=cdp_api_key_id,
+            api_key_secret=cdp_api_key_secret,
+            wallet_secret=cdp_wallet_secret,
             paymaster_url=None,  # Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
         )
     )
 
-    # Save both private key and smart wallet address
-    wallet_data = {
-        "private_key": private_key,
-        "smart_wallet_address": wallet_provider.get_address(),
-    }
-    with open(wallet_data_file, "w") as f:
-        json.dump(wallet_data, f, indent=2)
+    if (not smart_wallet_address and idempotency_key):
+        print("Creating new smart wallet...")
+        print(f"Smart wallet address: {wallet_provider.get_address()}")
 
     agentkit = AgentKit(
         AgentKitConfig(
