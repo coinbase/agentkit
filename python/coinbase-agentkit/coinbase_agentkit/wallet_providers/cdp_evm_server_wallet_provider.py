@@ -142,7 +142,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
         )
 
     def _run_async(self, coroutine):
-        """Run an async coroutine synchronously and ensure proper cleanup.
+        """Run an async coroutine synchronously.
 
         Args:
             coroutine: The coroutine to run
@@ -155,38 +155,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
         except RuntimeError:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-        
-        try:
-            return loop.run_until_complete(coroutine)
-        finally:
-            # Clean up any pending tasks
-            pending = asyncio.all_tasks(loop)
-            for task in pending:
-                task.cancel()
-            loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
-
-    async def _with_client(self, operation):
-        """Execute an operation with a client, ensuring proper cleanup.
-
-        Args:
-            operation: An async function that takes a client as its argument
-
-        Returns:
-            Any: The result of the operation
-        """
-        client = self.get_client()
-        try:
-            async with client as cdp:
-                result = await operation(cdp)
-                # Ensure the client's session is closed before returning
-                if hasattr(client, '_session') and client._session:
-                    await client._session.close()
-                return result
-        except Exception as e:
-            # Ensure the client's session is closed even if an error occurs
-            if hasattr(client, '_session') and client._session:
-                await client._session.close()
-            raise e
+        return loop.run_until_complete(coroutine)
 
     def get_address(self) -> str:
         """Get the wallet address.
@@ -232,17 +201,19 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
             str: The transaction hash as a string
         """
         value_wei = Web3.to_wei(value, "ether")
+        client = self.get_client()
 
-        async def _send_transaction(cdp):
-            return await cdp.evm.send_transaction(
-                address=self.get_address(),
-                transaction=TransactionRequestEIP1559(
-                    to=to,
-                    value=value_wei,
-                ),
-                network=self._network.network_id,
-            )
-        return self._run_async(self._with_client(_send_transaction))
+        async def _send_transaction():
+            async with client as cdp:
+                return await cdp.evm.send_transaction(
+                    address=self.get_address(),
+                    transaction=TransactionRequestEIP1559(
+                        to=to,
+                        value=value_wei,
+                    ),
+                    network=self._network.network_id,
+                )
+        return self._run_async(_send_transaction())
 
     def read_contract(
         self,
@@ -279,17 +250,20 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
         Returns:
             HexStr: The transaction hash as a hex string
         """
-        async def _send_transaction(cdp):
-            return await cdp.evm.send_transaction(
-                address=self.get_address(),
-                transaction=TransactionRequestEIP1559(
-                    to=transaction["to"],
-                    value=transaction.get("value", 0),
-                    data=transaction.get("data", "0x"),
-                ),
-                network=self._network.network_id,
-            )
-        return self._run_async(self._with_client(_send_transaction))
+        client = self.get_client()
+
+        async def _send_transaction():
+            async with client as cdp:
+                return await cdp.evm.send_transaction(
+                    address=self.get_address(),
+                    transaction=TransactionRequestEIP1559(
+                        to=transaction["to"],
+                        value=transaction.get("value", 0),
+                        data=transaction.get("data", "0x"),
+                    ),
+                    network=self._network.network_id,
+                )
+        return self._run_async(_send_transaction())
 
     def wait_for_transaction_receipt(
         self, tx_hash: HexStr, timeout: float = 120, poll_latency: float = 0.1
@@ -371,14 +345,17 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
         Returns:
             Any: The deployed contract instance
         """
-        async def _deploy_contract(cdp):
-            return await cdp.evm.deploy_contract(
-                solidity_version=solidity_version,
-                solidity_input_json=solidity_input_json,
-                contract_name=contract_name,
-                constructor_args=constructor_args,
-            )
-        return self._run_async(self._with_client(_deploy_contract))
+        client = self.get_client()
+
+        async def _deploy_contract():
+            async with client as cdp:
+                return await cdp.evm.deploy_contract(
+                    solidity_version=solidity_version,
+                    solidity_input_json=solidity_input_json,
+                    contract_name=contract_name,
+                    constructor_args=constructor_args,
+                )
+        return self._run_async(_deploy_contract())
 
     def deploy_nft(self, name: str, symbol: str, base_uri: str) -> Any:
         """Deploy a new NFT (ERC-721) smart contract.
@@ -391,13 +368,16 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
         Returns:
             Any: The deployed NFT contract instance
         """
-        async def _deploy_nft(cdp):
-            return await cdp.evm.deploy_nft(
-                name=name,
-                symbol=symbol,
-                base_uri=base_uri,
-            )
-        return self._run_async(self._with_client(_deploy_nft))
+        client = self.get_client()
+
+        async def _deploy_nft():
+            async with client as cdp:
+                return await cdp.evm.deploy_nft(
+                    name=name,
+                    symbol=symbol,
+                    base_uri=base_uri,
+                )
+        return self._run_async(_deploy_nft())
 
     def deploy_token(self, name: str, symbol: str, total_supply: str) -> Any:
         """Deploy an ERC20 token contract.
@@ -410,13 +390,16 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
         Returns:
             Any: The deployed token contract instance
         """
-        async def _deploy_token(cdp):
-            return await cdp.evm.deploy_token(
-                name=name,
-                symbol=symbol,
-                total_supply=total_supply,
-            )
-        return self._run_async(self._with_client(_deploy_token))
+        client = self.get_client()
+
+        async def _deploy_token():
+            async with client as cdp:
+                return await cdp.evm.deploy_token(
+                    name=name,
+                    symbol=symbol,
+                    total_supply=total_supply,
+                )
+        return self._run_async(_deploy_token())
 
     def trade(self, amount: str, from_asset_id: str, to_asset_id: str) -> str:
         """Trade a specified amount of one asset for another.
@@ -429,17 +412,20 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
         Returns:
             str: A message containing the trade details and transaction information
         """
-        async def _trade(cdp):
-            trade_result = await cdp.evm.trade(
-                amount=amount,
-                from_asset_id=from_asset_id,
-                to_asset_id=to_asset_id,
-            )
-            return "\n".join(
-                [
-                    f"Traded {amount} of {from_asset_id} for {trade_result.to_amount} of {to_asset_id}.",
-                    f"Transaction hash for the trade: {trade_result.transaction_hash}",
-                    f"Transaction link for the trade: {trade_result.transaction_link}",
-                ]
-            )
-        return self._run_async(self._with_client(_trade))
+        client = self.get_client()
+
+        async def _trade():
+            async with client as cdp:
+                trade_result = await cdp.evm.trade(
+                    amount=amount,
+                    from_asset_id=from_asset_id,
+                    to_asset_id=to_asset_id,
+                )
+                return "\n".join(
+                    [
+                        f"Traded {amount} of {from_asset_id} for {trade_result.to_amount} of {to_asset_id}.",
+                        f"Transaction hash for the trade: {trade_result.transaction_hash}",
+                        f"Transaction link for the trade: {trade_result.transaction_link}",
+                    ]
+                )
+        return self._run_async(_trade())
