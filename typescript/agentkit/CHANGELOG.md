@@ -1,5 +1,11 @@
 # AgentKit Changelog
 
+## 0.7.1
+
+### Patch Changes
+
+- [#610](https://github.com/coinbase/agentkit/pull/610) [`beb34c9`](https://github.com/coinbase/agentkit/commit/beb34c9a300c66ddb03c303685a322dc45e74a13) Thanks [@nowak-token](https://github.com/nowak-token)! - Fixed ReferenceError when initializing TwitterActionProvider by implementing lazy initialization pattern with proper null checks
+
 ## 0.7.0
 
 ### Minor Changes
