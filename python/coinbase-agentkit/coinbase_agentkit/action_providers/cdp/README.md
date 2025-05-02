@@ -7,7 +7,6 @@ This directory contains the **CdpActionProvider** implementations, which provide
 ```
 cdp/
 ├── cdp_api_action_provider.py        # CDP API actions
-├── cdp_wallet_action_provider.py     # CDP Wallet actions
 ├── constants.py                      # CDP constants
 ├── schemas.py                        # CDP action schemas
 ├── __init__.py                       # Main exports

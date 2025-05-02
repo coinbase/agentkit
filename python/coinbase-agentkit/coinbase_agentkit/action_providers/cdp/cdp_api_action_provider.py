@@ -1,125 +1,83 @@
 """CDP API action provider."""
 
-import os
-from typing import Any
+from typing import Any, Literal
+import asyncio
 
-from cdp import Cdp, ExternalAddress
-
-from ...__version__ import __version__
 from ...network import Network
-from ...wallet_providers import EvmWalletProvider
-from ...wallet_providers.cdp_wallet_provider import CdpProviderConfig
+from ...wallet_providers.cdp_server_wallet_shared import WalletProviderWithClient
 from ..action_decorator import create_action
 from ..action_provider import ActionProvider
-from .schemas import AddressReputationSchema, RequestFaucetFundsSchema
-
-BASE_SEPOLIA_NETWORK_ID = "base-sepolia"
-BASE_SEPOLIA_CHAIN_ID = "84532"
+from .schemas import RequestFaucetFundsSchema
+from cdp import CdpClient
 
 
-class CdpApiActionProvider(ActionProvider[EvmWalletProvider]):
+class CdpApiActionProvider(ActionProvider[WalletProviderWithClient]):
     """Provides actions for interacting with CDP API.
 
     This provider is used for any action that uses the CDP API, but does not require a CDP Wallet.
     """
 
-    def __init__(self, config: CdpProviderConfig | None = None):
+    def __init__(self):
         super().__init__("cdp_api", [])
-
-        try:
-            api_key_name = config.api_key_name if config else os.getenv("CDP_API_KEY_NAME")
-            api_key_private_key = (
-                config.api_key_private_key if config else os.getenv("CDP_API_KEY_PRIVATE_KEY")
-            )
-
-            if api_key_name and api_key_private_key:
-                Cdp.configure(
-                    api_key_name=api_key_name,
-                    private_key=api_key_private_key.replace("\\n", "\n"),
-                    source="agentkit",
-                    source_version=__version__,
-                )
-            else:
-                Cdp.configure_from_json(source="agentkit", source_version=__version__)
-        except Exception as e:
-            raise ValueError(f"Failed to initialize CDP client: {e!s}") from e
 
     @create_action(
         name="request_faucet_funds",
         description="""
 This tool will request test tokens from the faucet for the default address in the wallet. It takes the wallet and asset ID as input.
-If no asset ID is provided the faucet defaults to ETH. Faucet is only allowed on 'base-sepolia' and can only provide asset ID 'eth' or 'usdc'.
+Faucet is only allowed on 'base-sepolia' or 'solana-devnet'.
+If fauceting on 'base-sepolia', user can only provide asset ID 'eth', 'usdc', 'eurc' or 'cbbtc', if no asset ID is provided, the faucet will default to 'eth'.
+If fauceting on 'solana-devnet', user can only provide asset ID 'sol' or 'usdc', if no asset ID is provided, the faucet will default to 'sol'.
 You are not allowed to faucet with any other network or asset ID. If you are on another network, suggest that the user sends you some ETH
 from another wallet and provide the user with your wallet details.""",
         schema=RequestFaucetFundsSchema,
     )
-    def request_faucet_funds(self, wallet_provider: EvmWalletProvider, args: dict[str, Any]) -> str:
-        """Request test tokens from the Base Sepolia faucet.
+    def request_faucet_funds(
+        self, wallet_provider: WalletProviderWithClient, args: dict[str, Any]
+    ) -> str:
+        """Request test tokens from the faucet.
 
         Args:
-            wallet_provider (EvmWalletProvider): The wallet provider instance.
+            wallet_provider (WalletProviderWithClient): The wallet provider instance.
             args (dict[str, Any]): Input arguments for the action.
 
         Returns:
             str: A message containing the action response or error details.
-
         """
         validated_args = RequestFaucetFundsSchema(**args)
+        network = wallet_provider.get_network()
+        network_id = network.network_id
 
-        try:
-            network = wallet_provider.get_network()
-            if network.chain_id != BASE_SEPOLIA_CHAIN_ID:
-                return "Error: Faucet is only available on base-sepolia network"
+        if network.protocol_family == "evm":
+            if network_id not in ["base-sepolia", "ethereum-sepolia"]:
+                return "Error: Faucet is only supported on 'base-sepolia' or 'ethereum-sepolia' evm networks."
 
-            address = ExternalAddress(
-                BASE_SEPOLIA_NETWORK_ID,
-                wallet_provider.get_address(),
-            )
+            token: Literal["eth", "usdc", "eurc", "cbbtc"] = validated_args.asset_id or "eth"
+            
+            async def _request_faucet(cdp):
+                return await cdp.evm.request_faucet(
+                    address=wallet_provider.get_address(),
+                    token=token,
+                    network=network_id,
+                )
+            
+            faucet_hash = wallet_provider._run_async(wallet_provider._with_client(_request_faucet))
+            return f"Received {validated_args.asset_id or 'ETH'} from the faucet. Transaction hash: {faucet_hash}"
+        elif network.protocol_family == "svm":
+            if network_id != "solana-devnet":
+                return "Error: Faucet is only supported on 'solana-devnet' solana networks."
 
-            faucet_tx = address.faucet(validated_args.asset_id)
-            faucet_tx.wait()
-
-            asset_str = validated_args.asset_id or "ETH"
-            return (
-                f"Received {asset_str} from the faucet. Transaction: {faucet_tx.transaction_link}"
-            )
-        except Exception as e:
-            return f"Error requesting faucet funds: {e!s}"
-
-    @create_action(
-        name="address_reputation",
-        description="""
-This tool checks the reputation of an address on a given network. It takes:
-
-- network: The network the address is on (e.g. "base-mainnet")
-- address: The Ethereum address to check
-
-Important notes:
-- This tool will not work on base-sepolia, you can default to using base-mainnet instead
-- The wallet's default address and its network may be used if not provided
-""",
-        schema=AddressReputationSchema,
-    )
-    def address_reputation(self, args: dict[str, Any]) -> str:
-        """Check the reputation of an Ethereum address.
-
-        Args:
-            args (dict[str, Any]): Input arguments for the action.
-
-        Returns:
-            str: A message containing the action response or error details.
-
-        """
-        try:
-            validated_args = AddressReputationSchema(**args)
-
-            address = ExternalAddress(validated_args.network, validated_args.address)
-
-            reputation = address.reputation()
-
-            return f"Address {validated_args.address} reputation: {reputation}"
-        except Exception as e:
-            return f"Error checking address reputation: {e!s}"
+            token: Literal["sol", "usdc"] = validated_args.asset_id or "sol"
+            
+            async def _request_faucet(cdp):
+                return await cdp.solana.request_faucet(
+                    address=wallet_provider.get_address(),
+                    token=token,
+                )
+            
+            response = wallet_provider._run_async(wallet_provider._with_client(_request_faucet))
+            return f"Received {validated_args.asset_id or 'SOL'} from the faucet. Transaction signature hash: {response.transaction_signature}"
+        else:
+            return "Error: Faucet is only supported on Ethereum and Solana protocol families."
 
     def supports_network(self, network: Network) -> bool:
         """Check if the network is supported by this action provider.
@@ -129,19 +87,18 @@ Important notes:
 
         Returns:
             bool: Whether the network is supported.
-
         """
-        return True
+        if network.protocol_family == "evm":
+            return network.network_id in ["base-sepolia", "ethereum-sepolia"]
+        elif network.protocol_family == "svm":
+            return network.network_id == "solana-devnet"
+        return False
 
 
-def cdp_api_action_provider(config: CdpProviderConfig | None = None) -> CdpApiActionProvider:
+def cdp_api_action_provider() -> CdpApiActionProvider:
     """Create a new CDP API action provider.
-
-    Args:
-        config (CdpProviderConfig | None): Configuration for the CDP API provider.
 
     Returns:
         CdpApiActionProvider: A new CDP API action provider instance.
-
     """
-    return CdpApiActionProvider(config=config)
+    return CdpApiActionProvider()

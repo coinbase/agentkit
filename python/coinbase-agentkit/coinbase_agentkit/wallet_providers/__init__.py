@@ -1,19 +1,19 @@
-"""Wallet providers for AgentKit."""
+"""Wallet providers for different blockchain protocols."""
 
-from .cdp_wallet_provider import CdpProviderConfig, CdpWalletProvider, CdpWalletProviderConfig
+from .cdp_evm_server_wallet_provider import CdpEvmServerWalletProvider, CdpEvmServerWalletProviderConfig
+from .cdp_server_wallet_shared import WalletProviderWithClient
 from .eth_account_wallet_provider import EthAccountWalletProvider, EthAccountWalletProviderConfig
 from .evm_wallet_provider import EvmWalletProvider
-from .smart_wallet_provider import SmartWalletProvider, SmartWalletProviderConfig
 from .wallet_provider import WalletProvider
 
 __all__ = [
     "WalletProvider",
+    "CdpEvmServerWalletProvider",
+    "CdpEvmServerWalletProviderConfig",
+    "CdpEvmServerWalletProvider",
+    "CdpEvmServerWalletProviderConfig",
+    "WalletProviderWithClient",
     "EvmWalletProvider",
-    "CdpProviderConfig",
-    "CdpWalletProvider",
-    "CdpWalletProviderConfig",
     "EthAccountWalletProvider",
     "EthAccountWalletProviderConfig",
-    "SmartWalletProvider",
-    "SmartWalletProviderConfig",
 ]

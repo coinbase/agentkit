@@ -6,11 +6,10 @@ import time
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
-    CdpWalletProvider,
-    CdpWalletProviderConfig,
+    CdpEvmServerWalletProvider,
+    CdpEvmServerWalletProviderConfig,
     allora_action_provider,
     cdp_api_action_provider,
-    cdp_wallet_action_provider,
     erc20_action_provider,
     pyth_action_provider,
     wallet_action_provider,
@@ -24,8 +23,6 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 
 # Configure a file to persist the agent's CDP API Wallet Data.
-wallet_data_file = "wallet_data.txt"
-
 load_dotenv()
 
 
@@ -34,24 +31,21 @@ def initialize_agent():
     # Initialize LLM
     llm = ChatOpenAI(model="gpt-4o-mini")
 
-    # Initialize CDP Wallet Provider
-    wallet_data = None
-    if os.path.exists(wallet_data_file):
-        with open(wallet_data_file) as f:
-            wallet_data = f.read()
-
-    cdp_config = None
-    if wallet_data is not None:
-        cdp_config = CdpWalletProviderConfig(wallet_data=wallet_data)
-
-    wallet_provider = CdpWalletProvider(cdp_config)
+    # Initialize CDP EVM Server Wallet Provider
+    cdp_config = CdpEvmServerWalletProviderConfig(
+        api_key_id=os.getenv("CDP_API_KEY_ID"),
+        api_key_secret=os.getenv("CDP_API_KEY_SECRET"),
+        wallet_secret=os.getenv("CDP_WALLET_SECRET"),
+        network_id=os.getenv("NETWORK_ID", "base-sepolia"),
+        address=os.getenv("ADDRESS"),
+    )
+    wallet_provider = CdpEvmServerWalletProvider(cdp_config)
 
     agentkit = AgentKit(
         AgentKitConfig(
             wallet_provider=wallet_provider,
             action_providers=[
                 cdp_api_action_provider(),
-                cdp_wallet_action_provider(),
                 erc20_action_provider(),
                 pyth_action_provider(),
                 wallet_action_provider(),
@@ -60,11 +54,6 @@ def initialize_agent():
             ],
         )
     )
-
-    wallet_data_json = json.dumps(wallet_provider.export_wallet().to_dict())
-
-    with open(wallet_data_file, "w") as f:
-        f.write(wallet_data_json)
 
     # use get_langchain_tools
     tools = get_langchain_tools(agentkit)

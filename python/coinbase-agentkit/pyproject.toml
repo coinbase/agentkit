@@ -16,9 +16,9 @@ keywords = [
     "agent",
 ]
 dependencies = [
-    "cdp-sdk==0.21.0",
+    "cdp-sdk @ file:///Users/carsonroscoe/Documents/Github/Coinbase/cdp-sdk/python/dist/cdp_sdk-1.3.0-py3-none-any.whl",
     "pydantic~=2.0",
-    "web3>=7.10.0,<8",
+    "web3>=7.6.0,<8",
     "python-dotenv>=1.0.1,<2",
     "requests>=2.31.0,<3",
     "allora-sdk>=0.2.0,<0.3",
@@ -28,6 +28,9 @@ dependencies = [
     "pyjwt[crypto]>=2.10.1,<3",
     "jsonschema>=4.23.0,<5",
 ]
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [project.scripts]
 check-description-length = "scripts.check_description_length:main"

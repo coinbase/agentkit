@@ -1,8 +1,0 @@
-def test_example_action_execution(provider):
-    """Test example action execution."""
-    args = {
-        "field_name": "test",
-        "amount": "1.0",
-    }
-    result = provider.example_action(args)
-    assert "test" in result 
