@@ -1,19 +1,12 @@
 import { okxDexActionProvider, OKXDexActionProvider } from "./OKXDexActionProvider";
 import { Network } from "../../network";
-import { OKXDexClient } from "@okx-dex/okx-dex-sdk";
 
-// Mock the OKX DEX SDK
-jest.mock("@okx-dex/okx-dex-sdk", () => ({
-  OKXDexClient: jest.fn().mockImplementation(() => ({
-    dex: {
-      getQuote: jest.fn().mockImplementation(() => Promise.resolve({}))
-    }
-  }))
-}));
+// Mock fetch
+const mockFetch = jest.fn();
+global.fetch = mockFetch;
 
 describe("OKXDexActionProvider", () => {
   let provider: OKXDexActionProvider;
-  let mockDexClient: { dex: { getQuote: jest.Mock } };
 
   // Test data
   const MOCK_CONFIG = {
@@ -24,21 +17,48 @@ describe("OKXDexActionProvider", () => {
   };
 
   const MOCK_QUOTE_RESPONSE = {
-    quoteId: "mock-quote-id-123456",
-    price: "0.067891234567890123",
-    guaranteedPrice: "0.067212322098765432",
-    estimatedGas: "150000",
-    validTo: 1678901234,
-    route: [
-      {
-        dex: "OKX",
-        percent: 100,
-        path: ["0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", "0xdAC17F958D2ee523a2206206994597C13D831ec7"]
+    code: "0",
+    data: [{
+      routerResult: {
+        chainId: "1",
+        fromTokenAmount: "10000000000000000000",
+        toTokenAmount: "678912345678901230",
+        tradeFee: "0",
+        estimateGasFee: "150000",
+        dexRouterList: [{
+          router: "0x123",
+          routerPercent: "100",
+          subRouterList: [{
+            dexProtocol: [{
+              dexName: "OKX",
+              percent: "100"
+            }],
+            fromToken: {
+              tokenSymbol: "ETH",
+              decimal: "18",
+              tokenUnitPrice: "2000"
+            },
+            toToken: {
+              tokenSymbol: "USDT",
+              decimal: "6",
+              tokenUnitPrice: "1"
+            }
+          }]
+        }],
+        fromToken: {
+          tokenSymbol: "ETH",
+          decimal: "18",
+          tokenUnitPrice: "2000"
+        },
+        toToken: {
+          tokenSymbol: "USDT",
+          decimal: "6",
+          tokenUnitPrice: "1"
+        },
+        priceImpactPercentage: "0.05"
       }
-    ],
-    fromTokenAmount: "10000000000000000000",
-    toTokenAmount: "678912345678901230",
-    priceImpact: "0.05"
+    }],
+    msg: "success"
   };
 
   beforeEach(() => {
@@ -52,9 +72,6 @@ describe("OKXDexActionProvider", () => {
     
     // Initialize provider
     provider = okxDexActionProvider();
-    
-    // Get mock client instance
-    mockDexClient = (OKXDexClient as jest.Mock).mock.results[0].value;
   });
 
   describe("initialization", () => {
@@ -84,18 +101,25 @@ describe("OKXDexActionProvider", () => {
 
     it("should successfully fetch a swap quote", async () => {
       // Setup mock response
-      mockDexClient.dex.getQuote.mockResolvedValue(MOCK_QUOTE_RESPONSE);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(MOCK_QUOTE_RESPONSE)
+      });
 
       const response = await provider.getSwapQuote(quoteArgs);
       
-      // Verify correct parameters were passed
-      expect(mockDexClient.dex.getQuote).toHaveBeenCalledWith(expect.objectContaining({
-        chainId: quoteArgs.chainId,
-        fromTokenAddress: quoteArgs.fromTokenAddress,
-        toTokenAddress: quoteArgs.toTokenAddress,
-        amount: quoteArgs.amount,
-        slippage: quoteArgs.slippage
-      }));
+      // Verify fetch was called with correct parameters
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/v5/dex/aggregator/quote"),
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({
+            "OK-ACCESS-KEY": MOCK_CONFIG.apiKey,
+            "OK-ACCESS-PASSPHRASE": MOCK_CONFIG.apiPassphrase,
+            "OK-ACCESS-PROJECT": MOCK_CONFIG.projectId
+          })
+        })
+      );
       
       // Verify response format
       expect(response).toContain("Successfully fetched OKX DEX swap quote");
@@ -103,20 +127,24 @@ describe("OKXDexActionProvider", () => {
     });
 
     it("should handle API errors gracefully", async () => {
-      // Setup mock error
-      const mockError = new Error("API error");
-      mockDexClient.dex.getQuote.mockRejectedValue(mockError);
+      // Setup mock error response
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.resolve({ code: "50000", msg: "API error" })
+      });
       
       const response = await provider.getSwapQuote(quoteArgs);
-      expect(response).toBe(`Error fetching OKX DEX swap quote: ${mockError}`);
+      expect(response).toContain("Error fetching OKX DEX swap quote");
+      expect(response).toContain("API error");
     });
 
     it("should handle network errors", async () => {
       // Setup network error
-      mockDexClient.dex.getQuote.mockRejectedValue(new Error("Network error"));
+      mockFetch.mockRejectedValueOnce(new Error("Network error"));
       
       const response = await provider.getSwapQuote(quoteArgs);
       expect(response).toContain("Error fetching OKX DEX swap quote");
+      expect(response).toContain("Network error");
     });
   });
 
