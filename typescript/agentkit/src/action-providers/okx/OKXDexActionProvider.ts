@@ -509,14 +509,14 @@ A failure response will return an error message with details.
   supportsNetwork = (network: Network): boolean => {
     // List of supported chain IDs by OKX DEX
     const supportedChains = [
-      "1",    // Ethereum
-      "56",   // BNB Smart Chain
-      "137",  // Polygon
-      "42161", // Arbitrum One
-      "10",   // Optimism
-      "43114", // Avalanche C-Chain
-      "8453",  // Base
-      "1101",  // Polygon zkEVM
+      // "1",    // Ethereum
+      // "56",   // BNB Smart Chain
+      // "137",  // Polygon
+      // "42161", // Arbitrum One
+      // "10",   // Optimism
+      // "43114", // Avalanche C-Chain
+      // "8453",  // Base
+      // "1101",  // Polygon zkEVM
       "501"   // Solana
     ];
 
