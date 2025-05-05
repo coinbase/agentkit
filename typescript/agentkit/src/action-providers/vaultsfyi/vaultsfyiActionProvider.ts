@@ -97,7 +97,6 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
     wallet: EvmWalletProvider,
     args: z.infer<typeof VaultsActionSchema>,
   ): Promise<string> {
-    console.log("Fetching vaults", args);
     const apyRange = args.apyRange ?? "7day";
     const vaults = await fetchVaults(args, this.apiKey);
     if ("error" in vaults) {
