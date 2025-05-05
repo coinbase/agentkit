@@ -36,6 +36,10 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
     - [Configuring from CdpWalletProvider](#configuring-from-cdpwalletprovider)
     - [Configuring from PrivyWalletProvider](#configuring-from-privywalletprovider)
     - [Configuring from ViemWalletProvider](#configuring-from-viemwalletprovider)
+  - [ZeroDevWalletProvider](#zerodevwalletprovider)
+    - [Configuring from CdpWalletProvider](#configuring-from-cdpwalletprovider)
+    - [Configuring from PrivyWalletProvider](#configuring-from-privywalletprovider)
+    - [Configuring from ViemWalletProvider](#configuring-from-viemwalletprovider)
 - [SVM Wallet Providers](#svm-wallet-providers)
   - [CdpV2SolanaWalletProvider](#cdpv2solanawalletprovider)
   - [SolanaKeypairWalletProvider](#solanakeypairwalletprovider)
@@ -142,6 +146,19 @@ const agent = createReactAgent({
 ```
 
 ## Action Providers
+<details>
+<summary><strong>Across</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>bridge_token</code></td>
+    <td width="768">Bridges tokens between supported chains using Across Protocol.</td>
+</tr>
+<tr>
+    <td width="200"><code>check_deposit_status</code></td>
+    <td width="768">Checks the status of a cross-chain bridge deposit on the Across Protocol (mainnet networks only).</td>
+</tr>
+</table>
+</details>
 <details>
 <summary><strong>Across</strong></summary>
 <table width="100%">
@@ -301,6 +318,36 @@ const agent = createReactAgent({
 </table>
 </details>
 <details>
+<summary><strong>Flaunch</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>flaunch</code></td>
+    <td width="768">Launches a new memecoin token with customizable name, symbol, image, and metadata.</td>
+</tr>
+<tr>
+    <td width="200"><code>buyCoinWithETHInput</code></td>
+    <td width="768">Purchases Flaunch memecoin tokens by specifying ETH input amount with configurable slippage.</td>
+</tr>
+<tr>
+    <td width="200"><code>buyCoinWithCoinInput</code></td>
+    <td width="768">Purchases Flaunch memecoin tokens by specifying desired token output amount with configurable slippage.</td>
+</tr>
+<tr>
+    <td width="200"><code>sellCoin</code></td>
+    <td width="768">Sells Flaunch memecoin tokens back to ETH with configurable slippage.</td>
+</tr>
+</table>
+</details>
+<details>
+<summary><strong>Messari</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>research_question</code></td>
+    <td width="768">Queries Messari AI for comprehensive crypto research across news, market data, protocol information, and more.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Morpho</strong></summary>
 <table width="100%">
 <tr>
@@ -310,6 +357,15 @@ const agent = createReactAgent({
 <tr>
     <td width="200"><code>withdraw</code></td>
     <td width="768">Withdraws a specified amount of assets from a designated Morpho Vault.</td>
+</tr>
+</table>
+</details>
+<details>
+<summary><strong>Onramp</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_onramp_buy_url</code></td>
+    <td width="768">Gets a URL to purchase cryptocurrency from Coinbase via Debit card or other payment methods.</td>
 </tr>
 </table>
 </details>
@@ -414,6 +470,15 @@ const agent = createReactAgent({
 <tr>
     <td width="200"><code>swap</code></td>
     <td width="768">Swap tokens on Solana using the Jupiter DEX aggregator.</td>
+</tr>
+</table>
+</details>
+<details>
+<summary><strong>ZeroDev Wallet</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>getCAB</code></td>
+    <td width="768">Retrieves chain abstracted balances (CAB) for specified tokens across multiple networks.</td>
 </tr>
 </table>
 </details>
@@ -760,8 +825,12 @@ const walletProvider = new ViemWalletProvider(client, {
 The `PrivyWalletProvider` is a wallet provider that uses [Privy Server Wallets](https://docs.privy.io/guide/server-wallets/) or [Privy Embedded Wallets](https://docs.privy.io/guide/embedded-wallets/). This implementation extends the `EvmWalletProvider`.
 
 #### Server Wallet Configuration
+The `PrivyWalletProvider` is a wallet provider that uses [Privy Server Wallets](https://docs.privy.io/guide/server-wallets/) or [Privy Embedded Wallets](https://docs.privy.io/guide/embedded-wallets/). This implementation extends the `EvmWalletProvider`.
+
+#### Server Wallet Configuration
 
 ```typescript
+import { PrivyWalletProvider } from "@coinbase/agentkit";
 import { PrivyWalletProvider } from "@coinbase/agentkit";
 
 // Configure Server Wallet Provider
@@ -772,10 +841,47 @@ const config = {
     walletId: "PRIVY_WALLET_ID", // optional, otherwise a new wallet will be created
     authorizationPrivateKey: "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY", // optional, required if your account is using authorization keys
     authorizationKeyId: "PRIVY_WALLET_AUTHORIZATION_KEY_ID", // optional, only required to create a new wallet if walletId is not provided
+    authorizationPrivateKey: "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY", // optional, required if your account is using authorization keys
+    authorizationKeyId: "PRIVY_WALLET_AUTHORIZATION_KEY_ID", // optional, only required to create a new wallet if walletId is not provided
 };
 
 const walletProvider = await PrivyWalletProvider.configureWithWallet(config);
 ```
+
+#### Delegated Embedded Wallet Configuration
+
+You can also use Privy's embedded wallets with delegation for agent actions. This allows your agent to use wallets that have been delegated transaction signing authority by users.
+
+```typescript
+import { PrivyWalletProvider } from "@coinbase/agentkit";
+
+// Configure Embedded Wallet Provider
+const config = {
+    appId: "PRIVY_APP_ID",
+    appSecret: "PRIVY_APP_SECRET",
+    authorizationPrivateKey: "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY",
+    walletId: "PRIVY_DELEGATED_WALLET_ID", // The ID of the wallet that was delegated to your server
+    networkId: "base-mainnet", // or any supported network
+    walletType: "embedded" // Specify "embedded" to use the embedded wallet provider
+};
+
+const walletProvider = await PrivyWalletProvider.configureWithWallet(config);
+```
+
+### Prerequisites
+
+Before using this wallet provider, you need to:
+
+1. Set up Privy in your application
+2. Enable server delegated actions
+3. Have users delegate permissions to your server
+4. Obtain the delegated wallet ID
+
+For more information on setting up Privy and enabling delegated actions, see [Privy's documentation](https://docs.privy.io/guide/embedded/server-delegated-actions).
+
+### Supported Operations
+
+The `PrivyEvmDelegatedEmbeddedWalletProvider` supports all standard wallet operations including transaction signing, message signing, and native transfers, using the wallet that was delegated to your server.
 
 #### Delegated Embedded Wallet Configuration
 
@@ -828,6 +934,7 @@ The `PrivyWalletProvider` can export wallet information by calling the `exportWa
 const walletData = await walletProvider.exportWallet();
 
 // For server wallets, walletData will be in the following format:
+// For server wallets, walletData will be in the following format:
 {
     walletId: string;
     authorizationKey: string | undefined;
@@ -861,6 +968,84 @@ const walletProvider = await SmartWalletProvider.configureWithWallet({
   signer,
   smartWalletAddress: undefined, // If not provided a new smart wallet will be created
   paymasterUrl: undefined, // Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
+});
+```
+
+### ZeroDevWalletProvider
+
+The `ZeroDevWalletProvider` is a wallet provider that uses [ZeroDev](https://docs.zerodev.app/) smart accounts.  It supports features like chain abstraction, gasless transactions, batched transactions, and more.
+
+In the context of Agent Kit, "chain abstraction" means that the agent can spend funds across chains without explicitly bridging.  For example, if you send funds to the agent's address on Base, the agent will be able to spend the funds on any supported EVM chains such as Arbitrum and Optimism.
+
+The ZeroDev wallet provider does not itself manage keys.  Rather, it can be used with any EVM wallet provider (e.g. CDP/Privy/Viem) which serves as the "signer" for the ZeroDev smart account.
+
+#### Configuring from CdpWalletProvider
+
+```typescript
+import { ZeroDevWalletProvider, CdpWalletProvider } from "@coinbase/agentkit";
+
+// First create a CDP wallet provider as the signer
+const cdpWalletProvider = await CdpWalletProvider.configureWithWallet({
+    apiKeyName: "CDP API KEY NAME",
+    apiKeyPrivate: "CDP API KEY PRIVATE KEY",
+    networkId: "base-mainnet",
+});
+
+// Configure ZeroDev Wallet Provider with CDP signer
+const walletProvider = await ZeroDevWalletProvider.configureWithWallet({
+    signer: cdpWalletProvider.toSigner(),
+    projectId: "ZERODEV_PROJECT_ID",
+    entryPointVersion: "0.7" as const,
+    networkId: "base-mainnet",
+});
+```
+
+#### Configuring from PrivyWalletProvider
+
+```typescript
+import { ZeroDevWalletProvider, PrivyWalletProvider } from "@coinbase/agentkit";
+
+// First create a Privy wallet provider as the signer
+const privyWalletProvider = await PrivyWalletProvider.configureWithWallet({
+    appId: "PRIVY_APP_ID",
+    appSecret: "PRIVY_APP_SECRET",
+    chainId: "8453", // base-mainnet
+});
+
+// Configure ZeroDev Wallet Provider with Privy signer
+const walletProvider = await ZeroDevWalletProvider.configureWithWallet({
+    signer: privyWalletProvider.toSigner(),
+    projectId: "ZERODEV_PROJECT_ID",
+    entryPointVersion: "0.7" as const,
+    networkId: "base-mainnet",
+});
+```
+
+#### Configuring from ViemWalletProvider
+
+```typescript
+import { ZeroDevWalletProvider, ViemWalletProvider } from "@coinbase/agentkit";
+import { privateKeyToAccount } from "viem/accounts";
+import { base } from "viem/chains";
+import { createWalletClient, http } from "viem";
+
+// First create a Viem wallet provider as the signer
+const account = privateKeyToAccount("PRIVATE_KEY");
+
+const viemWalletProvider = new ViemWalletProvider(
+  createWalletClient({
+    account,
+    chain: base,
+    transport: http(),
+  })
+);
+
+// Configure ZeroDev Wallet Provider with Viem signer
+const walletProvider = await ZeroDevWalletProvider.configureWithWallet({
+    signer: viemWalletProvider.toSigner(),
+    projectId: "ZERODEV_PROJECT_ID",
+    entryPointVersion: "0.7" as const,
+    networkId: "base-mainnet",
 });
 ```
 
