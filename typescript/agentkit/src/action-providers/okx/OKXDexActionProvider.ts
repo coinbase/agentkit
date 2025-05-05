@@ -412,8 +412,10 @@ A failure response will return an error message with details.
           }
 
           console.log("Signing and sending transaction");
-          const txSignature = await this.walletProvider.signAndSendTransaction(transaction);
-          console.log("Transaction sent, track it here: https://web3.okx.com/explorer/solana/tx/${txSignature}");
+          const signedTransaction = await this.walletProvider.signTransaction(transaction);
+          const serializedTransaction = signedTransaction.serialize();
+          const txSignature = await connection.sendRawTransaction(serializedTransaction);
+          console.log(`Transaction sent, track it here: https://web3.okx.com/explorer/solana/tx/${txSignature}\n`);
 
           try {
             // First quick check with 'processed' commitment
@@ -448,7 +450,7 @@ A failure response will return an error message with details.
             return `✅ Swap executed successfully!\n🔍 Track transaction: https://web3.okx.com/explorer/solana/tx/${txSignature}`;
           } catch (error) {
             // If quick check failed, try one more time with a bit more patience
-            console.log("could not confirm transaction using 'processed' blocks, trying one more time using 'confirmed'  blocks...");
+            console.log("could not confirm transaction status using 'processed' blocks, trying one more time using 'confirmed'  blocks...\n");
             try {
               const finalCheck = await Promise.race([
                 connection.confirmTransaction({
