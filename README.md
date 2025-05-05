@@ -152,6 +152,7 @@ agentkit/
 │   │   └── model-context-protocol/
 │   └── examples/
 │       ├── langchain-cdp-chatbot/
+│       ├── langchain-cdp-v2-chatbot/
 │       ├── langchain-farcaster-chatbot/
 │       ├── langchain-privy-chatbot/
 │       ├── langchain-solana-chatbot/

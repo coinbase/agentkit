@@ -47,7 +47,7 @@ export class OKXDexActionProvider extends ActionProvider<SvmWalletProvider> {
   private readonly secretKey: string;
   private readonly apiPassphrase: string;
   private readonly projectId: string;
-  private readonly baseUrl: string = "https://beta.okex.org";
+  private readonly baseUrl: string = "https://www.okx.com";
   private readonly solanaRpcUrl: string;
   protected walletProvider?: SvmWalletProvider;
 
@@ -390,11 +390,9 @@ A failure response will return an error message with details.
           try {
             // Try versioned transaction first
             transaction = VersionedTransaction.deserialize(decodedTransaction);
-            console.log("Successfully created versioned transaction");
             
             // Update the blockhash directly on the message
             transaction.message.recentBlockhash = recentBlockHash.blockhash;
-            console.log("Updated blockhash for versioned transaction");
           } catch (e) {
             // Fall back to legacy transaction
             console.log("Versioned transaction failed, trying legacy:", e);
@@ -415,7 +413,7 @@ A failure response will return an error message with details.
 
           console.log("Signing and sending transaction");
           const txSignature = await this.walletProvider.signAndSendTransaction(transaction);
-          console.log("Transaction sent, checking status...");
+          console.log("Transaction sent, track it here: https://web3.okx.com/explorer/solana/tx/${txSignature}");
 
           try {
             // First quick check with 'processed' commitment
@@ -450,7 +448,7 @@ A failure response will return an error message with details.
             return `✅ Swap executed successfully!\n🔍 Track transaction: https://web3.okx.com/explorer/solana/tx/${txSignature}`;
           } catch (error) {
             // If quick check failed, try one more time with a bit more patience
-            console.log("Quick check failed, trying one more time...");
+            console.log("could not confirm transaction using 'processed' blocks, trying one more time using 'confirmed'  blocks...");
             try {
               const finalCheck = await Promise.race([
                 connection.confirmTransaction({
