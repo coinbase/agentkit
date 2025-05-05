@@ -805,4 +805,4 @@ agent_kit = AgentKit(AgentKitConfig(
 
 ## Contributing
 
-See [CONTRIBUTING.md](https://github.com/coinbase/agentkit/blob/master/CONTRIBUTING.md) for more information.
+See [CONTRIBUTING.md](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING.md) for more information.
