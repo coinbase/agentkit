@@ -47,7 +47,7 @@ export class OKXDexActionProvider extends ActionProvider<SvmWalletProvider> {
   private readonly secretKey: string;
   private readonly apiPassphrase: string;
   private readonly projectId: string;
-  private readonly baseUrl: string = "https://beta.okex.org";
+  private readonly baseUrl: string = "https://www.okx.com";
   private readonly solanaRpcUrl: string;
   protected walletProvider?: SvmWalletProvider;
 
@@ -390,11 +390,9 @@ A failure response will return an error message with details.
           try {
             // Try versioned transaction first
             transaction = VersionedTransaction.deserialize(decodedTransaction);
-            console.log("Successfully created versioned transaction");
             
             // Update the blockhash directly on the message
             transaction.message.recentBlockhash = recentBlockHash.blockhash;
-            console.log("Updated blockhash for versioned transaction");
           } catch (e) {
             // Fall back to legacy transaction
             console.log("Versioned transaction failed, trying legacy:", e);
