@@ -8,6 +8,7 @@ import {
   TwitterAccountMentionsSchema,
   TwitterPostTweetSchema,
   TwitterPostTweetReplySchema,
+  TwitterUploadMediaSchema,
 } from "./schemas";
 
 /**
@@ -143,6 +144,8 @@ A failure response will return a message with the Twitter API request error:
     name: "post_tweet",
     description: `
 This tool will post a tweet on Twitter. The tool takes the text of the tweet as input. Tweets can be maximum 280 characters.
+Optionally, up to 4 media items (images, videos) can be attached to the tweet by providing their media IDs in the mediaIds array.
+Media IDs are obtained by first uploading the media using the upload_media action.
 
 A successful response will return a message with the API response as a JSON payload:
     {"data": {"text": "hello, world!", "id": "0123456789012345678", "edit_history_tweet_ids": ["0123456789012345678"]}}
@@ -153,10 +156,20 @@ A failure response will return a message with the Twitter API request error:
   })
   async postTweet(args: z.infer<typeof TwitterPostTweetSchema>): Promise<string> {
     try {
-      const response = await this.getClient().v2.tweet(args.tweet);
+      let mediaOptions = {};
+
+      if (args.mediaIds && args.mediaIds.length > 0) {
+        // Convert array to tuple format expected by the Twitter API
+        const mediaIdsTuple = args.mediaIds as unknown as [string, ...string[]];
+        mediaOptions = {
+          media: { media_ids: mediaIdsTuple },
+        };
+      }
+
+      const response = await this.getClient().v2.tweet(args.tweet, mediaOptions);
       return `Successfully posted to Twitter:\n${JSON.stringify(response)}`;
     } catch (error) {
-      return `Error posting to Twitter:\n${error}`;
+      return `Error posting to Twitter:\n${error} with media ids: ${args.mediaIds}`;
     }
   }
 
@@ -169,7 +182,10 @@ A failure response will return a message with the Twitter API request error:
   @CreateAction({
     name: "post_tweet_reply",
     description: `
-This tool will post a tweet on Twitter. The tool takes the text of the tweet as input. Tweets can be maximum 280 characters.
+This tool will post a reply to a tweet on Twitter. The tool takes the text of the reply and the ID of the tweet to reply to as input.
+Replies can be maximum 280 characters.
+Optionally, up to 4 media items (images, videos) can be attached to the reply by providing their media IDs in the mediaIds array.
+Media IDs can be obtained by first uploading the media using the upload_media action.
 
 A successful response will return a message with the API response as a JSON payload:
     {"data": {"text": "hello, world!", "id": "0123456789012345678", "edit_history_tweet_ids": ["0123456789012345678"]}}
@@ -180,13 +196,48 @@ A failure response will return a message with the Twitter API request error:
   })
   async postTweetReply(args: z.infer<typeof TwitterPostTweetReplySchema>): Promise<string> {
     try {
-      const response = await this.getClient().v2.tweet(args.tweetReply, {
+      const options: Record<string, unknown> = {
         reply: { in_reply_to_tweet_id: args.tweetId },
-      });
+      };
+
+      if (args.mediaIds && args.mediaIds.length > 0) {
+        // Convert array to tuple format expected by the Twitter API
+        const mediaIdsTuple = args.mediaIds as unknown as [string, ...string[]];
+        options.media = { media_ids: mediaIdsTuple };
+      }
+
+      const response = await this.getClient().v2.tweet(args.tweetReply, options);
 
       return `Successfully posted reply to Twitter:\n${JSON.stringify(response)}`;
     } catch (error) {
       return `Error posting reply to Twitter: ${error}`;
+    }
+  }
+
+  /**
+   * Upload media to Twitter.
+   *
+   * @param args - The arguments containing the file path
+   * @returns A JSON string containing the media ID or error message
+   */
+  @CreateAction({
+    name: "upload_media",
+    description: `
+This tool will upload media (images, videos, etc.) to Twitter.
+
+A successful response will return a message with the media ID:
+    Successfully uploaded media to Twitter: 1234567890
+
+A failure response will return a message with the Twitter API request error:
+    Error uploading media to Twitter: Invalid file format`,
+    schema: TwitterUploadMediaSchema,
+  })
+  async uploadMedia(args: z.infer<typeof TwitterUploadMediaSchema>): Promise<string> {
+    try {
+      const mediaId = await this.getClient().v1.uploadMedia(args.filePath);
+      return `Successfully uploaded media to Twitter: ${mediaId}`;
+    } catch (error) {
+      return `Error uploading media to Twitter: ${error}`;
     }
   }
 
