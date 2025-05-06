@@ -1,19 +1,16 @@
 """CDP EVM Server Wallet provider."""
 
-import json
-import os
 import asyncio
+import os
 from decimal import Decimal
 from typing import Any
 
 from cdp import CdpClient
 from cdp.evm_transaction_types import TransactionRequestEIP1559
-from eth_account.typed_transactions import DynamicFeeTransaction
 from pydantic import BaseModel, Field
 from web3 import Web3
 from web3.types import BlockIdentifier, ChecksumAddress, HexStr, TxParams
 
-from ..__version__ import __version__
 from ..network import NETWORK_ID_TO_CHAIN, Network
 from .evm_wallet_provider import EvmWalletProvider
 
@@ -37,7 +34,7 @@ class CdpEvmServerWalletProviderConfig(CdpEvmServerProviderConfig):
 class CdpEvmServerWalletProvider(EvmWalletProvider):
     """A wallet provider that uses the CDP EVM Server SDK."""
 
-    def __init__(self, config: CdpEvmServerWalletProviderConfig | None = None):
+    def __init__(self, config: CdpEvmServerWalletProviderConfig):
         """Initialize CDP EVM Server wallet provider.
 
         Args:
@@ -47,9 +44,6 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
         Raises:
             ValueError: If required configuration is missing or initialization fails
         """
-        if not config:
-            config = CdpEvmServerWalletProviderConfig()
-
         try:
             self._api_key_id = config.api_key_id or os.getenv("CDP_API_KEY_ID")
             self._api_key_secret = config.api_key_secret or os.getenv("CDP_API_KEY_SECRET")
@@ -83,6 +77,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
                 account = asyncio.run(self._create_account(client))
             
             self._address = account.address
+            self._account = account  # Store the account object for signing operations
 
         except ImportError as e:
             raise ImportError(
@@ -281,9 +276,15 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
         Returns:
             HexStr: The signature as a hex string
         """
-        message_hash = hash_message(message)
-        payload_signature = self._web3.eth.account.sign_message(message_hash, self.get_address())
-        return payload_signature.signature
+        client = self.get_client()
+
+        async def _sign_message():
+            async with client as cdp:
+                return await cdp.evm.sign_message(
+                    address=self.get_address(),
+                    message=message,
+                )
+        return self._run_async(_sign_message())
 
     def sign_typed_data(self, typed_data: dict[str, Any]) -> HexStr:
         """Sign typed data according to EIP-712 standard.
@@ -294,9 +295,15 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
         Returns:
             HexStr: The signature as a hex string
         """
-        typed_data_message_hash = hash_typed_data_message(typed_data)
-        payload_signature = self._web3.eth.account.sign_message(typed_data_message_hash, self.get_address())
-        return payload_signature.signature
+        client = self.get_client()
+
+        async def _sign_typed_data():
+            async with client as cdp:
+                return await cdp.evm.sign_typed_data(
+                    address=self.get_address(),
+                    typed_data=typed_data,
+                )
+        return self._run_async(_sign_typed_data())
 
     def sign_transaction(self, transaction: TxParams) -> HexStr:
         """Sign an EVM transaction.
@@ -307,112 +314,17 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
         Returns:
             HexStr: The transaction signature as a hex string
         """
-        dynamic_fee_tx = DynamicFeeTransaction.from_dict(transaction)
-        tx_hash_bytes = dynamic_fee_tx.hash()
-        tx_hash_hex = tx_hash_bytes.hex()
-
-        payload_signature = self._web3.eth.account.sign_message(tx_hash_hex, self.get_address())
-        return payload_signature.signature
-
-    def deploy_contract(
-        self,
-        solidity_version: str,
-        solidity_input_json: str,
-        contract_name: str,
-        constructor_args: dict[str, Any],
-    ) -> Any:
-        """Deploy a smart contract.
-
-        Args:
-            solidity_version (str): The version of the Solidity compiler to use
-            solidity_input_json (str): The JSON input for the Solidity compiler
-            contract_name (str): The name of the contract to deploy
-            constructor_args (dict[str, Any]): Key-value map of constructor arguments
-
-        Returns:
-            Any: The deployed contract instance
-        """
         client = self.get_client()
 
-        async def _deploy_contract():
+        async def _sign_transaction():
             async with client as cdp:
-                return await cdp.evm.deploy_contract(
-                    solidity_version=solidity_version,
-                    solidity_input_json=solidity_input_json,
-                    contract_name=contract_name,
-                    constructor_args=constructor_args,
+                return await cdp.evm.sign_transaction(
+                    address=self.get_address(),
+                    transaction=TransactionRequestEIP1559(
+                        to=transaction["to"],
+                        value=transaction.get("value", 0),
+                        data=transaction.get("data", "0x"),
+                    ),
+                    network=self._network.network_id,
                 )
-        return self._run_async(_deploy_contract())
-
-    def deploy_nft(self, name: str, symbol: str, base_uri: str) -> Any:
-        """Deploy a new NFT (ERC-721) smart contract.
-
-        Args:
-            name (str): The name of the NFT collection
-            symbol (str): The token symbol for the collection
-            base_uri (str): The base URI for token metadata
-
-        Returns:
-            Any: The deployed NFT contract instance
-        """
-        client = self.get_client()
-
-        async def _deploy_nft():
-            async with client as cdp:
-                return await cdp.evm.deploy_nft(
-                    name=name,
-                    symbol=symbol,
-                    base_uri=base_uri,
-                )
-        return self._run_async(_deploy_nft())
-
-    def deploy_token(self, name: str, symbol: str, total_supply: str) -> Any:
-        """Deploy an ERC20 token contract.
-
-        Args:
-            name (str): The name of the token
-            symbol (str): The symbol of the token
-            total_supply (str): The total supply of the token
-
-        Returns:
-            Any: The deployed token contract instance
-        """
-        client = self.get_client()
-
-        async def _deploy_token():
-            async with client as cdp:
-                return await cdp.evm.deploy_token(
-                    name=name,
-                    symbol=symbol,
-                    total_supply=total_supply,
-                )
-        return self._run_async(_deploy_token())
-
-    def trade(self, amount: str, from_asset_id: str, to_asset_id: str) -> str:
-        """Trade a specified amount of one asset for another.
-
-        Args:
-            amount (str): The amount of the from asset to trade, e.g. `15`, `0.000001`.
-            from_asset_id (str): The from asset ID to trade (e.g., "eth", "usdc", or a valid contract address).
-            to_asset_id (str): The to asset ID to trade (e.g., "eth", "usdc", or a valid contract address).
-
-        Returns:
-            str: A message containing the trade details and transaction information
-        """
-        client = self.get_client()
-
-        async def _trade():
-            async with client as cdp:
-                trade_result = await cdp.evm.trade(
-                    amount=amount,
-                    from_asset_id=from_asset_id,
-                    to_asset_id=to_asset_id,
-                )
-                return "\n".join(
-                    [
-                        f"Traded {amount} of {from_asset_id} for {trade_result.to_amount} of {to_asset_id}.",
-                        f"Transaction hash for the trade: {trade_result.transaction_hash}",
-                        f"Transaction link for the trade: {trade_result.transaction_link}",
-                    ]
-                )
-        return self._run_async(_trade())
+        return self._run_async(_sign_transaction())

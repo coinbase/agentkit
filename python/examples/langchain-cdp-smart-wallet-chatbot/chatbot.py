@@ -49,8 +49,6 @@ def initialize_agent():
     if not smart_wallet_address and not idempotency_key:
         raise ValueError("SMART_WALLET_ADDRESS or IDEMPOTENCY_KEY environment variable is required")
 
-    signer = Account.from_key(private_key)
-
     # Initialize CDP Smart Wallet Provider
     wallet_provider = CdpEvmSmartWalletProvider(
         CdpEvmSmartWalletProviderConfig(
@@ -60,6 +58,7 @@ def initialize_agent():
             api_key_id=cdp_api_key_id,
             api_key_secret=cdp_api_key_secret,
             wallet_secret=cdp_wallet_secret,
+            owner=private_key,
             paymaster_url=None,  # Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
         )
     )

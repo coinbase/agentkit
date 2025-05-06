@@ -1,20 +1,18 @@
 """CDP EVM Smart Wallet provider."""
 
-import json
-import os
 import asyncio
+import os
 from decimal import Decimal
 from typing import Any, List
 
 from cdp import CdpClient
 from cdp.evm_call_types import EncodedCall
 from cdp.evm_transaction_types import TransactionRequestEIP1559
-from eth_account.typed_transactions import DynamicFeeTransaction
+from eth_account import Account
 from pydantic import BaseModel, Field
 from web3 import Web3
 from web3.types import BlockIdentifier, ChecksumAddress, HexStr, TxParams
 
-from ..__version__ import __version__
 from ..network import NETWORK_ID_TO_CHAIN, Network
 from .evm_wallet_provider import EvmGasConfig, EvmWalletProvider
 
@@ -26,7 +24,8 @@ class CdpEvmSmartWalletProviderConfig(BaseModel):
     api_key_secret: str | None = Field(None, description="The CDP API secret")
     wallet_secret: str | None = Field(None, description="The CDP wallet secret")
     network_id: str | None = Field(None, description="The network id")
-    address: str | None = Field(None, description="The address to use")
+    address: str | None = Field(None, description="The smart wallet address to use")
+    owner: str | None = Field(None, description="The owner's private key or CDP server wallet address")
     idempotency_key: str | None = Field(None, description="The idempotency key for wallet creation")
     gas: EvmGasConfig | None = Field(None, description="Gas configuration settings")
     paymaster_url: str | None = Field(None, description="Optional paymaster URL for gasless transactions")
@@ -35,7 +34,7 @@ class CdpEvmSmartWalletProviderConfig(BaseModel):
 class CdpEvmSmartWalletProvider(EvmWalletProvider):
     """A wallet provider that uses the CDP EVM Smart Account SDK."""
 
-    def __init__(self, config: CdpEvmSmartWalletProviderConfig | None = None):
+    def __init__(self, config: CdpEvmSmartWalletProviderConfig):
         """Initialize CDP EVM Smart Wallet provider.
 
         Args:
@@ -45,19 +44,21 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
         Raises:
             ValueError: If required configuration is missing or initialization fails
         """
-        if not config:
-            config = CdpEvmSmartWalletProviderConfig()
-
         try:
             self._api_key_id = config.api_key_id or os.getenv("CDP_API_KEY_ID")
             self._api_key_secret = config.api_key_secret or os.getenv("CDP_API_KEY_SECRET")
             self._wallet_secret = config.wallet_secret or os.getenv("CDP_WALLET_SECRET")
             self._paymaster_url = config.paymaster_url
+            self._address = config.address
+            owner_address_or_private_key = config.owner or os.getenv("OWNER")
 
             if not self._api_key_id or not self._api_key_secret or not self._wallet_secret:
                 raise ValueError(
                     "Missing required environment variables. CDP_API_KEY_ID, CDP_API_KEY_SECRET, CDP_WALLET_SECRET are required."
                 )
+
+            if not owner_address_or_private_key:
+                raise ValueError("Owner private key or CDP server wallet address is required")
 
             network_id = config.network_id or os.getenv("NETWORK_ID", "base-sepolia")
             self._idempotency_key = config.idempotency_key or os.getenv("IDEMPOTENCY_KEY")
@@ -77,20 +78,28 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
             try:
                 async def initialize_accounts():
                     async with client as cdp:
-                        if config.address:
-                            # If address is provided, get the account
-                            # account = await cdp.evm.get_account(address=config.address)
-                            # Pass in the account
-                            smart_account = await cdp.evm.get_smart_account(owner=account, address=config.address)
+                        # Handle owner setup - either private key or CDP server wallet
+                        if owner_address_or_private_key.startswith("0x") and len(owner_address_or_private_key) == 42:
+                            # Owner is a CDP server wallet address
+                            owner = await cdp.evm.get_account(address=owner_address_or_private_key)
                         else:
-                            # If no address but idempotency key is provided, create a new account
-                            account = await cdp.evm.create_account(idempotency_key=self._idempotency_key)
-                            smart_account = await cdp.evm.create_smart_account(owner=account)
-                        return account, smart_account
+                            # Owner is a private key
+                            owner = Account.from_key(owner_address_or_private_key)
 
-                account, smart_account = asyncio.run(initialize_accounts())
+                        if self._address:
+                            # If smart wallet address is provided, get the smart account
+                            smart_account = await cdp.evm.get_smart_account(
+                                owner=owner,
+                                address=self._address
+                            )
+                        else:
+                            # Create new smart account with owner
+                            smart_account = await cdp.evm.create_smart_account(owner=owner)
+                        return owner, smart_account
+
+                owner, smart_account = asyncio.run(initialize_accounts())
                 self._address = smart_account.address
-                self._owner_account = account
+                self._owner = owner
 
             finally:
                 # Ensure client is properly closed
@@ -192,8 +201,12 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         async def _send_user_operation():
             async with client as cdp:
+                smart_account = await cdp.evm.get_smart_account(
+                    owner=self._owner,
+                    address=self._address
+                )
                 user_operation = await cdp.evm.send_user_operation(
-                    smart_account=self._address,
+                    smart_account=smart_account,
                     network=self._network.network_id,
                     calls=[
                         EncodedCall(
@@ -252,8 +265,12 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         async def _send_user_operation():
             async with client as cdp:
+                smart_account = await cdp.evm.get_smart_account(
+                    owner=self._owner,
+                    address=self._address
+                )
                 user_operation = await cdp.evm.send_user_operation(
-                    smart_account=self._address,
+                    smart_account=smart_account,
                     network=self._network.network_id,
                     calls=[
                         EncodedCall(
@@ -301,10 +318,11 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         Returns:
             HexStr: The signature as a hex string
+
+        Raises:
+            NotImplementedError: Smart wallets cannot sign messages directly
         """
-        message_hash = hash_message(message)
-        payload_signature = self._web3.eth.account.sign_message(message_hash, self._owner_account.address)
-        return payload_signature.signature
+        raise NotImplementedError("Smart wallets cannot sign messages directly. Use the owner account to sign messages.")
 
     def sign_typed_data(self, typed_data: dict[str, Any]) -> HexStr:
         """Sign typed data according to EIP-712 standard.
@@ -314,10 +332,11 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         Returns:
             HexStr: The signature as a hex string
+
+        Raises:
+            NotImplementedError: Smart wallets cannot sign typed data directly
         """
-        typed_data_message_hash = hash_typed_data_message(typed_data)
-        payload_signature = self._web3.eth.account.sign_message(typed_data_message_hash, self._owner_account.address)
-        return payload_signature.signature
+        raise NotImplementedError("Smart wallets cannot sign typed data directly. Use the owner account to sign typed data.")
 
     def sign_transaction(self, transaction: TxParams) -> HexStr:
         """Sign an EVM transaction.
@@ -327,13 +346,11 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         Returns:
             HexStr: The transaction signature as a hex string
-        """
-        dynamic_fee_tx = DynamicFeeTransaction.from_dict(transaction)
-        tx_hash_bytes = dynamic_fee_tx.hash()
-        tx_hash_hex = tx_hash_bytes.hex()
 
-        payload_signature = self._web3.eth.account.sign_message(tx_hash_hex, self._owner_account.address)
-        return payload_signature.signature
+        Raises:
+            NotImplementedError: Smart wallets cannot sign transactions directly
+        """
+        raise NotImplementedError("Smart wallets cannot sign transactions directly. Use send_transaction or send_user_operation instead.")
 
     def send_user_operation(self, calls: List[EncodedCall]) -> str:
         """Send a user operation with multiple calls.
@@ -348,8 +365,12 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         async def _send_user_operation():
             async with client as cdp:
+                smart_account = await cdp.evm.get_smart_account(
+                    owner=self._owner,
+                    address=self._address
+                )
                 user_operation = await cdp.evm.send_user_operation(
-                    smart_account=self._address,
+                    smart_account=smart_account,
                     network=self._network.network_id,
                     calls=calls,
                     paymaster_url=self._paymaster_url
