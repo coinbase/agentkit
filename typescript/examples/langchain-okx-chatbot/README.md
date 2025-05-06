@@ -29,6 +29,7 @@ This will automatically install and use the latest version of Node.
 
 You'll need the following API keys:
 - [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
+- [OKX API Credentials](https://web3.okx.com/build/dev-portal)
 
 Once you have them, rename the `.env-local` file to `.env` and make sure you set the API keys to their corresponding environment variables:
 
