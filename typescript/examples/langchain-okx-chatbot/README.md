@@ -47,12 +47,12 @@ Once you have them, rename the `.env-local` file to `.env` and make sure you set
 
 #### Network Selection
 
-The supported networks are `solana-mainnet`, `solana-devnet`, and `solana-testnet`.
+The supported networks are `solana-mainnet`.
 
 Network selection follows this priority:
 1. **Explicit RPC URL** – If `SOLANA_RPC_URL` is set in your `.env`, this RPC URL is used, and the network is inferred from it.
 2. **Network ID** – If `SOLANA_RPC_URL` is not set but `NETWORK_ID` is, the network is determined by `NETWORK_ID`, and a default RPC URL is assigned accordingly.
-3. **Fallback** – If neither variable is set, the default network is `solana-devnet` with a default RPC URL.
+3. **Fallback** – If neither variable is set, the default network is `solana-mainnet` with a default RPC URL.
 
 #### Keypair Selection
 
