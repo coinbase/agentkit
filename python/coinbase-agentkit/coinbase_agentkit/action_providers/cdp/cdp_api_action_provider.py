@@ -1,14 +1,15 @@
 """CDP API action provider."""
 
-from typing import Any, Literal
 import asyncio
+from typing import Any, Literal
+
+from cdp import CdpClient
 
 from ...network import Network
 from ...wallet_providers.cdp_server_wallet_shared import WalletProviderWithClient
 from ..action_decorator import create_action
 from ..action_provider import ActionProvider
 from .schemas import RequestFaucetFundsSchema
-from cdp import CdpClient
 
 
 class CdpApiActionProvider(ActionProvider[WalletProviderWithClient]):
@@ -52,14 +53,14 @@ from another wallet and provide the user with your wallet details.""",
                 return "Error: Faucet is only supported on 'base-sepolia' or 'ethereum-sepolia' evm networks."
 
             token: Literal["eth", "usdc", "eurc", "cbbtc"] = validated_args.asset_id or "eth"
-            
+
             client = wallet_provider.get_client()
             try:
                 loop = asyncio.get_event_loop()
             except RuntimeError:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-            
+
             async def _request_faucet():
                 async with client as cdp:
                     return await cdp.evm.request_faucet(
@@ -67,7 +68,7 @@ from another wallet and provide the user with your wallet details.""",
                         token=token,
                         network=network_id,
                     )
-            
+
             faucet_hash = loop.run_until_complete(_request_faucet())
             return f"Received {validated_args.asset_id or 'ETH'} from the faucet. Transaction hash: {faucet_hash}"
         elif network.protocol_family == "svm":
@@ -75,21 +76,21 @@ from another wallet and provide the user with your wallet details.""",
                 return "Error: Faucet is only supported on 'solana-devnet' solana networks."
 
             token: Literal["sol", "usdc"] = validated_args.asset_id or "sol"
-            
+
             client = wallet_provider.get_client()
             try:
                 loop = asyncio.get_event_loop()
             except RuntimeError:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-            
+
             async def _request_faucet():
                 async with client as cdp:
                     return await cdp.solana.request_faucet(
                         address=wallet_provider.get_address(),
                         token=token,
                     )
-            
+
             response = loop.run_until_complete(_request_faucet())
             return f"Received {validated_args.asset_id or 'SOL'} from the faucet. Transaction signature hash: {response.transaction_signature}"
         else:

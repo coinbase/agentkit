@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 {% if _framework == "openai_agents" %}
@@ -8,7 +9,7 @@ from langchain_core.messages import HumanMessage
 {% endif %}
 from dotenv import load_dotenv
 
-from create_agent import create_agent
+from setup import setup
 
 """
 AgentKit Chatbot Interface
@@ -150,32 +151,45 @@ def choose_mode():
             return "auto"
         print("Invalid choice. Please try again.")
 
-{% if _framework == "openai_agents" %}
-async def main():
-{% elif _framework == "langchain" %}
 def main():
-{% endif %}
-    """Start the chatbot agent."""
-    agent_executor, config = create_agent()
+    # Load environment variables
+    load_dotenv()
 
-    mode = choose_mode()
-    if mode == "chat":
-        {% if _framework == "openai_agents" %}
-        await run_chat_mode(agent=agent_executor, config=config)
-        {% elif _framework == "langchain" %}
-        run_chat_mode(agent_executor=agent_executor, config=config)
-        {% endif %}
-    elif mode == "auto":
-        {% if _framework == "openai_agents" %}
-        await run_autonomous_mode(agent=agent_executor, config=config)
-        {% elif _framework == "langchain" %}
-        run_autonomous_mode(agent_executor=agent_executor, config=config)
-        {% endif %}
+    # Initialize the agent
+    agent_executor, agent_config = setup()
+
+    print("\nWelcome to the CDP Agent Chatbot!")
+    print("Type 'exit' to quit the chat.\n")
+
+    {% if _framework == "langchain" %}
+    # Run the agent in a loop
+    while True:
+        user_input = input("You: ")
+        if user_input.lower() == "exit":
+            break
+
+        # Process the input
+        response = agent_executor.invoke(
+            {"messages": [HumanMessage(content=user_input)]},
+            config=agent_config,
+        )
+
+        # Print the response
+        print("\nAgent:", response["messages"][-1].content, "\n")
+
+    {% elif _framework == "openai_agents" %}
+    # Run the agent in a loop
+    while True:
+        user_input = input("You: ")
+        if user_input.lower() == "exit":
+            break
+
+        # Process the input
+        response = agent_executor.chat(user_input)
+
+        # Print the response
+        print("\nAgent:", response, "\n")
+    {% endif %}
 
 if __name__ == "__main__":
-    print("Starting Agent...")
-    {% if _framework == "openai_agents" %}
-    asyncio.run(main())
-    {% elif _framework == "langchain" %}
     main()
-    {% endif %}
