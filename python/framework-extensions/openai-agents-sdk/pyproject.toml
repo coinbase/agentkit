@@ -17,7 +17,7 @@ keywords = [
     "agent",
 ]
 dependencies = [
-    "coinbase-agentkit>=0.3.0,<0.5",
+    "coinbase-agentkit @ file:///Users/carsonroscoe/Documents/Github/Coinbase/agentkit/python/coinbase-agentkit/dist/coinbase_agentkit-0.4.0-py3-none-any.whl",
     "python-dotenv>=1.0.1,<2",
     "pytest-asyncio>=0.25.3,<0.26",
     "openai-agents>=0.0.6,<0.0.7",
@@ -44,6 +44,9 @@ include = ["coinbase_agentkit_openai_agents_sdk"]
 
 [tool.hatch.build.targets.wheel]
 include = ["coinbase_agentkit_openai_agents_sdk"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [build-system]
 requires = ["hatchling"]
