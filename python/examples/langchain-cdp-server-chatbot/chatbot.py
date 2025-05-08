@@ -46,7 +46,7 @@ def initialize_agent(config: CdpEvmServerWalletProviderConfig):
             wallet_secret=config.wallet_secret,     # CDP Wallet Secret
             network_id=config.network_id,           # Network ID - Optional, will default to 'base-sepolia'
             address=config.address,                 # Wallet Address - Optional, will trigger idempotency flow if not provided
-            idempotency_key=config.idempotency_key, # Idempotency Key - Optional, will trigger idempotency flow if not provided
+            idempotency_key=config.idempotency_key, # Idempotency Key - Optional, seeds generation of a new wallet
         )
     )
 

@@ -75,7 +75,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
             else:
                 # If no address but idempotency key is provided, create a new account
                 account = asyncio.run(self._create_account(client))
-            
+
             self._address = account.address
             self._account = account  # Store the account object for signing operations
 
