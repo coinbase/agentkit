@@ -1,39 +1,27 @@
-import os
-import json
-import time
-{% if _framework == "langchain" %}
-from langchain_openai import ChatOpenAI
+{% if _framework == "langchain" %}from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
-from coinbase_agentkit_langchain import get_langchain_tools
-{% elif _framework == "openai_agents" %}
+from coinbase_agentkit_langchain import get_langchain_tools{% elif _framework == "openai_agents" %}
 from coinbase_agentkit_openai_agents_sdk import get_openai_agents_sdk_tools
-from agents.agent import Agent
-{% endif %}
+from agents.agent import Agent{% endif %}
 
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
-    {% if _wallet_provider == "server" %}
-    CdpEvmServerWalletProvider,
-    CdpEvmServerWalletProviderConfig,
-    {% elif _wallet_provider == "smart" %}
+    {% if _wallet_provider == "server" %}CdpEvmServerWalletProvider,
+    CdpEvmServerWalletProviderConfig,{% elif _wallet_provider == "smart" %}
     CdpEvmSmartWalletProvider,
-    CdpEvmSmartWalletProviderConfig,
-    {% elif _wallet_provider == "eth" %}
+    CdpEvmSmartWalletProviderConfig,{% elif _wallet_provider == "eth" %}
     EthAccountWalletProvider,
-    EthAccountWalletProviderConfig,
-    {% endif %}
+    EthAccountWalletProviderConfig,{% endif %}
     cdp_api_action_provider,
     erc20_action_provider,
     pyth_action_provider,
     wallet_action_provider,
     weth_action_provider,
 )
-{% if _wallet_provider == "eth" or _wallet_provider == "smart" %}
-from eth_account import Account
-from coinbase_agentkit.network import NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_CHAIN, CHAIN_ID_TO_NETWORK_ID
-{% endif %}
+{% if _wallet_provider == "eth" or _wallet_provider == "smart" %}from eth_account import Account
+from coinbase_agentkit.network import NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_CHAIN, CHAIN_ID_TO_NETWORK_ID{% endif %}
 
 """
 AgentKit Configuration
@@ -89,8 +77,7 @@ def initialize_agent(config):
     Returns:
         tuple[Agent, dict]: The initialized agent and its configuration
     """
-    {% if _wallet_provider == "server" %}
-    # Initialize CDP Server Wallet Provider
+    {% if _wallet_provider == "server" %}# Initialize CDP Server Wallet Provider
     wallet_provider = CdpEvmServerWalletProvider(
         CdpEvmServerWalletProviderConfig(
             api_key_id=config.api_key_id,
@@ -100,9 +87,7 @@ def initialize_agent(config):
             address=config.address,
             idempotency_key=config.idempotency_key,
         )
-    )
-    {% elif _wallet_provider == "smart" %}
-    # Initialize CDP Smart Wallet Provider
+    ){% elif _wallet_provider == "smart" %}# Initialize CDP Smart Wallet Provider
     wallet_provider = CdpEvmSmartWalletProvider(
         CdpEvmSmartWalletProviderConfig(
             api_key_id=config.api_key_id,
@@ -114,16 +99,13 @@ def initialize_agent(config):
             idempotency_key=config.idempotency_key,
             paymaster_url=config.paymaster_url,
         )
-    )
-    {% elif _wallet_provider == "eth" %}
-    # Initialize Ethereum Account Wallet Provider
+    ){% elif _wallet_provider == "eth" %}# Initialize Ethereum Account Wallet Provider
     wallet_provider = EthAccountWalletProvider(
         EthAccountWalletProviderConfig(
             account=config.account,
             chain_id=config.chain_id,
         )
-    )
-    {% endif %}
+    ){% endif %}
 
     # Initialize AgentKit
     agentkit = AgentKit(
@@ -139,13 +121,12 @@ def initialize_agent(config):
         )
     )
 
-    {% if _framework == "langchain" %}
-    # Initialize LLM
+    {% if _framework == "langchain" %}# Initialize LLM
     llm = ChatOpenAI(model="gpt-4o-mini")
 
     # Get Langchain tools
     tools = get_langchain_tools(agentkit)
-    
+
     # Store buffered conversation history in memory
     memory = MemorySaver()
 
@@ -159,9 +140,7 @@ def initialize_agent(config):
         ),
         wallet_provider
     )
-
-    {% elif _framework == "openai_agents" %}
-    # Get OpenAI Agents SDK tools
+    {% elif _framework == "openai_agents" %}# Get OpenAI Agents SDK tools
     tools = get_openai_agents_sdk_tools(agentkit)
 
     # Create Agent using the OpenAI Agents SDK
@@ -171,5 +150,4 @@ def initialize_agent(config):
         tools=tools
     )
 
-    return agent, wallet_provider
-    {% endif %}
+    return agent, wallet_provider{% endif %}

@@ -3,19 +3,8 @@ import json
 import time
 import asyncio
 from dotenv import load_dotenv
-{% if _wallet_provider == "eth" %}
-from eth_account import Account
-{% endif %}
-{% if _wallet_provider == "server" or _wallet_provider == "smart" %}
-from cdp import CdpClient
-{% endif %}
-{% if _wallet_provider == "server" %}
-from coinbase_agentkit import CdpEvmServerWalletProviderConfig
-{% elif _wallet_provider == "smart" %}
-from coinbase_agentkit import CdpEvmSmartWalletProviderConfig
-{% elif _wallet_provider == "eth" %}
-from coinbase_agentkit import EthAccountWalletProviderConfig
-{% endif %}
+{% if _wallet_provider == "server" %}from coinbase_agentkit import CdpEvmServerWalletProviderConfig{% elif _wallet_provider == "smart" %}from coinbase_agentkit import CdpEvmSmartWalletProviderConfig{% elif _wallet_provider == "eth" %}from coinbase_agentkit import EthAccountWalletProviderConfig{% endif %}
+{% if _wallet_provider == "eth" %}from eth_account import Account{% elif _wallet_provider == "smart" %}from cdp import CdpClient{% endif %}
 
 from initialize_agent import initialize_agent
 
@@ -25,15 +14,11 @@ def setup():
     Returns:
         tuple[Agent, dict]: The initialized agent and its configuration
     """
-    # Configure network and file path
-    {% if _wallet_provider == "server" or _wallet_provider == "smart" %}
+    # Configure network and file path{% if _wallet_provider == "server" or _wallet_provider == "smart" %}
     network_id = os.getenv("NETWORK_ID", "base-sepolia")
     wallet_file = f"wallet_data_{network_id.replace('-', '_')}.txt"
-    {% elif _wallet_provider == "eth" %}
-    chain_id = os.getenv("CHAIN_ID", "84532")
-    wallet_file = f"wallet_data_{chain_id}.txt"
-    {% endif %}
-
+    {% elif _wallet_provider == "eth" %}chain_id = os.getenv("CHAIN_ID", "84532")
+    wallet_file = f"wallet_data_{chain_id}.txt"{% endif %}
     # Load existing wallet data if available
     wallet_data = {}
     if os.path.exists(wallet_file):
@@ -45,18 +30,15 @@ def setup():
             print(f"Warning: Invalid wallet data in {wallet_file}")
             wallet_data = {}
 
-    {% if _wallet_provider == "server" or _wallet_provider == "smart" %}
-    # Get required CDP credentials
+    {% if _wallet_provider == "server" or _wallet_provider == "smart" %}# Get required CDP credentials
     api_key_id = os.getenv("CDP_API_KEY_ID")
     api_key_secret = os.getenv("CDP_API_KEY_SECRET")
     wallet_secret = os.getenv("CDP_WALLET_SECRET")
 
     if not all([api_key_id, api_key_secret, wallet_secret]):
-        raise ValueError("CDP_API_KEY_ID, CDP_API_KEY_SECRET, and CDP_WALLET_SECRET are required")
-    {% endif %}
+        raise ValueError("CDP_API_KEY_ID, CDP_API_KEY_SECRET, and CDP_WALLET_SECRET are required"){% endif %}
 
-    {% if _wallet_provider == "server" %}
-    # Create server wallet config
+    {% if _wallet_provider == "server" %}# Create server wallet config
     config = CdpEvmServerWalletProviderConfig(
         api_key_id=api_key_id,
         api_key_secret=api_key_secret,
@@ -65,8 +47,7 @@ def setup():
         address=wallet_data.get("address") or os.getenv("ADDRESS"),
         idempotency_key=os.getenv("IDEMPOTENCY_KEY"),
     )
-    {% elif _wallet_provider == "smart" %}
-    # Determine owner using priority order
+    {% elif _wallet_provider == "smart" %}# Determine owner using priority order
     owner = (
         os.getenv("OWNER_PRIVATE_KEY")  # First priority: Private key
         or os.getenv("OWNER_SERVER_WALLET_ADDRESS")  # Second priority: Server wallet address
@@ -102,8 +83,7 @@ def setup():
         idempotency_key=os.getenv("IDEMPOTENCY_KEY"),
         paymaster_url=os.getenv("PAYMASTER_URL"),
     )
-    {% elif _wallet_provider == "eth" %}
-    # Get or generate private key
+    {% elif _wallet_provider == "eth" %}# Get or generate private key
     private_key = (
         os.getenv("PRIVATE_KEY")  # First priority: Environment variable
         or wallet_data.get("private_key")  # Second priority: Saved wallet file
@@ -121,41 +101,32 @@ def setup():
     config = EthAccountWalletProviderConfig(
         account=account,
         chain_id=chain_id,
-    )
-    {% endif %}
-
+    ){% endif %}
     # Initialize the agent
     agent_executor, wallet_provider = initialize_agent(config)
 
-    # Save the wallet data after successful initialization
-    {% if _wallet_provider == "server" %}
+    # Save the wallet data after successful initialization{% if _wallet_provider == "server" %}
     new_wallet_data = {
         "address": wallet_provider.get_address(),
         "network_id": network_id,
         "created_at": time.strftime("%Y-%m-%d %H:%M:%S") if not wallet_data else wallet_data.get("created_at")
-    }
-    {% elif _wallet_provider == "smart" %}
+    }{% elif _wallet_provider == "smart" %}
     new_wallet_data = {
         "smart_wallet_address": wallet_provider.get_address(),
         "owner": owner,
         "network_id": network_id,
         "created_at": time.strftime("%Y-%m-%d %H:%M:%S") if not wallet_data else wallet_data.get("created_at")
-    }
-    {% elif _wallet_provider == "eth" %}
+    }{% elif _wallet_provider == "eth" %}
     new_wallet_data = {
         "private_key": private_key,
         "chain_id": chain_id,
         "created_at": time.strftime("%Y-%m-%d %H:%M:%S") if not wallet_data else wallet_data.get("created_at")
-    }
-    {% endif %}
+    }{% endif %}
 
     with open(wallet_file, "w") as f:
         json.dump(new_wallet_data, f, indent=2)
         print(f"Wallet data saved to {wallet_file}")
 
-    {% if _framework == "langchain" %}
-    agent_config = {"configurable": {"thread_id": "AgentKit Chatbot"}}
+    {% if _framework == "langchain" %}agent_config = {"configurable": {"thread_id": "AgentKit Chatbot"}}
     return agent_executor, agent_config
-    {% elif _framework == "openai_agents" %}
-    return agent_executor
-    {% endif %} 
+    {% elif _framework == "openai_agents" %}return agent_executor{% endif %} 
