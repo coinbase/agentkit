@@ -1,5 +1,21 @@
 # AgentKit Changelog
 
+## 0.7.1
+
+### Patch Changes
+
+- [#610](https://github.com/coinbase/agentkit/pull/610) [`beb34c9`](https://github.com/coinbase/agentkit/commit/beb34c9a300c66ddb03c303685a322dc45e74a13) Thanks [@nowak-token](https://github.com/nowak-token)! - Fixed ReferenceError when initializing TwitterActionProvider by implementing lazy initialization pattern with proper null checks
+
+## 0.7.0
+
+### Minor Changes
+
+- [#665](https://github.com/coinbase/agentkit/pull/665) [`bfed1a0`](https://github.com/coinbase/agentkit/commit/bfed1a07a0c5443297af20fa566723fa20e8a00f) Thanks [@jstinhw](https://github.com/jstinhw)! - Added ZeroDevWalletProvider powered by ZeroDev smart account
+
+  This change introduced a new wallet provider, `ZeroDevWalletProvider` which allows AgentKit to use ZeroDev's chain-abstracted smart account with any EvmWalletProvider like cdpWalletProvider or privyEvmWalletProvider as the signer.
+
+- [#678](https://github.com/coinbase/agentkit/pull/678) [`f6b464a`](https://github.com/coinbase/agentkit/commit/f6b464a62f3593957648c2d2f5bdfbca292a1f68) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Added CdpV2EvmWalletProvider, CdpV2SolanaWalletProvider, and a unified CdpV2WalletProvider entrypoint
+
 ## 0.6.2
 
 ### Patch Changes

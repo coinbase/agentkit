@@ -280,7 +280,7 @@ Here is your Hyperbolic spend history:
 ```
 </details>
 
-### *please use hyperbolic to generate a short paragrpah describing the number zero*
+### *please use hyperbolic to generate a short paragraph describing the number zero*
 
 <details>
 <summary>Tool Output</summary>
