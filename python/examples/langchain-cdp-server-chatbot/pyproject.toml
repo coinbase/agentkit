@@ -20,7 +20,7 @@ dev = ["ruff>=0.7.1,<0.8"]
 package = false
 
 [tool.uv.sources]
-coinbase-agentkit = { path = "../../../python/coinbase-agentkit", editable = true }
+coinbase-agentkit = { path = "../../../python/coinbase-agentkit/dist/coinbase_agentkit-0.4.0-py3-none-any.whl" }
 coinbase-agentkit-langchain = { path = "../../../python/framework-extensions/langchain", editable = true }
 
 [build-system]

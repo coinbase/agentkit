@@ -18,7 +18,7 @@ dev = ["ruff>=0.7.1,<0.8"]
 package = false
 
 [tool.uv.sources]
-coinbase-agentkit = { path = "../../../python/coinbase-agentkit", editable = true }
+coinbase-agentkit = { path = "../../../python/coinbase-agentkit/dist/coinbase_agentkit-0.4.0-py3-none-any.whl" }
 coinbase-agentkit-openai-agents-sdk = { path = "../../../python/framework-extensions/openai-agents-sdk", editable = true }
 
 [build-system]
