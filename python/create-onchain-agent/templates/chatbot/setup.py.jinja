@@ -125,18 +125,18 @@ def setup():
     {% endif %}
 
     # Initialize the agent
-    agent_executor, agent_config = initialize_agent(config)
+    agent_executor, wallet_provider = initialize_agent(config)
 
     # Save the wallet data after successful initialization
     {% if _wallet_provider == "server" %}
     new_wallet_data = {
-        "address": agent_executor.tools[0].agentkit.wallet_provider.get_address(),
+        "address": wallet_provider.get_address(),
         "network_id": network_id,
         "created_at": time.strftime("%Y-%m-%d %H:%M:%S") if not wallet_data else wallet_data.get("created_at")
     }
     {% elif _wallet_provider == "smart" %}
     new_wallet_data = {
-        "smart_wallet_address": agent_executor.tools[0].agentkit.wallet_provider.get_address(),
+        "smart_wallet_address": wallet_provider.get_address(),
         "owner": owner,
         "network_id": network_id,
         "created_at": time.strftime("%Y-%m-%d %H:%M:%S") if not wallet_data else wallet_data.get("created_at")
@@ -152,5 +152,11 @@ def setup():
     with open(wallet_file, "w") as f:
         json.dump(new_wallet_data, f, indent=2)
         print(f"Wallet data saved to {wallet_file}")
+
+    {% if _framework == "langchain" %}
+    agent_config = {"configurable": {"thread_id": "AgentKit Chatbot"}}
+    {% elif _framework == "openai_agents" %}
+    agent_config = {}
+    {% endif %}
 
     return agent_executor, agent_config 

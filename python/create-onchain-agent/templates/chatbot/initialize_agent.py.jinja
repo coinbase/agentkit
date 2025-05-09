@@ -148,7 +148,6 @@ def initialize_agent(config):
     
     # Store buffered conversation history in memory
     memory = MemorySaver()
-    agent_config = {"configurable": {"thread_id": "AgentKit Chatbot"}}
 
     # Create ReAct Agent using the LLM and AgentKit tools
     return (
@@ -158,7 +157,7 @@ def initialize_agent(config):
             checkpointer=memory,
             state_modifier=AGENT_INSTRUCTIONS,
         ),
-        agent_config
+        wallet_provider
     )
 
     {% elif _framework == "openai_agents" %}
@@ -172,5 +171,5 @@ def initialize_agent(config):
         tools=tools
     )
 
-    return agent, {}  # Return empty config to match Langchain interface
+    return agent, wallet_provider
     {% endif %}
