@@ -15,9 +15,9 @@ cdp-sdk = { path = "/Users/carsonroscoe/Documents/Github/Coinbase/cdp-sdk/python
 {% endif %}
 {% if _framework == "langchain" %}langchain-openai = "^0.2.4"
 langgraph = "^0.2.39"
-coinbase-agentkit-langchain = { path = "/Users/carsonroscoe/Documents/Github/Coinbase/agentkit/python/framework-extensions/langchain/dist/coinbase_agentkit_langchain-0.3.0-py3-none-any.whl" }{% elif _framework == "openai_agents" %}openai-agents = "0.0.2"
+coinbase-agentkit-langchain = { path = "/Users/carsonroscoe/Documents/Github/Coinbase/agentkit/python/framework-extensions/langchain/dist/coinbase_agentkit_langchain-0.3.0-py3-none-any.whl" }{% elif _framework == "openai_agents" %}openai-agents = "0.0.6"
 coinbase-agentkit-openai-agents-sdk = { path = "/Users/carsonroscoe/Documents/Github/Coinbase/agentkit/python/framework-extensions/openai-agents-sdk/dist/coinbase_agentkit_openai_agents_sdk-0.3.0-py3-none-any.whl" }
-openai = "1.66.0"{% endif %}
+openai = "1.68.0"{% endif %}
 
 [tool.poetry.scripts]
 start-agent = "chatbot:main"

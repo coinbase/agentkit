@@ -155,8 +155,7 @@ def setup():
 
     {% if _framework == "langchain" %}
     agent_config = {"configurable": {"thread_id": "AgentKit Chatbot"}}
+    return agent_executor, agent_config
     {% elif _framework == "openai_agents" %}
-    agent_config = {}
-    {% endif %}
-
-    return agent_executor, agent_config 
+    return agent_executor
+    {% endif %} 
