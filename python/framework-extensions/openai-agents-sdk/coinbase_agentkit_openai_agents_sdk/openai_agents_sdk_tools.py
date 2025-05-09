@@ -4,9 +4,13 @@ import json
 import warnings
 from typing import Any
 import pkg_resources
+import nest_asyncio
 
 from coinbase_agentkit import Action, AgentKit
 from agents import FunctionTool, RunContextWrapper
+
+# Apply nest-asyncio to allow nested event loops
+nest_asyncio.apply()
 
 def _check_web3_version() -> bool:
     """Check if web3 version is compatible with voice features.
