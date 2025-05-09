@@ -1,9 +1,0 @@
-"""Tests for example action."""
-
-{% set header_template = "example_action_test/header/" + provider_key + ".py.template" %}
-{% include header_template %}
-
-{% include "example_action_test/test_schema/default.py.template" %}
-
-{% set action_test_template = "example_action_test/test_action/" + provider_key + ".py.template" %}
-{% include action_test_template %}

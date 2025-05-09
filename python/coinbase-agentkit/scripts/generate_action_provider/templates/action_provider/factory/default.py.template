@@ -1,8 +1,0 @@
-def {{ name }}_action_provider() -> {{ name_pascal }}ActionProvider:
-    """Create a new {{ name_pascal }}ActionProvider instance.
-
-    Returns:
-        A new {{ name_pascal }}ActionProvider instance
-
-    """
-    return {{ name_pascal }}ActionProvider() 

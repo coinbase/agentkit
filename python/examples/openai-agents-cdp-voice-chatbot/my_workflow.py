@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from collections.abc import AsyncIterator, Callable
 
 from agents import Agent, Runner, TResponseInputItem
@@ -7,11 +8,11 @@ from agents.voice import VoiceWorkflowBase, VoiceWorkflowHelper
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
-    CdpWalletProvider,
-    CdpWalletProviderConfig,
+    CdpEvmServerWalletProvider,
+    CdpEvmServerWalletProviderConfig,
     cdp_api_action_provider,
-    erc20_action_provider,
     compound_action_provider,
+    erc20_action_provider,
     wallet_action_provider,
     weth_action_provider,
 )
@@ -20,25 +21,28 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+def initialize_agent(config: CdpEvmServerWalletProviderConfig):
+    """Initialize the agent with CDP Agentkit.
 
-# Configure a file to persist the agent's CDP API Wallet Data.
-wallet_data_file = "wallet_data.txt"
+    Args:
+        config: Configuration for the CDP EVM Server Wallet Provider
 
+    Returns:
+        tuple[Agent, CdpEvmServerWalletProvider]: The initialized agent and wallet provider
+    """
+    # Initialize the wallet provider with the config
+    wallet_provider = CdpEvmServerWalletProvider(
+        CdpEvmServerWalletProviderConfig(
+            api_key_id=config.api_key_id,           # CDP API Key ID
+            api_key_secret=config.api_key_secret,   # CDP API Key Secret
+            wallet_secret=config.wallet_secret,     # CDP Wallet Secret
+            network_id=config.network_id,           # Network ID - Optional, will default to 'base-sepolia'
+            address=config.address,                 # Wallet Address - Optional, will trigger idempotency flow if not provided
+            idempotency_key=config.idempotency_key  # Idempotency Key - Optional, seeds generation of a new wallet
+        )
+    )
 
-def initialize_agent():
-    """Initialize the agent with CDP Agentkit."""
-    # Initialize CDP Wallet Provider
-    wallet_data = None
-    if os.path.exists(wallet_data_file):
-        with open(wallet_data_file) as f:
-            wallet_data = f.read()
-
-    cdp_config = None
-    if wallet_data is not None:
-        cdp_config = CdpWalletProviderConfig(wallet_data=wallet_data)
-
-    wallet_provider = CdpWalletProvider(cdp_config)
-
+    # Create AgentKit instance with wallet and action providers
     agentkit = AgentKit(
         AgentKitConfig(
             wallet_provider=wallet_provider,
@@ -52,12 +56,7 @@ def initialize_agent():
         )
     )
 
-    wallet_data_json = json.dumps(wallet_provider.export_wallet().to_dict())
-
-    with open(wallet_data_file, "w") as f:
-        f.write(wallet_data_json)
-
-    # use get_openai_agents_sdk_tools
+    # Get tools for the agent
     tools = get_openai_agents_sdk_tools(agentkit)
 
     # Create Agent using the OpenAI Agents SDK
@@ -82,7 +81,67 @@ def initialize_agent():
         tools=tools,
     )
 
+    return agent, wallet_provider
+
+def setup():
+    """Set up the agent with persistent wallet storage.
+
+    Returns:
+        tuple[Agent, dict]: The initialized agent and its configuration
+    """
+    # Configure network and file path
+    network_id = os.getenv("NETWORK_ID", "base-sepolia")
+    wallet_file = f"wallet_data_{network_id.replace('-', '_')}.txt"
+
+    # Load existing wallet data if available
+    wallet_data = {}
+    if os.path.exists(wallet_file):
+        try:
+            with open(wallet_file) as f:
+                wallet_data = json.load(f)
+                print(f"Loading existing wallet from {wallet_file}")
+        except json.JSONDecodeError:
+            print(f"Warning: Invalid wallet data for {network_id}")
+            wallet_data = {}
+
+    # Determine wallet address using priority order
+    wallet_address = (
+        wallet_data.get("address")  # First priority: Saved wallet file
+        or os.getenv("ADDRESS")     # Second priority: ADDRESS env var
+        or None                     # Will trigger idempotency flow if needed
+    )
+
+    # Create the wallet provider config
+    config = CdpEvmServerWalletProviderConfig(
+        api_key_id=os.getenv("CDP_API_KEY_ID"),
+        api_key_secret=os.getenv("CDP_API_KEY_SECRET"),
+        wallet_secret=os.getenv("CDP_WALLET_SECRET"),
+        network_id=network_id,
+        address=wallet_address,
+        # Only include idempotency_key if we need to create a new wallet
+        idempotency_key=(
+            os.getenv("IDEMPOTENCY_KEY")
+            if not wallet_address
+            else None
+        )
+    )
+
+    # Initialize the agent and get the wallet provider
+    agent, wallet_provider = initialize_agent(config)
+
+    # Save the wallet data after successful initialization
+    new_wallet_data = {
+        "address": wallet_provider.get_address(),
+        "network_id": network_id,
+        "created_at": time.strftime("%Y-%m-%d %H:%M:%S") if not wallet_data else wallet_data.get("created_at")
+    }
+
+    with open(wallet_file, "w") as f:
+        json.dump(new_wallet_data, f, indent=2)
+        print(f"Wallet data saved to {wallet_file}")
+
     return agent
+
 
 
 class MyWorkflow(VoiceWorkflowBase):
@@ -92,13 +151,11 @@ class MyWorkflow(VoiceWorkflowBase):
         """Initialize the workflow.
 
         Args:
-        secret_word: The secret word to guess.
-        on_start: A callback that is called when the workflow starts. The transcription
-            is passed in as an argument.
-
+            on_start: A callback that is called when the workflow starts. The transcription
+                is passed in as an argument.
         """
         self._input_history: list[TResponseInputItem] = []
-        self._current_agent = initialize_agent()
+        self._current_agent = setup()
         self._on_start = on_start
 
     async def run(self, transcription: str) -> AsyncIterator[str]:

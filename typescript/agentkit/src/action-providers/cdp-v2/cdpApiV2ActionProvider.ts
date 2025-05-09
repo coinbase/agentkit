@@ -87,7 +87,12 @@ from another wallet and provide the user with your wallet details.`,
    * @param _ - The network to check.
    * @returns True if the Cdp action provider supports the network, false otherwise.
    */
-  supportsNetwork = (_: Network) => true;
+  supportsNetwork = (network: Network) => {
+    const supportedEvmNetwork = network.protocolFamily == 'evm' && network.networkId == 'base-sepolia' || network.networkId == 'ethereum-sepolia';
+    const supportedSolanaNetwork = network.protocolFamily == 'svm' && network.networkId == 'solana-devnet';
+    
+    return supportedEvmNetwork || supportedSolanaNetwork;
+  }
 }
 
 export const cdpApiV2ActionProvider = () => new CdpApiV2ActionProvider();

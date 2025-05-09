@@ -4,8 +4,6 @@ import os
 import sys
 import time
 
-from agents.agent import Agent
-from agents.run import Runner
 from cdp import CdpClient
 from coinbase_agentkit import (
     AgentKit,
@@ -18,8 +16,13 @@ from coinbase_agentkit import (
     wallet_action_provider,
     weth_action_provider,
 )
-from coinbase_agentkit_openai_agents_sdk import get_openai_agents_sdk_tools
+from coinbase_agentkit_langchain import get_langchain_tools
 from dotenv import load_dotenv
+from eth_account.account import Account
+from langchain_core.messages import HumanMessage
+from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.prebuilt import create_react_agent
 
 
 def initialize_agent(config: CdpEvmSmartWalletProviderConfig):
@@ -29,8 +32,11 @@ def initialize_agent(config: CdpEvmSmartWalletProviderConfig):
         config: Configuration for the CDP EVM Smart Wallet Provider
 
     Returns:
-        Agent: The initialized agent
+        tuple[Agent, CdpEvmSmartWalletProvider]: The initialized agent and wallet provider
     """
+    # Initialize the language model
+    llm = ChatOpenAI(model="gpt-4o-mini")
+
     # Initialize the wallet provider with the config
     wallet_provider = CdpEvmSmartWalletProvider(
         CdpEvmSmartWalletProviderConfig(
@@ -38,9 +44,9 @@ def initialize_agent(config: CdpEvmSmartWalletProviderConfig):
             api_key_secret=config.api_key_secret,   # CDP API Key Secret
             wallet_secret=config.wallet_secret,     # CDP Wallet Secret
             owner=config.owner,                     # Owner - Either private key or server wallet address
+            network_id=config.network_id,           # Network ID - Optional, will default to 'base-sepolia'
             address=config.address,                 # Smart Wallet Address - Optional, will create new if not provided
             idempotency_key=config.idempotency_key, # Idempotency Key - Optional, seeds generation of a new wallet
-            network_id=config.network_id,           # Network ID - Optional, will default to 'base-sepolia'
             paymaster_url=config.paymaster_url      # Optional paymaster URL to sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
         )
     )
@@ -60,30 +66,38 @@ def initialize_agent(config: CdpEvmSmartWalletProviderConfig):
     )
 
     # Get tools for the agent
-    tools = get_openai_agents_sdk_tools(agentkit)
+    tools = get_langchain_tools(agentkit)
 
-    # Create Agent using the OpenAI Agents SDK
-    return Agent(
-        name="CDP Agent",
-        instructions=(
-            "You are a helpful agent that can interact onchain using the Coinbase Developer Platform AgentKit. "
-            "You are empowered to interact onchain using your tools. If you ever need funds, you can request "
-            "them from the faucet if you are on network ID 'base-sepolia'. If not, you can provide your wallet "
-            "details and request funds from the user. Before executing your first action, get the wallet details "
-            "to see what network you're on. If there is a 5XX (internal) HTTP error code, ask the user to try "
-            "again later. If someone asks you to do something you can't do with your currently available tools, "
-            "you must say so, and encourage them to implement it themselves using the CDP SDK + Agentkit, "
-            "recommend they go to docs.cdp.coinbase.com for more information. Be concise and helpful with your "
-            "responses. Refrain from restating your tools' descriptions unless it is explicitly requested."
+    # Set up conversation memory
+    memory = MemorySaver()
+    agent_config = {"configurable": {"thread_id": "Smart Wallet Chatbot Example!"}}
+
+    # Create and return the agent and wallet provider
+    return (
+        create_react_agent(
+            llm,
+            tools=tools,
+            checkpointer=memory,
+            state_modifier=(
+                "You are a helpful agent that can interact onchain using the Coinbase Developer Platform AgentKit. "
+                "You are empowered to interact onchain using your tools. If you ever need funds, you can request "
+                "them from the faucet if you are on network ID 'base-sepolia'. If not, you can provide your wallet "
+                "details and request funds from the user. Before executing your first action, get the wallet details "
+                "to see what network you're on. If there is a 5XX (internal) HTTP error code, ask the user to try "
+                "again later. If someone asks you to do something you can't do with your currently available tools, "
+                "you must say so, and encourage them to implement it themselves using the CDP SDK + Agentkit, "
+                "recommend they go to docs.cdp.coinbase.com for more information. Be concise and helpful with your "
+                "responses."
+            ),
         ),
-        tools=tools
-    )
+        wallet_provider
+    ), agent_config
 
 def setup():
     """Set up the agent with persistent wallet storage.
 
     Returns:
-        Agent: The initialized agent
+        tuple[Agent, dict]: The initialized agent and its configuration
     """
     # Configure network and file path
     network_id = os.getenv("NETWORK_ID", "base-sepolia")
@@ -157,12 +171,12 @@ def setup():
         paymaster_url=os.getenv("PAYMASTER_URL")  # Optional paymaster URL to sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
     )
 
-    # Initialize the agent
-    agent = initialize_agent(config)
+    # Initialize the agent and get the wallet provider
+    (agent_executor, wallet_provider), agent_config = initialize_agent(config)
 
     # Save the wallet data after successful initialization
     new_wallet_data = {
-        "smart_wallet_address": agent.tools[0].agentkit.wallet_provider.get_address(),
+        "smart_wallet_address": wallet_provider.get_address(),
         "owner": owner,
         "network_id": network_id,
         "created_at": time.strftime("%Y-%m-%d %H:%M:%S") if not wallet_data else wallet_data.get("created_at")
@@ -172,33 +186,39 @@ def setup():
         json.dump(new_wallet_data, f, indent=2)
         print(f"Wallet data saved to {wallet_file}")
 
-    return agent
+    return (agent_executor, agent_config)
 
 # Autonomous Mode
-async def run_autonomous_mode(agent, interval=10):
+def run_autonomous_mode(agent_executor, config, interval=10):
     """Run the agent autonomously with specified intervals."""
     print("Starting autonomous mode...")
     while True:
         try:
+            # Provide instructions autonomously
             thought = (
                 "Be creative and do something interesting on the blockchain. "
                 "Choose an action or set of actions and execute it that highlights your abilities."
             )
 
             # Run agent in autonomous mode
-            output = await Runner.run(agent, thought)
-            print(output.final_output)
-            print("-------------------")
+            for chunk in agent_executor.stream(
+                {"messages": [HumanMessage(content=thought)]}, config
+            ):
+                if "agent" in chunk:
+                    print(chunk["agent"]["messages"][0].content)
+                elif "tools" in chunk:
+                    print(chunk["tools"]["messages"][0].content)
+                print("-------------------")
 
             # Wait before the next action
-            await asyncio.sleep(interval)
+            time.sleep(interval)
 
         except KeyboardInterrupt:
             print("Goodbye Agent!")
             sys.exit(0)
 
 # Chat Mode
-async def run_chat_mode(agent):
+def run_chat_mode(agent_executor, config):
     """Run the agent interactively based on user input."""
     print("Starting chat mode... Type 'exit' to end.")
     while True:
@@ -208,9 +228,14 @@ async def run_chat_mode(agent):
                 break
 
             # Run agent with the user's input in chat mode
-            output = await Runner.run(agent, user_input)
-            print(output.final_output)
-            print("-------------------")
+            for chunk in agent_executor.stream(
+                {"messages": [HumanMessage(content=user_input)]}, config
+            ):
+                if "agent" in chunk:
+                    print(chunk["agent"]["messages"][0].content)
+                elif "tools" in chunk:
+                    print(chunk["tools"]["messages"][0].content)
+                print("-------------------")
 
         except KeyboardInterrupt:
             print("Goodbye Agent!")
@@ -231,21 +256,21 @@ def choose_mode():
             return "auto"
         print("Invalid choice. Please try again.")
 
-async def main():
+def main():
     """Start the chatbot agent."""
     # Load environment variables
     load_dotenv()
 
     # Set up the agent
-    agent = setup()
+    agent_executor, agent_config = setup()
 
     # Run the agent in the selected mode
     mode = choose_mode()
     if mode == "chat":
-        await run_chat_mode(agent=agent)
+        run_chat_mode(agent_executor=agent_executor, config=agent_config)
     elif mode == "auto":
-        await run_autonomous_mode(agent=agent)
+        run_autonomous_mode(agent_executor=agent_executor, config=agent_config)
 
 if __name__ == "__main__":
     print("Starting Agent...")
-    asyncio.run(main())
+    main()

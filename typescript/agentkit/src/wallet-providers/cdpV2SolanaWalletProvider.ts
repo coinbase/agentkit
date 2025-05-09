@@ -318,7 +318,6 @@ export class CdpV2SolanaWalletProvider
 
     const signature = await this.signAndSendTransaction(tx);
     await this.waitForSignatureResult(signature);
-
     return signature;
   }
 }

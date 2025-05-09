@@ -1,3 +1,0 @@
-    def __init__(self):
-        """Initialize the {{ name_pascal }}ActionProvider."""
-        super().__init__("{{ name }}", [])
