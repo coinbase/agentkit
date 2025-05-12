@@ -9,7 +9,7 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.10"
 python-dotenv = "^1.0.1"
-coinbase-agentkit = "^0.4.0"
+coinbase-agentkit = { path = "/Users/carsonroscoe/Documents/Github/Coinbase/agentkit/python/coinbase-agentkit/dist/coinbase_agentkit-0.4.0-py3-none-any.whl" }
 {% if _framework == "langchain" %}langchain-openai = "^0.2.4"
 langgraph = "^0.2.39"
 coinbase-agentkit-langchain = { path = "/Users/carsonroscoe/Documents/Github/Coinbase/agentkit/python/framework-extensions/langchain/dist/coinbase_agentkit_langchain-0.3.0-py3-none-any.whl" }{% elif _framework == "openai_agents" %}openai-agents = "0.0.6"

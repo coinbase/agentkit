@@ -644,7 +644,7 @@ wheels = [
 [[package]]
 name = "coinbase-agentkit"
 version = "0.4.0"
-source = { path = "../../coinbase-agentkit/dist/coinbase_agentkit-0.4.0-py3-none-any.whl" }
+source = { editable = "../../coinbase-agentkit" }
 dependencies = [
     { name = "allora-sdk" },
     { name = "cdp-sdk" },
@@ -657,9 +657,6 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "requests" },
     { name = "web3" },
-]
-wheels = [
-    { filename = "coinbase_agentkit-0.4.0-py3-none-any.whl", hash = "sha256:0e7345816d3d7c0f07bab18b97ae9225b77f4b17b8e59040b2b98bb79dcbf554" },
 ]
 
 [package.metadata]
@@ -677,6 +674,29 @@ requires-dist = [
     { name = "web3", specifier = ">=7.6.0,<8" },
 ]
 
+[package.metadata.requires-dev]
+dev = [
+    { name = "jinja2", specifier = ">=3.1.3,<4" },
+    { name = "mypy", specifier = ">=1.13.0,<2" },
+    { name = "myst-parser", specifier = ">=4.0.0,<5" },
+    { name = "pillow", specifier = ">=11.1.0,<12" },
+    { name = "prompt-toolkit", specifier = ">=3.0.50,<4" },
+    { name = "pytest", specifier = ">=8.3.3,<9" },
+    { name = "pytest-cov", specifier = ">=6.0.0,<7" },
+    { name = "python-lsp-server", specifier = ">=1.12.0,<2" },
+    { name = "questionary", specifier = ">=2.1.0,<3" },
+    { name = "rich", specifier = ">=13.7.1,<14" },
+    { name = "ruff", specifier = ">=0.7.1,<0.8" },
+    { name = "ruff-lsp", specifier = ">=0.0.58,<0.0.59" },
+    { name = "sphinx", specifier = ">=8.0.2,<9" },
+    { name = "sphinx-autobuild", specifier = ">=2024.9.19,<2025" },
+    { name = "sphinx-autodoc-typehints", specifier = ">=2.4.4,<3" },
+    { name = "sphinxcontrib-napoleon", specifier = ">=0.7,<0.8" },
+    { name = "towncrier", specifier = ">=24.8.0,<25" },
+    { name = "tweepy", specifier = ">=4.15.0,<5" },
+    { name = "typer", specifier = ">=0.9.0,<0.10" },
+]
+
 [[package]]
 name = "coinbase-agentkit-langchain"
 version = "0.3.0"
@@ -684,6 +704,7 @@ source = { editable = "." }
 dependencies = [
     { name = "coinbase-agentkit" },
     { name = "langchain" },
+    { name = "nest-asyncio" },
     { name = "python-dotenv" },
 ]
 
@@ -706,8 +727,9 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "coinbase-agentkit", path = "../../coinbase-agentkit/dist/coinbase_agentkit-0.4.0-py3-none-any.whl" },
+    { name = "coinbase-agentkit", editable = "../../coinbase-agentkit" },
     { name = "langchain", specifier = ">=0.3.4,<0.4" },
+    { name = "nest-asyncio", specifier = ">=1.5.8,<2" },
     { name = "python-dotenv", specifier = ">=1.0.1,<2" },
 ]
 
@@ -1752,6 +1774,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/66/a5/9626ba4f73555b3735ad86247a8077d4603aa8628537687c839ab08bfe44/myst_parser-4.0.1.tar.gz", hash = "sha256:5cfea715e4f3574138aecbf7d54132296bfd72bb614d31168f48c477a830a7c4", size = 93985 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5f/df/76d0321c3797b54b60fef9ec3bd6f4cfd124b9e422182156a1dd418722cf/myst_parser-4.0.1-py3-none-any.whl", hash = "sha256:9134e88959ec3b5780aedf8a99680ea242869d012e8821db3126d427edc9c95d", size = 84579 },
+]
+
+[[package]]
+name = "nest-asyncio"
+version = "1.6.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/83/f8/51569ac65d696c8ecbee95938f89d4abf00f47d58d48f6fbabfe8f0baefe/nest_asyncio-1.6.0.tar.gz", hash = "sha256:6f172d5449aca15afd6c646851f4e31e02c598d553a667e38cafa997cfec55fe", size = 7418 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a0/c4/c2971a3ba4c6103a3d10c4b0f24f461ddc027f0f09763220cf35ca1401b3/nest_asyncio-1.6.0-py3-none-any.whl", hash = "sha256:87af6efd6b5e897c81050477ef65c62e2b2f35d51703cae01aff2905b1852e1c", size = 5195 },
 ]
 
 [[package]]
