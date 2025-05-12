@@ -16,6 +16,7 @@ import {
   ContractFunctionArgs,
   Address,
   Hex,
+  hashMessage,
 } from "viem";
 import { EvmWalletProvider } from "./evmWalletProvider";
 import { Network } from "../network";
@@ -29,7 +30,6 @@ import {
   Wallet,
   WalletData,
   hashTypedDataMessage,
-  hashMessage,
 } from "@coinbase/coinbase-sdk";
 import { NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_VIEM_CHAIN } from "../network/network";
 import { applyGasMultiplier } from "../utils";
