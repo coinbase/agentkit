@@ -16,13 +16,16 @@ import {
   claimActionSchema,
   depositActionSchema,
   redeemActionSchema,
+  VaultDetailsActionSchema,
+  VaultHistoricalDataActionSchema,
   VaultsActionSchema,
 } from "./schemas";
-import { executeActions, getVaultsLink, parseAssetAmount } from "./utils";
+import { executeActions, parseAssetAmount, transformDetailedVault, transformVault } from "./utils";
 import { VAULTSFYI_SUPPORTED_CHAINS, VAULTS_API_URL } from "./constants";
 import { fetchVaultActions } from "./api/actions";
-import { fetchVaults } from "./api/vaults";
+import { fetchVault, fetchVaults } from "./api/vaults";
 import { ApiError, Balances, Positions } from "./api/types";
+import { fetchVaultHistoricalData } from "./api/historicalData";
 
 /**
  * Configuration options for the OpenseaActionProvider.
@@ -62,7 +65,7 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
    * vaults action
    *
    * @param wallet - The wallet provider instance for blockchain interactions
-   * @param args - Input arguments: token, network, transactionalOnly...
+   * @param args - Input arguments: token, network...
    * @returns A list of vaults.
    */
   @CreateAction({
@@ -71,7 +74,7 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
       This action returns a list of available vaults.
       Small vaults (under 100k TVL) are probably best avoided as they may be more risky. Unless the user is looking for high-risk, high-reward opportunities, don't include them.
       When the user asks for best vaults, optimize for apy, and if the user asks for safest/reliable vaults, optimize for TVL.
-      Try to take a reasonable number of results so its easier to analyze the data.
+      Try to take a reasonable number of results so its easier to analyze the data. Include vaults.fyi links for each vault.
       Format result apys as: x% (base: x%, rewards: x%) if rewards apy is available, otherwise: x%
       Examples:
       User: "Show me the best vaults"
@@ -86,6 +89,7 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
       args: { network: 'polygon', sort: { field: 'apy', direction: 'desc' }, take: 5, minTvl: 0 }
       User: "Show me some more of those"
       args: { network: 'polygon', sort: { field: 'apy', direction: 'desc' }, take: 5, minTvl: 0, page: 2 }
+      All optional fields should be null if not specified.
     `,
     schema: VaultsActionSchema,
   })
@@ -93,6 +97,7 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
     wallet: EvmWalletProvider,
     args: z.infer<typeof VaultsActionSchema>,
   ): Promise<string> {
+    const apyRange = args.apyRange ?? "7day";
     const vaults = await fetchVaults(args, this.apiKey);
     if ("error" in vaults) {
       return `Failed to fetch vaults: ${vaults.error}, ${vaults.message}`;
@@ -104,24 +109,7 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
       return `Protocol ${args.protocol} is not supported. Supported protocols are: ${supportedProtocols.join(", ")}`;
     }
 
-    const transformedVaults = vaults.map(vault => ({
-      name: vault.name,
-      address: vault.address,
-      network: vault.network,
-      protocol: vault.protocol,
-      tvlInUsd: Number(vault.tvlDetails.tvlUsd),
-      apy: {
-        base: vault.apy.base["7day"] / 100,
-        rewards: vault.apy.rewards?.["7day"] ? vault.apy.rewards["7day"] / 100 : undefined,
-        total: vault.apy.total["7day"] / 100,
-      },
-      token: {
-        address: vault.token.assetAddress,
-        name: vault.token.name,
-        symbol: vault.token.symbol,
-      },
-      link: getVaultsLink(vault),
-    }));
+    const transformedVaults = vaults.map(vault => transformVault(vault, apyRange));
 
     const filteredVaults = transformedVaults.filter(vault =>
       args.protocol ? vault.protocol === args.protocol : true,
@@ -146,6 +134,85 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
       totalResults: sortedVaults.length,
       nextPage: end < sortedVaults.length,
       results,
+    });
+  }
+
+  /**
+   * vault details action
+   *
+   * @param wallet - The wallet provider instance for blockchain interactions
+   * @param args - Input arguments: address, network, apyRange
+   * @returns A detailed view of a single vault.
+   */
+  @CreateAction({
+    name: "vault_details",
+    description: `
+      This action returns a more detailed view of a single vault. Additional details include:
+      - Description
+      - Additional incentives (points etc)
+      - Rewards breakdown
+      Params: 
+      - vaultAddress: The address of the vault to fetch details for
+      - network: The network of the vault
+      - apyRange: The APY moving average range (default: 7day)
+    `,
+    schema: VaultDetailsActionSchema,
+  })
+  async vaultDetails(
+    wallet: EvmWalletProvider,
+    args: z.infer<typeof VaultDetailsActionSchema>,
+  ): Promise<string> {
+    const vault = await fetchVault(args, this.apiKey);
+    if ("error" in vault) {
+      return `Failed to fetch vault: ${vault.error}, ${vault.message}`;
+    }
+    return JSON.stringify(transformDetailedVault(vault, args.apyRange ?? "7day"));
+  }
+
+  /**
+   * vault historical data action
+   *
+   * @param wallet - The wallet provider instance for blockchain interactions
+   * @param args - Input arguments: address, network, date, apyRange
+   * @returns A detailed view of a single vault.
+   */
+  @CreateAction({
+    name: "vault_historical_data",
+    description: `
+      This action returns a historical data of a vault. It returns the APY and TVL data closest to the given date.
+      Always check if the results date is close to the requested date, as the data may not be available for the exact date.
+      If there is a more than 7 day difference between the requested date and the resulting date, don't provide the data, but rather with a message explaining the missing data.
+      If the resulting date is a lot later than the requested date, the reason for missing data might be that the vault has not been deployed yet.
+      Example queries:
+      params: { vaultAddress: "0x1234567890abcdef1234567890abcdef12345678", network: "arbitrum", date: "2025-01-01T00:00:00Z" }
+      result: { ..., date: "2025-02-16T14:59:59.000Z" }
+      response: "The requested date was 2025-01-01T00:00:00Z, but the closest data available is from 2025-02-16T14:59:59.000Z. This may indicate that the vault was not deployed at the requested date."
+    `,
+    schema: VaultHistoricalDataActionSchema,
+  })
+  async vaultHistoricalData(
+    wallet: EvmWalletProvider,
+    args: z.infer<typeof VaultHistoricalDataActionSchema>,
+  ): Promise<string> {
+    const data = await fetchVaultHistoricalData(args, this.apiKey);
+    if ("error" in data) {
+      return `Failed to fetch vault: ${data.error}, ${data.message}`;
+    }
+    return JSON.stringify({
+      apy: {
+        apy: {
+          base: data.apy.apy.base / 100,
+          rewards: data.apy.apy.rewards ? data.apy.apy.rewards / 100 : undefined,
+          total: data.apy.apy.total / 100,
+        },
+        date: new Date(data.apy.timestamp * 1000).toISOString(),
+        blockNumber: data.apy.blockNumber,
+      },
+      tvl: {
+        tvlInUsd: data.tvl.tvlDetails.tvlUsd,
+        date: new Date(data.tvl.timestamp * 1000).toISOString(),
+        blockNumber: data.tvl.blockNumber,
+      },
     });
   }
 
