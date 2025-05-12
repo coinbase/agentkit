@@ -32,7 +32,6 @@ from .wallet_providers import (
     EthAccountWalletProviderConfig,
     EvmWalletProvider,
     WalletProvider,
-    WalletProviderWithClient,
 )
 
 __all__ = [
@@ -65,6 +64,5 @@ __all__ = [
     "wallet_action_provider",
     "weth_action_provider",
     "wow_action_provider",
-    "WalletProviderWithClient",
     "__version__",
 ]

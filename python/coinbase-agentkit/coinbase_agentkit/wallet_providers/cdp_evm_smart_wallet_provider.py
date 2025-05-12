@@ -73,27 +73,21 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
             )
             self._web3 = Web3(Web3.HTTPProvider(rpc_url))
 
-            # Initialize client and handle account creation/retrieval
             client = self.get_client()
             try:
                 async def initialize_accounts():
                     async with client as cdp:
-                        # Handle owner setup - either private key or CDP server wallet
                         if owner_address_or_private_key.startswith("0x") and len(owner_address_or_private_key) == 42:
-                            # Owner is a CDP server wallet address
                             owner = await cdp.evm.get_account(address=owner_address_or_private_key)
                         else:
-                            # Owner is a private key
                             owner = Account.from_key(owner_address_or_private_key)
 
                         if self._address:
-                            # If smart wallet address is provided, get the smart account
                             smart_account = await cdp.evm.get_smart_account(
                                 owner=owner,
                                 address=self._address
                             )
                         else:
-                            # Create new smart account with owner
                             smart_account = await cdp.evm.create_smart_account(owner=owner)
                         return owner, smart_account
 
@@ -102,7 +96,6 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
                 self._owner = owner
 
             finally:
-                # Ensure client is properly closed
                 asyncio.run(client.close())
 
             self._gas_limit_multiplier = (

@@ -1,18 +1,20 @@
 """CDP API action provider."""
 
 import asyncio
-from typing import Any, Literal
+from typing import Any, Literal, TypeVar
 
 from cdp import CdpClient
 
 from ...network import Network
-from ...wallet_providers.cdp_server_wallet_shared import WalletProviderWithClient
+from ...wallet_providers.evm_wallet_provider import EvmWalletProvider
 from ..action_decorator import create_action
 from ..action_provider import ActionProvider
 from .schemas import RequestFaucetFundsSchema
 
+TWalletProvider = TypeVar('TWalletProvider', bound=EvmWalletProvider)
 
-class CdpApiActionProvider(ActionProvider[WalletProviderWithClient]):
+
+class CdpApiActionProvider(ActionProvider[TWalletProvider]):
     """Provides actions for interacting with CDP API.
 
     This provider is used for any action that uses the CDP API, but does not require a CDP Wallet.
@@ -20,6 +22,22 @@ class CdpApiActionProvider(ActionProvider[WalletProviderWithClient]):
 
     def __init__(self):
         super().__init__("cdp_api", [])
+
+    def _get_client(self, wallet_provider: TWalletProvider) -> CdpClient:
+        """Get the CDP client from the wallet provider if it has one.
+
+        Args:
+            wallet_provider: The wallet provider to get the client from.
+
+        Returns:
+            CdpClient: The CDP client.
+
+        Raises:
+            AttributeError: If the wallet provider doesn't have a get_client method.
+        """
+        if not hasattr(wallet_provider, 'get_client'):
+            raise AttributeError("Wallet provider must have a get_client method to use CDP API actions")
+        return wallet_provider.get_client()
 
     @create_action(
         name="request_faucet_funds",
@@ -33,13 +51,13 @@ from another wallet and provide the user with your wallet details.""",
         schema=RequestFaucetFundsSchema,
     )
     def request_faucet_funds(
-        self, wallet_provider: WalletProviderWithClient, args: dict[str, Any]
+        self, wallet_provider: TWalletProvider, args: dict[str, Any]
     ) -> str:
         """Request test tokens from the faucet.
 
         Args:
-            wallet_provider (WalletProviderWithClient): The wallet provider instance.
-            args (dict[str, Any]): Input arguments for the action.
+            wallet_provider: The wallet provider instance.
+            args: Input arguments for the action.
 
         Returns:
             str: A message containing the action response or error details.
@@ -54,7 +72,7 @@ from another wallet and provide the user with your wallet details.""",
 
             token: Literal["eth", "usdc", "eurc", "cbbtc"] = validated_args.asset_id or "eth"
 
-            client = wallet_provider.get_client()
+            client = self._get_client(wallet_provider)
             try:
                 loop = asyncio.get_event_loop()
             except RuntimeError:
@@ -77,7 +95,7 @@ from another wallet and provide the user with your wallet details.""",
 
             token: Literal["sol", "usdc"] = validated_args.asset_id or "sol"
 
-            client = wallet_provider.get_client()
+            client = self._get_client(wallet_provider)
             try:
                 loop = asyncio.get_event_loop()
             except RuntimeError:

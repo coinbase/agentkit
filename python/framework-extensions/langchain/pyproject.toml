@@ -20,6 +20,7 @@ dependencies = [
     "coinbase-agentkit",
     "langchain>=0.3.4,<0.4",
     "python-dotenv>=1.0.1,<2",
+    "nest-asyncio>=1.5.8,<2",
 ]
 
 [dependency-groups]

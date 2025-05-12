@@ -10,7 +10,6 @@ from coinbase_agentkit import (
     CdpEvmServerWalletProviderConfig,
     allora_action_provider,
     cdp_api_action_provider,
-    cdp_wallet_action_provider,
     erc20_action_provider,
     nillion_action_provider,
     pyth_action_provider,
@@ -55,7 +54,6 @@ def initialize_agent(config: CdpEvmServerWalletProviderConfig):
             wallet_provider=wallet_provider,
             action_providers=[
                 cdp_api_action_provider(),
-                cdp_wallet_action_provider(),
                 erc20_action_provider(),
                 nillion_action_provider(llm),  # Pass LLM to Nillion provider
                 pyth_action_provider(),

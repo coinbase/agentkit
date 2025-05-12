@@ -67,49 +67,17 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
             )
             self._web3 = Web3(Web3.HTTPProvider(rpc_url))
 
-            # Initialize client and handle account creation/retrieval
             client = self.get_client()
             if config.address:
-                # If address is provided, get the account
                 account = asyncio.run(self._get_account(client, config.address))
             else:
-                # If no address but idempotency key is provided, create a new account
                 account = asyncio.run(self._create_account(client))
 
             self._address = account.address
-            self._account = account  # Store the account object for signing operations
+            self._account = account
 
-        except ImportError as e:
-            raise ImportError(
-                "Failed to import cdp. Please install it with 'pip install cdp-sdk'."
-            ) from e
         except Exception as e:
             raise ValueError(f"Failed to initialize CDP wallet: {e!s}") from e
-
-    async def _get_account(self, client: CdpClient, address: str):
-        """Get an existing account by address.
-
-        Args:
-            client (CdpClient): The CDP client instance
-            address (str): The address of the account to get
-
-        Returns:
-            Any: The account object
-        """
-        async with client as cdp:
-            return await cdp.evm.get_account(address=address)
-
-    async def _create_account(self, client: CdpClient):
-        """Create a new account.
-
-        Args:
-            client (CdpClient): The CDP client instance
-
-        Returns:
-            Any: The newly created account object
-        """
-        async with client as cdp:
-            return await cdp.evm.create_account(idempotency_key=self._idempotency_key)
 
     def get_client(self) -> CdpClient:
         """Get a new CDP client instance.
@@ -122,22 +90,6 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
             api_key_secret=self._api_key_secret,
             wallet_secret=self._wallet_secret,
         )
-
-    def _run_async(self, coroutine):
-        """Run an async coroutine synchronously.
-
-        Args:
-            coroutine: The coroutine to run
-
-        Returns:
-            Any: The result of the coroutine
-        """
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        return loop.run_until_complete(coroutine)
 
     def get_address(self) -> str:
         """Get the wallet address.
@@ -328,3 +280,45 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
                     network=self._network.network_id,
                 )
         return self._run_async(_sign_transaction())
+
+
+    async def _get_account(self, client: CdpClient, address: str):
+        """Get an existing account by address.
+
+        Args:
+            client (CdpClient): The CDP client instance
+            address (str): The address of the account to get
+
+        Returns:
+            Any: The account object
+        """
+        async with client as cdp:
+            return await cdp.evm.get_account(address=address)
+
+    async def _create_account(self, client: CdpClient):
+        """Create a new account.
+
+        Args:
+            client (CdpClient): The CDP client instance
+
+        Returns:
+            Any: The newly created account object
+        """
+        async with client as cdp:
+            return await cdp.evm.create_account(idempotency_key=self._idempotency_key)
+
+    def _run_async(self, coroutine):
+        """Run an async coroutine synchronously.
+
+        Args:
+            coroutine: The coroutine to run
+
+        Returns:
+            Any: The result of the coroutine
+        """
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        return loop.run_until_complete(coroutine)
