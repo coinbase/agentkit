@@ -1,4 +1,16 @@
-# ZeroDev Wallet Provider with EVM Wallet Example
+# ZeroDev + Agent Kit Example
+
+ZeroDev is a smart wallet provider that enables your agents to:
+
+- Send gasless transactions on any chain.
+- Batch transactions (e.g. approve + transfer).
+- Spend tokens from one chain on another, i.e. "chain abstraction"
+  - This means your agent can receive tokens on chain A, and spend the tokens on chain B.
+- Spend USDC/USDT interexchangably.
+
+The best part is that ZeroDev can be used on top of any EVM wallet provider.  For example, if you are managing keys for your agents locally, you can use the ZeroDev with the Viem wallet provider.  If you are using a third-party signing service such as CDP or Privy, you can use those wallet providers with ZeroDev as well.
+
+## Example
 
 This example demonstrates an agent setup using the ZeroDevWalletProvider with a EVM wallet as the signer. It shows how to:
 
@@ -9,37 +21,31 @@ This example demonstrates an agent setup using the ZeroDevWalletProvider with a 
 5. Create a LangChain agent that uses those tools
 6. Run the agent in either chat mode or autonomous mode
 
-## Ask the agent to engage in the Web3 ecosystem!
+## Using the example
 
-- "Transfer a portion of your ETH to a random address"
-- "What is the price of BTC?"
-- "Deploy an NFT that will go super viral!"
-- "Deploy an ERC-20 token with total supply 1 billion"
+You can interact with this agent via chat.
+
+Try running the agent on Base but send USDC to it on Arbitrum.  In fact, feel free to send some USDT too.
+
+Then try asking the agent to do something on Base with their USDC/USDT.  For example, try transfering some USDC to yourself on Base, e.g. "send 1 USDC to <MY_ADDRESS>."
+
+You will notice that:
+
+- Even though your agent's funds are actually on Arbitrum, it can nevertheless *spend* funds on Base.
+- Your agent can spend USDT as if it's USDC, and vice versa.
+- Also, your agent does NOT have to manage any gas.
 
 ## Prerequisites
 
-### Checking Node Version
-
-Before using the example, ensure that you have the correct version of Node.js installed. The example requires Node.js 18 or higher. You can check your Node version by running:
-
-```bash
-node --version
-```
-
-If you don't have the correct version, you can install it using [nvm](https://github.com/nvm-sh/nvm):
-
-```bash
-nvm install node
-```
-
-This will automatically install and use the latest version of Node.
-
-### API Keys
-
 You'll need the following API keys:
-- [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key) - For the LLM
-- [CDP API Key](https://portal.cdp.coinbase.com/access/api) - For the CDP wallet
-- [ZeroDev Project ID](https://docs.zerodev.app/getting-started) - For the ZeroDev wallet provider
+
+- [ZeroDev Project ID](https://dashboard.zerodev.app/) -- create a project and copy the project ID, as described [here](https://docs.zerodev.app/sdk/getting-started/tutorial).
+  - Make sure to create a "gas policy" if you want your agent to send gasless transactions.
+- [OpenAI API Key](https://platform.openai.com/api-keys) - For the LLM
+
+You can run the example with any signer including CDP, Privy, and Viem (local keys).  For example, if you want to run with CDP as a signer, then you also need:
+
+- [CDP API Key](https://portal.cdp.coinbase.com/projects/api-keys) - For the CDP wallet
 
 Once you have them, rename the `.env-local` file to `.env` and make sure you set the API keys to their corresponding environment variables:
 
