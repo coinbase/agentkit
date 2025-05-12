@@ -227,37 +227,11 @@ This section provides a detailed list of all available action providers and thei
 </details>
 
 <details>
-<summary><strong>CDP Wallet</strong></summary>
-<table width="100%">
-<tr>
-    <td width="200"><code>deploy_contract</code></td>
-    <td width="768">Deploys a custom smart contract using specified Solidity version and constructor arguments.</td>
-</tr>
-<tr>
-    <td width="200"><code>deploy_nft</code></td>
-    <td width="768">Deploys a standard ERC-721 NFT contract with configurable name, symbol, and metadata URI.</td>
-</tr>
-<tr>
-    <td width="200"><code>deploy_token</code></td>
-    <td width="768">Deploys a standard ERC-20 token contract with configurable name, symbol, and initial supply.</td>
-</tr>
-<tr>
-    <td width="200"><code>trade</code></td>
-    <td width="768">Executes a token swap between two assets at current market rates on mainnet networks.</td>
-</tr>
-</table>
-</details>
-
-<details>
 <summary><strong>CDP API</strong></summary>
 <table width="100%">
 <tr>
-    <td width="200"><code>fetch_price</code></td>
-    <td width="768">Retrieves the current price of a cryptocurrency from the CDP API.</td>
-</tr>
-<tr>
-    <td width="200"><code>fetch_base_scan</code></td>
-    <td width="768">Fetches on-chain data from Base blockchain explorer via CDP API.</td>
+    <td width="200"><code>request_faucet_funds</code></td>
+    <td width="768">Requests testnet ETH, USDC, EURC or CBBTC.</td>
 </tr>
 </table>
 </details>

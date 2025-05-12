@@ -9,12 +9,9 @@ jobs:
         package:
           [
             "coinbase-agentkit",
-            "framework-extensions/langchain",
+            "framework-extensions/*",
             "create-onchain-agent",
-            "examples/langchain-cdp-chatbot",
-            "examples/langchain-eth-account-chatbot",
-            "examples/langchain-smart-wallet-chatbot",
-            "examples/langchain-twitter-chatbot",
+            "examples/*",
           ]
     defaults:
       run:
