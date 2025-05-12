@@ -43,6 +43,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
 
         Raises:
             ValueError: If required configuration is missing or initialization fails
+
         """
         try:
             self._api_key_id = config.api_key_id or os.getenv("CDP_API_KEY_ID")
@@ -84,6 +85,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
 
         Returns:
             Cdp: A new CDP client instance
+
         """
         return CdpClient(
             api_key_id=self._api_key_id,
@@ -96,6 +98,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
 
         Returns:
             str: The wallet's address as a hex string
+
         """
         return self._address
 
@@ -104,6 +107,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
 
         Returns:
             Decimal: The wallet's balance in wei as a Decimal
+
         """
         balance = self._web3.eth.get_balance(self.get_address())
         return Decimal(balance)
@@ -113,6 +117,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
 
         Returns:
             str: The string 'cdp_evm_server_wallet_provider'
+
         """
         return "cdp_evm_server_wallet_provider"
 
@@ -121,6 +126,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
 
         Returns:
             Network: Network object containing protocol family, network ID, and chain ID
+
         """
         return self._network
 
@@ -133,6 +139,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
 
         Returns:
             str: The transaction hash as a string
+
         """
         value_wei = Web3.to_wei(value, "ether")
         client = self.get_client()
@@ -147,6 +154,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
                     ),
                     network=self._network.network_id,
                 )
+
         return self._run_async(_send_transaction())
 
     def read_contract(
@@ -168,6 +176,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
 
         Returns:
             Any: The result of the contract function call
+
         """
         contract = self._web3.eth.contract(address=contract_address, abi=abi)
         func = contract.functions[function_name]
@@ -183,6 +192,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
 
         Returns:
             HexStr: The transaction hash as a hex string
+
         """
         client = self.get_client()
 
@@ -197,6 +207,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
                     ),
                     network=self._network.network_id,
                 )
+
         return self._run_async(_send_transaction())
 
     def wait_for_transaction_receipt(
@@ -214,6 +225,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
 
         Raises:
             TimeoutError: If transaction is not mined within timeout period
+
         """
         return self._web3.eth.wait_for_transaction_receipt(
             tx_hash, timeout=timeout, poll_latency=poll_latency
@@ -227,6 +239,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
 
         Returns:
             HexStr: The signature as a hex string
+
         """
         client = self.get_client()
 
@@ -236,6 +249,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
                     address=self.get_address(),
                     message=message,
                 )
+
         return self._run_async(_sign_message())
 
     def sign_typed_data(self, typed_data: dict[str, Any]) -> HexStr:
@@ -246,6 +260,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
 
         Returns:
             HexStr: The signature as a hex string
+
         """
         client = self.get_client()
 
@@ -255,6 +270,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
                     address=self.get_address(),
                     typed_data=typed_data,
                 )
+
         return self._run_async(_sign_typed_data())
 
     def sign_transaction(self, transaction: TxParams) -> HexStr:
@@ -265,6 +281,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
 
         Returns:
             HexStr: The transaction signature as a hex string
+
         """
         client = self.get_client()
 
@@ -279,8 +296,8 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
                     ),
                     network=self._network.network_id,
                 )
-        return self._run_async(_sign_transaction())
 
+        return self._run_async(_sign_transaction())
 
     async def _get_account(self, client: CdpClient, address: str):
         """Get an existing account by address.
@@ -291,6 +308,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
 
         Returns:
             Any: The account object
+
         """
         async with client as cdp:
             return await cdp.evm.get_account(address=address)
@@ -303,6 +321,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
 
         Returns:
             Any: The newly created account object
+
         """
         async with client as cdp:
             return await cdp.evm.create_account(idempotency_key=self._idempotency_key)
@@ -315,6 +334,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
 
         Returns:
             Any: The result of the coroutine
+
         """
         try:
             loop = asyncio.get_event_loop()

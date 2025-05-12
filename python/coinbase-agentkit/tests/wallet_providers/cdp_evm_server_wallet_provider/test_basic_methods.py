@@ -1,7 +1,6 @@
 """Tests for CDP Wallet Provider basic methods."""
 
 from decimal import Decimal
-from unittest.mock import patch
 
 import pytest
 
@@ -19,40 +18,40 @@ def test_get_address(mocked_wallet_provider):
     assert mocked_wallet_provider.get_address() == MOCK_ADDRESS
 
 
-def test_get_balance(mocked_wallet_provider, mock_wallet):
+def test_get_balance(mocked_wallet_provider, mock_web3):
     """Test get_balance method."""
-    provider_wallet = mocked_wallet_provider._wallet
-    provider_wallet.balance.return_value = 2.0
-
-    with patch(
-        "coinbase_agentkit.wallet_providers.cdp_wallet_provider.Web3.to_wei",
-        return_value=2 * MOCK_ONE_ETH_WEI,
-    ):
-        balance = mocked_wallet_provider.get_balance()
-        assert balance == Decimal(2 * MOCK_ONE_ETH_WEI)
-        provider_wallet.balance.assert_called_once_with("eth")
+    balance = mocked_wallet_provider.get_balance()
+    assert balance == Decimal(MOCK_ONE_ETH_WEI)
+    mock_web3.return_value.eth.get_balance.assert_called_once()
 
 
 def test_get_balance_without_wallet(mocked_wallet_provider):
     """Test get_balance method when wallet is not initialized."""
-    mocked_wallet_provider._wallet = None
-    with pytest.raises(Exception, match="Wallet not initialized"):
+    # Save the original Web3 instance
+    original_web3 = mocked_wallet_provider._web3
+
+    # Set _web3 to None to simulate uninitialized wallet
+    mocked_wallet_provider._web3 = None
+
+    # When _web3 is None, we expect an AttributeError with this specific message
+    with pytest.raises(AttributeError, match="'NoneType' object has no attribute 'eth'"):
         mocked_wallet_provider.get_balance()
 
+    # Restore the original Web3 instance
+    mocked_wallet_provider._web3 = original_web3
 
-def test_get_balance_with_connection_error(mocked_wallet_provider, mock_wallet):
+
+def test_get_balance_with_connection_error(mocked_wallet_provider, mock_web3):
     """Test get_balance method with network connection error."""
-    mock_wallet.balance.side_effect = ConnectionError("Network connection error")
+    mock_web3.return_value.eth.get_balance.side_effect = ConnectionError("Network connection error")
 
-    with pytest.raises(
-        Exception, match="Failed to transfer native tokens|Network connection error"
-    ):
+    with pytest.raises(Exception, match="Network connection error"):
         mocked_wallet_provider.get_balance()
 
 
 def test_get_name(mocked_wallet_provider):
     """Test get_name method."""
-    assert mocked_wallet_provider.get_name() == "cdp_wallet_provider"
+    assert mocked_wallet_provider.get_name() == "cdp_evm_server_wallet_provider"
 
 
 def test_get_network(mocked_wallet_provider):

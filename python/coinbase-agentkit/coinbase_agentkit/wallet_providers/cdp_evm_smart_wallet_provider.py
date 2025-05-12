@@ -3,11 +3,10 @@
 import asyncio
 import os
 from decimal import Decimal
-from typing import Any, List
+from typing import Any
 
 from cdp import CdpClient
 from cdp.evm_call_types import EncodedCall
-from cdp.evm_transaction_types import TransactionRequestEIP1559
 from eth_account import Account
 from pydantic import BaseModel, Field
 from web3 import Web3
@@ -25,10 +24,14 @@ class CdpEvmSmartWalletProviderConfig(BaseModel):
     wallet_secret: str | None = Field(None, description="The CDP wallet secret")
     network_id: str | None = Field(None, description="The network id")
     address: str | None = Field(None, description="The smart wallet address to use")
-    owner: str | None = Field(None, description="The owner's private key or CDP server wallet address")
+    owner: str | None = Field(
+        None, description="The owner's private key or CDP server wallet address"
+    )
     idempotency_key: str | None = Field(None, description="The idempotency key for wallet creation")
     gas: EvmGasConfig | None = Field(None, description="Gas configuration settings")
-    paymaster_url: str | None = Field(None, description="Optional paymaster URL for gasless transactions")
+    paymaster_url: str | None = Field(
+        None, description="Optional paymaster URL for gasless transactions"
+    )
 
 
 class CdpEvmSmartWalletProvider(EvmWalletProvider):
@@ -43,6 +46,7 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         Raises:
             ValueError: If required configuration is missing or initialization fails
+
         """
         try:
             self._api_key_id = config.api_key_id or os.getenv("CDP_API_KEY_ID")
@@ -75,17 +79,20 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
             client = self.get_client()
             try:
+
                 async def initialize_accounts():
                     async with client as cdp:
-                        if owner_address_or_private_key.startswith("0x") and len(owner_address_or_private_key) == 42:
+                        if (
+                            owner_address_or_private_key.startswith("0x")
+                            and len(owner_address_or_private_key) == 42
+                        ):
                             owner = await cdp.evm.get_account(address=owner_address_or_private_key)
                         else:
                             owner = Account.from_key(owner_address_or_private_key)
 
                         if self._address:
                             smart_account = await cdp.evm.get_smart_account(
-                                owner=owner,
-                                address=self._address
+                                owner=owner, address=self._address
                             )
                         else:
                             smart_account = await cdp.evm.create_smart_account(owner=owner)
@@ -122,12 +129,13 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         Returns:
             Cdp: A new CDP client instance
+
         """
         return CdpClient(
             api_key_id=self._api_key_id,
             api_key_secret=self._api_key_secret,
             wallet_secret=self._wallet_secret,
-            debugging=True
+            debugging=True,
         )
 
     def _run_async(self, coroutine):
@@ -138,6 +146,7 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         Returns:
             Any: The result of the coroutine
+
         """
         try:
             loop = asyncio.get_event_loop()
@@ -151,6 +160,7 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         Returns:
             str: The wallet's address as a hex string
+
         """
         return self._address
 
@@ -159,6 +169,7 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         Returns:
             Decimal: The wallet's balance in wei as a Decimal
+
         """
         balance = self._web3.eth.get_balance(self.get_address())
         return Decimal(balance)
@@ -168,6 +179,7 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         Returns:
             str: The string 'cdp_evm_smart_wallet_provider'
+
         """
         return "cdp_evm_smart_wallet_provider"
 
@@ -176,6 +188,7 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         Returns:
             Network: Network object containing protocol family, network ID, and chain ID
+
         """
         return self._network
 
@@ -188,6 +201,7 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         Returns:
             str: The transaction hash as a string
+
         """
         value_wei = Web3.to_wei(value, "ether")
         client = self.get_client()
@@ -195,25 +209,18 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
         async def _send_user_operation():
             async with client as cdp:
                 smart_account = await cdp.evm.get_smart_account(
-                    owner=self._owner,
-                    address=self._address
+                    owner=self._owner, address=self._address
                 )
                 user_operation = await cdp.evm.send_user_operation(
                     smart_account=smart_account,
                     network=self._network.network_id,
-                    calls=[
-                        EncodedCall(
-                            to=to,
-                            value=value_wei,
-                            data="0x"
-                        )
-                    ],
-                    paymaster_url=self._paymaster_url
+                    calls=[EncodedCall(to=to, value=value_wei, data="0x")],
+                    paymaster_url=self._paymaster_url,
                 )
                 return await cdp.evm.wait_for_user_operation(
-                    smart_account_address=self._address,
-                    user_op_hash=user_operation.user_op_hash
+                    smart_account_address=self._address, user_op_hash=user_operation.user_op_hash
                 )
+
         try:
             return self._run_async(_send_user_operation()).transaction_hash
         finally:
@@ -238,6 +245,7 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         Returns:
             Any: The result of the contract function call
+
         """
         contract = self._web3.eth.contract(address=contract_address, abi=abi)
         func = contract.functions[function_name]
@@ -253,14 +261,14 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         Returns:
             HexStr: The transaction hash as a hex string
+
         """
         client = self.get_client()
 
         async def _send_user_operation():
             async with client as cdp:
                 smart_account = await cdp.evm.get_smart_account(
-                    owner=self._owner,
-                    address=self._address
+                    owner=self._owner, address=self._address
                 )
                 user_operation = await cdp.evm.send_user_operation(
                     smart_account=smart_account,
@@ -269,15 +277,15 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
                         EncodedCall(
                             to=transaction["to"],
                             value=transaction.get("value", 0),
-                            data=transaction.get("data", "0x")
+                            data=transaction.get("data", "0x"),
                         )
                     ],
-                    paymaster_url=self._paymaster_url
+                    paymaster_url=self._paymaster_url,
                 )
                 return await cdp.evm.wait_for_user_operation(
-                    smart_account_address=self._address,
-                    user_op_hash=user_operation.user_op_hash
+                    smart_account_address=self._address, user_op_hash=user_operation.user_op_hash
                 )
+
         try:
             return self._run_async(_send_user_operation()).transaction_hash
         finally:
@@ -298,6 +306,7 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         Raises:
             TimeoutError: If transaction is not mined within timeout period
+
         """
         return self._web3.eth.wait_for_transaction_receipt(
             tx_hash, timeout=timeout, poll_latency=poll_latency
@@ -314,8 +323,11 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         Raises:
             NotImplementedError: Smart wallets cannot sign messages directly
+
         """
-        raise NotImplementedError("Smart wallets cannot sign messages directly. Use the owner account to sign messages.")
+        raise NotImplementedError(
+            "Smart wallets cannot sign messages directly. Use the owner account to sign messages."
+        )
 
     def sign_typed_data(self, typed_data: dict[str, Any]) -> HexStr:
         """Sign typed data according to EIP-712 standard.
@@ -328,8 +340,11 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         Raises:
             NotImplementedError: Smart wallets cannot sign typed data directly
+
         """
-        raise NotImplementedError("Smart wallets cannot sign typed data directly. Use the owner account to sign typed data.")
+        raise NotImplementedError(
+            "Smart wallets cannot sign typed data directly. Use the owner account to sign typed data."
+        )
 
     def sign_transaction(self, transaction: TxParams) -> HexStr:
         """Sign an EVM transaction.
@@ -342,10 +357,13 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         Raises:
             NotImplementedError: Smart wallets cannot sign transactions directly
-        """
-        raise NotImplementedError("Smart wallets cannot sign transactions directly. Use send_transaction or send_user_operation instead.")
 
-    def send_user_operation(self, calls: List[EncodedCall]) -> str:
+        """
+        raise NotImplementedError(
+            "Smart wallets cannot sign transactions directly. Use send_transaction or send_user_operation instead."
+        )
+
+    def send_user_operation(self, calls: list[EncodedCall]) -> str:
         """Send a user operation with multiple calls.
 
         Args:
@@ -353,26 +371,26 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         Returns:
             str: The transaction hash of the executed user operation
+
         """
         client = self.get_client()
 
         async def _send_user_operation():
             async with client as cdp:
                 smart_account = await cdp.evm.get_smart_account(
-                    owner=self._owner,
-                    address=self._address
+                    owner=self._owner, address=self._address
                 )
                 user_operation = await cdp.evm.send_user_operation(
                     smart_account=smart_account,
                     network=self._network.network_id,
                     calls=calls,
-                    paymaster_url=self._paymaster_url
+                    paymaster_url=self._paymaster_url,
                 )
                 return await cdp.evm.wait_for_user_operation(
-                    smart_account_address=self._address,
-                    user_op_hash=user_operation.user_op_hash
+                    smart_account_address=self._address, user_op_hash=user_operation.user_op_hash
                 )
+
         try:
             return self._run_async(_send_user_operation()).transaction_hash
         finally:
-            self._run_async(client.close()) 
+            self._run_async(client.close())

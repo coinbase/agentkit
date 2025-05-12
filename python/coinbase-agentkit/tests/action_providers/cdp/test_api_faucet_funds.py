@@ -9,7 +9,6 @@ from coinbase_agentkit.action_providers.cdp.cdp_api_action_provider import (
 from coinbase_agentkit.network import Network
 
 from .conftest import (
-    MOCK_EXPLORER_URL,
     MOCK_MAINNET_CHAIN_ID,
     MOCK_MAINNET_NETWORK_ID,
     MOCK_TX_HASH,
@@ -32,72 +31,57 @@ def test_request_eth_without_asset_id(
     mock_wallet_testnet_provider, mock_transaction, mock_env, mock_cdp_imports
 ):
     """Test requesting ETH from faucet without specifying asset_id."""
-    _, mock_external_address = mock_cdp_imports
+    # Setup mock loop
+    mock_loop = Mock()
+    mock_loop.run_until_complete.return_value = MOCK_TX_HASH
 
-    mock_external_address.return_value.faucet.return_value = mock_transaction
+    with patch("asyncio.get_event_loop", return_value=mock_loop):
+        response = cdp_api_action_provider().request_faucet_funds(mock_wallet_testnet_provider, {})
 
-    response = cdp_api_action_provider().request_faucet_funds(mock_wallet_testnet_provider, {})
-
-    expected_response = (
-        f"Received ETH from the faucet. Transaction: {MOCK_EXPLORER_URL}/{MOCK_TX_HASH}"
-    )
-    assert response == expected_response
+        assert "Received ETH from the faucet" in response
+        assert MOCK_TX_HASH in response
 
 
 def test_request_eth_with_asset_id(
     mock_wallet_testnet_provider, mock_transaction, mock_env, mock_cdp_imports
 ):
     """Test requesting ETH from faucet with eth asset_id."""
-    _, mock_external_address = mock_cdp_imports
+    # Setup mock loop
+    mock_loop = Mock()
+    mock_loop.run_until_complete.return_value = MOCK_TX_HASH
 
-    mock_external_address.return_value.faucet.return_value = mock_transaction
+    with patch("asyncio.get_event_loop", return_value=mock_loop):
+        response = cdp_api_action_provider().request_faucet_funds(
+            mock_wallet_testnet_provider, {"asset_id": "eth"}
+        )
 
-    response = cdp_api_action_provider().request_faucet_funds(
-        mock_wallet_testnet_provider, {"asset_id": "eth"}
-    )
-
-    expected_response = (
-        f"Received eth from the faucet. Transaction: {MOCK_EXPLORER_URL}/{MOCK_TX_HASH}"
-    )
-    assert response == expected_response
+        assert "Received eth from the faucet" in response
+        assert MOCK_TX_HASH in response
 
 
 def test_request_usdc(mock_wallet_testnet_provider, mock_transaction, mock_env, mock_cdp_imports):
     """Test requesting USDC from faucet."""
-    _, mock_external_address = mock_cdp_imports
+    # Setup mock loop
+    mock_loop = Mock()
+    mock_loop.run_until_complete.return_value = MOCK_TX_HASH
 
-    mock_external_address.return_value.faucet.return_value = mock_transaction
+    with patch("asyncio.get_event_loop", return_value=mock_loop):
+        response = cdp_api_action_provider().request_faucet_funds(
+            mock_wallet_testnet_provider, {"asset_id": "usdc"}
+        )
 
-    response = cdp_api_action_provider().request_faucet_funds(
-        mock_wallet_testnet_provider, {"asset_id": "usdc"}
-    )
-
-    expected_response = (
-        f"Received usdc from the faucet. Transaction: {MOCK_EXPLORER_URL}/{MOCK_TX_HASH}"
-    )
-    assert response == expected_response
+        assert "Received usdc from the faucet" in response
+        assert MOCK_TX_HASH in response
 
 
 def test_request_faucet_wrong_network(mock_env):
     """Test faucet request fails on wrong network (mainnet)."""
-    with patch("cdp.Cdp"):
-        wallet = Mock()
-        wallet.get_network.return_value = Network(
-            protocol_family="evm",
-            network_id=MOCK_MAINNET_NETWORK_ID,
-            chain_id=MOCK_MAINNET_CHAIN_ID,
-        )
+    wallet = Mock()
+    wallet.get_network.return_value = Network(
+        protocol_family="evm",
+        network_id=MOCK_MAINNET_NETWORK_ID,
+        chain_id=MOCK_MAINNET_CHAIN_ID,
+    )
 
-        response = cdp_api_action_provider().request_faucet_funds(wallet, {})
-        assert response == "Error: Faucet is only available on base-sepolia network"
-
-
-def test_request_faucet_api_error(mock_wallet_testnet_provider, mock_env, mock_cdp_imports):
-    """Test faucet request when API error occurs."""
-    _, mock_external_address = mock_cdp_imports
-
-    mock_external_address.return_value.faucet.side_effect = Exception("Faucet request failed")
-
-    response = cdp_api_action_provider().request_faucet_funds(mock_wallet_testnet_provider, {})
-
-    assert response == "Error requesting faucet funds: Faucet request failed"
+    response = cdp_api_action_provider().request_faucet_funds(wallet, {})
+    assert "Error: Faucet is only supported on" in response

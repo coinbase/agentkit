@@ -1,4 +1,4 @@
-"""Tests for Smart Wallet Provider contract operations."""
+"""Tests for CDP EVM Smart Wallet Provider contract operations."""
 
 from unittest.mock import Mock
 
@@ -12,7 +12,7 @@ from .conftest import MOCK_ADDRESS_TO
 # =========================================================
 
 
-def test_read_contract(wallet_provider, mock_web3):
+def test_read_contract(mocked_wallet_provider, mock_web3):
     """Test read_contract method."""
     contract_address = MOCK_ADDRESS_TO
     abi = [
@@ -26,7 +26,7 @@ def test_read_contract(wallet_provider, mock_web3):
     args = ["arg1"]
     block_identifier = "latest"
 
-    result = wallet_provider.read_contract(
+    result = mocked_wallet_provider.read_contract(
         contract_address, abi, "testFunction", args, block_identifier
     )
 
@@ -37,7 +37,7 @@ def test_read_contract(wallet_provider, mock_web3):
     )
 
 
-def test_read_contract_empty_args(wallet_provider, mock_web3):
+def test_read_contract_empty_args(mocked_wallet_provider, mock_web3):
     """Test read_contract method with empty args."""
     contract_address = MOCK_ADDRESS_TO
     abi = [
@@ -49,13 +49,13 @@ def test_read_contract_empty_args(wallet_provider, mock_web3):
         }
     ]
 
-    result = wallet_provider.read_contract(contract_address, abi, "testFunction")
+    result = mocked_wallet_provider.read_contract(contract_address, abi, "testFunction")
 
     assert result == "mock_result"
     mock_web3.return_value.eth.contract.assert_called_once_with(address=contract_address, abi=abi)
 
 
-def test_read_contract_with_complex_return_value(wallet_provider, mock_web3):
+def test_read_contract_with_complex_return_value(mocked_wallet_provider, mock_web3):
     """Test read_contract method with complex return value."""
     contract_address = MOCK_ADDRESS_TO
     abi = [
@@ -78,19 +78,19 @@ def test_read_contract_with_complex_return_value(wallet_provider, mock_web3):
     mock_contract.functions = {"testFunction": lambda *args: mock_function}
     mock_web3.return_value.eth.contract.return_value = mock_contract
 
-    result = wallet_provider.read_contract(contract_address, abi, "testFunction")
+    result = mocked_wallet_provider.read_contract(contract_address, abi, "testFunction")
 
     assert result == complex_return
 
 
-def test_read_contract_with_specific_block(wallet_provider, mock_web3):
+def test_read_contract_with_specific_block(mocked_wallet_provider, mock_web3):
     """Test read_contract method with specific block identifier."""
     contract_address = MOCK_ADDRESS_TO
     abi = [{"name": "testFunction", "type": "function", "inputs": [], "outputs": []}]
 
     block_number = 12345678
 
-    wallet_provider.read_contract(
+    mocked_wallet_provider.read_contract(
         contract_address, abi, "testFunction", block_identifier=block_number
     )
 
@@ -99,7 +99,7 @@ def test_read_contract_with_specific_block(wallet_provider, mock_web3):
     )
 
 
-def test_read_contract_with_multiple_inputs(wallet_provider, mock_web3):
+def test_read_contract_with_multiple_inputs(mocked_wallet_provider, mock_web3):
     """Test read_contract method with multiple input arguments."""
     contract_address = MOCK_ADDRESS_TO
     abi = [
@@ -124,13 +124,13 @@ def test_read_contract_with_multiple_inputs(wallet_provider, mock_web3):
 
     args = [100, "0xabcdef1234567890", True]
 
-    result = wallet_provider.read_contract(contract_address, abi, "complexFunction", args)
+    result = mocked_wallet_provider.read_contract(contract_address, abi, "complexFunction", args)
 
     assert result is True
     mock_web3.return_value.eth.contract.assert_called_once_with(address=contract_address, abi=abi)
 
 
-def test_read_contract_function_not_found(wallet_provider, mock_web3):
+def test_read_contract_function_not_found(mocked_wallet_provider, mock_web3):
     """Test read_contract method with non-existent function."""
     contract_address = MOCK_ADDRESS_TO
     abi = [
@@ -147,10 +147,10 @@ def test_read_contract_function_not_found(wallet_provider, mock_web3):
     mock_web3.return_value.eth.contract.return_value = mock_contract
 
     with pytest.raises(KeyError, match="nonExistentFunction"):
-        wallet_provider.read_contract(contract_address, abi, "nonExistentFunction")
+        mocked_wallet_provider.read_contract(contract_address, abi, "nonExistentFunction")
 
 
-def test_read_contract_call_failure(wallet_provider, mock_web3):
+def test_read_contract_call_failure(mocked_wallet_provider, mock_web3):
     """Test read_contract method when contract call fails."""
     contract_address = MOCK_ADDRESS_TO
     abi = [
@@ -171,10 +171,10 @@ def test_read_contract_call_failure(wallet_provider, mock_web3):
     mock_web3.return_value.eth.contract.return_value = mock_contract
 
     with pytest.raises(Exception, match=error_message):
-        wallet_provider.read_contract(contract_address, abi, "testFunction")
+        mocked_wallet_provider.read_contract(contract_address, abi, "testFunction")
 
 
-def test_read_contract_with_contract_logic_error(wallet_provider, mock_web3):
+def test_read_contract_with_contract_logic_error(mocked_wallet_provider, mock_web3):
     """Test read_contract method with ContractLogicError exception."""
     contract_address = MOCK_ADDRESS_TO
     abi = [{"name": "revertingFunction", "type": "function", "inputs": [], "outputs": []}]
@@ -188,10 +188,10 @@ def test_read_contract_with_contract_logic_error(wallet_provider, mock_web3):
     mock_web3.return_value.eth.contract.return_value = mock_contract
 
     with pytest.raises(ContractLogicError, match=error_message):
-        wallet_provider.read_contract(contract_address, abi, "revertingFunction")
+        mocked_wallet_provider.read_contract(contract_address, abi, "revertingFunction")
 
 
-def test_read_contract_with_invalid_abi(wallet_provider, mock_web3):
+def test_read_contract_with_invalid_abi(mocked_wallet_provider, mock_web3):
     """Test read_contract method with invalid ABI."""
     contract_address = MOCK_ADDRESS_TO
     invalid_abi = "not_a_valid_abi"
@@ -199,10 +199,10 @@ def test_read_contract_with_invalid_abi(wallet_provider, mock_web3):
     mock_web3.return_value.eth.contract.side_effect = TypeError("Invalid ABI format")
 
     with pytest.raises(TypeError, match="Invalid ABI format"):
-        wallet_provider.read_contract(contract_address, invalid_abi, "testFunction")
+        mocked_wallet_provider.read_contract(contract_address, invalid_abi, "testFunction")
 
 
-def test_read_contract_with_invalid_address(wallet_provider, mock_web3):
+def test_read_contract_with_invalid_address(mocked_wallet_provider, mock_web3):
     """Test read_contract method with invalid contract address."""
     invalid_address = "not_a_valid_address"
     abi = [{"name": "testFunction", "type": "function", "inputs": [], "outputs": []}]
@@ -210,4 +210,4 @@ def test_read_contract_with_invalid_address(wallet_provider, mock_web3):
     mock_web3.return_value.eth.contract.side_effect = ValueError("Invalid address")
 
     with pytest.raises(ValueError, match="Invalid address"):
-        wallet_provider.read_contract(invalid_address, abi, "testFunction")
+        mocked_wallet_provider.read_contract(invalid_address, abi, "testFunction")

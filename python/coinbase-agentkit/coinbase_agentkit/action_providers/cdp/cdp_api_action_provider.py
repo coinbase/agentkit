@@ -11,7 +11,7 @@ from ..action_decorator import create_action
 from ..action_provider import ActionProvider
 from .schemas import RequestFaucetFundsSchema
 
-TWalletProvider = TypeVar('TWalletProvider', bound=EvmWalletProvider)
+TWalletProvider = TypeVar("TWalletProvider", bound=EvmWalletProvider)
 
 
 class CdpApiActionProvider(ActionProvider[TWalletProvider]):
@@ -34,9 +34,12 @@ class CdpApiActionProvider(ActionProvider[TWalletProvider]):
 
         Raises:
             AttributeError: If the wallet provider doesn't have a get_client method.
+
         """
-        if not hasattr(wallet_provider, 'get_client'):
-            raise AttributeError("Wallet provider must have a get_client method to use CDP API actions")
+        if not hasattr(wallet_provider, "get_client"):
+            raise AttributeError(
+                "Wallet provider must have a get_client method to use CDP API actions"
+            )
         return wallet_provider.get_client()
 
     @create_action(
@@ -50,9 +53,7 @@ You are not allowed to faucet with any other network or asset ID. If you are on 
 from another wallet and provide the user with your wallet details.""",
         schema=RequestFaucetFundsSchema,
     )
-    def request_faucet_funds(
-        self, wallet_provider: TWalletProvider, args: dict[str, Any]
-    ) -> str:
+    def request_faucet_funds(self, wallet_provider: TWalletProvider, args: dict[str, Any]) -> str:
         """Request test tokens from the faucet.
 
         Args:
@@ -61,6 +62,7 @@ from another wallet and provide the user with your wallet details.""",
 
         Returns:
             str: A message containing the action response or error details.
+
         """
         validated_args = RequestFaucetFundsSchema(**args)
         network = wallet_provider.get_network()
@@ -122,6 +124,7 @@ from another wallet and provide the user with your wallet details.""",
 
         Returns:
             bool: Whether the network is supported.
+
         """
         if network.protocol_family == "evm":
             return network.network_id in ["base-sepolia", "ethereum-sepolia"]
@@ -135,5 +138,6 @@ def cdp_api_action_provider() -> CdpApiActionProvider:
 
     Returns:
         CdpApiActionProvider: A new CDP API action provider instance.
+
     """
     return CdpApiActionProvider()

@@ -1,8 +1,8 @@
 """Schemas for CDP action providers."""
 
-from typing import Any
 
 from pydantic import BaseModel, Field
+
 
 class RequestFaucetFundsSchema(BaseModel):
     """Input schema for requesting faucet funds."""
