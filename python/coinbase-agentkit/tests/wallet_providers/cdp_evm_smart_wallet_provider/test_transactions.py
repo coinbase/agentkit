@@ -149,11 +149,13 @@ def test_send_transaction_failure(mocked_wallet_provider, mock_cdp_client, mock_
 
     # Instead of using the mocked _run_async, directly call send_user_operation_mock
     # to get the exception and then check that the exception is properly raised
-    with patch.object(
-        mocked_wallet_provider, "_run_async", side_effect=Exception("Transaction failed")
+    with (
+        patch.object(
+            mocked_wallet_provider, "_run_async", side_effect=Exception("Transaction failed")
+        ),
+        pytest.raises(Exception, match="Transaction failed"),
     ):
-        with pytest.raises(Exception, match="Transaction failed"):
-            mocked_wallet_provider.send_transaction(transaction)
+        mocked_wallet_provider.send_transaction(transaction)
 
 
 def test_send_transaction_with_network_error(
@@ -173,13 +175,15 @@ def test_send_transaction_with_network_error(
     mock_cdp_client.evm.send_user_operation.side_effect = send_user_operation_mock
 
     # Patch _run_async to raise the expected exception
-    with patch.object(
-        mocked_wallet_provider,
-        "_run_async",
-        side_effect=ConnectionError("Network connection error"),
+    with (
+        patch.object(
+            mocked_wallet_provider,
+            "_run_async",
+            side_effect=ConnectionError("Network connection error"),
+        ),
+        pytest.raises(ConnectionError, match="Network connection error"),
     ):
-        with pytest.raises(ConnectionError, match="Network connection error"):
-            mocked_wallet_provider.send_transaction(transaction)
+        mocked_wallet_provider.send_transaction(transaction)
 
 
 def test_send_transaction_timeout(mocked_wallet_provider, mock_cdp_client, mock_smart_account):
@@ -203,11 +207,13 @@ def test_send_transaction_timeout(mocked_wallet_provider, mock_cdp_client, mock_
     mock_cdp_client.evm.wait_for_user_operation.side_effect = wait_for_user_operation_mock
 
     # Patch _run_async to raise the expected exception
-    with patch.object(
-        mocked_wallet_provider, "_run_async", side_effect=TimeoutError("Transaction timed out")
+    with (
+        patch.object(
+            mocked_wallet_provider, "_run_async", side_effect=TimeoutError("Transaction timed out")
+        ),
+        pytest.raises(TimeoutError, match="Transaction timed out"),
     ):
-        with pytest.raises(TimeoutError, match="Transaction timed out"):
-            mocked_wallet_provider.send_transaction(transaction)
+        mocked_wallet_provider.send_transaction(transaction)
 
 
 def test_send_user_operation(mocked_wallet_provider, mock_cdp_client, mock_smart_account):

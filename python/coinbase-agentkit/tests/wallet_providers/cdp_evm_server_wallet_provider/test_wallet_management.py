@@ -35,4 +35,4 @@ def test_get_client_with_missing_credentials():
         config = CdpEvmServerWalletProviderConfig()
 
         with pytest.raises(ValueError, match="Missing required environment variables"):
-            provider = CdpEvmServerWalletProvider(config)
+            CdpEvmServerWalletProvider(config)

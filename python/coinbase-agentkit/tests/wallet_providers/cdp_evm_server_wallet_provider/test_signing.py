@@ -45,9 +45,11 @@ def test_sign_message_failure(mocked_wallet_provider, mock_cdp_client):
 
     error_msg = "Signing failed"
     # Patch the sign_message method to raise an exception
-    with patch.object(mocked_wallet_provider, "sign_message", side_effect=Exception(error_msg)):
-        with pytest.raises(Exception, match=error_msg):
-            mocked_wallet_provider.sign_message(message)
+    with (
+        patch.object(mocked_wallet_provider, "sign_message", side_effect=Exception(error_msg)),
+        pytest.raises(Exception, match=error_msg),
+    ):
+        mocked_wallet_provider.sign_message(message)
 
 
 def test_sign_typed_data(mocked_wallet_provider, mock_cdp_client):
@@ -76,9 +78,11 @@ def test_sign_typed_data_failure(mocked_wallet_provider, mock_cdp_client):
 
     error_msg = "Signing failed"
     # Patch the sign_typed_data method to raise an exception
-    with patch.object(mocked_wallet_provider, "sign_typed_data", side_effect=Exception(error_msg)):
-        with pytest.raises(Exception, match=error_msg):
-            mocked_wallet_provider.sign_typed_data(typed_data)
+    with (
+        patch.object(mocked_wallet_provider, "sign_typed_data", side_effect=Exception(error_msg)),
+        pytest.raises(Exception, match=error_msg),
+    ):
+        mocked_wallet_provider.sign_typed_data(typed_data)
 
 
 def test_sign_transaction(mocked_wallet_provider, mock_cdp_client):
@@ -111,6 +115,8 @@ def test_sign_transaction_failure(mocked_wallet_provider, mock_cdp_client):
 
     error_msg = "Signing failed"
     # Patch the sign_transaction method to raise an exception
-    with patch.object(mocked_wallet_provider, "sign_transaction", side_effect=Exception(error_msg)):
-        with pytest.raises(Exception, match=error_msg):
-            mocked_wallet_provider.sign_transaction(transaction)
+    with (
+        patch.object(mocked_wallet_provider, "sign_transaction", side_effect=Exception(error_msg)),
+        pytest.raises(Exception, match=error_msg),
+    ):
+        mocked_wallet_provider.sign_transaction(transaction)

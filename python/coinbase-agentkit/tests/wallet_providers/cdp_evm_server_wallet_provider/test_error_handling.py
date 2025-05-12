@@ -74,6 +74,8 @@ def test_comprehensive_error_handling(mocked_wallet_provider, mock_cdp_client, m
 
     # Test invalid ABI error
     abi_error = "Invalid ABI"
-    with patch.object(mock_web3.return_value.eth, "contract", side_effect=Exception(abi_error)):
-        with pytest.raises(Exception, match=abi_error):
-            mocked_wallet_provider.read_contract("0x1234", "invalid_abi", "test")
+    with (
+        patch.object(mock_web3.return_value.eth, "contract", side_effect=Exception(abi_error)),
+        pytest.raises(Exception, match=abi_error),
+    ):
+        mocked_wallet_provider.read_contract("0x1234", "invalid_abi", "test")

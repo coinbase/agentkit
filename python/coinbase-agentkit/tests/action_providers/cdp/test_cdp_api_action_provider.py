@@ -1,6 +1,5 @@
 """Tests for CDP API action provider."""
 
-
 import pytest
 
 from coinbase_agentkit.action_providers.cdp.cdp_api_action_provider import (

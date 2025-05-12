@@ -1,6 +1,5 @@
 """Schemas for CDP action providers."""
 
-
 from pydantic import BaseModel, Field
 
 
