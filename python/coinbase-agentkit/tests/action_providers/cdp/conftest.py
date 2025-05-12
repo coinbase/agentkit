@@ -141,9 +141,7 @@ def mock_cdp_config():
 @pytest.fixture(autouse=True)
 def mock_cdp_imports():
     """Mock CDP SDK imports."""
-    with patch(
-        "coinbase_agentkit.action_providers.cdp.cdp_api_action_provider.CdpClient"
-    ) as mock_cdp_client:
+    with patch("cdp.CdpClient") as mock_cdp_client:
         # Add configure method to the CdpClient class mock
         mock_cdp_client.configure = Mock()
         mock_cdp_client.configure_from_json = Mock()
@@ -162,6 +160,9 @@ def mock_cdp_imports():
 
         # Create solana attribute for solana tests
         mock_instance.solana = Mock()
+        mock_solana_response = Mock()
+        mock_solana_response.transaction_signature = "mock_signature"
+        mock_instance.solana.request_faucet = AsyncMock(return_value=mock_solana_response)
 
         # Set up the external address mock that is expected by tests
         mock_external_address = Mock()

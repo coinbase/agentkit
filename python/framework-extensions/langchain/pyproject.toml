@@ -17,7 +17,7 @@ keywords = [
     "agent",
 ]
 dependencies = [
-    "coinbase-agentkit",
+    "coinbase-agentkit>=0.4.0,<0.6.0",
     "langchain>=0.3.4,<0.4",
     "python-dotenv>=1.0.1,<2",
     "nest-asyncio>=1.5.8,<2",
@@ -39,17 +39,11 @@ dev = [
     "towncrier>=24.8.0,<25",
 ]
 
-[tool.uv.sources]
-coinbase-agentkit = { path = "../../../python/coinbase-agentkit", editable = true }
-
 [tool.hatch.build.targets.sdist]
 include = ["coinbase_agentkit_langchain"]
 
 [tool.hatch.build.targets.wheel]
 include = ["coinbase_agentkit_langchain"]
-
-[tool.hatch.metadata]
-allow-direct-references = true
 
 [build-system]
 requires = ["hatchling"]

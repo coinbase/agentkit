@@ -21,6 +21,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 
+
 def initialize_agent(config: EthAccountWalletProviderConfig):
     """Initialize the agent with CDP Agentkit.
 
@@ -29,6 +30,7 @@ def initialize_agent(config: EthAccountWalletProviderConfig):
 
     Returns:
         tuple[Agent, dict]: The initialized agent and its configuration
+
     """
     # Initialize LLM
     llm = ChatOpenAI(model="gpt-4o-mini")
@@ -36,8 +38,8 @@ def initialize_agent(config: EthAccountWalletProviderConfig):
     # Initialize Ethereum Account Wallet Provider
     wallet_provider = EthAccountWalletProvider(
         config=EthAccountWalletProviderConfig(
-            account=config.account,     # Ethereum account from private key
-            chain_id=config.chain_id,   # Chain ID for the network
+            account=config.account,  # Ethereum account from private key
+            chain_id=config.chain_id,  # Chain ID for the network
         )
     )
 
@@ -73,14 +75,16 @@ def initialize_agent(config: EthAccountWalletProviderConfig):
                 "If you run into a 5XX (internal) error, ask the user to try again later."
             ),
         ),
-        agent_config
+        agent_config,
     )
+
 
 def setup():
     """Set up the agent with persistent wallet storage.
 
     Returns:
         tuple[Agent, dict]: The initialized agent and its configuration
+
     """
     # Configure chain ID and file path
     chain_id = os.getenv("CHAIN_ID", "84532")  # Default to Base Sepolia
@@ -124,7 +128,9 @@ def setup():
     new_wallet_data = {
         "private_key": private_key,
         "chain_id": chain_id,
-        "created_at": time.strftime("%Y-%m-%d %H:%M:%S") if not wallet_data else wallet_data.get("created_at")
+        "created_at": time.strftime("%Y-%m-%d %H:%M:%S")
+        if not wallet_data
+        else wallet_data.get("created_at"),
     }
 
     with open(wallet_file, "w") as f:
@@ -132,6 +138,7 @@ def setup():
         print(f"Wallet data saved to {wallet_file}")
 
     return agent_executor, agent_config
+
 
 # Autonomous Mode
 def run_autonomous_mode(agent_executor, config, interval=10):
@@ -162,6 +169,7 @@ def run_autonomous_mode(agent_executor, config, interval=10):
             print("Goodbye Agent!")
             sys.exit(0)
 
+
 # Chat Mode
 def run_chat_mode(agent_executor, config):
     """Run the agent interactively based on user input."""
@@ -186,6 +194,7 @@ def run_chat_mode(agent_executor, config):
             print("Goodbye Agent!")
             sys.exit(0)
 
+
 # Mode Selection
 def choose_mode():
     """Choose whether to run in autonomous or chat mode based on user input."""
@@ -201,6 +210,7 @@ def choose_mode():
             return "auto"
         print("Invalid choice. Please try again.")
 
+
 def main():
     """Start the chatbot agent."""
     # Load environment variables
@@ -215,6 +225,7 @@ def main():
         run_chat_mode(agent_executor=agent_executor, config=agent_config)
     elif mode == "auto":
         run_autonomous_mode(agent_executor=agent_executor, config=agent_config)
+
 
 if __name__ == "__main__":
     print("Starting Agent...")

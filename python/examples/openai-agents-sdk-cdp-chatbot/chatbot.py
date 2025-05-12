@@ -29,16 +29,17 @@ def initialize_agent(config: CdpEvmServerWalletProviderConfig):
 
     Returns:
         tuple[Agent, CdpEvmServerWalletProvider]: The initialized agent and wallet provider
+
     """
     # Initialize the wallet provider with the config
     wallet_provider = CdpEvmServerWalletProvider(
         CdpEvmServerWalletProviderConfig(
-            api_key_id=config.api_key_id,           # CDP API Key ID
-            api_key_secret=config.api_key_secret,   # CDP API Key Secret
-            wallet_secret=config.wallet_secret,     # CDP Wallet Secret
-            network_id=config.network_id,           # Network ID - Optional, will default to 'base-sepolia'
-            address=config.address,                 # Wallet Address - Optional, will trigger idempotency flow if not provided
-            idempotency_key=config.idempotency_key  # Idempotency Key - Optional, seeds generation of a new wallet
+            api_key_id=config.api_key_id,  # CDP API Key ID
+            api_key_secret=config.api_key_secret,  # CDP API Key Secret
+            wallet_secret=config.wallet_secret,  # CDP Wallet Secret
+            network_id=config.network_id,  # Network ID - Optional, will default to 'base-sepolia'
+            address=config.address,  # Wallet Address - Optional, will trigger idempotency flow if not provided
+            idempotency_key=config.idempotency_key,  # Idempotency Key - Optional, seeds generation of a new wallet
         )
     )
 
@@ -85,11 +86,13 @@ def initialize_agent(config: CdpEvmServerWalletProviderConfig):
 
     return agent, wallet_provider
 
+
 def setup():
     """Set up the agent with persistent wallet storage.
 
     Returns:
         Agent: The initialized agent
+
     """
     # Configure network and file path
     network_id = os.getenv("NETWORK_ID", "base-sepolia")
@@ -109,8 +112,8 @@ def setup():
     # Determine wallet address using priority order
     wallet_address = (
         wallet_data.get("address")  # First priority: Saved wallet file
-        or os.getenv("ADDRESS")     # Second priority: ADDRESS env var
-        or None                     # Will trigger idempotency flow if needed
+        or os.getenv("ADDRESS")  # Second priority: ADDRESS env var
+        or None  # Will trigger idempotency flow if needed
     )
 
     # Create the wallet provider config
@@ -121,11 +124,7 @@ def setup():
         network_id=network_id,
         address=wallet_address,
         # Only include idempotency_key if we need to create a new wallet
-        idempotency_key=(
-            os.getenv("IDEMPOTENCY_KEY")
-            if not wallet_address
-            else None
-        )
+        idempotency_key=(os.getenv("IDEMPOTENCY_KEY") if not wallet_address else None),
     )
 
     # Initialize the agent and get the wallet provider
@@ -135,7 +134,9 @@ def setup():
     new_wallet_data = {
         "address": wallet_provider.get_address(),
         "network_id": network_id,
-        "created_at": time.strftime("%Y-%m-%d %H:%M:%S") if not wallet_data else wallet_data.get("created_at")
+        "created_at": time.strftime("%Y-%m-%d %H:%M:%S")
+        if not wallet_data
+        else wallet_data.get("created_at"),
     }
 
     with open(wallet_file, "w") as f:
@@ -143,6 +144,7 @@ def setup():
         print(f"Wallet data saved to {wallet_file}")
 
     return agent
+
 
 # Autonomous Mode
 async def run_autonomous_mode(agent, interval=10):
@@ -167,6 +169,7 @@ async def run_autonomous_mode(agent, interval=10):
             print("Goodbye Agent!")
             sys.exit(0)
 
+
 # Chat Mode
 async def run_chat_mode(agent):
     """Run the agent interactively based on user input."""
@@ -186,6 +189,7 @@ async def run_chat_mode(agent):
             print("Goodbye Agent!")
             sys.exit(0)
 
+
 # Mode Selection
 def choose_mode():
     """Choose whether to run in autonomous or chat mode based on user input."""
@@ -201,6 +205,7 @@ def choose_mode():
             return "auto"
         print("Invalid choice. Please try again.")
 
+
 async def main():
     """Start the chatbot agent."""
     # Load environment variables
@@ -215,6 +220,7 @@ async def main():
         await run_chat_mode(agent=agent)
     elif mode == "auto":
         await run_autonomous_mode(agent=agent)
+
 
 if __name__ == "__main__":
     print("Starting Agent...")

@@ -5,7 +5,6 @@ from langchain.tools import StructuredTool
 
 from coinbase_agentkit import Action, AgentKit
 
-
 # Apply nest-asyncio to allow nested event loops
 nest_asyncio.apply()
 

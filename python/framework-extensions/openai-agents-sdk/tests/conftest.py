@@ -6,4 +6,4 @@ import pytest
 pytest.mark_asyncio_loop_scope = "function"
 
 # Mark all tests in this directory as asyncio tests
-pytestmark = pytest.mark.asyncio 
+pytestmark = pytest.mark.asyncio

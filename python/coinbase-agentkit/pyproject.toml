@@ -16,7 +16,7 @@ keywords = [
     "agent",
 ]
 dependencies = [
-    "cdp-sdk @ file:///Users/carsonroscoe/Documents/Github/Coinbase/cdp-sdk/python/dist/cdp_sdk-1.5.0-py3-none-any.whl",
+    "cdp-sdk>=1.6.1,<2",
     "pydantic~=2.0",
     "web3>=7.6.0,<8",
     "python-dotenv>=1.0.1,<2",

@@ -362,8 +362,8 @@ wheels = [
 
 [[package]]
 name = "cdp-sdk"
-version = "1.5.0"
-source = { path = "../../../../cdp-sdk/python/dist/cdp_sdk-1.5.0-py3-none-any.whl" }
+version = "1.6.1"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
     { name = "aiohttp-retry" },
@@ -374,35 +374,10 @@ dependencies = [
     { name = "urllib3" },
     { name = "web3" },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/a3/f3/8231c60a348c5255b1155887af252a7f128b3a0648bd913e32a56fc523ff/cdp_sdk-1.6.1.tar.gz", hash = "sha256:09ffc152cd982117c1bdf42475b5eab36c14664877e5d7de9fcaebeef5bd01e9", size = 113701 }
 wheels = [
-    { filename = "cdp_sdk-1.5.0-py3-none-any.whl", hash = "sha256:a95e67a1d21022a0d24b236ceea3d7b35f1bf18235201b79b866d29d00cd928e" },
+    { url = "https://files.pythonhosted.org/packages/a3/95/3e248035527f663ede99685918997fcb2842e08cf2b86ea7cbbe2249c535/cdp_sdk-1.6.1-py3-none-any.whl", hash = "sha256:1ab71effa79011fcabd3e5fdd06bcb83e30c3b9610298192bb4d52d07abb5be0", size = 273434 },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiohttp", specifier = "==3.11.16" },
-    { name = "aiohttp-retry", specifier = "==2.9.1" },
-    { name = "cryptography", specifier = ">=42.0.0" },
-    { name = "myst-parser", marker = "extra == 'dev'", specifier = ">=4.0.1" },
-    { name = "pydantic", specifier = ">=2.10.3,<=2.10.4" },
-    { name = "pyjwt", specifier = ">=2.10.1" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.26.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.1.0" },
-    { name = "python-dateutil", specifier = "==2.9.0.post0" },
-    { name = "python-dotenv", marker = "extra == 'dev'", specifier = ">=1.0.0" },
-    { name = "pyyaml", marker = "extra == 'dev'", specifier = ">=6.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.7.1,<0.8" },
-    { name = "solana", marker = "extra == 'dev'", specifier = ">=0.30.2" },
-    { name = "sphinx", marker = "extra == 'dev'", specifier = ">=8.1.3" },
-    { name = "sphinx-autobuild", marker = "extra == 'dev'", specifier = ">=2024.10.3" },
-    { name = "sphinx-autodoc-typehints", marker = "extra == 'dev'", specifier = ">=3.0.1" },
-    { name = "sphinxcontrib-napoleon", marker = "extra == 'dev'", specifier = ">=0.7" },
-    { name = "towncrier", marker = "extra == 'dev'", specifier = ">=24.8.0,<25" },
-    { name = "urllib3", specifier = ">=2.2.3,<=2.3.0" },
-    { name = "web3", specifier = ">=7.6.0,<=7.10.0" },
-]
-provides-extras = ["dev"]
 
 [[package]]
 name = "certifi"
@@ -648,7 +623,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "allora-sdk", specifier = ">=0.2.0,<0.3" },
-    { name = "cdp-sdk", path = "../../../../cdp-sdk/python/dist/cdp_sdk-1.5.0-py3-none-any.whl" },
+    { name = "cdp-sdk", specifier = ">=1.6.1,<2" },
     { name = "ecdsa", specifier = ">=0.19.0,<0.20" },
     { name = "jsonschema", specifier = ">=4.23.0,<5" },
     { name = "nilql", specifier = ">=0.0.0a12,<0.0.1" },
@@ -696,7 +671,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "coinbase-agentkit", editable = "../../coinbase-agentkit" },
+    { name = "coinbase-agentkit", specifier = ">=0.4.0,<0.6.0" },
     { name = "langchain", specifier = ">=0.3.4,<0.4" },
     { name = "nest-asyncio", specifier = ">=1.5.8,<2" },
     { name = "python-dotenv", specifier = ">=1.0.1,<2" },

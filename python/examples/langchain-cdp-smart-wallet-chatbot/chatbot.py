@@ -18,7 +18,6 @@ from coinbase_agentkit import (
 )
 from coinbase_agentkit_langchain import get_langchain_tools
 from dotenv import load_dotenv
-from eth_account.account import Account
 from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
@@ -33,6 +32,7 @@ def initialize_agent(config: CdpEvmSmartWalletProviderConfig):
 
     Returns:
         tuple[Agent, CdpEvmSmartWalletProvider]: The initialized agent and wallet provider
+
     """
     # Initialize the language model
     llm = ChatOpenAI(model="gpt-4o-mini")
@@ -40,14 +40,14 @@ def initialize_agent(config: CdpEvmSmartWalletProviderConfig):
     # Initialize the wallet provider with the config
     wallet_provider = CdpEvmSmartWalletProvider(
         CdpEvmSmartWalletProviderConfig(
-            api_key_id=config.api_key_id,           # CDP API Key ID
-            api_key_secret=config.api_key_secret,   # CDP API Key Secret
-            wallet_secret=config.wallet_secret,     # CDP Wallet Secret
-            owner=config.owner,                     # Owner - Either private key or server wallet address
-            network_id=config.network_id,           # Network ID - Optional, will default to 'base-sepolia'
-            address=config.address,                 # Smart Wallet Address - Optional, will create new if not provided
-            idempotency_key=config.idempotency_key, # Idempotency Key - Optional, seeds generation of a new wallet
-            paymaster_url=config.paymaster_url      # Optional paymaster URL to sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
+            api_key_id=config.api_key_id,  # CDP API Key ID
+            api_key_secret=config.api_key_secret,  # CDP API Key Secret
+            wallet_secret=config.wallet_secret,  # CDP Wallet Secret
+            owner=config.owner,  # Owner - Either private key or server wallet address
+            network_id=config.network_id,  # Network ID - Optional, will default to 'base-sepolia'
+            address=config.address,  # Smart Wallet Address - Optional, will create new if not provided
+            idempotency_key=config.idempotency_key,  # Idempotency Key - Optional, seeds generation of a new wallet
+            paymaster_url=config.paymaster_url,  # Optional paymaster URL to sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
         )
     )
 
@@ -90,14 +90,16 @@ def initialize_agent(config: CdpEvmSmartWalletProviderConfig):
                 "responses."
             ),
         ),
-        wallet_provider
+        wallet_provider,
     ), agent_config
+
 
 def setup():
     """Set up the agent with persistent wallet storage.
 
     Returns:
         tuple[Agent, dict]: The initialized agent and its configuration
+
     """
     # Configure network and file path
     network_id = os.getenv("NETWORK_ID", "base-sepolia")
@@ -140,18 +142,20 @@ def setup():
             api_key_secret=api_key_secret,
             wallet_secret=wallet_secret,
         )
+
         async def create_wallet():
             async with client as cdp:
                 account = await cdp.evm.create_account(idempotency_key=idempotency_key)
                 return account.address
+
         owner = asyncio.run(create_wallet())
         print(f"Created new server wallet: {owner}")
 
     # Determine smart wallet address using priority order
     smart_wallet_address = (
         wallet_data.get("smart_wallet_address")  # First priority: Saved wallet file
-        or os.getenv("SMART_WALLET_ADDRESS")     # Second priority: SMART_WALLET_ADDRESS env var
-        or None                                  # Will create new if not provided
+        or os.getenv("SMART_WALLET_ADDRESS")  # Second priority: SMART_WALLET_ADDRESS env var
+        or None  # Will create new if not provided
     )
 
     # Create the wallet provider config
@@ -163,12 +167,10 @@ def setup():
         address=smart_wallet_address,
         owner=owner,
         # Only include idempotency_key if we need to create a new wallet
-        idempotency_key=(
-            os.getenv("IDEMPOTENCY_KEY")
-            if not smart_wallet_address
-            else None
-        ),
-        paymaster_url=os.getenv("PAYMASTER_URL")  # Optional paymaster URL to sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
+        idempotency_key=(os.getenv("IDEMPOTENCY_KEY") if not smart_wallet_address else None),
+        paymaster_url=os.getenv(
+            "PAYMASTER_URL"
+        ),  # Optional paymaster URL to sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
     )
 
     # Initialize the agent and get the wallet provider
@@ -179,7 +181,9 @@ def setup():
         "smart_wallet_address": wallet_provider.get_address(),
         "owner": owner,
         "network_id": network_id,
-        "created_at": time.strftime("%Y-%m-%d %H:%M:%S") if not wallet_data else wallet_data.get("created_at")
+        "created_at": time.strftime("%Y-%m-%d %H:%M:%S")
+        if not wallet_data
+        else wallet_data.get("created_at"),
     }
 
     with open(wallet_file, "w") as f:
@@ -187,6 +191,7 @@ def setup():
         print(f"Wallet data saved to {wallet_file}")
 
     return (agent_executor, agent_config)
+
 
 # Autonomous Mode
 def run_autonomous_mode(agent_executor, config, interval=10):
@@ -217,6 +222,7 @@ def run_autonomous_mode(agent_executor, config, interval=10):
             print("Goodbye Agent!")
             sys.exit(0)
 
+
 # Chat Mode
 def run_chat_mode(agent_executor, config):
     """Run the agent interactively based on user input."""
@@ -241,6 +247,7 @@ def run_chat_mode(agent_executor, config):
             print("Goodbye Agent!")
             sys.exit(0)
 
+
 # Mode Selection
 def choose_mode():
     """Choose whether to run in autonomous or chat mode based on user input."""
@@ -256,6 +263,7 @@ def choose_mode():
             return "auto"
         print("Invalid choice. Please try again.")
 
+
 def main():
     """Start the chatbot agent."""
     # Load environment variables
@@ -270,6 +278,7 @@ def main():
         run_chat_mode(agent_executor=agent_executor, config=agent_config)
     elif mode == "auto":
         run_autonomous_mode(agent_executor=agent_executor, config=agent_config)
+
 
 if __name__ == "__main__":
     print("Starting Agent...")

@@ -116,7 +116,9 @@ def get_template_path(template_name: str, templates_path: str | None = None) -> 
 
     template_path = LOCAL_CACHE_DIR / TEMPLATES_SUBDIR / template_name
     if not template_path.exists():
-        raise FileNotFoundError(f"Template path {TEMPLATES_SUBDIR}/{template_name} not found in ZIP.")
+        raise FileNotFoundError(
+            f"Template path {TEMPLATES_SUBDIR}/{template_name} not found in ZIP."
+        )
 
     # Move extracted template to a stable path
     shutil.move(str(template_path), str(extract_path))
@@ -135,6 +137,7 @@ def get_network_choices(network_type: str) -> list:
             and any(net in id for net in ["sepolia", "mumbai", "devnet", "testnet"])
         )
     ]
+
 
 def create_advanced_project(templates_path: str | None = None):
     """Create a new onchain agent project with advanced setup."""
@@ -169,8 +172,7 @@ def create_advanced_project(templates_path: str | None = None):
 
     # Choose framework
     framework_choices = [
-        name + (" (default)" if id == "langchain" else "")
-        for name, id in FRAMEWORKS
+        name + (" (default)" if id == "langchain" else "") for name, id in FRAMEWORKS
     ]
     framework_name = questionary.select(
         "Choose your agent framework:",
@@ -306,6 +308,7 @@ def create_advanced_project(templates_path: str | None = None):
         console.print(f"[red]Error: {e!s}[/red]")
         return
 
+
 def create_beginner_project(templates_path: str | None = None):
     """Create a new onchain agent project with simplified setup."""
     # Prompt for project name (default: "onchain-agent")
@@ -338,8 +341,7 @@ def create_beginner_project(templates_path: str | None = None):
         package_name = suggested_package_name
 
     framework_choices = [
-        name + (" (default)" if id == "langchain" else "")
-        for name, id in FRAMEWORKS
+        name + (" (default)" if id == "langchain" else "") for name, id in FRAMEWORKS
     ]
     framework_name = questionary.select(
         "Choose your agent framework:",
@@ -398,6 +400,7 @@ def create_beginner_project(templates_path: str | None = None):
     except FileNotFoundError as e:
         console.print(f"[red]Error: {e!s}[/red]")
         return
+
 
 @click.command()
 @click.option("--templates-path", type=str, help="Path to local template directory", default=None)
