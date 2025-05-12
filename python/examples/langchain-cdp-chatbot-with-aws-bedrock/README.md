@@ -13,7 +13,7 @@ This example demonstrates an agent setup as a terminal style chatbot with access
 - uv for package management and tooling
   - [uv Installation Instructions](https://github.com/astral-sh/uv?tab=readme-ov-file#installation)
 - [CDP API Key](https://portal.cdp.coinbase.com/access/api)
-- [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
+- [AWS API Keys](https://aws.amazon.com/bedrock/)
 
 ### Checking Python Version
 Before using the example, ensure that you have the correct version of Python installed. The example requires Python 3.10 or higher. You can check your Python version by running:
