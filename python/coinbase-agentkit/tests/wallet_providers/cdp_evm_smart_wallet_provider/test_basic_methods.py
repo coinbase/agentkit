@@ -47,7 +47,9 @@ def test_get_balance(mocked_wallet_provider, mock_web3):
     balance = mocked_wallet_provider.get_balance()
 
     assert balance == Decimal(MOCK_ONE_ETH_WEI)
-    mock_web3.return_value.eth.get_balance.assert_called_once_with(MOCK_ADDRESS)
+    mock_web3.return_value.eth.get_balance.assert_called_once_with(
+        mocked_wallet_provider.get_address()
+    )
 
 
 def test_get_balance_with_zero(mocked_wallet_provider, mock_web3):
@@ -56,7 +58,9 @@ def test_get_balance_with_zero(mocked_wallet_provider, mock_web3):
 
     balance = mocked_wallet_provider.get_balance()
 
-    mock_web3.return_value.eth.get_balance.assert_called_once_with(MOCK_ADDRESS)
+    mock_web3.return_value.eth.get_balance.assert_called_once_with(
+        mocked_wallet_provider.get_address()
+    )
     assert balance == Decimal("0")
 
 
