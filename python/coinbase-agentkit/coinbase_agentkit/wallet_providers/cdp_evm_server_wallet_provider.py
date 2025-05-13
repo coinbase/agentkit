@@ -56,7 +56,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
                 )
 
             network_id = config.network_id or os.getenv("NETWORK_ID", "base-sepolia")
-            self._idempotency_key = config.idempotency_key or os.getenv("IDEMPOTENCY_KEY")
+            self._idempotency_key = config.idempotency_key or os.getenv("IDEMPOTENCY_KEY") or None
 
             chain = NETWORK_ID_TO_CHAIN[network_id]
             rpc_url = chain.rpc_urls["default"].http[0]
@@ -74,7 +74,6 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
             else:
                 account = asyncio.run(self._create_account(client))
 
-            self._address = account.address
             self._account = account
 
         except Exception as e:
@@ -100,7 +99,7 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
             str: The wallet's address as a hex string
 
         """
-        return self._address
+        return self._account.address
 
     def get_balance(self) -> Decimal:
         """Get the wallet balance in native currency.
@@ -264,11 +263,20 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
         """
         client = self.get_client()
 
+        # Extract required parameters from typed_data
+        domain = typed_data.get("domain", {})
+        types = typed_data.get("types", {})
+        primary_type = typed_data.get("primaryType", "")
+        message = typed_data.get("message", {})
+
         async def _sign_typed_data():
             async with client as cdp:
                 return await cdp.evm.sign_typed_data(
                     address=self.get_address(),
-                    typed_data=typed_data,
+                    domain=domain,
+                    types=types,
+                    primary_type=primary_type,
+                    message=message,
                 )
 
         return self._run_async(_sign_typed_data())
