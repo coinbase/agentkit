@@ -287,7 +287,7 @@ Here is your Hyperbolic spend history:
 
 ```
 Text generation successful:
-- Saved to: /Users/chris/repositories/agentkit/python/examples/langchain-cdp-chatbot/tmp/generated_text_d6f5a399-659f-4950-8c02-e7c23f7c942f.txt
+- Saved to: /Users/chris/repositories/agentkit/python/examples/langchain-cdp-server-chatbot/tmp/generated_text_d6f5a399-659f-4950-8c02-e7c23f7c942f.txt
 
 Preview (first 500 chars):
 The number zero is a fascinating and fundamental concept in mathematics, representing the absence or nullity of quantity. It is a placeholder digit that allows us to denote the concept of nothingness or the lack of value in a numerical sequence. Despite its seemingly simple nature, zero has played a crucial role in the development of mathematics, enabling the creation of the decimal system and facilitating calculations that involve negative numbers, fractions, and decimals. In many cultures, zer...
@@ -313,7 +313,7 @@ If you need anything else, feel free to ask!
 
 ```
 Image generation successful:
-- Saved to: /Users/chris/repositories/agentkit/python/examples/langchain-cdp-chatbot/tmp/generated_image_afeb3db9-66a5-40d6-a2f3-e4fdbffae129.png
+- Saved to: /Users/chris/repositories/agentkit/python/examples/langchain-cdp-server-chatbot/tmp/generated_image_afeb3db9-66a5-40d6-a2f3-e4fdbffae129.png
 ```
 </details>
 
@@ -332,7 +332,7 @@ I have generated an artistic image representing the number zero, incorporating t
 
 ```
 Audio generation successful:
-- Saved to: /Users/chris/repositories/agentkit/python/examples/langchain-cdp-chatbot/tmp/generated_audio_91103779-dee8-4b33-b34d-a8b08c18187a.mp3
+- Saved to: /Users/chris/repositories/agentkit/python/examples/langchain-cdp-server-chatbot/tmp/generated_audio_91103779-dee8-4b33-b34d-a8b08c18187a.mp3
 ```
 </details>
 

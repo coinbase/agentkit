@@ -62,7 +62,7 @@ Here's the structure of the action providers directory:
     └── ...
 ```
 
-Once you decide which folder to add your action to, go ahead and create a new file there to house your action, then read through the following sections to learn how to implement your action. For a complete example of an action provider, see [cdp_wallet_action_provider.py](./python/coinbase-agentkit/coinbase_agentkit/action_providers/cdp/cdp_wallet_action_provider.py).
+Once you decide which folder to add your action to, go ahead and create a new file there to house your action, then read through the following sections to learn how to implement your action. For a complete example of an action provider, see [erc20_action_provider.py](./python/coinbase-agentkit/coinbase_agentkit/action_providers/erc20/erc20_action_provider.py).
 
 ### Crafting a good description prompt
 
@@ -153,7 +153,7 @@ This class is then exported out of [python/coinbase-agentkit/coinbase_agentkit/\
 
 There are two forms of testing you should do: unit testing and manual end-to-end testing.
 
-To add a unit test for your action provider, add a file to the appropriate folder in `python/coinbase-agentkit/tests/action_providers` for your action provider, pre-fixing it with `test_`. For an example, see [test_cdp_wallet_action_provider.py](https://github.com/coinbase/agentkit/blob/master/python/coinbase-agentkit/tests/action_providers/cdp/test_cdp_wallet_action_provider.py).
+To add a unit test for your action provider, add a file to the appropriate folder in `python/coinbase-agentkit/tests/action_providers` for your action provider, pre-fixing it with `test_`. For an example, see [test_erc20_action_provider.py](https://github.com/coinbase/agentkit/blob/master/python/coinbase-agentkit/tests/action_providers/erc20/test_erc20_action_provider.py).
 
 You can then run the unit tests with the following command:
 
@@ -170,7 +170,8 @@ Wallet providers give an agent access to a wallet. AgentKit currently supports t
 
 EVM:
 
-- [CdpWalletProvider](./python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_wallet_provider.py)
+- [CdpEvmServerWalletProvider](./python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_evm_server_wallet_provider.py)
+- [CdpEvmSmartWalletProvider](./python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_evm_smart_wallet_provider.py)
 - [EthAccountWalletProvider](./python/coinbase-agentkit/coinbase_agentkit/wallet_providers/eth_account_wallet_provider.py)
 
 ### Adding a new EVM wallet provider

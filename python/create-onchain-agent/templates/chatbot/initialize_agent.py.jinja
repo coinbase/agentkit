@@ -1,0 +1,152 @@
+{% if _framework == "langchain" %}from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.prebuilt import create_react_agent
+from coinbase_agentkit_langchain import get_langchain_tools{% elif _framework == "openai_agents" %}
+from coinbase_agentkit_openai_agents_sdk import get_openai_agents_sdk_tools
+from agents.agent import Agent{% endif %}
+
+from coinbase_agentkit import (
+    AgentKit,
+    AgentKitConfig,
+    {% if _wallet_provider == "server" %}CdpEvmServerWalletProvider,
+    CdpEvmServerWalletProviderConfig,{% elif _wallet_provider == "smart" %}
+    CdpEvmSmartWalletProvider,
+    CdpEvmSmartWalletProviderConfig,{% elif _wallet_provider == "eth" %}
+    EthAccountWalletProvider,
+    EthAccountWalletProviderConfig,{% endif %}
+    cdp_api_action_provider,
+    erc20_action_provider,
+    pyth_action_provider,
+    wallet_action_provider,
+    weth_action_provider,
+)
+{% if _wallet_provider == "eth" or _wallet_provider == "smart" %}from eth_account import Account
+from coinbase_agentkit.network import NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_CHAIN, CHAIN_ID_TO_NETWORK_ID{% endif %}
+
+"""
+AgentKit Configuration
+
+This file serves as the entry point for configuring AgentKit tools and wallet providers.
+It handles wallet setup, persistence, and initializes AgentKit with the appropriate providers.
+
+# Key Steps to Configure AgentKit:
+
+1. Set up your WalletProvider:
+   - Learn more: https://github.com/coinbase/agentkit/tree/main/python/agentkit#evm-wallet-providers
+
+2. Set up your Action Providers:
+   - Action Providers define what your agent can do.  
+   - Choose from built-in providers or create your own:
+     - Built-in: https://github.com/coinbase/agentkit/tree/main/python/coinbase-agentkit#create-an-agentkit-instance-with-specified-action-providers
+     - Custom: https://github.com/coinbase/agentkit/tree/main/python/coinbase-agentkit#creating-an-action-provider
+
+# Next Steps:
+
+- Explore the AgentKit README: https://github.com/coinbase/agentkit
+- Learn more about available WalletProviders & Action Providers.
+- Experiment with custom Action Providers for your unique use case.
+
+## Want to contribute?
+Join us in shaping AgentKit! Check out the contribution guide:  
+- https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING.md
+- https://discord.gg/CDP
+"""
+
+# Configure a file to persist wallet data
+wallet_data_file = "wallet_data.txt"
+
+# Shared agent instructions
+AGENT_INSTRUCTIONS = (
+    "You are a helpful agent that can interact onchain using the Coinbase Developer Platform AgentKit. "
+    "You are empowered to interact onchain using your tools. If you ever need funds, you can request "
+    "them from the faucet if you are on network ID 'base-sepolia'. If not, you can provide your wallet "
+    "details and request funds from the user. Before executing your first action, get the wallet details "
+    "to see what network you're on. If there is a 5XX (internal) HTTP error code, ask the user to try "
+    "again later. If someone asks you to do something you can't do with your currently available tools, "
+    "you must say so, and encourage them to implement it themselves using the CDP SDK + Agentkit, "
+    "recommend they go to docs.cdp.coinbase.com for more information. Be concise and helpful with your "
+    "responses. Refrain from restating your tools' descriptions unless it is explicitly requested."
+)
+
+def initialize_agent(config):
+    """Initialize the agent with the provided configuration.
+
+    Args:
+        config: Configuration object for the wallet provider
+
+    Returns:
+        tuple[Agent, dict]: The initialized agent and its configuration
+    """
+    {% if _wallet_provider == "server" %}# Initialize CDP Server Wallet Provider
+    wallet_provider = CdpEvmServerWalletProvider(
+        CdpEvmServerWalletProviderConfig(
+            api_key_id=config.api_key_id,
+            api_key_secret=config.api_key_secret,
+            wallet_secret=config.wallet_secret,
+            network_id=config.network_id,
+            address=config.address,
+            idempotency_key=config.idempotency_key,
+        )
+    ){% elif _wallet_provider == "smart" %}# Initialize CDP Smart Wallet Provider
+    wallet_provider = CdpEvmSmartWalletProvider(
+        CdpEvmSmartWalletProviderConfig(
+            api_key_id=config.api_key_id,
+            api_key_secret=config.api_key_secret,
+            wallet_secret=config.wallet_secret,
+            network_id=config.network_id,
+            address=config.address,
+            owner=config.owner,
+            paymaster_url=config.paymaster_url,
+        )
+    ){% elif _wallet_provider == "eth" %}# Initialize Ethereum Account Wallet Provider
+    wallet_provider = EthAccountWalletProvider(
+        EthAccountWalletProviderConfig(
+            account=config.account,
+            chain_id=config.chain_id,
+        )
+    ){% endif %}
+
+    # Initialize AgentKit
+    agentkit = AgentKit(
+        AgentKitConfig(
+            wallet_provider=wallet_provider,
+            action_providers=[
+                cdp_api_action_provider(),
+                erc20_action_provider(),
+                pyth_action_provider(),
+                wallet_action_provider(),
+                weth_action_provider(),
+            ],
+        )
+    )
+
+    {% if _framework == "langchain" %}# Initialize LLM
+    llm = ChatOpenAI(model="gpt-4o-mini")
+
+    # Get Langchain tools
+    tools = get_langchain_tools(agentkit)
+
+    # Store buffered conversation history in memory
+    memory = MemorySaver()
+
+    # Create ReAct Agent using the LLM and AgentKit tools
+    return (
+        create_react_agent(
+            llm,
+            tools=tools,
+            checkpointer=memory,
+            state_modifier=AGENT_INSTRUCTIONS,
+        ),
+        wallet_provider
+    )
+    {% elif _framework == "openai_agents" %}# Get OpenAI Agents SDK tools
+    tools = get_openai_agents_sdk_tools(agentkit)
+
+    # Create Agent using the OpenAI Agents SDK
+    agent = Agent(
+        name="CDP Agent",
+        instructions=AGENT_INSTRUCTIONS,
+        tools=tools
+    )
+
+    return agent, wallet_provider{% endif %}

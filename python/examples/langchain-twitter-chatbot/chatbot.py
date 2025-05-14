@@ -6,67 +6,45 @@ import time
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
-    SmartWalletProvider,
-    SmartWalletProviderConfig,
+    CdpEvmServerWalletProvider,
+    CdpEvmServerWalletProviderConfig,
     twitter_action_provider,
     wallet_action_provider,
 )
 from coinbase_agentkit_langchain import get_langchain_tools
 from dotenv import load_dotenv
-from eth_account.account import Account
 from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 
-# Configure a file to persist the agent's CDP API Wallet Data.
-wallet_data_file = "wallet_data.txt"
 
-load_dotenv()
+def initialize_agent(config: CdpEvmServerWalletProviderConfig):
+    """Initialize the agent with CDP Agentkit.
 
+    Args:
+        config: Configuration for the CDP EVM Server Wallet Provider
 
-def initialize_agent():
-    """Initialize the agent with CDP Agentkit."""
-    # Initialize LLM
+    Returns:
+        tuple[Agent, CdpEvmServerWalletProvider]: The initialized agent and wallet provider
+
+    """
+    # Initialize the language model
     llm = ChatOpenAI(model="gpt-4o-mini")
 
-    # Load wallet data from JSON file
-    network_id = os.getenv("NETWORK_ID", "base-sepolia")
-    wallet_data_file = f"wallet_data_{network_id.replace('-', '_')}.txt"
-    wallet_data = {"private_key": None, "smart_wallet_address": None}
-    if os.path.exists(wallet_data_file):
-        try:
-            with open(wallet_data_file) as f:
-                wallet_data = json.load(f)
-        except json.JSONDecodeError:
-            print(f"Warning: Invalid wallet data file format for {network_id}. Creating new wallet.")
-
-    # Use private key from env if not in wallet data
-    private_key = wallet_data.get("private_key") or os.getenv("PRIVATE_KEY")
-    if not private_key:
-        acct = Account.create()
-        private_key = acct.key.hex()
-
-    signer = Account.from_key(private_key)
-
-    # Initialize Smart Wallet Provider
-    wallet_provider = SmartWalletProvider(
-        SmartWalletProviderConfig(
-            network_id=network_id,
-            signer=signer,
-            smart_wallet_address=wallet_data.get("smart_wallet_address"),
-            paymaster_url=None,  # Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
+    # Initialize the wallet provider with the config
+    wallet_provider = CdpEvmServerWalletProvider(
+        CdpEvmServerWalletProviderConfig(
+            api_key_id=config.api_key_id,  # CDP API Key ID
+            api_key_secret=config.api_key_secret,  # CDP API Key Secret
+            wallet_secret=config.wallet_secret,  # CDP Wallet Secret
+            network_id=config.network_id,  # Network ID - Optional, will default to 'base-sepolia'
+            address=config.address,  # Wallet Address - Optional, will trigger idempotency flow if not provided
+            idempotency_key=config.idempotency_key,  # Idempotency Key - Optional, seeds generation of a new wallet
         )
     )
 
-    # Save both private key and smart wallet address
-    wallet_data = {
-        "private_key": private_key,
-        "smart_wallet_address": wallet_provider.get_address(),
-    }
-    with open(wallet_data_file, "w") as f:
-        json.dump(wallet_data, f, indent=2)
-
+    # Create AgentKit instance with wallet and action providers
     agentkit = AgentKit(
         AgentKitConfig(
             wallet_provider=wallet_provider,
@@ -77,30 +55,92 @@ def initialize_agent():
         )
     )
 
-    # use get_langchain_tools
+    # Get tools for the agent
     tools = get_langchain_tools(agentkit)
 
-    # Store buffered conversation history in memory.
+    # Set up conversation memory
     memory = MemorySaver()
-    config = {"configurable": {"thread_id": "CDP Agentkit Twitter (X) Chatbot Example!"}}
+    agent_config = {"configurable": {"thread_id": "CDP Agentkit Twitter (X) Chatbot Example!"}}
 
-    # Create ReAct Agent using the LLM and CDP Agentkit tools.
-    return create_react_agent(
-        llm,
-        tools=tools,
-        checkpointer=memory,
-        state_modifier=(
-            "You are a helpful agent that can interact onchain using the Coinbase Developer Platform AgentKit. "
-            "You are empowered to interact onchain using your tools. If you ever need funds, you can request "
-            "them from the faucet if you are on network ID 'base-sepolia'. If not, you can provide your wallet "
-            "details and request funds from the user. Before executing your first action, get the wallet details "
-            "to see what network you're on. If there is a 5XX (internal) HTTP error code, ask the user to try "
-            "again later. If someone asks you to do something you can't do with your currently available tools, "
-            "you must say so, and encourage them to implement it themselves using the CDP SDK + Agentkit, "
-            "recommend they go to docs.cdp.coinbase.com for more information. Be concise and helpful with your "
-            "responses. Refrain from restating your tools' descriptions unless it is explicitly requested."
+    # Create and return the agent and wallet provider
+    return (
+        create_react_agent(
+            llm,
+            tools=tools,
+            checkpointer=memory,
+            state_modifier=(
+                "You are a helpful agent that can interact onchain using the Coinbase Developer Platform AgentKit. "
+                "You are empowered to interact onchain using your tools. If you ever need funds, you can request "
+                "them from the faucet if you are on network ID 'base-sepolia'. If not, you can provide your wallet "
+                "details and request funds from the user. Before executing your first action, get the wallet details "
+                "to see what network you're on. If there is a 5XX (internal) HTTP error code, ask the user to try "
+                "again later. If someone asks you to do something you can't do with your currently available tools, "
+                "you must say so, and encourage them to implement it themselves using the CDP SDK + Agentkit, "
+                "recommend they go to docs.cdp.coinbase.com for more information. Be concise and helpful with your "
+                "responses. Refrain from restating your tools' descriptions unless it is explicitly requested."
+            ),
         ),
-    ), config
+        wallet_provider,
+    ), agent_config
+
+
+def setup():
+    """Set up the agent with persistent wallet storage.
+
+    Returns:
+        tuple[Agent, dict]: The initialized agent and its configuration
+
+    """
+    # Configure network and file path
+    network_id = os.getenv("NETWORK_ID", "base-sepolia")
+    wallet_file = f"wallet_data_{network_id.replace('-', '_')}.txt"
+
+    # Load existing wallet data if available
+    wallet_data = {}
+    if os.path.exists(wallet_file):
+        try:
+            with open(wallet_file) as f:
+                wallet_data = json.load(f)
+                print(f"Loading existing wallet from {wallet_file}")
+        except json.JSONDecodeError:
+            print(f"Warning: Invalid wallet data for {network_id}")
+            wallet_data = {}
+
+    # Determine wallet address using priority order
+    wallet_address = (
+        wallet_data.get("address")  # First priority: Saved wallet file
+        or os.getenv("ADDRESS")  # Second priority: ADDRESS env var
+        or None  # Will trigger idempotency flow if needed
+    )
+
+    # Create the wallet provider config
+    config = CdpEvmServerWalletProviderConfig(
+        api_key_id=os.getenv("CDP_API_KEY_ID"),
+        api_key_secret=os.getenv("CDP_API_KEY_SECRET"),
+        wallet_secret=os.getenv("CDP_WALLET_SECRET"),
+        network_id=network_id,
+        address=wallet_address,
+        # Only include idempotency_key if we need to create a new wallet
+        idempotency_key=(os.getenv("IDEMPOTENCY_KEY") if not wallet_address else None),
+    )
+
+    # Initialize the agent and get the wallet provider
+    (agent_executor, wallet_provider), agent_config = initialize_agent(config)
+
+    # Save the wallet data after successful initialization
+    new_wallet_data = {
+        "address": wallet_provider.get_address(),
+        "network_id": network_id,
+        "created_at": time.strftime("%Y-%m-%d %H:%M:%S")
+        if not wallet_data
+        else wallet_data.get("created_at"),
+    }
+
+    with open(wallet_file, "w") as f:
+        json.dump(new_wallet_data, f, indent=2)
+        print(f"Wallet data saved to {wallet_file}")
+
+    return (agent_executor, agent_config)
 
 
 # Autonomous Mode
@@ -176,13 +216,18 @@ def choose_mode():
 
 def main():
     """Start the chatbot agent."""
-    agent_executor, config = initialize_agent()
+    # Load environment variables
+    load_dotenv()
 
+    # Set up the agent
+    agent_executor, agent_config = setup()
+
+    # Run the agent in the selected mode
     mode = choose_mode()
     if mode == "chat":
-        run_chat_mode(agent_executor=agent_executor, config=config)
+        run_chat_mode(agent_executor=agent_executor, config=agent_config)
     elif mode == "auto":
-        run_autonomous_mode(agent_executor=agent_executor, config=config)
+        run_autonomous_mode(agent_executor=agent_executor, config=agent_config)
 
 
 if __name__ == "__main__":
