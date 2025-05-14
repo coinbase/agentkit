@@ -2,6 +2,15 @@
 
 <!-- towncrier release notes start -->
 
+## [0.5.0] - 2025-05-14
+
+### Added
+
+- Added CdpEvmServerWalletProvider and removed CdpWalletProvider ([#705](https://github.com/coinbase/agentkit/pull/705))
+- Added CdpEvmSmartWalletProvider and removed SmartWalletProvider
+- Updated CdpApiActionProvider to new CDP SDK, and removed CdpWalletActionProvider
+
+
 ## [0.4.0] - 2025-04-04
 
 ### Added
