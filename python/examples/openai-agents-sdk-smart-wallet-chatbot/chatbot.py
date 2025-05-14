@@ -40,7 +40,6 @@ def initialize_agent(config: CdpEvmSmartWalletProviderConfig):
             wallet_secret=config.wallet_secret,  # CDP Wallet Secret
             owner=config.owner,  # Owner - Either private key or server wallet address
             address=config.address,  # Smart Wallet Address - Optional, will create new if not provided
-            idempotency_key=config.idempotency_key,  # Idempotency Key - Optional, seeds generation of a new wallet
             network_id=config.network_id,  # Network ID - Optional, will default to 'base-sepolia'
             paymaster_url=config.paymaster_url,  # Optional paymaster URL to sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
         )
@@ -121,7 +120,7 @@ def setup():
     # If no owner is provided, create a new server wallet to be used as the owner
     if not owner:
         print("No owner provided, creating new server wallet...")
-        idempotency_key = os.getenv("IDEMPOTENCY_KEY")
+        idempotency_key = os.getenv("OWNER_IDEMPOTENCY_KEY")
 
         # Create a new server wallet using CDP
         client = CdpClient(
@@ -153,8 +152,6 @@ def setup():
         network_id=network_id,
         address=smart_wallet_address,
         owner=owner,
-        # Only include idempotency_key if we need to create a new wallet
-        idempotency_key=(os.getenv("IDEMPOTENCY_KEY") if not smart_wallet_address else None),
         paymaster_url=os.getenv(
             "PAYMASTER_URL"
         ),  # Optional paymaster URL to sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome

@@ -96,7 +96,6 @@ def initialize_agent(config):
             network_id=config.network_id,
             address=config.address,
             owner=config.owner,
-            idempotency_key=config.idempotency_key,
             paymaster_url=config.paymaster_url,
         )
     ){% elif _wallet_provider == "eth" %}# Initialize Ethereum Account Wallet Provider

@@ -27,7 +27,6 @@ class CdpEvmSmartWalletProviderConfig(BaseModel):
     owner: str | None = Field(
         None, description="The owner's private key or CDP server wallet address"
     )
-    idempotency_key: str | None = Field(None, description="The idempotency key for wallet creation")
     gas: EvmGasConfig | None = Field(None, description="Gas configuration settings")
     paymaster_url: str | None = Field(
         None, description="Optional paymaster URL for gasless transactions"
@@ -64,7 +63,6 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
                 raise ValueError("Owner private key or CDP server wallet address is required")
 
             network_id = config.network_id or os.getenv("NETWORK_ID", "base-sepolia")
-            self._idempotency_key = config.idempotency_key or os.getenv("IDEMPOTENCY_KEY") or None
 
             chain = NETWORK_ID_TO_CHAIN[network_id]
             rpc_url = chain.rpc_urls["default"].http[0]
