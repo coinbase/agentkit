@@ -96,7 +96,7 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
                         return owner, smart_account
 
                 owner, smart_account = asyncio.run(initialize_accounts())
-                self._account = smart_account
+                self._address = smart_account.address
                 self._owner = owner
 
             finally:
@@ -158,7 +158,7 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
             str: The wallet's address as a hex string
 
         """
-        return self._account.address
+        return self._address
 
     def get_balance(self) -> Decimal:
         """Get the wallet balance in native currency.
@@ -204,14 +204,17 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         async def _send_user_operation():
             async with client as cdp:
+                smart_account = await cdp.evm.get_smart_account(
+                    owner=self._owner, address=self._address
+                )
                 user_operation = await cdp.evm.send_user_operation(
-                    smart_account=self._account,
+                    smart_account=smart_account,
                     network=self._network.network_id,
                     calls=[EncodedCall(to=to, value=value_wei, data="0x")],
                     paymaster_url=self._paymaster_url,
                 )
                 return await cdp.evm.wait_for_user_operation(
-                    smart_account_address=self._account.address,
+                    smart_account_address=self._address,
                     user_op_hash=user_operation.user_op_hash,
                 )
 
@@ -261,8 +264,11 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         async def _send_user_operation():
             async with client as cdp:
+                smart_account = await cdp.evm.get_smart_account(
+                    owner=self._owner, address=self._address
+                )
                 user_operation = await cdp.evm.send_user_operation(
-                    smart_account=self._account,
+                    smart_account=smart_account,
                     network=self._network.network_id,
                     calls=[
                         EncodedCall(
@@ -274,7 +280,7 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
                     paymaster_url=self._paymaster_url,
                 )
                 return await cdp.evm.wait_for_user_operation(
-                    smart_account_address=self._account.address,
+                    smart_account_address=self._address,
                     user_op_hash=user_operation.user_op_hash,
                 )
 
@@ -369,14 +375,17 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         async def _send_user_operation():
             async with client as cdp:
+                smart_account = await cdp.evm.get_smart_account(
+                    owner=self._owner, address=self._address
+                )
                 user_operation = await cdp.evm.send_user_operation(
-                    smart_account=self._account,
+                    smart_account=smart_account,
                     network=self._network.network_id,
                     calls=calls,
                     paymaster_url=self._paymaster_url,
                 )
                 return await cdp.evm.wait_for_user_operation(
-                    smart_account_address=self._account.address,
+                    smart_account_address=self._address,
                     user_op_hash=user_operation.user_op_hash,
                 )
 
