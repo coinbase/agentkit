@@ -1,5 +1,11 @@
 # AgentKit Changelog
 
+## 0.7.2
+
+### Patch Changes
+
+- [#716](https://github.com/coinbase/agentkit/pull/716) [`30dc6bd`](https://github.com/coinbase/agentkit/commit/30dc6bdca68cb567f91123c21c1fe3a5774d4f6b) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Fixed CdpV2EvmWalletProvider sendTransaction to use EIP1559 transactions
+
 ## 0.7.1
 
 ### Patch Changes
