@@ -1,19 +1,17 @@
 import { z } from "zod";
 import { Network } from "../../network";
 import { WalletProvider } from "../../wallet-providers";
-import { WalletProviderWithClient } from "../../wallet-providers/cdpV2Shared";
+import { isWalletProviderWithClient } from "../../wallet-providers/cdpV2Shared";
 import { CreateAction } from "../actionDecorator";
 import { ActionProvider } from "../actionProvider";
 import { RequestFaucetFundsV2Schema } from "./schemas";
-
-type CdpV2WalletProviderWithClient = WalletProvider & WalletProviderWithClient;
 
 /**
  * CdpApiActionProvider is an action provider for CDP API.
  *
  * This provider is used for any action that uses the CDP API, but does not require a CDP Wallet.
  */
-export class CdpApiV2ActionProvider extends ActionProvider<CdpV2WalletProviderWithClient> {
+export class CdpApiV2ActionProvider extends ActionProvider<WalletProvider> {
   /**
    * Constructor for the CdpApiActionProvider class.
    */
@@ -39,43 +37,47 @@ from another wallet and provide the user with your wallet details.`,
     schema: RequestFaucetFundsV2Schema,
   })
   async faucet(
-    walletProvider: CdpV2WalletProviderWithClient,
+    walletProvider: WalletProvider,
     args: z.infer<typeof RequestFaucetFundsV2Schema>,
   ): Promise<string> {
     const network = walletProvider.getNetwork();
     const networkId = network.networkId!;
 
-    if (network.protocolFamily === "evm") {
-      if (networkId !== "base-sepolia" && networkId !== "ethereum-sepolia") {
-        throw new Error(
-          "Faucet is only supported on 'base-sepolia' or 'ethereum-sepolia' evm networks.",
-        );
+    if (isWalletProviderWithClient(walletProvider)) {
+      if (network.protocolFamily === "evm") {
+        if (networkId !== "base-sepolia" && networkId !== "ethereum-sepolia") {
+          throw new Error(
+            "Faucet is only supported on 'base-sepolia' or 'ethereum-sepolia' evm networks.",
+          );
+        }
+
+        const faucetTx = await walletProvider.getClient().evm.requestFaucet({
+          address: walletProvider.getAddress(),
+          token: (args.assetId || "eth") as "eth" | "usdc" | "eurc" | "cbbtc",
+          network: networkId,
+        });
+
+        return `Received ${
+          args.assetId || "ETH"
+        } from the faucet. Transaction hash: ${faucetTx.transactionHash}`;
+      } else if (network.protocolFamily === "svm") {
+        if (networkId !== "solana-devnet") {
+          throw new Error("Faucet is only supported on 'solana-devnet' solana networks.");
+        }
+
+        const faucetTx = await walletProvider.getClient().solana.requestFaucet({
+          address: walletProvider.getAddress(),
+          token: (args.assetId || "sol") as "sol" | "usdc",
+        });
+
+        return `Received ${
+          args.assetId || "SOL"
+        } from the faucet. Transaction signature hash: ${faucetTx.signature}`;
+      } else {
+        throw new Error("Faucet is only supported on Ethereum and Solana protocol families.");
       }
-
-      const faucetTx = await walletProvider.getClient().evm.requestFaucet({
-        address: walletProvider.getAddress(),
-        token: (args.assetId || "eth") as "eth" | "usdc" | "eurc" | "cbbtc",
-        network: networkId,
-      });
-
-      return `Received ${
-        args.assetId || "ETH"
-      } from the faucet. Transaction hash: ${faucetTx.transactionHash}`;
-    } else if (network.protocolFamily === "svm") {
-      if (networkId !== "solana-devnet") {
-        throw new Error("Faucet is only supported on 'solana-devnet' solana networks.");
-      }
-
-      const faucetTx = await walletProvider.getClient().solana.requestFaucet({
-        address: walletProvider.getAddress(),
-        token: (args.assetId || "sol") as "sol" | "usdc",
-      });
-
-      return `Received ${
-        args.assetId || "SOL"
-      } from the faucet. Transaction signature hash: ${faucetTx.signature}`;
     } else {
-      throw new Error("Faucet is only supported on Ethereum and Solana protocol families.");
+      throw new Error("Wallet provider is not a CDP Wallet Provider.");
     }
   }
 
