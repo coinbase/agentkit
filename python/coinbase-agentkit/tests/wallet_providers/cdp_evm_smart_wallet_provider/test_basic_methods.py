@@ -67,9 +67,9 @@ def test_get_balance_with_zero(mocked_wallet_provider, mock_web3):
 def test_get_balance_failure(mocked_wallet_provider, mock_web3):
     """Test get_balance method when balance check fails."""
     error_message = "Balance check failed"
-    mock_web3.return_value.eth.get_balance.side_effect = Exception(error_message)
+    mock_web3.return_value.eth.get_balance.side_effect = RuntimeError(error_message)
 
-    with pytest.raises(Exception):
+    with pytest.raises(RuntimeError):
         mocked_wallet_provider.get_balance()
 
 
