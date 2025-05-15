@@ -618,7 +618,7 @@ wheels = [
 
 [[package]]
 name = "coinbase-agentkit"
-version = "0.5.0"
+version = "0.5.1"
 source = { editable = "." }
 dependencies = [
     { name = "allora-sdk" },
