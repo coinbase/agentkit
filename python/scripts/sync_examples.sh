@@ -27,6 +27,11 @@ for example_dir in "$EXAMPLES_DIR"/*/ ; do
         if ! uv sync; then
             echo "Warning: uv sync failed for $(basename "$example_dir")"
         fi
+
+        # Run uv run ruff format .
+        if ! uv run ruff format .; then
+            echo "Warning: ruff format failed for $(basename "$example_dir")"
+        fi
     fi
 done
 

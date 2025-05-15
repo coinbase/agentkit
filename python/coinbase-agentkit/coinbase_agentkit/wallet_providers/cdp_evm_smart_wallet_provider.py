@@ -96,7 +96,7 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
                         return owner, smart_account
 
                 owner, smart_account = asyncio.run(initialize_accounts())
-                self._account = smart_account
+                self._address = smart_account.address
                 self._owner = owner
 
             finally:
@@ -151,6 +151,28 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
             asyncio.set_event_loop(loop)
         return loop.run_until_complete(coroutine)
 
+    async def _get_smart_account(self, cdp):
+        """Get the smart account, handling server wallet owners differently.
+
+        Args:
+            cdp: CDP client instance
+
+        Returns:
+            The smart account object
+
+        """
+        # Check if owner is a server wallet (not an eth_account)
+        if not isinstance(self._owner, Account):
+            # For server wallets, create a fresh owner reference to avoid nested client sessions
+            owner = await cdp.evm.get_account(address=self._owner.address)
+            smart_account = await cdp.evm.get_smart_account(owner=owner, address=self._address)
+        else:
+            # Using eth_account is simpler - no nested client sessions
+            smart_account = await cdp.evm.get_smart_account(
+                owner=self._owner, address=self._address
+            )
+        return smart_account
+
     def get_address(self) -> str:
         """Get the wallet address.
 
@@ -158,7 +180,7 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
             str: The wallet's address as a hex string
 
         """
-        return self._account.address
+        return self._address
 
     def get_balance(self) -> Decimal:
         """Get the wallet balance in native currency.
@@ -204,14 +226,16 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         async def _send_user_operation():
             async with client as cdp:
+                smart_account = await self._get_smart_account(cdp)
+
                 user_operation = await cdp.evm.send_user_operation(
-                    smart_account=self._account,
+                    smart_account=smart_account,
                     network=self._network.network_id,
                     calls=[EncodedCall(to=to, value=value_wei, data="0x")],
                     paymaster_url=self._paymaster_url,
                 )
                 return await cdp.evm.wait_for_user_operation(
-                    smart_account_address=self._account.address,
+                    smart_account_address=self._address,
                     user_op_hash=user_operation.user_op_hash,
                 )
 
@@ -261,8 +285,9 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         async def _send_user_operation():
             async with client as cdp:
+                smart_account = await self._get_smart_account(cdp)
                 user_operation = await cdp.evm.send_user_operation(
-                    smart_account=self._account,
+                    smart_account=smart_account,
                     network=self._network.network_id,
                     calls=[
                         EncodedCall(
@@ -274,7 +299,7 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
                     paymaster_url=self._paymaster_url,
                 )
                 return await cdp.evm.wait_for_user_operation(
-                    smart_account_address=self._account.address,
+                    smart_account_address=self._address,
                     user_op_hash=user_operation.user_op_hash,
                 )
 
@@ -369,14 +394,15 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         async def _send_user_operation():
             async with client as cdp:
+                smart_account = await self._get_smart_account(cdp)
                 user_operation = await cdp.evm.send_user_operation(
-                    smart_account=self._account,
+                    smart_account=smart_account,
                     network=self._network.network_id,
                     calls=calls,
                     paymaster_url=self._paymaster_url,
                 )
                 return await cdp.evm.wait_for_user_operation(
-                    smart_account_address=self._account.address,
+                    smart_account_address=self._address,
                     user_op_hash=user_operation.user_op_hash,
                 )
 

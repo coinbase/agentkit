@@ -187,6 +187,7 @@ def mocked_wallet_provider(
         provider._api_key_secret = MOCK_API_KEY_SECRET
         provider._wallet_secret = MOCK_WALLET_SECRET
         provider._account = mock_smart_account
+        provider._address = MOCK_ADDRESS
 
         # Create a proper Network instance instead of a mock
         provider._network = Network(

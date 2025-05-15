@@ -77,7 +77,7 @@ def initialize_agent(config: CdpEvmSmartWalletProviderConfig):
             "responses. Refrain from restating your tools' descriptions unless it is explicitly requested."
         ),
         tools=tools,
-    )
+    ), wallet_provider
 
 
 def setup():
@@ -110,15 +110,66 @@ def setup():
     if not all([api_key_id, api_key_secret, wallet_secret]):
         raise ValueError("CDP_API_KEY_ID, CDP_API_KEY_SECRET, and CDP_WALLET_SECRET are required")
 
-    # Determine owner using priority order
-    owner = (
-        os.getenv("OWNER_PRIVATE_KEY")  # First priority: Private key
-        or os.getenv("OWNER_SERVER_WALLET_ADDRESS")  # Second priority: Server wallet address
-        or wallet_data.get("owner")  # Third priority: Saved wallet file
+    # Check for environment variables first
+    owner_private_key = os.getenv("OWNER_PRIVATE_KEY")
+    owner_server_address = os.getenv("OWNER_SERVER_WALLET_ADDRESS")
+    smart_wallet_address_env = os.getenv("SMART_WALLET_ADDRESS")
+
+    # Determine where to get wallet configuration from (env vars or saved file)
+    use_env_vars = (owner_private_key or owner_server_address) and smart_wallet_address_env
+    use_wallet_file = (
+        wallet_data.get("owner_value")
+        and wallet_data.get("owner_type")
+        and wallet_data.get("smart_wallet_address")
     )
 
+    owner_value = None
+    owner_type = None
+    smart_wallet_address = None
+
+    # Prioritize environment variables over saved wallet file
+    if use_env_vars:
+        # Use environment variables
+        print("Using wallet configuration from environment variables")
+        if owner_private_key:
+            owner_value = owner_private_key
+            owner_type = "private_key"
+        else:
+            owner_value = owner_server_address
+            owner_type = "server_address"
+        smart_wallet_address = smart_wallet_address_env
+    elif use_wallet_file:
+        # Use saved wallet file
+        print("Using wallet configuration from saved wallet file")
+        owner_value = wallet_data.get("owner_value")
+        owner_type = wallet_data.get("owner_type")
+        smart_wallet_address = wallet_data.get("smart_wallet_address")
+    else:
+        # If using just one part from env and missing the other, print a warning
+        if owner_private_key or owner_server_address:
+            print("Warning: Owner specified in environment, but no SMART_WALLET_ADDRESS found")
+            if owner_private_key:
+                owner_value = owner_private_key
+                owner_type = "private_key"
+            else:
+                owner_value = owner_server_address
+                owner_type = "server_address"
+        elif smart_wallet_address_env:
+            print("Warning: SMART_WALLET_ADDRESS specified in environment, but no owner found")
+            smart_wallet_address = smart_wallet_address_env
+
+        # Fall back to partial info from wallet file if available
+        if not owner_value and wallet_data.get("owner_value"):
+            print("Using owner from saved wallet file")
+            owner_value = wallet_data.get("owner_value")
+            owner_type = wallet_data.get("owner_type")
+
+        if not smart_wallet_address and wallet_data.get("smart_wallet_address"):
+            print("Using smart wallet address from saved wallet file")
+            smart_wallet_address = wallet_data.get("smart_wallet_address")
+
     # If no owner is provided, create a new server wallet to be used as the owner
-    if not owner:
+    if not owner_value:
         print("No owner provided, creating new server wallet...")
         idempotency_key = os.getenv("OWNER_IDEMPOTENCY_KEY")
 
@@ -134,15 +185,9 @@ def setup():
                 account = await cdp.evm.create_account(idempotency_key=idempotency_key)
                 return account.address
 
-        owner = asyncio.run(create_wallet())
-        print(f"Created new server wallet: {owner}")
-
-    # Determine smart wallet address using priority order
-    smart_wallet_address = (
-        wallet_data.get("smart_wallet_address")  # First priority: Saved wallet file
-        or os.getenv("SMART_WALLET_ADDRESS")  # Second priority: SMART_WALLET_ADDRESS env var
-        or None  # Will create new if not provided
-    )
+        owner_value = asyncio.run(create_wallet())
+        owner_type = "server_address"
+        print(f"Created new server wallet: {owner_value}")
 
     # Create the wallet provider config
     config = CdpEvmSmartWalletProviderConfig(
@@ -151,19 +196,20 @@ def setup():
         wallet_secret=wallet_secret,
         network_id=network_id,
         address=smart_wallet_address,
-        owner=owner,
+        owner=owner_value,
         paymaster_url=os.getenv(
             "PAYMASTER_URL"
         ),  # Optional paymaster URL to sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
     )
 
-    # Initialize the agent
-    agent = initialize_agent(config)
+    # Initialize the agent and get the wallet provider
+    agent, wallet_provider = initialize_agent(config)
 
     # Save the wallet data after successful initialization
     new_wallet_data = {
-        "smart_wallet_address": agent.tools[0].agentkit.wallet_provider.get_address(),
-        "owner": owner,
+        "smart_wallet_address": wallet_provider.get_address(),
+        "owner_value": owner_value,
+        "owner_type": owner_type,
         "network_id": network_id,
         "created_at": time.strftime("%Y-%m-%d %H:%M:%S")
         if not wallet_data
