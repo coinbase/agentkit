@@ -2,6 +2,7 @@
 
 from .action_decorator import create_action
 from .action_provider import Action, ActionProvider
+from .aave.aave_action_provider import AaveActionProvider, aave_action_provider
 from .allora.allora_action_provider import AlloraActionProvider, allora_action_provider
 from .basename.basename_action_provider import (
     BasenameActionProvider,
@@ -32,6 +33,8 @@ __all__ = [
     "Action",
     "ActionProvider",
     "create_action",
+    "AaveActionProvider",
+    "aave_action_provider",
     "AlloraActionProvider",
     "allora_action_provider",
     "BasenameActionProvider",
