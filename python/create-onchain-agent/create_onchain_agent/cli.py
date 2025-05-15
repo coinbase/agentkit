@@ -4,6 +4,7 @@ import os
 import re
 import shutil
 import sys
+import time
 import zipfile
 from pathlib import Path
 
@@ -24,8 +25,13 @@ if sys.version_info.major != REQUIRED_MAJOR or sys.version_info.minor not in ALL
     sys.exit(1)
 
 # GitHub repo and folder path
-GITHUB_ZIP_URL = "https://github.com/coinbase/agentkit/archive/refs/heads/main.zip"
-TEMPLATES_SUBDIR = "agentkit-main/python/create-onchain-agent/templates"
+GITHUB_REPO = "coinbase/agentkit"
+GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/commits/main"
+GITHUB_ZIP_URL_TEMPLATE = f"https://github.com/{GITHUB_REPO}/archive/"
+# The template subdirectory path will change based on how the zip is downloaded
+# For main.zip it will be "agentkit-main/..."
+# For commit SHA it will be "agentkit-{commit_sha}/..."
+TEMPLATES_SUBDIR_PREFIX = "python/create-onchain-agent/templates"
 LOCAL_CACHE_DIR = Path(platformdirs.user_cache_dir("create-onchain-agent"))
 
 console = Console()
@@ -101,22 +107,65 @@ def get_template_path(template_name: str, templates_path: str | None = None) -> 
 
     # If the template is already downloaded, return its path
     if extract_path.exists():
-        return str(extract_path)
+        # Always check for the latest version
+        shutil.rmtree(extract_path, ignore_errors=True)
+        if zip_path.exists():
+            zip_path.unlink()
+
+    # Get the latest commit SHA from the GitHub API
+    commit_sha = None
+    try:
+        response = requests.get(GITHUB_API_URL, timeout=10)
+        response.raise_for_status()
+        commit_sha = response.json()["sha"]
+        github_zip_url = f"{GITHUB_ZIP_URL_TEMPLATE}{commit_sha}.zip"
+    except (requests.RequestException, KeyError) as e:
+        console.print(f"[yellow]Warning: Could not fetch latest commit SHA: {e}[/yellow]")
+        # Fallback to a direct reference that won't be cached
+        github_zip_url = (
+            f"{GITHUB_ZIP_URL_TEMPLATE}refs/heads/main.zip?timestamp={int(time.time())}"
+        )
 
     # Download the zip file
-    response = requests.get(GITHUB_ZIP_URL)
+    response = requests.get(github_zip_url)
     response.raise_for_status()
 
     with open(zip_path, "wb") as f:
         f.write(response.content)
 
-    # Extract the template
+    # Determine the root directory within the ZIP
+    root_dir = None
+
     with zipfile.ZipFile(zip_path, "r") as zip_ref:
+        # Get all directories at the root level
+        root_dirs = set()
+        for file_info in zip_ref.infolist():
+            parts = file_info.filename.split("/")
+            if len(parts) > 1:
+                root_dirs.add(parts[0])
+
+        if len(root_dirs) == 1:
+            root_dir = next(iter(root_dirs))
+        else:
+            raise ValueError(f"Expected one root directory in ZIP, found: {root_dirs}")
+
+        # Construct the expected template path using the detected root directory
+        templates_subdir = f"{root_dir}/{TEMPLATES_SUBDIR_PREFIX}/{template_name}"
+
+        # Check if the template directory exists in the ZIP
+        template_path_exists = any(
+            file_info.filename.startswith(templates_subdir + "/")
+            for file_info in zip_ref.infolist()
+        )
+
+        if not template_path_exists:
+            raise FileNotFoundError(f"Template path {templates_subdir} not found in ZIP.")
+
+        # Extract the template
         zip_ref.extractall(LOCAL_CACHE_DIR)
 
-    template_path = LOCAL_CACHE_DIR / TEMPLATES_SUBDIR / template_name
-    if not template_path.exists():
-        raise FileNotFoundError(f"Template path {TEMPLATES_SUBDIR}/{template_name} not found in ZIP.")
+    # Use the detected root directory for the template path
+    template_path = LOCAL_CACHE_DIR / f"{root_dir}/{TEMPLATES_SUBDIR_PREFIX}/{template_name}"
 
     # Move extracted template to a stable path
     shutil.move(str(template_path), str(extract_path))
@@ -135,6 +184,7 @@ def get_network_choices(network_type: str) -> list:
             and any(net in id for net in ["sepolia", "mumbai", "devnet", "testnet"])
         )
     ]
+
 
 def create_advanced_project(templates_path: str | None = None):
     """Create a new onchain agent project with advanced setup."""
@@ -169,8 +219,7 @@ def create_advanced_project(templates_path: str | None = None):
 
     # Choose framework
     framework_choices = [
-        name + (" (default)" if id == "langchain" else "")
-        for name, id in FRAMEWORKS
+        name + (" (default)" if id == "langchain" else "") for name, id in FRAMEWORKS
     ]
     framework_name = questionary.select(
         "Choose your agent framework:",
@@ -238,20 +287,20 @@ def create_advanced_project(templates_path: str | None = None):
     if network:
         if network in CDP_SUPPORTED_NETWORKS:
             wallet_choices = [
-                "Smart Wallet Provider",
-                "CDP Wallet Provider",
+                "CDP Server Wallet Provider",
+                "CDP Smart Wallet Provider",
                 "Ethereum Account Wallet Provider",
             ]
             wallet_selection = questionary.select(
                 "Select a wallet provider:",
                 choices=wallet_choices,
-                default="Smart Wallet Provider",
+                default="CDP Server Wallet Provider",
                 style=custom_style,
             ).ask()
 
-            if wallet_selection.startswith("CDP"):
-                wallet_provider = "cdp"
-            elif wallet_selection.startswith("Smart"):
+            if wallet_selection.startswith("CDP Server"):
+                wallet_provider = "server"
+            elif wallet_selection.startswith("CDP Smart"):
                 wallet_provider = "smart"
             else:
                 wallet_provider = "eth"
@@ -306,6 +355,7 @@ def create_advanced_project(templates_path: str | None = None):
         console.print(f"[red]Error: {e!s}[/red]")
         return
 
+
 def create_beginner_project(templates_path: str | None = None):
     """Create a new onchain agent project with simplified setup."""
     # Prompt for project name (default: "onchain-agent")
@@ -338,8 +388,7 @@ def create_beginner_project(templates_path: str | None = None):
         package_name = suggested_package_name
 
     framework_choices = [
-        name + (" (default)" if id == "langchain" else "")
-        for name, id in FRAMEWORKS
+        name + (" (default)" if id == "langchain" else "") for name, id in FRAMEWORKS
     ]
     framework_name = questionary.select(
         "Choose your agent framework:",
@@ -398,6 +447,7 @@ def create_beginner_project(templates_path: str | None = None):
     except FileNotFoundError as e:
         console.print(f"[red]Error: {e!s}[/red]")
         return
+
 
 @click.command()
 @click.option("--templates-path", type=str, help="Path to local template directory", default=None)

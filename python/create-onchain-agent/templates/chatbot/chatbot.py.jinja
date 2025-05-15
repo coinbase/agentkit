@@ -1,14 +1,12 @@
+import os
 import sys
 import time
-{% if _framework == "openai_agents" %}
-import asyncio
+{% if _framework == "openai_agents" %}import asyncio
 from agents.run import Runner
-{% elif _framework == "langchain" %}
-from langchain_core.messages import HumanMessage
-{% endif %}
+{% elif _framework == "langchain" %}from langchain_core.messages import HumanMessage{% endif %}
 from dotenv import load_dotenv
 
-from create_agent import create_agent
+from setup import setup
 
 """
 AgentKit Chatbot Interface
@@ -35,10 +33,9 @@ Join us in shaping AgentKit! Check out the contribution guide:
 """
 
 load_dotenv()
-
 {% if _framework == "openai_agents" %}
 # Autonomous Mode
-async def run_autonomous_mode(agent, config, interval=10):
+async def run_autonomous_mode(agent, interval=10):
     """Run the agent autonomously with specified intervals."""
     print("Starting autonomous mode...")
     while True:
@@ -61,7 +58,7 @@ async def run_autonomous_mode(agent, config, interval=10):
             sys.exit(0)
 
 # Chat Mode
-async def run_chat_mode(agent, config):
+async def run_chat_mode(agent):
     """Run the agent interactively based on user input."""
     print("Starting chat mode... Type 'exit' to end.")
     while True:
@@ -150,32 +147,23 @@ def choose_mode():
             return "auto"
         print("Invalid choice. Please try again.")
 
-{% if _framework == "openai_agents" %}
-async def main():
-{% elif _framework == "langchain" %}
 def main():
-{% endif %}
-    """Start the chatbot agent."""
-    agent_executor, config = create_agent()
+    # Load environment variables
+    load_dotenv()
 
+    # Initialize the agent
+    {% if _framework == "langchain" %}agent_executor, agent_config = setup(){% elif _framework == "openai_agents" %}agent = setup(){% endif %}
+
+    print("\nWelcome to the CDP Agent Chatbot!")
+    print("Type 'exit' to quit the chat.\n")
+
+    # Run the agent in the selected mode
     mode = choose_mode()
     if mode == "chat":
-        {% if _framework == "openai_agents" %}
-        await run_chat_mode(agent=agent_executor, config=config)
-        {% elif _framework == "langchain" %}
-        run_chat_mode(agent_executor=agent_executor, config=config)
-        {% endif %}
+        {% if _framework == "langchain" %}run_chat_mode(agent_executor=agent_executor, config=agent_config){% elif _framework == "openai_agents" %}asyncio.run(run_chat_mode(agent=agent)){% endif %}
     elif mode == "auto":
-        {% if _framework == "openai_agents" %}
-        await run_autonomous_mode(agent=agent_executor, config=config)
-        {% elif _framework == "langchain" %}
-        run_autonomous_mode(agent_executor=agent_executor, config=config)
-        {% endif %}
+        {% if _framework == "langchain" %}run_autonomous_mode(agent_executor=agent_executor, config=agent_config){% elif _framework == "openai_agents" %}asyncio.run(run_autonomous_mode(agent=agent)){% endif %}
 
 if __name__ == "__main__":
     print("Starting Agent...")
-    {% if _framework == "openai_agents" %}
-    asyncio.run(main())
-    {% elif _framework == "langchain" %}
     main()
-    {% endif %}

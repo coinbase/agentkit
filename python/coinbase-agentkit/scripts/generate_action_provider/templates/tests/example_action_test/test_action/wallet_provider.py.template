@@ -1,9 +1,0 @@
-def test_example_action_execution(mock_wallet_provider, provider):
-    """Test example action execution."""
-    args = {
-        "field_name": "test",
-        "amount": "1.0",
-    }
-    result = provider.example_action(mock_wallet_provider, args)
-    assert "test" in result
-    assert mock_wallet_provider.get_network.called 

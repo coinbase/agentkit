@@ -1,4 +1,0 @@
-import pytest
-
-from coinbase_agentkit.action_providers.{{ name }}.{{ name }}_action_provider import {{ name_pascal }}ActionProvider
-from coinbase_agentkit.network import Network 
