@@ -117,7 +117,11 @@ def setup():
 
     # Determine where to get wallet configuration from (env vars or saved file)
     use_env_vars = (owner_private_key or owner_server_address) and smart_wallet_address_env
-    use_wallet_file = wallet_data.get("owner_value") and wallet_data.get("owner_type") and wallet_data.get("smart_wallet_address")
+    use_wallet_file = (
+        wallet_data.get("owner_value")
+        and wallet_data.get("owner_type")
+        and wallet_data.get("smart_wallet_address")
+    )
 
     owner_value = None
     owner_type = None

@@ -127,15 +127,19 @@ def setup():
     owner_private_key = os.getenv("OWNER_PRIVATE_KEY")
     owner_server_address = os.getenv("OWNER_SERVER_WALLET_ADDRESS")
     smart_wallet_address_env = os.getenv("SMART_WALLET_ADDRESS")
-    
+
     # Determine where to get wallet configuration from (env vars or saved file)
     use_env_vars = (owner_private_key or owner_server_address) and smart_wallet_address_env
-    use_wallet_file = wallet_data.get("owner_value") and wallet_data.get("owner_type") and wallet_data.get("smart_wallet_address")
-    
+    use_wallet_file = (
+        wallet_data.get("owner_value")
+        and wallet_data.get("owner_type")
+        and wallet_data.get("smart_wallet_address")
+    )
+
     owner_value = None
     owner_type = None
     smart_wallet_address = None
-    
+
     # Prioritize environment variables over saved wallet file
     if use_env_vars:
         # Use environment variables
@@ -166,17 +170,17 @@ def setup():
         elif smart_wallet_address_env:
             print("Warning: SMART_WALLET_ADDRESS specified in environment, but no owner found")
             smart_wallet_address = smart_wallet_address_env
-            
+
         # Fall back to partial info from wallet file if available
         if not owner_value and wallet_data.get("owner_value"):
             print("Using owner from saved wallet file")
             owner_value = wallet_data.get("owner_value")
             owner_type = wallet_data.get("owner_type")
-        
+
         if not smart_wallet_address and wallet_data.get("smart_wallet_address"):
             print("Using smart wallet address from saved wallet file")
             smart_wallet_address = wallet_data.get("smart_wallet_address")
-    
+
     # If no owner is provided, create a new server wallet to be used as the owner
     if not owner_value:
         print("No owner provided, creating new server wallet...")
