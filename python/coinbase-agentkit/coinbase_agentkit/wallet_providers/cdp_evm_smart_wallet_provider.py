@@ -151,6 +151,28 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
             asyncio.set_event_loop(loop)
         return loop.run_until_complete(coroutine)
 
+    async def _get_smart_account(self, cdp):
+        """Get the smart account, handling server wallet owners differently.
+
+        Args:
+            cdp: CDP client instance
+
+        Returns:
+            The smart account object
+
+        """
+        # Check if owner is a server wallet (not an eth_account)
+        if not isinstance(self._owner, Account):
+            # For server wallets, create a fresh owner reference to avoid nested client sessions
+            owner = await cdp.evm.get_account(address=self._owner.address)
+            smart_account = await cdp.evm.get_smart_account(owner=owner, address=self._address)
+        else:
+            # Using eth_account is simpler - no nested client sessions
+            smart_account = await cdp.evm.get_smart_account(
+                owner=self._owner, address=self._address
+            )
+        return smart_account
+
     def get_address(self) -> str:
         """Get the wallet address.
 
@@ -204,9 +226,8 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         async def _send_user_operation():
             async with client as cdp:
-                smart_account = await cdp.evm.get_smart_account(
-                    owner=self._owner, address=self._address
-                )
+                smart_account = await self._get_smart_account(cdp)
+
                 user_operation = await cdp.evm.send_user_operation(
                     smart_account=smart_account,
                     network=self._network.network_id,
@@ -264,9 +285,7 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         async def _send_user_operation():
             async with client as cdp:
-                smart_account = await cdp.evm.get_smart_account(
-                    owner=self._owner, address=self._address
-                )
+                smart_account = await self._get_smart_account(cdp)
                 user_operation = await cdp.evm.send_user_operation(
                     smart_account=smart_account,
                     network=self._network.network_id,
@@ -375,9 +394,7 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         async def _send_user_operation():
             async with client as cdp:
-                smart_account = await cdp.evm.get_smart_account(
-                    owner=self._owner, address=self._address
-                )
+                smart_account = await self._get_smart_account(cdp)
                 user_operation = await cdp.evm.send_user_operation(
                     smart_account=smart_account,
                     network=self._network.network_id,
