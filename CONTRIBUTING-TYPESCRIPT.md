@@ -217,7 +217,7 @@ Actions are necessary building blocks powering onchain AI applications, but they
 
 Integrations into AI Agent frameworks are specific to the framework itself, so we can't go into specific implementation details here, but we can offer up some examples and tips.
 
-- Check out how [AgentKit actions are mapped into LangChain Tools](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit-langchain/src/index.ts)
+- Check out how [AgentKit actions are mapped into LangChain Tools](https://github.com/coinbase/agentkit/blob/master/typescript/framework-extensions/langchain/src/index.ts)
 - Check out how [AgentKit Actions are mapped into Eliza Actions](https://github.com/elizaOS/eliza/blob/develop/packages/plugin-agentkit/src/actions.ts#L31)
 
 ## Testing
