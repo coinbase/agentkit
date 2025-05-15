@@ -2,6 +2,13 @@
 
 <!-- towncrier release notes start -->
 
+## [0.5.1] - 2025-05-14
+
+### Fixed
+
+- Fixed a bug with server wallets as owner of smart wallets
+
+
 ## [0.5.0] - 2025-05-14
 
 ### Added
