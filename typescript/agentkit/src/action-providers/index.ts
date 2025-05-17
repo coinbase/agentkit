@@ -29,3 +29,4 @@ export * from "./flaunch";
 export * from "./onramp";
 export * from "./vaultsfyi";
 export * from "./zerodev";
+export * from "./near";
