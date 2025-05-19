@@ -67,23 +67,20 @@ async function initializeAgent() {
     const networkId = process.env.NETWORK_ID || "mainnet-beta";
 
     // Configure Dynamic wallet provider
-    console.log("Starting Dynamic wallet provider configuration...");
-    const walletProvider = await DynamicSvmWalletProvider.configureWithWallet({
+    const baseApiUrl = process.env.DYNAMIC_BASE_API_URL || "https://app.dynamicauth.com";
+    const baseMPCRelayApiUrl = process.env.DYNAMIC_BASE_MPC_RELAY_API_URL || "relay.dynamicauth.com";
+  
+    const walletConfig = {
       authToken: process.env.DYNAMIC_AUTH_TOKEN as string,
       environmentId: process.env.DYNAMIC_ENVIRONMENT_ID as string,
-      baseApiUrl: process.env.DYNAMIC_BASE_API_URL || "https://app.dynamicauth.com",
-      baseMPCRelayApiUrl: process.env.DYNAMIC_BASE_MPC_RELAY_API_URL || "https://relay.dynamicauth.com",
+      baseApiUrl,
+      baseMPCRelayApiUrl,
       networkId,
-      chainType: "solana",
+      chainType: "solana" as const,
       thresholdSignatureScheme: ThresholdSignatureScheme.TWO_OF_TWO,
-    });
+    };
 
-    console.log("Dynamic wallet provider configuration complete");
-    console.log("Wallet provider details:", {
-      address: walletProvider.getAddress(),
-      network: walletProvider.getNetwork(),
-      name: walletProvider.getName()
-    });
+    const walletProvider = await DynamicSvmWalletProvider.configureWithWallet(walletConfig);
 
     // Initialize AgentKit
     const agentkit = await AgentKit.from({

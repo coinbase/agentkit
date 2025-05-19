@@ -81,7 +81,7 @@ describe("DynamicSvmWalletProvider", () => {
     authToken: "test-auth-token",
     environmentId: "test-environment-id",
     baseApiUrl: "https://app.dynamicauth.com",
-    baseMPCRelayApiUrl: "https://relay.dynamicauth.com",
+    baseMPCRelayApiUrl: "relay.dynamicauth.com",
     networkId: "mainnet-beta",
     chainType: "solana" as const,
     thresholdSignatureScheme: ThresholdSignatureScheme.TWO_OF_TWO,

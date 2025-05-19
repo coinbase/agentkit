@@ -83,7 +83,7 @@ export class DynamicSvmWalletProvider extends SvmWalletProvider {
    *   authToken: "your-auth-token",
    *   environmentId: "your-environment-id",
    *   baseApiUrl: "https://app.dynamicauth.com",
-   *   baseMPCRelayApiUrl: "https://relay.dynamicauth.com",
+   *   baseMPCRelayApiUrl: "relay.dynamicauth.com",
    *   chainType: "solana",
    *   networkId: "mainnet-beta",
    *   thresholdSignatureScheme: ThresholdSignatureScheme.TWO_OF_TWO

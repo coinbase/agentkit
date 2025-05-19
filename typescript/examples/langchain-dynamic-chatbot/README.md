@@ -28,7 +28,7 @@ OPENAI_API_KEY=your_openai_api_key
 DYNAMIC_AUTH_TOKEN=your_dynamic_auth_token
 DYNAMIC_ENVIRONMENT_ID=your_dynamic_environment_id
 DYNAMIC_BASE_API_URL=https://app.dynamicauth.com
-DYNAMIC_BASE_MPC_RELAY_API_URL=https://relay.dynamicauth.com
+DYNAMIC_BASE_MPC_RELAY_API_URL=relay.dynamicauth.com
 
 # Optional Network ID. If you'd like to use a Dynamic Solana wallet, set to "solana-devnet". Otherwise, defaults to "mainnet-beta"
 NETWORK_ID=solana-devnet

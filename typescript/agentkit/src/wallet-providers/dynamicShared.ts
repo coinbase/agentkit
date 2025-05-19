@@ -59,12 +59,19 @@ export const createDynamicClient = async (config: DynamicWalletConfig) => {
     baseMPCRelayApiUrl: config.baseMPCRelayApiUrl,
   };
 
-  const client = config.chainType === "ethereum"
-    ? new DynamicEvmWalletClient(clientConfig)
-    : new DynamicSvmWalletClient(clientConfig);
+  try {
+    const client = config.chainType === "ethereum"
+      ? new DynamicEvmWalletClient(clientConfig)
+      : new DynamicSvmWalletClient(clientConfig);
 
-  await client.authenticateApiToken(config.authToken);
-  return client;
+    console.log("[createDynamicClient] Client created successfully");
+    await client.authenticateApiToken(config.authToken);
+    console.log("[createDynamicClient] Client authenticated successfully");
+    return client;
+  } catch (error) {
+    console.error("[createDynamicClient] Error creating client:", error);
+    throw error;
+  }
 };
 
 /**
@@ -102,6 +109,12 @@ export const createDynamicWallet = async (config: DynamicWalletConfig): Promise<
     }
   } else {
     console.log("[createDynamicWallet] Creating new wallet");
+    console.log("[createDynamicWallet] createWalletAccount params:", {
+      thresholdSignatureScheme: config.thresholdSignatureScheme,
+      password: config.password ? "***" : undefined,
+      networkId: config.networkId,
+      chainType: config.chainType
+    });
     const result = await client.createWalletAccount({
       thresholdSignatureScheme: config.thresholdSignatureScheme,
       password: config.password,

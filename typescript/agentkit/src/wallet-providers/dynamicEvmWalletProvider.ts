@@ -55,7 +55,7 @@ export class DynamicEvmWalletProvider extends ViemWalletProvider {
    *   authToken: "your-auth-token",
    *   environmentId: "your-environment-id",
    *   baseApiUrl: "https://app.dynamicauth.com",
-   *   baseMPCRelayApiUrl: "https://relay.dynamicauth.com",
+   *   baseMPCRelayApiUrl: "relay.dynamicauth.com",
    *   chainType: "ethereum",
    *   chainId: "84532",
    *   thresholdSignatureScheme: ThresholdSignatureScheme.TWO_OF_TWO

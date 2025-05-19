@@ -20,7 +20,7 @@ describe("DynamicEvmWalletProvider", () => {
     authToken: "test-auth-token",
     environmentId: "test-environment-id",
     baseApiUrl: "https://app.dynamicauth.com",
-    baseMPCRelayApiUrl: "https://relay.dynamicauth.com",
+    baseMPCRelayApiUrl: "relay.dynamicauth.com",
     chainId: "84532",
     chainType: "ethereum" as const,
     thresholdSignatureScheme: ThresholdSignatureScheme.TWO_OF_TWO,

@@ -46,7 +46,7 @@ describe("DynamicWalletProvider", () => {
     authToken: "test-auth-token",
     environmentId: "test-environment-id",
     baseApiUrl: "https://app.dynamicauth.com",
-    baseMPCRelayApiUrl: "https://relay.dynamicauth.com",
+    baseMPCRelayApiUrl: "relay.dynamicauth.com",
     chainId: "1",
     chainType: "ethereum",
   };
@@ -55,7 +55,7 @@ describe("DynamicWalletProvider", () => {
     authToken: "test-auth-token",
     environmentId: "test-environment-id",
     baseApiUrl: "https://app.dynamicauth.com",
-    baseMPCRelayApiUrl: "https://relay.dynamicauth.com",
+    baseMPCRelayApiUrl: "relay.dynamicauth.com",
     chainType: "solana",
     networkId: "mainnet-beta",
   };
@@ -140,7 +140,7 @@ describe("DynamicWalletProvider", () => {
     const testConfig: Partial<DynamicEvmWalletConfig> = {
       environmentId: "test-environment-id",
       baseApiUrl: "https://app.dynamicauth.com",
-      baseMPCRelayApiUrl: "https://relay.dynamicauth.com",
+      baseMPCRelayApiUrl: "relay.dynamicauth.com",
       chainType: "ethereum",
     };
 
