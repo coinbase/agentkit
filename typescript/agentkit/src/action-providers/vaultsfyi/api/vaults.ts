@@ -1,14 +1,21 @@
 import z from "zod";
-import { VaultsActionSchema } from "../schemas";
+import { VaultDetailsActionSchema, VaultsActionSchema } from "../schemas";
 import { createSearchParams } from "../utils";
 import { VAULTS_API_URL } from "../constants";
 import { ApiError } from "./types";
+
+type ApyData = {
+  "1day": number;
+  "7day": number;
+  "30day": number;
+};
 
 export type ApiVault = {
   name: string;
   address: string;
   network: string;
   protocol: string;
+  isTransactional: boolean;
   tvlDetails: {
     tvlUsd: string;
   };
@@ -19,17 +26,30 @@ export type ApiVault = {
     decimals: number;
   };
   apy: {
-    base: {
-      "7day": number;
-    };
-    rewards: {
-      "7day": number;
-    };
-    total: {
-      "7day": number;
-    };
+    base: ApyData;
+    rewards: ApyData;
+    total: ApyData;
   };
-  isTransactional: boolean;
+  numberOfHolders: number;
+  rewards: {
+    apy: ApyData;
+    asset: {
+      name: string;
+      symbol: string;
+      assetAddress: string;
+      decimals: number;
+    };
+  }[];
+  description: string;
+  additionalIncentives: string;
+  score: {
+    vaultScore: number;
+    vaultTvlScore: number;
+    protocolTvlScore: number;
+    holderScore: number;
+    networkScore: number;
+    assetScore: number;
+  };
 };
 
 type ApiResult = {
@@ -55,7 +75,7 @@ export async function fetchVaults(
     token: args.token,
     network: args.network,
     tvl_min: args.minTvl ?? 100_000,
-    transactional_only: true,
+    transactionalOnly: true,
   });
   for (let i = 0; i < 10; i++) {
     const response = await fetch(`${VAULTS_API_URL}/detailed/vaults?${params}`, {
@@ -74,4 +94,22 @@ export async function fetchVaults(
   }
 
   return vaults;
+}
+
+/**
+ * Fetches the details of a specific vault from the vaultsfyi API.
+ *
+ * @param args - The action parameters
+ * @param apiKey - The vaultsfyi API key
+ * @returns The vault details
+ */
+export async function fetchVault(args: z.infer<typeof VaultDetailsActionSchema>, apiKey: string) {
+  const response = await fetch(`${VAULTS_API_URL}/vaults/${args.network}/${args.vaultAddress}`, {
+    method: "GET",
+    headers: {
+      "x-api-key": apiKey,
+    },
+  });
+  const data = (await response.json()) as ApiVault | ApiError;
+  return data;
 }

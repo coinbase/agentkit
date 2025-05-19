@@ -37,6 +37,30 @@ const mockVault = (num: number) => ({
         "7day": num * 100,
       },
     },
+    numberOfHolders: num,
+    rewards: [
+      {
+        apy: {
+          "7day": num * 100,
+        },
+        asset: {
+          name: `reward-token-${num}`,
+          symbol: `RT${num}`,
+          assetAddress: `0x${num.toString(16).padStart(40, "0")}`,
+          decimals: 18,
+        },
+      },
+    ],
+    description: `Description for vault-${num}`,
+    additionalIncentives: `Incentives for vault-${num}`,
+    score: {
+      vaultScore: num,
+      vaultTvlScore: num,
+      protocolTvlScore: num,
+      holderScore: num,
+      networkScore: num,
+      assetScore: num,
+    },
     isTransactional: true,
   },
   transformedResult: {
@@ -55,6 +79,8 @@ const mockVault = (num: number) => ({
       rewards: num,
       total: num,
     },
+    vaultsFyiScore: num,
+    numberOfHolders: num,
     link: `https://app.vaults.fyi/opportunity/network-${num}/0x${num.toString(16).padStart(40, "0")}`,
   },
 });
@@ -510,6 +536,178 @@ describe("VaultsfyiActionProvider", () => {
       );
       expect(await provider.positions(mockWalletProvider)).toBe(
         "Failed to fetch positions: Internal Server Error, some more info",
+      );
+    });
+  });
+
+  describe("vault_details action", () => {
+    it("should transform vault details correctly", async () => {
+      const detailedVault = mockVault(1);
+
+      mockedFetch.mockResolvedValue(mockFetchResult(200, detailedVault.apiResult));
+
+      const args = {
+        vaultAddress: "0x123456",
+        network: "mainnet",
+      };
+
+      const result = await provider.vaultDetails(mockWalletProvider, args);
+      const parsedResult = JSON.parse(result);
+
+      expect(parsedResult).toStrictEqual({
+        ...detailedVault.transformedResult,
+        description: detailedVault.apiResult.description,
+        additionalIncentives: detailedVault.apiResult.additionalIncentives,
+        rewards: [
+          {
+            apy: detailedVault.apiResult.rewards[0].apy["7day"] / 100,
+            asset: {
+              name: detailedVault.apiResult.rewards[0].asset.name,
+              symbol: detailedVault.apiResult.rewards[0].asset.symbol,
+              address: detailedVault.apiResult.rewards[0].asset.assetAddress,
+            },
+          },
+        ],
+      });
+    });
+
+    it("should return an error if the API request fails", async () => {
+      mockedFetch.mockResolvedValue(
+        mockFetchResult(500, { error: "Internal Server Error", message: "some more info" }),
+      );
+
+      const args = {
+        vaultAddress: "0x123456",
+        network: "mainnet",
+      };
+
+      expect(await provider.vaultDetails(mockWalletProvider, args)).toBe(
+        "Failed to fetch vault: Internal Server Error, some more info",
+      );
+    });
+  });
+
+  describe("vault_historical_data action", () => {
+    it("should fetch and transform historical data correctly", async () => {
+      // Mock API responses for both TVL and APY data
+      const mockApyData = {
+        timestamp: 1704067200, // Jan 1, 2024
+        blockNumber: 12345678,
+        apy: {
+          base: 500,
+          rewards: 300,
+          total: 800,
+        },
+      };
+
+      const mockTvlData = {
+        timestamp: 1704067200, // Jan 1, 2024
+        blockNumber: 12345678,
+        tvlDetails: {
+          tvlUsd: 1000000,
+        },
+      };
+
+      // Set up the mock to return appropriate data for each call
+      mockedFetch.mockImplementation(url => {
+        if (url.includes("/historical-apy/")) {
+          return Promise.resolve(mockFetchResult(200, mockApyData));
+        } else if (url.includes("/historical-tvl/")) {
+          return Promise.resolve(mockFetchResult(200, mockTvlData));
+        }
+        return Promise.resolve(mockFetchResult(500, { error: "Unexpected URL" }));
+      });
+
+      const args = {
+        vaultAddress: "0x123456",
+        network: "mainnet",
+        date: "2024-01-01T00:00:00Z",
+      };
+
+      const result = await provider.vaultHistoricalData(mockWalletProvider, args);
+      const parsedResult = JSON.parse(result);
+
+      expect(parsedResult).toEqual({
+        apy: {
+          apy: {
+            base: 5,
+            rewards: 3,
+            total: 8,
+          },
+          date: "2024-01-01T00:00:00.000Z",
+          blockNumber: 12345678,
+        },
+        tvl: {
+          tvlInUsd: 1000000,
+          date: "2024-01-01T00:00:00.000Z",
+          blockNumber: 12345678,
+        },
+      });
+    });
+
+    it("should return an error if the APY API request fails", async () => {
+      // Set up the mock to fail for APY but succeed for TVL
+      mockedFetch.mockImplementation(url => {
+        if (url.includes("/historical-apy/")) {
+          return Promise.resolve(
+            mockFetchResult(500, {
+              error: "Internal Server Error",
+              message: "Failed to get historical APY data",
+            }),
+          );
+        } else if (url.includes("/historical-tvl/")) {
+          return Promise.resolve(
+            mockFetchResult(200, {
+              timestamp: 1704067200,
+              blockNumber: 12345678,
+              tvlDetails: { tvlUsd: 1000000 },
+            }),
+          );
+        }
+        return Promise.resolve(mockFetchResult(500, { error: "Unexpected URL" }));
+      });
+
+      const args = {
+        vaultAddress: "0x123456",
+        network: "mainnet",
+        date: "2024-01-01T00:00:00Z",
+      };
+
+      expect(await provider.vaultHistoricalData(mockWalletProvider, args)).toBe(
+        "Failed to fetch vault: Internal Server Error, Failed to get historical APY data",
+      );
+    });
+
+    it("should return an error if the TVL API request fails", async () => {
+      // Set up the mock to succeed for APY but fail for TVL
+      mockedFetch.mockImplementation(url => {
+        if (url.includes("/historical-apy/")) {
+          return Promise.resolve(
+            mockFetchResult(200, {
+              timestamp: 1704067200,
+              blockNumber: 12345678,
+              apy: { base: 500, rewards: 300, total: 800 },
+            }),
+          );
+        } else if (url.includes("/historical-tvl/")) {
+          return Promise.resolve(
+            mockFetchResult(500, {
+              error: "Internal Server Error",
+              message: "Failed to get historical TVL data",
+            }),
+          );
+        }
+        return Promise.resolve(mockFetchResult(500, { error: "Unexpected URL" }));
+      });
+
+      const args = {
+        vaultAddress: "0x123456",
+        network: "mainnet",
+        date: "2024-01-01T00:00:00Z",
+      };
+
+      expect(await provider.vaultHistoricalData(mockWalletProvider, args)).toBe(
+        "Failed to fetch vault: Internal Server Error, Failed to get historical TVL data",
       );
     });
   });
