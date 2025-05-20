@@ -7,7 +7,6 @@ This directory contains the **CdpActionProvider** implementations, which provide
 ```
 cdp/
 ├── cdp_api_action_provider.py        # CDP API actions
-├── cdp_wallet_action_provider.py     # CDP Wallet actions
 ├── constants.py                      # CDP constants
 ├── schemas.py                        # CDP action schemas
 ├── __init__.py                       # Main exports
@@ -18,8 +17,7 @@ tests/action_providers/cdp/
 ├── conftest.py                              # Test configuration
 ├── test_api_address_reputation_action.py    # Tests for address reputation
 ├── test_api_faucet_funds.py                 # Tests for faucet funds
-├── test_cdp_api_action_provider.py          # Tests for CDP API actions
-└── test_cdp_wallet_action_provider.py       # Tests for CDP Wallet actions
+└── test_cdp_api_action_provider.py          # Tests for CDP API actions
 ```
 
 ## Actions
@@ -45,9 +43,7 @@ tests/action_providers/cdp/
 To add new CDP actions:
 
 1. Define your action schema in `schemas.py`
-2. Implement the action in the appropriate provider file:
-   - CDP API actions in `cdp_api_action_provider.py`
-   - CDP Wallet actions in `cdp_wallet_action_provider.py`
+2. Implement the actions
 3. Add corresponding tests
 
 ## Network Support

@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import time
@@ -20,28 +21,26 @@ from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 
-# Configure a file to persist the agent's CDP API Wallet Data.
-wallet_data_file = "wallet_data.txt"
 
-load_dotenv()
+def initialize_agent(config: EthAccountWalletProviderConfig):
+    """Initialize the agent with CDP Agentkit.
 
+    Args:
+        config: Configuration for the Ethereum Account Wallet Provider
 
-def initialize_agent():
-    """Initialize the agent with an Ethereum Account Wallet Provider."""
+    Returns:
+        tuple[Agent, dict]: The initialized agent and its configuration
+
+    """
     # Initialize LLM
     llm = ChatOpenAI(model="gpt-4o-mini")
 
-    # Ensure PRIVATE_KEY is set
-    private_key = os.getenv("PRIVATE_KEY")
-    assert private_key, "You must set the PRIVATE_KEY environment variable"
-    assert private_key.startswith("0x"), "Private key must start with 0x hex prefix"
-
-    # Create Ethereum account from private key
-    account = Account.from_key(private_key)
-
     # Initialize Ethereum Account Wallet Provider
     wallet_provider = EthAccountWalletProvider(
-        config=EthAccountWalletProviderConfig(account=account, chain_id="84532")
+        config=EthAccountWalletProviderConfig(
+            account=config.account,  # Ethereum account from private key
+            chain_id=config.chain_id,  # Chain ID for the network
+        )
     )
 
     # Initialize AgentKit
@@ -57,24 +56,88 @@ def initialize_agent():
         )
     )
 
-    # use get_langchain_tools
+    # Get tools for the agent
     tools = get_langchain_tools(agentkit)
 
-    # Store buffered conversation history in memory.
+    # Store buffered conversation history in memory
     memory = MemorySaver()
-    config = {"configurable": {"thread_id": "Ethereum Account Chatbot"}}
+    agent_config = {"configurable": {"thread_id": "Ethereum Account Chatbot"}}
 
-    # Create ReAct Agent using the LLM and Ethereum Account Wallet tools.
-    return create_react_agent(
-        llm,
-        tools=tools,
-        checkpointer=memory,
-        state_modifier=(
-            "You are a helpful agent that can interact onchain using an Ethereum Account Wallet. "
-            "You have tools to send transactions, query blockchain data, and interact with contracts. "
-            "If you run into a 5XX (internal) error, ask the user to try again later."
+    # Create ReAct Agent using the LLM and Ethereum Account Wallet tools
+    return (
+        create_react_agent(
+            llm,
+            tools=tools,
+            checkpointer=memory,
+            state_modifier=(
+                "You are a helpful agent that can interact onchain using an Ethereum Account Wallet. "
+                "You have tools to send transactions, query blockchain data, and interact with contracts. "
+                "If you run into a 5XX (internal) error, ask the user to try again later."
+            ),
         ),
-    ), config
+        agent_config,
+    )
+
+
+def setup():
+    """Set up the agent with persistent wallet storage.
+
+    Returns:
+        tuple[Agent, dict]: The initialized agent and its configuration
+
+    """
+    # Configure chain ID and file path
+    chain_id = os.getenv("CHAIN_ID", "84532")  # Default to Base Sepolia
+    wallet_file = f"wallet_data_{chain_id}.txt"
+
+    # Load existing wallet data if available
+    wallet_data = {}
+    if os.path.exists(wallet_file):
+        try:
+            with open(wallet_file) as f:
+                wallet_data = json.load(f)
+                print(f"Loading existing wallet from {wallet_file}")
+        except json.JSONDecodeError:
+            print(f"Warning: Invalid wallet data for chain {chain_id}")
+            wallet_data = {}
+
+    # Get or generate private key
+    private_key = (
+        os.getenv("PRIVATE_KEY")  # First priority: Environment variable
+        or wallet_data.get("private_key")  # Second priority: Saved wallet file
+        or Account.create().key.hex()  # Third priority: Generate new key
+    )
+
+    # Ensure private key has 0x prefix
+    if not private_key.startswith("0x"):
+        private_key = f"0x{private_key}"
+
+    # Create Ethereum account from private key
+    account = Account.from_key(private_key)
+
+    # Create the wallet provider config
+    config = EthAccountWalletProviderConfig(
+        account=account,
+        chain_id=chain_id,
+    )
+
+    # Initialize the agent
+    agent_executor, agent_config = initialize_agent(config)
+
+    # Save the wallet data after successful initialization
+    new_wallet_data = {
+        "private_key": private_key,
+        "chain_id": chain_id,
+        "created_at": time.strftime("%Y-%m-%d %H:%M:%S")
+        if not wallet_data
+        else wallet_data.get("created_at"),
+    }
+
+    with open(wallet_file, "w") as f:
+        json.dump(new_wallet_data, f, indent=2)
+        print(f"Wallet data saved to {wallet_file}")
+
+    return agent_executor, agent_config
 
 
 # Autonomous Mode
@@ -150,13 +213,18 @@ def choose_mode():
 
 def main():
     """Start the chatbot agent."""
-    agent_executor, config = initialize_agent()
+    # Load environment variables
+    load_dotenv()
 
+    # Set up the agent
+    agent_executor, agent_config = setup()
+
+    # Run the agent in the selected mode
     mode = choose_mode()
     if mode == "chat":
-        run_chat_mode(agent_executor=agent_executor, config=config)
+        run_chat_mode(agent_executor=agent_executor, config=agent_config)
     elif mode == "auto":
-        run_autonomous_mode(agent_executor=agent_executor, config=config)
+        run_autonomous_mode(agent_executor=agent_executor, config=agent_config)
 
 
 if __name__ == "__main__":

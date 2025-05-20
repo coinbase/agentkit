@@ -46,3 +46,20 @@ export interface WalletProviderWithClient {
    */
   getClient(): CdpClient;
 }
+
+/**
+ * Type guard to check if a wallet provider implements WalletProviderWithClient interface.
+ *
+ * @param provider - The provider to check
+ * @returns True if the provider implements WalletProviderWithClient
+ */
+export function isWalletProviderWithClient(
+  provider: unknown,
+): provider is WalletProviderWithClient {
+  return (
+    provider !== null &&
+    typeof provider === "object" &&
+    "getClient" in provider &&
+    typeof (provider as WalletProviderWithClient).getClient === "function"
+  );
+}

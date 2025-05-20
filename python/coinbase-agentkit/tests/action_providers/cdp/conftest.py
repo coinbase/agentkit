@@ -1,13 +1,20 @@
 """Test fixtures for CDP API tests."""
 
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
 from coinbase_agentkit.network import Network
+from coinbase_agentkit.wallet_providers.cdp_evm_server_wallet_provider import (
+    CdpEvmServerWalletProviderConfig,
+)
 
 MOCK_API_KEY_NAME = "mock-api-key"
 MOCK_API_KEY_PRIVATE_KEY = "mock-private-key"
+
+MOCK_API_KEY_ID = "mock-api-key-id"
+MOCK_API_KEY_SECRET = "mock-api-key-secret"
+MOCK_WALLET_SECRET = "mock-wallet-secret"
 
 MOCK_MAINNET_NETWORK_ID = "base-mainnet"
 MOCK_MAINNET_CHAIN_ID = "8453"
@@ -68,8 +75,9 @@ def mock_contract_result():
 @pytest.fixture
 def mock_env(monkeypatch):
     """Mock environment variables for testing."""
-    monkeypatch.setenv("CDP_API_KEY_NAME", MOCK_API_KEY_NAME)
-    monkeypatch.setenv("CDP_API_KEY_PRIVATE_KEY", MOCK_API_KEY_PRIVATE_KEY)
+    monkeypatch.setenv("CDP_API_KEY_ID", MOCK_API_KEY_ID)
+    monkeypatch.setenv("CDP_API_KEY_SECRET", MOCK_API_KEY_SECRET)
+    monkeypatch.setenv("CDP_WALLET_SECRET", MOCK_WALLET_SECRET)
 
 
 @pytest.fixture
@@ -113,16 +121,51 @@ def mock_wallet_testnet_provider():
         chain_id=MOCK_TESTNET_CHAIN_ID,
     )
     wallet.get_address.return_value = MOCK_WALLET_ADDRESS
+    # Add the get_client method to the wallet provider
+    wallet.get_client = Mock(return_value=Mock())
     return wallet
+
+
+@pytest.fixture
+def mock_cdp_config():
+    """Create a mock CDP EVM Server Provider config."""
+    return CdpEvmServerWalletProviderConfig(
+        api_key_id=MOCK_API_KEY_ID,
+        api_key_secret=MOCK_API_KEY_SECRET,
+        wallet_secret=MOCK_WALLET_SECRET,
+        network_id=MOCK_TESTNET_NETWORK_ID,
+        address=MOCK_WALLET_ADDRESS,
+    )
 
 
 @pytest.fixture(autouse=True)
 def mock_cdp_imports():
     """Mock CDP SDK imports."""
-    with (
-        patch("coinbase_agentkit.action_providers.cdp.cdp_api_action_provider.Cdp") as mock_cdp,
-        patch(
-            "coinbase_agentkit.action_providers.cdp.cdp_api_action_provider.ExternalAddress"
-        ) as mock_external_address,
-    ):
-        yield mock_cdp, mock_external_address
+    with patch("cdp.CdpClient") as mock_cdp_client:
+        # Add configure method to the CdpClient class mock
+        mock_cdp_client.configure = Mock()
+        mock_cdp_client.configure_from_json = Mock()
+
+        # Create mock CDP client instance with async context manager
+        mock_instance = Mock()
+        mock_cdp_client.return_value = mock_instance
+
+        # Set up async context manager mocks
+        mock_instance.__aenter__ = AsyncMock(return_value=mock_instance)
+        mock_instance.__aexit__ = AsyncMock(return_value=None)
+
+        # Create evm attribute with request_faucet method
+        mock_instance.evm = Mock()
+        mock_instance.evm.request_faucet = AsyncMock(return_value=MOCK_TX_HASH)
+
+        # Create solana attribute for solana tests
+        mock_instance.solana = Mock()
+        mock_solana_response = Mock()
+        mock_solana_response.transaction_signature = "mock_signature"
+        mock_instance.solana.request_faucet = AsyncMock(return_value=mock_solana_response)
+
+        # Set up the external address mock that is expected by tests
+        mock_external_address = Mock()
+
+        # Return both mocks as a tuple
+        yield mock_cdp_client, mock_external_address

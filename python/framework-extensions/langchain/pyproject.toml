@@ -1,6 +1,6 @@
 [project]
 name = "coinbase-agentkit-langchain"
-version = "0.3.0"
+version = "0.4.0"
 description = "Coinbase AgentKit LangChain extension"
 authors = [{ name = "John Peterson", email = "john.peterson@coinbase.com" }]
 requires-python = "~=3.10"
@@ -17,9 +17,10 @@ keywords = [
     "agent",
 ]
 dependencies = [
-    "coinbase-agentkit>=0.3.0,<0.5",
+    "coinbase-agentkit>=0.5.0,<0.6",
     "langchain>=0.3.4,<0.4",
     "python-dotenv>=1.0.1,<2",
+    "nest-asyncio>=1.5.8,<2",
 ]
 
 [dependency-groups]

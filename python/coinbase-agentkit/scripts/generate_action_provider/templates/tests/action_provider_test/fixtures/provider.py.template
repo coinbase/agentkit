@@ -1,4 +1,0 @@
-@pytest.fixture
-def provider():
-    """Create a provider instance for testing."""
-    return {{ name_pascal }}ActionProvider() 

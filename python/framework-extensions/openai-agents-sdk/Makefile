@@ -29,3 +29,7 @@ local-docs: docs
 .PHONY: test
 test:
 	uv run pytest
+
+.PHONY: check-deps
+check-deps:
+	uv run python scripts/check_dependencies.py

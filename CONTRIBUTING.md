@@ -47,11 +47,13 @@ agentkit/
 │   │   ├── langchain/
 │   │   └── openai-agents-sdk/
 │   └── examples/
-│       ├── langchain-cdp-chatbot/
+│       ├── langchain-cdp-server-chatbot/
+│       ├── langchain-cdp-smart-wallet-chatbot/
 │       ├── langchain-eth-account-chatbot/
-│       ├── langchain-smart-wallet-chatbot/
+│       ├── langchain-nillion-secretvault-chatbot/
 │       ├── langchain-twitter-chatbot/
-│       └── openai-agents-cdp-voice-chatbot/
+│       ├── openai-agents-sdk-cdp-chatbot/
+│       ├── openai-agents-sdk-cdp-voice-chatbot/
 │       └── openai-agents-sdk-smart-wallet-chatbot/
 ```
 
