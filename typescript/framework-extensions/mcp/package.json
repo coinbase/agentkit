@@ -1,0 +1,20 @@
+{
+  "name": "@coinbase/agentkit-mcp",
+  "version": "0.1.0",
+  "description": "Model Context Protocol support for AgentKit",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@coinbase/agentkit": "workspace:*",
+    "@modelcontextprotocol/sdk": "^0.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
