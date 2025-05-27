@@ -32,10 +32,12 @@ agentkit/
 │   │   └── model-context-protocol/
 │   └── examples/
 │       ├── langchain-cdp-chatbot/
+│       ├── langchain-cdp-v2-chatbot/
 │       ├── langchain-farcaster-chatbot/
 │       ├── langchain-privy-chatbot/
 │       ├── langchain-solana-chatbot/
 │       ├── langchain-twitter-chatbot/
+│       ├── langchain-xmtp-chatbot/
 │       ├── model-context-protocol-smart-wallet-server/
 │       └── vercel-ai-sdk-smart-wallet-chatbot/
 ├── python/
@@ -45,8 +47,13 @@ agentkit/
 │   │   ├── langchain/
 │   │   └── openai-agents-sdk/
 │   └── examples/
-│       ├── langchain-cdp-chatbot/
+│       ├── langchain-cdp-server-chatbot/
+│       ├── langchain-cdp-smart-wallet-chatbot/
+│       ├── langchain-eth-account-chatbot/
+│       ├── langchain-nillion-secretvault-chatbot/
 │       ├── langchain-twitter-chatbot/
+│       ├── openai-agents-sdk-cdp-chatbot/
+│       ├── openai-agents-sdk-cdp-voice-chatbot/
 │       └── openai-agents-sdk-smart-wallet-chatbot/
 ```
 

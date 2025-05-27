@@ -30,7 +30,7 @@ body:
           AgentKitConfig, 
           CdpWalletProvider,
           CdpWalletProviderConfig,
-          cdp_wallet_action_provider
+          erc20_action_provider
       )
       from coinbase_agentkit_langchain import get_langchain_tools
 
@@ -42,7 +42,7 @@ body:
       agentkit = AgentKit(AgentKitConfig(
           wallet_provider=wallet_provider,
           action_providers=[
-              cdp_wallet_action_provider()
+              erc20_action_provider()
           ]
       ))
       tools = get_langchain_tools(agentkit)  # Note: the bug is here, the method raises an error

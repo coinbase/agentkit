@@ -6,3 +6,6 @@
 
 export * from "./{{name}}ActionProvider";
 export * from "./schemas";
+
+// depending on usage, you might export the factory like this:
+// export { {{name}}ActionProviderFactory } from "./{{name}}ActionProvider";

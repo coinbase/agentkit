@@ -128,7 +128,7 @@ wheels = [
 
 [[package]]
 name = "create-onchain-agent"
-version = "0.4.0"
+version = "0.6.1"
 source = { editable = "." }
 dependencies = [
     { name = "click" },

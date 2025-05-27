@@ -1,5 +1,49 @@
 # AgentKit Changelog
 
+## 0.7.2
+
+### Patch Changes
+
+- [#716](https://github.com/coinbase/agentkit/pull/716) [`30dc6bd`](https://github.com/coinbase/agentkit/commit/30dc6bdca68cb567f91123c21c1fe3a5774d4f6b) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Fixed CdpV2EvmWalletProvider sendTransaction to use EIP1559 transactions
+
+## 0.7.1
+
+### Patch Changes
+
+- [#610](https://github.com/coinbase/agentkit/pull/610) [`beb34c9`](https://github.com/coinbase/agentkit/commit/beb34c9a300c66ddb03c303685a322dc45e74a13) Thanks [@nowak-token](https://github.com/nowak-token)! - Fixed ReferenceError when initializing TwitterActionProvider by implementing lazy initialization pattern with proper null checks
+
+## 0.7.0
+
+### Minor Changes
+
+- [#665](https://github.com/coinbase/agentkit/pull/665) [`bfed1a0`](https://github.com/coinbase/agentkit/commit/bfed1a07a0c5443297af20fa566723fa20e8a00f) Thanks [@jstinhw](https://github.com/jstinhw)! - Added ZeroDevWalletProvider powered by ZeroDev smart account
+
+  This change introduced a new wallet provider, `ZeroDevWalletProvider` which allows AgentKit to use ZeroDev's chain-abstracted smart account with any EvmWalletProvider like cdpWalletProvider or privyEvmWalletProvider as the signer.
+
+- [#678](https://github.com/coinbase/agentkit/pull/678) [`f6b464a`](https://github.com/coinbase/agentkit/commit/f6b464a62f3593957648c2d2f5bdfbca292a1f68) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Added CdpV2EvmWalletProvider, CdpV2SolanaWalletProvider, and a unified CdpV2WalletProvider entrypoint
+
+## 0.6.2
+
+### Patch Changes
+
+- [#645](https://github.com/coinbase/agentkit/pull/645) [`8fdb847`](https://github.com/coinbase/agentkit/commit/8fdb847c32cc90b1500d3883cc2f68b97b90ba86) Thanks [@pawelpolak2](https://github.com/pawelpolak2)! - Add vaults.fyi provider
+
+## 0.6.1
+
+### Patch Changes
+
+- [#656](https://github.com/coinbase/agentkit/pull/656) [`8465c35`](https://github.com/coinbase/agentkit/commit/8465c355a648601e2de8ea858d3571922eb3ec52) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Fixed Privy dependency on @privy-io/public-api
+
+## 0.6.0
+
+### Minor Changes
+
+- [#641](https://github.com/coinbase/agentkit/pull/641) [`03ea0e5`](https://github.com/coinbase/agentkit/commit/03ea0e541cb0b76fefcc15fe9d74297ac809801d) Thanks [@pawelpolak2](https://github.com/pawelpolak2)! - Added transaction queue to the cdp wallet provider to avoid nonce collisions.
+
+- [#617](https://github.com/coinbase/agentkit/pull/617) [`d64b11c`](https://github.com/coinbase/agentkit/commit/d64b11cb8a7f795e5c33e45c70eec8153977783d) Thanks [@apoorvlathey](https://github.com/apoorvlathey)! - Added a new action provider to interact with Flaunch protocol
+
+- [#638](https://github.com/coinbase/agentkit/pull/638) [`4d4b031`](https://github.com/coinbase/agentkit/commit/4d4b031242d6760a089b300d8f135110dd8d467d) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Added OnrampActionProvider to enable cryptocurrency purchases
+
 ## 0.5.0
 
 ### Minor Changes

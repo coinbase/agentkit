@@ -17,13 +17,18 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
     - [Adding an Action Provider to your AgentKit instance](#adding-an-action-provider-to-your-agentkit-instance)
 - [Action Providers](#action-providers)
 - [Wallet Providers](#wallet-providers)
-    - [CdpWalletProvider](#cdpwalletprovider)
+    - [CdpEvmServerWalletProvider](#cdpevmserverwalletprovider)
         - [Network Configuration](#network-configuration)
         - [Configuring from an existing CDP API Wallet](#configuring-from-an-existing-cdp-api-wallet)
-        - [Configuring from a mnemonic phrase](#configuring-from-a-mnemonic-phrase)
-        - [Exporting a wallet](#exporting-a-wallet)
-        - [Importing a wallet from WalletData JSON string](#importing-a-wallet-from-walletdata-json-string)
-        - [Configuring gas parameters](#configuring-cdpwalletprovider-gas-parameters)
+        - [Creating a new wallet](#creating-a-new-wallet)
+        - [Example Usage with AgentKit](#example-usage-with-agentkit)
+    - [CdpEvmSmartWalletProvider](#cdpevmsmartwalletprovider)
+        - [Network Configuration](#network-configuration)
+        - [Configuring with a Private Key Owner](#configuring-with-a-private-key-owner)
+        - [Configuring with a Server Wallet Owner](#configuring-with-a-server-wallet-owner)
+        - [Creating a New Smart Wallet](#creating-a-new-smart-wallet)
+        - [Gasless Transactions with Paymaster](#gasless-transactions-with-paymaster)
+        - [Example Usage with AgentKit](#example-usage-with-agentkit)
     - [EthAccountWalletProvider](#ethaccountwalletprovider)
         - [Configuring gas parameters](#configuring-ethaccountwalletprovider-gas-parameters)
     - [SmartWalletProvider](#smartwalletprovider)
@@ -222,37 +227,11 @@ This section provides a detailed list of all available action providers and thei
 </details>
 
 <details>
-<summary><strong>CDP Wallet</strong></summary>
-<table width="100%">
-<tr>
-    <td width="200"><code>deploy_contract</code></td>
-    <td width="768">Deploys a custom smart contract using specified Solidity version and constructor arguments.</td>
-</tr>
-<tr>
-    <td width="200"><code>deploy_nft</code></td>
-    <td width="768">Deploys a standard ERC-721 NFT contract with configurable name, symbol, and metadata URI.</td>
-</tr>
-<tr>
-    <td width="200"><code>deploy_token</code></td>
-    <td width="768">Deploys a standard ERC-20 token contract with configurable name, symbol, and initial supply.</td>
-</tr>
-<tr>
-    <td width="200"><code>trade</code></td>
-    <td width="768">Executes a token swap between two assets at current market rates on mainnet networks.</td>
-</tr>
-</table>
-</details>
-
-<details>
 <summary><strong>CDP API</strong></summary>
 <table width="100%">
 <tr>
-    <td width="200"><code>fetch_price</code></td>
-    <td width="768">Retrieves the current price of a cryptocurrency from the CDP API.</td>
-</tr>
-<tr>
-    <td width="200"><code>fetch_base_scan</code></td>
-    <td width="768">Fetches on-chain data from Base blockchain explorer via CDP API.</td>
+    <td width="200"><code>request_faucet_funds</code></td>
+    <td width="768">Requests testnet ETH, USDC, EURC or CBBTC.</td>
 </tr>
 </table>
 </details>
@@ -383,6 +362,38 @@ This section provides a detailed list of all available action providers and thei
 <tr>
     <td width="200"><code>withdraw</code></td>
     <td width="768">Withdraws a specified amount of assets from a designated Morpho Vault.</td>
+</tr>
+</table>
+</details>
+
+<details>
+<summary><strong>Nillion</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>lookup_schema</code></td>
+    <td width="768">Looks up a schema by description and returns both the schema UUID and corresponding JSON schema.</td>
+</tr>
+<tr>
+    <td width="200"><code>create_schema</code></td>
+    <td width="768">Creates a new schema in the Nillion SecretVault based on a natural language description.</td>
+</tr>
+<tr>
+    <td width="200"><code>data_upload</code></td>
+    <td width="768">Uploads data into the Nillion SecretVault using a specified schema UUID.</td>
+</tr>
+<tr>
+    <td width="200"><code>data_download</code></td>
+    <td width="768">Downloads all data from the Nillion SecretVault for a specified schema UUID.</td>
+</tr>
+</table>
+</details>
+
+<details>
+<summary><strong>Onramp</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_onramp_buy_url</code></td>
+    <td width="768">Gets a URL to purchase cryptocurrency from Coinbase via Debit card or other payment methods.</td>
 </tr>
 </table>
 </details>
@@ -531,103 +542,219 @@ AgentKit supports the following wallet providers:
 
 EVM:
 
-- [CdpWalletProvider](https://github.com/coinbase/agentkit/blob/master/python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_wallet_provider.py) - Uses the Coinbase Developer Platform (CDP) API Wallet
+- [CdpEvmServerWalletProvider](https://github.com/coinbase/agentkit/blob/master/python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_evm_server_wallet_provider.py) - Uses the Coinbase Developer Platform (CDP) API Server Wallet
+- [CdpEvmSmartWalletProvider](https://github.com/coinbase/agentkit/blob/master/python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_evm_smart_wallet_provider.py) - Uses the Coinbase Developer Platform (CDP) API Smart Wallet
 - [EthAccountWalletProvider](https://github.com/coinbase/agentkit/blob/master/python/coinbase-agentkit/coinbase_agentkit/wallet_providers/eth_account_wallet_provider.py) - Uses a local private key for any EVM-compatible chain
 
-### CdpWalletProvider
+### CdpEvmServerWalletProvider
 
-The `CdpWalletProvider` is a wallet provider that uses the Coinbase Developer Platform (CDP) [API Wallet](https://docs.cdp.coinbase.com/wallet-api/docs/welcome).
+The `CdpEvmServerWalletProvider` is a wallet provider that uses the Coinbase Developer Platform (CDP) [API Server Wallet](https://docs.cdp.coinbase.com/wallet-api/docs/welcome).
 
 #### Network Configuration
 
-The `CdpWalletProvider` can be configured to use a specific network by passing the `network_id` parameter to the `CdpWalletProviderConfig`. The `network_id` is the ID of the network you want to use. You can find a list of [supported networks on the CDP API docs](https://docs.cdp.coinbase.com/cdp-apis/docs/networks).
+The `CdpEvmServerWalletProvider` can be configured to use a specific network by passing the `network_id` parameter to the `CdpEvmServerWalletProviderConfig`. The `network_id` is the ID of the network you want to use. You can find a list of [supported networks on the CDP API docs](https://docs.cdp.coinbase.com/cdp-apis/docs/networks).
 
 ```python
-from coinbase_agentkit import CdpWalletProvider, CdpWalletProviderConfig
+from coinbase_agentkit import CdpEvmServerWalletProvider, CdpEvmServerWalletProviderConfig
 
-wallet_provider = CdpWalletProvider(CdpWalletProviderConfig(
-    api_key_name="CDP API KEY NAME",
-    api_key_private="CDP API KEY PRIVATE KEY",
+wallet_provider = CdpEvmServerWalletProvider(CdpEvmServerWalletProviderConfig(
+    api_key_id="CDP API KEY ID",
+    api_key_secret="CDP API KEY SECRET",
+    wallet_secret="CDP WALLET SECRET",
     network_id="base-mainnet",
 ))
 ```
 
 #### Configuring from an existing CDP API Wallet
 
-If you already have a CDP API Wallet, you can configure the `CdpWalletProvider` by passing the `wallet` parameter to the `configureWithWallet` method.
+If you already have a CDP API Wallet, you can configure the `CdpEvmServerWalletProvider` by passing the `address` parameter to the config.
 
 ```python
-from coinbase_agentkit import CdpWalletProvider, CdpWalletProviderConfig
-from cdp import Wallet
+from coinbase_agentkit import CdpEvmServerWalletProvider, CdpEvmServerWalletProviderConfig
 
-wallet_provider = CdpWalletProvider(CdpWalletProviderConfig(
-    wallet=wallet,
-    api_key_name="CDP API KEY NAME",
-    api_key_private="CDP API KEY PRIVATE KEY",
+wallet_provider = CdpEvmServerWalletProvider(CdpEvmServerWalletProviderConfig(
+    api_key_id="CDP API KEY ID",
+    api_key_secret="CDP API KEY SECRET",
+    wallet_secret="CDP WALLET SECRET",
+    address="YOUR_WALLET_ADDRESS",
 ))
 ```
 
-#### Configuring from a mnemonic phrase
+#### Creating a new wallet
 
-The `CdpWalletProvider` can be configured from a mnemonic phrase by passing the `mnemonic_phrase` and `network_id` parameters to the `CdpWalletProviderConfig`. If `network_id` is not defined, the `CdpWalletProvider` will fall back to the env var `NETWORK_ID`, and if that is not defined, it will default to `base-sepolia`.
+The `CdpEvmServerWalletProvider` can create a new wallet by providing an `idempotency_key`. If no `address` is provided, a new wallet will be created.
 
 ```python
-from coinbase_agentkit import CdpWalletProvider, CdpWalletProviderConfig
+from coinbase_agentkit import CdpEvmServerWalletProvider, CdpEvmServerWalletProviderConfig
 
-wallet_provider = CdpWalletProvider(CdpWalletProviderConfig(
-    mnemonic_phrase="MNEMONIC PHRASE",
+wallet_provider = CdpEvmServerWalletProvider(CdpEvmServerWalletProviderConfig(
+    api_key_id="CDP API KEY ID",
+    api_key_secret="CDP API KEY SECRET",
+    wallet_secret="CDP WALLET SECRET",
+    idempotency_key="UNIQUE_IDEMPOTENCY_KEY",
+))
+```
+
+#### Example Usage with AgentKit
+
+Here's a complete example of using `CdpEvmServerWalletProvider` with AgentKit:
+
+```python
+from coinbase_agentkit import (
+    AgentKit,
+    AgentKitConfig,
+    CdpEvmServerWalletProvider,
+    CdpEvmServerWalletProviderConfig,
+    cdp_api_action_provider,
+    erc20_action_provider,
+    pyth_action_provider,
+    wallet_action_provider,
+    weth_action_provider,
+)
+
+# Initialize the wallet provider
+wallet_provider = CdpEvmServerWalletProvider(CdpEvmServerWalletProviderConfig(
+    api_key_id="CDP API KEY ID",
+    api_key_secret="CDP API KEY SECRET",
+    wallet_secret="CDP WALLET SECRET",
+    network_id="base-sepolia",
+))
+
+# Create AgentKit instance with wallet and action providers
+agentkit = AgentKit(AgentKitConfig(
+    wallet_provider=wallet_provider,
+    action_providers=[
+        cdp_api_action_provider(),
+        erc20_action_provider(),
+        pyth_action_provider(),
+        wallet_action_provider(),
+        weth_action_provider(),
+    ],
+))
+```
+
+### CdpEvmSmartWalletProvider
+
+The `CdpEvmSmartWalletProvider` is a wallet provider that uses the Coinbase Developer Platform (CDP) [Smart Wallets](https://docs.cdp.coinbase.com/wallet-api/docs/smart-wallets). Smart wallets are controlled by an owner, which can be either an EVM private key or a CDP server wallet address.
+
+#### Network Configuration
+
+The `CdpEvmSmartWalletProvider` can be configured to use a specific network by passing the `network_id` parameter to the `CdpEvmSmartWalletProviderConfig`. The `network_id` is the ID of the network you want to use. You can find a list of [supported networks on the CDP API docs](https://docs.cdp.coinbase.com/cdp-apis/docs/networks).
+
+```python
+from coinbase_agentkit import CdpEvmSmartWalletProvider, CdpEvmSmartWalletProviderConfig
+
+wallet_provider = CdpEvmSmartWalletProvider(CdpEvmSmartWalletProviderConfig(
+    api_key_id="CDP API KEY ID",
+    api_key_secret="CDP API KEY SECRET",
+    wallet_secret="CDP WALLET SECRET",
+    network_id="base-mainnet",
+    owner="OWNER_PRIVATE_KEY_OR_SERVER_WALLET_ADDRESS",
+))
+```
+
+#### Configuring with a Private Key Owner
+
+You can configure the `CdpEvmSmartWalletProvider` with a private key owner:
+
+```python
+from coinbase_agentkit import CdpEvmSmartWalletProvider, CdpEvmSmartWalletProviderConfig
+
+wallet_provider = CdpEvmSmartWalletProvider(CdpEvmSmartWalletProviderConfig(
+    api_key_id="CDP API KEY ID",
+    api_key_secret="CDP API KEY SECRET",
+    wallet_secret="CDP WALLET SECRET",
+    owner="0x123...",  # Private key
     network_id="base-sepolia",
 ))
 ```
 
-#### Exporting a wallet
+#### Configuring with a Server Wallet Owner
 
-The `CdpWalletProvider` can export a wallet by calling the `export_wallet` method.
+You can also configure the `CdpEvmSmartWalletProvider` with a CDP server wallet address as the owner:
 
 ```python
-from coinbase_agentkit import CdpWalletProvider
+from coinbase_agentkit import CdpEvmSmartWalletProvider, CdpEvmSmartWalletProviderConfig
 
-wallet_provider = CdpWalletProvider(CdpWalletProviderConfig(
-    mnemonic_phrase="MNEMONIC PHRASE",
+wallet_provider = CdpEvmSmartWalletProvider(CdpEvmSmartWalletProviderConfig(
+    api_key_id="CDP API KEY ID",
+    api_key_secret="CDP API KEY SECRET",
+    wallet_secret="CDP WALLET SECRET",
+    owner="0x456...",  # Server wallet address
+    network_id="base-sepolia",
+))
+```
+
+#### Creating a New Smart Wallet
+
+If no `address` is provided, a new smart wallet will be created for the owner. You can optionally provide an `idempotency_key` to ensure idempotent wallet creation:
+
+```python
+from coinbase_agentkit import CdpEvmSmartWalletProvider, CdpEvmSmartWalletProviderConfig
+
+wallet_provider = CdpEvmSmartWalletProvider(CdpEvmSmartWalletProviderConfig(
+    api_key_id="CDP API KEY ID",
+    api_key_secret="CDP API KEY SECRET",
+    wallet_secret="CDP WALLET SECRET",
+    owner="OWNER_PRIVATE_KEY_OR_SERVER_WALLET_ADDRESS",
+    idempotency_key="UNIQUE_IDEMPOTENCY_KEY",
+))
+```
+
+#### Gasless Transactions with Paymaster
+
+You can enable gasless transactions by providing a paymaster URL:
+
+```python
+from coinbase_agentkit import CdpEvmSmartWalletProvider, CdpEvmSmartWalletProviderConfig
+
+wallet_provider = CdpEvmSmartWalletProvider(CdpEvmSmartWalletProviderConfig(
+    api_key_id="CDP API KEY ID",
+    api_key_secret="CDP API KEY SECRET",
+    wallet_secret="CDP WALLET SECRET",
+    owner="OWNER_PRIVATE_KEY_OR_SERVER_WALLET_ADDRESS",
+    paymaster_url="https://your-paymaster-url.com",  # Optional paymaster URL for gasless transactions
+))
+```
+
+#### Example Usage with AgentKit
+
+Here's a complete example of using `CdpEvmSmartWalletProvider` with AgentKit:
+
+```python
+from coinbase_agentkit import (
+    AgentKit,
+    AgentKitConfig,
+    CdpEvmSmartWalletProvider,
+    CdpEvmSmartWalletProviderConfig,
+    cdp_api_action_provider,
+    erc20_action_provider,
+    pyth_action_provider,
+    wallet_action_provider,
+    weth_action_provider,
+)
+
+# Initialize the wallet provider
+wallet_provider = CdpEvmSmartWalletProvider(CdpEvmSmartWalletProviderConfig(
+    api_key_id="CDP API KEY ID",
+    api_key_secret="CDP API KEY SECRET",
+    wallet_secret="CDP WALLET SECRET",
+    owner="OWNER_PRIVATE_KEY_OR_SERVER_WALLET_ADDRESS",
     network_id="base-sepolia",
 ))
 
-wallet_data = wallet_provider.export_wallet()
-```
-
-#### Importing a wallet from `WalletData` JSON string
-
-The `CdpWalletProvider` can import a wallet from a `WalletData` JSON string by passing the `cdp_wallet_data` parameter to the `CdpWalletProviderConfig`.
-
-```python
-from coinbase_agentkit import CdpWalletProvider, CdpWalletProviderConfig
-
-wallet_provider = CdpWalletProvider(CdpWalletProviderConfig(
-    wallet_data="WALLET DATA JSON STRING",
-    api_key_name="CDP API KEY NAME",
-    api_key_private="CDP API KEY PRIVATE KEY",
+# Create AgentKit instance with wallet and action providers
+agentkit = AgentKit(AgentKitConfig(
+    wallet_provider=wallet_provider,
+    action_providers=[
+        cdp_api_action_provider(),
+        erc20_action_provider(),
+        pyth_action_provider(),
+        wallet_action_provider(),
+        weth_action_provider(),
+    ],
 ))
 ```
-
-#### Configuring `CdpWalletProvider` gas parameters
-
-The `CdpWalletProvider` also exposes parameters for effecting the gas calculations.
-
-```python
-from coinbase_agentkit import CdpWalletProvider, CdpWalletProviderConfig
-
-wallet_provider = CdpWalletProvider(CdpWalletProviderConfig(
-    wallet_data="WALLET DATA JSON STRING",
-    api_key_name="CDP API KEY NAME",
-    api_key_private="CDP API KEY PRIVATE KEY",
-    gas={
-        "gas_limit_multiplier": 2.0,   # Adjusts gas limit estimation
-        "fee_per_gas_multiplier": 2.0  # Adjusts max fee per gas
-    }
-))
-```
-
-**Note**: Gas parameters only impact the `wallet_provider.send_transaction` behavior. Actions that do not rely on direct transaction calls, such as `deploy_token`, `deploy_contract`, and `native_transfer`, remain unaffected.
 
 ### EthAccountWalletProvider
 
@@ -773,4 +900,4 @@ agent_kit = AgentKit(AgentKitConfig(
 
 ## Contributing
 
-See [CONTRIBUTING.md](https://github.com/coinbase/agentkit/blob/master/CONTRIBUTING.md) for more information.
+See [CONTRIBUTING.md](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING.md) for more information.

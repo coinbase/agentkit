@@ -54,6 +54,28 @@ describe("TwitterActionProvider", () => {
 
       expect(() => new TwitterActionProvider()).toThrow("TWITTER_API_KEY is not configured.");
     });
+
+    it("should implement lazy initialization", async () => {
+      // We'll check lazy initialization by observing that we can create an instance
+      // without error, and then use it to call methods successfully
+      const provider = new TwitterActionProvider(MOCK_CONFIG);
+
+      // Mock a response for accountDetails
+      mockClient.me.mockResolvedValue({
+        data: {
+          id: MOCK_ID,
+          name: MOCK_NAME,
+          username: MOCK_USERNAME,
+        },
+      });
+
+      // Call a method that should trigger initialization
+      const response = await provider.accountDetails({});
+
+      // Verify the method worked, which means initialization succeeded
+      expect(response).toContain("Successfully retrieved authenticated user account details");
+      expect(mockClient.me).toHaveBeenCalled();
+    });
   });
 
   describe("Account Details Action", () => {
@@ -221,6 +243,39 @@ describe("TwitterActionProvider", () => {
     it("should always return true for network support", () => {
       expect(provider.supportsNetwork({ protocolFamily: "evm", networkId: "1" })).toBe(true);
       expect(provider.supportsNetwork({ protocolFamily: "solana", networkId: "2" })).toBe(true);
+    });
+  });
+
+  describe("Next.js Integration", () => {
+    it("should work in a simulated Next.js environment", async () => {
+      // Create a clean instance of the provider
+      const provider = new TwitterActionProvider(MOCK_CONFIG);
+
+      // Mock v2.me to test functionality
+      const mockResponse = {
+        data: {
+          id: MOCK_ID,
+          name: MOCK_NAME,
+          username: MOCK_USERNAME,
+        },
+      };
+
+      const mockTwitterApi = {
+        v2: {
+          me: jest.fn().mockResolvedValue(mockResponse),
+        },
+      };
+
+      // Override the getClient method to return our mocked API
+      jest
+        .spyOn(provider as unknown as { getClient(): TwitterApi }, "getClient")
+        .mockReturnValue(mockTwitterApi as unknown as TwitterApi);
+
+      // Simulate a Next.js API route calling the provider
+      const result = await provider.accountDetails({});
+
+      expect(result).toContain("Successfully retrieved authenticated user account details");
+      expect(mockTwitterApi.v2.me).toHaveBeenCalled();
     });
   });
 });

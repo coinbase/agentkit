@@ -1,0 +1,180 @@
+import os
+import json
+import time
+import asyncio
+from dotenv import load_dotenv
+{% if _wallet_provider == "server" %}from coinbase_agentkit import CdpEvmServerWalletProviderConfig{% elif _wallet_provider == "smart" %}from coinbase_agentkit import CdpEvmSmartWalletProviderConfig{% elif _wallet_provider == "eth" %}from coinbase_agentkit import EthAccountWalletProviderConfig{% endif %}
+{% if _wallet_provider == "eth" %}from eth_account import Account{% elif _wallet_provider == "smart" %}from cdp import CdpClient{% endif %}
+
+from initialize_agent import initialize_agent
+
+def setup():
+    """Set up the agent with persistent wallet storage.
+
+    Returns:
+        tuple[Agent, dict]: The initialized agent and its configuration
+    """
+    # Configure network and file path{% if _wallet_provider == "server" or _wallet_provider == "smart" %}
+    network_id = os.getenv("NETWORK_ID", "base-sepolia")
+    wallet_file = f"wallet_data_{network_id.replace('-', '_')}.txt"
+    {% elif _wallet_provider == "eth" %}chain_id = os.getenv("CHAIN_ID", "84532")
+    wallet_file = f"wallet_data_{chain_id}.txt"{% endif %}
+    # Load existing wallet data if available
+    wallet_data = {}
+    if os.path.exists(wallet_file):
+        try:
+            with open(wallet_file) as f:
+                wallet_data = json.load(f)
+                print(f"Loading existing wallet from {wallet_file}")
+        except json.JSONDecodeError:
+            print(f"Warning: Invalid wallet data in {wallet_file}")
+            wallet_data = {}
+
+    {% if _wallet_provider == "server" or _wallet_provider == "smart" %}# Get required CDP credentials
+    api_key_id = os.getenv("CDP_API_KEY_ID")
+    api_key_secret = os.getenv("CDP_API_KEY_SECRET")
+    wallet_secret = os.getenv("CDP_WALLET_SECRET")
+
+    if not all([api_key_id, api_key_secret, wallet_secret]):
+        raise ValueError("CDP_API_KEY_ID, CDP_API_KEY_SECRET, and CDP_WALLET_SECRET are required"){% endif %}
+
+    {% if _wallet_provider == "server" %}# Create server wallet config
+    config = CdpEvmServerWalletProviderConfig(
+        api_key_id=api_key_id,
+        api_key_secret=api_key_secret,
+        wallet_secret=wallet_secret,
+        network_id=network_id,
+        address=wallet_data.get("address") or os.getenv("ADDRESS"),
+        idempotency_key=os.getenv("IDEMPOTENCY_KEY"),
+    )
+    {% elif _wallet_provider == "smart" %}# Check for environment variables first
+    owner_private_key = os.getenv("OWNER_PRIVATE_KEY")
+    owner_server_address = os.getenv("OWNER_SERVER_WALLET_ADDRESS")
+    smart_wallet_address_env = os.getenv("SMART_WALLET_ADDRESS")
+    
+    # Determine where to get wallet configuration from (env vars or saved file)
+    use_env_vars = (owner_private_key or owner_server_address) and smart_wallet_address_env
+    use_wallet_file = wallet_data.get("owner_value") and wallet_data.get("owner_type") and wallet_data.get("smart_wallet_address")
+    
+    owner_value = None
+    owner_type = None
+    smart_wallet_address = None
+    
+    # Prioritize environment variables over saved wallet file
+    if use_env_vars:
+        # Use environment variables
+        print("Using wallet configuration from environment variables")
+        if owner_private_key:
+            owner_value = owner_private_key
+            owner_type = "private_key"
+        else:
+            owner_value = owner_server_address
+            owner_type = "server_address"
+        smart_wallet_address = smart_wallet_address_env
+    elif use_wallet_file:
+        # Use saved wallet file
+        print("Using wallet configuration from saved wallet file")
+        owner_value = wallet_data.get("owner_value")
+        owner_type = wallet_data.get("owner_type")
+        smart_wallet_address = wallet_data.get("smart_wallet_address")
+    else:
+        # If using just one part from env and missing the other, print a warning
+        if owner_private_key or owner_server_address:
+            print("Warning: Owner specified in environment, but no SMART_WALLET_ADDRESS found")
+            if owner_private_key:
+                owner_value = owner_private_key
+                owner_type = "private_key"
+            else:
+                owner_value = owner_server_address
+                owner_type = "server_address"
+        elif smart_wallet_address_env:
+            print("Warning: SMART_WALLET_ADDRESS specified in environment, but no owner found")
+            smart_wallet_address = smart_wallet_address_env
+            
+        # Fall back to partial info from wallet file if available
+        if not owner_value and wallet_data.get("owner_value"):
+            print("Using owner from saved wallet file")
+            owner_value = wallet_data.get("owner_value")
+            owner_type = wallet_data.get("owner_type")
+        
+        if not smart_wallet_address and wallet_data.get("smart_wallet_address"):
+            print("Using smart wallet address from saved wallet file")
+            smart_wallet_address = wallet_data.get("smart_wallet_address")
+
+    # If no owner is provided, create a new server wallet to be used as the owner
+    if not owner_value:
+        print("No owner provided, creating new server wallet...")
+        idempotency_key = os.getenv("OWNER_IDEMPOTENCY_KEY")
+        
+        # Create a new server wallet using CDP
+        client = CdpClient(
+            api_key_id=api_key_id,
+            api_key_secret=api_key_secret,
+            wallet_secret=wallet_secret,
+        )
+        async def create_wallet():
+            async with client as cdp:
+                account = await cdp.evm.create_account(idempotency_key=idempotency_key)
+                return account.address
+        owner_value = asyncio.run(create_wallet())
+        owner_type = "server_address"
+        print(f"Created new server wallet: {owner_value}")
+
+    # Create smart wallet config
+    config = CdpEvmSmartWalletProviderConfig(
+        api_key_id=api_key_id,
+        api_key_secret=api_key_secret,
+        wallet_secret=wallet_secret,
+        network_id=network_id,
+        address=smart_wallet_address,
+        owner=owner_value,
+        paymaster_url=os.getenv("PAYMASTER_URL"),
+    )
+    {% elif _wallet_provider == "eth" %}# Get or generate private key
+    private_key = (
+        os.getenv("PRIVATE_KEY")  # First priority: Environment variable
+        or wallet_data.get("private_key")  # Second priority: Saved wallet file
+        or Account.create().key.hex()  # Third priority: Generate new key
+    )
+
+    # Ensure private key has 0x prefix
+    if not private_key.startswith("0x"):
+        private_key = f"0x{private_key}"
+
+    # Create Ethereum account from private key
+    account = Account.from_key(private_key)
+
+    # Create eth wallet config
+    config = EthAccountWalletProviderConfig(
+        account=account,
+        chain_id=chain_id,
+    ){% endif %}
+    # Initialize the agent
+    agent_executor, wallet_provider = initialize_agent(config)
+
+    # Save the wallet data after successful initialization{% if _wallet_provider == "server" %}
+    new_wallet_data = {
+        "address": wallet_provider.get_address(),
+        "network_id": network_id,
+        "created_at": time.strftime("%Y-%m-%d %H:%M:%S") if not wallet_data else wallet_data.get("created_at")
+    }{% elif _wallet_provider == "smart" %}
+    new_wallet_data = {
+        "smart_wallet_address": wallet_provider.get_address(),
+        "owner_value": owner_value,
+        "owner_type": owner_type,
+        "network_id": network_id,
+        "created_at": time.strftime("%Y-%m-%d %H:%M:%S") if not wallet_data else wallet_data.get("created_at")
+    }{% elif _wallet_provider == "eth" %}
+    new_wallet_data = {
+        "private_key": private_key,
+        "chain_id": chain_id,
+        "created_at": time.strftime("%Y-%m-%d %H:%M:%S") if not wallet_data else wallet_data.get("created_at")
+    }{% endif %}
+
+    with open(wallet_file, "w") as f:
+        json.dump(new_wallet_data, f, indent=2)
+        print(f"Wallet data saved to {wallet_file}")
+
+    {% if _framework == "langchain" %}agent_config = {"configurable": {"thread_id": "AgentKit Chatbot"}}
+    return agent_executor, agent_config
+    {% elif _framework == "openai_agents" %}return agent_executor{% endif %} 

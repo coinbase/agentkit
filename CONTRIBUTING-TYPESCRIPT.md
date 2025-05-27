@@ -177,7 +177,7 @@ Do not use the contract address as the destination address. If you are unsure of
 
 Notice the return value contains useful information for the user, such as the transaction hash and link. It's important to include this information in the return value so that the user can easily see the result of the action.
 
-This class is then exported out of [typescript/agentkit/src/action-providers/erc721/index.ts](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/action-providers/erc721/index.ts) so that is is consumable by users of the `@coinbase/agentkit` package.
+This class is then exported out of [typescript/agentkit/src/action-providers/erc721/index.ts](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/action-providers/erc721/index.ts) so that is consumable by users of the `@coinbase/agentkit` package.
 
 ### Testing the action provider
 
@@ -213,11 +213,11 @@ Non-EVM Wallet Providers are housed in `typescript/agentkit/src/wallet-providers
 
 ## Integrating into an AI Agent Framework
 
-Actions are necessary building blocks powering onchain AI applications, but they're just one piece of the puzzle. To make them truly useful, they must be integrated into an AI Agent framework such as [LangChain](https://www.langchain.com/) or [Eliza](https://elizaos.github.io/eliza/), among others.
+Actions are necessary building blocks powering onchain AI applications, but they're just one piece of the puzzle. To make them truly useful, they must be integrated into an AI Agent framework such as [LangChain](https://www.langchain.com/) or [Eliza](https://eliza.how/), among others.
 
 Integrations into AI Agent frameworks are specific to the framework itself, so we can't go into specific implementation details here, but we can offer up some examples and tips.
 
-- Check out how [AgentKit actions are mapped into LangChain Tools](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit-langchain/src/index.ts)
+- Check out how [AgentKit actions are mapped into LangChain Tools](https://github.com/coinbase/agentkit/blob/master/typescript/framework-extensions/langchain/src/index.ts)
 - Check out how [AgentKit Actions are mapped into Eliza Actions](https://github.com/elizaOS/eliza/blob/develop/packages/plugin-agentkit/src/actions.ts#L31)
 
 ## Testing

@@ -1,0 +1,10 @@
+describe("example action execution", () => {
+  it("should execute example action", async () => {
+    const args = {
+      fieldName: "test",
+      amount: "1.0",
+    };
+    const result = await provider.exampleAction(args);
+    expect(result).toContain(args.fieldName);
+  });
+});

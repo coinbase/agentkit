@@ -1,6 +1,6 @@
 [project]
 name = "coinbase-agentkit"
-version = "0.3.0"
+version = "0.5.1"
 description = "Coinbase AgentKit"
 authors = [{ name = "John Peterson", email = "john.peterson@coinbase.com" }]
 requires-python = "~=3.10"
@@ -16,7 +16,7 @@ keywords = [
     "agent",
 ]
 dependencies = [
-    "cdp-sdk==0.21.0",
+    "cdp-sdk>=1.6.1,<2",
     "pydantic~=2.0",
     "web3>=7.6.0,<8",
     "python-dotenv>=1.0.1,<2",
@@ -30,6 +30,9 @@ dependencies = [
     "langchain-compass==0.2.1",
     "numpy>=2.2.4",
 ]
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [project.scripts]
 check-description-length = "scripts.check_description_length:main"
