@@ -58,6 +58,12 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{
   agentkit: AgentKit;
   walletProvider: WalletProvider;
 }> {
+  if (!process.env.PRIVY_APP_ID || !process.env.PRIVY_APP_SECRET) {
+    throw new Error(
+      "I need both PRIVY_APP_ID and PRIVY_APP_SECRET in your .env file to set up your wallet.",
+    );
+  }
+
   try {
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
     const config: PrivyWalletConfig = {

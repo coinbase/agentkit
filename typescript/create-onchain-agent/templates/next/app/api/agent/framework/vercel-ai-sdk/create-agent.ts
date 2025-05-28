@@ -44,11 +44,15 @@ export async function createAgent(): Promise<Agent> {
     return agent;
   }
 
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("I need an OPENAI_API_KEY in your .env file to power my intelligence.");
+  }
+
+  const { agentkit, walletProvider } = await prepareAgentkitAndWalletProvider();
+
   try {
     // Initialize LLM: https://platform.openai.com/docs/models#gpt-4o
     const model = openai("gpt-4o-mini");
-
-    const { agentkit, walletProvider } = await prepareAgentkitAndWalletProvider();
 
     // Initialize Agent
     const canUseFaucet = walletProvider.getNetwork().networkId == "base-sepolia";

@@ -40,9 +40,13 @@ export async function createAgent(): Promise<ReturnType<typeof createReactAgent>
     return agent;
   }
 
-  try {
-    const { agentkit, walletProvider } = await prepareAgentkitAndWalletProvider();
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("I need an OPENAI_API_KEY in your .env file to power my intelligence.");
+  }
 
+  const { agentkit, walletProvider } = await prepareAgentkitAndWalletProvider();
+
+  try {
     // Initialize LLM: https://platform.openai.com/docs/models#gpt-4o
     const llm = new ChatOpenAI({ model: "gpt-4o-mini" });
 
