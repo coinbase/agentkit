@@ -41,12 +41,12 @@ export interface CdpProviderConfig {
   /**
    * The CDP API Key Name.
    */
-  apiKeyName?: string;
+  apiKeyId?: string;
 
   /**
    * The CDP API Key Private Key.
    */
-  apiKeyPrivateKey?: string;
+  apiKeySecret?: string;
 }
 
 /**
@@ -145,10 +145,10 @@ export class CdpWalletProvider extends EvmWalletProvider {
   public static async configureWithWallet(
     config: ConfigureCdpAgentkitWithWalletOptions = {},
   ): Promise<CdpWalletProvider> {
-    if (config.apiKeyName && config.apiKeyPrivateKey) {
+    if (config.apiKeyId && config.apiKeySecret) {
       Coinbase.configure({
-        apiKeyName: config.apiKeyName,
-        privateKey: config.apiKeyPrivateKey?.replace(/\\n/g, "\n"),
+        apiKeyName: config.apiKeyId,
+        privateKey: config.apiKeySecret?.replace(/\\n/g, "\n"),
         source: "agentkit",
         sourceVersion: version,
       });

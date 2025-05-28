@@ -10,8 +10,8 @@
         "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY": "",
         "PRIVY_WALLET_AUTHORIZATION_KEY_ID": "",
         "CHAIN_ID": "84532",
-        "CDP_API_KEY_NAME": "",
-        "CDP_API_KEY_PRIVATE_KEY": ""
+        "CDP_API_KEY_ID": "",
+        "CDP_API_KEY_SECRET": ""
       }
     }
   }

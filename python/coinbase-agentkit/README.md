@@ -70,8 +70,8 @@ from coinbase_agentkit import (
 )
 
 wallet_provider = CdpWalletProvider(CdpWalletProviderConfig(
-    api_key_name="CDP API KEY NAME",
-    api_key_private="CDP API KEY PRIVATE KEY",
+    api_key_id="CDP API KEY NAME",
+    api_key_secret="CDP API KEY SECRET",
     network_id="base-mainnet"
 ))
 
@@ -94,8 +94,8 @@ agent_kit = AgentKit(AgentKitConfig(
     wallet_provider=wallet_provider,
     action_providers=[
         cdp_api_action_provider(
-            api_key_name="CDP API KEY NAME",
-            api_key_private="CDP API KEY PRIVATE KEY"
+            api_key_id="CDP API KEY NAME",
+            api_key_secret="CDP API KEY SECRET"
         ),
         pyth_action_provider()
     ]
@@ -206,8 +206,8 @@ class MyActionProvider(ActionProvider[WalletProvider]):
 
 ```python
 agent_kit = AgentKit(AgentKitConfig(
-    cdp_api_key_name="CDP API KEY NAME",
-    cdp_api_key_private="CDP API KEY PRIVATE KEY",
+    cdp_api_key_id="CDP API KEY ID",
+    cdp_api_key_secret="CDP API KEY SECRET",
     action_providers=[my_action_provider()]
 ))
 ```

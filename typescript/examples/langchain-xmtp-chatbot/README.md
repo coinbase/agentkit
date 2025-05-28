@@ -35,8 +35,8 @@ You'll need the following API keys:
 
 Once you have them, rename the `.env-local` file to `.env` and make sure you set the API keys to their corresponding environment variables:
 
-- "CDP_API_KEY_NAME"
-- "CDP_API_KEY_PRIVATE_KEY"
+- "CDP_API_KEY_ID"
+- "CDP_API_KEY_SECRET"
 - "OPENAI_API_KEY"
 - "XMTP_ENV" # defaults to "dev"
 - "WALLET_KEY" # Optional, use `npm run gen:keys` to generate a random wallet key

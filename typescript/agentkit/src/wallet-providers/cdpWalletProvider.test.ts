@@ -261,18 +261,18 @@ describe("CdpWalletProvider", () => {
     });
 
     it("should initialize with API keys", async () => {
-      const apiKeyName = "test-key";
-      const apiKeyPrivateKey = "private-key";
+      const apiKeyId = "test-key";
+      const apiKeySecret = "private-key";
 
       const provider = await CdpWalletProvider.configureWithWallet({
-        apiKeyName,
-        apiKeyPrivateKey,
+        apiKeyId,
+        apiKeySecret,
         networkId: MOCK_NETWORK_ID,
       });
 
       expect(Coinbase.configure).toHaveBeenCalledWith({
-        apiKeyName,
-        privateKey: apiKeyPrivateKey,
+        apiKeyName: apiKeyId,
+        privateKey: apiKeySecret,
         source: "agentkit",
         sourceVersion: "1.0.0",
       });

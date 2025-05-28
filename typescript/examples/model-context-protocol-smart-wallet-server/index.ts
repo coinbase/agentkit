@@ -18,7 +18,7 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
  * Validates that required environment variables are set
  */
 function validateEnvironment(): void {
-  const requiredVars = ["CDP_API_KEY_NAME", "CDP_API_KEY_PRIVATE_KEY"];
+  const requiredVars = ["CDP_API_KEY_ID", "CDP_API_KEY_SECRET"];
   const missingVars = requiredVars.filter(varName => !process.env[varName]);
 
   if (missingVars.length > 0) {
@@ -61,8 +61,8 @@ async function initializeServer() {
     const signer = privateKeyToAccount(privateKey);
 
     const config = {
-      apiKeyName: process.env.CDP_API_KEY_NAME!,
-      apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY!,
+      apiKeyId: process.env.CDP_API_KEY_ID!,
+      apiKeySecret: process.env.CDP_API_KEY_SECRET!,
       networkId: process.env.NETWORK_ID || "base-sepolia",
       smartWalletAddress: process.env.SMART_WALLET_ADDRESS as Address,
       signer,
@@ -86,8 +86,8 @@ async function initializeServer() {
         erc20ActionProvider(),
         erc721ActionProvider(),
         cdpApiActionProvider({
-          apiKeyName: config.apiKeyName,
-          apiKeyPrivateKey: config.apiKeyPrivateKey,
+          apiKeyId: config.apiKeyId,
+          apiKeySecret: config.apiKeySecret,
         }),
       ],
     });

@@ -40,8 +40,8 @@ function validateEnvironment(): void {
   const requiredVars = [
     "OPENAI_API_KEY",
     "ZERODEV_PROJECT_ID",
-    "CDP_API_KEY_NAME",
-    "CDP_API_KEY_PRIVATE_KEY",
+    "CDP_API_KEY_ID",
+    "CDP_API_KEY_SECRET",
   ];
 
   requiredVars.forEach(varName => {
@@ -119,11 +119,11 @@ async function initializeAgent() {
         chainId: NETWORK_ID_TO_VIEM_CHAIN[networkId].id.toString(),
       };
       evmWalletProvider = await PrivyEvmWalletProvider.configureWithWallet(privyConfig);
-    } else if (process.env.CDP_API_KEY_NAME && process.env.CDP_API_KEY_PRIVATE_KEY) {
+    } else if (process.env.CDP_API_KEY_ID && process.env.CDP_API_KEY_SECRET) {
       // Configure CDP Wallet Provider
       const cdpConfig = {
-        apiKeyName: process.env.CDP_API_KEY_NAME!,
-        apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY!,
+        apiKeyId: process.env.CDP_API_KEY_ID!,
+        apiKeySecret: process.env.CDP_API_KEY_SECRET!,
         cdpWalletData: walletDataStr || undefined,
         networkId: networkId,
       };
@@ -157,12 +157,12 @@ async function initializeAgent() {
         erc20ActionProvider(),
         erc721ActionProvider(),
         cdpApiActionProvider({
-          apiKeyName: process.env.CDP_API_KEY_NAME!,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY!,
+          apiKeyId: process.env.CDP_API_KEY_ID!,
+          apiKeySecret: process.env.CDP_API_KEY_SECRET!,
         }),
         cdpWalletActionProvider({
-          apiKeyName: process.env.CDP_API_KEY_NAME!,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY!,
+          apiKeyId: process.env.CDP_API_KEY_ID!,
+          apiKeySecret: process.env.CDP_API_KEY_SECRET!,
         }),
         zeroDevWalletActionProvider(),
       ],

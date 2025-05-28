@@ -134,8 +134,8 @@ async function initializeAgent() {
         walletActionProvider(),
         erc20ActionProvider(),
         cdpApiActionProvider({
-          apiKeyName: process.env.CDP_API_KEY_NAME as string,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY as string,
+          apiKeyId: process.env.CDP_API_KEY_ID as string,
+          apiKeySecret: process.env.CDP_API_KEY_SECRET as string,
         }),
         splActionProvider(),
       ],
