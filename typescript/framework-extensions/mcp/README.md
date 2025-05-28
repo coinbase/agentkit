@@ -5,6 +5,7 @@ Model Context Protocol (MCP) integration for AgentKit, enabling Claude Desktop a
 ## Overview
 
 This package provides an MCP server that wraps AgentKit functionality, allowing AI assistants like Claude to:
+
 - Create and manage blockchain wallets
 - Send transactions
 - Deploy smart contracts
@@ -15,3 +16,4 @@ This package provides an MCP server that wraps AgentKit functionality, allowing 
 
 ```bash
 npm install @coinbase/agentkit-mcp
+```

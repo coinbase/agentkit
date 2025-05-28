@@ -718,6 +718,22 @@ importers:
         specifier: workspace:*
         version: link:../../agentkit
 
+  framework-extensions/mcp:
+    dependencies:
+      '@coinbase/agentkit':
+        specifier: workspace:*
+        version: link:../../agentkit
+      '@modelcontextprotocol/sdk':
+        specifier: ^0.5.0
+        version: 0.5.0
+    devDependencies:
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.17.27
+      typescript:
+        specifier: ^5.0.0
+        version: 5.8.2
+
   framework-extensions/model-context-protocol:
     dependencies:
       '@modelcontextprotocol/sdk':
@@ -1511,6 +1527,9 @@ packages:
   '@metamask/utils@9.3.0':
     resolution: {integrity: sha512-w8CVbdkDrVXFJbfBSlDfafDR6BAkpDmv1bC1UJVCoVny5tW2RKAdn9i68Xf7asYT4TnUhl/hN4zfUiKQq9II4g==}
     engines: {node: '>=16.0.0'}
+
+  '@modelcontextprotocol/sdk@0.5.0':
+    resolution: {integrity: sha512-RXgulUX6ewvxjAG0kOpLMEdXXWkzWgaoCGaA2CwNW7cQCIphjpJhjpHSiaPdVCnisjRF/0Cm9KWHUuIoeiAblQ==}
 
   '@modelcontextprotocol/sdk@1.8.0':
     resolution: {integrity: sha512-e06W7SwrontJDHwCawNO5SGxG+nU9AAx+jpHHZqGl/WrDBdWOpvirC+s58VpJTB5QemI4jTRcjWT4Pt3Q1NPQQ==}
@@ -7950,6 +7969,12 @@ snapshots:
       uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
+
+  '@modelcontextprotocol/sdk@0.5.0':
+    dependencies:
+      content-type: 1.0.5
+      raw-body: 3.0.0
+      zod: 3.24.2
 
   '@modelcontextprotocol/sdk@1.8.0':
     dependencies:
