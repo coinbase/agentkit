@@ -271,7 +271,7 @@ describe("CdpWalletProvider", () => {
       });
 
       expect(Coinbase.configure).toHaveBeenCalledWith({
-        apiKeyId,
+        apiKeyName: apiKeyId,
         privateKey: apiKeySecret,
         source: "agentkit",
         sourceVersion: "1.0.0",
