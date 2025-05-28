@@ -65,8 +65,8 @@ npm install @coinbase/agentkit
 
 ```typescript
 const agentKit = await AgentKit.from({
-  cdpApiKeyName: "CDP API KEY NAME",
-  cdpApiKeyPrivate: "CDP API KEY PRIVATE KEY",
+  cdpApiKeyId: "CDP API KEY NAME",
+  cdpApiKeyPrivate: "CDP API KEY SECRET",
 });
 ```
 
@@ -76,8 +76,8 @@ If no wallet or action provider are specified, the agent will use the `CdpWallet
 
 ```typescript
 const agentKit = await AgentKit.from({
-  cdpApiKeyName: "CDP API KEY NAME",
-  cdpApiKeyPrivate: "CDP API KEY PRIVATE KEY",
+  cdpApiKeyId: "CDP API KEY NAME",
+  cdpApiKeyPrivate: "CDP API KEY SECRET",
 });
 ```
 
@@ -87,8 +87,8 @@ const agentKit = await AgentKit.from({
 import { CdpWalletProvider } from "@coinbase/agentkit";
 
 const walletProvider = await CdpWalletProvider.configureWithWallet({
-    apiKeyName: "CDP API KEY NAME",
-    apiKeyPrivate: "CDP API KEY PRIVATE KEY",
+    apiKeyId: "CDP API KEY NAME",
+    apiKeyPrivate: "CDP API KEY SECRET",
     networkId: "base-mainnet",
 });
 
@@ -106,8 +106,8 @@ const agentKit = await AgentKit.from({
     walletProvider,
     actionProviders: [
         cdpApiActionProvider({
-            apiKeyName: "CDP API KEY NAME",
-            apiKeyPrivate: "CDP API KEY PRIVATE KEY",
+            apiKeyId: "CDP API KEY NAME",
+            apiKeyPrivate: "CDP API KEY SECRET",
         }),
         pythActionProvider(),
     ],
@@ -528,8 +528,8 @@ This gives your agent access to the actions defined in the action provider.
 
 ```typescript
 const agentKit = new AgentKit({
-  cdpApiKeyName: "CDP API KEY NAME",
-  cdpApiKeyPrivate: "CDP API KEY PRIVATE KEY",
+  cdpApiKeyId: "CDP API KEY NAME",
+  cdpApiKeyPrivate: "CDP API KEY SECRET",
   actionProviders: [myActionProvider()],
 });
 ```
@@ -621,8 +621,8 @@ The `CdpWalletProvider` can be configured to use a specific network by passing t
 import { CdpWalletProvider } from "@coinbase/agentkit";
 
 const walletProvider = await CdpWalletProvider.configureWithWallet({
-    apiKeyName: "CDP API KEY NAME",
-    apiKeyPrivate: "CDP API KEY PRIVATE KEY",
+    apiKeyId: "CDP API KEY NAME",
+    apiKeyPrivate: "CDP API KEY SECRET",
     networkId: "base-mainnet",
 });
 ```
@@ -636,8 +636,8 @@ import { CdpWalletProvider } from "@coinbase/agentkit";
 import { Wallet } from "@coinbase/coinbase-sdk";
 const walletProvider = await CdpWalletProvider.configureWithWallet({
     wallet,
-    apiKeyName: "CDP API KEY NAME",
-    apiKeyPrivate: "CDP API KEY PRIVATE KEY",
+    apiKeyId: "CDP API KEY NAME",
+    apiKeyPrivate: "CDP API KEY SECRET",
 });
 ```
 
@@ -678,8 +678,8 @@ import { CdpWalletProvider } from "@coinbase/agentkit";
 
 const walletProvider = await CdpWalletProvider.configureWithWallet({
     cdpWalletData: "WALLET DATA JSON STRING",
-    apiKeyName: "CDP API KEY NAME",
-    apiKeyPrivate: "CDP API KEY PRIVATE KEY",
+    apiKeyId: "CDP API KEY NAME",
+    apiKeyPrivate: "CDP API KEY SECRET",
 });
 ```
 
@@ -692,8 +692,8 @@ import { CdpWalletProvider } from "@coinbase/agentkit";
 
 const walletProvider = await CdpWalletProvider.configureWithWallet({
     cdpWalletData: "WALLET DATA JSON STRING",
-    apiKeyName: "CDP API KEY NAME",
-    apiKeyPrivate: "CDP API KEY PRIVATE KEY",
+    apiKeyId: "CDP API KEY NAME",
+    apiKeyPrivate: "CDP API KEY SECRET",
     gas: {
         gasLimitMultiplier: 2.0,  // Adjusts gas limit estimation
         feePerGasMultiplier: 2.0, // Adjusts max fee per gas
@@ -879,8 +879,8 @@ import { ZeroDevWalletProvider, CdpWalletProvider } from "@coinbase/agentkit";
 
 // First create a CDP wallet provider as the signer
 const cdpWalletProvider = await CdpWalletProvider.configureWithWallet({
-    apiKeyName: "CDP API KEY NAME",
-    apiKeyPrivate: "CDP API KEY PRIVATE KEY",
+    apiKeyId: "CDP API KEY NAME",
+    apiKeyPrivate: "CDP API KEY SECRET",
     networkId: "base-mainnet",
 });
 

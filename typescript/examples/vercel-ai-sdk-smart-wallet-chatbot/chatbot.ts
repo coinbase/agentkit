@@ -32,7 +32,7 @@ function validateEnvironment(): void {
   const missingVars: string[] = [];
 
   // Check required variables
-  const requiredVars = ["OPENAI_API_KEY", "CDP_API_KEY_NAME", "CDP_API_KEY_PRIVATE_KEY"];
+  const requiredVars = ["OPENAI_API_KEY", "CDP_API_KEY_ID", "CDP_API_KEY_SECRET"];
   requiredVars.forEach(varName => {
     if (!process.env[varName]) {
       missingVars.push(varName);
@@ -115,8 +115,8 @@ async function initializeAgent() {
       walletProvider,
       actionProviders: [
         cdpApiActionProvider({
-          apiKeyName: process.env.CDP_API_KEY_NAME,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
+          apiKeyId: process.env.CDP_API_KEY_ID,
+          apiKeySecret: process.env.CDP_API_KEY_SECRET,
         }),
         erc721ActionProvider(),
         pythActionProvider(),

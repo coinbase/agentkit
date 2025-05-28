@@ -34,8 +34,8 @@ You'll need the following API keys:
 Once you have them, rename the `.env-local` file to `.env` and make sure you set the API keys to their corresponding environment variables:
 
 #### Required:
-  - `CDP_API_KEY_NAME=`
-  - `CDP_API_KEY_PRIVATE_KEY=`
+  - `CDP_API_KEY_ID=`
+  - `CDP_API_KEY_SECRET=`
   - `OPENAI_API_KEY=`
 
 #### Optional:

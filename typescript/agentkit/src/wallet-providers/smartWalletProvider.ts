@@ -27,8 +27,8 @@ import { EvmWalletProvider } from "./evmWalletProvider";
 import { version } from "../../package.json";
 
 export interface ConfigureSmartWalletOptions {
-  cdpApiKeyName?: string;
-  cdpApiKeyPrivateKey?: string;
+  cdpApiKeyId?: string;
+  cdpApiKeySecret?: string;
   networkId?: string;
   smartWalletAddress?: Hex;
   paymasterUrl?: string;
@@ -83,8 +83,8 @@ export class SmartWalletProvider extends EvmWalletProvider {
    * const smartWalletProvider = await SmartWalletProvider.configureWithWallet({
    *   networkId: "base-sepolia",
    *   signer: privateKeyToAccount("0xethprivatekey"),
-   *   cdpApiKeyName: "my-api-key",
-   *   cdpApiKeyPrivateKey: "my-private-key",
+   *   cdpApiKeyId: "my-api-key",
+   *   cdpApiKeySecret: "my-private-key",
    *   smartWalletAddress: "0x123456...",
    * });
    * ```
@@ -110,13 +110,13 @@ export class SmartWalletProvider extends EvmWalletProvider {
       );
     }
 
-    const cdpApiKeyName = config.cdpApiKeyName || process.env.CDP_API_KEY_NAME;
-    const cdpApiKeyPrivateKey = config.cdpApiKeyPrivateKey || process.env.CDP_API_KEY_PRIVATE_KEY;
+    const cdpApiKeyId = config.cdpApiKeyId || process.env.CDP_API_KEY_ID;
+    const cdpApiKeySecret = config.cdpApiKeySecret || process.env.CDP_API_KEY_SECRET;
 
-    if (cdpApiKeyName && cdpApiKeyPrivateKey) {
+    if (cdpApiKeyId && cdpApiKeySecret) {
       Coinbase.configure({
-        apiKeyName: cdpApiKeyName,
-        privateKey: cdpApiKeyPrivateKey?.replace(/\\n/g, "\n"),
+        apiKeyName: cdpApiKeyId,
+        privateKey: cdpApiKeySecret?.replace(/\\n/g, "\n"),
         source: "agentkit",
         sourceVersion: version,
       });
