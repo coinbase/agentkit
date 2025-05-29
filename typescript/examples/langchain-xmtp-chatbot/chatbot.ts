@@ -184,8 +184,8 @@ async function initializeAgent(userId: string): Promise<{ agent: Agent; config: 
     );
 
     const config = {
-      apiKeyName: process.env.CDP_API_KEY_NAME,
-      apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+      apiKeyId: process.env.CDP_API_KEY_ID,
+      apiKeySecret: process.env.CDP_API_KEY_SECRET?.replace(/\\n/g, "\n"),
       cdpWalletData: storedWalletData || undefined,
       networkId: process.env.NETWORK_ID || "base-sepolia",
     };
@@ -198,12 +198,12 @@ async function initializeAgent(userId: string): Promise<{ agent: Agent; config: 
         walletActionProvider(),
         erc20ActionProvider(),
         cdpApiActionProvider({
-          apiKeyName: process.env.CDP_API_KEY_NAME,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+          apiKeyId: process.env.CDP_API_KEY_ID,
+          apiKeySecret: process.env.CDP_API_KEY_SECRET?.replace(/\\n/g, "\n"),
         }),
         cdpWalletActionProvider({
-          apiKeyName: process.env.CDP_API_KEY_NAME,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+          apiKeyId: process.env.CDP_API_KEY_ID,
+          apiKeySecret: process.env.CDP_API_KEY_SECRET?.replace(/\\n/g, "\n"),
         }),
       ],
     });
@@ -352,8 +352,8 @@ function validateEnvironment(): void {
 
   const requiredVars = [
     "OPENAI_API_KEY",
-    "CDP_API_KEY_NAME",
-    "CDP_API_KEY_PRIVATE_KEY",
+    "CDP_API_KEY_ID",
+    "CDP_API_KEY_SECRET",
     "WALLET_KEY",
     "ENCRYPTION_KEY",
   ];

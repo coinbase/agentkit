@@ -22,10 +22,10 @@ export class CdpWalletActionProvider extends ActionProvider<CdpWalletProvider> {
   constructor(config: CdpProviderConfig = {}) {
     super("cdp_wallet", []);
 
-    if (config.apiKeyName && config.apiKeyPrivateKey) {
+    if (config.apiKeyId && config.apiKeySecret) {
       Coinbase.configure({
-        apiKeyName: config.apiKeyName,
-        privateKey: config.apiKeyPrivateKey?.replace(/\\n/g, "\n"),
+        apiKeyName: config.apiKeyId,
+        privateKey: config.apiKeySecret?.replace(/\\n/g, "\n"),
         source: "agentkit",
         sourceVersion: version,
       });

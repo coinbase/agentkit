@@ -6,8 +6,8 @@
         "/Users/YOUR_USER/YOUR_DIRECTORIES/agentkit/typescript/examples/model-context-protocol-smart-wallet-server/dist/index.js"
       ],
       "env": {
-        "CDP_API_KEY_NAME": "YOUR_CDP_API_KEY_NAME",
-        "CDP_API_KEY_PRIVATE_KEY": "YOUR_CDP_API_KEY_PRIVATE_KEY",
+        "CDP_API_KEY_ID": "YOUR_CDP_API_KEY_ID",
+        "CDP_API_KEY_SECRET": "YOUR_CDP_API_KEY_SECRET",
         "PRIVATE_KEY": "YOUR_PRIVATE_KEY",
         "SMART_WALLET_ADDRESS": "YOUR_SMART_WALLET_ADDRESS"
       }

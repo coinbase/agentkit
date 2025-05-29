@@ -32,8 +32,8 @@ uv sync
 
 ### Set ENV Vars
 - Ensure the following ENV Vars are set:
-  - "CDP_API_KEY_NAME"
-  - "CDP_API_KEY_PRIVATE_KEY"
+  - "CDP_API_KEY_ID"
+  - "CDP_API_KEY_SECRET"
   - "OPENAI_API_KEY"
   - "PRIVATE_KEY" (optional, will generate a new private key if not provided)
   - "NETWORK_ID" (Defaults to `base-sepolia`)
