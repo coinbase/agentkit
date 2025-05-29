@@ -8,6 +8,8 @@ import { AgentKit, Action } from "@coinbase/agentkit";
 
 /**
  * The AgentKit MCP tools and tool handler
+ * @property tools - Array of MCP-compatible tool definitions
+ * @property toolHandler - Function to execute tools by name with arguments
  */
 interface AgentKitMcpTools {
   tools: Tool[];
@@ -28,8 +30,7 @@ export async function getMcpTools(agentKit: AgentKit): Promise<AgentKitMcpTools>
       return {
         name: action.name,
         description: action.description,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        inputSchema: zodToJsonSchema(action.schema as any),
+        inputSchema: zodToJsonSchema(action.schema),
       } as Tool;
     }),
     toolHandler: async (name: string, args: unknown) => {
@@ -38,18 +39,22 @@ export async function getMcpTools(agentKit: AgentKit): Promise<AgentKitMcpTools>
         throw new Error(`Tool ${name} not found`);
       }
 
-      const parsedArgs = action.schema.parse(args);
+      try {
+        const parsedArgs = action.schema.parse(args);
+        const result = await action.invoke(parsedArgs);
 
-      const result = await action.invoke(parsedArgs);
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(result),
-          },
-        ],
-      };
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result),
+            },
+          ],
+        };
+      } catch (error) {
+        // Zod validation error veya invoke error'larını handle et
+        throw new Error(`Failed to execute tool ${name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     },
   };
 }

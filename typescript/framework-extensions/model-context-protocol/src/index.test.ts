@@ -39,4 +39,44 @@ describe("getMcpTools", () => {
     const result = await toolHandler("testAction", { test: "data" });
     expect(result).toStrictEqual({ content: [{ text: '"Invoked with data"', type: "text" }] });
   });
+
+  it("should throw error when tool not found", async () => {
+    const mockAgentKit = await AgentKit.from({});
+    const { toolHandler } = await getMcpTools(mockAgentKit);
+    
+    await expect(toolHandler("nonExistentTool", {}))
+      .rejects.toThrow("Tool nonExistentTool not found");
+  });
+
+  it("should handle schema validation errors", async () => {
+    const mockAgentKit = await AgentKit.from({});
+    const { toolHandler } = await getMcpTools(mockAgentKit);
+    
+    await expect(toolHandler("testAction", { invalid: "data" }))
+      .rejects.toThrow("Failed to execute tool testAction");
+  });
+
+  it("should handle action invoke errors", async () => {
+    const errorAction: Action = {
+      name: "errorAction",
+      description: "An action that throws error",
+      schema: z.object({ test: z.string() }),
+      invoke: jest.fn(async () => {
+        throw new Error("Invoke failed");
+      }),
+    };
+
+    // Update mock to include error action
+    jest.mocked(AgentKit.from).mockImplementationOnce(() => 
+      Promise.resolve({
+        getActions: jest.fn(() => [mockAction, errorAction]),
+      }) as any
+    );
+
+    const mockAgentKit = await AgentKit.from({});
+    const { toolHandler } = await getMcpTools(mockAgentKit);
+    
+    await expect(toolHandler("errorAction", { test: "data" }))
+      .rejects.toThrow("Failed to execute tool errorAction: Invoke failed");
+  });
 });
