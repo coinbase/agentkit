@@ -3,53 +3,47 @@
  * This enables Claude Desktop and other MCP clients to use AgentKit
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  AgentKit,
+import { Server } from "@modelcontextprotocol/sdk/server";  // .js uzantısını kaldırdık
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio";
+import { 
+  AgentKit, 
   AgentKitConfig,
   CdpWalletProvider,
-  CdpWalletProviderConfig,
+  CdpWalletProviderConfig
 } from "@coinbase/agentkit";
 
-// Existing AgentKit actions'ları import et
-import {
-  createWallet,
-  getBalance,
-  sendTransaction,
-  deployToken,
-  // ... diğer action'lar
-} from "@coinbase/agentkit/actions";
+// Not: AgentKit'te actions export'u olmayabilir, kontrol edilmeli
+// import { ... } from "@coinbase/agentkit/actions";
 
 export class AgentKitMCPServer {
   private server: Server;
   private agentKit: AgentKit | null = null;
-
+  
   constructor() {
     this.server = new Server(
       {
         name: "agentkit-mcp",
         version: "0.1.0",
-        description: "Blockchain operations via AgentKit",
+        description: "Blockchain operations via AgentKit"
       },
       {
         capabilities: {
-          tools: {},
-        },
-      },
+          tools: {}
+        }
+      }
     );
-
+    
     this.setupHandlers();
   }
 
   private setupHandlers() {
     // Tool listesi
     this.server.setRequestHandler("tools/list", async () => ({
-      tools: this.getToolDefinitions(),
+      tools: this.getToolDefinitions()
     }));
 
     // Tool çağrıları
-    this.server.setRequestHandler("tools/call", async request => {
+    this.server.setRequestHandler("tools/call", async (request: any) => {
       return this.handleToolCall(request);
     });
   }
@@ -65,11 +59,11 @@ export class AgentKitMCPServer {
             network: {
               type: "string",
               description: "Network ID (e.g., base-mainnet, base-sepolia)",
-              default: "base-sepolia",
-            },
+              default: "base-sepolia"
+            }
           },
-          required: [],
-        },
+          required: []
+        }
       },
       {
         name: "get_balance",
@@ -79,18 +73,39 @@ export class AgentKitMCPServer {
           properties: {
             address: {
               type: "string",
-              description: "Wallet address (optional, uses default if not provided)",
+              description: "Wallet address (optional, uses default if not provided)"
             },
             token: {
               type: "string",
-              description: "Token symbol (e.g., ETH, USDC)",
-            },
+              description: "Token symbol (e.g., ETH, USDC)"
+            }
           },
-          required: [],
-        },
-      },
-      // Diğer tool tanımları...
+          required: []
+        }
+      }
     ];
+  }
+
+  private async handleToolCall(request: any): Promise<any> {
+    // TODO: Implement tool call handling
+    const { name, arguments: args } = request.params;
+    
+    if (!this.agentKit) {
+      this.agentKit = new AgentKit();
+    }
+
+    switch (name) {
+      case "create_wallet":
+        // TODO: Implement wallet creation
+        return { content: [{ type: "text", text: "Wallet created" }] };
+      
+      case "get_balance":
+        // TODO: Implement balance retrieval
+        return { content: [{ type: "text", text: "Balance: 0" }] };
+      
+      default:
+        throw new Error(`Unknown tool: ${name}`);
+    }
   }
 
   async start() {
