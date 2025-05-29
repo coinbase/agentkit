@@ -52,7 +52,6 @@ export async function getMcpTools(agentKit: AgentKit): Promise<AgentKitMcpTools>
           ],
         };
       } catch (error) {
-        // Zod validation error veya invoke error'larını handle et
         throw new Error(`Failed to execute tool ${name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     },
