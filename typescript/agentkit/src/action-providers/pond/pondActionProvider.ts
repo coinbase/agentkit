@@ -35,6 +35,32 @@ export interface PondActionProviderConfig {
   ethDifyApiKey?: string;
 }
 
+// Add at the top, after imports
+async function handlePondApiError(response: Response, service: string = "Pond API"): Promise<void> {
+  if (!response.ok) {
+    const errorText = await response.text();
+    if (response.status === 429) {
+      throw new Error("Rate limit exceeded. Please try again later.");
+    } else if (response.status === 401) {
+      throw new Error("Invalid API key or authentication failed.");
+    } else if (response.status >= 500) {
+      throw new Error(`${service} service is currently unavailable. Please try again later.`);
+    }
+    throw new Error(`API Error (${response.status}): ${errorText}`);
+  }
+}
+
+function formatDate(dateStr: string | number): string {
+  if (!dateStr || dateStr === "unknown") return "unknown date";
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
 /**
  * Action provider for interacting with Pond API
  */
@@ -89,7 +115,7 @@ export class PondActionProvider extends ActionProvider {
     12: 38,  // 12 hour prediction
     24: 39   // 24 hour prediction
   };
-  private static readonly BASE_DATA_ANALYST_MODEL_ID = 41;  // Base data analyst model
+ 
 
   private static readonly TIMEFRAME_SUFFIX_MAP = {
     3: "3HOURS",
@@ -153,7 +179,7 @@ export class PondActionProvider extends ActionProvider {
   @CreateAction({
     name: "get_wallet_risk_score",
     description: `
-This tool will get a wallet risk score from Pond API. It is based on the wallet's activity and transaction history. NOT TOKEN RISK ASSESMENT
+This tool will get a wallet risk score from Pond API. It is based on the wallet's activity and transaction history. NOT TOKEN RISSESMENT
 It requires an Ethereum (base) wallet address as input.
 
 The response will include:
@@ -162,7 +188,7 @@ The response will include:
 - Feature completeness percentage
 
 Available models:
-- DEFAULT (40): Standard risk assessment model by OlehRCL
+- DEFAULT (40): Wallet risk assessment model by OlehRCL
 - BASE_22JE0569 (14): Base chain risk assessment by 22je0569
 - BASE_WELLSPRING (15): Base chain risk assessment by Wellspring Praise
 
@@ -189,17 +215,7 @@ A failure response will return an error message with details.
         }),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        if (response.status === 429) {
-          throw new Error("Rate limit exceeded. Please try again later.");
-        } else if (response.status === 401) {
-          throw new Error("Invalid API key or authentication failed.");
-        } else if (response.status >= 500) {
-          throw new Error("Pond API service is currently unavailable. Please try again later.");
-        }
-        throw new Error(`API Error (${response.status}): ${errorText}`);
-      }
+      await handlePondApiError(response);
 
       const data = await response.json().catch(() => {
         throw new Error("Invalid JSON response from Pond API");
@@ -223,42 +239,13 @@ A failure response will return an error message with details.
 
       // Convert score to percentage and risk level
       const riskPercentage = (result.score * 100).toFixed(2);
-      let riskLevel = "MINIMAL";
-      let riskDescription = "";
       
-      if (result.score > 0.8) {
-        riskLevel = "CRITICAL";
-        riskDescription = "Extremely high-risk behavior detected";
-      } else if (result.score > 0.6) {
-        riskLevel = "HIGH";
-        riskDescription = "Significant risk factors present";
-      } else if (result.score > 0.4) {
-        riskLevel = "MODERATE";
-        riskDescription = "Some concerning patterns observed";
-      } else if (result.score > 0.2) {
-        riskLevel = "LOW";
-        riskDescription = "Minor risk indicators present";
-      } else {
-        riskDescription = "No significant risk factors detected";
-      }
-
       // Get the most recent feature update time
       const updateTimes = Object.entries(featureUpdateTime)
         .filter(([time]) => time !== "null")
         .sort(([a], [b]) => b.localeCompare(a));
       const latestUpdate = updateTimes[0] ? updateTimes[0][0] : "unknown";
       
-      // Format the date nicely
-      const formattedDate = latestUpdate !== "unknown" 
-        ? new Date(latestUpdate).toLocaleDateString('en-US', { 
-            day: 'numeric', 
-            month: 'long', 
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit' 
-          })
-        : "unknown date";
-
       const modelAuthor = args.model === 'BASE_22JE0569' ? '22je0569' : 
                          args.model === 'BASE_WELLSPRING' ? 'Wellspring Praise' : 
                          'OlehRCL';
@@ -269,15 +256,8 @@ Using Pond wallet risk scoring from ${modelAuthor}
 Wallet Risk Assessment for ${args.walletAddress}:
 
 • Risk Score: ${riskPercentage}%
-• Risk Level: ${riskLevel}
-• Risk Summary: ${riskDescription}
 ${debugInfo.not_null_feature ? `• Feature Completeness: ${notNullFeature}` : ''}
-${latestUpdate !== "unknown" ? `• Last Updated: ${formattedDate}` : ''}
-
-Note: Risk scores range from 0% (lowest risk) to 100% (highest risk).
-${result.score > 0.6 ? `\nWould you like to try the other risk assessment models for comparison?
-• Wallet risk scoring from 22je0569
-• Wallet risk scoring from Wellspring Praise` : ''}`;
+• Last Updated: ${formatDate(latestUpdate)}`;
     } catch (error) {
       return `Error getting wallet risk score: ${error instanceof Error ? error.message : String(error)}`;
     }
@@ -293,7 +273,7 @@ ${result.score > 0.6 ? `\nWould you like to try the other risk assessment models
     name: "get_wallet_summary",
     description: `
 This tool will get a basic wallet activity summary from Pond API for Base, Ethereum, or Solana chains.
-It is designed for simple numerical metrics and statistics only. For complex analysis or specific token information, use the Base data analyst.
+It is designed for simple numerical metrics and statistics only. For complex analysis or specific token bought,sold, traded, use the Base/ethereum data analyst.
 
 It requires:
 1. A wallet address
@@ -401,17 +381,7 @@ You can specify the timeframe by adding it to your request, for example:
         }),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        if (response.status === 429) {
-          throw new Error("Rate limit exceeded. Please try again later.");
-        } else if (response.status === 401) {
-          throw new Error("Invalid API key or authentication failed.");
-        } else if (response.status >= 500) {
-          throw new Error("Pond API service is currently unavailable. Please try again later.");
-        }
-        throw new Error(`API Error (${response.status}): ${errorText}`);
-      }
+      await handlePondApiError(response);
 
       const data = await response.json();
       const parsedResponse = WalletSummarySchema.response.parse(data);
@@ -478,7 +448,7 @@ Gas Usage:
 • Average Gas per Tx: ${formatNative(analysis[`${chainPrefix}_TRANSACTIONS_USER_GAS_FEE_AVG_FOR_${daySuffix}`])}
 • Median Gas per Tx: ${formatNative(analysis[`${chainPrefix}_TRANSACTIONS_USER_GAS_FEE_SUM_MEDIAN_${daySuffix}`])}
 
-Last Updated: ${new Date(result.debug_info.UPDATED_AT).toLocaleString()}`;
+Last Updated: ${formatDate(result.debug_info.UPDATED_AT)}`;
 
     } catch (error) {
       console.error(`Error getting ${chain} chain summary:`, error);
@@ -539,17 +509,7 @@ A failure response will return an error message with details.
         }),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        if (response.status === 429) {
-          throw new Error("Rate limit exceeded. Please try again later.");
-        } else if (response.status === 401) {
-          throw new Error("Invalid API key or authentication failed.");
-        } else if (response.status >= 500) {
-          throw new Error("Pond API service is currently unavailable. Please try again later.");
-        }
-        throw new Error(`API Error (${response.status}): ${errorText}`);
-      }
+      await handlePondApiError(response);
 
       const data = await response.json();
       const parsedResponse = SybilPredictionSchema.response.parse(data);
@@ -574,54 +534,20 @@ Please check if this is a new or inactive wallet address.
 
       // Convert score to percentage and Sybil likelihood level
       const sybilPercentage = (result.score * 100).toFixed(2);
-      let sybilLevel = "VERY UNLIKELY";
-      let sybilDescription = "";
-
-      if (result.score > 0.8) {
-        sybilLevel = "VERY LIKELY";
-        sybilDescription = "Strong indicators of Sybil behavior detected";
-      } else if (result.score > 0.6) {
-        sybilLevel = "LIKELY";
-        sybilDescription = "Significant Sybil patterns observed";
-      } else if (result.score > 0.4) {
-        sybilLevel = "POSSIBLE";
-        sybilDescription = "Some Sybil-like patterns present";
-      } else if (result.score > 0.2) {
-        sybilLevel = "UNLIKELY";
-        sybilDescription = "Minor Sybil indicators present";
-      } else {
-        sybilDescription = "No significant Sybil behavior detected";
-      }
-
+      
       // Get the most recent feature update time
       const updateTimes = Object.entries(result.debug_info.feature_update_time)
         .filter(([time]) => time !== "null")
         .sort(([a], [b]) => b.localeCompare(a));
       const latestUpdate = updateTimes[0] ? updateTimes[0][0] : "unknown";
 
-      // Format the date nicely
-      const formattedDate = latestUpdate !== "unknown"
-        ? new Date(latestUpdate).toLocaleDateString('en-US', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })
-        : "unknown date";
-
       return `
 Based on Pond's Sybil detection model (created by Jerry), this wallet has been analyzed:
 
 Sybil Assessment:
 • Sybil Score: ${sybilPercentage}%
-• Likelihood: ${sybilLevel}
-• Analysis: ${sybilDescription}
 • Feature Completeness: ${result.debug_info.not_null_feature}
-• Last Updated: ${formattedDate}
-
-Note: Sybil scores range from 0% (lowest likelihood) to 100% (highest likelihood) of being a multi-account wallet.
-`;
+• Last Updated: ${formatDate(latestUpdate)}`;
 
     } catch (error) {
       return `Error getting Sybil prediction: ${error instanceof Error ? error.message : String(error)}`;
@@ -671,17 +597,7 @@ A failure response will return an error message with details.
         }),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        if (response.status === 429) {
-          throw new Error("Rate limit exceeded. Please try again later.");
-        } else if (response.status === 401) {
-          throw new Error("Invalid API key or authentication failed.");
-        } else if (response.status >= 500) {
-          throw new Error("Pond API service is currently unavailable. Please try again later.");
-        }
-        throw new Error(`API Error (${response.status}): ${errorText}`);
-      }
+      await handlePondApiError(response);
 
       const data = await response.json();
       const parsedResponse = TokenPricePredictionSchema.response.parse(data);
@@ -699,66 +615,28 @@ Based on Pond's price prediction model, the analysis for ${args.tokenAddress} is
 • Data Completeness: ${result.debug_info.not_null_feature || '0'}%
 • Predicted Change: ${(result.score * 100).toFixed(2)}% (low confidence)
 
-Note: This prediction may not be reliable due to limited available data.
-Please check if this is a new or illiquid token.
-`;
+Note: This prediction is based on on-chain metrics and historical patterns.
+Past performance does not guarantee future results.`;
       }
 
-      // Convert score to percentage and determine prediction direction
+      // Convert score to percentage
       const priceChangePercent = (result.score * 100).toFixed(2);
       const direction = result.score >= 0 ? "increase" : "decrease";
-      const magnitude = Math.abs(result.score);
-      let confidenceLevel = "LOW";
-      let movementDescription = "minimal";
-
-      if (magnitude > 0.1) {
-        confidenceLevel = "VERY HIGH";
-        movementDescription = "significant";
-      } else if (magnitude > 0.05) {
-        confidenceLevel = "HIGH";
-        movementDescription = "notable";
-      } else if (magnitude > 0.02) {
-        confidenceLevel = "MODERATE";
-        movementDescription = "moderate";
-      } else if (magnitude > 0.01) {
-        confidenceLevel = "LOW";
-        movementDescription = "slight";
-      }
-
+      
       // Get the most recent feature update time
       const updateTimes = Object.entries(result.debug_info.feature_update_time)
         .filter(([time]) => time !== "null")
         .sort(([a], [b]) => b.localeCompare(a));
       const latestUpdate = updateTimes[0] ? updateTimes[0][0] : "unknown";
 
-      // Format the date nicely
-      const formattedDate = latestUpdate !== "unknown"
-        ? new Date(latestUpdate).toLocaleDateString('en-US', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })
-        : "unknown date";
-
       return `
 Based on Pond's price prediction model for Base chain tokens:
 
 Price Movement Forecast:
-• Direction: ${direction.toUpperCase()}
-• Magnitude: ${movementDescription.toUpperCase()}
+• Direction: ${direction}
 • Predicted Change: ${priceChangePercent}%
-• Confidence Level: ${confidenceLevel}
-
-Analysis Details:
-• Token Address: ${args.tokenAddress}
 • Data Completeness: ${result.debug_info.not_null_feature}
-• Last Updated: ${formattedDate}
-
-Note: This prediction is based on on-chain metrics and historical patterns.
-Past performance does not guarantee future results.
-`;
+• Last Updated: ${formatDate(latestUpdate)}`;
 
     } catch (error) {
       return `Error getting price prediction: ${error instanceof Error ? error.message : String(error)}`;
@@ -810,17 +688,7 @@ A failure response will return an error message with details.
             }),
           });
 
-          if (!response.ok) {
-            const errorText = await response.text();
-            if (response.status === 429) {
-              throw new Error("Rate limit exceeded. Please try again later.");
-            } else if (response.status === 401) {
-              throw new Error("Invalid API key or authentication failed.");
-            } else if (response.status >= 500) {
-              throw new Error("Pond API service is currently unavailable. Please try again later.");
-            }
-            throw new Error(`API Error (${response.status}): ${errorText}`);
-          }
+          await handlePondApiError(response);
 
           const data = await response.json();
           const parsedResponse = TokenRiskScoreSchema.response.parse(data);
@@ -838,46 +706,18 @@ A failure response will return an error message with details.
       );
 
       // Format the results
-      const formatRiskLevel = (score: number): { level: string; description: string } => {
-        if (score > 0.8) {
-          return { level: "CRITICAL", description: "Extremely high-risk token" };
-        } else if (score > 0.6) {
-          return { level: "HIGH", description: "Significant risk factors present" };
-        } else if (score > 0.4) {
-          return { level: "MODERATE", description: "Some concerning patterns observed" };
-        } else if (score > 0.2) {
-          return { level: "LOW", description: "Minor risk indicators present" };
-        } else {
-          return { level: "MINIMAL", description: "No significant risk factors detected" };
-        }
-      };
-
-      const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('en-US', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        });
-      };
-
       const formattedResults = results.map(({ modelName, result }) => {
         const riskPercentage = (result.score * 100).toFixed(2);
-        const { level, description } = formatRiskLevel(result.score);
         const updateTimes = Object.entries(result.debug_info.feature_update_time)
           .filter(([time]) => time !== "null")
           .sort(([a], [b]) => b.localeCompare(a));
         const latestUpdate = updateTimes[0] ? updateTimes[0][0] : "unknown";
-        const formattedDate = latestUpdate !== "unknown" ? formatDate(latestUpdate) : "unknown date";
 
         return {
           modelName,
           riskPercentage,
-          level,
-          description,
           dataCompleteness: result.debug_info.not_null_feature,
-          lastUpdated: formattedDate
+          lastUpdated: formatDate(latestUpdate)
         };
       });
 
@@ -888,8 +728,6 @@ Token Risk Analysis for ${args.tokenAddress}:
 ${formattedResults.map(result => 
   `${result.modelName}'s Model (${result.modelName === 'THE_DAY' ? '1st' : result.modelName === 'MR_HEOS' ? '2nd' : '3rd'} Place):\n` +
   `• Risk Score: ${result.riskPercentage}%\n` +
-  `• Risk Level: ${result.level}\n` +
-  `• Analysis: ${result.description}\n` +
   `• Data Completeness: ${result.dataCompleteness}\n` +
   `• Last Updated: ${result.lastUpdated}\n\n`
 ).join('')}Note: Risk scores range from 0% (lowest risk) to 100% (highest risk).
@@ -950,17 +788,7 @@ A failure response will return an error message with details.
         }),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        if (response.status === 429) {
-          throw new Error("Rate limit exceeded. Please try again later.");
-        } else if (response.status === 401) {
-          throw new Error("Invalid API key or authentication failed.");
-        } else if (response.status >= 500) {
-          throw new Error("Pond API service is currently unavailable. Please try again later.");
-        }
-        throw new Error(`API Error (${response.status}): ${errorText}`);
-      }
+      await handlePondApiError(response);
 
       const data = await response.json();
       const parsedResponse = TopSolanaMemeCoinsSchema.response.parse(data);
@@ -1029,14 +857,6 @@ A failure response will return an error message with details.
       });
 
       const lastUpdated = coins[0].debug_info.UPDATED_AT;
-      const formattedDate = new Date(lastUpdated).toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
 
       return `Based on Pond's Solana meme coins analytics (Last ${args.timeframe} hours):
 
@@ -1046,7 +866,7 @@ ${top3.join('\n\n')}
 Other Trending Meme Coins:
 ${rest.join('\n\n')}
 
-Last Updated: ${formattedDate}
+Last Updated: ${formatDate(lastUpdated)}
 
 Note: 
 • Price change is percentage over the period
@@ -1103,17 +923,7 @@ A failure response will return an error message with details.
         }),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        if (response.status === 429) {
-          throw new Error("Rate limit exceeded. Please try again later.");
-        } else if (response.status === 401) {
-          throw new Error("Invalid API key or authentication failed.");
-        } else if (response.status >= 500) {
-          throw new Error("Dify API service is currently unavailable. Please try again later.");
-        }
-        throw new Error(`API Error (${response.status}): ${errorText}`);
-      }
+      await handlePondApiError(response, "Dify API");
 
       // Handle streaming response
       const reader = response.body?.getReader();
@@ -1158,13 +968,7 @@ A failure response will return an error message with details.
         throw new Error("No valid response received from the API");
       }
 
-      return `Using Pond's Base Data Analyst model.\n\n${fullResponse}\n\nLast Updated: ${new Date().toLocaleDateString('en-US', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })}`;
+      return `Using Pond's Base Data Analyst model.\n\n${fullResponse}\n\nLast Updated: ${formatDate(new Date().toISOString())}`;
     } catch (error) {
       return `Error getting Base data analysis: ${error instanceof Error ? error.message : String(error)}`;
     }
@@ -1179,15 +983,16 @@ A failure response will return an error message with details.
   @CreateAction({
     name: "get_eth_data_analysis",
     description: `
-This tool will get Eth chain data analysis from Pond API.
+This tool will answer complex Ethereum data-based question from Pond API.
 It requires a query string as input.
 
 The response will include:
-- Analysis results based on the query
+- Analysis results based on the query (already LLM interpreted and user friendly)
 - Data completeness metrics
 - Last update timestamp
 
-Example query: "What are the most popular NFTs on Eth today?"
+Example query: "What are the most popular NFTs on Eth today?", "What are the top trending tokens in the last 12 hours on Ethereum?"
+
 
 A failure response will return an error message with details.
 `,
@@ -1214,17 +1019,7 @@ A failure response will return an error message with details.
         }),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        if (response.status === 429) {
-          throw new Error("Rate limit exceeded. Please try again later.");
-        } else if (response.status === 401) {
-          throw new Error("Invalid API key or authentication failed.");
-        } else if (response.status >= 500) {
-          throw new Error("Dify API service is currently unavailable. Please try again later.");
-        }
-        throw new Error(`API Error (${response.status}): ${errorText}`);
-      }
+      await handlePondApiError(response, "Dify API");
 
       // Handle streaming response
       const reader = response.body?.getReader();
@@ -1269,13 +1064,7 @@ A failure response will return an error message with details.
         throw new Error("No valid response received from the API");
       }
 
-      return `Using Pond's Ethereum Data Analyst model.\n\n${fullResponse}\n\nLast Updated: ${new Date().toLocaleDateString('en-US', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })}`;
+      return `Using Pond's Ethereum Data Analyst model.\n\n${fullResponse}\n\nLast Updated: ${formatDate(new Date().toISOString())}`;
     } catch (error) {
       return `Error getting Ethereum data analysis: ${error instanceof Error ? error.message : String(error)}`;
     }
@@ -1328,17 +1117,7 @@ A failure response will return an error message with details.
           }),
         });
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          if (response.status === 429) {
-            throw new Error("Rate limit exceeded. Please try again later.");
-          } else if (response.status === 401) {
-            throw new Error("Invalid API key or authentication failed.");
-          } else if (response.status >= 500) {
-            throw new Error("Pond API service is currently unavailable. Please try again later.");
-          }
-          throw new Error(`API Error (${response.status}): ${errorText}`);
-        }
+        await handlePondApiError(response);
 
         const data = await response.json();
         const parsedResponse = TokenPricePredictionSchema.response.parse(data);
@@ -1356,8 +1135,8 @@ Based on Pond's volatility prediction model, the analysis for ${args.tokenAddres
 • Data Completeness: ${result.debug_info.not_null_feature || '0'}%
 • Predicted Volatility: ${(result.score * 100).toFixed(2)}% (low confidence)
 
-Note: This prediction may not be reliable due to limited available data.
-Please check if this is a new or illiquid token.
+Note: This prediction is based on on-chain metrics and historical patterns.
+Past performance does not guarantee future results.
 
 Note: The requested timeframe is not available. Available timeframes are: ${validTimeframes} hours.
 For the closest prediction to your request, please use one of these timeframes.
@@ -1373,30 +1152,15 @@ For the closest prediction to your request, please use one of these timeframes.
           .sort(([a], [b]) => b.localeCompare(a));
         const latestUpdate = updateTimes[0] ? updateTimes[0][0] : "unknown";
 
-        // Format the date nicely
-        const formattedDate = latestUpdate !== "unknown"
-          ? new Date(latestUpdate).toLocaleDateString('en-US', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })
-          : "unknown date";
-
         return `
 Volatility Prediction for ${args.tokenAddress} (${defaultTimeframe}h):
 
 • Predicted Volatility: ${volatilityPercent}%
 • Data Completeness: ${result.debug_info.not_null_feature}
-• Last Updated: ${formattedDate}
+• Last Updated: ${formatDate(latestUpdate)}
 
 Note: This prediction is based on on-chain metrics and historical patterns.
-Past performance does not guarantee future results.
-
-Note: The requested timeframe is not available. Available timeframes are: ${validTimeframes} hours.
-For the closest prediction to your request, please use one of these timeframes.
-`;
+Past performance does not guarantee future results.`;
       }
 
       const modelId = PondActionProvider.VOLATILITY_PREDICTION_MODEL_MAP[args.timeframe];
@@ -1414,17 +1178,7 @@ For the closest prediction to your request, please use one of these timeframes.
         }),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        if (response.status === 429) {
-          throw new Error("Rate limit exceeded. Please try again later.");
-        } else if (response.status === 401) {
-          throw new Error("Invalid API key or authentication failed.");
-        } else if (response.status >= 500) {
-          throw new Error("Pond API service is currently unavailable. Please try again later.");
-        }
-        throw new Error(`API Error (${response.status}): ${errorText}`);
-      }
+      await handlePondApiError(response);
 
       const data = await response.json();
       const parsedResponse = TokenPricePredictionSchema.response.parse(data);
@@ -1442,9 +1196,8 @@ Based on Pond's volatility prediction model, the analysis for ${args.tokenAddres
 • Data Completeness: ${result.debug_info.not_null_feature || '0'}%
 • Predicted Volatility: ${(result.score * 100).toFixed(2)}% (low confidence)
 
-Note: This prediction may not be reliable due to limited available data.
-Please check if this is a new or illiquid token.
-`;
+Note: This prediction is based on on-chain metrics and historical patterns.
+Past performance does not guarantee future results.`;
       }
 
       // Convert score to percentage
@@ -1456,27 +1209,15 @@ Please check if this is a new or illiquid token.
         .sort(([a], [b]) => b.localeCompare(a));
       const latestUpdate = updateTimes[0] ? updateTimes[0][0] : "unknown";
 
-      // Format the date nicely
-      const formattedDate = latestUpdate !== "unknown"
-        ? new Date(latestUpdate).toLocaleDateString('en-US', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })
-        : "unknown date";
-
       return `
 Volatility Prediction for ${args.tokenAddress} (${args.timeframe}h):
 
 • Predicted Volatility: ${volatilityPercent}%
 • Data Completeness: ${result.debug_info.not_null_feature}
-• Last Updated: ${formattedDate}
+• Last Updated: ${formatDate(latestUpdate)}
 
 Note: This prediction is based on on-chain metrics and historical patterns.
-Past performance does not guarantee future results.
-`;
+Past performance does not guarantee future results.`;
 
     } catch (error) {
       return `Error getting volatility prediction: ${error instanceof Error ? error.message : String(error)}`;
@@ -1532,17 +1273,7 @@ A failure response will return an error message with details.
         }),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        if (response.status === 429) {
-          throw new Error("Rate limit exceeded. Please try again later.");
-        } else if (response.status === 401) {
-          throw new Error("Invalid API key or authentication failed.");
-        } else if (response.status >= 500) {
-          throw new Error("Pond API service is currently unavailable. Please try again later.");
-        }
-        throw new Error(`API Error (${response.status}): ${errorText}`);
-      }
+      await handlePondApiError(response);
 
       const data = await response.json();
       const parsedResponse = PumpFunPricePredictionSchema.response.parse(data);
@@ -1560,9 +1291,8 @@ Based on Pond's PumpFun price prediction model, the analysis for ${args.tokenAdd
 • Data Completeness: ${result.debug_info.not_null_feature || '0'}%
 • Predicted Change: ${(result.score * 100).toFixed(2)}% (low confidence)
 
-Note: This prediction may not be reliable due to limited available data.
-Please check if this is a new or illiquid token.
-`;
+Note: This prediction is based on on-chain metrics and historical patterns.
+Past performance does not guarantee future results.`;
       }
 
       // Convert score to percentage
@@ -1575,27 +1305,15 @@ Please check if this is a new or illiquid token.
         .sort(([a], [b]) => b.localeCompare(a));
       const latestUpdate = updateTimes[0] ? updateTimes[0][0] : "unknown";
 
-      // Format the date nicely
-      const formattedDate = latestUpdate !== "unknown"
-        ? new Date(latestUpdate).toLocaleDateString('en-US', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })
-        : "unknown date";
-
       return `
 PumpFun Price Prediction for ${args.tokenAddress} (${args.timeframe}h):
 
 • Predicted Change: ${priceChangePercent}% (${direction})
 • Data Completeness: ${result.debug_info.not_null_feature}
-• Last Updated: ${formattedDate}
+• Last Updated: ${formatDate(latestUpdate)}
 
 Note: This prediction is based on on-chain metrics and historical patterns.
-Past performance does not guarantee future results.
-`;
+Past performance does not guarantee future results.`;
 
     } catch (error) {
       return `Error getting PumpFun price prediction: ${error instanceof Error ? error.message : String(error)}`;
@@ -1640,17 +1358,7 @@ A failure response will return an error message with details.
         }),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        if (response.status === 429) {
-          throw new Error("Rate limit exceeded. Please try again later.");
-        } else if (response.status === 401) {
-          throw new Error("Invalid API key or authentication failed.");
-        } else if (response.status >= 500) {
-          throw new Error("Pond API service is currently unavailable. Please try again later.");
-        }
-        throw new Error(`API Error (${response.status}): ${errorText}`);
-      }
+      await handlePondApiError(response);
 
       const data = await response.json();
       const parsedResponse = ZoraNFTRecommendationSchema.response.parse(data);
@@ -1704,17 +1412,6 @@ Please check if this is a new or inactive wallet address.
         .sort(([a], [b]) => b.localeCompare(a));
       const latestUpdate = updateTimes[0] ? updateTimes[0][0] : "unknown";
 
-      // Format the date nicely
-      const formattedDate = latestUpdate !== "unknown"
-        ? new Date(latestUpdate).toLocaleDateString('en-US', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })
-        : "unknown date";
-
       return `
 Based on Pond's Zora NFT recommendation model for ${args.walletAddress}:
 
@@ -1723,11 +1420,10 @@ ${recommendations}
 
 Data Quality:
 • Data Completeness: ${result.debug_info.not_null_feature}
-• Last Updated: ${formattedDate}
+• Last Updated: ${formatDate(latestUpdate)}
 
 Note: Similarity scores range from 0% to 100%, where higher scores indicate better matches to your preferences.
-These recommendations are based on your wallet's activity and preferences on Zora.
-`;
+These recommendations are based on your wallet's activity and preferences on Zora.`;
 
     } catch (error) {
       return `Error getting Zora NFT recommendations: ${error instanceof Error ? error.message : String(error)}`;
@@ -1775,17 +1471,7 @@ A failure response will return an error message with details.
         }),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        if (response.status === 429) {
-          throw new Error("Rate limit exceeded. Please try again later.");
-        } else if (response.status === 401) {
-          throw new Error("Invalid API key or authentication failed.");
-        } else if (response.status >= 500) {
-          throw new Error("Pond API service is currently unavailable. Please try again later.");
-        }
-        throw new Error(`API Error (${response.status}): ${errorText}`);
-      }
+      await handlePondApiError(response);
 
       const data = await response.json();
       const parsedResponse = SecurityModelSchema.response.parse(data);
@@ -1803,61 +1489,26 @@ Based on Pond's security assessment model, the analysis for ${args.address} is i
 • Data Completeness: ${result.debug_info.not_null_feature || '0'}%
 • Risk Score: ${(result.score * 100).toFixed(2)}% (low confidence)
 
-Note: This assessment may not be reliable due to limited available data.
+Note: This assessment is based on behavioral patterns and known security indicators.
 Please check if this is a new or inactive address.
 `;
       }
 
       // Convert score to percentage and determine risk level
       const riskPercentage = (result.score * 100).toFixed(2);
-      let riskLevel = "SAFE";
-      let riskDescription = "";
-
-      if (result.score > 0.8) {
-        riskLevel = "CRITICAL";
-        riskDescription = "Extremely high-risk behavior detected. Strong indicators of malicious activity.";
-      } else if (result.score > 0.6) {
-        riskLevel = "HIGH";
-        riskDescription = "Significant security risks present. Exercise extreme caution.";
-      } else if (result.score > 0.4) {
-        riskLevel = "MODERATE";
-        riskDescription = "Some concerning patterns observed. Proceed with caution.";
-      } else if (result.score > 0.2) {
-        riskLevel = "LOW";
-        riskDescription = "Minor risk indicators present. Standard security measures recommended.";
-      } else {
-        riskDescription = "No significant security risks detected. Standard security practices still recommended.";
-      }
-
+      
       // Get the most recent feature update time
       const updateTimes = Object.entries(result.debug_info.feature_update_time)
         .filter(([time]) => time !== "null")
         .sort(([a], [b]) => b.localeCompare(a));
       const latestUpdate = updateTimes[0] ? updateTimes[0][0] : "unknown";
 
-      // Format the date nicely
-      const formattedDate = latestUpdate !== "unknown"
-        ? new Date(latestUpdate).toLocaleDateString('en-US', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })
-        : "unknown date";
-
       return `
 Security Assessment for ${args.address}:
 
 • Risk Score: ${riskPercentage}%
-• Risk Level: ${riskLevel}
-• Assessment: ${riskDescription}
 • Data Completeness: ${result.debug_info.not_null_feature}
-• Last Updated: ${formattedDate}
-
-Note: Risk scores range from 0% (lowest risk) to 100% (highest risk).
-This assessment is based on behavioral patterns and known security indicators.
-`;
+• Last Updated: ${formatDate(latestUpdate)}`;
 
     } catch (error) {
       return `Error getting security assessment: ${error instanceof Error ? error.message : String(error)}`;
