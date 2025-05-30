@@ -2,6 +2,14 @@
 
 <!-- towncrier release notes start -->
 
+## [0.6.1] - 2025-05-15
+
+### Added
+
+- Fixed bug where CLI would download stale cached templates
+- Bump coinbase-agentkit to 0.5.1 in beginner template and chatbot template
+
+
 ## [0.6.0] - 2025-05-14
 
 ### Added
@@ -49,7 +57,7 @@
 
 ### Added
 
-- Added wallet persistance to all templates (#484)
+- Added wallet persistence to all templates (#484)
 
 ### Fixed
 

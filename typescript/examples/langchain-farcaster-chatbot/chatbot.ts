@@ -30,8 +30,8 @@ async function initialize() {
   const llm = new ChatOpenAI({ model: "gpt-4o-mini" });
 
   const agentkit = await AgentKit.from({
-    cdpApiKeyName: process.env.CDP_API_KEY_NAME,
-    cdpApiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
+    cdpApiKeyId: process.env.CDP_API_KEY_ID,
+    cdpApiKeySecret: process.env.CDP_API_KEY_SECRET,
     actionProviders: [farcasterActionProvider()],
   });
 

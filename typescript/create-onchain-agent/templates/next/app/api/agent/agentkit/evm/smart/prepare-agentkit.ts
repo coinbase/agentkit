@@ -63,30 +63,35 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{
   agentkit: AgentKit;
   walletProvider: WalletProvider;
 }> {
+  if (!process.env.CDP_API_KEY_ID || !process.env.CDP_API_KEY_SECRET) {
+    throw new Error(
+      "I need both CDP_API_KEY_ID and CDP_API_KEY_SECRET in your .env file to connect to the Coinbase Developer Platform.",
+    );
+  }
+
+  let walletData: WalletData | null = null;
+  let privateKey: Hex | null = null;
+
+  // Read existing wallet data if available
+  if (fs.existsSync(WALLET_DATA_FILE)) {
+    try {
+      walletData = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8")) as WalletData;
+      privateKey = walletData.privateKey;
+    } catch (error) {
+      console.error("Error reading wallet data:", error);
+    }
+  }
+
+  if (!privateKey) {
+    if (walletData?.smartWalletAddress) {
+      throw new Error(
+        `I found your smart wallet but can't access your private key. Please either provide the private key in your .env, or delete ${WALLET_DATA_FILE} to create a new wallet.`,
+      );
+    }
+    privateKey = (process.env.PRIVATE_KEY || generatePrivateKey()) as Hex;
+  }
+
   try {
-    let walletData: WalletData | null = null;
-    let privateKey: Hex | null = null;
-
-    // Read existing wallet data if available
-    if (fs.existsSync(WALLET_DATA_FILE)) {
-      try {
-        walletData = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8")) as WalletData;
-        privateKey = walletData.privateKey;
-      } catch (error) {
-        console.error("Error reading wallet data:", error);
-        // Continue without wallet data
-      }
-    }
-
-    if (!privateKey) {
-      if (walletData?.smartWalletAddress) {
-        throw new Error(
-          `Smart wallet found but no private key provided. Either provide the private key, or delete ${WALLET_DATA_FILE} and try again.`,
-        );
-      }
-      privateKey = (process.env.PRIVATE_KEY || generatePrivateKey()) as Hex;
-    }
-
     const signer = privateKeyToAccount(privateKey);
 
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
@@ -106,14 +111,14 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{
         walletActionProvider(),
         erc20ActionProvider(),
         cdpApiActionProvider({
-          apiKeyName: process.env.CDP_API_KEY_NAME,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
+          apiKeyId: process.env.CDP_API_KEY_ID,
+          apiKeySecret: process.env.CDP_API_KEY_SECRET,
         }),
       ],
     });
 
     // Save wallet data
-    const smartWalletAddress = await walletProvider.getAddress();
+    const smartWalletAddress = walletProvider.getAddress();
     fs.writeFileSync(
       WALLET_DATA_FILE,
       JSON.stringify({
