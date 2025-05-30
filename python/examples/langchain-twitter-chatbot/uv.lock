@@ -604,7 +604,7 @@ wheels = [
 
 [[package]]
 name = "coinbase-agentkit"
-version = "0.5.1"
+version = "0.6.0"
 source = { editable = "../../coinbase-agentkit" }
 dependencies = [
     { name = "allora-sdk" },
@@ -671,7 +671,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "coinbase-agentkit", specifier = ">=0.5.0,<0.6" },
+    { name = "coinbase-agentkit", specifier = ">=0.5.0,<0.7" },
     { name = "langchain", specifier = ">=0.3.4,<0.4" },
     { name = "nest-asyncio", specifier = ">=1.5.8,<2" },
     { name = "python-dotenv", specifier = ">=1.0.1,<2" },
