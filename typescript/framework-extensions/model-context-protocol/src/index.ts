@@ -8,8 +8,9 @@ import { AgentKit, Action } from "@coinbase/agentkit";
 
 /**
  * The AgentKit MCP tools and tool handler
- * @property tools - Array of MCP-compatible tool definitions
- * @property toolHandler - Function to execute tools by name with arguments
+ *
+ * @property {Tool[]} tools - Array of MCP-compatible tool definitions
+ * @property {(name: string, args: any) => Promise<any>} toolHandler - Function to execute tools by name with arguments
  */
 interface AgentKitMcpTools {
   tools: Tool[];
@@ -52,7 +53,9 @@ export async function getMcpTools(agentKit: AgentKit): Promise<AgentKitMcpTools>
           ],
         };
       } catch (error) {
-        throw new Error(`Failed to execute tool ${name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+          `Failed to execute tool ${name}: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
       }
     },
   };
