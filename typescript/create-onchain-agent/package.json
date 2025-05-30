@@ -2,7 +2,7 @@
   "name": "create-onchain-agent",
   "description": "Instantly create onchain-agent applications with Coinbase AgentKit.",
   "repository": "https://github.com/coinbase/agentkit",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "author": "Coinbase Inc.",
   "license": "Apache-2.0",
   "scripts": {
