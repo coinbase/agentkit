@@ -73,7 +73,7 @@ describe("getMcpTools", () => {
       () =>
         Promise.resolve({
           getActions: jest.fn(() => [mockAction, errorAction]),
-        }) as unknown as AgentKit,
+        }) as any,
     );
 
     const mockAgentKit = await AgentKit.from({});

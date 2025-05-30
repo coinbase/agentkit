@@ -10,7 +10,7 @@ import { AgentKit, Action } from "@coinbase/agentkit";
  * The AgentKit MCP tools and tool handler
  *
  * @property {Tool[]} tools - Array of MCP-compatible tool definitions
- * @property {(name: string, args: any) => Promise<any>} toolHandler - Function to execute tools by name with arguments
+ * @property {(name: string, args: unknown) => Promise<CallToolResult>} toolHandler - Function to execute tools by name with arguments
  */
 interface AgentKitMcpTools {
   tools: Tool[];
