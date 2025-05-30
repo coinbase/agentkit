@@ -1,5 +1,11 @@
 # AgentKit Changelog
 
+## 0.8.0
+
+### Minor Changes
+
+- [#732](https://github.com/coinbase/agentkit/pull/732) [`cd044db`](https://github.com/coinbase/agentkit/commit/cd044db7ae35140726c35ba82429b0f0885ccb60) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Renamed CDP env vars to modern naming convention
+
 ## 0.7.2
 
 ### Patch Changes
