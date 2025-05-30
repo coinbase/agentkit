@@ -3,17 +3,9 @@
  * This enables Claude Desktop and other MCP clients to use AgentKit
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server";  // .js uzantısını kaldırdık
+import { Server } from "@modelcontextprotocol/sdk/server";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio";
-import { 
-  AgentKit, 
-  AgentKitConfig,
-  CdpWalletProvider,
-  CdpWalletProviderConfig
-} from "@coinbase/agentkit";
-
-// Not: AgentKit'te actions export'u olmayabilir, kontrol edilmeli
-// import { ... } from "@coinbase/agentkit/actions";
+import { AgentKit } from "@coinbase/agentkit";
 
 export class AgentKitMCPServer {
   private server: Server;
@@ -37,12 +29,10 @@ export class AgentKitMCPServer {
   }
 
   private setupHandlers() {
-    // Tool listesi
     this.server.setRequestHandler("tools/list", async () => ({
       tools: this.getToolDefinitions()
     }));
 
-    // Tool çağrıları
     this.server.setRequestHandler("tools/call", async (request: any) => {
       return this.handleToolCall(request);
     });
@@ -51,35 +41,11 @@ export class AgentKitMCPServer {
   private getToolDefinitions() {
     return [
       {
-        name: "create_wallet",
-        description: "Create a new blockchain wallet",
+        name: "get_wallet_info",
+        description: "Get wallet information",
         inputSchema: {
           type: "object",
-          properties: {
-            network: {
-              type: "string",
-              description: "Network ID (e.g., base-mainnet, base-sepolia)",
-              default: "base-sepolia"
-            }
-          },
-          required: []
-        }
-      },
-      {
-        name: "get_balance",
-        description: "Get wallet balance",
-        inputSchema: {
-          type: "object",
-          properties: {
-            address: {
-              type: "string",
-              description: "Wallet address (optional, uses default if not provided)"
-            },
-            token: {
-              type: "string",
-              description: "Token symbol (e.g., ETH, USDC)"
-            }
-          },
+          properties: {},
           required: []
         }
       }
@@ -87,21 +53,22 @@ export class AgentKitMCPServer {
   }
 
   private async handleToolCall(request: any): Promise<any> {
-    // TODO: Implement tool call handling
     const { name, arguments: args } = request.params;
     
+    // Initialize AgentKit if needed
     if (!this.agentKit) {
-      this.agentKit = new AgentKit();
+      // Use AgentKit.from() instead of constructor
+      this.agentKit = await AgentKit.from({});
     }
 
     switch (name) {
-      case "create_wallet":
-        // TODO: Implement wallet creation
-        return { content: [{ type: "text", text: "Wallet created" }] };
-      
-      case "get_balance":
-        // TODO: Implement balance retrieval
-        return { content: [{ type: "text", text: "Balance: 0" }] };
+      case "get_wallet_info":
+        return { 
+          content: [{ 
+            type: "text", 
+            text: "Wallet operations will be implemented here" 
+          }] 
+        };
       
       default:
         throw new Error(`Unknown tool: ${name}`);
