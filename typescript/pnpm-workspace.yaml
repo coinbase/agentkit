@@ -6,3 +6,4 @@ packages:
   - "!create-onchain-agent/templates/mcp"
   - "framework-extensions/*"
   - "examples/*"
+  - "!examples/model-context-protocol-smart-wallet-server"
