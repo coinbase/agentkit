@@ -1,5 +1,5 @@
 {
-  "name": "@coinbase/agentkit-mcp",
+  "name": "@coinbase/agentkit-mcp-server",
   "version": "0.1.0",
   "description": "Model Context Protocol support for AgentKit",
   "main": "dist/index.js",
