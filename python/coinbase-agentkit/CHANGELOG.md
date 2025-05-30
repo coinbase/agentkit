@@ -2,6 +2,14 @@
 
 <!-- towncrier release notes start -->
 
+## [0.6.0] - 2025-05-30
+
+### Added
+
+- Renamed CDP env vars to modern naming convention
+- Renamed CDP wallet provider & action provider interfaces for new env var names
+
+
 ## [0.5.1] - 2025-05-14
 
 ### Fixed
