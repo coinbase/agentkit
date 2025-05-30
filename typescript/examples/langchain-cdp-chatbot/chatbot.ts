@@ -10,6 +10,7 @@ import {
   pythActionProvider,
   openseaActionProvider,
   alloraActionProvider,
+  pondActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -122,6 +123,7 @@ async function initializeAgent() {
             ]
           : []),
         alloraActionProvider(),
+        pondActionProvider(),
       ],
     });
 
