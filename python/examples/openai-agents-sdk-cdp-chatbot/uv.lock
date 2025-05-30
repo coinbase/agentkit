@@ -625,7 +625,7 @@ dev = [
 
 [[package]]
 name = "coinbase-agentkit-openai-agents-sdk"
-version = "0.4.0"
+version = "0.5.0"
 source = { editable = "../../framework-extensions/openai-agents-sdk" }
 dependencies = [
     { name = "coinbase-agentkit" },
@@ -638,7 +638,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "coinbase-agentkit", specifier = ">=0.5.0,<0.7" },
+    { name = "coinbase-agentkit", specifier = ">=0.6.0,<0.7" },
     { name = "nest-asyncio", specifier = ">=1.6.0,<2" },
     { name = "openai-agents", specifier = ">=0.0.6,<0.0.7" },
     { name = "pytest-asyncio", specifier = ">=0.25.3,<0.26" },
