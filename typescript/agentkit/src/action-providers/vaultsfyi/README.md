@@ -19,12 +19,15 @@ vaultsfyi/
     ├── actions.ts                  # vaultsfyi transactional API actions
     ├── types.ts                    # vaultsfyi API types
     ├── vaults.ts                   # vaults list getter
+    ├── historicalData.ts           # vaults historical data getter
 ├── index.ts                        # Package exports
 └── README.md                       # Documentation (this file)
 ```
 
 ## Actions
 - `vaults`: Get the list of available vaults on vaultsfyi.
+- `vault_details`: Get details of a specific vault.
+- `historical_data`: Get historical data for a specific vault.
 - `deposit`: Deposit assets into a vault.
 - `redeem`: Redeem assets from a vault.
 - `claim`: Claim rewards from a vault.
