@@ -27,7 +27,7 @@ You can interact with this agent via chat.
 
 Try running the agent on Base but send USDC to it on Arbitrum.  In fact, feel free to send some USDT too.
 
-Then try asking the agent to do something on Base with their USDC/USDT.  For example, try transfering some USDC to yourself on Base, e.g. "send 1 USDC to <MY_ADDRESS>."
+Then try asking the agent to do something on Base with their USDC/USDT.  For example, try transferring some USDC to yourself on Base, e.g. "send 1 USDC to <MY_ADDRESS>."
 
 You will notice that:
 
