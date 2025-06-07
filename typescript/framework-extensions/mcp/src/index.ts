@@ -5,7 +5,7 @@
 
 import { Server } from "@modelcontextprotocol/sdk/server";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio";
-import { AgentKit } from "@coinbase/agentkit";
+import { AgentKit, AgentKitOptions } from "@coinbase/agentkit";
 
 export class AgentKitMCPServer {
   private server: Server;
@@ -57,7 +57,7 @@ export class AgentKitMCPServer {
     
     // Initialize AgentKit if needed
     if (!this.agentKit) {
-      // Use AgentKit.from() instead of constructor
+      // Use AgentKit.from() which is the correct static method
       this.agentKit = await AgentKit.from({});
     }
 
