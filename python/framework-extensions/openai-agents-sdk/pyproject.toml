@@ -1,6 +1,6 @@
 [project]
 name = "coinbase-agentkit-openai-agents-sdk"
-version = "0.4.0"
+version = "0.5.0"
 description = "Coinbase AgentKit OpenAI Agents SDK extension"
 authors = [{ name = "John Peterson", email = "john.peterson@coinbase.com" }]
 requires-python = "~=3.10"
@@ -17,7 +17,7 @@ keywords = [
     "agent",
 ]
 dependencies = [
-    "coinbase-agentkit>=0.5.0,<0.6",
+    "coinbase-agentkit>=0.6.0,<0.7",
     "python-dotenv>=1.0.1,<2",
     "pytest-asyncio>=0.25.3,<0.26",
     "openai-agents>=0.0.6,<0.0.7",

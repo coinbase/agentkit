@@ -25,6 +25,7 @@ from langgraph.prebuilt import create_react_agent
 
 load_dotenv()
 
+
 def initialize_agent(config: CdpEvmServerWalletProviderConfig):
     """Initialize the agent with CDP Agentkit.
 
@@ -37,8 +38,8 @@ def initialize_agent(config: CdpEvmServerWalletProviderConfig):
     """
     # Initialize LLM
     llm = ChatBedrockConverse(
-        model_id="amazon.nova-pro-v1:0", # Change to any Bedrock Model ID
-        region_name=os.getenv("AWS_REGION", "us-east-1") # Add AWS region
+        model_id="amazon.nova-pro-v1:0",  # Change to any Bedrock Model ID
+        region_name=os.getenv("AWS_REGION", "us-east-1"),  # Add AWS region
     )
 
     # Initialize the wallet provider with the config

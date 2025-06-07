@@ -11,7 +11,7 @@
     "build": "tsup && node -e \"require('fs').chmodSync('build/index.js', '755')\""
   },
   "dependencies": {
-    "@coinbase/agentkit": "^0.6.0",
+    "@coinbase/agentkit": "^0.8.0",
     "@coinbase/agentkit-model-context-protocol": "^0.2.0",
     "@modelcontextprotocol/sdk": "^1.6.1",
     "@solana/web3.js": "^1.98.0",
