@@ -1,5 +1,11 @@
 # AgentKit Changelog
 
+## 0.8.1
+
+### Patch Changes
+
+- [#751](https://github.com/coinbase/agentkit/pull/751) [`97408c1`](https://github.com/coinbase/agentkit/commit/97408c1976995a8abff124cbc8baead3209da0b2) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Fixed an indirect dependency issue
+
 ## 0.8.0
 
 ### Minor Changes
