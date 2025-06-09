@@ -9,6 +9,7 @@ import { getAgentKit } from "./getAgentKit.js";
  * It creates a new agent and starts the server.
  */
 async function main() {
+  // AgentKit yapıcı fonksiyonu yerine factory method ile oluşturulmalı!
   const agentKit = await getAgentKit();
 
   const { tools, toolHandler } = await getMcpTools(agentKit);
@@ -40,7 +41,6 @@ async function main() {
   });
 
   const transport = new StdioServerTransport();
-
   await server.connect(transport);
 }
 
