@@ -16,12 +16,20 @@ const NetworkSchema = z.enum(Object.values(VAULTSFYI_SUPPORTED_CHAINS) as [strin
 export const VaultsActionSchema = z.object({
   token: z
     .string()
+    .transform(val => (val === "" ? undefined : val))
     .optional()
     .describe("Optional: Name or symbol of the token to filter vaults by"),
-  protocol: z.string().optional().describe("Optional: Protocol to filter vaults by"),
-  network: NetworkSchema.optional().describe(
-    "Optional: Network name to filter vaults by. Supported networks: mainnet, arbitrum, optimism, polygon, base, gnosis, unichain",
-  ),
+  protocol: z
+    .string()
+    .transform(val => (val === "" ? undefined : val))
+    .optional()
+    .describe("Optional: Protocol to filter vaults by"),
+  network: NetworkSchema.or(z.enum(["", "all"]))
+    .optional()
+    .transform(val => (val === "" || val === "all" ? undefined : val))
+    .describe(
+      "Optional: Network name to filter vaults by. Supported networks: mainnet, arbitrum, optimism, polygon, base, gnosis, unichain",
+    ),
   minTvl: z.number().optional().describe("Optional: Minimum TVL to filter vaults by"),
   sort: z
     .object({
@@ -30,10 +38,35 @@ export const VaultsActionSchema = z.object({
     })
     .optional()
     .describe("Sort options"),
+  apyRange: z
+    .enum(["1day", "7day", "30day"])
+    .optional()
+    .describe("Optional: APY moving average range (default: 7day)"),
   take: z.number().optional().describe("Optional: Limit the number of results"),
   page: z.number().optional().describe("Optional: Page number"),
 });
 
+/**
+ * Vault details action schema.
+ */
+export const VaultDetailsActionSchema = z.object({
+  vaultAddress: z.string().describe("The address of the vault to fetch details for"),
+  network: NetworkSchema.describe("The network of the vault"),
+  apyRange: z
+    .enum(["1day", "7day", "30day"])
+    .optional()
+    .describe("Optional: APY moving average range (default: 7day)"),
+});
+
+export const VaultHistoricalDataActionSchema = z.object({
+  vaultAddress: z.string().describe("The address of the vault to fetch historical data for"),
+  network: NetworkSchema.describe("The network of the vault"),
+  date: z.string().datetime().describe("The date to fetch historical data for"),
+  apyRange: z
+    .enum(["1day", "7day", "30day"])
+    .optional()
+    .describe("Optional: APY moving average range (default: 7day)"),
+});
 /**
  * Base transaction params schema.
  */
