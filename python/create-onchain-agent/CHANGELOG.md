@@ -2,6 +2,16 @@
 
 <!-- towncrier release notes start -->
 
+## [0.7.0] - 2025-05-30
+
+### Added
+
+- Bump coinbase-agentkit to 0.6.0 in beginner template and chatbot template
+- Bump coinbase-agentkit-langchain to 0.5.0 in beginner template and chatbot template
+- Bump coinbase-agentkit-openai-agents-sdk to 0.5.0 in beginner template and chatbot template
+- Renamed CDP env vars to modern naming convention
+
+
 ## [0.6.1] - 2025-05-15
 
 ### Added
@@ -57,7 +67,7 @@
 
 ### Added
 
-- Added wallet persistance to all templates (#484)
+- Added wallet persistence to all templates (#484)
 
 ### Fixed
 

@@ -27,8 +27,8 @@ import { getMcpTools } from "@coinbase/agentkit-model-context-protocol";
 import { AgentKit } from "@coinbase/agentkit";
 
 const agentKit = await AgentKit.from({
-  cdpApiKeyName: "CDP API KEY NAME",
-  cdpApiKeyPrivateKey: "CDP API KEY PRIVATE KEY",
+  cdpApiKeyId: "CDP API KEY NAME",
+  cdpApiKeySecret: "CDP API KEY SECRET",
 });
 
 const { tools, toolHandler } = await getMcpTools(agentKit);

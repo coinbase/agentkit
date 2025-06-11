@@ -43,8 +43,8 @@ npm install
   - PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY=[For server wallets, optional, only if you are using authorization keys. For delegated embedded wallets, required]
   - PRIVY_WALLET_AUTHORIZATION_KEY_ID=[For server wallets, optional, only if walletId is not provided in order to create a new wallet, this can be found in your Privy Dashboard. For delegated embedded wallets, required]
   - NETWORK_ID=[optional. If you'd like to use a Privy Solana wallet, set to "solana-devnet". Otherwise, defaults to "base-sepolia" and will use a Privy EVM wallet]
-  - CDP_API_KEY_NAME=[optional. If you'd like to use the CDP API, for example to faucet funds, set this to the name of the CDP API key]
-  - CDP_API_KEY_PRIVATE_KEY=[optional. If you'd like to use the CDP API, for example to faucet funds, set this to the private key of the CDP API key]
+  - CDP_API_KEY_ID=[optional. If you'd like to use the CDP API, for example to faucet funds, set this to the name of the CDP API key]
+  - CDP_API_KEY_SECRET=[optional. If you'd like to use the CDP API, for example to faucet funds, set this to the private key of the CDP API key]
 
 You can manage authorization keys from your [Privy dashboard](https://dashboard.privy.io/account) or programmatically [using the API](https://docs.privy.io/guide/server-wallets/authorization/signatures).
 
