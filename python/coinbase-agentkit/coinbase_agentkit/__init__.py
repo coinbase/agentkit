@@ -21,6 +21,7 @@ from .action_providers import (
     wallet_action_provider,
     weth_action_provider,
     wow_action_provider,
+    compass_action_provider,
 )
 from .agentkit import AgentKit, AgentKitConfig
 from .wallet_providers import (
@@ -52,6 +53,7 @@ __all__ = [
     "allora_action_provider",
     "cdp_api_action_provider",
     "compound_action_provider",
+    "compass_action_provider",
     "erc20_action_provider",
     "hyperbolic_action_provider",
     "morpho_action_provider",
