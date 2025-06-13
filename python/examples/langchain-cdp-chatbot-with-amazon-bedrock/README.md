@@ -1,6 +1,6 @@
-# CDP Agentkit LangChain Extension Powered by AWS Bedrock Models
+# CDP Agentkit LangChain Extension Powered by Amazon Bedrock Models
 
-This example demonstrates an agent setup as a terminal style chatbot with access to the full set of CDP Agentkit actions, using [AWS Bedrock](https://aws.amazon.com/bedrock/) models.
+This example demonstrates an agent setup as a terminal style chatbot with access to the full set of CDP Agentkit actions, using [Amazon Bedrock](https://aws.amazon.com/bedrock/) models.
 
 ## Ask the chatbot to engage in the Web3 ecosystem!
 - "Transfer a portion of your ETH to a random address"
