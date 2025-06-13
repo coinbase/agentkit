@@ -1037,7 +1037,7 @@ The `CdpV2SolanaWalletProvider` supports the following Solana networks:
 
 ### SolanaKeypairWalletProvider
 
-The `SolanaKeypairWalletProvider` is a wallet provider that uses the API [Solana web3.js](https://solana-labs.github.io/solana-web3.js/).
+The `SolanaKeypairWalletProvider` is a wallet provider that uses the API [Solana web3.js](https://solana.com/docs/clients/javascript).
 
 NOTE: It is highly recommended to use a dedicated RPC provider. See [here](https://solana.com/rpc) for more info on Solana RPC infrastructure, and see [here](#rpc-url-configuration) for instructions on configuring `SolanaKeypairWalletProvider` with a custom RPC URL.
 
