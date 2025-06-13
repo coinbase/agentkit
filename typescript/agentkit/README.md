@@ -418,6 +418,19 @@ const agent = createReactAgent({
 </table>
 </details>
 <details>
+<summary><strong>X402</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>paid_request</code></td>
+    <td width="768">Makes HTTP requests to x402-protected API endpoints with automatic payment handling.</td>
+</tr>
+<tr>
+    <td width="200"><code>fetch_payment_info</code></td>
+    <td width="768">Fetches payment information from x402-protected endpoints without making payments.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>ZeroDev Wallet</strong></summary>
 <table width="100%">
 <tr>

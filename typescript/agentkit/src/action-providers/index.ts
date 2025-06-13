@@ -28,4 +28,5 @@ export * from "./allora";
 export * from "./flaunch";
 export * from "./onramp";
 export * from "./vaultsfyi";
+export * from "./x402";
 export * from "./zerodev";
