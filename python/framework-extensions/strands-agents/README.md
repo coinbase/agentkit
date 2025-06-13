@@ -59,7 +59,7 @@ For AgentKit configuration options, see the [Coinbase Agentkit README](https://g
 
 For Strands Agents configuration options, see the [Strands Agents Documentation](https://strandsagents.com/latest/).
 
-For a full example, see the [chatbot example](https://github.com/coinbase/agentkit/blob/main/python/examples/strands-agents-cdp-smart-wallet-chatbot/chatbot.py).
+For a full example, see the [chatbot example](https://github.com/coinbase/agentkit/blob/main/python/examples/strands-agents-cdp-server-chatbot/chatbot.py).
 
 ## Contributing
 
