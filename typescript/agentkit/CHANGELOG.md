@@ -1,5 +1,13 @@
 # AgentKit Changelog
 
+## 0.8.2
+
+### Patch Changes
+
+- [#753](https://github.com/coinbase/agentkit/pull/753) [`ff04ce9`](https://github.com/coinbase/agentkit/commit/ff04ce9dd8f6de48692560bd84b430c45576925e) Thanks [@phdargen](https://github.com/phdargen)! - Added a new action provider to call x402 protected api
+
+- [#700](https://github.com/coinbase/agentkit/pull/700) [`913beb0`](https://github.com/coinbase/agentkit/commit/913beb06541224b41d5a923474470ec9fee7de76) Thanks [@pawelpolak2](https://github.com/pawelpolak2)! - Improve the vaults.fyi provider
+
 ## 0.8.1
 
 ### Patch Changes
