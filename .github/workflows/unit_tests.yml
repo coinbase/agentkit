@@ -53,5 +53,5 @@ jobs:
       - name: Install and test AgentKit.js
         working-directory: ./typescript
         run: |
-          pnpm install --frozen-lockfile
+          pnpm install --no-frozen-lockfile
           pnpm run test

@@ -1,52 +1,44 @@
 {
-  "name": "@coinbase/agentkit-model-context-protocol",
-  "version": "0.2.0",
-  "description": "Model Context Protocol Extension of Coinbase Agentkit",
+  "name": "@coinbase/agentkit-mcp",
+  "version": "0.1.0",
+  "description": "Model Context Protocol (MCP) integration for AgentKit",
   "repository": "https://github.com/coinbase/agentkit",
   "author": "Coinbase Inc.",
   "license": "Apache-2.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "src",
+    "README.md"
   ],
   "scripts": {
     "build": "tsc",
-    "lint": "eslint -c .eslintrc.json \"src/**/*.ts\"",
-    "lint:fix": "eslint -c .eslintrc.json \"src/**/*.ts\" --fix",
-    "format": "prettier -c .prettierrc --write \"**/*.{ts,js,cjs,json,md}\"",
-    "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\"",
-    "check": "tsc --noEmit",
-    "test": "jest --no-cache --testMatch='**/*.test.ts'",
-    "test:e2e": "jest --no-cache --testMatch=**/e2e.ts --coverageThreshold '{}'",
-    "test:types": "tsd --files src/tests/types.test-d.ts",
-    "clean": "rm -rf dist/*",
-    "prepack": "tsc",
-    "docs": "typedoc --entryPoints ./src --entryPointStrategy expand --exclude ./src/tests/**/*.ts",
-    "docs:serve": "http-server ./docs",
-    "dev": "tsc --watch"
+    "clean": "rm -rf dist",
+    "dev": "tsc --watch",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "test": "jest",
+    "test:types": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\""
   },
   "keywords": [
     "coinbase",
-    "sdk",
-    "crypto",
-    "cdp",
     "agentkit",
+    "mcp",
+    "claude",
     "ai",
-    "agent",
-    "nodejs",
-    "typescript",
-    "mcp"
+    "blockchain"
   ],
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.6.1",
-    "zod": "^3.22.4",
-    "zod-to-json-schema": "^3.24.3"
+    "@coinbase/agentkit": "workspace:*",
+    "@modelcontextprotocol/sdk": "^0.5.0"
   },
   "devDependencies": {
-    "@coinbase/agentkit": "workspace:*"
-  },
-  "peerDependencies": {
-    "@coinbase/agentkit": ">=0.1.0"
+    "@types/node": "^20.12.11",
+    "typescript": "^5.4.5",
+    "zod": "^3.25.56",
+    "zod-to-json-schema": "^3.24.5"
   }
 }
