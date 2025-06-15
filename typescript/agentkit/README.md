@@ -66,7 +66,7 @@ npm install @coinbase/agentkit
 ```typescript
 const agentKit = await AgentKit.from({
   cdpApiKeyId: "CDP API KEY NAME",
-  cdpApiKeyPrivate: "CDP API KEY SECRET",
+  cdpApiKeySecret: "CDP API KEY SECRET",
 });
 ```
 
@@ -77,7 +77,7 @@ If no wallet or action provider are specified, the agent will use the `CdpWallet
 ```typescript
 const agentKit = await AgentKit.from({
   cdpApiKeyId: "CDP API KEY NAME",
-  cdpApiKeyPrivate: "CDP API KEY SECRET",
+  cdpApiKeySecret: "CDP API KEY SECRET",
 });
 ```
 
@@ -542,7 +542,7 @@ This gives your agent access to the actions defined in the action provider.
 ```typescript
 const agentKit = new AgentKit({
   cdpApiKeyId: "CDP API KEY NAME",
-  cdpApiKeyPrivate: "CDP API KEY SECRET",
+  cdpApiKeySecret: "CDP API KEY SECRET",
   actionProviders: [myActionProvider()],
 });
 ```
