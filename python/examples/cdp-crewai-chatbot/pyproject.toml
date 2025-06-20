@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "cdp-crewai-chatbot"
+version = "0.0.1"
+description = "CDP AgentKit Example Chatbot using CrewAI"
+authors = ["Bilgin Koçak <kocakbilgin@gmail.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+python-dotenv = "^1.0.1"
+cdp-crewai = { path = "../../cdp-crewai", develop = true }
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api" 
