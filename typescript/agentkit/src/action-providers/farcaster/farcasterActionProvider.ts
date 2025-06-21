@@ -111,6 +111,7 @@ A failure response will return a message with the Farcaster API request error:
     name: "post_cast",
     description: `
 This tool will post a cast to Farcaster. The tool takes the text of the cast as input. Casts can be maximum 280 characters.
+Optionally, up to 2 embeds (links to websites or mini apps) can be attached to the cast by providing an array of URLs in the embeds parameter.
 
 A successful response will return a message with the API response as a JSON payload:
     {}
@@ -133,6 +134,7 @@ A failure response will return a message with the Farcaster API request error:
         body: JSON.stringify({
           signer_uuid: this.signerUuid,
           text: args.castText,
+          embeds: args.embeds,
         }),
       });
       const data = await response.json();
