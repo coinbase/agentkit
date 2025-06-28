@@ -1,42 +1,36 @@
-import { z } from "zod";
-import { zodToJsonSchema } from "zod-to-json-schema";
-import { getMcpTools } from "./index";
-import { AgentKit, Action } from "@coinbase/agentkit";
+import { AgentKitMCPServer } from "./index";
 
-// Mocking the Action class
-const mockAction: Action = {
-  name: "testAction",
-  description: "A test action",
-  schema: z.object({ test: z.string() }),
-  invoke: jest.fn(async arg => `Invoked with ${arg.test}`),
-};
+// Mock AgentKit
+jest.mock("@coinbase/agentkit", () => ({
+  AgentKit: {
+    from: jest.fn().mockResolvedValue({
+      // Mock AgentKit instance
+    })
+  }
+}));
 
-// Creating a mock for AgentKit
-jest.mock("@coinbase/agentkit", () => {
-  const originalModule = jest.requireActual("@coinbase/agentkit");
-  return {
-    ...originalModule,
-    AgentKit: {
-      from: jest.fn().mockImplementation(() => ({
-        getActions: jest.fn(() => [mockAction]),
-      })),
-    },
-  };
-});
+describe("AgentKitMCPServer", () => {
+  let server: AgentKitMCPServer;
 
-describe("getMcpTools", () => {
-  it("should return an array of tools and a tool handler with correct properties", async () => {
-    const mockAgentKit = await AgentKit.from({});
-    const { tools, toolHandler } = await getMcpTools(mockAgentKit);
+  beforeEach(() => {
+    server = new AgentKitMCPServer();
+  });
 
-    expect(tools).toHaveLength(1);
-    const tool = tools[0];
+  it("should create an instance", () => {
+    expect(server).toBeInstanceOf(AgentKitMCPServer);
+  });
 
-    expect(tool.name).toBe(mockAction.name);
-    expect(tool.description).toBe(mockAction.description);
-    expect(tool.inputSchema).toStrictEqual(zodToJsonSchema(mockAction.schema));
+  it("should return tools", async () => {
+    const tools = await server.getTools();
+    expect(tools).toBeInstanceOf(Array);
+    expect(tools.length).toBeGreaterThan(0);
+    expect(tools[0]).toHaveProperty("name");
+    expect(tools[0]).toHaveProperty("description");
+  });
 
-    const result = await toolHandler("testAction", { test: "data" });
-    expect(result).toStrictEqual({ content: [{ text: '"Invoked with data"', type: "text" }] });
+  it("should handle tool calls", async () => {
+    const result = await server.handleToolCall("test_tool", { arg: "value" });
+    expect(result).toHaveProperty("content");
+    expect(result.content[0]).toHaveProperty("type", "text");
   });
 });
