@@ -22,6 +22,7 @@
 
 ## Table of Contents
 
+- [Table of Contents](#table-of-contents)
 - [📖 Overview](#-overview)
 - [🚀 Quickstart](#-quickstart)
   - [Node.js](#nodejs)
@@ -30,9 +31,15 @@
 - [🤝 Contributing](#-contributing)
 - [📜 Documentation](#-documentation)
 - [🌙 Nightly Builds](#-nightly-builds)
-- [🚨 Security and bug reports](#-security-and-bug-reports)
+  - [Typescript](#typescript)
+  - [Python](#python-1)
+- [🚨 Security and Bug Reports](#-security-and-bug-reports)
 - [📧 Contact](#-contact)
 - [🔗 Supported Wallets, Protocols, and Frameworks](#-supported-wallets-protocols-and-frameworks)
+  - [Wallets](#wallets)
+  - [Protocols](#protocols)
+  - [Frameworks](#frameworks)
+  - [Networks](#networks)
 - [📝 License](#-license)
 - [🔒 Legal and Privacy](#-legal-and-privacy)
 
@@ -193,6 +200,8 @@ agentkit/
 ## 📜 Documentation
 
 - [AgentKit Documentation](https://docs.cdp.coinbase.com/agentkit/docs/welcome)
+- Migration Guides
+  - [Upgrading from 0.4.0 to 0.6.0](./python/coinbase-agentkit/docs/upgrading-0.4-to-0.6.md)
 - Python API References
   - [AgentKit](https://coinbase.github.io/agentkit/coinbase-agentkit/python/index.html)
   - [AgentKit Langchain Extension](https://coinbase.github.io/agentkit/coinbase-agentkit-langchain/python/index.html)
@@ -308,4 +317,4 @@ AgentKit is licensed under the [Apache-2.0](LICENSE.md) license.
 
 ## 🔒 Legal and Privacy
 
-The AgentKit software is novel and experimental, and is therefore provided on an AS-IS basis. The software is intended to be used only for the purposes of assisting with designing blockchain transactions and enabling other API integrations using natural language inputs, and is not intended to provide (i) an offer, or solicitation of an offer, to invest in, or to buy or sell, any interests or shares, or to participate in any investment or trading strategy, (ii) accounting, legal, tax advice, investment recommendations or other professional advice or (iii) an official statement of Coinbase. Acts proposed or performed by an agent through AgentKit software are NOT acts of Coinbase. You should consult with a professional advisor before making any decisions based on the information provided by the software. You are not permitted to use the proceeds of loans or credit to purchase digital assets on or through coinbase.com, Coinbase's APIs, the Coinbase mobile application, or any other Coinbase website or product, including AgentKit. No representation or warranty is made, expressed or implied, with respect to the accuracy, completeness, reliability, security, or suitability of the software or to any information provided in connection with the software. The risk of loss through use of the software can be substantial, and you assume any and all risks of loss and liability. The software may produce output that is inaccurate, incorrect, unpredictable or undesirable, and it is the user’s exclusive responsibility to evaluate the output and the use-case and determine whether it is appropriate. The right to use the software is contingent on your agreement to the [CDP Terms of Service](https://www.coinbase.com/legal/developer-platform/terms-of-service) (except to the extent it conflicts with the Apache-2.0 license).
+The AgentKit software is novel and experimental, and is therefore provided on an AS-IS basis. The software is intended to be used only for the purposes of assisting with designing blockchain transactions and enabling other API integrations using natural language inputs, and is not intended to provide (i) an offer, or solicitation of an offer, to invest in, or to buy or sell, any interests or shares, or to participate in any investment or trading strategy, (ii) accounting, legal, tax advice, investment recommendations or other professional advice or (iii) an official statement of Coinbase. Acts proposed or performed by an agent through AgentKit software are NOT acts of Coinbase. You should consult with a professional advisor before making any decisions based on the information provided by the software. You are not permitted to use the proceeds of loans or credit to purchase digital assets on or through coinbase.com, Coinbase's APIs, the Coinbase mobile application, or any other Coinbase website or product, including AgentKit. No representation or warranty is made, expressed or implied, with respect to the accuracy, completeness, reliability, security, or suitability of the software or to any information provided in connection with the software. The risk of loss through use of the software can be substantial, and you assume any and all risks of loss and liability. The software may produce output that is inaccurate, incorrect, unpredictable or undesirable, and it is the user's exclusive responsibility to evaluate the output and the use-case and determine whether it is appropriate. The right to use the software is contingent on your agreement to the [CDP Terms of Service](https://www.coinbase.com/legal/developer-platform/terms-of-service) (except to the extent it conflicts with the Apache-2.0 license).
