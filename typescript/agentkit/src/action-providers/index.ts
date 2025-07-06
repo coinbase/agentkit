@@ -30,3 +30,4 @@ export * from "./onramp";
 export * from "./vaultsfyi";
 export * from "./x402";
 export * from "./zerodev";
+export * from "./uniswap";
