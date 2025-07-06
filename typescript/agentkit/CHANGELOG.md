@@ -154,7 +154,7 @@
 - Added `privyWalletProvider` to use a Privy server wallet for agent actions.
 - Added gas configuration parameters (`gasLimitMultiplier`, `feePerGasMultiplier`) to `CdpWalletProvider` and `ViemWalletProvider`.
 - Added Solana chatbot example.
-- Added Privy EVM chatbot exmaple.
+- Added Privy EVM chatbot example.
 
 ## [0.1.2] - 2025-02-07
 
