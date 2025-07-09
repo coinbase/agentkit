@@ -1,4 +1,4 @@
-import { SmartWalletProvider } from "./smartWalletProvider";
+import { LegacyCdpSmartWalletProvider } from "./legacyCdpSmartWalletProvider";
 import {
   TransactionRequest,
   Hex,
@@ -118,8 +118,8 @@ jest.mock("@coinbase/coinbase-sdk", () => {
 // tests
 // =========================================================
 
-describe("SmartWalletProvider", () => {
-  let provider: jest.Mocked<SmartWalletProvider>;
+describe("LegacyCdpSmartWalletProvider", () => {
+  let provider: jest.Mocked<LegacyCdpSmartWalletProvider>;
   let mockNetworkScopedWallet: MockNetworkScopedSmartWallet;
   let mockWaitForUserOperation: jest.MockedFunction<
     (op: MockUserOperation) => Promise<UserOperationResult>
@@ -180,7 +180,7 @@ describe("SmartWalletProvider", () => {
       readContract: jest.fn(),
       nativeTransfer: jest.fn(),
       _smartWallet: mockNetworkScopedWallet as unknown as NetworkScopedSmartWallet,
-    } as unknown as jest.Mocked<SmartWalletProvider>;
+    } as unknown as jest.Mocked<LegacyCdpSmartWalletProvider>;
 
     provider.getAddress.mockReturnValue(MOCK_ADDRESS);
     provider.getNetwork.mockReturnValue({
@@ -188,7 +188,7 @@ describe("SmartWalletProvider", () => {
       networkId: MOCK_NETWORK_ID,
       chainId: MOCK_CHAIN_ID,
     });
-    provider.getName.mockReturnValue("smart_wallet_provider");
+    provider.getName.mockReturnValue("legacy_cdp_smart_wallet_provider");
     provider.getBalance.mockResolvedValue(MOCK_BALANCE);
 
     provider.sendTransaction.mockImplementation(async (tx: TransactionRequest): Promise<Hex> => {

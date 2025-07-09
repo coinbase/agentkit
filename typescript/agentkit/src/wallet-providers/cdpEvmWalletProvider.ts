@@ -16,9 +16,9 @@ import {
 } from "viem";
 import { Network, NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_VIEM_CHAIN } from "../network";
 import { EvmWalletProvider } from "./evmWalletProvider";
-import { WalletProviderWithClient, CdpV2WalletProviderConfig } from "./cdpV2Shared";
+import { WalletProviderWithClient, CdpWalletProviderConfig } from "./cdpShared";
 
-interface ConfigureCdpV2EvmWalletProviderWithWalletOptions {
+interface ConfigureCdpEvmWalletProviderWithWalletOptions {
   /**
    * The CDP client of the wallet.
    */
@@ -43,18 +43,18 @@ interface ConfigureCdpV2EvmWalletProviderWithWalletOptions {
 /**
  * A wallet provider that uses the Coinbase SDK.
  */
-export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletProviderWithClient {
+export class CdpEvmWalletProvider extends EvmWalletProvider implements WalletProviderWithClient {
   #publicClient: PublicClient;
   #serverAccount: EvmServerAccount;
   #cdp: CdpClient;
   #network: Network;
 
   /**
-   * Constructs a new CdpWalletProvider.
+   * Constructs a new CdpServerWalletProvider.
    *
-   * @param config - The configuration options for the CdpWalletProvider.
+   * @param config - The configuration options for the CdpServerWalletProvider.
    */
-  private constructor(config: ConfigureCdpV2EvmWalletProviderWithWalletOptions) {
+  private constructor(config: ConfigureCdpEvmWalletProviderWithWalletOptions) {
     super();
 
     this.#serverAccount = config.serverAccount;
@@ -64,15 +64,15 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletP
   }
 
   /**
-   * Configures a new CdpWalletProvider with a wallet.
+   * Configures a new CdpServerWalletProvider with a wallet.
    *
    * @param config - Optional configuration parameters
-   * @returns A Promise that resolves to a new CdpWalletProvider instance
+   * @returns A Promise that resolves to a new CdpServerWalletProvider instance
    * @throws Error if required environment variables are missing or wallet initialization fails
    */
   public static async configureWithWallet(
-    config: CdpV2WalletProviderConfig = {},
-  ): Promise<CdpV2EvmWalletProvider> {
+    config: CdpWalletProviderConfig = {},
+  ): Promise<CdpEvmWalletProvider> {
     const apiKeyId = config.apiKeyId || process.env.CDP_API_KEY_ID;
     const apiKeySecret = config.apiKeySecret || process.env.CDP_API_KEY_SECRET;
     const walletSecret = config.walletSecret || process.env.CDP_WALLET_SECRET;
@@ -106,12 +106,24 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletP
       transport: http(),
     });
 
-    return new CdpV2EvmWalletProvider({
+    return new CdpEvmWalletProvider({
       publicClient,
       cdp: cdpClient,
       serverAccount,
       network,
     });
+  }
+
+  /**
+   * Exports the wallet.
+   *
+   * @returns The wallet's data.
+   */
+  async exportWallet(): Promise<{ name: string | undefined; address: `0x${string}` }> {
+    return {
+      name: this.#serverAccount.name,
+      address: this.#serverAccount.address as `0x${string}`,
+    };
   }
 
   /**
@@ -211,7 +223,7 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletP
    * @returns The name of the wallet provider.
    */
   getName(): string {
-    return "cdp_v2_wallet_provider";
+    return "cdp_evm_wallet_provider";
   }
 
   /**

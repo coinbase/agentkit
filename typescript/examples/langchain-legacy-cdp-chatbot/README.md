@@ -13,7 +13,7 @@ This example demonstrates an agent setup as a terminal style chatbot with access
 
 ### Checking Node Version
 
-Before using the example, ensure that you have the correct version of Node.js installed. The example requires Node.js 20 or higher. You can check your Node version by running:
+Before using the example, ensure that you have the correct version of Node.js installed. The example requires Node.js 18 or higher. You can check your Node version by running:
 
 ```bash
 node --version
@@ -32,13 +32,11 @@ This will automatically install and use the latest version of Node.
 You'll need the following API keys:
 - [CDP API Key](https://portal.cdp.coinbase.com/access/api)
 - [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
-- [Generate Wallet Secret](https://portal.cdp.coinbase.com/products/wallet-api)
 
 Once you have them, rename the `.env-local` file to `.env` and make sure you set the API keys to their corresponding environment variables:
 
 - "CDP_API_KEY_ID"
 - "CDP_API_KEY_SECRET"
-- "CDP_WALLET_SECRET"
 - "OPENAI_API_KEY"
 
 ## Running the example
@@ -46,16 +44,16 @@ Once you have them, rename the `.env-local` file to `.env` and make sure you set
 From the root directory, run:
 
 ```bash
-pnpm install
-pnpm build
+npm install
+npm run build
 ```
 
-This will install the dependencies and build the packages locally. The chatbot example uses the local `@coinbase/agentkit-langchain` and `@coinbase/agentkit` packages. If you make changes to the packages, you can run `pnpm build` from root again to rebuild the packages, and your changes will be reflected in the chatbot example.
+This will install the dependencies and build the packages locally. The chatbot example uses the local `@coinbase/agentkit-langchain` and `@coinbase/agentkit` packages. If you make changes to the packages, you can run `npm run build` from root again to rebuild the packages, and your changes will be reflected in the chatbot example.
 
-Now from the `typescript/examples/langchain-cdp-v2-chatbot` directory, run:
+Now from the `typescript/examples/langchain-cdp-chatbot` directory, run:
 
 ```bash
-pnpm start
+npm start
 ```
 
 Select "1. chat mode" and start telling your Agent to do things onchain!

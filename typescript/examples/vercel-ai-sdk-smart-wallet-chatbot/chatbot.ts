@@ -4,7 +4,7 @@ import {
   erc721ActionProvider,
   pythActionProvider,
   walletActionProvider,
-  SmartWalletProvider,
+  CdpSmartWalletProvider,
 } from "@coinbase/agentkit";
 import { getVercelAITools } from "@coinbase/agentkit-vercel-ai-sdk";
 import { openai } from "@ai-sdk/openai";
@@ -12,13 +12,12 @@ import { generateId, Message, streamText, ToolSet } from "ai";
 import * as dotenv from "dotenv";
 import * as readline from "readline";
 import * as fs from "fs";
-import { Address, Hex } from "viem";
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { Address } from "viem";
 
 dotenv.config();
 
 type WalletData = {
-  privateKey: Hex;
+  smartAccountName?: string;
   smartWalletAddress: Address;
 };
 
@@ -79,58 +78,43 @@ async function initializeAgent() {
     const walletDataFile = `wallet_data_${networkId.replace(/-/g, "_")}.txt`;
 
     let walletData: WalletData | null = null;
-    let privateKey: Hex | null = null;
+    let smartAccountName: string | undefined = undefined;
 
     // Read existing wallet data if available
     if (fs.existsSync(walletDataFile)) {
       try {
         walletData = JSON.parse(fs.readFileSync(walletDataFile, "utf8")) as WalletData;
-        privateKey = walletData.privateKey;
+        smartAccountName = walletData.smartAccountName;
       } catch (error) {
         console.error(`Error reading wallet data for ${networkId}:`, error);
         // Continue without wallet data
       }
     }
 
-    if (!privateKey) {
-      if (walletData?.smartWalletAddress) {
-        throw new Error(
-          `Smart wallet found but no private key provided. Either provide the private key, or delete ${walletDataFile} and try again.`,
-        );
-      }
-      privateKey = (process.env.PRIVATE_KEY || generatePrivateKey()) as Hex;
-    }
-
-    const signer = privateKeyToAccount(privateKey);
-
     // Configure Smart Wallet Provider
-    const walletProvider = await SmartWalletProvider.configureWithWallet({
+    const walletProvider = await CdpSmartWalletProvider.configureWithWallet({
       networkId,
-      signer,
-      smartWalletAddress: walletData?.smartWalletAddress,
-      paymasterUrl: undefined, // Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
+      smartAccountName,
     });
 
     const agentKit = await AgentKit.from({
       walletProvider,
       actionProviders: [
-        cdpApiActionProvider({
-          apiKeyId: process.env.CDP_API_KEY_ID,
-          apiKeySecret: process.env.CDP_API_KEY_SECRET,
-        }),
+        cdpApiActionProvider(),
         erc721ActionProvider(),
         pythActionProvider(),
         walletActionProvider(),
       ],
     });
 
+    const data = await walletProvider.exportWallet();
+
     // Save wallet data
-    const smartWalletAddress = await walletProvider.getAddress();
     fs.writeFileSync(
       walletDataFile,
       JSON.stringify({
-        privateKey,
-        smartWalletAddress,
+        smartAccountName: data.name,
+        smartWalletAddress: data.address,
       } as WalletData),
     );
 

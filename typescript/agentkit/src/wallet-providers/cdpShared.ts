@@ -1,6 +1,6 @@
 import { CdpClient } from "@coinbase/cdp-sdk";
 
-export interface CdpV2ProviderConfig {
+export interface CdpProviderConfig {
   /**
    * The CDP API Key ID.
    */
@@ -20,7 +20,7 @@ export interface CdpV2ProviderConfig {
 /**
  * Configuration options for the CDP Providers.
  */
-export interface CdpV2WalletProviderConfig extends CdpV2ProviderConfig {
+export interface CdpWalletProviderConfig extends CdpProviderConfig {
   /**
    * The address of the wallet.
    */

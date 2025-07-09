@@ -1,5 +1,5 @@
 {
-  "name": "@coinbase/cdp-langchain-chatbot-example",
+  "name": "@coinbase/cdp-v2-evm-langchain-chatbot-example",
   "description": "CDP Agentkit Node.js SDK Chatbot Example",
   "version": "1.0.0",
   "private": true,

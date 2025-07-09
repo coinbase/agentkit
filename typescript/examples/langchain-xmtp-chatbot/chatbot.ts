@@ -2,11 +2,11 @@ import * as dotenv from "dotenv";
 import * as fs from "fs";
 import {
   AgentKit,
-  CdpWalletProvider,
+  LegacyCdpWalletProvider,
   walletActionProvider,
   erc20ActionProvider,
-  cdpApiActionProvider,
-  cdpWalletActionProvider,
+  legacyCdpApiActionProvider,
+  cdpEvmWalletActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -190,21 +190,18 @@ async function initializeAgent(userId: string): Promise<{ agent: Agent; config: 
       networkId: process.env.NETWORK_ID || "base-sepolia",
     };
 
-    const walletProvider = await CdpWalletProvider.configureWithWallet(config);
+    const walletProvider = await LegacyCdpWalletProvider.configureWithWallet(config);
 
     const agentkit = await AgentKit.from({
       walletProvider,
       actionProviders: [
         walletActionProvider(),
         erc20ActionProvider(),
-        cdpApiActionProvider({
+        legacyCdpApiActionProvider({
           apiKeyId: process.env.CDP_API_KEY_ID,
           apiKeySecret: process.env.CDP_API_KEY_SECRET?.replace(/\\n/g, "\n"),
         }),
-        cdpWalletActionProvider({
-          apiKeyId: process.env.CDP_API_KEY_ID,
-          apiKeySecret: process.env.CDP_API_KEY_SECRET?.replace(/\\n/g, "\n"),
-        }),
+        cdpEvmWalletActionProvider(),
       ],
     });
 
