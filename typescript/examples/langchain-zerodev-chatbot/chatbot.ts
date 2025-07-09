@@ -1,12 +1,12 @@
 import {
   AgentKit,
-  CdpWalletProvider,
+  CdpEvmWalletProvider,
   wethActionProvider,
   walletActionProvider,
   erc20ActionProvider,
   erc721ActionProvider,
   cdpApiActionProvider,
-  cdpWalletActionProvider,
+  cdpEvmWalletActionProvider,
   pythActionProvider,
   ViemWalletProvider,
   NETWORK_ID_TO_VIEM_CHAIN,
@@ -100,7 +100,7 @@ async function initializeAgent() {
 
     // Initialize Viem/CDP Wallet Provider
     let evmWalletProvider: EvmWalletProvider;
-    let cdpWalletProvider: CdpWalletProvider | undefined;
+    let cdpWalletProvider: CdpEvmWalletProvider | undefined;
 
     if (process.env.PRIVATE_KEY) {
       // Configure Viem Wallet Provider
@@ -128,7 +128,7 @@ async function initializeAgent() {
         networkId: networkId,
       };
       cdpWalletProvider = evmWalletProvider =
-        await CdpWalletProvider.configureWithWallet(cdpConfig);
+        await CdpEvmWalletProvider.configureWithWallet(cdpConfig);
     } else {
       throw new Error("No wallet provider configured");
     }
@@ -156,14 +156,8 @@ async function initializeAgent() {
         walletActionProvider(),
         erc20ActionProvider(),
         erc721ActionProvider(),
-        cdpApiActionProvider({
-          apiKeyId: process.env.CDP_API_KEY_ID!,
-          apiKeySecret: process.env.CDP_API_KEY_SECRET!,
-        }),
-        cdpWalletActionProvider({
-          apiKeyId: process.env.CDP_API_KEY_ID!,
-          apiKeySecret: process.env.CDP_API_KEY_SECRET!,
-        }),
+        cdpApiActionProvider(),
+        cdpEvmWalletActionProvider(),
         zeroDevWalletActionProvider(),
       ],
     });

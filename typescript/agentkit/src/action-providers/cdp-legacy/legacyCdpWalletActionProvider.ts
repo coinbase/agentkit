@@ -4,7 +4,7 @@ import { version } from "../../../package.json";
 import { CreateAction } from "../actionDecorator";
 import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
-import { CdpWalletProvider, CdpProviderConfig } from "../../wallet-providers";
+import { LegacyCdpWalletProvider, LegacyCdpProviderConfig } from "../../wallet-providers";
 import { SolidityVersions } from "./constants";
 import { DeployContractSchema, DeployNftSchema, DeployTokenSchema, TradeSchema } from "./schemas";
 
@@ -13,14 +13,14 @@ import { DeployContractSchema, DeployNftSchema, DeployTokenSchema, TradeSchema }
  *
  * This provider is used for any action that requires a CDP Wallet.
  */
-export class CdpWalletActionProvider extends ActionProvider<CdpWalletProvider> {
+export class LegacyCdpWalletActionProvider extends ActionProvider<LegacyCdpWalletProvider> {
   /**
    * Constructor for the CdpWalletActionProvider class.
    *
    * @param config - The configuration options for the CdpWalletActionProvider.
    */
-  constructor(config: CdpProviderConfig = {}) {
-    super("cdp_wallet", []);
+  constructor(config: LegacyCdpProviderConfig = {}) {
+    super("legacy_cdp_wallet", []);
 
     if (config.apiKeyId && config.apiKeySecret) {
       Coinbase.configure({
@@ -61,7 +61,7 @@ map where the key is the arg name and the value is the arg value. Encode uint/in
     schema: DeployContractSchema,
   })
   async deployContract(
-    walletProvider: CdpWalletProvider,
+    walletProvider: LegacyCdpWalletProvider,
     args: z.infer<typeof DeployContractSchema>,
   ): Promise<string> {
     try {
@@ -98,7 +98,7 @@ map where the key is the arg name and the value is the arg value. Encode uint/in
     schema: DeployNftSchema,
   })
   async deployNFT(
-    walletProvider: CdpWalletProvider,
+    walletProvider: LegacyCdpWalletProvider,
     args: z.infer<typeof DeployNftSchema>,
   ): Promise<string> {
     try {
@@ -139,7 +139,10 @@ map where the key is the arg name and the value is the arg value. Encode uint/in
 The token will be deployed using the wallet's default address as the owner and initial token holder.`,
     schema: DeployTokenSchema,
   })
-  async deployToken(walletProvider: CdpWalletProvider, args: z.infer<typeof DeployTokenSchema>) {
+  async deployToken(
+    walletProvider: LegacyCdpWalletProvider,
+    args: z.infer<typeof DeployTokenSchema>,
+  ) {
     try {
       const tokenContract = await walletProvider.deployToken({
         name: args.name,
@@ -181,7 +184,7 @@ Important notes:
     schema: TradeSchema,
   })
   async trade(
-    walletProvider: CdpWalletProvider,
+    walletProvider: LegacyCdpWalletProvider,
     args: z.infer<typeof TradeSchema>,
   ): Promise<string> {
     try {
@@ -214,5 +217,5 @@ Important notes:
   supportsNetwork = (network: Network) => network.protocolFamily === "evm";
 }
 
-export const cdpWalletActionProvider = (config: CdpProviderConfig = {}) =>
-  new CdpWalletActionProvider(config);
+export const legacyCdpWalletActionProvider = (config: LegacyCdpProviderConfig = {}) =>
+  new LegacyCdpWalletActionProvider(config);

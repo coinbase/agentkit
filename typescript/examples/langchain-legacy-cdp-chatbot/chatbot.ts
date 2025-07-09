@@ -1,11 +1,15 @@
 import {
   AgentKit,
-  cdpApiActionProvider,
-  erc20ActionProvider,
-  pythActionProvider,
-  SmartWalletProvider,
-  walletActionProvider,
+  LegacyCdpWalletProvider,
   wethActionProvider,
+  walletActionProvider,
+  erc20ActionProvider,
+  erc721ActionProvider,
+  legacyCdpApiActionProvider,
+  legacyCdpWalletActionProvider,
+  pythActionProvider,
+  openseaActionProvider,
+  alloraActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -15,8 +19,6 @@ import { ChatOpenAI } from "@langchain/openai";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as readline from "readline";
-import { Address, Hex } from "viem";
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 dotenv.config();
 
@@ -29,6 +31,7 @@ dotenv.config();
 function validateEnvironment(): void {
   const missingVars: string[] = [];
 
+  // Check required variables
   const requiredVars = ["OPENAI_API_KEY", "CDP_API_KEY_ID", "CDP_API_KEY_SECRET"];
   requiredVars.forEach(varName => {
     if (!process.env[varName]) {
@@ -36,6 +39,7 @@ function validateEnvironment(): void {
     }
   });
 
+  // Exit if any required variables are missing
   if (missingVars.length > 0) {
     console.error("Error: Required environment variables are not set");
     missingVars.forEach(varName => {
@@ -44,6 +48,7 @@ function validateEnvironment(): void {
     process.exit(1);
   }
 
+  // Warn about optional NETWORK_ID
   if (!process.env.NETWORK_ID) {
     console.warn("Warning: NETWORK_ID not set, defaulting to base-sepolia testnet");
   }
@@ -52,10 +57,8 @@ function validateEnvironment(): void {
 // Add this right after imports and before any other code
 validateEnvironment();
 
-type WalletData = {
-  privateKey: Hex;
-  smartWalletAddress: Address;
-};
+// Configure a file to persist the agent's CDP MPC Wallet Data
+const WALLET_DATA_FILE = "wallet_data.txt";
 
 /**
  * Initialize the agent with CDP Agentkit
@@ -69,40 +72,27 @@ async function initializeAgent() {
       model: "gpt-4o-mini",
     });
 
-    const networkId = process.env.NETWORK_ID || "base-sepolia";
-    const walletDataFile = `wallet_data_${networkId.replace(/-/g, "_")}.txt`;
-
-    let walletData: WalletData | null = null;
-    let privateKey: Hex | null = null;
+    let walletDataStr: string | null = null;
 
     // Read existing wallet data if available
-    if (fs.existsSync(walletDataFile)) {
+    if (fs.existsSync(WALLET_DATA_FILE)) {
       try {
-        walletData = JSON.parse(fs.readFileSync(walletDataFile, "utf8")) as WalletData;
-        privateKey = walletData.privateKey;
+        walletDataStr = fs.readFileSync(WALLET_DATA_FILE, "utf8");
       } catch (error) {
-        console.error(`Error reading wallet data for ${networkId}:`, error);
+        console.error("Error reading wallet data:", error);
         // Continue without wallet data
       }
     }
-    if (!privateKey) {
-      if (walletData?.smartWalletAddress) {
-        throw new Error(
-          `Smart wallet found but no private key provided. Either provide the private key, or delete ${walletDataFile} and try again.`,
-        );
-      }
-      privateKey = (process.env.PRIVATE_KEY || generatePrivateKey()) as Hex;
-    }
 
-    const signer = privateKeyToAccount(privateKey);
+    // Configure CDP Wallet Provider
+    const config = {
+      apiKeyId: process.env.CDP_API_KEY_ID,
+      apiKeySecret: process.env.CDP_API_KEY_SECRET,
+      cdpWalletData: walletDataStr || undefined,
+      networkId: process.env.NETWORK_ID || "base-sepolia",
+    };
 
-    // Configure Smart Wallet Provider
-    const walletProvider = await SmartWalletProvider.configureWithWallet({
-      networkId,
-      signer,
-      smartWalletAddress: walletData?.smartWalletAddress,
-      paymasterUrl: undefined, // Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
-    });
+    const walletProvider = await LegacyCdpWalletProvider.configureWithWallet(config);
 
     // Initialize AgentKit
     const agentkit = await AgentKit.from({
@@ -112,10 +102,26 @@ async function initializeAgent() {
         pythActionProvider(),
         walletActionProvider(),
         erc20ActionProvider(),
-        cdpApiActionProvider({
+        erc721ActionProvider(),
+        legacyCdpApiActionProvider({
           apiKeyId: process.env.CDP_API_KEY_ID,
           apiKeySecret: process.env.CDP_API_KEY_SECRET,
         }),
+        legacyCdpWalletActionProvider({
+          apiKeyId: process.env.CDP_API_KEY_ID,
+          apiKeySecret: process.env.CDP_API_KEY_SECRET,
+        }),
+        // Only add OpenSea provider if API key is configured
+        ...(process.env.OPENSEA_API_KEY
+          ? [
+              openseaActionProvider({
+                apiKey: process.env.OPENSEA_API_KEY,
+                networkId: walletProvider.getNetwork().networkId,
+                privateKey: await (await walletProvider.getWallet().getDefaultAddress()).export(),
+              }),
+            ]
+          : []),
+        alloraActionProvider(),
       ],
     });
 
@@ -144,14 +150,8 @@ async function initializeAgent() {
     });
 
     // Save wallet data
-    const smartWalletAddress = await walletProvider.getAddress();
-    fs.writeFileSync(
-      walletDataFile,
-      JSON.stringify({
-        privateKey,
-        smartWalletAddress,
-      } as WalletData),
-    );
+    const exportedWallet = await walletProvider.exportWallet();
+    fs.writeFileSync(WALLET_DATA_FILE, JSON.stringify(exportedWallet));
 
     return { agent, config: agentConfig };
   } catch (error) {

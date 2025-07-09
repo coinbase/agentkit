@@ -1,4 +1,4 @@
-import { CdpClient, EvmServerAccount } from "@coinbase/cdp-sdk";
+import { CdpClient, EvmSmartAccount, EvmServerAccount } from "@coinbase/cdp-sdk";
 import {
   Abi,
   Address,
@@ -10,24 +10,28 @@ import {
   PublicClient,
   ReadContractParameters,
   ReadContractReturnType,
-  serializeTransaction,
   TransactionRequest,
-  TransactionSerializable,
+  PrivateKeyAccount,
 } from "viem";
 import { Network, NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_VIEM_CHAIN } from "../network";
 import { EvmWalletProvider } from "./evmWalletProvider";
-import { WalletProviderWithClient, CdpV2WalletProviderConfig } from "./cdpV2Shared";
+import { WalletProviderWithClient, CdpSmartWalletProviderConfig } from "./cdpShared";
 
-interface ConfigureCdpV2EvmWalletProviderWithWalletOptions {
+interface ConfigureCdpSmartWalletProviderWithWalletOptions {
   /**
    * The CDP client of the wallet.
    */
   cdp: CdpClient;
 
   /**
-   * The server account of the wallet.
+   * The smart account of the wallet.
    */
-  serverAccount: EvmServerAccount;
+  smartAccount: EvmSmartAccount;
+
+  /**
+   * The owner account of the smart wallet.
+   */
+  ownerAccount: EvmServerAccount | PrivateKeyAccount;
 
   /**
    * The public client of the wallet.
@@ -41,38 +45,40 @@ interface ConfigureCdpV2EvmWalletProviderWithWalletOptions {
 }
 
 /**
- * A wallet provider that uses the Coinbase SDK.
+ * A wallet provider that uses the Coinbase CDP SDK smart wallets.
  */
-export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletProviderWithClient {
+export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletProviderWithClient {
   #publicClient: PublicClient;
-  #serverAccount: EvmServerAccount;
+  #smartAccount: EvmSmartAccount;
+  #ownerAccount: PrivateKeyAccount | EvmServerAccount;
   #cdp: CdpClient;
   #network: Network;
 
   /**
-   * Constructs a new CdpWalletProvider.
+   * Constructs a new CdpSmartWalletProvider.
    *
-   * @param config - The configuration options for the CdpWalletProvider.
+   * @param config - The configuration options for the CdpSmartWalletProvider.
    */
-  private constructor(config: ConfigureCdpV2EvmWalletProviderWithWalletOptions) {
+  private constructor(config: ConfigureCdpSmartWalletProviderWithWalletOptions) {
     super();
 
-    this.#serverAccount = config.serverAccount;
+    this.#smartAccount = config.smartAccount;
+    this.#ownerAccount = config.ownerAccount;
     this.#cdp = config.cdp;
     this.#publicClient = config.publicClient;
     this.#network = config.network;
   }
 
   /**
-   * Configures a new CdpWalletProvider with a wallet.
+   * Configures a new CdpSmartWalletProvider with a smart wallet.
    *
    * @param config - Optional configuration parameters
-   * @returns A Promise that resolves to a new CdpWalletProvider instance
+   * @returns A Promise that resolves to a new CdpSmartWalletProvider instance
    * @throws Error if required environment variables are missing or wallet initialization fails
    */
   public static async configureWithWallet(
-    config: CdpV2WalletProviderConfig = {},
-  ): Promise<CdpV2EvmWalletProvider> {
+    config: CdpSmartWalletProviderConfig = {},
+  ): Promise<CdpSmartWalletProvider> {
     const apiKeyId = config.apiKeyId || process.env.CDP_API_KEY_ID;
     const apiKeySecret = config.apiKeySecret || process.env.CDP_API_KEY_SECRET;
     const walletSecret = config.walletSecret || process.env.CDP_WALLET_SECRET;
@@ -85,6 +91,12 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletP
     }
 
     const networkId: string = config.networkId || process.env.NETWORK_ID || "base-sepolia";
+
+    // Smart wallets are currently only supported on Base networks
+    if (!networkId.startsWith("base-")) {
+      throw new Error(`Smart wallets are only supported on Base networks. Got: ${networkId}`);
+    }
+
     const network = {
       protocolFamily: "evm" as const,
       chainId: NETWORK_ID_TO_CHAIN_ID[networkId],
@@ -97,103 +109,125 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletP
       walletSecret,
     });
 
-    const serverAccount = await (config.address
-      ? cdpClient.evm.getAccount({ address: config.address as Address })
-      : cdpClient.evm.createAccount({ idempotencyKey }));
+    // Create or get the owner account
+    const ownerAccount = await (() => {
+      if (typeof config.owner === "string") {
+        return cdpClient.evm.getAccount({ address: config.owner as Address });
+      }
+
+      if (typeof config.owner === "object") {
+        return config.owner;
+      }
+
+      return cdpClient.evm.createAccount({ idempotencyKey });
+    })();
+
+    // Create or get the smart account
+    const smartAccount = await (config.address || config.smartAccountName
+      ? cdpClient.evm.getSmartAccount({
+          address: config.address,
+          name: config.smartAccountName,
+          owner: ownerAccount as EvmServerAccount,
+        })
+      : cdpClient.evm.createSmartAccount({
+          owner: ownerAccount as EvmServerAccount,
+        }));
 
     const publicClient = createPublicClient({
       chain: NETWORK_ID_TO_VIEM_CHAIN[networkId],
       transport: http(),
     });
 
-    return new CdpV2EvmWalletProvider({
+    return new CdpSmartWalletProvider({
       publicClient,
       cdp: cdpClient,
-      serverAccount,
+      smartAccount,
+      ownerAccount,
       network,
     });
   }
 
   /**
-   * Signs a message.
+   * Exports the wallet.
+   *
+   * @returns The wallet's data.
+   */
+  async exportWallet(): Promise<{
+    name: string | undefined;
+    address: Address;
+    ownerAddress: Address;
+  }> {
+    return {
+      name: this.#smartAccount.name,
+      address: this.#smartAccount.address as Address,
+      ownerAddress: this.#ownerAccount.address as Address,
+    };
+  }
+
+  /**
+   * Signs a message using the owner account.
    *
    * @param message - The message to sign.
    * @returns The signed message.
    */
   async signMessage(message: string): Promise<Hex> {
-    return this.#serverAccount.signMessage({ message });
+    return this.#ownerAccount.signMessage({ message });
   }
 
   /**
-   * Signs a typed data object.
+   * Signs a typed data object using the owner account.
    *
    * @param typedData - The typed data object to sign.
    * @returns The signed typed data object.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async signTypedData(typedData: any): Promise<Hex> {
-    return this.#serverAccount.signTypedData(typedData);
+    return this.#ownerAccount.signTypedData(typedData);
   }
 
   /**
-   * Signs a transaction.
+   * Signs a transaction using the owner account.
    *
-   * @param transaction - The transaction to sign.
+   * @param _ - The transaction to sign.
    * @returns The signed transaction.
    */
-  async signTransaction(transaction: TransactionRequest): Promise<Hex> {
-    const serializedTx = serializeTransaction(transaction as TransactionSerializable);
-    const signedTx = await this.#cdp.evm.signTransaction({
-      address: this.#serverAccount.address,
-      transaction: serializedTx,
-    });
-
-    return signedTx.signature;
+  async signTransaction(_: TransactionRequest): Promise<Hex> {
+    throw new Error(
+      "Direct transaction signing not supported for smart wallets. Use sendTransaction instead.",
+    );
   }
 
   /**
-   * Sends a transaction.
+   * Sends a user operation through the smart wallet.
    *
    * @param transaction - The transaction to send.
-   * @returns The hash of the transaction.
+   * @returns The user operation hash.
    */
   async sendTransaction(transaction: TransactionRequest): Promise<Hex> {
-    const txWithGasParams = {
-      ...transaction,
-      chainId: this.#network.chainId,
-    };
+    const calls = [
+      {
+        to: transaction.to as Address,
+        value: transaction.value ? BigInt(transaction.value.toString()) : 0n,
+        data: (transaction.data as Hex) || "0x",
+      },
+    ];
 
-    if (!txWithGasParams.maxFeePerGas && !txWithGasParams.gasPrice) {
-      const feeData = await this.#publicClient.estimateFeesPerGas();
-      txWithGasParams.maxFeePerGas = feeData.maxFeePerGas;
-      txWithGasParams.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
-    }
-
-    if (!txWithGasParams.gas) {
-      try {
-        txWithGasParams.gas = await this.#publicClient.estimateGas({
-          account: this.#serverAccount.address as Address,
-          ...txWithGasParams,
-        });
-      } catch (error) {
-        console.warn("Failed to estimate gas, continuing without gas estimation", error);
-      }
-    }
-    const result = await this.#cdp.evm.sendTransaction({
-      address: this.#serverAccount.address,
-      transaction: serializeTransaction(txWithGasParams as TransactionSerializable),
+    const userOperation = await this.#cdp.evm.sendUserOperation({
+      smartAccount: this.#smartAccount,
       network: this.#getCdpSdkNetwork(),
+      calls,
     });
-    return result.transactionHash;
+
+    return userOperation.userOpHash as Hex;
   }
 
   /**
-   * Gets the address of the wallet.
+   * Gets the address of the smart wallet.
    *
-   * @returns The address of the wallet.
+   * @returns The address of the smart wallet.
    */
   getAddress(): string {
-    return this.#serverAccount.address;
+    return this.#smartAccount.address;
   }
 
   /**
@@ -211,7 +245,7 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletP
    * @returns The name of the wallet provider.
    */
   getName(): string {
-    return "cdp_v2_wallet_provider";
+    return "cdp_smart_wallet_provider";
   }
 
   /**
@@ -224,23 +258,29 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletP
   }
 
   /**
-   * Gets the balance of the wallet.
+   * Gets the balance of the smart wallet.
    *
    * @returns The balance of the wallet in wei
    */
   async getBalance(): Promise<bigint> {
-    return await this.#publicClient.getBalance({ address: this.#serverAccount.address });
+    return await this.#publicClient.getBalance({ address: this.#smartAccount.address });
   }
 
   /**
-   * Waits for a transaction receipt.
+   * Waits for a user operation receipt.
    *
-   * @param txHash - The hash of the transaction to wait for.
-   * @returns The transaction receipt.
+   * @param userOpHash - The user operation hash to wait for.
+   * @returns The user operation receipt.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async waitForTransactionReceipt(txHash: Hex): Promise<any> {
-    return await this.#publicClient.waitForTransactionReceipt({ hash: txHash });
+  async waitForTransactionReceipt(userOpHash: Hex): Promise<any> {
+    // For smart wallets, we need to wait for the user operation to be confirmed
+    // This is a simplified implementation - in practice you might want to poll
+    // the CDP API for user operation status
+    return this.#cdp.evm.waitForUserOperation({
+      smartAccountAddress: this.#smartAccount.address,
+      userOpHash,
+    });
   }
 
   /**
@@ -260,11 +300,11 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletP
   }
 
   /**
-   * Transfer the native asset of the network.
+   * Transfer the native asset of the network using smart wallet.
    *
    * @param to - The destination address.
    * @param value - The amount to transfer in Wei.
-   * @returns The transaction hash.
+   * @returns The user operation hash.
    */
   async nativeTransfer(to: Address, value: string): Promise<Hex> {
     return this.sendTransaction({
@@ -287,7 +327,7 @@ export class CdpV2EvmWalletProvider extends EvmWalletProvider implements WalletP
       case "base-mainnet":
         return "base";
       default:
-        throw new Error(`Unsupported network: ${this.#network.networkId}`);
+        throw new Error(`Unsupported network for smart wallets: ${this.#network.networkId}`);
     }
   }
 }

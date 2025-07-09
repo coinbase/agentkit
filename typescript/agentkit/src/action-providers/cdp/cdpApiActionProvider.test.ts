@@ -1,185 +1,285 @@
-import { EvmWalletProvider } from "../../wallet-providers";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { CdpClient } from "@coinbase/cdp-sdk";
+import { WalletProvider } from "../../wallet-providers";
+import { WalletProviderWithClient } from "../../wallet-providers/cdpShared";
 import { CdpApiActionProvider } from "./cdpApiActionProvider";
-import { AddressReputationSchema, RequestFaucetFundsSchema } from "./schemas";
+import { RequestFaucetFundsV2Schema, SwapSchema } from "./schemas";
 
-jest.mock("@coinbase/coinbase-sdk");
-
-const { ExternalAddress } = jest.requireMock("@coinbase/coinbase-sdk");
-
-describe("CDP API Action Provider Input Schemas", () => {
-  describe("Address Reputation Schema", () => {
-    it("should successfully parse valid input", () => {
-      const validInput = {
-        address: "0xe6b2af36b3bb8d47206a129ff11d5a2de2a63c83",
-        network: "base-mainnet",
-      };
-
-      const result = AddressReputationSchema.safeParse(validInput);
-
-      expect(result.success).toBe(true);
-      expect(result.data).toEqual(validInput);
-    });
-
-    it("should fail parsing invalid address", () => {
-      const invalidInput = {
-        address: "invalid-address",
-        network: "base-mainnet",
-      };
-      const result = AddressReputationSchema.safeParse(invalidInput);
-
-      expect(result.success).toBe(false);
-    });
-  });
-
-  describe("Request Faucet Funds Schema", () => {
-    it("should successfully parse with optional assetId", () => {
-      const validInput = {
-        assetId: "eth",
-      };
-
-      const result = RequestFaucetFundsSchema.safeParse(validInput);
-
-      expect(result.success).toBe(true);
-      expect(result.data).toEqual(validInput);
-    });
-
-    it("should successfully parse without assetId", () => {
-      const validInput = {};
-      const result = RequestFaucetFundsSchema.safeParse(validInput);
-
-      expect(result.success).toBe(true);
-      expect(result.data).toEqual(validInput);
-    });
-  });
-});
+// Mock the CDP SDK
+jest.mock("@coinbase/cdp-sdk");
 
 describe("CDP API Action Provider", () => {
   let actionProvider: CdpApiActionProvider;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let mockExternalAddressInstance: jest.Mocked<any>;
-  let mockWallet: jest.Mocked<EvmWalletProvider>;
+  let mockWalletProvider: jest.Mocked<WalletProvider & WalletProviderWithClient>;
+  let mockCdpClient: jest.Mocked<CdpClient>;
 
   beforeEach(() => {
-    // Reset all mocks before each test
     jest.clearAllMocks();
 
-    actionProvider = new CdpApiActionProvider();
-    mockExternalAddressInstance = {
-      reputation: jest.fn(),
-      faucet: jest.fn(),
+    const mockAccount = {
+      swap: jest.fn(),
     };
 
-    // Mock the constructor to return our mock instance
-    (ExternalAddress as jest.Mock).mockImplementation(() => mockExternalAddressInstance);
+    mockCdpClient = {
+      evm: {
+        requestFaucet: jest.fn() as any,
+        getAccount: jest.fn() as any,
+      },
+      solana: {
+        requestFaucet: jest.fn() as any,
+      },
+    } as any;
 
-    mockWallet = {
-      deployToken: jest.fn(),
-      deployContract: jest.fn(),
-      getAddress: jest.fn().mockReturnValue("0xe6b2af36b3bb8d47206a129ff11d5a2de2a63c83"),
-      getNetwork: jest.fn().mockReturnValue({ networkId: "base-sepolia" }),
-    } as unknown as jest.Mocked<EvmWalletProvider>;
+    // Set up default mock behavior
+    (mockCdpClient.evm.getAccount as jest.Mock).mockResolvedValue(mockAccount);
+
+    mockWalletProvider = {
+      getNetwork: jest.fn(),
+      getAddress: jest.fn(),
+      getClient: jest.fn(),
+    } as any;
+
+    actionProvider = new CdpApiActionProvider();
   });
 
-  describe("addressReputation", () => {
-    it("should successfully check address reputation", async () => {
-      const args = {
-        address: "0xe6b2af36b3bb8d47206a129ff11d5a2de2a63c83",
-        network: "base-mainnet",
-      };
-
-      mockExternalAddressInstance.reputation.mockResolvedValue("Good reputation");
-
-      const result = await actionProvider.addressReputation(args);
-
-      expect(ExternalAddress).toHaveBeenCalledWith(args.network, args.address);
-      expect(ExternalAddress).toHaveBeenCalledTimes(1);
-      expect(mockExternalAddressInstance.reputation).toHaveBeenCalled();
-      expect(mockExternalAddressInstance.reputation).toHaveBeenCalledTimes(1);
-      expect(result).toBe("Good reputation");
+  describe("initialization", () => {
+    it("should initialize with correct provider name", () => {
+      expect(actionProvider.name).toBe("cdp_api");
     });
 
-    it("should handle errors when checking reputation", async () => {
-      const args = {
-        address: "0xe6b2af36b3bb8d47206a129ff11d5a2de2a63c83",
-        network: "base-mainnet",
-      };
-
-      const error = new Error("Reputation check failed");
-      mockExternalAddressInstance.reputation.mockRejectedValue(error);
-
-      const result = await actionProvider.addressReputation(args);
-
-      expect(ExternalAddress).toHaveBeenCalledWith(args.network, args.address);
-      expect(ExternalAddress).toHaveBeenCalledTimes(1);
-      expect(mockExternalAddressInstance.reputation).toHaveBeenCalled();
-      expect(mockExternalAddressInstance.reputation).toHaveBeenCalledTimes(1);
-      expect(result).toBe(`Error checking address reputation: ${error}`);
-    });
-
-    it("should return error if not on Ethereum network", async () => {
-      const args = {
-        address: "0xe6b2af36b3bb8d47206a129ff11d5a2de2a63c83",
-        network: "solana-devnet",
-      };
-
-      const result = await actionProvider.addressReputation(args);
-
-      expect(result).toBe("Address reputation is only supported on Ethereum networks.");
+    it("should support all networks", () => {
+      const mockNetwork = { protocolFamily: "evm", networkId: "base-sepolia" };
+      expect(actionProvider.supportsNetwork(mockNetwork as any)).toBe(true);
     });
   });
 
   describe("faucet", () => {
-    beforeEach(() => {
-      mockExternalAddressInstance.faucet.mockResolvedValue({
-        wait: jest.fn().mockResolvedValue({
-          getTransactionLink: jest.fn().mockReturnValue("tx-link"),
-        }),
+    it("should request faucet funds on base-sepolia", async () => {
+      const mockNetwork = { protocolFamily: "evm", networkId: "base-sepolia" };
+      mockWalletProvider.getNetwork.mockReturnValue(mockNetwork as any);
+      mockWalletProvider.getAddress.mockReturnValue("0x123456789");
+      mockWalletProvider.getClient.mockReturnValue(mockCdpClient);
+
+      (mockCdpClient.evm.requestFaucet as jest.Mock).mockResolvedValue({
+        transactionHash: "0xabcdef123456",
       });
-    });
 
-    it("should successfully request faucet funds with assetId", async () => {
-      const args = {
-        assetId: "eth",
-      };
+      const result = await actionProvider.faucet(mockWalletProvider, { assetId: "eth" });
 
-      const result = await actionProvider.faucet(mockWallet, args);
-
-      expect(ExternalAddress).toHaveBeenCalledWith("base-sepolia", mockWallet.getAddress());
-      expect(ExternalAddress).toHaveBeenCalledTimes(1);
-      expect(mockExternalAddressInstance.faucet).toHaveBeenCalledWith("eth");
-      expect(mockExternalAddressInstance.faucet).toHaveBeenCalledTimes(1);
+      expect(mockCdpClient.evm.requestFaucet).toHaveBeenCalledWith({
+        address: "0x123456789",
+        token: "eth",
+        network: "base-sepolia",
+      });
       expect(result).toContain("Received eth from the faucet");
-      expect(result).toContain("tx-link");
+      expect(result).toContain("0xabcdef123456");
     });
 
-    it("should successfully request faucet funds without assetId", async () => {
-      const args = {};
+    it("should request faucet funds on solana-devnet", async () => {
+      const mockNetwork = { protocolFamily: "svm", networkId: "solana-devnet" };
+      mockWalletProvider.getNetwork.mockReturnValue(mockNetwork as any);
+      mockWalletProvider.getAddress.mockReturnValue("address123");
+      mockWalletProvider.getClient.mockReturnValue(mockCdpClient);
 
-      const result = await actionProvider.faucet(mockWallet, args);
+      (mockCdpClient.solana.requestFaucet as jest.Mock).mockResolvedValue({
+        signature: "signature123",
+      });
 
-      expect(ExternalAddress).toHaveBeenCalledWith("base-sepolia", mockWallet.getAddress());
-      expect(ExternalAddress).toHaveBeenCalledTimes(1);
-      expect(mockExternalAddressInstance.faucet).toHaveBeenCalledWith(undefined);
-      expect(mockExternalAddressInstance.faucet).toHaveBeenCalledTimes(1);
-      expect(result).toContain("Received ETH from the faucet");
+      const result = await actionProvider.faucet(mockWalletProvider, { assetId: "sol" });
+
+      expect(mockCdpClient.solana.requestFaucet).toHaveBeenCalledWith({
+        address: "address123",
+        token: "sol",
+      });
+      expect(result).toContain("Received sol from the faucet");
+      expect(result).toContain("signature123");
     });
 
-    it("should handle faucet errors", async () => {
-      const args = {};
-      const error = new Error("Faucet request failed");
-      mockExternalAddressInstance.faucet.mockRejectedValue(error);
+    it("should throw error for unsupported EVM network", async () => {
+      const mockNetwork = { protocolFamily: "evm", networkId: "ethereum-mainnet" };
+      mockWalletProvider.getNetwork.mockReturnValue(mockNetwork as any);
+      mockWalletProvider.getClient.mockReturnValue(mockCdpClient);
 
-      const result = await actionProvider.faucet(mockWallet, args);
-
-      expect(result).toBe(`Error requesting faucet funds: ${error}`);
+      await expect(actionProvider.faucet(mockWalletProvider, { assetId: "eth" })).rejects.toThrow(
+        "Faucet is only supported on 'base-sepolia' or 'ethereum-sepolia' evm networks",
+      );
     });
 
-    it("should return error if not on base-sepolia or solana-devnet", async () => {
-      mockWallet.getNetwork.mockReturnValue({ networkId: "solana-mainnet", protocolFamily: "svm" });
-      const args = {};
-      const result = await actionProvider.faucet(mockWallet, args);
+    it("should throw error for unsupported Solana network", async () => {
+      const mockNetwork = { protocolFamily: "svm", networkId: "solana-mainnet" };
+      mockWalletProvider.getNetwork.mockReturnValue(mockNetwork as any);
+      mockWalletProvider.getClient.mockReturnValue(mockCdpClient);
 
-      expect(result).toBe("Faucet is only allowed on 'base-sepolia' or 'solana-devnet'.");
+      await expect(actionProvider.faucet(mockWalletProvider, { assetId: "sol" })).rejects.toThrow(
+        "Faucet is only supported on 'solana-devnet' solana networks",
+      );
+    });
+
+    it("should throw error for wallet provider without client", async () => {
+      const mockWalletWithoutClient = {
+        getNetwork: jest.fn().mockReturnValue({ protocolFamily: "evm", networkId: "base-sepolia" }),
+      } as any;
+
+      await expect(
+        actionProvider.faucet(mockWalletWithoutClient, { assetId: "eth" }),
+      ).rejects.toThrow("Wallet provider is not a CDP Wallet Provider");
+    });
+  });
+
+  describe("swap", () => {
+    it("should perform swap on base-sepolia", async () => {
+      const mockNetwork = { protocolFamily: "evm", networkId: "base-sepolia" };
+      mockWalletProvider.getNetwork.mockReturnValue(mockNetwork as any);
+      mockWalletProvider.getAddress.mockReturnValue("0x123456789");
+      mockWalletProvider.getClient.mockReturnValue(mockCdpClient);
+
+      const mockAccount = { swap: jest.fn() };
+      (mockCdpClient.evm.getAccount as jest.Mock).mockResolvedValue(mockAccount);
+      mockAccount.swap.mockResolvedValue({
+        transactionHash: "0xswap123456",
+      });
+
+      const result = await actionProvider.swap(mockWalletProvider, {
+        fromAssetId: "eth",
+        toAssetId: "usdc",
+        amount: "0.1",
+      });
+
+      expect(mockCdpClient.evm.getAccount).toHaveBeenCalledWith({
+        address: "0x123456789",
+      });
+      expect(mockAccount.swap).toHaveBeenCalledWith({
+        network: "base-sepolia",
+        from: "eth",
+        to: "usdc",
+        amount: "0.1",
+        slippageBps: 100,
+      });
+      expect(result).toContain("Successfully swapped 0.1 ETH to USDC");
+      expect(result).toContain("0xswap123456");
+    });
+
+    it("should perform swap on base-mainnet", async () => {
+      const mockNetwork = { protocolFamily: "evm", networkId: "base-mainnet" };
+      mockWalletProvider.getNetwork.mockReturnValue(mockNetwork as any);
+      mockWalletProvider.getAddress.mockReturnValue("0x123456789");
+      mockWalletProvider.getClient.mockReturnValue(mockCdpClient);
+
+      const mockAccount = { swap: jest.fn() };
+      (mockCdpClient.evm.getAccount as jest.Mock).mockResolvedValue(mockAccount);
+      mockAccount.swap.mockResolvedValue({
+        transactionHash: "0xswap789",
+      });
+
+      const result = await actionProvider.swap(mockWalletProvider, {
+        fromAssetId: "usdc",
+        toAssetId: "eth",
+        amount: "100",
+      });
+
+      expect(mockAccount.swap).toHaveBeenCalledWith({
+        network: "base", // Should convert base-mainnet to base
+        from: "usdc",
+        to: "eth",
+        amount: "100",
+        slippageBps: 100,
+      });
+      expect(result).toContain("Successfully swapped 100 USDC to ETH");
+    });
+
+    it("should throw error for non-EVM networks", async () => {
+      const mockNetwork = { protocolFamily: "svm", networkId: "solana-devnet" };
+      mockWalletProvider.getNetwork.mockReturnValue(mockNetwork as any);
+      mockWalletProvider.getClient.mockReturnValue(mockCdpClient);
+
+      await expect(
+        actionProvider.swap(mockWalletProvider, {
+          fromAssetId: "sol",
+          toAssetId: "usdc",
+          amount: "1",
+        }),
+      ).rejects.toThrow("Swap is currently only supported on EVM networks");
+    });
+
+    it("should throw error for wallet provider without client", async () => {
+      const mockWalletWithoutClient = {
+        getNetwork: jest.fn().mockReturnValue({ protocolFamily: "evm", networkId: "base-sepolia" }),
+      } as any;
+
+      await expect(
+        actionProvider.swap(mockWalletWithoutClient, {
+          fromAssetId: "eth",
+          toAssetId: "usdc",
+          amount: "0.1",
+        }),
+      ).rejects.toThrow("Wallet provider is not a CDP Wallet Provider");
+    });
+
+    it("should handle swap errors", async () => {
+      const mockNetwork = { protocolFamily: "evm", networkId: "base-sepolia" };
+      mockWalletProvider.getNetwork.mockReturnValue(mockNetwork as any);
+      mockWalletProvider.getAddress.mockReturnValue("0x123456789");
+      mockWalletProvider.getClient.mockReturnValue(mockCdpClient);
+
+      const mockAccount = { swap: jest.fn() };
+      (mockCdpClient.evm.getAccount as jest.Mock).mockResolvedValue(mockAccount);
+      mockAccount.swap.mockRejectedValue(new Error("Insufficient liquidity"));
+
+      await expect(
+        actionProvider.swap(mockWalletProvider, {
+          fromAssetId: "eth",
+          toAssetId: "usdc",
+          amount: "1000",
+        }),
+      ).rejects.toThrow("Swap failed: Error: Insufficient liquidity");
+    });
+  });
+
+  describe("RequestFaucetFundsV2Schema", () => {
+    it("should validate correct input", () => {
+      const validInput = { assetId: "eth" };
+      const result = RequestFaucetFundsV2Schema.safeParse(validInput);
+      expect(result.success).toBe(true);
+    });
+
+    it("should allow missing assetId", () => {
+      const validInput = {};
+      const result = RequestFaucetFundsV2Schema.safeParse(validInput);
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe("SwapSchema", () => {
+    it("should validate correct swap input", () => {
+      const validInput = {
+        fromAssetId: "eth",
+        toAssetId: "usdc",
+        amount: "0.1",
+      };
+      const result = SwapSchema.safeParse(validInput);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(validInput);
+    });
+
+    it("should validate swap input with network", () => {
+      const validInput = {
+        fromAssetId: "usdc",
+        toAssetId: "eth",
+        amount: "100",
+        network: "base-sepolia",
+      };
+      const result = SwapSchema.safeParse(validInput);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(validInput);
+    });
+
+    it("should fail validation when missing required fields", () => {
+      const invalidInput = {
+        fromAssetId: "eth",
+        // missing toAssetId and amount
+      };
+      const result = SwapSchema.safeParse(invalidInput);
+      expect(result.success).toBe(false);
     });
   });
 });

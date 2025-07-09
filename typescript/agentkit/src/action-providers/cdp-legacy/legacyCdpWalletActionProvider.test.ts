@@ -1,5 +1,5 @@
-import { CdpWalletProvider } from "../../wallet-providers";
-import { CdpWalletActionProvider } from "./cdpWalletActionProvider";
+import { LegacyCdpWalletProvider } from "../../wallet-providers";
+import { LegacyCdpWalletActionProvider } from "./legacyCdpWalletActionProvider";
 import { DeployNftSchema, DeployTokenSchema, DeployContractSchema } from "./schemas";
 import { SmartContract, Trade } from "@coinbase/coinbase-sdk";
 
@@ -71,17 +71,17 @@ describe("CDP Wallet Action Provider Input Schemas", () => {
   });
 });
 
-describe("CDP Wallet Action Provider", () => {
-  let actionProvider: CdpWalletActionProvider;
+describe("Legacy CDP Wallet Action Provider", () => {
+  let actionProvider: LegacyCdpWalletActionProvider;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockExternalAddressInstance: jest.Mocked<any>;
-  let mockWallet: jest.Mocked<CdpWalletProvider>;
+  let mockWallet: jest.Mocked<LegacyCdpWalletProvider>;
 
   beforeEach(() => {
     // Reset all mocks before each test
     jest.clearAllMocks();
 
-    actionProvider = new CdpWalletActionProvider();
+    actionProvider = new LegacyCdpWalletActionProvider();
     mockExternalAddressInstance = {
       reputation: jest.fn(),
       faucet: jest.fn(),
@@ -96,11 +96,11 @@ describe("CDP Wallet Action Provider", () => {
       deployContract: jest.fn(),
       getAddress: jest.fn().mockReturnValue("0xe6b2af36b3bb8d47206a129ff11d5a2de2a63c83"),
       getNetwork: jest.fn().mockReturnValue({ networkId: "base-sepolia" }),
-    } as unknown as jest.Mocked<CdpWalletProvider>;
+    } as unknown as jest.Mocked<LegacyCdpWalletProvider>;
   });
 
   describe("deployNft", () => {
-    let mockWallet: jest.Mocked<CdpWalletProvider>;
+    let mockWallet: jest.Mocked<LegacyCdpWalletProvider>;
     const MOCK_NFT_BASE_URI = "https://www.test.xyz/metadata/";
     const MOCK_NFT_NAME = "Test Token";
     const MOCK_NFT_SYMBOL = "TEST";
@@ -121,7 +121,7 @@ describe("CDP Wallet Action Provider", () => {
           }),
         }),
         getNetwork: jest.fn().mockReturnValue({ networkId: NETWORK_ID }),
-      } as unknown as jest.Mocked<CdpWalletProvider>;
+      } as unknown as jest.Mocked<LegacyCdpWalletProvider>;
     });
 
     it("should successfully deploy an NFT", async () => {
@@ -169,7 +169,7 @@ describe("CDP Wallet Action Provider", () => {
             }),
           }),
         }),
-      } as unknown as jest.Mocked<CdpWalletProvider>;
+      } as unknown as jest.Mocked<LegacyCdpWalletProvider>;
     });
 
     it("should successfully deploy a token", async () => {
