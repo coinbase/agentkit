@@ -1,5 +1,11 @@
 # AgentKit Changelog
 
+## 0.8.3
+
+### Patch Changes
+
+- [#774](https://github.com/coinbase/agentkit/pull/774) [`8988011`](https://github.com/coinbase/agentkit/commit/8988011081044ccb090ee498882d196d026b1963) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Improved x402ActionProvider actions
+
 ## 0.8.2
 
 ### Patch Changes
