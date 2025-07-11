@@ -8,6 +8,8 @@ from .basename.basename_action_provider import (
     basename_action_provider,
 )
 from .cdp.cdp_api_action_provider import CdpApiActionProvider, cdp_api_action_provider
+from .cdp.cdp_wallet_action_provider import CdpWalletActionProvider, cdp_wallet_action_provider
+from .compass.compass_action_provider import CompassActionProvider, compass_action_provider
 from .compound.compound_action_provider import CompoundActionProvider, compound_action_provider
 from .erc20.erc20_action_provider import ERC20ActionProvider, erc20_action_provider
 from .hyperboliclabs.hyperbolic_action_provider import (
@@ -40,6 +42,8 @@ __all__ = [
     "cdp_api_action_provider",
     "CompoundActionProvider",
     "compound_action_provider",
+    "CompassActionProvider",
+    "compass_action_provider",
     "ERC20ActionProvider",
     "erc20_action_provider",
     "HyperbolicActionProvider",
