@@ -418,15 +418,20 @@ const agent = createReactAgent({
 </table>
 </details>
 <details>
-<summary><strong>X402</strong></summary>
+<summary><strong>x402</strong></summary>
 <table width="100%">
 <tr>
-    <td width="200"><code>paid_request</code></td>
-    <td width="768">Makes HTTP requests to x402-protected API endpoints with automatic payment handling.</td>
+    <td width="200"><code>make_http_request</code></td>
+    <td width="768">Makes a basic HTTP request to an API endpoint. If the endpoint requires payment (returns 402),
+it will return payment details that can be used on retry.</td>
 </tr>
 <tr>
-    <td width="200"><code>fetch_payment_info</code></td>
-    <td width="768">Fetches payment information from x402-protected endpoints without making payments.</td>
+    <td width="200"><code>retry_http_request_with_x402</code></td>
+    <td width="768">Retries an HTTP request with x402 payment after receiving a 402 Payment Required response.</td>
+</tr>
+<tr>
+    <td width="200"><code>make_http_request_with_x402</code></td>
+    <td width="768">Combines make_http_request and retry_http_request_with_x402 into a single step.</td>
 </tr>
 </table>
 </details>

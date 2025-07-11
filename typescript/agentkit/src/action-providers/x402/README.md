@@ -14,42 +14,104 @@ x402/
 
 ## Actions
 
-- `paid_request`: Make HTTP requests to x402-protected API endpoints with automatic payment handling
-- `fetch_payment_info`: Get payment information from x402-protected endpoints without making payments
+### Primary Actions (Recommended Flow)
+
+1. `make_http_request`: Make initial HTTP request and handle 402 responses
+2. `retry_http_request_with_x402`: Retry a request with payment after receiving payment details
+
+### Alternative Action
+
+- `make_http_request_with_x402`: Direct payment-enabled requests (skips confirmation flow)
 
 ## Overview
 
-The x402 protocol enables APIs to require micropayments for access. When a client makes a request to a protected endpoint, the server responds with a `402 Payment Required` status code along with payment instructions. This action provider automatically handles the entire payment flow:
+The x402 protocol enables APIs to require micropayments for access. When a client makes a request to a protected endpoint, the server responds with a `402 Payment Required` status code along with payment instructions.
 
-1. Makes the initial request to the protected API
-2. If a 402 response is received, automatically processes the payment using the wallet
-3. Retries the request with payment proof
-4. Returns the API response data
+### Recommended Two-Step Flow
+
+1. Initial Request:
+   - Make request using `make_http_request`
+   - If endpoint doesn't require payment, get response immediately
+   - If 402 received, get payment options and instructions
+
+2. Payment & Retry (if needed):
+   - Review payment requirements
+   - Use `retry_http_request_with_x402` with chosen payment option
+   - Get response with payment proof
+
+This flow provides better control and visibility into the payment process.
+
+### Direct Payment Flow (Alternative)
+
+For cases where immediate payment without confirmation is acceptable, use `make_http_request_with_x402` to handle everything in one step.
 
 ## Usage
 
-### `paid_request` Action
+### `make_http_request` Action
 
-The `paid_request` action accepts the following parameters:
+Makes initial request and handles 402 responses:
 
-- **url**: The full URL of the x402-protected API endpoint
-- **method**: HTTP method (GET, POST, PUT, DELETE, PATCH) - defaults to GET
-- **headers**: Optional additional headers to include in the request  
-- **body**: Optional request body for POST/PUT/PATCH requests
+```typescript
+{
+  url: "https://api.example.com/data",
+  method: "GET",                    // Optional, defaults to GET
+  headers: { "Accept": "..." },     // Optional
+  body: { ... }                     // Optional
+}
+```
 
-### `fetch_payment_info` Action
+### `retry_http_request_with_x402` Action
 
-The `fetch_payment_info` action accepts the following parameters:
+Retries request with payment after 402:
 
-- **url**: The full URL of the x402-protected API endpoint
-- **method**: HTTP method (GET, POST, PUT, DELETE, PATCH) - defaults to GET
-- **headers**: Optional additional headers to include in the request
+```typescript
+{
+  url: "https://api.example.com/data",
+  method: "GET",                    // Optional, defaults to GET
+  headers: { "Accept": "..." },     // Optional
+  body: { ... },                    // Optional
+  paymentOption: {                  // Payment details from 402 response
+    scheme: "exact",
+    network: "base-sepolia",
+    maxAmountRequired: "1000",
+    resource: "https://api.example.com/data",
+    description: "Access to data",
+    mimeType: "application/json",
+    payTo: "0x...",
+    maxTimeoutSeconds: 300,
+    asset: "0x..."
+  }
+}
+```
 
-This action is useful for:
-- Checking payment requirements before committing to a paid request
-- Understanding the cost structure of an API
-- Getting details about accepted payment tokens and amounts
-- Debugging x402 payment configurations
+### `make_http_request_with_x402` Action
+
+Direct payment-enabled requests (use with caution):
+
+```typescript
+{
+  url: "https://api.example.com/data",
+  method: "GET",                    // Optional, defaults to GET
+  headers: { "Accept": "..." },     // Optional
+  body: { ... }                     // Optional
+}
+```
+
+## Response Format
+
+Successful responses include payment proof when payment was made:
+
+```typescript
+{
+  success: true,
+  data: { ... },            // API response data
+  paymentProof: {           // Only present if payment was made
+    transaction: "0x...",   // Transaction hash
+    network: "base-sepolia",
+    payer: "0x..."         // Payer address
+  }
+}
+```
 
 ## Network Support
 
@@ -64,6 +126,7 @@ The provider requires EVM-compatible networks where the wallet can sign payment 
 This action provider requires:
 - `axios` - For making HTTP requests
 - `x402-axios` - For handling x402 payment flows
+- `x402` - For payment requirement types and validation
 
 ## Notes
 

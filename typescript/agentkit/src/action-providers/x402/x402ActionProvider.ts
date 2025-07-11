@@ -2,233 +2,300 @@ import { z } from "zod";
 import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
-import { PaidRequestSchema, FetchPaymentInfoSchema } from "./schemas";
+import { HttpRequestSchema, RetryWithX402Schema, DirectX402RequestSchema } from "./schemas";
 import { EvmWalletProvider } from "../../wallet-providers";
 import axios, { AxiosError } from "axios";
 import { withPaymentInterceptor, decodeXPaymentResponse } from "x402-axios";
+import { PaymentRequirements, PaymentRequirementsSchema } from "x402/types";
 
 const SUPPORTED_NETWORKS = ["base-mainnet", "base-sepolia"];
 
 /**
- * X402ActionProvider is an action provider for making paid requests to x402-protected APIs.
+ * X402ActionProvider provides actions for making HTTP requests, with optional x402 payment handling.
  */
 export class X402ActionProvider extends ActionProvider<EvmWalletProvider> {
   /**
-   * Constructor for the X402ActionProvider.
+   * Creates a new instance of X402ActionProvider.
+   * Initializes the provider with x402 capabilities.
    */
   constructor() {
     super("x402", []);
   }
 
   /**
-   * Makes a paid request to an x402-protected API endpoint.
+   * Makes a basic HTTP request to an API endpoint.
    *
-   * @param walletProvider - The wallet provider to use for payment signing.
-   * @param args - The input arguments for the action.
-   * @returns A message containing the API response data.
+   * @param walletProvider - The wallet provider to use for potential payments
+   * @param args - The request parameters including URL, method, headers, and body
+   * @returns A JSON string containing the response or error details
    */
   @CreateAction({
-    name: "paid_request",
+    name: "make_http_request",
     description: `
-This tool makes HTTP requests to APIs that are protected by x402 paywalls. It automatically handles the payment flow when a 402 Payment Required response is received.
+Makes a basic HTTP request to an API endpoint. If the endpoint requires payment (returns 402),
+it will return payment details that can be used with retry_http_request_with_x402.
 
-Inputs:
-- url: The full URL of the x402-protected API endpoint
-- method: The HTTP method (GET, POST, PUT, DELETE, PATCH) - defaults to GET
-- headers: Optional additional headers to include in the request
-- body: Optional request body for POST/PUT/PATCH requests
+EXAMPLES:
+- Production API: make_http_request("https://api.example.com/weather")
+- Local development: make_http_request("http://localhost:3000/api/data")
+- Testing x402: make_http_request("http://localhost:3000/protected")
 
-The tool will:
-1. Make the initial request to the protected endpoint
-2. If a 402 Payment Required response is received, automatically handle the payment using the wallet
-3. Retry the request with payment proof
-4. Return the API response data
-
-Supported on EVM networks where the wallet can sign payment transactions.
-`,
-    schema: PaidRequestSchema,
+If you receive a 402 Payment Required response, use retry_http_request_with_x402 to handle the payment.`,
+    schema: HttpRequestSchema,
   })
-  async paidRequest(
+  async makeHttpRequest(
     walletProvider: EvmWalletProvider,
-    args: z.infer<typeof PaidRequestSchema>,
+    args: z.infer<typeof HttpRequestSchema>,
   ): Promise<string> {
     try {
-      // Get the viem account from the wallet provider for x402-axios
-      const account = walletProvider.toSigner();
+      const response = await axios.request({
+        url: args.url,
+        method: args.method ?? "GET",
+        headers: args.headers ?? undefined,
+        data: args.body,
+        validateStatus: status => status === 402 || (status >= 200 && status < 300),
+      });
 
-      // Create an axios instance with the payment interceptor
+      if (response.status !== 402) {
+        return JSON.stringify(
+          {
+            success: true,
+            url: args.url,
+            method: args.method,
+            status: response.status,
+            data: response.data,
+          },
+          null,
+          2,
+        );
+      }
+
+      const paymentRequirements = (response.data.accepts as PaymentRequirements[]).map(accept =>
+        PaymentRequirementsSchema.parse(accept),
+      );
+
+      return JSON.stringify({
+        status: "error_402_payment_required",
+        acceptablePaymentOptions: paymentRequirements,
+        nextSteps: [
+          "Inform the user that the requested server replied with a 402 Payment Required response.",
+          `The payment options are: ${paymentRequirements.map(option => `${option.asset} ${option.maxAmountRequired} ${option.network}`).join(", ")}`,
+          "Ask the user if they want to retry the request with payment.",
+          `Use retry_http_request_with_x402 to retry the request with payment.`,
+        ],
+      });
+    } catch (error) {
+      return this.handleHttpError(error as AxiosError, args.url);
+    }
+  }
+
+  /**
+   * Retries a request with x402 payment after receiving a 402 response.
+   *
+   * @param walletProvider - The wallet provider to use for making the payment
+   * @param args - The request parameters including URL, method, headers, body, and payment option
+   * @returns A JSON string containing the response with payment details or error information
+   */
+  @CreateAction({
+    name: "retry_http_request_with_x402",
+    description: `
+Retries an HTTP request with x402 payment after receiving a 402 Payment Required response.
+This should be used after make_http_request returns a 402 response.
+
+EXAMPLE WORKFLOW:
+1. First call make_http_request("http://localhost:3000/protected")
+2. If you get a 402 response, use this action to retry with payment
+3. Pass the entire original response to this action
+
+DO NOT use this action directly without first trying make_http_request!`,
+    schema: RetryWithX402Schema,
+  })
+  async retryWithX402(
+    walletProvider: EvmWalletProvider,
+    args: z.infer<typeof RetryWithX402Schema>,
+  ): Promise<string> {
+    try {
+      // Validate the payment option matches the URL
+      if (args.paymentOption.resource !== args.url) {
+        return JSON.stringify({
+          status: "error_invalid_payment_option",
+          message: "The payment option resource does not match the request URL",
+          details: {
+            expected: args.url,
+            received: args.paymentOption.resource,
+          },
+        });
+      }
+
+      // Make the request with payment handling
+      const account = walletProvider.toSigner();
       const api = withPaymentInterceptor(axios.create({}), account);
 
-      // Make the request
       const response = await api.request({
         url: args.url,
-        method: args.method,
-        headers: args.headers,
+        method: args.method ?? "GET",
+        headers: args.headers ?? undefined,
         data: args.body,
       });
 
-      // Extract payment information if available
-      const paymentResponseHeader = response.headers["x-payment-response"];
-      let paymentResponse: Record<string, unknown> | null = null;
+      // Check for payment proof
+      const paymentProof = response.headers["x-payment-response"]
+        ? decodeXPaymentResponse(response.headers["x-payment-response"])
+        : null;
 
-      if (paymentResponseHeader) {
-        try {
-          paymentResponse = decodeXPaymentResponse(paymentResponseHeader);
-        } catch {
-          // Fall back to JSON parsing if decodeXPaymentResponse fails
-          try {
-            paymentResponse = JSON.parse(paymentResponseHeader);
-          } catch {
-            paymentResponse = {
-              error: "Failed to decode payment response",
-              rawHeader: paymentResponseHeader,
-            };
-          }
-        }
-      }
-
-      // Structure the response to clearly separate API response and payment details
-      const result = {
-        success: true,
-        url: args.url,
-        method: args.method,
-        status: response.status,
+      return JSON.stringify({
+        status: "success",
         data: response.data,
-        paymentResponse: paymentResponse,
-      };
-
-      return JSON.stringify(result, null, 2);
+        message: "Request completed successfully with payment",
+        details: {
+          url: args.url,
+          method: args.method,
+          paymentUsed: {
+            network: args.paymentOption.network,
+            asset: args.paymentOption.asset,
+            amount: args.paymentOption.maxAmountRequired,
+          },
+          paymentProof: paymentProof
+            ? {
+                transaction: paymentProof.transaction,
+                network: paymentProof.network,
+                payer: paymentProof.payer,
+              }
+            : null,
+        },
+      });
     } catch (error) {
-      const axiosError = error as AxiosError<{ error?: string }>;
-      if (axiosError.response) {
-        return `Error making paid request to ${args.url}: HTTP ${axiosError.response.status} - ${axiosError.response.data?.error || axiosError.response.statusText}`;
-      } else if (axiosError.request) {
-        return `Error making paid request to ${args.url}: Network error - ${axiosError.message}`;
-      } else {
-        return `Error making paid request to ${args.url}: ${axiosError.message}`;
-      }
+      return this.handleHttpError(error as AxiosError, args.url);
     }
   }
 
   /**
-   * Fetches payment information from an x402-protected API endpoint without making the payment.
+   * Makes an HTTP request with automatic x402 payment handling.
    *
-   * @param walletProvider - The wallet provider (not used for this action but required by interface).
-   * @param args - The input arguments for the action.
-   * @returns A message containing the payment requirements and endpoint information.
+   * @param walletProvider - The wallet provider to use for automatic payments
+   * @param args - The request parameters including URL, method, headers, and body
+   * @returns A JSON string containing the response with optional payment details or error information
    */
   @CreateAction({
-    name: "fetch_payment_info",
+    name: "make_http_request_with_x402",
     description: `
-This tool fetches payment information from x402-protected API endpoints without actually making any payments. It's useful for checking payment requirements before deciding whether to proceed with a paid request.
+⚠️ WARNING: This action automatically handles payments without asking for confirmation!
+Only use this when explicitly told to skip the confirmation flow.
 
-Inputs:
-- url: The full URL of the x402-protected API endpoint
-- method: The HTTP method (GET, POST, PUT, DELETE, PATCH) - defaults to GET
-- headers: Optional additional headers to include in the request
+For most cases, you should:
+1. First try make_http_request
+2. Then use retry_http_request_with_x402 if payment is required
 
-The tool will:
-1. Make a request to the protected endpoint
-2. Receive the 402 Payment Required response with payment details
-3. Return information about the payment requirements (amount, token, etc.)
+This action combines both steps into one, which means:
+- No chance to review payment details before paying
+- No confirmation step
+- Automatic payment processing
 
-Note: Payment amounts are returned in the smallest unit of the token. For example, for USDC (which has 6 decimal places) maxAmountRequired "10000" corresponds to 0.01 USDC.
+EXAMPLES:
+- Production: make_http_request_with_x402("https://api.example.com/data")
+- Local dev: make_http_request_with_x402("http://localhost:3000/protected")
 
-This is useful for understanding what payment will be required before using the paid_request action.
-`,
-    schema: FetchPaymentInfoSchema,
+Unless specifically instructed otherwise, prefer the two-step approach with make_http_request first.`,
+    schema: DirectX402RequestSchema,
   })
-  async fetchPaymentInfo(
+  async makeHttpRequestWithX402(
     walletProvider: EvmWalletProvider,
-    args: z.infer<typeof FetchPaymentInfoSchema>,
+    args: z.infer<typeof DirectX402RequestSchema>,
   ): Promise<string> {
     try {
-      // Make a simple axios request without payment interceptor to get the 402 response
-      const response = await axios.request({
+      const account = walletProvider.toSigner();
+      const api = withPaymentInterceptor(axios.create({}), account);
+
+      const response = await api.request({
         url: args.url,
-        method: args.method,
-        headers: args.headers,
-        validateStatus: status => status === 402 || (status >= 200 && status < 300), // Accept 402 responses
+        method: args.method ?? "GET",
+        headers: args.headers ?? undefined,
+        data: args.body,
       });
 
-      if (response.status === 402) {
-        return JSON.stringify(
-          {
-            paymentRequired: true,
-            url: args.url,
-            status: response.status,
-            data: response.data,
-          },
-          null,
-          2,
-        );
-      } else {
-        // Endpoint is not payment-protected or request succeeded without payment
-        return JSON.stringify(
-          {
-            paymentRequired: false,
-            url: args.url,
-            status: response.status,
-            data: response.data,
-          },
-          null,
-          2,
-        );
-      }
-    } catch (error) {
-      const axiosError = error as AxiosError<{ error?: string }>;
-      if (axiosError.response) {
-        if (axiosError.response.status === 402) {
-          // Handle 402 responses that axios might treat as errors
-          const paymentResponseHeader = axiosError.response.headers["x-payment-response"];
-          let paymentDetails: Record<string, unknown> | null = null;
+      // Check for payment proof
+      const paymentProof = response.headers["x-payment-response"]
+        ? decodeXPaymentResponse(response.headers["x-payment-response"])
+        : null;
 
-          if (paymentResponseHeader) {
-            try {
-              paymentDetails = decodeXPaymentResponse(paymentResponseHeader);
-            } catch {
-              // Fall back to JSON parsing if decodeXPaymentResponse fails
-              try {
-                paymentDetails = JSON.parse(paymentResponseHeader);
-              } catch {
-                paymentDetails = {
-                  error: "Failed to decode payment response",
-                  rawHeader: paymentResponseHeader,
-                };
+      return JSON.stringify(
+        {
+          success: true,
+          message: "Request completed successfully (payment handled automatically if required)",
+          url: args.url,
+          method: args.method,
+          status: response.status,
+          data: response.data,
+          paymentProof: paymentProof
+            ? {
+                transaction: paymentProof.transaction,
+                network: paymentProof.network,
+                payer: paymentProof.payer,
               }
-            }
-          }
-
-          return JSON.stringify(
-            {
-              paymentRequired: true,
-              url: args.url,
-              status: 402,
-              paymentDetails: paymentDetails,
-              data: axiosError.response.data,
-            },
-            null,
-            2,
-          );
-        } else {
-          return `Error fetching payment info from ${args.url}: HTTP ${axiosError.response.status} - ${axiosError.response.data?.error || axiosError.response.statusText}`;
-        }
-      } else if (axiosError.request) {
-        return `Error fetching payment info from ${args.url}: Network error - ${axiosError.message}`;
-      } else {
-        return `Error fetching payment info from ${args.url}: ${axiosError.message}`;
-      }
+            : null,
+        },
+        null,
+        2,
+      );
+    } catch (error) {
+      return this.handleHttpError(error as AxiosError, args.url);
     }
   }
 
   /**
-   * Checks if the X402 action provider supports the given network.
+   * Checks if the action provider supports the given network.
    *
-   * @param network - The network to check.
-   * @returns True if the X402 action provider supports the network, false otherwise.
+   * @param network - The network to check support for
+   * @returns True if the network is supported, false otherwise
    */
   supportsNetwork = (network: Network) =>
     network.protocolFamily === "evm" && SUPPORTED_NETWORKS.includes(network.networkId!);
+
+  /**
+   * Helper method to handle HTTP errors consistently.
+   *
+   * @param error - The axios error to handle
+   * @param url - The URL that was being accessed when the error occurred
+   * @returns A JSON string containing formatted error details
+   */
+  private handleHttpError(error: AxiosError, url: string): string {
+    if (error.response) {
+      return JSON.stringify(
+        {
+          error: true,
+          message: `HTTP ${error.response.status} error when accessing ${url}`,
+          details: (error.response.data as { error?: string })?.error || error.response.statusText,
+          suggestion: "Check if the URL is correct and the API is available.",
+        },
+        null,
+        2,
+      );
+    }
+
+    if (error.request) {
+      return JSON.stringify(
+        {
+          error: true,
+          message: `Network error when accessing ${url}`,
+          details: error.message,
+          suggestion: "Check your internet connection and verify the API endpoint is accessible.",
+        },
+        null,
+        2,
+      );
+    }
+
+    return JSON.stringify(
+      {
+        error: true,
+        message: `Error making request to ${url}`,
+        details: error.message,
+        suggestion: "Please check the request parameters and try again.",
+      },
+      null,
+      2,
+    );
+  }
 }
 
 export const x402ActionProvider = () => new X402ActionProvider();
