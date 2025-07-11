@@ -1,4 +1,4 @@
-import { CdpWalletProvider } from "./cdpWalletProvider";
+import { LegacyCdpWalletProvider } from "./legacyCdpWalletProvider";
 import { Network } from "../network";
 import {
   Abi,
@@ -170,8 +170,8 @@ const MOCK_TRANSACTION_RECEIPT = {
   transactionHash: MOCK_TRANSACTION_HASH,
 } as unknown as TransactionReceipt;
 
-describe("CdpWalletProvider", () => {
-  let provider: CdpWalletProvider;
+describe("LegacyCdpWalletProvider", () => {
+  let provider: LegacyCdpWalletProvider;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -220,7 +220,7 @@ describe("CdpWalletProvider", () => {
     } as unknown as jest.Mocked<EstimateFeesPerGasReturnType>);
     mockPublicClient.estimateGas.mockResolvedValue(BigInt(21000));
 
-    provider = await CdpWalletProvider.configureWithWallet({
+    provider = await LegacyCdpWalletProvider.configureWithWallet({
       wallet: mockWalletObj,
       networkId: MOCK_NETWORK_ID,
     });
@@ -237,7 +237,7 @@ describe("CdpWalletProvider", () => {
         networkId: MOCK_NETWORK_ID,
       });
 
-      const provider = await CdpWalletProvider.configureWithWallet({
+      const provider = await LegacyCdpWalletProvider.configureWithWallet({
         cdpWalletData: walletData,
         networkId: MOCK_NETWORK_ID,
       });
@@ -250,7 +250,7 @@ describe("CdpWalletProvider", () => {
     it("should initialize with mnemonic phrase", async () => {
       const mnemonicPhrase = "test test test test test test test test test test test junk";
 
-      const provider = await CdpWalletProvider.configureWithWallet({
+      const provider = await LegacyCdpWalletProvider.configureWithWallet({
         mnemonicPhrase,
         networkId: MOCK_NETWORK_ID,
       });
@@ -264,7 +264,7 @@ describe("CdpWalletProvider", () => {
       const apiKeyId = "test-key";
       const apiKeySecret = "private-key";
 
-      const provider = await CdpWalletProvider.configureWithWallet({
+      const provider = await LegacyCdpWalletProvider.configureWithWallet({
         apiKeyId,
         apiKeySecret,
         networkId: MOCK_NETWORK_ID,
@@ -282,7 +282,7 @@ describe("CdpWalletProvider", () => {
     });
 
     it("should initialize with an existing wallet", async () => {
-      const provider = await CdpWalletProvider.configureWithWallet({
+      const provider = await LegacyCdpWalletProvider.configureWithWallet({
         wallet: mockWalletObj as unknown as Wallet,
         networkId: MOCK_NETWORK_ID,
       });
@@ -294,7 +294,7 @@ describe("CdpWalletProvider", () => {
     it("should default to base-sepolia if network not provided", async () => {
       mockWalletObj.getNetworkId.mockReturnValueOnce("base-sepolia");
 
-      const provider = await CdpWalletProvider.configureWithWallet({
+      const provider = await LegacyCdpWalletProvider.configureWithWallet({
         wallet: mockWalletObj as unknown as Wallet,
       });
 
@@ -305,7 +305,7 @@ describe("CdpWalletProvider", () => {
       jest.spyOn(Wallet, "create").mockRejectedValueOnce(new Error("Failed to create wallet"));
 
       await expect(
-        CdpWalletProvider.configureWithWallet({
+        LegacyCdpWalletProvider.configureWithWallet({
           networkId: MOCK_NETWORK_ID,
         }),
       ).rejects.toThrow("Failed to create wallet");
@@ -326,7 +326,7 @@ describe("CdpWalletProvider", () => {
     });
 
     it("should get the name", () => {
-      expect(provider.getName()).toBe("cdp_wallet_provider");
+      expect(provider.getName()).toBe("legacy_cdp_wallet_provider");
     });
 
     it("should get the balance", async () => {

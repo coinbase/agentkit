@@ -9,7 +9,7 @@ import {
   VersionedTransaction,
 } from "@solana/web3.js";
 import { Network } from "../network";
-import { CdpV2SolanaWalletProvider } from "./cdpV2SolanaWalletProvider";
+import { CdpSolanaWalletProvider } from "./cdpSolanaWalletProvider";
 
 // =========================================================
 // consts
@@ -130,8 +130,8 @@ const MOCK_SIGNATURE_RESULT = {
   },
 } as RpcResponseAndContext<SignatureResult>;
 
-describe("CdpV2SolanaWalletProvider", () => {
-  let provider: CdpV2SolanaWalletProvider;
+describe("CdpSolanaWalletProvider", () => {
+  let provider: CdpSolanaWalletProvider;
   let mockCdpClient: jest.Mocked<CdpClient>;
   let mockServerAccount: jest.Mocked<
     Awaited<ReturnType<typeof CdpClient.prototype.solana.createAccount>>
@@ -171,7 +171,7 @@ describe("CdpV2SolanaWalletProvider", () => {
     mockConnection.confirmTransaction.mockResolvedValue(MOCK_SIGNATURE_RESULT);
     mockConnection.sendTransaction.mockResolvedValue(MOCK_SIGNATURE);
 
-    provider = await CdpV2SolanaWalletProvider.configureWithWallet({
+    provider = await CdpSolanaWalletProvider.configureWithWallet({
       apiKeyId: "test-key-id",
       apiKeySecret: "test-key-secret",
       walletSecret: "test-wallet-secret",
@@ -185,7 +185,7 @@ describe("CdpV2SolanaWalletProvider", () => {
 
   describe("initialization", () => {
     it("should initialize with API keys", async () => {
-      const provider = await CdpV2SolanaWalletProvider.configureWithWallet({
+      const provider = await CdpSolanaWalletProvider.configureWithWallet({
         apiKeyId: "test-key-id",
         apiKeySecret: "test-key-secret",
         walletSecret: "test-wallet-secret",
@@ -197,7 +197,7 @@ describe("CdpV2SolanaWalletProvider", () => {
     });
 
     it("should default to solana-devnet if network not provided", async () => {
-      const provider = await CdpV2SolanaWalletProvider.configureWithWallet({
+      const provider = await CdpSolanaWalletProvider.configureWithWallet({
         apiKeyId: "test-key-id",
         apiKeySecret: "test-key-secret",
         walletSecret: "test-wallet-secret",
@@ -224,7 +224,7 @@ describe("CdpV2SolanaWalletProvider", () => {
       (CdpClient as jest.MockedClass<typeof CdpClient>).mockImplementation(() => mockCdpClient);
 
       await expect(
-        CdpV2SolanaWalletProvider.configureWithWallet({
+        CdpSolanaWalletProvider.configureWithWallet({
           apiKeyId: "test-key-id",
           apiKeySecret: "test-key-secret",
           walletSecret: "test-wallet-secret",
@@ -248,7 +248,7 @@ describe("CdpV2SolanaWalletProvider", () => {
     });
 
     it("should get the name", () => {
-      expect(provider.getName()).toBe("cdp_v2_solana_wallet_provider");
+      expect(provider.getName()).toBe("cdp_solana_wallet_provider");
     });
 
     it("should get the balance", async () => {
