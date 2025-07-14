@@ -7,31 +7,36 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
 - [Getting Started](#getting-started)
 - [Installation](#installation)
 - [Usage](#usage)
-    - [Create an AgentKit instance](#create-an-agentkit-instance)
-    - [Create an AgentKit instance with a specified wallet provider](#create-an-agentkit-instance-with-a-specified-wallet-provider)
-    - [Create an AgentKit instance with specified action providers](#create-an-agentkit-instance-with-specified-action-providers)
-    - [Use with a framework extension (e.g., LangChain + OpenAI)](#use-with-a-framework-extension)
+  - [Create an AgentKit instance](#create-an-agentkit-instance)
+  - [Create an AgentKit instance with a specified wallet provider](#create-an-agentkit-instance-with-a-specified-wallet-provider)
+  - [Create an AgentKit instance with specified action providers](#create-an-agentkit-instance-with-specified-action-providers)
+  - [Use with a framework extension (e.g., LangChain + OpenAI)](#use-with-a-framework-extension)
 - [Creating an Action Provider](#creating-an-action-provider)
-    - [Adding Actions to your Action Provider](#adding-actions-to-your-action-provider)
-    - [Adding Actions that use a Wallet Provider](#adding-actions-that-use-a-wallet-provider)
-    - [Adding an Action Provider to your AgentKit instance](#adding-an-action-provider-to-your-agentkit-instance)
+  - [Adding Actions to your Action Provider](#adding-actions-to-your-action-provider)
+  - [Adding Actions that use a Wallet Provider](#adding-actions-that-use-a-wallet-provider)
+  - [Adding an Action Provider to your AgentKit instance](#adding-an-action-provider-to-your-agentkit-instance)
 - [Action Providers](#action-providers)
 - [Wallet Providers](#wallet-providers)
-    - [CdpEvmServerWalletProvider](#cdpevmserverwalletprovider)
-        - [Network Configuration](#network-configuration)
-        - [Configuring from an existing CDP API Wallet](#configuring-from-an-existing-cdp-api-wallet)
-        - [Creating a new wallet](#creating-a-new-wallet)
-        - [Example Usage with AgentKit](#example-usage-with-agentkit)
-    - [CdpEvmSmartWalletProvider](#cdpevmsmartwalletprovider)
-        - [Network Configuration](#network-configuration)
-        - [Configuring with a Private Key Owner](#configuring-with-a-private-key-owner)
-        - [Configuring with a Server Wallet Owner](#configuring-with-a-server-wallet-owner)
-        - [Creating a New Smart Wallet](#creating-a-new-smart-wallet)
-        - [Gasless Transactions with Paymaster](#gasless-transactions-with-paymaster)
-        - [Example Usage with AgentKit](#example-usage-with-agentkit)
-    - [EthAccountWalletProvider](#ethaccountwalletprovider)
-        - [Configuring gas parameters](#configuring-ethaccountwalletprovider-gas-parameters)
-    - [SmartWalletProvider](#smartwalletprovider)
+  - [CdpEvmServerWalletProvider](#cdpevmserverwalletprovider)
+    - [Network Configuration](#network-configuration)
+    - [Configuring from an existing CDP API Wallet](#configuring-from-an-existing-cdp-api-wallet)
+    - [Creating a new wallet](#creating-a-new-wallet)
+    - [Example Usage with AgentKit](#example-usage-with-agentkit)
+  - [CdpEvmSmartWalletProvider](#cdpevmsmartwalletprovider)
+    - [Network Configuration](#network-configuration)
+    - [Configuring with a Private Key Owner](#configuring-with-a-private-key-owner)
+    - [Configuring with a Server Wallet Owner](#configuring-with-a-server-wallet-owner)
+    - [Creating a New Smart Wallet](#creating-a-new-smart-wallet)
+    - [Gasless Transactions with Paymaster](#gasless-transactions-with-paymaster)
+    - [Example Usage with AgentKit](#example-usage-with-agentkit)
+  - [EthAccountWalletProvider](#ethaccountwalletprovider)
+    - [Configuring gas parameters](#configuring-ethaccountwalletprovider-gas-parameters)
+    - [Configuring `EthAccountWalletProvider` rpc url](#configuring-ethaccountwalletprovider-rpc-url)
+  - [SmartWalletProvider](#smartwalletprovider)
+  - [CdpSolanaWalletProvider](#cdpsolanawalletprovider)
+    - [Configuring with API credentials](#configuring-with-api-credentials)
+    - [Using environment variables](#using-environment-variables)
+    - [Example Usage with AgentKit](#example-usage-with-agentkit)
 - [Contributing](#contributing)
 
 ## Getting Started
@@ -888,9 +893,9 @@ import os
 from eth_account import Account
 
 from coinbase_agentkit import (
-    AgentKit, 
-    AgentKitConfig, 
-    SmartWalletProvider, 
+    AgentKit,
+    AgentKitConfig,
+    SmartWalletProvider,
     SmartWalletProviderConfig
 )
 
@@ -914,6 +919,112 @@ wallet_provider = SmartWalletProvider(SmartWalletProviderConfig(
 agent_kit = AgentKit(AgentKitConfig(
     wallet_provider=wallet_provider
 ))
+```
+
+### CdpSolanaWalletProvider
+
+The `CdpSolanaWalletProvider` is a wallet provider that uses the Coinbase Developer Platform (CDP) API for Solana networks. It supports SOL transfers and message signing on Solana mainnet, devnet, and testnet.
+
+#### Network Configuration
+
+The `CdpSolanaWalletProvider` can be configured to use different Solana networks by setting the `network_id` parameter:
+
+- `solana-mainnet` - Solana Mainnet
+- `solana-devnet` - Solana Devnet (default)
+- `solana-testnet` - Solana Testnet
+
+```python
+from coinbase_agentkit import CdpSolanaWalletProvider, CdpSolanaWalletProviderConfig
+
+wallet_provider = CdpSolanaWalletProvider(CdpSolanaWalletProviderConfig(
+    api_key_id="CDP API KEY ID",
+    api_key_secret="CDP API KEY SECRET",
+    wallet_secret="CDP WALLET SECRET",
+    network_id="solana-devnet",
+))
+```
+
+#### Configuring with API credentials
+
+You can configure the provider by passing CDP API credentials directly:
+
+```python
+from coinbase_agentkit import CdpSolanaWalletProvider, CdpSolanaWalletProviderConfig
+
+wallet_provider = CdpSolanaWalletProvider(CdpSolanaWalletProviderConfig(
+    api_key_id="CDP API KEY ID",
+    api_key_secret="CDP API KEY SECRET",
+    wallet_secret="CDP WALLET SECRET",
+    network_id="solana-mainnet",
+))
+```
+
+#### Using environment variables
+
+The provider can also read configuration from environment variables:
+
+```python
+from coinbase_agentkit import CdpSolanaWalletProvider, CdpSolanaWalletProviderConfig
+
+# Set environment variables:
+# CDP_API_KEY_ID="your-api-key-id"
+# CDP_API_KEY_SECRET="your-api-key-secret"
+# CDP_WALLET_SECRET="your-wallet-secret"
+# NETWORK_ID="solana-devnet"
+
+wallet_provider = CdpSolanaWalletProvider(CdpSolanaWalletProviderConfig())
+```
+
+#### Using an existing wallet
+
+If you have an existing CDP Solana wallet, you can specify its address:
+
+```python
+from coinbase_agentkit import CdpSolanaWalletProvider, CdpSolanaWalletProviderConfig
+
+wallet_provider = CdpSolanaWalletProvider(CdpSolanaWalletProviderConfig(
+    api_key_id="CDP API KEY ID",
+    api_key_secret="CDP API KEY SECRET",
+    wallet_secret="CDP WALLET SECRET",
+    address="YOUR_EXISTING_SOLANA_ADDRESS",
+    network_id="solana-mainnet",
+))
+```
+
+#### Example Usage with AgentKit
+
+Here's a complete example of using `CdpSolanaWalletProvider` with AgentKit:
+
+```python
+from coinbase_agentkit import (
+    AgentKit,
+    AgentKitConfig,
+    CdpSolanaWalletProvider,
+    CdpSolanaWalletProviderConfig,
+    wallet_action_provider,
+)
+
+# Initialize the wallet provider
+wallet_provider = CdpSolanaWalletProvider(CdpSolanaWalletProviderConfig(
+    api_key_id="CDP API KEY ID",
+    api_key_secret="CDP API KEY SECRET",
+    wallet_secret="CDP WALLET SECRET",
+    network_id="solana-devnet",
+))
+
+# Create AgentKit instance with wallet and action providers
+agentkit = AgentKit(AgentKitConfig(
+    wallet_provider=wallet_provider,
+    action_providers=[
+        wallet_action_provider(),  # Provides basic wallet operations for Solana
+    ],
+))
+
+# The wallet provider supports:
+# - Getting wallet address: wallet_provider.get_address()
+# - Getting SOL balance: wallet_provider.get_balance()
+# - Transferring SOL: wallet_provider.native_transfer(to, amount)
+# - Signing messages: wallet_provider.sign_message(message)
 ```
 
 ## Contributing
