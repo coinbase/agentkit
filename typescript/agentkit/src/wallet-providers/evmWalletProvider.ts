@@ -12,7 +12,6 @@ import {
   ContractFunctionArgs,
   Address,
   Account,
-  LocalAccount,
 } from "viem";
 
 /**
@@ -26,7 +25,7 @@ export abstract class EvmWalletProvider extends WalletProvider {
    *
    * @returns The signer.
    */
-  toSigner(): LocalAccount {
+  toSigner(): Account {
     return toAccount({
       address: this.getAddress() as Address,
       signMessage: async ({ message }) => {
@@ -38,7 +37,7 @@ export abstract class EvmWalletProvider extends WalletProvider {
       signTypedData: async typedData => {
         return this.signTypedData(typedData);
       },
-    }) as LocalAccount;
+    });
   }
 
   /**

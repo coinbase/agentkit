@@ -123,12 +123,38 @@ class EvmWalletSigner(BaseAccount):
         message_data: dict[str, Any] | None = None,
         full_message: dict[str, Any] | None = None,
     ) -> SignedMessage:
+        """Sign typed data according to EIP-712 standard.
+
+        This method signs structured data following the EIP-712 specification. It supports both
+        individual component input and full message input formats.
+
+        Args:
+            domain_data (dict[str, Any] | None): The domain separator data containing properties like
+                name, version, chainId, verifyingContract, and salt. Required if not using full_message.
+            message_types (dict[str, Any] | None): The type definitions for the structured data.
+                Required if not using full_message.
+            message_data (dict[str, Any] | None): The actual data to be signed, matching the types.
+                Required if not using full_message.
+            full_message (dict[str, Any] | None): A complete EIP-712 message containing types, domain,
+                primaryType, and message. If provided, other parameters are ignored.
+
+        Returns:
+            SignedMessage: A signed message object containing the signature components (v, r, s)
+                and the message hash.
+
+        Raises:
+            ValueError: If neither full_message nor the complete set of individual components
+                (domain_data, message_types, message_data) are provided.
+
+        """
         # Step 1: Construct typed data
         if full_message is not None:
             typed_data = full_message
         else:
             if not (domain_data and message_types and message_data):
-                raise ValueError("Must provide either full_message or domain_data + message_types + message_data")
+                raise ValueError(
+                    "Must provide either full_message or domain_data + message_types + message_data"
+                )
 
             domain_type = self._get_types_for_eip712_domain(domain_data)
             message_types = dict(message_types)  # Copy to avoid mutation
@@ -137,7 +163,9 @@ class EvmWalletSigner(BaseAccount):
             # Find primaryType
             primary_types = [t for t in message_types if t != "EIP712Domain"]
             if len(primary_types) != 1:
-                raise ValueError("Unable to determine primaryType; found: " + ", ".join(primary_types))
+                raise ValueError(
+                    "Unable to determine primaryType; found: " + ", ".join(primary_types)
+                )
             primary_type = primary_types[0]
 
             processed_data = self._process_message_bytes(message_data, message_types, primary_type)
@@ -246,7 +274,6 @@ class EvmWalletSigner(BaseAccount):
                 )
 
         return processed_message
-
 
     def __str__(self) -> str:
         """Return a string representation of the EvmWalletSigner object.

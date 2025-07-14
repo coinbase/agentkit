@@ -50,6 +50,7 @@ If you receive a 402 Payment Required response, use retry_http_request_with_x402
 
         Returns:
             str: JSON string containing response data or payment requirements.
+
         """
         try:
             response = requests.request(
@@ -65,9 +66,11 @@ If you receive a 402 Payment Required response, use retry_http_request_with_x402
                     {
                         "success": True,
                         "url": args["url"],
-                        "method": args["method"],
+                        "method": args["method"] or "GET",
                         "status": response.status_code,
-                        "data": response.json() if "application/json" in response.headers.get("content-type", "") else response.text,
+                        "data": response.json()
+                        if "application/json" in response.headers.get("content-type", "")
+                        else response.text,
                     },
                     indent=2,
                 )
@@ -92,6 +95,7 @@ If you receive a 402 Payment Required response, use retry_http_request_with_x402
             )
 
         except Exception as error:
+            print("Error making request:", str(error))
             return self._handle_http_error(error, args["url"])
 
     @create_action(
@@ -123,7 +127,7 @@ DO NOT use this action directly without first trying make_http_request!""",
                 "description": args.get("description", ""),
                 "mimeType": args.get("mime_type", ""),
                 "outputSchema": args.get("output_schema"),
-                "extra": args.get("extra")
+                "extra": args.get("extra"),
             }
 
             # Make request with payment handling
@@ -142,19 +146,23 @@ DO NOT use this action directly without first trying make_http_request!""",
             payment_proof = None
             if "x-payment-response" in response.headers:
                 try:
-                    payment_proof = decode_x_payment_response(response.headers["x-payment-response"])
+                    payment_proof = decode_x_payment_response(
+                        response.headers["x-payment-response"]
+                    )
                 except Exception as e:
                     print("Failed to decode payment proof:", str(e))
                     pass
 
             return json.dumps(
                 {
-                    "status": "success",
-                    "data": response.json() if "application/json" in response.headers.get("content-type", "") else response.text,
+                    "success": True,
+                    "data": response.json()
+                    if "application/json" in response.headers.get("content-type", "")
+                    else response.text,
                     "message": "Request completed successfully with payment",
                     "details": {
                         "url": args["url"],
-                        "method": args["method"],
+                        "method": args["method"] or "GET",
                         "paymentUsed": {
                             "network": args["network"],
                             "asset": args["asset"],
@@ -164,13 +172,16 @@ DO NOT use this action directly without first trying make_http_request!""",
                             "transaction": payment_proof["transaction"],
                             "network": payment_proof["network"],
                             "payer": payment_proof["payer"],
-                        } if payment_proof else None,
+                        }
+                        if payment_proof
+                        else None,
                     },
                 },
                 indent=2,
             )
 
         except Exception as error:
+            print("Error retrying request:", str(error))
             return self._handle_http_error(error, args["url"])
 
     @create_action(
@@ -206,6 +217,7 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
 
         Returns:
             str: JSON string containing response data and optional payment proof.
+
         """
         try:
             account = wallet_provider.to_signer()
@@ -222,7 +234,9 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
             payment_proof = None
             if "x-payment-response" in response.headers:
                 try:
-                    payment_proof = decode_x_payment_response(response.headers["x-payment-response"])
+                    payment_proof = decode_x_payment_response(
+                        response.headers["x-payment-response"]
+                    )
                 except Exception as e:
                     print("Failed to decode payment proof:", str(e))
                     pass
@@ -232,19 +246,24 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
                     "success": True,
                     "message": "Request completed successfully (payment handled automatically if required)",
                     "url": args["url"],
-                    "method": args["method"],
+                    "method": args["method"] or "GET",
                     "status": response.status_code,
-                    "data": response.json() if "application/json" in response.headers.get("content-type", "") else response.text,
+                    "data": response.json()
+                    if "application/json" in response.headers.get("content-type", "")
+                    else response.text,
                     "paymentProof": {
                         "transaction": payment_proof["transaction"],
                         "network": payment_proof["network"],
                         "payer": payment_proof["payer"],
-                    } if payment_proof else None,
+                    }
+                    if payment_proof
+                    else None,
                 },
                 indent=2,
             )
 
         except Exception as error:
+            print("Error making request:", str(error))
             return self._handle_http_error(error, args["url"])
 
     def _handle_http_error(self, error: Exception, url: str) -> str:
@@ -256,6 +275,7 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
 
         Returns:
             str: JSON string containing formatted error details.
+
         """
         if hasattr(error, "response") and error.response is not None:
             error_details = getattr(error.response, "json", lambda: {"error": str(error)})()
@@ -298,6 +318,7 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
 
         Returns:
             bool: Whether the network is supported.
+
         """
         return network.protocol_family == "evm" and network.network_id in SUPPORTED_NETWORKS
 
@@ -307,5 +328,6 @@ def x402_action_provider() -> x402ActionProvider:
 
     Returns:
         x402ActionProvider: A new x402 action provider instance.
+
     """
     return x402ActionProvider()
