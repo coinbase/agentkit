@@ -1,6 +1,7 @@
-import { CdpClient } from "@coinbase/cdp-sdk";
+import { CdpClient, type EvmServerAccount } from "@coinbase/cdp-sdk";
+import type { Address, PrivateKeyAccount } from "viem";
 
-export interface CdpV2ProviderConfig {
+export interface CdpProviderConfig {
   /**
    * The CDP API Key ID.
    */
@@ -20,11 +21,11 @@ export interface CdpV2ProviderConfig {
 /**
  * Configuration options for the CDP Providers.
  */
-export interface CdpV2WalletProviderConfig extends CdpV2ProviderConfig {
+export interface CdpWalletProviderConfig extends CdpProviderConfig {
   /**
    * The address of the wallet.
    */
-  address?: string;
+  address?: Address;
 
   /**
    * The network of the wallet.
@@ -35,6 +36,18 @@ export interface CdpV2WalletProviderConfig extends CdpV2ProviderConfig {
    * The idempotency key of the wallet. Only used when creating a new account.
    */
   idempotencyKey?: string;
+}
+
+export interface CdpSmartWalletProviderConfig extends CdpWalletProviderConfig {
+  /**
+   * The owner account of the smart wallet.
+   */
+  owner?: EvmServerAccount | PrivateKeyAccount | Address;
+
+  /**
+   * The name of the smart wallet.
+   */
+  smartAccountName?: string;
 }
 
 /**

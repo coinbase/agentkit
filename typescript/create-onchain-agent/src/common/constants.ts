@@ -25,7 +25,12 @@ export type SVMNetwork = (typeof SVM_NETWORKS)[number];
 
 export type Network = EVMNetwork | SVMNetwork;
 
-const CDP_SUPPORTED_EVM_WALLET_PROVIDERS = ["SmartWallet", "CDP", "Viem", "Privy"] as const;
+const CDP_SUPPORTED_EVM_WALLET_PROVIDERS = [
+  "CDPSmartWallet",
+  "CDPWallet",
+  "Viem",
+  "Privy",
+] as const;
 const SVM_WALLET_PROVIDERS = ["SolanaKeypair", "Privy"] as const;
 export const NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS = ["Viem", "Privy"] as const;
 
@@ -65,10 +70,10 @@ export const AgentkitRouteConfigurations: Record<
   Partial<Record<WalletProviderChoice, AgentkitRouteConfiguration>>
 > = {
   EVM: {
-    CDP: {
+    CDPWallet: {
       env: {
         topComments: ["Get keys from CDP Portal: https://portal.cdp.coinbase.com/"],
-        required: ["CDP_API_KEY_ID", "CDP_API_KEY_SECRET"],
+        required: ["CDP_API_KEY_ID", "CDP_API_KEY_SECRET", "CDP_WALLET_SECRET"],
         optional: [],
       },
       prepareAgentkitRoute: "evm/cdp/prepare-agentkit.ts",
@@ -102,13 +107,13 @@ export const AgentkitRouteConfigurations: Record<
       },
       prepareAgentkitRoute: "evm/privy/prepare-agentkit.ts",
     },
-    SmartWallet: {
+    CDPSmartWallet: {
       env: {
         topComments: [
           "Get keys from CDP Portal: https://portal.cdp.coinbase.com/",
           "Optionally provide a private key, otherwise one will be generated",
         ],
-        required: ["CDP_API_KEY_ID", "CDP_API_KEY_SECRET"],
+        required: ["CDP_API_KEY_ID", "CDP_API_KEY_SECRET", "CDP_WALLET_SECRET"],
         optional: ["PRIVATE_KEY"],
       },
       prepareAgentkitRoute: "evm/smart/prepare-agentkit.ts",
@@ -196,7 +201,7 @@ export const MCPRouteConfigurations: Record<
   Partial<Record<WalletProviderChoice, MCPRouteConfiguration>>
 > = {
   EVM: {
-    CDP: {
+    CDPWallet: {
       getAgentkitRoute: "evm/cdp/getAgentKit.ts",
       configRoute: "evm/cdp/claude_desktop_config.json",
     },
@@ -208,7 +213,7 @@ export const MCPRouteConfigurations: Record<
       getAgentkitRoute: "evm/privy/getAgentKit.ts",
       configRoute: "evm/privy/claude_desktop_config.json",
     },
-    SmartWallet: {
+    CDPSmartWallet: {
       getAgentkitRoute: "evm/smart/getAgentKit.ts",
       configRoute: "evm/smart/claude_desktop_config.json",
     },
@@ -236,7 +241,7 @@ export const PrepareAgentkitRouteConfigurations: Record<
   Partial<Record<WalletProviderChoice, PrepareAgentkitRouteConfiguration>>
 > = {
   EVM: {
-    CDP: {
+    CDPWallet: {
       route: "evm/cdp/prepareAgentkit.ts",
     },
     Viem: {
@@ -245,7 +250,7 @@ export const PrepareAgentkitRouteConfigurations: Record<
     Privy: {
       route: "evm/privy/prepareAgentkit.ts",
     },
-    SmartWallet: {
+    CDPSmartWallet: {
       route: "evm/smart/prepareAgentkit.ts",
     },
   },

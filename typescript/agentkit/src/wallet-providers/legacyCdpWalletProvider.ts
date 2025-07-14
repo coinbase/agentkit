@@ -37,7 +37,7 @@ import { applyGasMultiplier } from "../utils";
 /**
  * Configuration options for the CDP Providers.
  */
-export interface CdpProviderConfig {
+export interface LegacyCdpProviderConfig {
   /**
    * The CDP API Key Name.
    */
@@ -50,9 +50,11 @@ export interface CdpProviderConfig {
 }
 
 /**
- * Configuration options for the CdpActionProvider.
+ * Configuration options for the LegacyCdpActionProvider.
+ *
+ * @deprecated Use CdpV2WalletProviderConfig instead
  */
-export interface CdpWalletProviderConfig extends CdpProviderConfig {
+export interface LegacyCdpWalletProviderConfig extends LegacyCdpProviderConfig {
   /**
    * The CDP Wallet.
    */
@@ -92,7 +94,7 @@ export interface CdpWalletProviderConfig extends CdpProviderConfig {
 /**
  * Configuration options for the CDP Agentkit with a Wallet.
  */
-interface ConfigureCdpAgentkitWithWalletOptions extends CdpWalletProviderConfig {
+interface ConfigureLegacyCdpAgentkitWithWalletOptions extends LegacyCdpWalletProviderConfig {
   /**
    * The data of the CDP Wallet as a JSON string.
    */
@@ -105,9 +107,11 @@ interface ConfigureCdpAgentkitWithWalletOptions extends CdpWalletProviderConfig 
 }
 
 /**
- * A wallet provider that uses the Coinbase SDK.
+ * A legacy wallet provider that uses the old Coinbase SDK.
+ *
+ * @deprecated Use CdpServerWalletProvider or CdpSmartWalletProvider instead
  */
-export class CdpWalletProvider extends EvmWalletProvider {
+export class LegacyCdpWalletProvider extends EvmWalletProvider {
   #cdpWallet?: Wallet;
   #address?: string;
   #network?: Network;
@@ -117,11 +121,11 @@ export class CdpWalletProvider extends EvmWalletProvider {
   #transactionQueue: Promise<void> | undefined;
 
   /**
-   * Constructs a new CdpWalletProvider.
+   * Constructs a new LegacyCdpWalletProvider.
    *
-   * @param config - The configuration options for the CdpWalletProvider.
+   * @param config - The configuration options for the LegacyCdpWalletProvider.
    */
-  private constructor(config: CdpWalletProviderConfig) {
+  private constructor(config: LegacyCdpWalletProviderConfig) {
     super();
 
     this.#cdpWallet = config.wallet;
@@ -136,15 +140,15 @@ export class CdpWalletProvider extends EvmWalletProvider {
   }
 
   /**
-   * Configures a new CdpWalletProvider with a wallet.
+   * Configures a new LegacyCdpWalletProvider with a wallet.
    *
    * @param config - Optional configuration parameters
-   * @returns A Promise that resolves to a new CdpWalletProvider instance
+   * @returns A Promise that resolves to a new LegacyCdpWalletProvider instance
    * @throws Error if required environment variables are missing or wallet initialization fails
    */
   public static async configureWithWallet(
-    config: ConfigureCdpAgentkitWithWalletOptions = {},
-  ): Promise<CdpWalletProvider> {
+    config: ConfigureLegacyCdpAgentkitWithWalletOptions = {},
+  ): Promise<LegacyCdpWalletProvider> {
     if (config.apiKeyId && config.apiKeySecret) {
       Coinbase.configure({
         apiKeyName: config.apiKeyId,
@@ -185,7 +189,7 @@ export class CdpWalletProvider extends EvmWalletProvider {
       networkId: networkId,
     };
 
-    const cdpWalletProvider = new CdpWalletProvider({
+    const cdpWalletProvider = new LegacyCdpWalletProvider({
       wallet,
       address,
       network,
@@ -407,7 +411,7 @@ export class CdpWalletProvider extends EvmWalletProvider {
    * @returns The name of the wallet provider.
    */
   getName(): string {
-    return "cdp_wallet_provider";
+    return "legacy_cdp_wallet_provider";
   }
 
   /**

@@ -1,14 +1,11 @@
 import {
   AgentKit,
-  CdpV2WalletProvider,
-  wethActionProvider,
-  walletActionProvider,
+  cdpApiActionProvider,
   erc20ActionProvider,
-  erc721ActionProvider,
-  cdpApiV2ActionProvider,
-  CdpV2EvmWalletProvider,
-  CdpV2SolanaWalletProvider,
-  splActionProvider,
+  pythActionProvider,
+  CdpSmartWalletProvider,
+  walletActionProvider,
+  wethActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -16,7 +13,10 @@ import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 import * as dotenv from "dotenv";
+import * as fs from "fs";
 import * as readline from "readline";
+import { Address, Hex } from "viem";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 dotenv.config();
 
@@ -29,20 +29,13 @@ dotenv.config();
 function validateEnvironment(): void {
   const missingVars: string[] = [];
 
-  // Check required variables
-  const requiredVars = [
-    "OPENAI_API_KEY",
-    "CDP_API_KEY_ID",
-    "CDP_API_KEY_SECRET",
-    "CDP_WALLET_SECRET",
-  ];
+  const requiredVars = ["OPENAI_API_KEY", "CDP_API_KEY_ID", "CDP_API_KEY_SECRET"];
   requiredVars.forEach(varName => {
     if (!process.env[varName]) {
       missingVars.push(varName);
     }
   });
 
-  // Exit if any required variables are missing
   if (missingVars.length > 0) {
     console.error("Error: Required environment variables are not set");
     missingVars.forEach(varName => {
@@ -51,7 +44,6 @@ function validateEnvironment(): void {
     process.exit(1);
   }
 
-  // Warn about optional NETWORK_ID
   if (!process.env.NETWORK_ID) {
     console.warn("Warning: NETWORK_ID not set, defaulting to base-sepolia testnet");
   }
@@ -60,29 +52,10 @@ function validateEnvironment(): void {
 // Add this right after imports and before any other code
 validateEnvironment();
 
-/**
- * Type guard to check if the wallet provider is an EVM provider
- *
- * @param walletProvider - The wallet provider to check
- * @returns True if the wallet provider is an EVM provider, false otherwise
- */
-function isEvmWalletProvider(
-  walletProvider: CdpV2WalletProvider,
-): walletProvider is CdpV2EvmWalletProvider {
-  return walletProvider instanceof CdpV2EvmWalletProvider;
-}
-
-/**
- * Type guard to check if the wallet provider is a Solana provider
- *
- * @param walletProvider - The wallet provider to check
- * @returns True if the wallet provider is a Solana provider, false otherwise
- */
-function isSolanaWalletProvider(
-  walletProvider: CdpV2WalletProvider,
-): walletProvider is CdpV2SolanaWalletProvider {
-  return walletProvider instanceof CdpV2SolanaWalletProvider;
-}
+type WalletData = {
+  privateKey: Hex;
+  smartWalletAddress: Address;
+};
 
 /**
  * Initialize the agent with CDP Agentkit
@@ -96,31 +69,55 @@ async function initializeAgent() {
       model: "gpt-4o-mini",
     });
 
-    // Configure CDP Wallet Provider
-    const cdpWalletConfig = {
+    const networkId = process.env.NETWORK_ID || "base-sepolia";
+    const walletDataFile = `wallet_data_${networkId.replace(/-/g, "_")}.txt`;
+
+    let walletData: WalletData | null = null;
+    let privateKey: Hex | null = null;
+
+    // Read existing wallet data if available
+    if (fs.existsSync(walletDataFile)) {
+      try {
+        walletData = JSON.parse(fs.readFileSync(walletDataFile, "utf8")) as WalletData;
+        privateKey = walletData.privateKey;
+      } catch (error) {
+        console.error(`Error reading wallet data for ${networkId}:`, error);
+        // Continue without wallet data
+      }
+    }
+    if (!privateKey) {
+      if (walletData?.smartWalletAddress) {
+        throw new Error(
+          `Smart wallet found but no private key provided. Either provide the private key, or delete ${walletDataFile} and try again.`,
+        );
+      }
+      privateKey = (process.env.PRIVATE_KEY || generatePrivateKey()) as Hex;
+    }
+
+    const owner = privateKeyToAccount(privateKey);
+
+    // Configure Smart Wallet Provider
+    const walletProvider = await CdpSmartWalletProvider.configureWithWallet({
       apiKeyId: process.env.CDP_API_KEY_ID,
       apiKeySecret: process.env.CDP_API_KEY_SECRET,
       walletSecret: process.env.CDP_WALLET_SECRET,
-      idempotencyKey: process.env.IDEMPOTENCY_KEY,
-      address: process.env.ADDRESS as `0x${string}` | undefined,
-      networkId: process.env.NETWORK_ID,
-    };
-
-    const walletProvider = await CdpV2WalletProvider.configureWithWallet(cdpWalletConfig);
-    const actionProviders = [
-      walletActionProvider(),
-      cdpApiV2ActionProvider(),
-      ...(isEvmWalletProvider(walletProvider)
-        ? [wethActionProvider(), erc20ActionProvider(), erc721ActionProvider()]
-        : isSolanaWalletProvider(walletProvider)
-          ? [splActionProvider()]
-          : []),
-    ];
+      address: walletData?.smartWalletAddress,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      owner: owner as any,
+      networkId,
+      // paymasterUrl: undefined, // Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
+    });
 
     // Initialize AgentKit
     const agentkit = await AgentKit.from({
       walletProvider,
-      actionProviders,
+      actionProviders: [
+        wethActionProvider(),
+        pythActionProvider(),
+        walletActionProvider(),
+        erc20ActionProvider(),
+        cdpApiActionProvider(),
+      ],
     });
 
     const tools = await getLangChainTools(agentkit);
@@ -146,6 +143,16 @@ async function initializeAgent() {
         restating your tools' descriptions unless it is explicitly requested.
         `,
     });
+
+    // Save wallet data
+    const exportedWallet = await walletProvider.exportWallet();
+    fs.writeFileSync(
+      walletDataFile,
+      JSON.stringify({
+        privateKey,
+        smartWalletAddress: exportedWallet.address,
+      } as WalletData),
+    );
 
     return { agent, config: agentConfig };
   } catch (error) {

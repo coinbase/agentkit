@@ -9,7 +9,7 @@ import {
   createWalletClient,
 } from "viem";
 import { Network } from "../network";
-import { CdpV2EvmWalletProvider } from "./cdpV2EvmWalletProvider";
+import { CdpEvmWalletProvider } from "./cdpEvmWalletProvider";
 
 // =========================================================
 // consts
@@ -121,8 +121,8 @@ const MOCK_TRANSACTION_RECEIPT = {
   transactionHash: MOCK_TRANSACTION_HASH,
 } as unknown as TransactionReceipt;
 
-describe("CdpV2EvmWalletProvider", () => {
-  let provider: CdpV2EvmWalletProvider;
+describe("CdpEvmWalletProvider", () => {
+  let provider: CdpEvmWalletProvider;
   let mockCdpClient: jest.Mocked<CdpClient>;
   let mockServerAccount: jest.Mocked<EvmServerAccount>;
   let mockSignTransaction: jest.Mock;
@@ -167,7 +167,7 @@ describe("CdpV2EvmWalletProvider", () => {
 
     mockWalletClient.sendTransaction.mockResolvedValue(MOCK_TRANSACTION_HASH);
 
-    provider = await CdpV2EvmWalletProvider.configureWithWallet({
+    provider = await CdpEvmWalletProvider.configureWithWallet({
       apiKeyId: "test-key-id",
       apiKeySecret: "test-key-secret",
       walletSecret: "test-wallet-secret",
@@ -181,7 +181,7 @@ describe("CdpV2EvmWalletProvider", () => {
 
   describe("initialization", () => {
     it("should initialize with API keys", async () => {
-      const provider = await CdpV2EvmWalletProvider.configureWithWallet({
+      const provider = await CdpEvmWalletProvider.configureWithWallet({
         apiKeyId: "test-key-id",
         apiKeySecret: "test-key-secret",
         walletSecret: "test-wallet-secret",
@@ -193,7 +193,7 @@ describe("CdpV2EvmWalletProvider", () => {
     });
 
     it("should default to base-sepolia if network not provided", async () => {
-      const provider = await CdpV2EvmWalletProvider.configureWithWallet({
+      const provider = await CdpEvmWalletProvider.configureWithWallet({
         apiKeyId: "test-key-id",
         apiKeySecret: "test-key-secret",
         walletSecret: "test-wallet-secret",
@@ -223,7 +223,7 @@ describe("CdpV2EvmWalletProvider", () => {
       (CdpClient as jest.MockedClass<typeof CdpClient>).mockImplementation(() => mockCdpClient);
 
       await expect(
-        CdpV2EvmWalletProvider.configureWithWallet({
+        CdpEvmWalletProvider.configureWithWallet({
           apiKeyId: "test-key-id",
           apiKeySecret: "test-key-secret",
           walletSecret: "test-wallet-secret",
@@ -247,7 +247,7 @@ describe("CdpV2EvmWalletProvider", () => {
     });
 
     it("should get the name", () => {
-      expect(provider.getName()).toBe("cdp_v2_wallet_provider");
+      expect(provider.getName()).toBe("cdp_evm_wallet_provider");
     });
 
     it("should get the balance", async () => {

@@ -3,9 +3,6 @@ import { SvmWalletProvider } from "../../wallet-providers/svmWalletProvider";
 import { JupiterActionProvider } from "./jupiterActionProvider";
 import { createJupiterApiClient } from "@jup-ag/api";
 
-// Default SPL token decimals for tests
-const DECIMALS = 6;
-
 // Mock the @solana/web3.js module
 jest.mock("@solana/web3.js", () => ({
   // Preserve the actual implementation of @solana/web3.js while overriding specific methods
@@ -34,7 +31,7 @@ jest.mock("@solana/spl-token", () => ({
   ...jest.requireActual("@solana/spl-token"),
 
   // Mock getMint to always return a fixed decimal value for tokens
-  getMint: jest.fn().mockReturnValue({ decimals: DECIMALS }),
+  getMint: jest.fn().mockReturnValue({ decimals: 6 }),
 }));
 
 // Mock the @jup-ag/api module
@@ -128,7 +125,7 @@ describe("JupiterActionProvider", () => {
       expect(mockQuoteGet).toHaveBeenCalledWith({
         inputMint: INPUT_MINT,
         outputMint: OUTPUT_MINT,
-        amount: swapArgs.amount * 10 ** DECIMALS, // Ensure correct decimal conversion
+        amount: swapArgs.amount * 10 ** 6, // Ensure correct decimal conversion
         slippageBps: swapArgs.slippageBps,
       });
 

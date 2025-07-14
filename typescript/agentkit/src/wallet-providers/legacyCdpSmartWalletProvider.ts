@@ -26,7 +26,7 @@ import { Network, NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_VIEM_CHAIN } from "../ne
 import { EvmWalletProvider } from "./evmWalletProvider";
 import { version } from "../../package.json";
 
-export interface ConfigureSmartWalletOptions {
+export interface ConfigureLegacyCdpSmartWalletOptions {
   cdpApiKeyId?: string;
   cdpApiKeySecret?: string;
   networkId?: string;
@@ -35,7 +35,7 @@ export interface ConfigureSmartWalletOptions {
   signer: Signer;
 }
 
-interface SmartWalletProviderConfig {
+interface LegacyCdpSmartWalletProviderConfig {
   smartWallet: NetworkScopedSmartWallet;
   network: Required<Network>;
   chainId: string;
@@ -44,7 +44,7 @@ interface SmartWalletProviderConfig {
 /**
  * A wallet provider that uses Smart Wallets from the Coinbase SDK.
  */
-export class SmartWalletProvider extends EvmWalletProvider {
+export class LegacyCdpSmartWalletProvider extends EvmWalletProvider {
   #smartWallet: NetworkScopedSmartWallet;
   #network: Required<Network>;
   #publicClient: ViemPublicClient;
@@ -54,7 +54,7 @@ export class SmartWalletProvider extends EvmWalletProvider {
    *
    * @param config - The configuration options for the CdpWalletProvider.
    */
-  private constructor(config: SmartWalletProviderConfig) {
+  private constructor(config: LegacyCdpSmartWalletProviderConfig) {
     super();
 
     this.#network = config.network;
@@ -90,8 +90,8 @@ export class SmartWalletProvider extends EvmWalletProvider {
    * ```
    */
   public static async configureWithWallet(
-    config: ConfigureSmartWalletOptions,
-  ): Promise<SmartWalletProvider> {
+    config: ConfigureLegacyCdpSmartWalletOptions,
+  ): Promise<LegacyCdpSmartWalletProvider> {
     const networkId = config.networkId || process.env.NETWORK_ID || Coinbase.networks.BaseSepolia;
     const network = {
       protocolFamily: "evm" as const,
@@ -138,13 +138,13 @@ export class SmartWalletProvider extends EvmWalletProvider {
       paymasterUrl: config.paymasterUrl,
     });
 
-    const smartWalletProvider = new SmartWalletProvider({
+    const legacyCdpSmartWalletProvider = new LegacyCdpSmartWalletProvider({
       smartWallet: networkScopedSmartWallet,
       network,
       chainId: network.chainId,
     });
 
-    return smartWalletProvider;
+    return legacyCdpSmartWalletProvider;
   }
 
   /**
@@ -289,7 +289,7 @@ export class SmartWalletProvider extends EvmWalletProvider {
    * @returns The name of the wallet provider.
    */
   getName(): string {
-    return "cdp_smart_wallet_provider";
+    return "legacy_cdp_smart_wallet_provider";
   }
 
   /**

@@ -22,10 +22,10 @@ import {
   SOLANA_TESTNET_NETWORK,
   SOLANA_TESTNET_NETWORK_ID,
 } from "../network/svm";
-import { WalletProviderWithClient, CdpV2WalletProviderConfig } from "./cdpV2Shared";
+import { WalletProviderWithClient, CdpWalletProviderConfig } from "./cdpShared";
 import { SvmWalletProvider } from "./svmWalletProvider";
 
-interface ConfigureCdpV2WalletProviderWithWalletOptions {
+interface ConfigureCdpSolanaWalletProviderWithWalletOptions {
   /**
    * The CDP client of the wallet.
    */
@@ -50,21 +50,18 @@ interface ConfigureCdpV2WalletProviderWithWalletOptions {
 /**
  * A wallet provider that uses the Coinbase SDK.
  */
-export class CdpV2SolanaWalletProvider
-  extends SvmWalletProvider
-  implements WalletProviderWithClient
-{
+export class CdpSolanaWalletProvider extends SvmWalletProvider implements WalletProviderWithClient {
   #connection: Connection;
   #serverAccount: Awaited<ReturnType<typeof CdpClient.prototype.solana.createAccount>>;
   #cdp: CdpClient;
   #network: Network;
 
   /**
-   * Constructs a new CdpWalletProvider.
+   * Constructs a new CdpSolanaWalletProvider.
    *
-   * @param config - The configuration options for the CdpWalletProvider.
+   * @param config - The configuration options for the CdpSolanaWalletProvider.
    */
-  private constructor(config: ConfigureCdpV2WalletProviderWithWalletOptions) {
+  private constructor(config: ConfigureCdpSolanaWalletProviderWithWalletOptions) {
     super();
 
     this.#serverAccount = config.serverAccount;
@@ -74,15 +71,15 @@ export class CdpV2SolanaWalletProvider
   }
 
   /**
-   * Configures a new CdpWalletProvider with a wallet.
+   * Configures a new CdpSolanaWalletProvider with a wallet.
    *
    * @param config - Optional configuration parameters
-   * @returns A Promise that resolves to a new CdpWalletProvider instance
+   * @returns A Promise that resolves to a new CdpSolanaWalletProvider instance
    * @throws Error if required environment variables are missing or wallet initialization fails
    */
   public static async configureWithWallet(
-    config: CdpV2WalletProviderConfig = {},
-  ): Promise<CdpV2SolanaWalletProvider> {
+    config: CdpWalletProviderConfig = {},
+  ): Promise<CdpSolanaWalletProvider> {
     const apiKeyId = config.apiKeyId || process.env.CDP_API_KEY_ID;
     const apiKeySecret = config.apiKeySecret || process.env.CDP_API_KEY_SECRET;
     const walletSecret = config.walletSecret || process.env.CDP_WALLET_SECRET;
@@ -127,12 +124,24 @@ export class CdpV2SolanaWalletProvider
       ? cdpClient.solana.getAccount({ address: config.address })
       : cdpClient.solana.createAccount({ idempotencyKey }));
 
-    return new CdpV2SolanaWalletProvider({
+    return new CdpSolanaWalletProvider({
       connection,
       cdp: cdpClient,
       serverAccount,
       network,
     });
+  }
+
+  /**
+   * Exports the wallet.
+   *
+   * @returns The wallet's data.
+   */
+  async exportWallet(): Promise<{ name: string | undefined; address: `0x${string}` }> {
+    return {
+      name: this.#serverAccount.name,
+      address: this.#serverAccount.address as `0x${string}`,
+    };
   }
 
   /**
@@ -177,7 +186,7 @@ export class CdpV2SolanaWalletProvider
    * @returns The name of the wallet provider.
    */
   getName(): string {
-    return "cdp_v2_solana_wallet_provider";
+    return "cdp_solana_wallet_provider";
   }
 
   /**
