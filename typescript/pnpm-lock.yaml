@@ -132,8 +132,8 @@ importers:
         specifier: ^0.4.1
         version: 0.4.1(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
       x402-axios:
-        specifier: ^0.3.3
-        version: 0.3.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
+        specifier: ^0.4.0
+        version: 0.4.1(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
       zod:
         specifier: ^3.23.8
         version: 3.24.2
@@ -4989,11 +4989,8 @@ packages:
       utf-8-validate:
         optional: true
 
-  x402-axios@0.3.3:
-    resolution: {integrity: sha512-WaqYBO6QCLtON6YYHoN1vCxVaWXXTDOltZnwo7VjvWc9gYoQRismONVu2VC6PK5SHad+Ha9wsJJrgL9NBF83Bg==}
-
-  x402@0.3.7:
-    resolution: {integrity: sha512-8g2sXjWX7UbUNg9wJqgSBoYP7QV3/7qYYssdfPiQM5XDDThuVy7+MnH4cCuQ4UGGn2SVz1hpzWpwxMC3nwp+zA==}
+  x402-axios@0.4.1:
+    resolution: {integrity: sha512-GnLoD8xnDdpy61iHuEb85ukDnKxrtCcWkApuQb7szS4SKpMK8wVV9/i6u+ISNQgohECrABpWtYjwlUPAZp3mGA==}
 
   x402@0.4.1:
     resolution: {integrity: sha512-5EW6FzcZjyizk4qa+t7QzclUBq//mCWbNf75O+WgDIyGtWg2FfqWPocmncjof6cG33rrHQG/PvNw5AMvKU6lpw==}
@@ -10691,24 +10688,15 @@ snapshots:
       bufferutil: 4.0.9
       utf-8-validate: 5.0.10
 
-  x402-axios@0.3.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10):
+  x402-axios@0.4.1(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10):
     dependencies:
       axios: 1.9.0
       viem: 2.24.1(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.25.56)
-      x402: 0.3.7(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
+      x402: 0.4.1(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
       zod: 3.25.56
     transitivePeerDependencies:
       - bufferutil
       - debug
-      - typescript
-      - utf-8-validate
-
-  x402@0.3.7(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10):
-    dependencies:
-      viem: 2.24.1(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.25.56)
-      zod: 3.25.56
-    transitivePeerDependencies:
-      - bufferutil
       - typescript
       - utf-8-validate
 
