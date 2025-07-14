@@ -117,22 +117,58 @@ DO NOT use this action directly without first trying make_http_request!""",
         try:
             # Convert snake_case args to camelCase for x402 API
             payment_data = {
-                "scheme": args["scheme"],
                 "network": args["network"],
+                "scheme": args["scheme"],
                 "maxAmountRequired": args["max_amount_required"],
-                "resource": args["resource"],
                 "payTo": args["pay_to"],
-                "maxTimeoutSeconds": args["max_timeout_seconds"],
                 "asset": args["asset"],
-                "description": args.get("description", ""),
-                "mimeType": args.get("mime_type", ""),
-                "outputSchema": args.get("output_schema"),
-                "extra": args.get("extra"),
             }
+
+            # Create payment selector function that prioritizes the specified payment option
+            def payment_selector(
+                payment_options: list[PaymentRequirements],
+                network_filter: str | None = None,
+                scheme_filter: str | None = None,
+                max_value: int | None = None,
+            ) -> PaymentRequirements:
+                # Use provided filters if available, otherwise use from payment_data
+                network = network_filter or payment_data["network"]
+                scheme = scheme_filter or payment_data["scheme"]
+                max_amount = max_value or int(payment_data["maxAmountRequired"])
+                pay_to = payment_data["payTo"]
+                asset = payment_data["asset"]
+
+                for req in payment_options:
+                    # Handle both dict and PaymentRequirements types
+                    req_dict = req if isinstance(req, dict) else req.dict()
+
+                    # Check for exact match with all criteria
+                    if (
+                        req_dict["network"] == network
+                        and req_dict["scheme"] == scheme
+                        and req_dict["pay_to"] == pay_to
+                        and req_dict["asset"] == asset
+                        and int(req_dict["max_amount_required"]) <= max_amount
+                    ):
+                        return PaymentRequirements(**req_dict)
+
+                # If no exact match, try matching just network, payTo and asset
+                for req in payment_options:
+                    req_dict = req if isinstance(req, dict) else req.dict()
+                    if (
+                        req_dict["network"] == network
+                        and req_dict["pay_to"] == pay_to
+                        and req_dict["asset"] == asset
+                        and int(req_dict["max_amount_required"]) <= max_amount
+                    ):
+                        return PaymentRequirements(**req_dict)
+
+                # If no match found, raise an exception
+                raise ValueError("No matching payment requirements found for the selected criteria")
 
             # Make request with payment handling
             account = wallet_provider.to_signer()
-            session = x402_requests(account)
+            session = x402_requests(account, payment_requirements_selector=payment_selector)
 
             # Pass the payment data to the session request
             response = session.request(
