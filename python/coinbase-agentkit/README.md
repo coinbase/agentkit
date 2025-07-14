@@ -536,6 +536,24 @@ This section provides a detailed list of all available action providers and thei
 </table>
 </details>
 
+<details>
+<summary><strong>x402</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>make_http_request</code></td>
+    <td width="768">Makes a basic HTTP request to an API endpoint. If the endpoint requires payment (returns 402), it will return payment details that can be used with retry_http_request_with_x402.</td>
+</tr>
+<tr>
+    <td width="200"><code>retry_http_request_with_x402</code></td>
+    <td width="768">Retries an HTTP request with x402 payment after receiving a 402 Payment Required response. This should be used after make_http_request returns a 402 response.</td>
+</tr>
+<tr>
+    <td width="200"><code>make_http_request_with_x402</code></td>
+    <td width="768">Makes an HTTP request with automatic x402 payment handling. Only use when explicitly told to skip the confirmation flow.</td>
+</tr>
+</table>
+</details>
+
 ## Wallet Providers
 
 AgentKit supports the following wallet providers:
