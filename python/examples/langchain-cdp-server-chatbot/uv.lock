@@ -644,7 +644,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.0.1,<2" },
     { name = "requests", specifier = ">=2.31.0,<3" },
     { name = "web3", specifier = ">=7.6.0,<8" },
-    { name = "x402", editable = "../../../../x402/python/x402" },
+    { name = "x402", specifier = ">=0.1.2,<2" },
 ]
 
 [package.metadata.requires-dev]
@@ -3138,7 +3138,7 @@ wheels = [
 [[package]]
 name = "x402"
 version = "0.1.2"
-source = { editable = "../../../../x402/python/x402" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "eth-account" },
     { name = "eth-typing" },
@@ -3149,24 +3149,9 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "web3" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "eth-account", specifier = ">=0.13.7" },
-    { name = "eth-typing", specifier = ">=4.0.0" },
-    { name = "eth-utils", specifier = ">=3.0.0" },
-    { name = "fastapi", extras = ["standard"], specifier = ">=0.115.12" },
-    { name = "pydantic", specifier = ">=2.10.3,<=2.10.4" },
-    { name = "pydantic-settings", specifier = ">=2.2.1" },
-    { name = "python-dotenv", specifier = ">=1.0.1" },
-    { name = "web3", specifier = ">=6.0.0" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=8.3.5" },
-    { name = "pytest-asyncio", specifier = ">=1.0.0" },
-    { name = "ruff", specifier = ">=0.11.9" },
+sdist = { url = "https://files.pythonhosted.org/packages/4e/de/784e48765a475cd04e4767d9df446f4c0e443240678582efcd332f529abc/x402-0.1.2.tar.gz", hash = "sha256:9caf213fe3fd8a29ecee2de003cbbefed4d7e67e0d0c67c3830d8285666e2527", size = 144126 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/88/ac/fbd560ab825b38a2e46735fdda1ff4e8e7fed7841adad2a8d68c081a0347/x402-0.1.2-py3-none-any.whl", hash = "sha256:48e6d375277cb7ccf27ff6eecfd1604ec5fddf86b55409279812cee44a15745e", size = 17764 },
 ]
 
 [[package]]
