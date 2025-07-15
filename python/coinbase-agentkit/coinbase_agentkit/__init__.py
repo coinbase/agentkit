@@ -21,6 +21,7 @@ from .action_providers import (
     wallet_action_provider,
     weth_action_provider,
     wow_action_provider,
+    x402_action_provider,
 )
 from .agentkit import AgentKit, AgentKitConfig
 from .wallet_providers import (
@@ -64,5 +65,6 @@ __all__ = [
     "wallet_action_provider",
     "weth_action_provider",
     "wow_action_provider",
+    "x402_action_provider",
     "__version__",
 ]
