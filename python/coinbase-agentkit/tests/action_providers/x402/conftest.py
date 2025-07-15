@@ -86,9 +86,7 @@ def mock_requests():
 @pytest.fixture
 def mock_x402_requests():
     """Create a mock for x402_requests session."""
-    with patch(
-        "coinbase_agentkit.action_providers.x402.x402_action_provider.x402_requests"
-    ) as mock_x402:
+    with patch("x402.clients.requests.x402_requests", autospec=True) as mock_x402:
         mock_session = Mock()
         mock_x402.return_value = mock_session
 
@@ -108,8 +106,6 @@ def mock_x402_requests():
 @pytest.fixture
 def mock_decode_payment():
     """Create a mock for decode_x_payment_response."""
-    with patch(
-        "coinbase_agentkit.action_providers.x402.x402_action_provider.decode_x_payment_response"
-    ) as mock_decode:
+    with patch("x402.clients.base.decode_x_payment_response", autospec=True) as mock_decode:
         mock_decode.return_value = MOCK_PAYMENT_PROOF
         yield mock_decode
