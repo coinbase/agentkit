@@ -359,9 +359,36 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
             NotImplementedError: Smart wallets cannot sign typed data directly
 
         """
-        raise NotImplementedError(
-            "Smart wallets cannot sign typed data directly. Use the owner account to sign typed data."
-        )
+        client = self.get_client()
+
+        # Extract required parameters from typed_data
+        domain = typed_data.get("domain", {})
+        print(domain)
+        types = typed_data.get("types", {})
+        print(types)
+        primary_type = typed_data.get("primaryType", "")
+        print(primary_type)
+        message = typed_data.get("message", {})
+        print(message)
+
+        async def _sign_typed_data():
+            async with client as cdp:
+                smart_account = await self._get_smart_account(cdp)
+                print(smart_account)
+                return await smart_account.sign_typed_data(
+                    domain=domain,
+                    types=types,
+                    primary_type=primary_type,
+                    message=message,
+                    network="base"
+                    if self.get_network().network_id == "base-mainnet"
+                    else self.get_network().network_id,
+                )
+
+        try:
+            return self._run_async(_sign_typed_data()).signature
+        finally:
+            self._run_async(client.close())
 
     def sign_transaction(self, transaction: TxParams) -> HexStr:
         """Sign an EVM transaction.
