@@ -35,11 +35,11 @@ def test_supports_network():
         )
         assert (
             provider.supports_network(Network(protocol_family="evm", network_id="base-mainnet"))
-            is False
+            is True
         )
         assert (
             provider.supports_network(Network(protocol_family="evm", network_id="ethereum-mainnet"))
-            is False
+            is True
         )
 
         assert (

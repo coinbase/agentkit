@@ -6,14 +6,10 @@ import time
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
-    CdpEvmServerWalletProvider,
-    CdpEvmServerWalletProviderConfig,
-    allora_action_provider,
+    CdpSolanaWalletProvider,
+    CdpSolanaWalletProviderConfig,
     cdp_api_action_provider,
-    erc20_action_provider,
-    pyth_action_provider,
     wallet_action_provider,
-    weth_action_provider,
 )
 from coinbase_agentkit_langchain import get_langchain_tools
 from dotenv import load_dotenv
@@ -22,32 +18,30 @@ from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 
-# Configure a file to persist the agent's CDP API Wallet Data.
 load_dotenv()
 
 
-def initialize_agent(config: CdpEvmServerWalletProviderConfig):
-    """Initialize the agent with CDP Agentkit.
+def initialize_agent(config: CdpSolanaWalletProviderConfig):
+    """Initialize the agent with CDP Agentkit for Solana.
 
     Args:
-        config: Configuration for the CDP EVM Server Wallet Provider
+        config: Configuration for the CDP Solana Wallet Provider
 
     Returns:
-        tuple[Agent, CdpEvmServerWalletProvider]: The initialized agent and wallet provider
+        tuple[Agent, CdpSolanaWalletProvider]: The initialized agent and wallet provider
 
     """
     # Initialize the language model
     llm = ChatOpenAI(model="gpt-4o-mini")
 
     # Initialize the wallet provider with the config
-    wallet_provider = CdpEvmServerWalletProvider(
-        CdpEvmServerWalletProviderConfig(
+    wallet_provider = CdpSolanaWalletProvider(
+        CdpSolanaWalletProviderConfig(
             api_key_id=config.api_key_id,  # CDP API Key ID
             api_key_secret=config.api_key_secret,  # CDP API Key Secret
             wallet_secret=config.wallet_secret,  # CDP Wallet Secret
-            network_id=config.network_id,  # Network ID - Optional, will default to 'base-sepolia'
-            address=config.address,  # Wallet Address - Optional, will trigger idempotency flow if not provided
-            idempotency_key=config.idempotency_key,  # Idempotency Key - Optional, seeds generation of a new wallet
+            address=config.address,
+            network_id=config.network_id,  # Network ID - Optional, will default to 'solana-devnet'
         )
     )
 
@@ -57,11 +51,7 @@ def initialize_agent(config: CdpEvmServerWalletProviderConfig):
             wallet_provider=wallet_provider,
             action_providers=[
                 cdp_api_action_provider(),
-                erc20_action_provider(),
-                pyth_action_provider(),
                 wallet_action_provider(),
-                weth_action_provider(),
-                allora_action_provider(),
             ],
         )
     )
@@ -71,7 +61,7 @@ def initialize_agent(config: CdpEvmServerWalletProviderConfig):
 
     # Set up conversation memory
     memory = MemorySaver()
-    agent_config = {"configurable": {"thread_id": "CDP Agentkit Chatbot Example!"}}
+    agent_config = {"configurable": {"thread_id": "CDP Solana Agentkit Chatbot Example!"}}
 
     # Create and return the agent and wallet provider
     return (
@@ -80,16 +70,15 @@ def initialize_agent(config: CdpEvmServerWalletProviderConfig):
             tools=tools,
             checkpointer=memory,
             state_modifier=(
-                "You are a helpful agent that can interact onchain using the Coinbase Developer Platform AgentKit. "
+                "You are a helpful agent that can interact onchain on Solana using the Coinbase Developer Platform AgentKit. "
                 "You are empowered to interact onchain using your tools. If you ever need funds, you can request "
-                "them from the faucet if you are on network ID 'base-sepolia', 'ethereum-sepolia', or 'solana-devnet'. "
-                "If not, you can provide your wallet details and request funds from the user. Before executing your "
-                "first action, get the wallet details to see what network you're on. If there is a 5XX (internal) "
-                "HTTP error code, ask the user to try again later. If someone asks you to do something you can't do "
-                "with your currently available tools, you must say so, and encourage them to implement it themselves "
-                "using the CDP SDK + Agentkit, recommend they go to docs.cdp.coinbase.com for more information. "
-                "Be concise and helpful with your responses. Refrain from restating your tools' descriptions unless "
-                "it is explicitly requested."
+                "them from the faucet if you are on network ID 'solana-devnet'. If not, you can provide your wallet "
+                "details and request funds from the user. Before executing your first action, get the wallet details "
+                "to see what network you're on. If there is a 5XX (internal) HTTP error code, ask the user to try "
+                "again later. If someone asks you to do something you can't do with your currently available tools, "
+                "you must say so, and encourage them to implement it themselves using the CDP SDK + Agentkit, "
+                "recommend they go to docs.cdp.coinbase.com for more information. Be concise and helpful with your "
+                "responses. Refrain from restating your tools' descriptions unless it is explicitly requested."
             ),
         ),
         wallet_provider,
@@ -104,7 +93,7 @@ def setup():
 
     """
     # Configure network and file path
-    network_id = os.getenv("NETWORK_ID", "base-sepolia")
+    network_id = os.getenv("NETWORK_ID", "solana-devnet")
     wallet_file = f"wallet_data_{network_id.replace('-', '_')}.txt"
 
     # Load existing wallet data if available
@@ -126,7 +115,7 @@ def setup():
     )
 
     # Create the wallet provider config
-    config = CdpEvmServerWalletProviderConfig(
+    config = CdpSolanaWalletProviderConfig(
         api_key_id=os.getenv("CDP_API_KEY_ID"),
         api_key_secret=os.getenv("CDP_API_KEY_SECRET"),
         wallet_secret=os.getenv("CDP_WALLET_SECRET"),
