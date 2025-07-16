@@ -6,6 +6,11 @@ import {
   erc20ActionProvider,
   erc721ActionProvider,
   cdpApiActionProvider,
+  cdpWalletActionProvider,
+  pythActionProvider,
+  superfluidStreamActionProvider,
+  superfluidPoolActionProvider,
+  superfluidQueryActionProvider,
   CdpSolanaWalletProvider,
   splActionProvider,
 } from "@coinbase/agentkit";
@@ -110,7 +115,7 @@ async function initializeAgent() {
       walletActionProvider(),
       cdpApiActionProvider(),
       ...(isEvmWalletProvider(walletProvider)
-        ? [wethActionProvider(), erc20ActionProvider(), erc721ActionProvider()]
+        ? [wethActionProvider(), erc20ActionProvider(), erc721ActionProvider(), superfluidPoolActionProvider(), superfluidQueryActionProvider(), superfluidStreamActionProvider()]
         : isSolanaWalletProvider(walletProvider)
           ? [splActionProvider()]
           : []),

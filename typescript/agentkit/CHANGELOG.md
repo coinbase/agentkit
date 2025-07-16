@@ -108,6 +108,23 @@
 
 ## [0.2.3] - 2025-02-28
 
+## [0.1.4] - 2025-02-13
+
+### Added
+
+- Added `superfluidPoolActionProvider` to start, stop, and update superfluid pools
+- Added `superfluidStreamActionProvider` to start, stop, and update superfluid streams
+- Added `superfluidQueryActionProvider` to use The Graph to find active streams
+
+## [0.1.3] - 2025-02-13
+
+### Added
+
+- Added `svmWalletProvider` abstract class for interacting with Solana.
+- Added `solanaKeypairWalletProvider` to concretely implement `svmWalletProvider` with a local keypair.
+
+## [0.1.2] - 2025-02-07
+
 ### Added
 
 - [#392](https://github.com/coinbase/agentkit/pull/392) [`c5c1513`](https://github.com/coinbase/agentkit/commit/c5c1513933626bd6aef42652a875accb0c95d82e) Thanks [@mikeghen](https://github.com/mikeghen)! - Added `compoundActionProvider` to interact with Compound protocol on Base.
