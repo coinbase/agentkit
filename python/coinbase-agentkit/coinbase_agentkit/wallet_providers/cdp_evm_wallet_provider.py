@@ -15,30 +15,25 @@ from ..network import NETWORK_ID_TO_CHAIN, Network
 from .evm_wallet_provider import EvmWalletProvider
 
 
-class CdpEvmServerProviderConfig(BaseModel):
-    """Configuration options for CDP EVM Server providers."""
+class CdpEvmWalletProviderConfig(BaseModel):
+    """Configuration options for CDP EVM Server wallet provider."""
 
     api_key_id: str | None = Field(None, description="The CDP API key ID")
     api_key_secret: str | None = Field(None, description="The CDP API secret")
     wallet_secret: str | None = Field(None, description="The CDP wallet secret")
-
-
-class CdpEvmServerWalletProviderConfig(CdpEvmServerProviderConfig):
-    """Configuration options for CDP EVM Server wallet provider."""
-
     network_id: str | None = Field(None, description="The network id")
     address: str | None = Field(None, description="The address to use")
     idempotency_key: str | None = Field(None, description="The idempotency key for wallet creation")
 
 
-class CdpEvmServerWalletProvider(EvmWalletProvider):
+class CdpEvmWalletProvider(EvmWalletProvider):
     """A wallet provider that uses the CDP EVM Server SDK."""
 
-    def __init__(self, config: CdpEvmServerWalletProviderConfig):
+    def __init__(self, config: CdpEvmWalletProviderConfig):
         """Initialize CDP EVM Server wallet provider.
 
         Args:
-            config (CdpEvmServerWalletProviderConfig | None): Configuration options for the CDP provider. If not provided,
+            config (CdpEvmWalletProviderConfig | None): Configuration options for the CDP provider. If not provided,
                    will attempt to configure from environment variables.
 
         Raises:
@@ -115,10 +110,10 @@ class CdpEvmServerWalletProvider(EvmWalletProvider):
         """Get the name of the wallet provider.
 
         Returns:
-            str: The string 'cdp_evm_server_wallet_provider'
+            str: The string 'cdp_evm_wallet_provider'
 
         """
-        return "cdp_evm_server_wallet_provider"
+        return "cdp_evm_wallet_provider"
 
     def get_network(self) -> Network:
         """Get the current network.

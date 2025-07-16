@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import pytest
 
-from coinbase_agentkit.wallet_providers.cdp_evm_server_wallet_provider import (
-    CdpEvmServerWalletProvider,
-    CdpEvmServerWalletProviderConfig,
+from coinbase_agentkit.wallet_providers.cdp_evm_wallet_provider import (
+    CdpEvmWalletProvider,
+    CdpEvmWalletProviderConfig,
 )
 
 from .conftest import MOCK_API_KEY_ID, MOCK_API_KEY_SECRET, MOCK_WALLET_SECRET
@@ -32,7 +32,7 @@ def test_get_client(mocked_wallet_provider):
 def test_get_client_with_missing_credentials():
     """Test get_client method with missing credentials."""
     with patch.dict(os.environ, {}, clear=True):
-        config = CdpEvmServerWalletProviderConfig()
+        config = CdpEvmWalletProviderConfig()
 
         with pytest.raises(ValueError, match="Missing required environment variables"):
-            CdpEvmServerWalletProvider(config)
+            CdpEvmWalletProvider(config)

@@ -4,9 +4,9 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from coinbase_agentkit.wallet_providers.cdp_evm_server_wallet_provider import (
-    CdpEvmServerWalletProvider,
-    CdpEvmServerWalletProviderConfig,
+from coinbase_agentkit.wallet_providers.cdp_evm_wallet_provider import (
+    CdpEvmWalletProvider,
+    CdpEvmWalletProviderConfig,
 )
 
 # =========================================================
@@ -48,7 +48,7 @@ MOCK_SIGNATURE = "0x123456"
 def mock_cdp_client():
     """Create a mock for CDP Client with proper async handling."""
     with patch(
-        "coinbase_agentkit.wallet_providers.cdp_evm_server_wallet_provider.CdpClient", autospec=True
+        "coinbase_agentkit.wallet_providers.cdp_evm_wallet_provider.CdpClient", autospec=True
     ) as mock_client_class:
         # Create a properly configured AsyncMock for the client
         mock_instance = AsyncMock()
@@ -92,7 +92,7 @@ def mock_account():
 def mock_web3():
     """Create a mock Web3 instance."""
     with patch(
-        "coinbase_agentkit.wallet_providers.cdp_evm_server_wallet_provider.Web3"
+        "coinbase_agentkit.wallet_providers.cdp_evm_wallet_provider.Web3"
     ) as mock_web3:
         mock_web3_instance = Mock()
         mock_web3.return_value = mock_web3_instance
@@ -130,7 +130,7 @@ def mock_wallet():
 def mocked_wallet_provider(mock_cdp_client, mock_account, mock_web3, mock_wallet):
     """Create a mocked wallet provider instance."""
     # Create the configuration
-    config = CdpEvmServerWalletProviderConfig(
+    config = CdpEvmWalletProviderConfig(
         api_key_id=MOCK_API_KEY_ID,
         api_key_secret=MOCK_API_KEY_SECRET,
         wallet_secret=MOCK_WALLET_SECRET,
@@ -139,7 +139,7 @@ def mocked_wallet_provider(mock_cdp_client, mock_account, mock_web3, mock_wallet
 
     # Patch the async run to return the mock account directly
     with patch("asyncio.run", return_value=mock_account):
-        provider = CdpEvmServerWalletProvider(config)
+        provider = CdpEvmWalletProvider(config)
 
         # Manually set account and wallet attributes
         provider._account = mock_account

@@ -25,8 +25,8 @@ from .action_providers import (
 )
 from .agentkit import AgentKit, AgentKitConfig
 from .wallet_providers import (
-    CdpEvmServerWalletProvider,
-    CdpEvmServerWalletProviderConfig,
+    CdpEvmWalletProvider,
+    CdpEvmWalletProviderConfig,
     CdpEvmSmartWalletProvider,
     CdpEvmSmartWalletProviderConfig,
     CdpSolanaWalletProvider,
@@ -45,8 +45,8 @@ __all__ = [
     "create_action",
     "basename_action_provider",
     "WalletProvider",
-    "CdpEvmServerWalletProvider",
-    "CdpEvmServerWalletProviderConfig",
+    "CdpEvmWalletProvider",
+    "CdpEvmWalletProviderConfig",
     "CdpEvmSmartWalletProvider",
     "CdpEvmSmartWalletProviderConfig",
     "CdpSolanaWalletProvider",
