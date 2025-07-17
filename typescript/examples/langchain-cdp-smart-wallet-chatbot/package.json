@@ -20,7 +20,7 @@
     "@langchain/langgraph": "^0.2.21",
     "@langchain/openai": "^0.3.14",
     "dotenv": "^16.4.5",
-    "viem": "^2.24.1",
+    "viem": "2.22.16",
     "zod": "^3.22.4"
   },
   "devDependencies": {

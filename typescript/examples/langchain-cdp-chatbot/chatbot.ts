@@ -8,6 +8,7 @@ import {
   cdpApiActionProvider,
   CdpSolanaWalletProvider,
   splActionProvider,
+  x402ActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -110,7 +111,12 @@ async function initializeAgent() {
       walletActionProvider(),
       cdpApiActionProvider(),
       ...(isEvmWalletProvider(walletProvider)
-        ? [wethActionProvider(), erc20ActionProvider(), erc721ActionProvider()]
+        ? [
+            wethActionProvider(),
+            erc20ActionProvider(),
+            erc721ActionProvider(),
+            x402ActionProvider(),
+          ]
         : isSolanaWalletProvider(walletProvider)
           ? [splActionProvider()]
           : []),

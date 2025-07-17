@@ -229,17 +229,11 @@ describe("X402ActionProvider", () => {
       const result = await provider.retryWithX402(mockWalletProvider, {
         url: "https://www.x402.org/protected",
         method: "GET",
-        paymentOption: {
+        selectedPaymentOption: {
           scheme: "exact",
           network: "base-sepolia",
           maxAmountRequired: "10000",
-          resource: "https://www.x402.org/protected",
-          description: "Access to protected content",
-          mimeType: "application/json",
-          payTo: "0x123",
-          maxTimeoutSeconds: 300,
           asset: "0x456",
-          outputSchema: {},
         },
       });
 
@@ -258,17 +252,11 @@ describe("X402ActionProvider", () => {
       const result = await provider.retryWithX402(mockWalletProvider, {
         url: "https://www.x402.org/protected",
         method: "GET",
-        paymentOption: {
+        selectedPaymentOption: {
           scheme: "exact",
           network: "base-sepolia",
           maxAmountRequired: "10000",
-          resource: "https://different.url/protected", // Mismatched URL
-          description: "Access to protected content",
-          mimeType: "application/json",
-          payTo: "0x123",
-          maxTimeoutSeconds: 300,
           asset: "0x456",
-          outputSchema: {},
         },
       });
 
@@ -286,17 +274,11 @@ describe("X402ActionProvider", () => {
       const result = await provider.retryWithX402(mockWalletProvider, {
         url: "https://www.x402.org/protected",
         method: "GET",
-        paymentOption: {
+        selectedPaymentOption: {
           scheme: "exact",
           network: "base-sepolia",
           maxAmountRequired: "10000",
-          resource: "https://www.x402.org/protected",
-          description: "Access to protected content",
-          mimeType: "application/json",
-          payTo: "0x123",
-          maxTimeoutSeconds: 300,
           asset: "0x456",
-          outputSchema: {},
         },
       });
 

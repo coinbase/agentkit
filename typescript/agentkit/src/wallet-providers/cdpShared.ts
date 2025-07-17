@@ -1,5 +1,5 @@
 import { CdpClient, type EvmServerAccount } from "@coinbase/cdp-sdk";
-import type { Address, PrivateKeyAccount } from "viem";
+import type { Address, LocalAccount } from "viem";
 
 export interface CdpProviderConfig {
   /**
@@ -42,7 +42,7 @@ export interface CdpSmartWalletProviderConfig extends CdpWalletProviderConfig {
   /**
    * The owner account of the smart wallet.
    */
-  owner?: EvmServerAccount | PrivateKeyAccount | Address;
+  owner?: EvmServerAccount | LocalAccount | Address;
 
   /**
    * The name of the smart wallet.
