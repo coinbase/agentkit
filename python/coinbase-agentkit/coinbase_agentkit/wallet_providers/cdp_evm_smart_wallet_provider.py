@@ -363,18 +363,13 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
 
         # Extract required parameters from typed_data
         domain = typed_data.get("domain", {})
-        print(domain)
         types = typed_data.get("types", {})
-        print(types)
         primary_type = typed_data.get("primaryType", "")
-        print(primary_type)
         message = typed_data.get("message", {})
-        print(message)
 
         async def _sign_typed_data():
             async with client as cdp:
                 smart_account = await self._get_smart_account(cdp)
-                print(smart_account)
                 return await smart_account.sign_typed_data(
                     domain=domain,
                     types=types,
