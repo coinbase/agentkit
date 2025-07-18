@@ -78,6 +78,7 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{
     const walletProvider = await CdpSolanaWalletProvider.configureWithWallet({
       apiKeyId: process.env.CDP_API_KEY_ID,
       apiKeySecret: process.env.CDP_API_KEY_SECRET,
+      walletSecret: process.env.CDP_WALLET_SECRET,
       networkId: process.env.NETWORK_ID || "solana-devnet",
       address: walletDataStr ? JSON.parse(walletDataStr).address : undefined,
     });
