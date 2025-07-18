@@ -1,5 +1,15 @@
 # Coinbase Create Onchain Agent Changelog
 
+## 0.5.0
+
+### Minor Changes
+
+- [#785](https://github.com/coinbase/agentkit/pull/785) [`2d13565`](https://github.com/coinbase/agentkit/commit/2d13565d91e64a13d3ecb8c300d8c0cd973d3fae) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Upgraded all templates to match upgraded CDP wallet providers
+
+- [#785](https://github.com/coinbase/agentkit/pull/785) [`2d13565`](https://github.com/coinbase/agentkit/commit/2d13565d91e64a13d3ecb8c300d8c0cd973d3fae) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Added CdpSolanaWalletProvider to CLI
+
+- [#773](https://github.com/coinbase/agentkit/pull/773) [`463d310`](https://github.com/coinbase/agentkit/commit/463d3101147cacb0f2044162dd007489f97ef0a0) Thanks [@0xRAG](https://github.com/0xRAG)! - Migrate to CDP Wallet API v2 as the default when using CDP wallets
+
 ## 0.4.0
 
 ### Minor Changes
