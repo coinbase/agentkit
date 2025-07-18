@@ -173,8 +173,9 @@ agentkit/
 │   │   ├── langchain/
 │   │   └── openai-agents-sdk/
 │   └── examples/
-│       ├── langchain-cdp-server-chatbot/
+│       ├── langchain-cdp-chatbot/
 │       ├── langchain-cdp-smart-wallet-chatbot/
+│       ├── langchain-cdp-solana-chatbot/
 │       ├── langchain-eth-account-chatbot/
 │       ├── langchain-nillion-secretvault-chatbot/
 │       ├── langchain-twitter-chatbot/

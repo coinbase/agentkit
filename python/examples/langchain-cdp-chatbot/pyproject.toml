@@ -27,7 +27,7 @@ coinbase-agentkit-langchain = { path = "../../../python/framework-extensions/lan
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.langchain-cdp-server-chatbot]
+[tool.langchain-cdp-chatbot]
 private = true
 
 [tool.ruff]
