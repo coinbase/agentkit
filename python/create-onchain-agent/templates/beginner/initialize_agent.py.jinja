@@ -85,7 +85,7 @@ AGENT_INSTRUCTIONS = (
     Returns:
         tuple[Agent, dict]: The initialized agent and its configuration
     """
-    # Initialize CDP Server Wallet Provider
+    # Initialize CDP EVM Wallet Provider
     wallet_provider = CdpEvmWalletProvider(
         CdpEvmWalletProviderConfig(
             api_key_id=config.api_key_id,
