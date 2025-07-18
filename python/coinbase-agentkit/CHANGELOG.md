@@ -21,8 +21,8 @@
 
 ### Added
 
-- Added CdpEvmServerWalletProvider and removed CdpWalletProvider ([#705](https://github.com/coinbase/agentkit/pull/705))
-- Added CdpEvmSmartWalletProvider and removed SmartWalletProvider
+- Added CdpEvmWalletProvider and removed CdpWalletProvider ([#705](https://github.com/coinbase/agentkit/pull/705))
+- Added CdpSmartWalletProvider and removed SmartWalletProvider
 - Updated CdpApiActionProvider to new CDP SDK, and removed CdpWalletActionProvider
 
 

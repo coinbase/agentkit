@@ -17,12 +17,12 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
   - [Adding an Action Provider to your AgentKit instance](#adding-an-action-provider-to-your-agentkit-instance)
 - [Action Providers](#action-providers)
 - [Wallet Providers](#wallet-providers)
-  - [CdpEvmServerWalletProvider](#cdpevmserverwalletprovider)
+  - [CdpEvmWalletProvider](#cdpevmwalletprovider)
     - [Network Configuration](#network-configuration)
     - [Configuring from an existing CDP API Wallet](#configuring-from-an-existing-cdp-api-wallet)
     - [Creating a new wallet](#creating-a-new-wallet)
     - [Example Usage with AgentKit](#example-usage-with-agentkit)
-  - [CdpEvmSmartWalletProvider](#cdpevmsmartwalletprovider)
+  - [CdpSmartWalletProvider](#cdpsmartwalletprovider)
     - [Network Configuration](#network-configuration)
     - [Configuring with a Private Key Owner](#configuring-with-a-private-key-owner)
     - [Configuring with a Server Wallet Owner](#configuring-with-a-server-wallet-owner)
@@ -565,22 +565,22 @@ AgentKit supports the following wallet providers:
 
 EVM:
 
-- [CdpEvmServerWalletProvider](https://github.com/coinbase/agentkit/blob/master/python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_evm_server_wallet_provider.py) - Uses the Coinbase Developer Platform (CDP) API Server Wallet
-- [CdpEvmSmartWalletProvider](https://github.com/coinbase/agentkit/blob/master/python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_evm_smart_wallet_provider.py) - Uses the Coinbase Developer Platform (CDP) API Smart Wallet
+- [CdpEvmWalletProvider](https://github.com/coinbase/agentkit/blob/master/python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_evm_wallet_provider.py) - Uses the Coinbase Developer Platform (CDP) API Server Wallet
+- [CdpSmartWalletProvider](https://github.com/coinbase/agentkit/blob/master/python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_smart_wallet_provider.py) - Uses the Coinbase Developer Platform (CDP) API Smart Wallet
 - [EthAccountWalletProvider](https://github.com/coinbase/agentkit/blob/master/python/coinbase-agentkit/coinbase_agentkit/wallet_providers/eth_account_wallet_provider.py) - Uses a local private key for any EVM-compatible chain
 
-### CdpEvmServerWalletProvider
+### CdpEvmWalletProvider
 
-The `CdpEvmServerWalletProvider` is a wallet provider that uses the Coinbase Developer Platform (CDP) [API Server Wallet](https://docs.cdp.coinbase.com/wallet-api/docs/welcome).
+The `CdpEvmWalletProvider` is a wallet provider that uses the Coinbase Developer Platform (CDP) [API Server Wallet](https://docs.cdp.coinbase.com/wallet-api/docs/welcome).
 
 #### Network Configuration
 
-The `CdpEvmServerWalletProvider` can be configured to use a specific network by passing the `network_id` parameter to the `CdpEvmServerWalletProviderConfig`. The `network_id` is the ID of the network you want to use. You can find a list of [supported networks on the CDP API docs](https://docs.cdp.coinbase.com/cdp-apis/docs/networks).
+The `CdpEvmWalletProvider` can be configured to use a specific network by passing the `network_id` parameter to the `CdpEvmWalletProviderConfig`. The `network_id` is the ID of the network you want to use. You can find a list of [supported networks on the CDP API docs](https://docs.cdp.coinbase.com/cdp-apis/docs/networks).
 
 ```python
-from coinbase_agentkit import CdpEvmServerWalletProvider, CdpEvmServerWalletProviderConfig
+from coinbase_agentkit import CdpEvmWalletProvider, CdpEvmWalletProviderConfig
 
-wallet_provider = CdpEvmServerWalletProvider(CdpEvmServerWalletProviderConfig(
+wallet_provider = CdpEvmWalletProvider(CdpEvmWalletProviderConfig(
     api_key_id="CDP API KEY ID",
     api_key_secret="CDP API KEY SECRET",
     wallet_secret="CDP WALLET SECRET",
@@ -590,12 +590,12 @@ wallet_provider = CdpEvmServerWalletProvider(CdpEvmServerWalletProviderConfig(
 
 #### Configuring from an existing CDP API Wallet
 
-If you already have a CDP API Wallet, you can configure the `CdpEvmServerWalletProvider` by passing the `address` parameter to the config.
+If you already have a CDP API Wallet, you can configure the `CdpEvmWalletProvider` by passing the `address` parameter to the config.
 
 ```python
-from coinbase_agentkit import CdpEvmServerWalletProvider, CdpEvmServerWalletProviderConfig
+from coinbase_agentkit import CdpEvmWalletProvider, CdpEvmWalletProviderConfig
 
-wallet_provider = CdpEvmServerWalletProvider(CdpEvmServerWalletProviderConfig(
+wallet_provider = CdpEvmWalletProvider(CdpEvmWalletProviderConfig(
     api_key_id="CDP API KEY ID",
     api_key_secret="CDP API KEY SECRET",
     wallet_secret="CDP WALLET SECRET",
@@ -605,12 +605,12 @@ wallet_provider = CdpEvmServerWalletProvider(CdpEvmServerWalletProviderConfig(
 
 #### Creating a new wallet
 
-The `CdpEvmServerWalletProvider` can create a new wallet by providing an `idempotency_key`. If no `address` is provided, a new wallet will be created.
+The `CdpEvmWalletProvider` can create a new wallet by providing an `idempotency_key`. If no `address` is provided, a new wallet will be created.
 
 ```python
-from coinbase_agentkit import CdpEvmServerWalletProvider, CdpEvmServerWalletProviderConfig
+from coinbase_agentkit import CdpEvmWalletProvider, CdpEvmWalletProviderConfig
 
-wallet_provider = CdpEvmServerWalletProvider(CdpEvmServerWalletProviderConfig(
+wallet_provider = CdpEvmWalletProvider(CdpEvmWalletProviderConfig(
     api_key_id="CDP API KEY ID",
     api_key_secret="CDP API KEY SECRET",
     wallet_secret="CDP WALLET SECRET",
@@ -620,14 +620,14 @@ wallet_provider = CdpEvmServerWalletProvider(CdpEvmServerWalletProviderConfig(
 
 #### Example Usage with AgentKit
 
-Here's a complete example of using `CdpEvmServerWalletProvider` with AgentKit:
+Here's a complete example of using `CdpEvmWalletProvider` with AgentKit:
 
 ```python
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
-    CdpEvmServerWalletProvider,
-    CdpEvmServerWalletProviderConfig,
+    CdpEvmWalletProvider,
+    CdpEvmWalletProviderConfig,
     cdp_api_action_provider,
     erc20_action_provider,
     pyth_action_provider,
@@ -636,7 +636,7 @@ from coinbase_agentkit import (
 )
 
 # Initialize the wallet provider
-wallet_provider = CdpEvmServerWalletProvider(CdpEvmServerWalletProviderConfig(
+wallet_provider = CdpEvmWalletProvider(CdpEvmWalletProviderConfig(
     api_key_id="CDP API KEY ID",
     api_key_secret="CDP API KEY SECRET",
     wallet_secret="CDP WALLET SECRET",
@@ -656,18 +656,18 @@ agentkit = AgentKit(AgentKitConfig(
 ))
 ```
 
-### CdpEvmSmartWalletProvider
+### CdpSmartWalletProvider
 
-The `CdpEvmSmartWalletProvider` is a wallet provider that uses the Coinbase Developer Platform (CDP) [Smart Wallets](https://docs.cdp.coinbase.com/wallet-api/docs/smart-wallets). Smart wallets are controlled by an owner, which can be either an EVM private key or a CDP server wallet address.
+The `CdpSmartWalletProvider` is a wallet provider that uses the Coinbase Developer Platform (CDP) [Smart Wallets](https://docs.cdp.coinbase.com/wallet-api/docs/smart-wallets). Smart wallets are controlled by an owner, which can be either an EVM private key or a CDP server wallet address.
 
 #### Network Configuration
 
-The `CdpEvmSmartWalletProvider` can be configured to use a specific network by passing the `network_id` parameter to the `CdpEvmSmartWalletProviderConfig`. The `network_id` is the ID of the network you want to use. You can find a list of [supported networks on the CDP API docs](https://docs.cdp.coinbase.com/cdp-apis/docs/networks).
+The `CdpSmartWalletProvider` can be configured to use a specific network by passing the `network_id` parameter to the `CdpSmartWalletProviderConfig`. The `network_id` is the ID of the network you want to use. You can find a list of [supported networks on the CDP API docs](https://docs.cdp.coinbase.com/cdp-apis/docs/networks).
 
 ```python
-from coinbase_agentkit import CdpEvmSmartWalletProvider, CdpEvmSmartWalletProviderConfig
+from coinbase_agentkit import CdpSmartWalletProvider, CdpSmartWalletProviderConfig
 
-wallet_provider = CdpEvmSmartWalletProvider(CdpEvmSmartWalletProviderConfig(
+wallet_provider = CdpSmartWalletProvider(CdpSmartWalletProviderConfig(
     api_key_id="CDP API KEY ID",
     api_key_secret="CDP API KEY SECRET",
     wallet_secret="CDP WALLET SECRET",
@@ -678,12 +678,12 @@ wallet_provider = CdpEvmSmartWalletProvider(CdpEvmSmartWalletProviderConfig(
 
 #### Configuring with a Private Key Owner
 
-You can configure the `CdpEvmSmartWalletProvider` with a private key owner:
+You can configure the `CdpSmartWalletProvider` with a private key owner:
 
 ```python
-from coinbase_agentkit import CdpEvmSmartWalletProvider, CdpEvmSmartWalletProviderConfig
+from coinbase_agentkit import CdpSmartWalletProvider, CdpSmartWalletProviderConfig
 
-wallet_provider = CdpEvmSmartWalletProvider(CdpEvmSmartWalletProviderConfig(
+wallet_provider = CdpSmartWalletProvider(CdpSmartWalletProviderConfig(
     api_key_id="CDP API KEY ID",
     api_key_secret="CDP API KEY SECRET",
     wallet_secret="CDP WALLET SECRET",
@@ -694,12 +694,12 @@ wallet_provider = CdpEvmSmartWalletProvider(CdpEvmSmartWalletProviderConfig(
 
 #### Configuring with a Server Wallet Owner
 
-You can also configure the `CdpEvmSmartWalletProvider` with a CDP server wallet address as the owner:
+You can also configure the `CdpSmartWalletProvider` with a CDP server wallet address as the owner:
 
 ```python
-from coinbase_agentkit import CdpEvmSmartWalletProvider, CdpEvmSmartWalletProviderConfig
+from coinbase_agentkit import CdpSmartWalletProvider, CdpSmartWalletProviderConfig
 
-wallet_provider = CdpEvmSmartWalletProvider(CdpEvmSmartWalletProviderConfig(
+wallet_provider = CdpSmartWalletProvider(CdpSmartWalletProviderConfig(
     api_key_id="CDP API KEY ID",
     api_key_secret="CDP API KEY SECRET",
     wallet_secret="CDP WALLET SECRET",
@@ -713,9 +713,9 @@ wallet_provider = CdpEvmSmartWalletProvider(CdpEvmSmartWalletProviderConfig(
 If no `address` is provided, a new smart wallet will be created for the owner. You can optionally provide an `idempotency_key` to ensure idempotent wallet creation:
 
 ```python
-from coinbase_agentkit import CdpEvmSmartWalletProvider, CdpEvmSmartWalletProviderConfig
+from coinbase_agentkit import CdpSmartWalletProvider, CdpSmartWalletProviderConfig
 
-wallet_provider = CdpEvmSmartWalletProvider(CdpEvmSmartWalletProviderConfig(
+wallet_provider = CdpSmartWalletProvider(CdpSmartWalletProviderConfig(
     api_key_id="CDP API KEY ID",
     api_key_secret="CDP API KEY SECRET",
     wallet_secret="CDP WALLET SECRET",
@@ -729,9 +729,9 @@ wallet_provider = CdpEvmSmartWalletProvider(CdpEvmSmartWalletProviderConfig(
 You can enable gasless transactions by providing a paymaster URL:
 
 ```python
-from coinbase_agentkit import CdpEvmSmartWalletProvider, CdpEvmSmartWalletProviderConfig
+from coinbase_agentkit import CdpSmartWalletProvider, CdpSmartWalletProviderConfig
 
-wallet_provider = CdpEvmSmartWalletProvider(CdpEvmSmartWalletProviderConfig(
+wallet_provider = CdpSmartWalletProvider(CdpSmartWalletProvideronfig(
     api_key_id="CDP API KEY ID",
     api_key_secret="CDP API KEY SECRET",
     wallet_secret="CDP WALLET SECRET",
@@ -742,14 +742,14 @@ wallet_provider = CdpEvmSmartWalletProvider(CdpEvmSmartWalletProviderConfig(
 
 #### Example Usage with AgentKit
 
-Here's a complete example of using `CdpEvmSmartWalletProvider` with AgentKit:
+Here's a complete example of using `CdpSmartWalletProvider` with AgentKit:
 
 ```python
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
-    CdpEvmSmartWalletProvider,
-    CdpEvmSmartWalletProviderConfig,
+    CdpSmartWalletProvider,
+    CdpSmartWalletProviderConfig,
     cdp_api_action_provider,
     erc20_action_provider,
     pyth_action_provider,
@@ -758,7 +758,7 @@ from coinbase_agentkit import (
 )
 
 # Initialize the wallet provider
-wallet_provider = CdpEvmSmartWalletProvider(CdpEvmSmartWalletProviderConfig(
+wallet_provider = CdpSmartWalletProvider(CdpSmartWalletProviderConfig(
     api_key_id="CDP API KEY ID",
     api_key_secret="CDP API KEY SECRET",
     wallet_secret="CDP WALLET SECRET",
@@ -884,9 +884,9 @@ agent_kit = AgentKit(AgentKitConfig(
 ))
 ```
 
-### SmartWalletProvider
+### CDPSmartWalletProvider
 
-The `SmartWalletProvider` is a wallet provider that uses [CDP Smart Wallets](https://docs.cdp.coinbase.com/wallet-api/docs/smart-wallets).
+The `CDPSmartWalletProvider` is a wallet provider that uses [CDP Smart Wallets](https://docs.cdp.coinbase.com/wallet-api/docs/smart-wallets).
 
 ```python
 import os

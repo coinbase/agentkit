@@ -7,8 +7,8 @@ from agents.agent import Agent{% endif %}
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
-    CdpEvmServerWalletProvider,
-    CdpEvmServerWalletProviderConfig,
+    CdpEvmWalletProvider,
+    CdpEvmWalletProviderConfig,
     cdp_api_action_provider,
     erc20_action_provider,
     pyth_action_provider,
@@ -86,8 +86,8 @@ AGENT_INSTRUCTIONS = (
         tuple[Agent, dict]: The initialized agent and its configuration
     """
     # Initialize CDP Server Wallet Provider
-    wallet_provider = CdpEvmServerWalletProvider(
-        CdpEvmServerWalletProviderConfig(
+    wallet_provider = CdpEvmWalletProvider(
+        CdpEvmWalletProviderConfig(
             api_key_id=config.api_key_id,
             api_key_secret=config.api_key_secret,
             wallet_secret=config.wallet_secret,

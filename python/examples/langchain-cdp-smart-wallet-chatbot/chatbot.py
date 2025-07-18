@@ -8,8 +8,8 @@ from cdp import CdpClient
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
-    CdpEvmSmartWalletProvider,
-    CdpEvmSmartWalletProviderConfig,
+    CdpSmartWalletProvider,
+    CdpSmartWalletProviderConfig,
     cdp_api_action_provider,
     erc20_action_provider,
     pyth_action_provider,
@@ -25,22 +25,22 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 
 
-def initialize_agent(config: CdpEvmSmartWalletProviderConfig):
+def initialize_agent(config: CdpSmartWalletProviderConfig):
     """Initialize the agent with CDP Agentkit.
 
     Args:
         config: Configuration for the CDP EVM Smart Wallet Provider
 
     Returns:
-        tuple[Agent, CdpEvmSmartWalletProvider]: The initialized agent and wallet provider
+        tuple[Agent, CdpSmartWalletProvider]: The initialized agent and wallet provider
 
     """
     # Initialize the language model
     llm = ChatOpenAI(model="gpt-4o-mini")
 
     # Initialize the wallet provider with the config
-    wallet_provider = CdpEvmSmartWalletProvider(
-        CdpEvmSmartWalletProviderConfig(
+    wallet_provider = CdpSmartWalletProvider(
+        CdpSmartWalletProviderConfig(
             api_key_id=config.api_key_id,  # CDP API Key ID
             api_key_secret=config.api_key_secret,  # CDP API Key Secret
             wallet_secret=config.wallet_secret,  # CDP Wallet Secret
@@ -205,7 +205,7 @@ def setup():
         print(f"Created new server wallet: {owner_value}")
 
     # Create the wallet provider config
-    config = CdpEvmSmartWalletProviderConfig(
+    config = CdpSmartWalletProviderConfig(
         api_key_id=api_key_id,
         api_key_secret=api_key_secret,
         wallet_secret=wallet_secret,

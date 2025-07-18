@@ -3,7 +3,7 @@ import json
 import time
 import asyncio
 from dotenv import load_dotenv
-{% if _wallet_provider == "server" %}from coinbase_agentkit import CdpEvmServerWalletProviderConfig{% elif _wallet_provider == "smart" %}from coinbase_agentkit import CdpEvmSmartWalletProviderConfig{% elif _wallet_provider == "eth" %}from coinbase_agentkit import EthAccountWalletProviderConfig{% endif %}
+{% if _wallet_provider == "server" %}from coinbase_agentkit import CdpEvmWalletProviderConfig{% elif _wallet_provider == "smart" %}from coinbase_agentkit import CdpSmartWalletProviderConfig{% elif _wallet_provider == "eth" %}from coinbase_agentkit import EthAccountWalletProviderConfig{% endif %}
 {% if _wallet_provider == "eth" %}from eth_account import Account{% elif _wallet_provider == "smart" %}from cdp import CdpClient{% endif %}
 
 from initialize_agent import initialize_agent
@@ -39,7 +39,7 @@ def setup():
         raise ValueError("CDP_API_KEY_ID, CDP_API_KEY_SECRET, and CDP_WALLET_SECRET are required"){% endif %}
 
     {% if _wallet_provider == "server" %}# Create server wallet config
-    config = CdpEvmServerWalletProviderConfig(
+    config = CdpEvmWalletProviderConfig(
         api_key_id=api_key_id,
         api_key_secret=api_key_secret,
         wallet_secret=wallet_secret,
@@ -121,7 +121,7 @@ def setup():
         print(f"Created new server wallet: {owner_value}")
 
     # Create smart wallet config
-    config = CdpEvmSmartWalletProviderConfig(
+    config = CdpSmartWalletProviderConfig(
         api_key_id=api_key_id,
         api_key_secret=api_key_secret,
         wallet_secret=wallet_secret,

@@ -4,9 +4,9 @@ from .cdp_evm_wallet_provider import (
     CdpEvmWalletProvider,
     CdpEvmWalletProviderConfig,
 )
-from .cdp_evm_smart_wallet_provider import (
-    CdpEvmSmartWalletProvider,
-    CdpEvmSmartWalletProviderConfig,
+from .cdp_smart_wallet_provider import (
+    CdpSmartWalletProvider,
+    CdpSmartWalletProviderConfig,
 )
 from .cdp_solana_wallet_provider import (
     CdpSolanaWalletProvider,
@@ -20,8 +20,8 @@ __all__ = [
     "WalletProvider",
     "CdpEvmWalletProvider",
     "CdpEvmWalletProviderConfig",
-    "CdpEvmSmartWalletProvider",
-    "CdpEvmSmartWalletProviderConfig",
+    "CdpSmartWalletProvider",
+    "CdpSmartWalletProviderConfig",
     "CdpSolanaWalletProvider",
     "CdpSolanaWalletProviderConfig",
     "EvmWalletProvider",

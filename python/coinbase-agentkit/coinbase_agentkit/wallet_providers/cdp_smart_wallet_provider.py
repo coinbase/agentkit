@@ -16,7 +16,7 @@ from ..network import NETWORK_ID_TO_CHAIN, Network
 from .evm_wallet_provider import EvmGasConfig, EvmWalletProvider
 
 
-class CdpEvmSmartWalletProviderConfig(BaseModel):
+class CdpSmartWalletProviderConfig(BaseModel):
     """Configuration options for CDP EVM Smart Wallet provider."""
 
     api_key_id: str | None = Field(None, description="The CDP API key ID")
@@ -33,14 +33,14 @@ class CdpEvmSmartWalletProviderConfig(BaseModel):
     )
 
 
-class CdpEvmSmartWalletProvider(EvmWalletProvider):
+class CdpSmartWalletProvider(EvmWalletProvider):
     """A wallet provider that uses the CDP EVM Smart Account SDK."""
 
-    def __init__(self, config: CdpEvmSmartWalletProviderConfig):
+    def __init__(self, config: CdpSmartWalletProviderConfig):
         """Initialize CDP EVM Smart Wallet provider.
 
         Args:
-            config (CdpEvmSmartWalletProviderConfig | None): Configuration options for the CDP provider. If not provided,
+            config (CdpSmartWalletProviderConfig | None): Configuration options for the CDP provider. If not provided,
                    will attempt to configure from environment variables.
 
         Raises:
@@ -196,10 +196,10 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
         """Get the name of the wallet provider.
 
         Returns:
-            str: The string 'cdp_evm_smart_wallet_provider'
+            str: The string 'cdp_smart_wallet_provider'
 
         """
-        return "cdp_evm_smart_wallet_provider"
+        return "cdp_smart_wallet_provider"
 
     def get_network(self) -> Network:
         """Get the current network.
