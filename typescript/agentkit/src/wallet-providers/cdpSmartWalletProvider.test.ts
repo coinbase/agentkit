@@ -242,22 +242,46 @@ describe("CdpSmartWalletProvider", () => {
   // =========================================================
 
   describe("signing operations", () => {
-    it("should sign messages using owner account", async () => {
-      const signature = await provider.signMessage("Hello, world!");
-      expect(mockOwnerAccount.signMessage).toHaveBeenCalledWith({ message: "Hello, world!" });
-      expect(signature).toBe(MOCK_SIGNATURE);
+    it("should throw error for direct message signing", async () => {
+      await expect(provider.signMessage("Hello, world!")).rejects.toThrow(
+        "Direct message signing not supported for smart wallets. Use sendTransaction instead.",
+      );
     });
 
-    it("should sign typed data using owner account", async () => {
+    it("should sign typed data using smart account", async () => {
       const typedData = {
-        domain: { name: "Example" },
-        types: { Test: [{ name: "test", type: "string" }] },
-        message: { test: "example" },
-        primaryType: "Test",
+        domain: {
+          name: "Example",
+          version: "1",
+          chainId: 1,
+          verifyingContract: "0x1234567890123456789012345678901234567890",
+        },
+        types: {
+          Person: [
+            { name: "name", type: "string" },
+            { name: "wallet", type: "address" },
+          ],
+        },
+        primaryType: "Person",
+        message: {
+          name: "Bob",
+          wallet: "0x1234567890123456789012345678901234567890",
+        },
       };
 
+      // Mock the smart account's signTypedData method
+      mockSmartAccount.signTypedData = jest.fn().mockResolvedValue(MOCK_SIGNATURE);
+
       const signature = await provider.signTypedData(typedData);
-      expect(mockOwnerAccount.signTypedData).toHaveBeenCalledWith(typedData);
+
+      // Verify the smart account was called with the correct parameters
+      expect(mockSmartAccount.signTypedData).toHaveBeenCalledWith({
+        domain: typedData.domain,
+        types: typedData.types,
+        primaryType: typedData.primaryType,
+        message: typedData.message,
+        network: MOCK_NETWORK.networkId,
+      });
       expect(signature).toBe(MOCK_SIGNATURE);
     });
 
@@ -268,7 +292,7 @@ describe("CdpSmartWalletProvider", () => {
       };
 
       await expect(provider.signTransaction(tx)).rejects.toThrow(
-        "Direct transaction signing not supported for smart wallets",
+        "Direct transaction signing not supported for smart wallets. Use sendTransaction instead.",
       );
     });
   });
