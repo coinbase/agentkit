@@ -61,6 +61,12 @@ EVM_NETWORKS = [
     ("polygon-mumbai", "Polygon Mumbai"),
 ]
 
+SVM_NETWORKS = [
+    ("solana-mainnet", "Solana Mainnet"),
+    ("solana-devnet", "Solana Devnet"),
+    ("solana-testnet", "Solana Testnet"),
+]
+
 # Framework constants
 FRAMEWORKS = [
     ("Langchain", "langchain"),
@@ -233,13 +239,12 @@ def create_advanced_project(templates_path: str | None = None):
     # Look up the framework ID from the name
     framework = next(id for name, id in FRAMEWORKS if name == framework_name)
 
-    # Choose network type
-    network_type = questionary.select(
-        "Choose network type:",
+    # Choose network family
+    network_family = questionary.select(
+        "Choose network family:",
         choices=[
-            "Mainnet",
-            "Testnet",
-            "Custom Chain ID",
+            "Ethereum Virtual Machine (EVM)",
+            "Solana Virtual Machine (SVM)",
         ],
         style=custom_style,
     ).ask()
@@ -247,68 +252,90 @@ def create_advanced_project(templates_path: str | None = None):
     network = None
     chain_id = None
     rpc_url = None
+    wallet_provider = None
 
-    if network_type == "Custom Chain ID":
-        # Handle custom EVM network
-        chain_id = questionary.text(
-            "Enter your chain ID:",
-            validate=lambda text: text.strip().isdigit() or "Chain ID must be a number",
-            style=custom_style,
-        ).ask()
-
-        rpc_url = questionary.text(
-            "Enter your RPC URL:",
-            validate=lambda text: (
-                text.strip().startswith(("http://", "https://"))
-                or "RPC URL must start with http:// or https://"
-            ),
-            style=custom_style,
-        ).ask()
-
-        wallet_provider = "eth"  # Default to eth wallet provider for custom networks
-    else:
-        # Filter networks based on mainnet/testnet selection
-        network_choices = get_network_choices(network_type.lower())
+    if network_family == "Solana Virtual Machine (SVM)":
+        # Handle Solana network selection
+        network_choices = list(SVM_NETWORKS)
         network_name = questionary.select(
             "Choose a network:",
+            choices=[name for _, name in network_choices],
+            style=custom_style,
+        ).ask()
+        network = next(id for id, name in network_choices if name == network_name)
+        wallet_provider = "solana_server"  # Currently only one Solana wallet provider
+    else:
+        # Choose network type for EVM
+        network_type = questionary.select(
+            "Choose network type:",
             choices=[
-                name + (" (default)" if id == "base-sepolia" else "")
-                for name, id in network_choices
+                "Mainnet",
+                "Testnet",
+                "Custom Chain ID",
             ],
-            default="Base Sepolia (default)" if network_type == "Testnet" else None,
             style=custom_style,
         ).ask()
 
-        # Remove " (default)" suffix if present
-        network_name = network_name.replace(" (default)", "")
-        network = next(id for name, id in network_choices if name == network_name)
-
-    # Determine wallet provider
-    if network:
-        if network in CDP_SUPPORTED_NETWORKS:
-            wallet_choices = [
-                "CDP Server Wallet Provider",
-                "CDP Smart Wallet Provider",
-                "Ethereum Account Wallet Provider",
-            ]
-            wallet_selection = questionary.select(
-                "Select a wallet provider:",
-                choices=wallet_choices,
-                default="CDP Server Wallet Provider",
+        if network_type == "Custom Chain ID":
+            # Handle custom EVM network
+            chain_id = questionary.text(
+                "Enter your chain ID:",
+                validate=lambda text: text.strip().isdigit() or "Chain ID must be a number",
                 style=custom_style,
             ).ask()
 
-            if wallet_selection.startswith("CDP Server"):
-                wallet_provider = "server"
-            elif wallet_selection.startswith("CDP Smart"):
-                wallet_provider = "smart"
-            else:
-                wallet_provider = "eth"
+            rpc_url = questionary.text(
+                "Enter your RPC URL:",
+                validate=lambda text: (
+                    text.strip().startswith(("http://", "https://"))
+                    or "RPC URL must start with http:// or https://"
+                ),
+                style=custom_style,
+            ).ask()
+
+            wallet_provider = "eth"  # Default to eth wallet provider for custom networks
         else:
-            console.print(
-                f"[yellow]⚠️ CDP is not supported on {network}. Defaulting to Ethereum Account Wallet Provider.[/yellow]"
-            )
-            wallet_provider = "eth"
+            # Filter networks based on mainnet/testnet selection
+            network_choices = get_network_choices(network_type.lower())
+            network_name = questionary.select(
+                "Choose a network:",
+                choices=[
+                    name + (" (default)" if id == "base-sepolia" else "")
+                    for name, id in network_choices
+                ],
+                default="Base Sepolia (default)" if network_type == "Testnet" else None,
+                style=custom_style,
+            ).ask()
+
+            # Remove " (default)" suffix if present
+            network_name = network_name.replace(" (default)", "")
+            network = next(id for name, id in network_choices if name == network_name)
+
+            # Determine wallet provider
+            if network in CDP_SUPPORTED_NETWORKS:
+                wallet_choices = [
+                    "CDP EVM Wallet Provider",
+                    "CDP Smart Wallet Provider",
+                    "Ethereum Account Wallet Provider",
+                ]
+                wallet_selection = questionary.select(
+                    "Select a wallet provider:",
+                    choices=wallet_choices,
+                    default="CDP EVM Wallet Provider",
+                    style=custom_style,
+                ).ask()
+
+                if wallet_selection.startswith("CDP EVM"):
+                    wallet_provider = "server"
+                elif wallet_selection.startswith("CDP Smart"):
+                    wallet_provider = "smart"
+                else:
+                    wallet_provider = "eth"
+            else:
+                console.print(
+                    f"[yellow]⚠️ CDP is not supported on {network}. Defaulting to Ethereum Account Wallet Provider.[/yellow]"
+                )
+                wallet_provider = "eth"
 
     console.print(f"\n[blue]Creating your onchain agent project: {project_name}[/blue]")
 

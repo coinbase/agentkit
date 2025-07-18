@@ -1,12 +1,12 @@
 """Wallet providers for AgentKit."""
 
-from .cdp_evm_server_wallet_provider import (
-    CdpEvmServerWalletProvider,
-    CdpEvmServerWalletProviderConfig,
+from .cdp_evm_wallet_provider import (
+    CdpEvmWalletProvider,
+    CdpEvmWalletProviderConfig,
 )
-from .cdp_evm_smart_wallet_provider import (
-    CdpEvmSmartWalletProvider,
-    CdpEvmSmartWalletProviderConfig,
+from .cdp_smart_wallet_provider import (
+    CdpSmartWalletProvider,
+    CdpSmartWalletProviderConfig,
 )
 from .cdp_solana_wallet_provider import (
     CdpSolanaWalletProvider,
@@ -18,10 +18,10 @@ from .wallet_provider import WalletProvider
 
 __all__ = [
     "WalletProvider",
-    "CdpEvmServerWalletProvider",
-    "CdpEvmServerWalletProviderConfig",
-    "CdpEvmSmartWalletProvider",
-    "CdpEvmSmartWalletProviderConfig",
+    "CdpEvmWalletProvider",
+    "CdpEvmWalletProviderConfig",
+    "CdpSmartWalletProvider",
+    "CdpSmartWalletProviderConfig",
     "CdpSolanaWalletProvider",
     "CdpSolanaWalletProviderConfig",
     "EvmWalletProvider",

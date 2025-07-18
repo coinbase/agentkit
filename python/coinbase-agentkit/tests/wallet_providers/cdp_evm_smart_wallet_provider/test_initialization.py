@@ -6,9 +6,9 @@ from unittest.mock import Mock, patch
 import pytest
 from eth_account.account import Account
 
-from coinbase_agentkit.wallet_providers.cdp_evm_smart_wallet_provider import (
-    CdpEvmSmartWalletProvider,
-    CdpEvmSmartWalletProviderConfig,
+from coinbase_agentkit.wallet_providers.cdp_smart_wallet_provider import (
+    CdpSmartWalletProvider,
+    CdpSmartWalletProviderConfig,
 )
 
 from .conftest import (
@@ -48,7 +48,7 @@ def test_init_with_config(mock_cdp_client, mock_asyncio, mock_network_id_to_chai
     mock_cdp_client.evm.create_smart_account.side_effect = create_smart_account_mock
 
     # Test with full configuration
-    config = CdpEvmSmartWalletProviderConfig(
+    config = CdpSmartWalletProviderConfig(
         api_key_id=MOCK_API_KEY_ID,
         api_key_secret=MOCK_API_KEY_SECRET,
         wallet_secret=MOCK_WALLET_SECRET,
@@ -58,10 +58,10 @@ def test_init_with_config(mock_cdp_client, mock_asyncio, mock_network_id_to_chai
         paymaster_url=MOCK_PAYMASTER_URL,
     )
 
-    provider = CdpEvmSmartWalletProvider(config)
+    provider = CdpSmartWalletProvider(config)
 
     assert provider.get_address() == MOCK_ADDRESS
-    assert provider.get_name() == "cdp_evm_smart_wallet_provider"
+    assert provider.get_name() == "cdp_smart_wallet_provider"
     assert provider._api_key_id == MOCK_API_KEY_ID
     assert provider._api_key_secret == MOCK_API_KEY_SECRET
     assert provider._wallet_secret == MOCK_WALLET_SECRET
@@ -100,10 +100,10 @@ def test_init_with_env_vars(mock_cdp_client, mock_asyncio, mock_network_id_to_ch
     }
 
     with patch.dict(os.environ, mock_env_vars, clear=True):
-        config = CdpEvmSmartWalletProviderConfig()
-        provider = CdpEvmSmartWalletProvider(config)
+        config = CdpSmartWalletProviderConfig()
+        provider = CdpSmartWalletProvider(config)
 
-        assert provider.get_name() == "cdp_evm_smart_wallet_provider"
+        assert provider.get_name() == "cdp_smart_wallet_provider"
         assert provider._api_key_id == MOCK_API_KEY_ID
         assert provider._api_key_secret == MOCK_API_KEY_SECRET
         assert provider._wallet_secret == MOCK_WALLET_SECRET
@@ -120,7 +120,7 @@ def test_init_with_private_key_owner(mock_cdp_client, mock_asyncio, mock_network
     mock_smart_account.address = MOCK_ADDRESS
 
     with patch(
-        "coinbase_agentkit.wallet_providers.cdp_evm_smart_wallet_provider.Account"
+        "coinbase_agentkit.wallet_providers.cdp_smart_wallet_provider.Account"
     ) as mock_account_class:
         mock_account_class.from_key.return_value = mock_owner
 
@@ -137,7 +137,7 @@ def test_init_with_private_key_owner(mock_cdp_client, mock_asyncio, mock_network
 
         mock_cdp_client.evm.create_smart_account.side_effect = create_smart_account_mock
 
-        config = CdpEvmSmartWalletProviderConfig(
+        config = CdpSmartWalletProviderConfig(
             api_key_id=MOCK_API_KEY_ID,
             api_key_secret=MOCK_API_KEY_SECRET,
             wallet_secret=MOCK_WALLET_SECRET,
@@ -145,7 +145,7 @@ def test_init_with_private_key_owner(mock_cdp_client, mock_asyncio, mock_network
             owner=private_key,
         )
 
-        provider = CdpEvmSmartWalletProvider(config)
+        provider = CdpSmartWalletProvider(config)
 
         # Don't check if from_key was called, since we're mocking asyncio.run
         # We only care that the provider was initialized correctly
@@ -155,15 +155,15 @@ def test_init_with_private_key_owner(mock_cdp_client, mock_asyncio, mock_network
 
 def test_init_without_required_credentials():
     """Test initialization without required credentials."""
-    config = CdpEvmSmartWalletProviderConfig()
+    config = CdpSmartWalletProviderConfig()
 
     with pytest.raises(ValueError, match="Missing required environment variables"):
-        CdpEvmSmartWalletProvider(config)
+        CdpSmartWalletProvider(config)
 
 
 def test_init_without_owner():
     """Test initialization without owner."""
-    config = CdpEvmSmartWalletProviderConfig(
+    config = CdpSmartWalletProviderConfig(
         api_key_id=MOCK_API_KEY_ID,
         api_key_secret=MOCK_API_KEY_SECRET,
         wallet_secret=MOCK_WALLET_SECRET,
@@ -172,7 +172,7 @@ def test_init_without_owner():
     with pytest.raises(
         ValueError, match="Owner private key or CDP server wallet address is required"
     ):
-        CdpEvmSmartWalletProvider(config)
+        CdpSmartWalletProvider(config)
 
 
 def test_init_with_invalid_network_id(mock_cdp_client, mock_asyncio):
@@ -180,14 +180,14 @@ def test_init_with_invalid_network_id(mock_cdp_client, mock_asyncio):
     invalid_network_id = "invalid-network"
 
     with pytest.raises(ValueError) as excinfo:
-        config = CdpEvmSmartWalletProviderConfig(
+        config = CdpSmartWalletProviderConfig(
             api_key_id=MOCK_API_KEY_ID,
             api_key_secret=MOCK_API_KEY_SECRET,
             wallet_secret=MOCK_WALLET_SECRET,
             network_id=invalid_network_id,
             owner="0x123456789012345678901234567890123456789012",
         )
-        CdpEvmSmartWalletProvider(config)
+        CdpSmartWalletProvider(config)
 
     # Check that the error message contains the invalid network ID
     assert "Failed to initialize CDP smart wallet" in str(excinfo.value)

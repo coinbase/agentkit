@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import pytest
 
-from coinbase_agentkit.wallet_providers.cdp_evm_server_wallet_provider import (
-    CdpEvmServerWalletProvider,
-    CdpEvmServerWalletProviderConfig,
+from coinbase_agentkit.wallet_providers.cdp_evm_wallet_provider import (
+    CdpEvmWalletProvider,
+    CdpEvmWalletProviderConfig,
 )
 
 from .conftest import (
@@ -28,14 +28,14 @@ def test_init_with_config(mock_cdp_client, mock_account):
     with patch("asyncio.run") as mock_run:
         mock_run.return_value = mock_account
 
-        config = CdpEvmServerWalletProviderConfig(
+        config = CdpEvmWalletProviderConfig(
             api_key_id=MOCK_API_KEY_ID,
             api_key_secret=MOCK_API_KEY_SECRET,
             wallet_secret=MOCK_WALLET_SECRET,
             network_id=MOCK_NETWORK_ID,
         )
 
-        provider = CdpEvmServerWalletProvider(config)
+        provider = CdpEvmWalletProvider(config)
 
         assert provider.get_address() == MOCK_ADDRESS
         assert provider.get_network().network_id == MOCK_NETWORK_ID
@@ -57,7 +57,7 @@ def test_init_with_env_vars(mock_cdp_client, mock_account):
     ):
         mock_run.return_value = mock_account
 
-        provider = CdpEvmServerWalletProvider(CdpEvmServerWalletProviderConfig())
+        provider = CdpEvmWalletProvider(CdpEvmWalletProviderConfig())
 
         assert provider.get_address() == MOCK_ADDRESS
         assert provider.get_network().network_id == MOCK_NETWORK_ID
@@ -75,13 +75,13 @@ def test_init_with_default_network(mock_cdp_client, mock_account):
     ):
         mock_run.return_value = mock_account
 
-        config = CdpEvmServerWalletProviderConfig(
+        config = CdpEvmWalletProviderConfig(
             api_key_id=MOCK_API_KEY_ID,
             api_key_secret=MOCK_API_KEY_SECRET,
             wallet_secret=MOCK_WALLET_SECRET,
         )
 
-        provider = CdpEvmServerWalletProvider(config)
+        provider = CdpEvmWalletProvider(config)
 
         network = provider.get_network()
         assert network.network_id == "base-sepolia"
@@ -90,17 +90,17 @@ def test_init_with_default_network(mock_cdp_client, mock_account):
 def test_init_with_missing_credentials():
     """Test initialization with missing credentials."""
     with patch.dict(os.environ, {}, clear=True):
-        config = CdpEvmServerWalletProviderConfig()
+        config = CdpEvmWalletProviderConfig()
 
         with pytest.raises(ValueError, match="Missing required environment variables"):
-            CdpEvmServerWalletProvider(config)
+            CdpEvmWalletProvider(config)
 
 
 def test_init_with_invalid_network(mock_cdp_client):
     """Test initialization with invalid network."""
     # Use a known invalid network ID
     with patch("asyncio.run", side_effect=ValueError("Invalid network ID")):
-        config = CdpEvmServerWalletProviderConfig(
+        config = CdpEvmWalletProviderConfig(
             api_key_id=MOCK_API_KEY_ID,
             api_key_secret=MOCK_API_KEY_SECRET,
             wallet_secret=MOCK_WALLET_SECRET,
@@ -108,13 +108,13 @@ def test_init_with_invalid_network(mock_cdp_client):
         )
 
         with pytest.raises(ValueError, match="Failed to initialize CDP wallet"):
-            CdpEvmServerWalletProvider(config)
+            CdpEvmWalletProvider(config)
 
 
 def test_init_with_account_creation_error(mock_cdp_client):
     """Test initialization when account creation fails."""
     with patch("asyncio.run", side_effect=Exception("Failed to create account")):
-        config = CdpEvmServerWalletProviderConfig(
+        config = CdpEvmWalletProviderConfig(
             api_key_id=MOCK_API_KEY_ID,
             api_key_secret=MOCK_API_KEY_SECRET,
             wallet_secret=MOCK_WALLET_SECRET,
@@ -122,4 +122,4 @@ def test_init_with_account_creation_error(mock_cdp_client):
         )
 
         with pytest.raises(ValueError, match="Failed to initialize CDP wallet"):
-            CdpEvmServerWalletProvider(config)
+            CdpEvmWalletProvider(config)

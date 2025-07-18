@@ -109,7 +109,7 @@ interface ConfigureLegacyCdpAgentkitWithWalletOptions extends LegacyCdpWalletPro
 /**
  * A legacy wallet provider that uses the old Coinbase SDK.
  *
- * @deprecated Use CdpServerWalletProvider or CdpSmartWalletProvider instead
+ * @deprecated Use CdpEvmWalletProvider or CdpSmartWalletProvider instead
  */
 export class LegacyCdpWalletProvider extends EvmWalletProvider {
   #cdpWallet?: Wallet;

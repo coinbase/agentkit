@@ -50,9 +50,9 @@ export class CdpEvmWalletProvider extends EvmWalletProvider implements WalletPro
   #network: Network;
 
   /**
-   * Constructs a new CdpServerWalletProvider.
+   * Constructs a new CdpEvmWalletProvider.
    *
-   * @param config - The configuration options for the CdpServerWalletProvider.
+   * @param config - The configuration options for the CdpEvmWalletProvider.
    */
   private constructor(config: ConfigureCdpEvmWalletProviderWithWalletOptions) {
     super();
@@ -64,10 +64,10 @@ export class CdpEvmWalletProvider extends EvmWalletProvider implements WalletPro
   }
 
   /**
-   * Configures a new CdpServerWalletProvider with a wallet.
+   * Configures a new CdpEvmWalletProvider with a wallet.
    *
    * @param config - Optional configuration parameters
-   * @returns A Promise that resolves to a new CdpServerWalletProvider instance
+   * @returns A Promise that resolves to a new CdpEvmWalletProvider instance
    * @throws Error if required environment variables are missing or wallet initialization fails
    */
   public static async configureWithWallet(

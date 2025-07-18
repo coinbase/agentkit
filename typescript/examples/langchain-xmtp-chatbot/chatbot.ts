@@ -6,7 +6,7 @@ import {
   walletActionProvider,
   erc20ActionProvider,
   legacyCdpApiActionProvider,
-  cdpEvmWalletActionProvider,
+  legacyCdpWalletActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -201,7 +201,7 @@ async function initializeAgent(userId: string): Promise<{ agent: Agent; config: 
           apiKeyId: process.env.CDP_API_KEY_ID,
           apiKeySecret: process.env.CDP_API_KEY_SECRET?.replace(/\\n/g, "\n"),
         }),
-        cdpEvmWalletActionProvider(),
+        legacyCdpWalletActionProvider(),
       ],
     });
 

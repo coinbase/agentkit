@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from coinbase_agentkit.network import Network
-from coinbase_agentkit.wallet_providers.cdp_evm_server_wallet_provider import (
-    CdpEvmServerWalletProviderConfig,
+from coinbase_agentkit.wallet_providers.cdp_evm_wallet_provider import (
+    CdpEvmWalletProviderConfig,
 )
 
 MOCK_API_KEY_NAME = "mock-api-key"
@@ -129,7 +129,7 @@ def mock_wallet_testnet_provider():
 @pytest.fixture
 def mock_cdp_config():
     """Create a mock CDP EVM Server Provider config."""
-    return CdpEvmServerWalletProviderConfig(
+    return CdpEvmWalletProviderConfig(
         api_key_id=MOCK_API_KEY_ID,
         api_key_secret=MOCK_API_KEY_SECRET,
         wallet_secret=MOCK_WALLET_SECRET,

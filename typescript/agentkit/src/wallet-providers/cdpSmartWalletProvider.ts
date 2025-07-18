@@ -11,7 +11,7 @@ import {
   ReadContractParameters,
   ReadContractReturnType,
   TransactionRequest,
-  PrivateKeyAccount,
+  LocalAccount,
 } from "viem";
 import { Network, NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_VIEM_CHAIN } from "../network";
 import { EvmWalletProvider } from "./evmWalletProvider";
@@ -31,7 +31,7 @@ interface ConfigureCdpSmartWalletProviderWithWalletOptions {
   /**
    * The owner account of the smart wallet.
    */
-  ownerAccount: EvmServerAccount | PrivateKeyAccount;
+  ownerAccount: EvmServerAccount | LocalAccount;
 
   /**
    * The public client of the wallet.
@@ -50,7 +50,7 @@ interface ConfigureCdpSmartWalletProviderWithWalletOptions {
 export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletProviderWithClient {
   #publicClient: PublicClient;
   #smartAccount: EvmSmartAccount;
-  #ownerAccount: PrivateKeyAccount | EvmServerAccount;
+  #ownerAccount: LocalAccount | EvmServerAccount;
   #cdp: CdpClient;
   #network: Network;
 
@@ -167,11 +167,13 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
   /**
    * Signs a message using the owner account.
    *
-   * @param message - The message to sign.
+   * @param _message - The message to sign.
    * @returns The signed message.
    */
-  async signMessage(message: string): Promise<Hex> {
-    return this.#ownerAccount.signMessage({ message });
+  async signMessage(_message: string): Promise<Hex> {
+    throw new Error(
+      "Direct message signing not supported for smart wallets. Use sendTransaction instead.",
+    );
   }
 
   /**
@@ -182,7 +184,14 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async signTypedData(typedData: any): Promise<Hex> {
-    return this.#ownerAccount.signTypedData(typedData);
+    const { domain, types, primaryType, message } = typedData;
+    return await this.#smartAccount.signTypedData({
+      domain,
+      types,
+      primaryType,
+      message,
+      network: this.#getCdpSdkNetwork(),
+    });
   }
 
   /**

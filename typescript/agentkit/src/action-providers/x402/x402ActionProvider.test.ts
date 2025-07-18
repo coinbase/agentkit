@@ -229,21 +229,20 @@ describe("X402ActionProvider", () => {
       const result = await provider.retryWithX402(mockWalletProvider, {
         url: "https://www.x402.org/protected",
         method: "GET",
-        paymentOption: {
+        selectedPaymentOption: {
           scheme: "exact",
           network: "base-sepolia",
           maxAmountRequired: "10000",
-          resource: "https://www.x402.org/protected",
-          description: "Access to protected content",
-          mimeType: "application/json",
-          payTo: "0x123",
-          maxTimeoutSeconds: 300,
           asset: "0x456",
-          outputSchema: {},
         },
       });
 
-      expect(mockWithPaymentInterceptor).toHaveBeenCalledWith(mockAxiosInstance, "mock-signer");
+      // Update expectation to accept the payment selector function
+      expect(mockWithPaymentInterceptor).toHaveBeenCalledWith(
+        mockAxiosInstance,
+        "mock-signer",
+        expect.any(Function),
+      );
 
       const parsedResult = JSON.parse(result);
       expect(parsedResult.status).toBe("success");
@@ -252,28 +251,6 @@ describe("X402ActionProvider", () => {
         network: MOCK_PAYMENT_RESPONSE.network,
         payer: MOCK_PAYMENT_RESPONSE.payer,
       });
-    });
-
-    it("should reject if payment option resource doesn't match URL", async () => {
-      const result = await provider.retryWithX402(mockWalletProvider, {
-        url: "https://www.x402.org/protected",
-        method: "GET",
-        paymentOption: {
-          scheme: "exact",
-          network: "base-sepolia",
-          maxAmountRequired: "10000",
-          resource: "https://different.url/protected", // Mismatched URL
-          description: "Access to protected content",
-          mimeType: "application/json",
-          payTo: "0x123",
-          maxTimeoutSeconds: 300,
-          asset: "0x456",
-          outputSchema: {},
-        },
-      });
-
-      const parsedResult = JSON.parse(result);
-      expect(parsedResult.status).toBe("error_invalid_payment_option");
     });
 
     it("should handle network errors during payment", async () => {
@@ -286,17 +263,11 @@ describe("X402ActionProvider", () => {
       const result = await provider.retryWithX402(mockWalletProvider, {
         url: "https://www.x402.org/protected",
         method: "GET",
-        paymentOption: {
+        selectedPaymentOption: {
           scheme: "exact",
           network: "base-sepolia",
           maxAmountRequired: "10000",
-          resource: "https://www.x402.org/protected",
-          description: "Access to protected content",
-          mimeType: "application/json",
-          payTo: "0x123",
-          maxTimeoutSeconds: 300,
           asset: "0x456",
-          outputSchema: {},
         },
       });
 

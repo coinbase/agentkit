@@ -27,11 +27,11 @@ export type Network = EVMNetwork | SVMNetwork;
 
 const CDP_SUPPORTED_EVM_WALLET_PROVIDERS = [
   "CDPSmartWallet",
-  "CDPWallet",
+  "CDPEvmWallet",
   "Viem",
   "Privy",
 ] as const;
-const SVM_WALLET_PROVIDERS = ["SolanaKeypair", "Privy"] as const;
+const SVM_WALLET_PROVIDERS = ["CDPSolanaWallet", "SolanaKeypair", "Privy"] as const;
 export const NON_CDP_SUPPORTED_EVM_WALLET_PROVIDERS = ["Viem", "Privy"] as const;
 
 export type WalletProviderChoice =
@@ -70,7 +70,7 @@ export const AgentkitRouteConfigurations: Record<
   Partial<Record<WalletProviderChoice, AgentkitRouteConfiguration>>
 > = {
   EVM: {
-    CDPWallet: {
+    CDPEvmWallet: {
       env: {
         topComments: ["Get keys from CDP Portal: https://portal.cdp.coinbase.com/"],
         required: ["CDP_API_KEY_ID", "CDP_API_KEY_SECRET", "CDP_WALLET_SECRET"],
@@ -133,6 +133,14 @@ export const AgentkitRouteConfigurations: Record<
     },
   },
   SVM: {
+    CDPSolanaWallet: {
+      env: {
+        topComments: ["Get keys from CDP Portal: https://portal.cdp.coinbase.com/"],
+        required: ["CDP_API_KEY_ID", "CDP_API_KEY_SECRET", "CDP_WALLET_SECRET"],
+        optional: [],
+      },
+      prepareAgentkitRoute: "svm/cdp/prepare-agentkit.ts",
+    },
     SolanaKeypair: {
       env: {
         topComments: [
@@ -201,7 +209,7 @@ export const MCPRouteConfigurations: Record<
   Partial<Record<WalletProviderChoice, MCPRouteConfiguration>>
 > = {
   EVM: {
-    CDPWallet: {
+    CDPEvmWallet: {
       getAgentkitRoute: "evm/cdp/getAgentKit.ts",
       configRoute: "evm/cdp/claude_desktop_config.json",
     },
@@ -225,6 +233,10 @@ export const MCPRouteConfigurations: Record<
     },
   },
   SVM: {
+    CDPSolanaWallet: {
+      getAgentkitRoute: "svm/cdp/getAgentKit.ts",
+      configRoute: "svm/cdp/claude_desktop_config.json",
+    },
     SolanaKeypair: {
       getAgentkitRoute: "svm/solana-keypair/getAgentKit.ts",
       configRoute: "svm/solana-keypair/claude_desktop_config.json",
@@ -241,7 +253,7 @@ export const PrepareAgentkitRouteConfigurations: Record<
   Partial<Record<WalletProviderChoice, PrepareAgentkitRouteConfiguration>>
 > = {
   EVM: {
-    CDPWallet: {
+    CDPEvmWallet: {
       route: "evm/cdp/prepareAgentkit.ts",
     },
     Viem: {
@@ -260,6 +272,9 @@ export const PrepareAgentkitRouteConfigurations: Record<
     },
   },
   SVM: {
+    CDPSolanaWallet: {
+      route: "svm/cdp/prepareAgentkit.ts",
+    },
     SolanaKeypair: {
       route: "svm/solana-keypair/prepareAgentkit.ts",
     },

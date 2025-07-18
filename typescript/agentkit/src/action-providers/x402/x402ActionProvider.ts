@@ -6,7 +6,7 @@ import { HttpRequestSchema, RetryWithX402Schema, DirectX402RequestSchema } from 
 import { EvmWalletProvider } from "../../wallet-providers";
 import axios, { AxiosError } from "axios";
 import { withPaymentInterceptor, decodeXPaymentResponse } from "x402-axios";
-import { PaymentRequirements, PaymentRequirementsSchema } from "x402/types";
+import { PaymentRequirements } from "x402/types";
 
 const SUPPORTED_NETWORKS = ["base-mainnet", "base-sepolia"];
 
@@ -70,16 +70,12 @@ If you receive a 402 Payment Required response, use retry_http_request_with_x402
         );
       }
 
-      const paymentRequirements = (response.data.accepts as PaymentRequirements[]).map(accept =>
-        PaymentRequirementsSchema.parse(accept),
-      );
-
       return JSON.stringify({
         status: "error_402_payment_required",
-        acceptablePaymentOptions: paymentRequirements,
+        acceptablePaymentOptions: response.data.accepts,
         nextSteps: [
           "Inform the user that the requested server replied with a 402 Payment Required response.",
-          `The payment options are: ${paymentRequirements.map(option => `${option.asset} ${option.maxAmountRequired} ${option.network}`).join(", ")}`,
+          `The payment options are: ${response.data.accepts.map(option => `${option.asset} ${option.maxAmountRequired} ${option.network}`).join(", ")}`,
           "Ask the user if they want to retry the request with payment.",
           `Use retry_http_request_with_x402 to retry the request with payment.`,
         ],
@@ -115,21 +111,38 @@ DO NOT use this action directly without first trying make_http_request!`,
     args: z.infer<typeof RetryWithX402Schema>,
   ): Promise<string> {
     try {
-      // Validate the payment option matches the URL
-      if (args.paymentOption.resource !== args.url) {
-        return JSON.stringify({
-          status: "error_invalid_payment_option",
-          message: "The payment option resource does not match the request URL",
-          details: {
-            expected: args.url,
-            received: args.paymentOption.resource,
-          },
-        });
-      }
-
       // Make the request with payment handling
       const account = walletProvider.toSigner();
-      const api = withPaymentInterceptor(axios.create({}), account);
+
+      const paymentSelector = (accepts: PaymentRequirements[]) => {
+        const { scheme, network, maxAmountRequired, asset } = args.selectedPaymentOption;
+
+        let paymentRequirements = accepts.find(
+          accept =>
+            accept.scheme === scheme &&
+            accept.network === network &&
+            accept.maxAmountRequired <= maxAmountRequired &&
+            accept.asset === asset,
+        );
+        if (paymentRequirements) {
+          return paymentRequirements;
+        }
+
+        paymentRequirements = accepts.find(
+          accept =>
+            accept.scheme === scheme &&
+            accept.network === network &&
+            accept.maxAmountRequired <= maxAmountRequired &&
+            accept.asset === asset,
+        );
+        if (paymentRequirements) {
+          return paymentRequirements;
+        }
+
+        return accepts[0];
+      };
+
+      const api = withPaymentInterceptor(axios.create({}), account, paymentSelector);
 
       const response = await api.request({
         url: args.url,
@@ -151,9 +164,9 @@ DO NOT use this action directly without first trying make_http_request!`,
           url: args.url,
           method: args.method,
           paymentUsed: {
-            network: args.paymentOption.network,
-            asset: args.paymentOption.asset,
-            amount: args.paymentOption.maxAmountRequired,
+            network: args.selectedPaymentOption.network,
+            asset: args.selectedPaymentOption.asset,
+            amount: args.selectedPaymentOption.maxAmountRequired,
           },
           paymentProof: paymentProof
             ? {

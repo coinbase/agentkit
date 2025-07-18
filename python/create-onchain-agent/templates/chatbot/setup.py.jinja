@@ -3,7 +3,7 @@ import json
 import time
 import asyncio
 from dotenv import load_dotenv
-{% if _wallet_provider == "server" %}from coinbase_agentkit import CdpEvmServerWalletProviderConfig{% elif _wallet_provider == "smart" %}from coinbase_agentkit import CdpEvmSmartWalletProviderConfig{% elif _wallet_provider == "eth" %}from coinbase_agentkit import EthAccountWalletProviderConfig{% endif %}
+{% if _wallet_provider == "server" %}from coinbase_agentkit import CdpEvmWalletProviderConfig{% elif _wallet_provider == "smart" %}from coinbase_agentkit import CdpSmartWalletProviderConfig{% elif _wallet_provider == "eth" %}from coinbase_agentkit import EthAccountWalletProviderConfig{% elif _wallet_provider == "solana_server" %}from coinbase_agentkit import CdpSolanaWalletProviderConfig{% endif %}
 {% if _wallet_provider == "eth" %}from eth_account import Account{% elif _wallet_provider == "smart" %}from cdp import CdpClient{% endif %}
 
 from initialize_agent import initialize_agent
@@ -14,10 +14,11 @@ def setup():
     Returns:
         tuple[Agent, dict]: The initialized agent and its configuration
     """
-    # Configure network and file path{% if _wallet_provider == "server" or _wallet_provider == "smart" %}
-    network_id = os.getenv("NETWORK_ID", "base-sepolia")
+    # Configure network and file path{% if _wallet_provider == "server" or _wallet_provider == "smart" or _wallet_provider == "solana_server" %}
+    network_id = os.getenv("NETWORK_ID", {% if _wallet_provider == "solana_server" %}"solana-devnet"{% else %}"base-sepolia"{% endif %})
     wallet_file = f"wallet_data_{network_id.replace('-', '_')}.txt"
-    {% elif _wallet_provider == "eth" %}chain_id = os.getenv("CHAIN_ID", "84532")
+    {% elif _wallet_provider == "eth" %}
+    chain_id = os.getenv("CHAIN_ID", "84532")
     wallet_file = f"wallet_data_{chain_id}.txt"{% endif %}
     # Load existing wallet data if available
     wallet_data = {}
@@ -30,7 +31,7 @@ def setup():
             print(f"Warning: Invalid wallet data in {wallet_file}")
             wallet_data = {}
 
-    {% if _wallet_provider == "server" or _wallet_provider == "smart" %}# Get required CDP credentials
+    {% if _wallet_provider == "server" or _wallet_provider == "smart" or _wallet_provider == "solana_server" %}# Get required CDP credentials
     api_key_id = os.getenv("CDP_API_KEY_ID")
     api_key_secret = os.getenv("CDP_API_KEY_SECRET")
     wallet_secret = os.getenv("CDP_WALLET_SECRET")
@@ -39,7 +40,7 @@ def setup():
         raise ValueError("CDP_API_KEY_ID, CDP_API_KEY_SECRET, and CDP_WALLET_SECRET are required"){% endif %}
 
     {% if _wallet_provider == "server" %}# Create server wallet config
-    config = CdpEvmServerWalletProviderConfig(
+    config = CdpEvmWalletProviderConfig(
         api_key_id=api_key_id,
         api_key_secret=api_key_secret,
         wallet_secret=wallet_secret,
@@ -121,7 +122,7 @@ def setup():
         print(f"Created new server wallet: {owner_value}")
 
     # Create smart wallet config
-    config = CdpEvmSmartWalletProviderConfig(
+    config = CdpSmartWalletProviderConfig(
         api_key_id=api_key_id,
         api_key_secret=api_key_secret,
         wallet_secret=wallet_secret,
@@ -148,6 +149,13 @@ def setup():
     config = EthAccountWalletProviderConfig(
         account=account,
         chain_id=chain_id,
+    ){% elif _wallet_provider == "solana_server" %}# Create CDP Solana wallet config
+    config = CdpSolanaWalletProviderConfig(
+        api_key_id=api_key_id,
+        api_key_secret=api_key_secret,
+        wallet_secret=wallet_secret,
+        network_id=network_id,
+        address=wallet_data.get("address") or os.getenv("ADDRESS"),
     ){% endif %}
     # Initialize the agent
     agent_executor, wallet_provider = initialize_agent(config)
@@ -168,6 +176,11 @@ def setup():
     new_wallet_data = {
         "private_key": private_key,
         "chain_id": chain_id,
+        "created_at": time.strftime("%Y-%m-%d %H:%M:%S") if not wallet_data else wallet_data.get("created_at")
+    }{% elif _wallet_provider == "solana_server" %}
+    new_wallet_data = {
+        "address": wallet_provider.get_address(),
+        "network_id": network_id,
         "created_at": time.strftime("%Y-%m-%d %H:%M:%S") if not wallet_data else wallet_data.get("created_at")
     }{% endif %}
 

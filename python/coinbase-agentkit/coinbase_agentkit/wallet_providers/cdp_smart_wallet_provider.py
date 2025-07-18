@@ -16,7 +16,7 @@ from ..network import NETWORK_ID_TO_CHAIN, Network
 from .evm_wallet_provider import EvmGasConfig, EvmWalletProvider
 
 
-class CdpEvmSmartWalletProviderConfig(BaseModel):
+class CdpSmartWalletProviderConfig(BaseModel):
     """Configuration options for CDP EVM Smart Wallet provider."""
 
     api_key_id: str | None = Field(None, description="The CDP API key ID")
@@ -33,14 +33,14 @@ class CdpEvmSmartWalletProviderConfig(BaseModel):
     )
 
 
-class CdpEvmSmartWalletProvider(EvmWalletProvider):
+class CdpSmartWalletProvider(EvmWalletProvider):
     """A wallet provider that uses the CDP EVM Smart Account SDK."""
 
-    def __init__(self, config: CdpEvmSmartWalletProviderConfig):
+    def __init__(self, config: CdpSmartWalletProviderConfig):
         """Initialize CDP EVM Smart Wallet provider.
 
         Args:
-            config (CdpEvmSmartWalletProviderConfig | None): Configuration options for the CDP provider. If not provided,
+            config (CdpSmartWalletProviderConfig | None): Configuration options for the CDP provider. If not provided,
                    will attempt to configure from environment variables.
 
         Raises:
@@ -196,10 +196,10 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
         """Get the name of the wallet provider.
 
         Returns:
-            str: The string 'cdp_evm_smart_wallet_provider'
+            str: The string 'cdp_smart_wallet_provider'
 
         """
-        return "cdp_evm_smart_wallet_provider"
+        return "cdp_smart_wallet_provider"
 
     def get_network(self) -> Network:
         """Get the current network.
@@ -359,9 +359,31 @@ class CdpEvmSmartWalletProvider(EvmWalletProvider):
             NotImplementedError: Smart wallets cannot sign typed data directly
 
         """
-        raise NotImplementedError(
-            "Smart wallets cannot sign typed data directly. Use the owner account to sign typed data."
-        )
+        client = self.get_client()
+
+        # Extract required parameters from typed_data
+        domain = typed_data.get("domain", {})
+        types = typed_data.get("types", {})
+        primary_type = typed_data.get("primaryType", "")
+        message = typed_data.get("message", {})
+
+        async def _sign_typed_data():
+            async with client as cdp:
+                smart_account = await self._get_smart_account(cdp)
+                return await smart_account.sign_typed_data(
+                    domain=domain,
+                    types=types,
+                    primary_type=primary_type,
+                    message=message,
+                    network="base"
+                    if self.get_network().network_id == "base-mainnet"
+                    else self.get_network().network_id,
+                )
+
+        try:
+            return self._run_async(_sign_typed_data()).signature
+        finally:
+            self._run_async(client.close())
 
     def sign_transaction(self, transaction: TxParams) -> HexStr:
         """Sign an EVM transaction.
