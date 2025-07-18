@@ -1,5 +1,13 @@
 # Coinbase Create Onchain Agent Changelog
 
+## 0.5.0
+
+### Minor Changes
+
+- [#773](https://github.com/coinbase/agentkit/pull/773) [`463d310`](https://github.com/coinbase/agentkit/commit/463d3101147cacb0f2044162dd007489f97ef0a0) Thanks [@0xRAG](https://github.com/0xRAG)! - Upgraded to support updated CDP wallet providers
+
+- [#785](https://github.com/coinbase/agentkit/pull/785) [`2d13565`](https://github.com/coinbase/agentkit/commit/2d13565d91e64a13d3ecb8c300d8c0cd973d3fae) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Added Solana option to CLI
+
 ## 0.4.0
 
 ### Minor Changes
