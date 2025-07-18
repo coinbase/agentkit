@@ -6,7 +6,7 @@ import { HttpRequestSchema, RetryWithX402Schema, DirectX402RequestSchema } from 
 import { EvmWalletProvider } from "../../wallet-providers";
 import axios, { AxiosError } from "axios";
 import { withPaymentInterceptor, decodeXPaymentResponse } from "x402-axios";
-import { PaymentRequirements, PaymentRequirementsSchema } from "x402/types";
+import { PaymentRequirements } from "x402/types";
 
 const SUPPORTED_NETWORKS = ["base-mainnet", "base-sepolia"];
 
@@ -117,12 +117,24 @@ DO NOT use this action directly without first trying make_http_request!`,
       const paymentSelector = (accepts: PaymentRequirements[]) => {
         const { scheme, network, maxAmountRequired, asset } = args.selectedPaymentOption;
 
-        let paymentRequirements = accepts.find(accept => accept.scheme === scheme && accept.network === network && accept.maxAmountRequired <= maxAmountRequired && accept.asset === asset);
+        let paymentRequirements = accepts.find(
+          accept =>
+            accept.scheme === scheme &&
+            accept.network === network &&
+            accept.maxAmountRequired <= maxAmountRequired &&
+            accept.asset === asset,
+        );
         if (paymentRequirements) {
           return paymentRequirements;
         }
 
-        paymentRequirements = accepts.find(accept => accept.scheme === scheme && accept.network === network && accept.maxAmountRequired <= maxAmountRequired && accept.asset === asset);
+        paymentRequirements = accepts.find(
+          accept =>
+            accept.scheme === scheme &&
+            accept.network === network &&
+            accept.maxAmountRequired <= maxAmountRequired &&
+            accept.asset === asset,
+        );
         if (paymentRequirements) {
           return paymentRequirements;
         }

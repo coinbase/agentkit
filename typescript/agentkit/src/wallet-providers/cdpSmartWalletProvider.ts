@@ -167,11 +167,13 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
   /**
    * Signs a message using the owner account.
    *
-   * @param message - The message to sign.
+   * @param _message - The message to sign.
    * @returns The signed message.
    */
-  async signMessage(message: string): Promise<Hex> {
-    throw new Error("Direct message signing not supported for smart wallets. Use sendTransaction instead.");
+  async signMessage(_message: string): Promise<Hex> {
+    throw new Error(
+      "Direct message signing not supported for smart wallets. Use sendTransaction instead.",
+    );
   }
 
   /**

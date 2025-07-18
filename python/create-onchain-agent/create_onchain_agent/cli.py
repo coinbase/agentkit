@@ -256,7 +256,7 @@ def create_advanced_project(templates_path: str | None = None):
 
     if network_family == "Solana Virtual Machine (SVM)":
         # Handle Solana network selection
-        network_choices = [(id, name) for id, name in SVM_NETWORKS]
+        network_choices = list(SVM_NETWORKS)
         network_name = questionary.select(
             "Choose a network:",
             choices=[name for _, name in network_choices],

@@ -38,14 +38,8 @@ export const RetryWithX402Schema = z
       .nullable()
       .default("GET")
       .describe("The HTTP method to use for the request"),
-    headers: z
-      .record(z.string())
-      .optional()
-      .describe("Optional headers to include in the request"),
-    body: z
-      .any()
-      .optional()
-      .describe("Optional request body for POST/PUT/PATCH requests"),
+    headers: z.record(z.string()).optional().describe("Optional headers to include in the request"),
+    body: z.any().optional().describe("Optional request body for POST/PUT/PATCH requests"),
     selectedPaymentOption: z
       .object({
         scheme: z.string(),

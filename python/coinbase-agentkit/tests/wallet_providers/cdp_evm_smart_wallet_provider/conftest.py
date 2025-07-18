@@ -84,9 +84,7 @@ def mock_smart_account():
 @pytest.fixture
 def mock_web3():
     """Create a mock Web3 instance."""
-    with patch(
-        "coinbase_agentkit.wallet_providers.cdp_smart_wallet_provider.Web3"
-    ) as mock_web3:
+    with patch("coinbase_agentkit.wallet_providers.cdp_smart_wallet_provider.Web3") as mock_web3:
         mock_web3_instance = Mock()
         mock_web3.return_value = mock_web3_instance
 
