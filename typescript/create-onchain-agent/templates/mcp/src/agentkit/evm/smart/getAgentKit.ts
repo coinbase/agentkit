@@ -1,7 +1,6 @@
 import {
   AgentKit,
   cdpApiActionProvider,
-  cdpSmartWalletActionProvider,
   erc20ActionProvider,
   pythActionProvider,
   CdpSmartWalletProvider,
@@ -28,6 +27,9 @@ export async function getAgentKit(): Promise<AgentKit> {
 
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
     const walletProvider = await CdpSmartWalletProvider.configureWithWallet({
+      apiKeyId: process.env.CDP_API_KEY_ID,
+      apiKeySecret: process.env.CDP_API_KEY_SECRET,
+      walletSecret: process.env.CDP_WALLET_SECRET,
       networkId: process.env.NETWORK_ID || "base-sepolia",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       owner: owner as any,
@@ -43,7 +45,6 @@ export async function getAgentKit(): Promise<AgentKit> {
         walletActionProvider(),
         erc20ActionProvider(),
         cdpApiActionProvider(),
-        cdpSmartWalletActionProvider(),
       ],
     });
 

@@ -104,7 +104,8 @@ export async function prepareAgentKit() {
           message: (prev, { network }) => {
             const walletDescriptions: Record<WalletProviderChoice, string> = {
               CDPSmartWallet: "Uses Coinbase Developer Platform (CDP)'s Smart Wallet.",
-              CDPWallet: "Uses Coinbase Developer Platform (CDP)'s managed wallet.",
+              CDPEvmWallet: "Uses Coinbase Developer Platform (CDP)'s EVM wallet.",
+              CDPSolanaWallet: "Uses Coinbase Developer Platform (CDP)'s Solana wallet.",
               Viem: "Client-side Ethereum wallet.",
               Privy: "Authentication and wallet infrastructure.",
               SolanaKeypair: "Client-side Solana wallet.",

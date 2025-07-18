@@ -7,7 +7,7 @@
         "CDP_API_KEY_ID": "",
         "CDP_API_KEY_SECRET": "",
         "CDP_WALLET_SECRET": "",
-        "NETWORK_ID": "base-sepolia"
+        "NETWORK_ID": "solana-devnet"
       }
     }
   }
