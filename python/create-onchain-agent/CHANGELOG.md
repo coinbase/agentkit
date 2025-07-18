@@ -24,7 +24,7 @@
 
 ### Added
 
-- Updated to support CdpEvmWalletProvider and CdpSmartWalletProvider ([#705](https://github.com/coinbase/agentkit/pull/705))
+- Updated to support CdpEvmServerWalletProvider and CdpEvmSmartWalletProvider ([#705](https://github.com/coinbase/agentkit/pull/705))
 - Bump coinbase-agentkit to 0.5.0 in beginner template and chatbot template
 - Bump coinbase-agentkit-langchain to 0.4.0 in beginner template and chatbot template
 - Bump coinbase-agentkit-openai-agents-sdk to 0.4.0 in beginner template and chatbot template
