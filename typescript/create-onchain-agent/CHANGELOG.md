@@ -1,5 +1,11 @@
 # Coinbase Create Onchain Agent Changelog
 
+## 0.5.1
+
+### Patch Changes
+
+- [#792](https://github.com/coinbase/agentkit/pull/792) [`1aa170f`](https://github.com/coinbase/agentkit/commit/1aa170f2a2c891779290e38ca9a6a185e3f9ae36) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Removed broken references
+
 ## 0.5.0
 
 ### Minor Changes
