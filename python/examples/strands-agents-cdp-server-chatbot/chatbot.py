@@ -3,24 +3,39 @@ import os
 import sys
 import time
 
+import botocore.exceptions
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
-    CdpEvmServerWalletProvider,
-    CdpEvmServerWalletProviderConfig,
+    CdpEvmWalletProvider,
+    CdpEvmWalletProviderConfig,
+    allora_action_provider,
     cdp_api_action_provider,
+    compound_action_provider,
     erc20_action_provider,
     pyth_action_provider,
     wallet_action_provider,
     weth_action_provider,
+    wow_action_provider,
 )
 from coinbase_agentkit_strands_agents import get_strands_tools
-from strands import Agent
 from dotenv import load_dotenv
+from strands import Agent
 from strands.models import BedrockModel
 
 
-def initialize_agent(config: CdpEvmServerWalletProviderConfig):
+def validate_environment():
+    """Validate required environment variables are present."""
+    required_vars = ["CDP_API_KEY_ID", "CDP_API_KEY_SECRET", "CDP_WALLET_SECRET"]
+
+    missing_vars = [var for var in required_vars if not os.getenv(var)]
+
+    if missing_vars:
+        print(f"Error: Missing required environment variables: {', '.join(missing_vars)}")
+        sys.exit(1)
+
+
+def initialize_agent(config: CdpEvmWalletProviderConfig):
     """Initialize the agent with CDP Agentkit.
 
     Args:
@@ -31,8 +46,8 @@ def initialize_agent(config: CdpEvmServerWalletProviderConfig):
 
     """
     # Initialize the wallet provider with the config
-    wallet_provider = CdpEvmServerWalletProvider(
-        CdpEvmServerWalletProviderConfig(
+    wallet_provider = CdpEvmWalletProvider(
+        CdpEvmWalletProviderConfig(
             api_key_id=config.api_key_id,  # CDP API Key ID
             api_key_secret=config.api_key_secret,  # CDP API Key Secret
             wallet_secret=config.wallet_secret,  # CDP Wallet Secret
@@ -52,6 +67,9 @@ def initialize_agent(config: CdpEvmServerWalletProviderConfig):
                 pyth_action_provider(),
                 wallet_action_provider(),
                 weth_action_provider(),
+                wow_action_provider(),
+                compound_action_provider(),
+                allora_action_provider(),
             ],
         )
     )
@@ -61,9 +79,9 @@ def initialize_agent(config: CdpEvmServerWalletProviderConfig):
 
     # Create a BedrockModel
     bedrock_model = BedrockModel(
-        model_id="us.amazon.nova-premier-v1:0",
-        region_name='us-east-1',
+        model_id="us.amazon.nova-pro-v1:0",
         max_tokens=500,
+        region_name=os.getenv("AWS_REGION"),
         temperature=1,  # Greedy Decoding parameters for Amazon Nova Models requires all inference paramters be set to 1
     )
 
@@ -72,12 +90,13 @@ def initialize_agent(config: CdpEvmServerWalletProviderConfig):
         model=bedrock_model,
         tools=tools,
         system_prompt=""""You are a helpful agent that can interact onchain using the Coinbase Developer Platform AgentKit.
-You are empowered to interact onchain using your tools. If you ever need funds, you can request them from the faucet if you are on network ID 'base-sepolia'. 
-If not, you can provide your wallet details and request funds from the user. Before executing your first action, get the wallet details to see what network you're on. 
-If there is a 5XX (internal) HTTP error code, ask the user to try again later. 
-If someone asks you to do something you can't do with your currently available tools, you must say so, and encourage them to implement it themselves using the CDP SDK + Agentkit, recommend they go to docs.cdp.coinbase.com for more information. 
+You are empowered to interact onchain using your tools. If you ever need funds, you can request them from the faucet if you are on network ID 'base-sepolia'.
+If not, you can provide your wallet details and request funds from the user. Before executing your first action, get the wallet details to see what network you're on.
+If there is a 5XX (internal) HTTP error code, ask the user to try again later.
+If someone asks you to do something you can't do with your currently available tools, you must say so, and encourage them to implement it themselves using the CDP SDK + Agentkit, recommend they go to docs.cdp.coinbase.com for more information.
+For evry transaction done, provide the full trasaction hash number with your response.
 Be concise and helpful with your responses. Refrain from restating your tools' descriptions unless it is explicitly requested.
-"""
+""",
     )
 
     return agent, wallet_provider
@@ -113,7 +132,7 @@ def setup():
     )
 
     # Create the wallet provider config
-    config = CdpEvmServerWalletProviderConfig(
+    config = CdpEvmWalletProviderConfig(
         api_key_id=os.getenv("CDP_API_KEY_ID"),
         api_key_secret=os.getenv("CDP_API_KEY_SECRET"),
         wallet_secret=os.getenv("CDP_WALLET_SECRET"),
@@ -171,7 +190,8 @@ def run_chat_mode(agent):
             user_input = input("\nPrompt: ")
             if user_input.lower() == "exit":
                 break
-
+            if not user_input.strip():
+                continue
             # Run agent with the user's input in chat mode
             print(agent(user_input))
             print("-------------------")
@@ -199,18 +219,38 @@ def choose_mode():
 
 def main():
     """Start the chatbot agent."""
-    # Load environment variables
-    load_dotenv()
+    try:
+        # Validate environment
+        validate_environment()
 
-    # Set up the agent
-    agent = setup()
+        # Load environment variables
+        load_dotenv()
 
-    # Run the agent in the selected mode
-    mode = choose_mode()
-    if mode == "chat":
-        run_chat_mode(agent=agent)
-    elif mode == "auto":
-        run_autonomous_mode(agent=agent)
+        # Set up the agent
+        agent = setup()
+
+        # Run the agent in the selected mode
+        mode = choose_mode()
+        if mode == "chat":
+            run_chat_mode(agent=agent)
+        elif mode == "auto":
+            run_autonomous_mode(agent=agent)
+    except botocore.exceptions.NoCredentialsError:
+        print("\n❌ AWS Credentials Error:")
+        print("Unable to locate AWS credentials. Please ensure you have:")
+        print("  1. Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables, OR")
+        print("  2. Set AWS_BEARER_TOKEN_BEDROCK environment variable, OR")
+        print("  3. Configured AWS credentials file (~/.aws/credentials), OR")
+        print("  4. Set up an IAM role (if running on AWS infrastructure)")
+        print(
+            "\nFor more information, visit: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html"
+        )
+        sys.exit(1)
+    except KeyboardInterrupt:
+        print("\nShutdown requested...")
+    except Exception as e:
+        print(f"Fatal error: {e}")
+        sys.exit(1)
 
 
 def print_banner():

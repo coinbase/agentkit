@@ -8,8 +8,9 @@ Strands Agents extension of AgentKit. Enables agentic workflows to interact with
 
 - [CDP API Key](https://portal.cdp.coinbase.com/access/api)
 - Amazon Bedrock Models
-    - [Configure AWS Credentials for Amazon Bedrock model access with Strands Agents](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html)
+    - [Configure AWS Credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html) OR use [Amazon Bedrock API keys](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started-api-keys.html) alternatively for Amazon Bedrock model access with Strands Agents.
     - [Set up Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html)
+      > **_NOTE:_**  [Strands Agents](https://strandsagents.com/latest/) is model provider agnostic
 
 ### Installation
 
@@ -29,6 +30,7 @@ export AWS_ACCESS_KEY_ID=<your-aws-access-key-id>
 export AWS_SECRET_ACCESS_KEY=<your-aws-secret-access-key>
 export AWS_REGION=<your-aws-region>
 ```
+⚠ **Note**: If using Bedrock API keys instead of AWS credentials, set `AWS_BEARER_TOKEN_BEDROCK` instead of `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` as environment variable for Bedrock model access. Also make sure the `AWS_REGION` aligns with the AWS region the Bedrock access key was created in.
 
 ## Usage
 
@@ -45,8 +47,8 @@ agentKit = AgentKit()
 tools = get_strands_tools(agentKit)
 
 llm = BedrockModel(
-    model_id="us.amazon.nova-premier-v1:0",
-    region_name='us-east-1'
+    model_id="us.amazon.nova-pro-v1:0",
+    region_name='us-east-1' ## set to the appropiate region with model access
 )
 
 agent = Agent(

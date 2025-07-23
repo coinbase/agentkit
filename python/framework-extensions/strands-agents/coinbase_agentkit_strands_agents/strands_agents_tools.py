@@ -1,11 +1,13 @@
-"""Formatting AgentKit actions as tools for Strands Agents"""
+"""Formatting AgentKit actions as tools for Strands Agents."""
 
 import functools
 import inspect
-import nest_asyncio
+from collections.abc import Callable
+from typing import Any
 
-from typing import Any, Callable, Dict, List
+import nest_asyncio
 from strands import tool
+
 from coinbase_agentkit import Action, AgentKit
 
 # Apply nest-asyncio to allow nested event loops
@@ -25,6 +27,7 @@ def _generate_docstring_from_schema(action: Action) -> str:
     Returns:
         A formatted string containing the action description followed by an Args
         section listing all parameters with their descriptions.
+
     """
     schema = action.args_schema.model_json_schema()
 
@@ -32,7 +35,7 @@ def _generate_docstring_from_schema(action: Action) -> str:
     docstring = f"{action.description}\n\n"
 
     # Add Args section if there are properties
-    if "properties" in schema and schema["properties"]:
+    if schema.get("properties"):
         docstring += "Args:\n"
         for prop_name, prop_info in schema["properties"].items():
             desc = prop_info.get("description", "")
@@ -41,7 +44,7 @@ def _generate_docstring_from_schema(action: Action) -> str:
     return docstring
 
 
-def _infer_type_hints(action: Action) -> Dict[str, Any]:
+def _infer_type_hints(action: Action) -> dict[str, Any]:
     """Infer Python type hints from JSON schema types in an action's schema.
 
     This function maps JSON schema types to their corresponding Python type hints.
@@ -61,6 +64,7 @@ def _infer_type_hints(action: Action) -> Dict[str, Any]:
         - JSON "object" is mapped to Python dict
         - JSON "array" is mapped to Python list
         - Complex schemas with anyOf/oneOf are mapped to Any
+
     """
     schema = action.args_schema.model_json_schema()
     type_hints = {}
@@ -115,6 +119,7 @@ def create_strands_tool(action: Action) -> Callable:
     Raises:
         Exception: Any exception from action.invoke() is caught and returned
             as an error response with status='error'.
+
     """
     # Get type hints and parameter info from the schema
     type_hints = _infer_type_hints(action)
@@ -126,11 +131,11 @@ def create_strands_tool(action: Action) -> Callable:
 
     # Create parameters for our new function signature
     parameters = []
-    for param_name in type_hints.keys():
+    for param_name in type_hints:
         param = inspect.Parameter(
             name=param_name,
             kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
-            annotation=type_hints.get(param_name, inspect.Parameter.empty)
+            annotation=type_hints.get(param_name, inspect.Parameter.empty),
         )
         parameters.append(param)
 
@@ -149,17 +154,9 @@ def create_strands_tool(action: Action) -> Callable:
 
             # Invoke the action with all arguments
             result = action.invoke(all_kwargs)
-            return {
-                "status": "success",
-                "content": [{"text": result}]
-            }
+            return {"status": "success", "content": [{"text": result}]}
         except Exception as e:
-            return {
-                "status": "error",
-                "content": [
-                    {"text": f"Error:{e}"}
-                ]
-            }
+            return {"status": "error", "content": [{"text": f"Error:{e}"}]}
 
     # Clone our template function
     tool_function = functools.update_wrapper(action_handler, template_function)
@@ -176,7 +173,7 @@ def create_strands_tool(action: Action) -> Callable:
     return decorated_func
 
 
-def get_strands_tools(agent_kit: AgentKit) -> List[Callable]:
+def get_strands_tools(agent_kit: AgentKit) -> list[Callable]:
     """Get a list of Strands-compatible tool functions from an AgentKit instance.
 
     This function retrieves all available actions from an AgentKit instance and
@@ -195,8 +192,9 @@ def get_strands_tools(agent_kit: AgentKit) -> List[Callable]:
     Note:
         The returned tools maintain all the functionality of the original
         AgentKit actions while being compatible with Strands' tool interface.
+
     """
-    actions: List[Action] = agent_kit.get_actions()
+    actions: list[Action] = agent_kit.get_actions()
 
     tools = []
     for action in actions:

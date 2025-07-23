@@ -14,7 +14,7 @@ This example demonstrates an agent setup as a terminal style chatbot with access
   - [uv Installation Instructions](https://github.com/astral-sh/uv?tab=readme-ov-file#installation)
 - [CDP API Key](https://portal.cdp.coinbase.com/access/api)
 - Amazon Bedrock Models
-    - [Configure AWS Credentials for Amazon Bedrock model access with Strands Agents](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html)
+    - [Configure AWS Credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html) OR use [Amazon Bedrock API keys](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started-api-keys.html) alternatively for Amazon Bedrock model access with Strands Agents.
     - [Set up Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html)
     > **_NOTE:_**  [Strands Agents](https://strandsagents.com/latest/) is model provider agnostic
 
@@ -42,6 +42,8 @@ uv sync
   - "AWS_SECRET_ACCESS_KEY"
   - "AWS_REGION"
   - "NETWORK_ID" (Defaults to `base-sepolia`)
+
+⚠ **Note**: If using Bedrock API keys instead of AWS credentials, set `AWS_BEARER_TOKEN_BEDROCK` instead of `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` as environment variable for Bedrock model access. Also make sure the `AWS_REGION` aligns with the AWS region the Bedrock access key was created in.
 
 ```bash
 uv run chatbot.py
@@ -72,6 +74,8 @@ pip install coinbase-agentkit coinbase-agentkit-strands-agents
   - "AWS_SECRET_ACCESS_KEY"
   - "AWS_REGION"
   - "NETWORK_ID" (Defaults to `base-sepolia`)
+
+⚠ **Note**: If using Bedrock API keys instead of AWS credentials, set `AWS_BEARER_TOKEN_BEDROCK` instead of `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` as environment variable for Bedrock model access. Also make sure the `AWS_REGION` aligns with the AWS region the Bedrock access key was created in.
 
 ```bash
 python chatbot.py
