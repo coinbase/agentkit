@@ -8,13 +8,14 @@ from cdp import CdpClient
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
-    CdpEvmSmartWalletProvider,
-    CdpEvmSmartWalletProviderConfig,
+    CdpSmartWalletProvider,
+    CdpSmartWalletProviderConfig,
     cdp_api_action_provider,
     erc20_action_provider,
     pyth_action_provider,
     wallet_action_provider,
     weth_action_provider,
+    x402_action_provider,
 )
 from coinbase_agentkit_langchain import get_langchain_tools
 from dotenv import load_dotenv
@@ -24,22 +25,22 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 
 
-def initialize_agent(config: CdpEvmSmartWalletProviderConfig):
+def initialize_agent(config: CdpSmartWalletProviderConfig):
     """Initialize the agent with CDP Agentkit.
 
     Args:
         config: Configuration for the CDP EVM Smart Wallet Provider
 
     Returns:
-        tuple[Agent, CdpEvmSmartWalletProvider]: The initialized agent and wallet provider
+        tuple[Agent, CdpSmartWalletProvider]: The initialized agent and wallet provider
 
     """
     # Initialize the language model
     llm = ChatOpenAI(model="gpt-4o-mini")
 
     # Initialize the wallet provider with the config
-    wallet_provider = CdpEvmSmartWalletProvider(
-        CdpEvmSmartWalletProviderConfig(
+    wallet_provider = CdpSmartWalletProvider(
+        CdpSmartWalletProviderConfig(
             api_key_id=config.api_key_id,  # CDP API Key ID
             api_key_secret=config.api_key_secret,  # CDP API Key Secret
             wallet_secret=config.wallet_secret,  # CDP Wallet Secret
@@ -60,6 +61,7 @@ def initialize_agent(config: CdpEvmSmartWalletProviderConfig):
                 pyth_action_provider(),
                 wallet_action_provider(),
                 weth_action_provider(),
+                x402_action_provider(),
             ],
         )
     )
@@ -80,13 +82,13 @@ def initialize_agent(config: CdpEvmSmartWalletProviderConfig):
             state_modifier=(
                 "You are a helpful agent that can interact onchain using the Coinbase Developer Platform AgentKit. "
                 "You are empowered to interact onchain using your tools. If you ever need funds, you can request "
-                "them from the faucet if you are on network ID 'base-sepolia'. If not, you can provide your wallet "
-                "details and request funds from the user. Before executing your first action, get the wallet details "
-                "to see what network you're on. If there is a 5XX (internal) HTTP error code, ask the user to try "
-                "again later. If someone asks you to do something you can't do with your currently available tools, "
-                "you must say so, and encourage them to implement it themselves using the CDP SDK + Agentkit, "
-                "recommend they go to docs.cdp.coinbase.com for more information. Be concise and helpful with your "
-                "responses."
+                "them from the faucet if you are on network ID 'base-sepolia', 'ethereum-sepolia', or 'solana-devnet'. "
+                "If not, you can provide your wallet details and request funds from the user. Before executing your "
+                "first action, get the wallet details to see what network you're on. If there is a 5XX (internal) "
+                "HTTP error code, ask the user to try again later. If someone asks you to do something you can't do "
+                "with your currently available tools, you must say so, and encourage them to implement it themselves "
+                "using the CDP SDK + Agentkit, recommend they go to docs.cdp.coinbase.com for more information. "
+                "Be concise and helpful with your responses."
             ),
         ),
         wallet_provider,
@@ -203,7 +205,7 @@ def setup():
         print(f"Created new server wallet: {owner_value}")
 
     # Create the wallet provider config
-    config = CdpEvmSmartWalletProviderConfig(
+    config = CdpSmartWalletProviderConfig(
         api_key_id=api_key_id,
         api_key_secret=api_key_secret,
         wallet_secret=wallet_secret,

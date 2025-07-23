@@ -18,14 +18,27 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
   - [Adding Actions to your Action Provider that use a Wallet Provider](#adding-actions-to-your-action-provider-that-use-a-wallet-provider)
   - [Adding an Action Provider to your AgentKit instance](#adding-an-action-provider-to-your-agentkit-instance)
 - [EVM Wallet Providers](#evm-wallet-providers)
-  - [CdpV2EvmWalletProvider](#cdpv2evmwalletprovider)
-  - [CdpWalletProvider](#cdpwalletprovider)
+  - [CdpEvmWalletProvider](#cdpevmwalletprovider)
+    - [Basic Configuration](#basic-configuration)
+    - [Using an existing wallet](#using-an-existing-wallet)
+    - [Creating a new wallet](#creating-a-new-wallet)
+    - [Environment Variables](#environment-variables)
+    - [Exporting a wallet](#exporting-a-wallet)
+  - [CdpSmartWalletProvider](#cdpsmartwalletprovider)
+    - [Basic Configuration](#basic-configuration-1)
+    - [Using an Existing Smart Wallet](#using-an-existing-smart-wallet)
+    - [Specifying an Owner Account](#specifying-an-owner-account)
+    - [Creating a New Smart Wallet](#creating-a-new-smart-wallet)
+    - [Environment Variables](#environment-variables-1)
+    - [Exporting Smart Wallet Information](#exporting-smart-wallet-information)
+    - [Key Differences from Regular Wallets](#key-differences-from-regular-wallets)
+  - [LegacyCdpWalletProvider](#legacycdpwalletprovider)
     - [Network Configuration](#network-configuration)
     - [Configuring from an existing CDP API Wallet](#configuring-from-an-existing-cdp-api-wallet)
     - [Configuring from a mnemonic phrase](#configuring-from-a-mnemonic-phrase)
     - [Exporting a wallet](#exporting-a-wallet)
     - [Importing a wallet from WalletData JSON string](#importing-a-wallet-from-walletdata-json-string)
-    - [Configuring gas parameters](#configuring-cdpwalletprovider-gas-parameters)
+    - [Configuring gas parameters](#configuring-legacycdpwalletprovider-gas-parameters)
   - [ViemWalletProvider](#viemwalletprovider)
     - [Configuring gas parameters](#configuring-viemwalletprovider-gas-parameters)
   - [PrivyWalletProvider](#privywalletprovider)
@@ -37,7 +50,7 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
     - [Configuring from PrivyWalletProvider](#configuring-from-privywalletprovider)
     - [Configuring from ViemWalletProvider](#configuring-from-viemwalletprovider)
 - [SVM Wallet Providers](#svm-wallet-providers)
-  - [CdpV2SolanaWalletProvider](#cdpv2solanawalletprovider)
+  - [CdpSolanaWalletProvider](#cdpsolanawalletprovider)
   - [SolanaKeypairWalletProvider](#solanakeypairwalletprovider)
     - [Network Configuration](#solana-network-configuration)
     - [RPC URL Configuration](#rpc-url-configuration)
@@ -49,7 +62,8 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
 
 ## Getting Started
 
-*Prerequisites*:
+_Prerequisites_:
+
 - [Node.js 18+](https://nodejs.org/en/download/)
 - [CDP Secret API Key](https://docs.cdp.coinbase.com/get-started/docs/cdp-api-keys#creating-secret-api-keys)
 
@@ -87,13 +101,13 @@ const agentKit = await AgentKit.from({
 import { CdpWalletProvider } from "@coinbase/agentkit";
 
 const walletProvider = await CdpWalletProvider.configureWithWallet({
-    apiKeyId: "CDP API KEY NAME",
-    apiKeyPrivate: "CDP API KEY SECRET",
-    networkId: "base-mainnet",
+  apiKeyId: "CDP API KEY NAME",
+  apiKeyPrivate: "CDP API KEY SECRET",
+  networkId: "base-mainnet",
 });
 
 const agentKit = await AgentKit.from({
-    walletProvider,
+  walletProvider,
 });
 ```
 
@@ -103,20 +117,21 @@ const agentKit = await AgentKit.from({
 import { cdpApiActionProvider, pythActionProvider } from "@coinbase/agentkit";
 
 const agentKit = await AgentKit.from({
-    walletProvider,
-    actionProviders: [
-        cdpApiActionProvider({
-            apiKeyId: "CDP API KEY NAME",
-            apiKeyPrivate: "CDP API KEY SECRET",
-        }),
-        pythActionProvider(),
-    ],
+  walletProvider,
+  actionProviders: [
+    cdpApiActionProvider({
+      apiKeyId: "CDP API KEY NAME",
+      apiKeyPrivate: "CDP API KEY SECRET",
+    }),
+    pythActionProvider(),
+  ],
 });
 ```
 
 ### Use the agent's actions with a framework extension. For example, using LangChain + OpenAI.
 
-*Prerequisites*:
+_Prerequisites_:
+
 - [OpenAI API Key](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key)
 - Set `OPENAI_API_KEY` environment variable.
 
@@ -132,16 +147,17 @@ import { ChatOpenAI } from "@langchain/openai";
 const tools = await getLangChainTools(agentKit);
 
 const llm = new ChatOpenAI({
-    model: "gpt-4o-mini",
+  model: "gpt-4o-mini",
 });
 
 const agent = createReactAgent({
-    llm,
-    tools,
+  llm,
+  tools,
 });
 ```
 
 ## Action Providers
+
 <details>
 <summary><strong>Across</strong></summary>
 <table width="100%">
@@ -161,27 +177,6 @@ const agent = createReactAgent({
 <tr>
     <td width="200"><code>register_basename</code></td>
     <td width="768">Registers a custom .base.eth or .basetest.eth domain name for the wallet address.</td>
-</tr>
-</table>
-</details>
-<details>
-<summary><strong>CDP Wallet</strong></summary>
-<table width="100%">
-<tr>
-    <td width="200"><code>deploy_contract</code></td>
-    <td width="768">Deploys a custom smart contract using specified Solidity version and constructor arguments.</td>
-</tr>
-<tr>
-    <td width="200"><code>deploy_nft</code></td>
-    <td width="768">Deploys a standard ERC-721 NFT contract with configurable name, symbol, and metadata URI.</td>
-</tr>
-<tr>
-    <td width="200"><code>deploy_token</code></td>
-    <td width="768">Deploys a standard ERC-20 token contract with configurable name, symbol, and initial supply.</td>
-</tr>
-<tr>
-    <td width="200"><code>trade</code></td>
-    <td width="768">Executes a token swap between two assets at current market rates on mainnet networks.</td>
 </tr>
 </table>
 </details>
@@ -418,15 +413,20 @@ const agent = createReactAgent({
 </table>
 </details>
 <details>
-<summary><strong>X402</strong></summary>
+<summary><strong>x402</strong></summary>
 <table width="100%">
 <tr>
-    <td width="200"><code>paid_request</code></td>
-    <td width="768">Makes HTTP requests to x402-protected API endpoints with automatic payment handling.</td>
+    <td width="200"><code>make_http_request</code></td>
+    <td width="768">Makes a basic HTTP request to an API endpoint. If the endpoint requires payment (returns 402),
+it will return payment details that can be used on retry.</td>
 </tr>
 <tr>
-    <td width="200"><code>fetch_payment_info</code></td>
-    <td width="768">Fetches payment information from x402-protected endpoints without making payments.</td>
+    <td width="200"><code>retry_http_request_with_x402</code></td>
+    <td width="768">Retries an HTTP request with x402 payment after receiving a 402 Payment Required response.</td>
+</tr>
+<tr>
+    <td width="200"><code>make_http_request_with_x402</code></td>
+    <td width="768">Combines make_http_request and retry_http_request_with_x402 into a single step.</td>
 </tr>
 </table>
 </details>
@@ -449,12 +449,12 @@ import { ActionProvider, WalletProvider, Network } from "@coinbase/agentkit";
 
 // Define an action provider that uses a wallet provider.
 class MyActionProvider extends ActionProvider<WalletProvider> {
-    constructor() {
-        super("my-action-provider", []);
-    }
+  constructor() {
+    super("my-action-provider", []);
+  }
 
-    // Define if the action provider supports the given network
-    supportsNetwork = (network: Network) => true;
+  // Define if the action provider supports the given network
+  supportsNetwork = (network: Network) => true;
 }
 ```
 
@@ -468,11 +468,11 @@ Creating actions with the `@CreateAction` decorator requires the following compi
 
 ```json
 {
-    "compilerOptions": {
-        "experimentalDecorators": true,
-        "emitDecoratorMetadata": true
-    }
-} 
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  }
+}
 ```
 
 #### Steps to create an action
@@ -493,20 +493,20 @@ export const MyActionSchema = z.object({
 import { ActionProvider, WalletProvider, Network, CreateAction } from "@coinbase/agentkit";
 
 class MyActionProvider extends ActionProvider<WalletProvider> {
-    constructor() {
-        super("my-action-provider", []);
-    }
+  constructor() {
+    super("my-action-provider", []);
+  }
 
-    @CreateAction({
-        name: "my-action",
-        description: "My action description",
-        schema: MyActionSchema,
-    })
-    async myAction(args: z.infer<typeof MyActionSchema>): Promise<string> {
-        return args.myField;
-    }
+  @CreateAction({
+    name: "my-action",
+    description: "My action description",
+    schema: MyActionSchema,
+  })
+  async myAction(args: z.infer<typeof MyActionSchema>): Promise<string> {
+    return args.myField;
+  }
 
-    supportsNetwork = (network: Network) => true;
+  supportsNetwork = (network: Network) => true;
 }
 
 export const myActionProvider = () => new MyActionProvider();
@@ -518,24 +518,27 @@ Actions that use a wallet provider can be defined as instance methods on the act
 
 ```typescript
 class MyActionProvider extends ActionProvider<WalletProvider> {
-    constructor() {
-        super("my-action-provider", []);
-    }
+  constructor() {
+    super("my-action-provider", []);
+  }
 
-    @CreateAction({
-        name: "my-action",
-        description: "My action description",
-        schema: MyActionSchema,
-    })
-    async myAction(walletProvider: WalletProvider, args: z.infer<typeof MyActionSchema>): Promise<string> {
-        return walletProvider.signMessage(args.myField);
-    }
+  @CreateAction({
+    name: "my-action",
+    description: "My action description",
+    schema: MyActionSchema,
+  })
+  async myAction(
+    walletProvider: WalletProvider,
+    args: z.infer<typeof MyActionSchema>,
+  ): Promise<string> {
+    return walletProvider.signMessage(args.myField);
+  }
 
-    supportsNetwork = (network: Network) => true;
+  supportsNetwork = (network: Network) => true;
 }
 ```
 
-### Adding an Action Provider to your AgentKit instance. 
+### Adding an Action Provider to your AgentKit instance.
 
 This gives your agent access to the actions defined in the action provider.
 
@@ -552,26 +555,27 @@ const agentKit = new AgentKit({
 Wallet providers give an agent access to a wallet. AgentKit currently supports the following wallet providers:
 
 EVM:
-- [CdpV2EvmWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/cdpV2EvmWalletProvider.ts)
-- [CdpWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/cdpWalletProvider.ts)
+
+- [CdpEvmWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/cdpEvmWalletProvider.ts)
+- [CdpSmartWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/cdpSmartWalletProvider.ts)
 - [ViemWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/viemWalletProvider.ts)
 - [PrivyWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/privyWalletProvider.ts)
 - [ZeroDevWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/zeroDevWalletProvider.ts)
 
-### CdpV2EvmWalletProvider
+### CdpEvmWalletProvider
 
-The `CdpV2EvmWalletProvider` is a wallet provider that uses the Coinbase Developer Platform (CDP) V2 API. It provides a more modern and streamlined interface for interacting with CDP wallets.
+The `CdpEvmWalletProvider` is a wallet provider that uses the Coinbase Developer Platform (CDP) [v2 Wallet API](https://docs.cdp.coinbase.com/wallet-api/v2/introduction/welcome). It provides a more modern and streamlined interface for interacting with CDP wallets.
 
 #### Basic Configuration
 
 ```typescript
-import { CdpV2EvmWalletProvider } from "@coinbase/agentkit";
+import { CdpEvmWalletProvider } from "@coinbase/agentkit";
 
-const walletProvider = await CdpV2EvmWalletProvider.configureWithWallet({
-    apiKeyId: "CDP_API_KEY_ID",
-    apiKeySecret: "CDP_API_KEY_SECRET",
-    walletSecret: "CDP_WALLET_SECRET",
-    networkId: "base-sepolia", // Optional, defaults to "base-sepolia"
+const walletProvider = await CdpEvmWalletProvider.configureWithWallet({
+  apiKeyId: "CDP_API_KEY_ID",
+  apiKeySecret: "CDP_API_KEY_SECRET",
+  walletSecret: "CDP_WALLET_SECRET",
+  networkId: "base-sepolia", // Optional, defaults to "base-sepolia"
 });
 ```
 
@@ -580,14 +584,14 @@ const walletProvider = await CdpV2EvmWalletProvider.configureWithWallet({
 You can configure the provider with an existing wallet by providing the wallet's address:
 
 ```typescript
-import { CdpV2EvmWalletProvider } from "@coinbase/agentkit";
+import { CdpEvmWalletProvider } from "@coinbase/agentkit";
 
-const walletProvider = await CdpV2EvmWalletProvider.configureWithWallet({
-    apiKeyId: "CDP_API_KEY_ID",
-    apiKeySecret: "CDP_API_KEY_SECRET",
-    walletSecret: "CDP_WALLET_SECRET",
-    address: "0x...", // The address of an existing wallet
-    networkId: "base-sepolia",
+const walletProvider = await CdpEvmWalletProvider.configureWithWallet({
+  apiKeyId: "CDP_API_KEY_ID",
+  apiKeySecret: "CDP_API_KEY_SECRET",
+  walletSecret: "CDP_WALLET_SECRET",
+  address: "0x...", // The address of an existing wallet
+  networkId: "base-sepolia",
 });
 ```
 
@@ -596,14 +600,14 @@ const walletProvider = await CdpV2EvmWalletProvider.configureWithWallet({
 To create a new wallet, you can provide an idempotency key. The same idempotency key will always generate the same wallet address, and these keys are valid for 24 hours:
 
 ```typescript
-import { CdpV2EvmWalletProvider } from "@coinbase/agentkit";
+import { CdpEvmWalletProvider } from "@coinbase/agentkit";
 
-const walletProvider = await CdpV2EvmWalletProvider.configureWithWallet({
-    apiKeyId: "CDP_API_KEY_ID",
-    apiKeySecret: "CDP_API_KEY_SECRET",
-    walletSecret: "CDP_WALLET_SECRET",
-    idempotencyKey: "unique-key-123", // Optional, if not provided a new wallet will be created
-    networkId: "base-sepolia",
+const walletProvider = await CdpEvmWalletProvider.configureWithWallet({
+  apiKeyId: "CDP_API_KEY_ID",
+  apiKeySecret: "CDP_API_KEY_SECRET",
+  walletSecret: "CDP_WALLET_SECRET",
+  idempotencyKey: "unique-key-123", // Optional, if not provided a new wallet will be created
+  networkId: "base-sepolia",
 });
 ```
 
@@ -619,64 +623,197 @@ The provider can also be configured using environment variables:
 // NETWORK_ID=base-sepolia (optional)
 // IDEMPOTENCY_KEY=unique-key-123 (optional)
 
-const walletProvider = await CdpV2EvmWalletProvider.configureWithWallet();
+const walletProvider = await CdpEvmWalletProvider.configureWithWallet();
 ```
 
-### CdpWalletProvider
+#### Exporting a wallet
 
-The `CdpWalletProvider` is a wallet provider that uses the Coinbase Developer Platform (CDP) [API Wallet](https://docs.cdp.coinbase.com/wallet-api/docs/welcome).
+The `CdpEvmWalletProvider` can export a wallet by calling the `exportWallet` method:
+
+```typescript
+const walletData = await walletProvider.exportWallet();
+```
+
+### CdpSmartWalletProvider
+
+The `CdpSmartWalletProvider` is a wallet provider that uses the Coinbase Developer Platform (CDP) [Smart Wallets](https://docs.cdp.coinbase.com/wallet-api/docs/smart-wallets). Smart wallets are ERC-4337 compliant smart contract wallets that provide enhanced features like gasless transactions, batch operations, and account recovery.
+
+**Note:** Smart wallets are currently only supported on Base networks (base-sepolia and base-mainnet).
+
+#### Basic Configuration
+
+```typescript
+import { CdpSmartWalletProvider } from "@coinbase/agentkit";
+
+const walletProvider = await CdpSmartWalletProvider.configureWithWallet({
+  apiKeyId: "CDP_API_KEY_ID",
+  apiKeySecret: "CDP_API_KEY_SECRET",
+  walletSecret: "CDP_WALLET_SECRET",
+  networkId: "base-sepolia", // Optional, defaults to "base-sepolia"
+});
+```
+
+#### Using an Existing Smart Wallet
+
+You can configure the provider with an existing smart wallet by providing either the wallet's address or name:
+
+```typescript
+import { CdpSmartWalletProvider } from "@coinbase/agentkit";
+
+// Using smart wallet address
+const walletProvider = await CdpSmartWalletProvider.configureWithWallet({
+  apiKeyId: "CDP_API_KEY_ID",
+  apiKeySecret: "CDP_API_KEY_SECRET",
+  walletSecret: "CDP_WALLET_SECRET",
+  address: "0x...", // The address of an existing smart wallet
+  networkId: "base-sepolia",
+});
+
+// Or using smart wallet name
+const walletProvider = await CdpSmartWalletProvider.configureWithWallet({
+  apiKeyId: "CDP_API_KEY_ID",
+  apiKeySecret: "CDP_API_KEY_SECRET",
+  walletSecret: "CDP_WALLET_SECRET",
+  smartAccountName: "my-smart-wallet", // The name of an existing smart wallet
+  networkId: "base-sepolia",
+});
+```
+
+#### Specifying an Owner Account
+
+Smart wallets require an owner account. You can specify an existing owner account by providing its address or the account object itself:
+
+```typescript
+import { CdpSmartWalletProvider } from "@coinbase/agentkit";
+
+// Using owner address
+const walletProvider = await CdpSmartWalletProvider.configureWithWallet({
+  apiKeyId: "CDP_API_KEY_ID",
+  apiKeySecret: "CDP_API_KEY_SECRET",
+  walletSecret: "CDP_WALLET_SECRET",
+  owner: "0x...", // The address of the owner account
+  networkId: "base-sepolia",
+});
+
+// Using owner account object
+const walletProvider = await CdpSmartWalletProvider.configureWithWallet({
+  apiKeyId: "CDP_API_KEY_ID",
+  apiKeySecret: "CDP_API_KEY_SECRET",
+  walletSecret: "CDP_WALLET_SECRET",
+  owner: ownerAccount, // An EvmServerAccount or PrivateKeyAccount object
+  networkId: "base-sepolia",
+});
+```
+
+#### Creating a New Smart Wallet
+
+To create a new smart wallet, provide an idempotency key. The same idempotency key will always generate the same owner account address, and these keys are valid for 24 hours:
+
+```typescript
+import { CdpSmartWalletProvider } from "@coinbase/agentkit";
+
+const walletProvider = await CdpSmartWalletProvider.configureWithWallet({
+  apiKeyId: "CDP_API_KEY_ID",
+  apiKeySecret: "CDP_API_KEY_SECRET",
+  walletSecret: "CDP_WALLET_SECRET",
+  idempotencyKey: "unique-key-123", // Optional, if not provided a new owner account will be created
+  networkId: "base-sepolia",
+});
+```
+
+#### Environment Variables
+
+The provider can also be configured using environment variables:
+
+```typescript
+// Environment variables:
+// CDP_API_KEY_ID=your_api_key_id
+// CDP_API_KEY_SECRET=your_api_key_secret
+// CDP_WALLET_SECRET=your_wallet_secret
+// NETWORK_ID=base-sepolia (optional)
+// IDEMPOTENCY_KEY=unique-key-123 (optional)
+
+const walletProvider = await CdpSmartWalletProvider.configureWithWallet();
+```
+
+#### Exporting Smart Wallet Information
+
+The `CdpSmartWalletProvider` can export wallet information by calling the `exportWallet` method:
+
+```typescript
+const walletData = await walletProvider.exportWallet();
+
+// walletData will be in the following format:
+{
+  name: string | undefined; // The smart wallet name (if set)
+  address: string; // The smart wallet address
+  ownerAddress: string; // The owner account address
+}
+```
+
+#### Key Differences from Regular Wallets
+
+1. **User Operations**: Smart wallets use ERC-4337 user operations instead of regular transactions
+2. **No Direct Transaction Signing**: Smart wallets cannot sign transactions directly; all operations go through the user operation flow
+3. **Gasless Transactions**: Smart wallets can be configured to use paymasters for sponsored transactions
+4. **Batch Operations**: Multiple operations can be bundled into a single user operation
+5. **Base Networks Only**: Currently limited to base-sepolia and base-mainnet
+
+### LegacyCdpWalletProvider
+
+The `LegacyCdpWalletProvider` is a wallet provider that uses the Coinbase Developer Platform (CDP) [v1 Wallet API](https://docs.cdp.coinbase.com/wallet-api/v1/introduction/welcome).
 
 #### Network Configuration
 
-The `CdpWalletProvider` can be configured to use a specific network by passing the `networkId` parameter to the `configureWithWallet` method. The `networkId` is the ID of the network you want to use. You can find a list of [supported networks on the CDP API docs](https://docs.cdp.coinbase.com/cdp-apis/docs/networks).
+The `LegacyCdpWalletProvider` can be configured to use a specific network by passing the `networkId` parameter to the `configureWithWallet` method. The `networkId` is the ID of the network you want to use. You can find a list of [supported networks on the CDP API docs](https://docs.cdp.coinbase.com/cdp-apis/docs/networks).
 
 ```typescript
-import { CdpWalletProvider } from "@coinbase/agentkit";
+import { LegacyCdpWalletProvider } from "@coinbase/agentkit";
 
 const walletProvider = await CdpWalletProvider.configureWithWallet({
-    apiKeyId: "CDP API KEY NAME",
-    apiKeyPrivate: "CDP API KEY SECRET",
-    networkId: "base-mainnet",
+  apiKeyId: "CDP API KEY NAME",
+  apiKeyPrivate: "CDP API KEY SECRET",
+  networkId: "base-mainnet",
 });
 ```
 
 #### Configuring from an existing CDP API Wallet
 
-If you already have a CDP API Wallet, you can configure the `CdpWalletProvider` by passing the `wallet` parameter to the `configureWithWallet` method.
+If you already have a CDP API Wallet, you can configure the `LegacyCdpWalletProvider` by passing the `wallet` parameter to the `configureWithWallet` method.
 
 ```typescript
-import { CdpWalletProvider } from "@coinbase/agentkit";
+import { LegacyCdpWalletProvider } from "@coinbase/agentkit";
 import { Wallet } from "@coinbase/coinbase-sdk";
-const walletProvider = await CdpWalletProvider.configureWithWallet({
-    wallet,
-    apiKeyId: "CDP API KEY NAME",
-    apiKeyPrivate: "CDP API KEY SECRET",
+const walletProvider = await LegacyCdpWalletProvider.configureWithWallet({
+  wallet,
+  apiKeyId: "CDP API KEY NAME",
+  apiKeyPrivate: "CDP API KEY SECRET",
 });
 ```
 
 #### Configuring from a mnemonic phrase
 
-The `CdpWalletProvider` can be configured from a mnemonic phrase by passing the `mnemonicPhrase` and `networkId` parameters to the `configureWithWallet` method. If `networkId` is not defined, the `CdpWalletProvider` will fall back to the env var `NETWORK_ID`, and if that is not defined, it will default to `base-sepolia`.
+The `LegacyCdpWalletProvider` can be configured from a mnemonic phrase by passing the `mnemonicPhrase` and `networkId` parameters to the `configureWithWallet` method. If `networkId` is not defined, the `LegacyCdpWalletProvider` will fall back to the env var `NETWORK_ID`, and if that is not defined, it will default to `base-sepolia`.
 
 ```typescript
-import { CdpWalletProvider } from "@coinbase/agentkit";
+import { LegacyCdpWalletProvider } from "@coinbase/agentkit";
 
-const walletProvider = await CdpWalletProvider.configureWithWallet({
-    mnemonicPhrase: "MNEMONIC PHRASE",
-    networkId: "base-sepolia",
+const walletProvider = await LegacyCdpWalletProvider.configureWithWallet({
+  mnemonicPhrase: "MNEMONIC PHRASE",
+  networkId: "base-sepolia",
 });
 ```
 
 #### Exporting a wallet
 
-The `CdpWalletProvider` can export a wallet by calling the `exportWallet` method.
+The `LegacyCdpWalletProvider` can export a wallet by calling the `exportWallet` method.
 
 ```typescript
-import { CdpWalletProvider } from "@coinbase/agentkit";
+import { LegacyCdpWalletProvider } from "@coinbase/agentkit";
 
-const walletProvider = await CdpWalletProvider.configureWithWallet({
-    mnemonicPhrase: "MNEMONIC PHRASE",
-    networkId: "base-sepolia",
+const walletProvider = await LegacyCdpWalletProvider.configureWithWallet({
+  mnemonicPhrase: "MNEMONIC PHRASE",
+  networkId: "base-sepolia",
 });
 
 const walletData = await walletProvider.exportWallet();
@@ -684,38 +821,37 @@ const walletData = await walletProvider.exportWallet();
 
 #### Importing a wallet from `WalletData` JSON string
 
-The `CdpWalletProvider` can import a wallet from a `WalletData` JSON string by passing the `cdpWalletData` parameter to the `configureWithWallet` method.
+The `LegacyCdpWalletProvider` can import a wallet from a `WalletData` JSON string by passing the `cdpWalletData` parameter to the `configureWithWallet` method.
 
 ```typescript
-import { CdpWalletProvider } from "@coinbase/agentkit";
+import { LegacyCdpWalletProvider } from "@coinbase/agentkit";
 
-const walletProvider = await CdpWalletProvider.configureWithWallet({
-    cdpWalletData: "WALLET DATA JSON STRING",
-    apiKeyId: "CDP API KEY NAME",
-    apiKeyPrivate: "CDP API KEY SECRET",
+const walletProvider = await LegacyCdpWalletProvider.configureWithWallet({
+  cdpWalletData: "WALLET DATA JSON STRING",
+  apiKeyId: "CDP API KEY NAME",
+  apiKeyPrivate: "CDP API KEY SECRET",
 });
 ```
 
-#### Configuring CdpWalletProvider gas parameters
+#### Configuring LegacyCdpWalletProvider gas parameters
 
-The `CdpWalletProvider` also exposes parameters for effecting the gas calculations.
+The `LegacyCdpWalletProvider` also exposes parameters for effecting the gas calculations.
 
 ```typescript
-import { CdpWalletProvider } from "@coinbase/agentkit";
+import { LegacyCdpWalletProvider } from "@coinbase/agentkit";
 
-const walletProvider = await CdpWalletProvider.configureWithWallet({
-    cdpWalletData: "WALLET DATA JSON STRING",
-    apiKeyId: "CDP API KEY NAME",
-    apiKeyPrivate: "CDP API KEY SECRET",
-    gas: {
-        gasLimitMultiplier: 2.0,  // Adjusts gas limit estimation
-        feePerGasMultiplier: 2.0, // Adjusts max fee per gas
-    }
+const walletProvider = await LegacyCdpWalletProvider.configureWithWallet({
+  cdpWalletData: "WALLET DATA JSON STRING",
+  apiKeyId: "CDP API KEY NAME",
+  apiKeyPrivate: "CDP API KEY SECRET",
+  gas: {
+    gasLimitMultiplier: 2.0, // Adjusts gas limit estimation
+    feePerGasMultiplier: 2.0, // Adjusts max fee per gas
+  },
 });
 ```
 
 **Note**: Gas parameters only impact the `walletProvider.sendTransaction` behavior. Actions that do not rely on direct transaction calls, such as `deploy_token`, `deploy_contract`, and `native_transfer`, remain unaffected.
-
 
 ### ViemWalletProvider
 
@@ -763,8 +899,8 @@ const client = createWalletClient({
 });
 
 const walletProvider = new ViemWalletProvider(client, {
-    gasLimitMultiplier: 2.0,  // Adjusts gas limit estimation
-    feePerGasMultiplier: 2.0, // Adjusts max fee per gas
+  gasLimitMultiplier: 2.0, // Adjusts gas limit estimation
+  feePerGasMultiplier: 2.0, // Adjusts max fee per gas
 });
 ```
 
@@ -779,12 +915,12 @@ import { PrivyWalletProvider } from "@coinbase/agentkit";
 
 // Configure Server Wallet Provider
 const config = {
-    appId: "PRIVY_APP_ID",
-    appSecret: "PRIVY_APP_SECRET",
-    chainId: "84532", // base-sepolia
-    walletId: "PRIVY_WALLET_ID", // optional, otherwise a new wallet will be created
-    authorizationPrivateKey: "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY", // optional, required if your account is using authorization keys
-    authorizationKeyId: "PRIVY_WALLET_AUTHORIZATION_KEY_ID", // optional, only required to create a new wallet if walletId is not provided
+  appId: "PRIVY_APP_ID",
+  appSecret: "PRIVY_APP_SECRET",
+  chainId: "84532", // base-sepolia
+  walletId: "PRIVY_WALLET_ID", // optional, otherwise a new wallet will be created
+  authorizationPrivateKey: "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY", // optional, required if your account is using authorization keys
+  authorizationKeyId: "PRIVY_WALLET_AUTHORIZATION_KEY_ID", // optional, only required to create a new wallet if walletId is not provided
 };
 
 const walletProvider = await PrivyWalletProvider.configureWithWallet(config);
@@ -799,12 +935,12 @@ import { PrivyWalletProvider } from "@coinbase/agentkit";
 
 // Configure Embedded Wallet Provider
 const config = {
-    appId: "PRIVY_APP_ID",
-    appSecret: "PRIVY_APP_SECRET",
-    authorizationPrivateKey: "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY",
-    walletId: "PRIVY_DELEGATED_WALLET_ID", // The ID of the wallet that was delegated to your server
-    networkId: "base-mainnet", // or any supported network
-    walletType: "embedded" // Specify "embedded" to use the embedded wallet provider
+  appId: "PRIVY_APP_ID",
+  appSecret: "PRIVY_APP_SECRET",
+  authorizationPrivateKey: "PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY",
+  walletId: "PRIVY_DELEGATED_WALLET_ID", // The ID of the wallet that was delegated to your server
+  networkId: "base-mainnet", // or any supported network
+  walletType: "embedded", // Specify "embedded" to use the embedded wallet provider
 };
 
 const walletProvider = await PrivyWalletProvider.configureWithWallet(config);
@@ -835,23 +971,23 @@ When using authorization keys, you must provide the `authorizationPrivateKey` an
 
 #### Exporting Privy Wallet information
 
-The `PrivyWalletProvider` can export wallet information by calling the `exportWallet` method. 
+The `PrivyWalletProvider` can export wallet information by calling the `exportWallet` method.
 
 ```typescript
 const walletData = await walletProvider.exportWallet();
 
 // For server wallets, walletData will be in the following format:
 {
-    walletId: string;
-    authorizationKey: string | undefined;
-    chainId: string | undefined;
+  walletId: string;
+  authorizationKey: string | undefined;
+  chainId: string | undefined;
 }
 
 // For embedded wallets, walletData will be in the following format:
 {
-    walletId: string;
-    networkId: string;
-    chainId: string | undefined;
+  walletId: string;
+  networkId: string;
+  chainId: string | undefined;
 }
 ```
 
@@ -879,11 +1015,11 @@ const walletProvider = await SmartWalletProvider.configureWithWallet({
 
 ### ZeroDevWalletProvider
 
-The `ZeroDevWalletProvider` is a wallet provider that uses [ZeroDev](https://docs.zerodev.app/) smart accounts.  It supports features like chain abstraction, gasless transactions, batched transactions, and more.
+The `ZeroDevWalletProvider` is a wallet provider that uses [ZeroDev](https://docs.zerodev.app/) smart accounts. It supports features like chain abstraction, gasless transactions, batched transactions, and more.
 
-In the context of Agent Kit, "chain abstraction" means that the agent can spend funds across chains without explicitly bridging.  For example, if you send funds to the agent's address on Base, the agent will be able to spend the funds on any supported EVM chains such as Arbitrum and Optimism.
+In the context of Agent Kit, "chain abstraction" means that the agent can spend funds across chains without explicitly bridging. For example, if you send funds to the agent's address on Base, the agent will be able to spend the funds on any supported EVM chains such as Arbitrum and Optimism.
 
-The ZeroDev wallet provider does not itself manage keys.  Rather, it can be used with any EVM wallet provider (e.g. CDP/Privy/Viem) which serves as the "signer" for the ZeroDev smart account.
+The ZeroDev wallet provider does not itself manage keys. Rather, it can be used with any EVM wallet provider (e.g. CDP/Privy/Viem) which serves as the "signer" for the ZeroDev smart account.
 
 #### Configuring from CdpWalletProvider
 
@@ -892,17 +1028,17 @@ import { ZeroDevWalletProvider, CdpWalletProvider } from "@coinbase/agentkit";
 
 // First create a CDP wallet provider as the signer
 const cdpWalletProvider = await CdpWalletProvider.configureWithWallet({
-    apiKeyId: "CDP API KEY NAME",
-    apiKeyPrivate: "CDP API KEY SECRET",
-    networkId: "base-mainnet",
+  apiKeyId: "CDP API KEY NAME",
+  apiKeyPrivate: "CDP API KEY SECRET",
+  networkId: "base-mainnet",
 });
 
 // Configure ZeroDev Wallet Provider with CDP signer
 const walletProvider = await ZeroDevWalletProvider.configureWithWallet({
-    signer: cdpWalletProvider.toSigner(),
-    projectId: "ZERODEV_PROJECT_ID",
-    entryPointVersion: "0.7" as const,
-    networkId: "base-mainnet",
+  signer: cdpWalletProvider.toSigner(),
+  projectId: "ZERODEV_PROJECT_ID",
+  entryPointVersion: "0.7" as const,
+  networkId: "base-mainnet",
 });
 ```
 
@@ -913,17 +1049,17 @@ import { ZeroDevWalletProvider, PrivyWalletProvider } from "@coinbase/agentkit";
 
 // First create a Privy wallet provider as the signer
 const privyWalletProvider = await PrivyWalletProvider.configureWithWallet({
-    appId: "PRIVY_APP_ID",
-    appSecret: "PRIVY_APP_SECRET",
-    chainId: "8453", // base-mainnet
+  appId: "PRIVY_APP_ID",
+  appSecret: "PRIVY_APP_SECRET",
+  chainId: "8453", // base-mainnet
 });
 
 // Configure ZeroDev Wallet Provider with Privy signer
 const walletProvider = await ZeroDevWalletProvider.configureWithWallet({
-    signer: privyWalletProvider.toSigner(),
-    projectId: "ZERODEV_PROJECT_ID",
-    entryPointVersion: "0.7" as const,
-    networkId: "base-mainnet",
+  signer: privyWalletProvider.toSigner(),
+  projectId: "ZERODEV_PROJECT_ID",
+  entryPointVersion: "0.7" as const,
+  networkId: "base-mainnet",
 });
 ```
 
@@ -943,15 +1079,15 @@ const viemWalletProvider = new ViemWalletProvider(
     account,
     chain: base,
     transport: http(),
-  })
+  }),
 );
 
 // Configure ZeroDev Wallet Provider with Viem signer
 const walletProvider = await ZeroDevWalletProvider.configureWithWallet({
-    signer: viemWalletProvider.toSigner(),
-    projectId: "ZERODEV_PROJECT_ID",
-    entryPointVersion: "0.7" as const,
-    networkId: "base-mainnet",
+  signer: viemWalletProvider.toSigner(),
+  projectId: "ZERODEV_PROJECT_ID",
+  entryPointVersion: "0.7" as const,
+  networkId: "base-mainnet",
 });
 ```
 
@@ -960,6 +1096,7 @@ const walletProvider = await ZeroDevWalletProvider.configureWithWallet({
 Wallet providers give an agent access to a wallet. AgentKit currently supports the following wallet providers:
 
 SVM:
+
 - [CdpV2SolanaWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/cdpV2SolanaWalletProvider.ts)
 - [SolanaKeypairWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/solanaKeypairWalletProvider.ts)
 - [PrivyWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/privySvmWalletProvider.ts)
@@ -974,10 +1111,10 @@ The `CdpV2SolanaWalletProvider` is a wallet provider that uses the Coinbase Deve
 import { CdpV2SolanaWalletProvider } from "@coinbase/agentkit";
 
 const walletProvider = await CdpV2SolanaWalletProvider.configureWithWallet({
-    apiKeyId: "CDP_API_KEY_ID",
-    apiKeySecret: "CDP_API_KEY_SECRET",
-    walletSecret: "CDP_WALLET_SECRET",
-    networkId: "solana-devnet", // Optional, defaults to "solana-devnet"
+  apiKeyId: "CDP_API_KEY_ID",
+  apiKeySecret: "CDP_API_KEY_SECRET",
+  walletSecret: "CDP_WALLET_SECRET",
+  networkId: "solana-devnet", // Optional, defaults to "solana-devnet"
 });
 ```
 
@@ -989,11 +1126,11 @@ You can configure the provider with an existing wallet by providing the wallet's
 import { CdpV2SolanaWalletProvider } from "@coinbase/agentkit";
 
 const walletProvider = await CdpV2SolanaWalletProvider.configureWithWallet({
-    apiKeyId: "CDP_API_KEY_ID",
-    apiKeySecret: "CDP_API_KEY_SECRET",
-    walletSecret: "CDP_WALLET_SECRET",
-    address: "your-solana-address", // The address of an existing wallet
-    networkId: "solana-devnet",
+  apiKeyId: "CDP_API_KEY_ID",
+  apiKeySecret: "CDP_API_KEY_SECRET",
+  walletSecret: "CDP_WALLET_SECRET",
+  address: "your-solana-address", // The address of an existing wallet
+  networkId: "solana-devnet",
 });
 ```
 
@@ -1005,11 +1142,11 @@ To create a new wallet, you can provide an idempotency key. The same idempotency
 import { CdpV2SolanaWalletProvider } from "@coinbase/agentkit";
 
 const walletProvider = await CdpV2SolanaWalletProvider.configureWithWallet({
-    apiKeyId: "CDP_API_KEY_ID",
-    apiKeySecret: "CDP_API_KEY_SECRET",
-    walletSecret: "CDP_WALLET_SECRET",
-    idempotencyKey: "unique-key-123", // Optional, if not provided a new wallet will be created
-    networkId: "solana-devnet",
+  apiKeyId: "CDP_API_KEY_ID",
+  apiKeySecret: "CDP_API_KEY_SECRET",
+  walletSecret: "CDP_WALLET_SECRET",
+  idempotencyKey: "unique-key-123", // Optional, if not provided a new wallet will be created
+  networkId: "solana-devnet",
 });
 ```
 
@@ -1031,6 +1168,7 @@ const walletProvider = await CdpV2SolanaWalletProvider.configureWithWallet();
 #### Supported Networks
 
 The `CdpV2SolanaWalletProvider` supports the following Solana networks:
+
 - `solana-mainnet`
 - `solana-devnet`
 - `solana-testnet`
@@ -1046,6 +1184,7 @@ NOTE: It is highly recommended to use a dedicated RPC provider. See [here](https
 The `SolanaKeypairWalletProvider` can be configured to use a specific network by passing the `networkId` parameter to the `fromNetwork` method. The `networkId` is the ID of the Solana network you want to use. Valid values are `solana-mainnet`, `solana-devnet` and `solana-testnet`.
 
 The default RPC endpoints for each network are as follows:
+
 - `solana-mainnet`: `https://api.mainnet-beta.solana.com`
 - `solana-devnet`: `https://api.devnet.solana.com`
 - `solana-testnet`: `https://api.testnet.solana.com`
@@ -1083,14 +1222,14 @@ import { PrivyWalletProvider, PrivyWalletConfig } from "@coinbase/agentkit";
 
 // Configure Wallet Provider
 const config: PrivyWalletConfig = {
-    appId: "PRIVY_APP_ID",
-    appSecret: "PRIVY_APP_SECRET",
-    connection,
-    chainType: "solana", // optional, defaults to "evm". Make sure to set this to "solana" if you want to use Solana!
-    networkId: "solana-devnet", // optional, defaults to "solana-devnet"
-    walletId: "PRIVY_WALLET_ID", // optional, otherwise a new wallet will be created
-    authorizationPrivateKey: PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY, // optional, required if your account is using authorization keys
-    authorizationKeyId: PRIVY_WALLET_AUTHORIZATION_KEY_ID, // optional, only required to create a new wallet if walletId is not provided
+  appId: "PRIVY_APP_ID",
+  appSecret: "PRIVY_APP_SECRET",
+  connection,
+  chainType: "solana", // optional, defaults to "evm". Make sure to set this to "solana" if you want to use Solana!
+  networkId: "solana-devnet", // optional, defaults to "solana-devnet"
+  walletId: "PRIVY_WALLET_ID", // optional, otherwise a new wallet will be created
+  authorizationPrivateKey: PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY, // optional, required if your account is using authorization keys
+  authorizationKeyId: PRIVY_WALLET_AUTHORIZATION_KEY_ID, // optional, only required to create a new wallet if walletId is not provided
 };
 
 const walletProvider = await PrivyWalletProvider.configureWithWallet(config);
@@ -1107,14 +1246,14 @@ const connection = new Connection("YOUR_RPC_URL");
 
 // Configure Wallet Provider
 const config: PrivyWalletConfig = {
-    appId: "PRIVY_APP_ID",
-    appSecret: "PRIVY_APP_SECRET",
-    connection,
-    chainType: "solana", // optional, defaults to "evm". Make sure to set this to "solana" if you want to use Solana!
-    networkId: "solana-devnet", // optional, defaults to "solana-devnet"
-    walletId: "PRIVY_WALLET_ID", // optional, otherwise a new wallet will be created
-    authorizationPrivateKey: PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY, // optional, required if your account is using authorization keys
-    authorizationKeyId: PRIVY_WALLET_AUTHORIZATION_KEY_ID, // optional, only required to create a new wallet if walletId is not provided
+  appId: "PRIVY_APP_ID",
+  appSecret: "PRIVY_APP_SECRET",
+  connection,
+  chainType: "solana", // optional, defaults to "evm". Make sure to set this to "solana" if you want to use Solana!
+  networkId: "solana-devnet", // optional, defaults to "solana-devnet"
+  walletId: "PRIVY_WALLET_ID", // optional, otherwise a new wallet will be created
+  authorizationPrivateKey: PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY, // optional, required if your account is using authorization keys
+  authorizationKeyId: PRIVY_WALLET_AUTHORIZATION_KEY_ID, // optional, only required to create a new wallet if walletId is not provided
 };
 
 const walletProvider = await PrivyWalletProvider.configureWithWallet(config);
@@ -1137,9 +1276,9 @@ const walletData = await walletProvider.exportWallet();
 
 // walletData will be in the following format:
 {
-    walletId: string;
-    authorizationKey: string | undefined;
-    networkId: string | undefined;
+  walletId: string;
+  authorizationKey: string | undefined;
+  networkId: string | undefined;
 }
 ```
 

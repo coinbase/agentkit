@@ -9,7 +9,7 @@ from ...network import Network
 from ...wallet_providers.evm_wallet_provider import EvmWalletProvider
 from ..action_decorator import create_action
 from ..action_provider import ActionProvider
-from .schemas import RequestFaucetFundsSchema
+from .schemas import RequestFaucetFundsSchema, SwapSchema
 
 TWalletProvider = TypeVar("TWalletProvider", bound=EvmWalletProvider)
 
@@ -116,6 +116,58 @@ from another wallet and provide the user with your wallet details.""",
         else:
             return "Error: Faucet is only supported on Ethereum and Solana protocol families."
 
+    @create_action(
+        name="swap",
+        description="""
+This tool can be used to swap tokens on EVM networks (Ethereum and Base).
+It takes the from asset ID, to asset ID, amount, and network as input.
+Only supported on mainnet EVM networks.
+Amount should be specified in the smallest denomination (e.g., wei for ETH).""",
+        schema=SwapSchema,
+    )
+    def swap(self, wallet_provider: TWalletProvider, args: dict[str, Any]) -> str:
+        """Swap tokens using CDP API.
+
+        Args:
+            wallet_provider: The wallet provider instance.
+            args: Input arguments for the action.
+
+        Returns:
+            str: A message containing the action response or error details.
+
+        """
+        validated_args = SwapSchema(**args)
+        network = wallet_provider.get_network()
+
+        if network.protocol_family != "evm":
+            return "Error: Swap is only supported on EVM networks."
+
+        if "sepolia" in network.network_id or "testnet" in network.network_id:
+            return "Error: Swap is only supported on mainnet networks."
+
+        client = self._get_client(wallet_provider)
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        async def _swap():
+            async with client as cdp:
+                return await cdp.evm.swap(
+                    address=wallet_provider.get_address(),
+                    amount=validated_args.amount,
+                    from_asset_id=validated_args.from_asset_id,
+                    to_asset_id=validated_args.to_asset_id,
+                    network=validated_args.network,
+                )
+
+        try:
+            swap_result = loop.run_until_complete(_swap())
+            return f"Successfully swapped {validated_args.amount} {validated_args.from_asset_id} to {validated_args.to_asset_id}. Transaction hash: {swap_result.transaction_hash}"
+        except Exception as e:
+            return f"Error performing swap: {e!s}"
+
     def supports_network(self, network: Network) -> bool:
         """Check if the network is supported by this action provider.
 
@@ -127,7 +179,13 @@ from another wallet and provide the user with your wallet details.""",
 
         """
         if network.protocol_family == "evm":
-            return network.network_id in ["base-sepolia", "ethereum-sepolia"]
+            # Support both testnet (for faucet) and mainnet (for swap)
+            return network.network_id in [
+                "base-sepolia",
+                "ethereum-sepolia",  # testnet for faucet
+                "base-mainnet",
+                "ethereum-mainnet",  # mainnet for swap
+            ]
         elif network.protocol_family == "svm":
             return network.network_id == "solana-devnet"
         return False

@@ -1,5 +1,13 @@
 # AgentKit Changelog
 
+## 0.9.0
+
+### Minor Changes
+
+- [#773](https://github.com/coinbase/agentkit/pull/773) [`463d310`](https://github.com/coinbase/agentkit/commit/463d3101147cacb0f2044162dd007489f97ef0a0) Thanks [@0xRAG](https://github.com/0xRAG)! - Upgraded cdp-sdk to latest, added CdpSmartWalletProvider, added CdpSolanaWalletProvider, and renamed the v1 CDP wallet providers/action providers to be prefixed with "Legacy"
+
+- [#785](https://github.com/coinbase/agentkit/pull/785) [`2d13565`](https://github.com/coinbase/agentkit/commit/2d13565d91e64a13d3ecb8c300d8c0cd973d3fae) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Upgraded x402ActionProvider
+
 ## 0.8.2
 
 ### Patch Changes
