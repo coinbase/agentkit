@@ -17,6 +17,7 @@ weth/
 ## Actions
 
 - `wrap_eth`: Convert ETH to WETH
+- `unwrap-eth`: Convert WETH to ETH
 
 ## Adding New Actions
 
