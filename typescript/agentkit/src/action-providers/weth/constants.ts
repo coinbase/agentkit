@@ -11,6 +11,18 @@ export const WETH_ABI = [
   {
     inputs: [
       {
+        name: "wad",
+        type: "uint256",
+      },
+    ],
+    name: "withdraw",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
         name: "account",
         type: "address",
       },
