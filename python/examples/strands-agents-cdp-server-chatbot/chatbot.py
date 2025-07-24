@@ -220,11 +220,11 @@ def choose_mode():
 def main():
     """Start the chatbot agent."""
     try:
-        # Validate environment
-        validate_environment()
-
         # Load environment variables
         load_dotenv()
+
+        # Validate environment
+        validate_environment()
 
         # Set up the agent
         agent = setup()
