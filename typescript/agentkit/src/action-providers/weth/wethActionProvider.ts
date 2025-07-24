@@ -38,7 +38,7 @@ Important notes:
 - The amount is a string and cannot have any decimal points, since the unit of measurement is wei.
 - Make sure to use the exact amount provided, and if there's any doubt, check by getting more information before continuing with the action.
 - 1 wei = 0.000000000000000001 WETH
-- Minimum purchase amount is 100000000000000 wei (0.0000001 WETH)
+- Minimum purchase amount is 100000000000 wei (0.0000001 WETH)
 - Only supported on the following networks:
   - Base Sepolia (ie, 'base-sepolia')
   - Base Mainnet (ie, 'base', 'base-mainnet')
@@ -87,7 +87,7 @@ Important notes:
 - The amount is a string and cannot have any decimal points, since the unit of measurement is wei.
 - Make sure to use the exact amount provided, and if there's any doubt, check by getting more information before continuing with the action.
 - 1 wei = 0.000000000000000001 WETH
-- Minimum unwrap amount is 100000000000000 wei (0.0000001 WETH)
+- Minimum unwrap amount is 100000000000 wei (0.0000001 WETH)
 - Only supported on the following networks:
   - Base Sepolia (ie, 'base-sepolia')
   - Base Mainnet (ie, 'base', 'base-mainnet')

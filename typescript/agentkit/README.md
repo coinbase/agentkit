@@ -384,6 +384,10 @@ const agent = createReactAgent({
     <td width="200"><code>wrap_eth</code></td>
     <td width="768">Converts native ETH to Wrapped ETH (WETH) on Base Sepolia or Base Mainnet.</td>
 </tr>
+<tr>
+    <td width="200"><code>unwrap_eth</code></td>
+    <td width="768">Converts Wrapped ETH (WETH) to Native ETH on Base Sepolia or Base Mainnet.</td>
+</tr>
 </table>
 </details>
 <details>
