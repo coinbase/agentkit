@@ -2,6 +2,17 @@
 
 <!-- towncrier release notes start -->
 
+## [0.7.0] - 2025-07-18
+
+### Added
+
+- Upgraded cdp-sdk to latest
+- Added CdpSolanaWalletProvider
+- Renamed CdpEvmServerWalletProvider to CdpEvmWalletProvider and upgraded it
+- Renamed CdpEvmSmartWalletProvider to CdpSmartWalletProvider and upgraded it
+- Upgraded CdpApiActionProvider and added swap
+- Added x402ActionProvider
+
 ## [0.6.0] - 2025-05-30
 
 ### Added

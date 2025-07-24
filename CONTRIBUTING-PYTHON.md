@@ -170,8 +170,8 @@ Wallet providers give an agent access to a wallet. AgentKit currently supports t
 
 EVM:
 
-- [CdpEvmServerWalletProvider](./python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_evm_server_wallet_provider.py)
-- [CdpEvmSmartWalletProvider](./python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_evm_smart_wallet_provider.py)
+- [CdpEvmWalletProvider](./python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_evm_wallet_provider.py)
+- [CdpSmartWalletProvider](./python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_smart_wallet_provider.py)
 - [EthAccountWalletProvider](./python/coinbase-agentkit/coinbase_agentkit/wallet_providers/eth_account_wallet_provider.py)
 
 ### Adding a new EVM wallet provider

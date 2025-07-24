@@ -2,6 +2,14 @@
 
 <!-- towncrier release notes start -->
 
+## [0.8.0] - 2025-07-18
+
+### Added
+
+- Upgraded to support the updated CDP wallet providers
+- Added Solana selection to CLI
+
+
 ## [0.7.0] - 2025-05-30
 
 ### Added

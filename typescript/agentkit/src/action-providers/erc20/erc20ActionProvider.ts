@@ -5,7 +5,7 @@ import { CreateAction } from "../actionDecorator";
 import { GetBalanceSchema, TransferSchema } from "./schemas";
 import { abi, BaseTokenToAssetId, BaseSepoliaTokenToAssetId } from "./constants";
 import { encodeFunctionData, formatUnits, Hex, getAddress } from "viem";
-import { EvmWalletProvider, CdpWalletProvider } from "../../wallet-providers";
+import { EvmWalletProvider, LegacyCdpWalletProvider } from "../../wallet-providers";
 
 /**
  * ERC20ActionProvider is an action provider for ERC20 tokens.
@@ -96,8 +96,8 @@ Important notes:
           (network.networkId === "base-sepolia" && BaseSepoliaTokenToAssetId.has(tokenAddress)));
 
       if (canDoGasless) {
-        // Cast to CdpWalletProvider to access erc20Transfer
-        const cdpWallet = walletProvider as CdpWalletProvider;
+        // Cast to LegacyCdpWalletProvider to access erc20Transfer
+        const cdpWallet = walletProvider as LegacyCdpWalletProvider;
         const assetId =
           network.networkId === "base-mainnet"
             ? BaseTokenToAssetId.get(tokenAddress)!

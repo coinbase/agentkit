@@ -37,7 +37,7 @@ def test_get_network(mocked_wallet_provider):
 
 def test_get_name(mocked_wallet_provider):
     """Test get_name method."""
-    assert mocked_wallet_provider.get_name() == "cdp_evm_smart_wallet_provider"
+    assert mocked_wallet_provider.get_name() == "cdp_smart_wallet_provider"
 
 
 def test_get_balance(mocked_wallet_provider, mock_web3):

@@ -9,13 +9,13 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.10"
 python-dotenv = "^1.0.1"
-coinbase-agentkit = "^0.6.0"
+coinbase-agentkit = "^0.7.0"
 {% if _framework == "langchain" %}langchain-openai = "^0.2.4"
 langgraph = "^0.2.39"
-coinbase-agentkit-langchain = "0.5.0"{% elif _framework == "openai_agents" %}openai-agents = "0.0.6"
-coinbase-agentkit-openai-agents-sdk = "0.5.0"
+coinbase-agentkit-langchain = "^0.6.0"{% elif _framework == "openai_agents" %}openai-agents = "0.0.6"
+coinbase-agentkit-openai-agents-sdk = "^0.6.0"
 openai = "1.68.0"{% endif %}
-{% if _wallet_provider == "server" or _wallet_provider == "smart"%}cdp-sdk = "1.6.1"{% endif %}
+{% if _wallet_provider == "server" or _wallet_provider == "smart"%}cdp-sdk = "1.23.0"{% endif %}
 
 [tool.poetry.scripts]
 start-agent = "chatbot:main"
