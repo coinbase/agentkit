@@ -261,7 +261,7 @@ const agent = createReactAgent({
 </tr>
 <tr>
     <td width="200"><code>post_cast</code></td>
-    <td width="768">Creates a new cast (message) on Farcaster with up to 280 characters.</td>
+    <td width="768">Creates a new cast (message) on Farcaster with up to 280 characters and support for up to 2 embedded URLs.</td>
 </tr>
 </table>
 </details>
@@ -362,6 +362,10 @@ const agent = createReactAgent({
     <td width="200"><code>post_tweet_reply</code></td>
     <td width="768">Creates a reply to an existing tweet using the tweet's unique identifier.</td>
 </tr>
+<tr>
+    <td width="200"><code>upload_media</code></td>
+    <td width="768">Uploads media (images, videos) to Twitter that can be attached to tweets.</td>
+</tr>
 </table>
 </details>
 <details>
@@ -383,6 +387,10 @@ const agent = createReactAgent({
 <tr>
     <td width="200"><code>wrap_eth</code></td>
     <td width="768">Converts native ETH to Wrapped ETH (WETH) on Base Sepolia or Base Mainnet.</td>
+</tr>
+<tr>
+    <td width="200"><code>unwrap_eth</code></td>
+    <td width="768">Converts Wrapped ETH (WETH) to Native ETH on Base Sepolia or Base Mainnet.</td>
 </tr>
 </table>
 </details>
