@@ -51,6 +51,17 @@ FRAMEWORK_PACKAGES = [
                 "version_key": "version"
             }
         ]
+    },
+    {
+        "name": "framework-extensions/strands-agents",
+        "package_name": "coinbase-agentkit-strands-agents",
+        "path": "../framework-extensions/strands-agents/pyproject.toml",
+        "files": [
+            {
+                "path": "../framework-extensions/strands-agents/pyproject.toml",
+                "version_key": "version"
+            }
+        ]
     }
 ]
 

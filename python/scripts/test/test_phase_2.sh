@@ -10,6 +10,10 @@ cd framework-extensions/openai-agents-sdk
 uv run towncrier create --content "Fixed a bug" 123.bugfix.md
 cd ../../
 
+cd framework-extensions/strands-agents
+uv run towncrier create --content "Fixed a bug" 123.bugfix.md
+cd ../../
+
 cd create-onchain-agent
 uv run towncrier create --content "Fixed a bug" 123.bugfix.md
 cd ..
