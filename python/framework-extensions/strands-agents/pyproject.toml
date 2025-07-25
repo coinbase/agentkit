@@ -1,0 +1,88 @@
+[project]
+name = "coinbase-agentkit-strands-agents"
+version = "0.1.0"
+description = "Coinbase AgentKit Strands Agents extension"
+authors = [{ name = "Uchenna Egbe", email = "ucheegbe@amazon.com" }]
+requires-python = "~=3.10"
+readme = "README.md"
+license = "Apache-2.0"
+keywords = [
+    "coinbase",
+    "sdk",
+    "crypto",
+    "cdp",
+    "strands agents",
+    "strands",
+    "agentkit",
+    "ai",
+    "agent",
+]
+dependencies = [
+    "python-dotenv>=1.0.1,<2",
+    "nest-asyncio>=1.5.8,<2",
+    "strands-agents>=1.0.1", 
+    "strands-agents-builder>=0.1.7",
+    "strands-agents-tools>=0.2.1"
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.7.1,<0.8",
+    "mypy>=1.13.0,<2",
+    "pytest>=8.3.3,<9",
+    "pytest-cov>=6.0.0,<7",
+    "sphinx>=8.0.2,<9",
+    "sphinx-autobuild>=2024.9.19,<2025",
+    "sphinxcontrib-napoleon>=0.7,<0.8",
+    "sphinx-autodoc-typehints>=2.4.4,<3",
+    "myst-parser>=4.0.0,<5",
+    "ruff-lsp>=0.0.58,<0.0.59",
+    "python-lsp-server>=1.12.0,<2",
+    "towncrier>=24.8.0,<25",
+]
+
+[tool.hatch.build.targets.sdist]
+include = ["coinbase_agentkit_strands_agents"]
+
+[tool.hatch.build.targets.wheel]
+include = ["coinbase_agentkit_strands_agents"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = ["./build/**", "./dist/**", "./docs/**"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "D", "UP", "B", "C4", "SIM", "RUF"]
+ignore = ["D213", "D203", "D100", "D104", "D107", "E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+known-first-party = ["coinbase_agentkit"]
+
+[tool.towncrier]
+package = "coinbase_agentkit_strands_agents"
+filename = "CHANGELOG.md"
+directory = "changelog.d/"
+title_format = "## [{version}] - {project_date}"
+issue_format = "[#{issue}](https://github.com/coinbase/agentkit/pull/{issue})"
+
+[tool.towncrier.fragment.feature]
+name = "Added"
+
+[tool.towncrier.fragment.bugfix]
+name = "Fixed"
