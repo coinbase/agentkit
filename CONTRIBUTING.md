@@ -55,7 +55,8 @@ agentkit/
 │       ├── langchain-twitter-chatbot/
 │       ├── openai-agents-sdk-cdp-chatbot/
 │       ├── openai-agents-sdk-cdp-voice-chatbot/
-│       └── openai-agents-sdk-smart-wallet-chatbot/
+│       ├── openai-agents-sdk-smart-wallet-chatbot/
+│       └── strands-agents-cdp-server-chatbot/
 ```
 
 ## Language-Specific Guides
