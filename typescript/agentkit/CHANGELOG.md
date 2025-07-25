@@ -1,5 +1,17 @@
 # AgentKit Changelog
 
+## 0.9.1
+
+### Patch Changes
+
+- [#614](https://github.com/coinbase/agentkit/pull/614) [`0633cce`](https://github.com/coinbase/agentkit/commit/0633cce4b5d5ee5c9bc56bf36eff90f2403007b3) Thanks [@phdargen](https://github.com/phdargen)! - Added TrueMarketsActionProvider for retrieving prediction market info
+
+- [#675](https://github.com/coinbase/agentkit/pull/675) [`ff02c51`](https://github.com/coinbase/agentkit/commit/ff02c51c91bb3b27133c97004ad1eec2bd4a4cbf) Thanks [@phdargen](https://github.com/phdargen)! - Added media upload support for TwitterActionProvider and embeds support for FarcasterActionProvider
+
+- [#704](https://github.com/coinbase/agentkit/pull/704) [`84c2d98`](https://github.com/coinbase/agentkit/commit/84c2d98d63cadbd89c317e54ebcdb001c694c8de) Thanks [@phdargen](https://github.com/phdargen)! - Added ZoraActionProvider for creating Zora coins
+
+- [#796](https://github.com/coinbase/agentkit/pull/796) [`73ea2e0`](https://github.com/coinbase/agentkit/commit/73ea2e07c9ef1bdc419e47cc69f0f23bafa91339) Thanks [@ya7ya](https://github.com/ya7ya)! - Added unwrap_eth action to the WethActionProvider
+
 ## 0.9.0
 
 ### Minor Changes
