@@ -102,7 +102,8 @@ def get_pydantic_ai_tools(agent_kit: AgentKit) -> list[Tool]:
         tool = Tool(
             tool_function, name=action.name, description=action.description, takes_ctx=False
         )
-        tool.function_schema.json_schema = action.args_schema.model_json_schema()
+        if action.args_schema:
+            tool.function_schema.json_schema = action.args_schema.model_json_schema()
 
         tools.append(tool)
 
