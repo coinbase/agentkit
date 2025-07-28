@@ -45,13 +45,25 @@ def _check_web3_version() -> bool:
 
 
 def _get_action_annotations(action: Action) -> dict[str, Any]:
-    """Get the annotations for an action's arguments.
+    """Extract type annotations from an action's argument schema.
+
+    This function processes the Pydantic model fields of an action's argument schema
+    to create a dictionary of type annotations suitable for PydanticAI tool functions.
+    It includes error handling for cases where schema processing might fail.
 
     Args:
-        action (Action): The action to get the annotations for
+        action (Action): The AgentKit action to extract annotations from. Must have
+            an args_schema attribute with model_fields.
 
     Returns:
-        dict[str, Any]: The annotations for the action's arguments
+        dict[str, Any]: A dictionary mapping argument names to their type annotations.
+            Always includes a 'return' key mapped to str. Returns an empty dict if
+            schema processing fails or if no schema is available.
+
+    Note:
+        - Falls back to Any type for fields without clear annotations
+        - Gracefully handles exceptions during schema processing
+        - Always adds 'return': str annotation for PydanticAI compatibility
 
     """
     if action.args_schema and hasattr(action.args_schema, "model_fields"):
@@ -72,13 +84,27 @@ def _get_action_annotations(action: Action) -> dict[str, Any]:
 
 
 def get_pydantic_ai_tools(agent_kit: AgentKit) -> list[Tool]:
-    """Get PydanticAI compatible tools from an AgentKit instance.
+    """Convert AgentKit actions to PydanticAI-compatible tools.
+
+    This function takes an AgentKit instance and converts all its available actions
+    into PydanticAI Tool objects. Each tool maintains the original action's name,
+    description, and argument schema while providing proper integration with the
+    PydanticAI framework.
 
     Args:
-        agent_kit: The AgentKit instance
+        agent_kit (AgentKit): An initialized AgentKit instance containing the actions
+            to be converted. The instance should have properly configured action
+            providers and wallet providers.
 
     Returns:
-        A list of PydanticAI Tool objects
+        list[Tool]: A list of PydanticAI Tool objects, where each tool corresponds
+            to an AgentKit action. The tools can be directly used with PydanticAI
+            agents and will automatically handle argument validation and execution.
+
+    Note:
+        - Each tool function returns string representations of action results
+        - JSON schemas are properly transferred from AgentKit action schemas
+        - All tools are configured with takes_ctx=False for simplicity
 
     """
     actions: list[Action] = agent_kit.get_actions()
