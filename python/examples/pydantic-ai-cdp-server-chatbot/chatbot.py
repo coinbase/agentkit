@@ -3,6 +3,7 @@ import sys
 
 from dotenv import load_dotenv
 from pydantic_ai import Agent
+
 from setup import setup
 
 
@@ -32,6 +33,7 @@ async def run_autonomous_mode(agent: Agent, interval=10):
             print("Goodbye Agent!")
             sys.exit(0)
 
+
 # Chat Mode
 async def run_chat_mode(agent):
     """Run the agent interactively based on user input."""
@@ -55,7 +57,6 @@ async def run_chat_mode(agent):
             sys.exit(0)
 
 
-
 # Mode Selection
 def choose_mode():
     """Choose whether to run in autonomous or chat mode based on user input."""
@@ -70,6 +71,7 @@ def choose_mode():
         elif choice in ["2", "auto"]:
             return "auto"
         print("Invalid choice. Please try again.")
+
 
 async def main():
     """Start the chatbot agent."""
@@ -88,6 +90,7 @@ async def main():
         await run_chat_mode(agent=agent)
     elif mode == "auto":
         await run_autonomous_mode(agent=agent)
+
 
 if __name__ == "__main__":
     print("Starting Agent...")
