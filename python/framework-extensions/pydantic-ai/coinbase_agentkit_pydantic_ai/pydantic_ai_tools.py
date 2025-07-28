@@ -4,14 +4,14 @@ import warnings
 from collections.abc import Callable
 from typing import Any
 
-import nest_asyncio  # type: ignore
+import nest_asyncio
 import pkg_resources
 from pydantic_ai import Tool
 
 from coinbase_agentkit import Action, AgentKit
 
 # Apply nest-asyncio to allow nested event loops
-nest_asyncio.apply()  # type: ignore
+nest_asyncio.apply()
 
 
 def _check_web3_version() -> bool:
