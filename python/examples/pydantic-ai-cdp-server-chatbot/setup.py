@@ -2,7 +2,7 @@ import json
 import os
 import time
 
-from coinbase_agentkit import CdpEvmServerWalletProviderConfig
+from coinbase_agentkit import CdpEvmWalletProviderConfig
 
 from initialize_agent import initialize_agent
 
@@ -38,7 +38,7 @@ async def setup():
         raise ValueError("CDP_API_KEY_ID, CDP_API_KEY_SECRET, and CDP_WALLET_SECRET are required")
 
     # Create server wallet config
-    config = CdpEvmServerWalletProviderConfig(
+    config = CdpEvmWalletProviderConfig(
         api_key_id=api_key_id,
         api_key_secret=api_key_secret,
         wallet_secret=wallet_secret,

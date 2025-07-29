@@ -1,8 +1,8 @@
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
-    CdpEvmServerWalletProvider,
-    CdpEvmServerWalletProviderConfig,
+    CdpEvmWalletProvider,
+    CdpEvmWalletProviderConfig,
     cdp_api_action_provider,
     erc20_action_provider,
     pyth_action_provider,
@@ -13,7 +13,7 @@ from coinbase_agentkit_pydantic_ai import get_pydantic_ai_tools
 from pydantic_ai import Agent
 
 
-async def initialize_agent(config: CdpEvmServerWalletProviderConfig):
+async def initialize_agent(config: CdpEvmWalletProviderConfig):
     """Initialize the agent with the provided configuration.
 
     Args:
@@ -24,8 +24,8 @@ async def initialize_agent(config: CdpEvmServerWalletProviderConfig):
 
     """
     # Initialize CDP Server Wallet Provider
-    wallet_provider = CdpEvmServerWalletProvider(
-        CdpEvmServerWalletProviderConfig(
+    wallet_provider = CdpEvmWalletProvider(
+        CdpEvmWalletProviderConfig(
             api_key_id=config.api_key_id,
             api_key_secret=config.api_key_secret,
             wallet_secret=config.wallet_secret,
