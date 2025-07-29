@@ -33,22 +33,3 @@ test:
 .PHONY: type-check
 type-check:
 	uv run mypy .
-
-.PHONY: build
-build: clean
-	uv build
-
-.PHONY: clean
-clean:
-	rm -rf build/
-	rm -rf dist/
-	rm -rf *.egg-info/
-	find . -type d -name __pycache__ -exec rm -rf {} +
-	find . -type f -name "*.pyc" -delete
-
-.PHONY: dev-install
-dev-install:
-	uv sync --dev
-
-.PHONY: check
-check: lint type-check test
