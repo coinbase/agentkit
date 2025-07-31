@@ -58,6 +58,8 @@ For AgentKit configuration options, see the [Coinbase Agentkit README](https://g
 
 For a full example, see the [chatbot example](https://github.com/coinbase/agentkit/blob/master/python/examples/pydantic-ai-cdp-chatbot/chatbot.py).
 
+For PydanticAI configuration options, see the [PydanticAI Documentation](https://ai.pydantic.dev/).
+
 ## Contributing
 
 See [CONTRIBUTING.md](https://github.com/coinbase/agentkit/blob/master/CONTRIBUTING.md) for detailed setup instructions and contribution guidelines.

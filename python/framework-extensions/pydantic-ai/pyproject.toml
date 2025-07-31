@@ -92,9 +92,3 @@ asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
     "ignore::pydantic.PydanticDeprecatedSince20",
 ]
-
-[tool.uv]
-dev-dependencies = [
-    "mypy>=1.16.1",
-    "ruff>=0.12.3",
-]
