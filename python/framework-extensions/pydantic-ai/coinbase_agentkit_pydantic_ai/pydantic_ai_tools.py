@@ -57,13 +57,13 @@ def _get_action_annotations(action: Action) -> dict[str, Any]:
 
     Returns:
         dict[str, Any]: A dictionary mapping argument names to their type annotations.
-            Always includes a 'return' key mapped to str. Returns an empty dict if
-            schema processing fails or if no schema is available.
+            Includes a 'return' key mapped to str when schema processing succeeds.
+            Returns an empty dict if schema processing fails or if no schema is available.
 
     Note:
         - Falls back to Any type for fields without clear annotations
         - Gracefully handles exceptions during schema processing
-        - Always adds 'return': str annotation for PydanticAI compatibility
+        - Only adds 'return': str annotation when schema processing succeeds
 
     """
     if action.args_schema and hasattr(action.args_schema, "model_fields"):
@@ -78,7 +78,7 @@ def _get_action_annotations(action: Action) -> dict[str, Any]:
             annotations["return"] = str
             return annotations
         except Exception:
-            # If schema processing fails, continue without annotations
+            # If schema processing fails, return empty dict
             return {}
     return {}
 
