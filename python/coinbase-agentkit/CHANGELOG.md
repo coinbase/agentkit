@@ -2,6 +2,13 @@
 
 <!-- towncrier release notes start -->
 
+## [0.7.1] - 2025-08-01
+
+### Added
+
+- Removed AlloraActionProvider due to dependency violations ([#801](https://github.com/coinbase/agentkit/pull/801))
+
+
 ## [0.7.0] - 2025-07-18
 
 ### Added
