@@ -8,7 +8,6 @@ from coinbase_agentkit import (
     AgentKitConfig,
     CdpEvmWalletProvider,
     CdpEvmWalletProviderConfig,
-    allora_action_provider,
     cdp_api_action_provider,
     erc20_action_provider,
     pyth_action_provider,
@@ -62,7 +61,6 @@ def initialize_agent(config: CdpEvmWalletProviderConfig):
                 pyth_action_provider(),
                 wallet_action_provider(),
                 weth_action_provider(),
-                allora_action_provider(),
                 x402_action_provider(),
             ],
         )
