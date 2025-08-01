@@ -21,7 +21,6 @@ dependencies = [
     "web3>=7.6.0,<8",
     "python-dotenv>=1.0.1,<2",
     "requests>=2.31.0,<3",
-    "allora-sdk>=0.2.0,<0.3",
     "paramiko>=3.5.1,<4",
     "nilql>=0.0.0a12,<0.0.1",
     "ecdsa>=0.19.0,<0.20",

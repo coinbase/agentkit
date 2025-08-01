@@ -4,7 +4,6 @@ from .__version__ import __version__
 from .action_providers import (
     Action,
     ActionProvider,
-    allora_action_provider,
     basename_action_provider,
     cdp_api_action_provider,
     compound_action_provider,
@@ -54,7 +53,6 @@ __all__ = [
     "EvmWalletProvider",
     "EthAccountWalletProvider",
     "EthAccountWalletProviderConfig",
-    "allora_action_provider",
     "cdp_api_action_provider",
     "compound_action_provider",
     "erc20_action_provider",

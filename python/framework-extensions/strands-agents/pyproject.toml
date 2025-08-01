@@ -18,6 +18,7 @@ keywords = [
     "agent",
 ]
 dependencies = [
+    "coinbase-agentkit",
     "python-dotenv>=1.0.1,<2",
     "nest-asyncio>=1.5.8,<2",
     "strands-agents>=1.0.1", 
@@ -86,3 +87,9 @@ name = "Added"
 
 [tool.towncrier.fragment.bugfix]
 name = "Fixed"
+
+[tool.uv.sources]
+coinbase-agentkit = { path = "../../coinbase-agentkit", editable = true }
+
+[tool.hatch.metadata]
+allow-direct-references = true

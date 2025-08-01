@@ -2,7 +2,6 @@
 
 from .action_decorator import create_action
 from .action_provider import Action, ActionProvider
-from .allora.allora_action_provider import AlloraActionProvider, allora_action_provider
 from .basename.basename_action_provider import (
     BasenameActionProvider,
     basename_action_provider,
@@ -33,8 +32,6 @@ __all__ = [
     "Action",
     "ActionProvider",
     "create_action",
-    "AlloraActionProvider",
-    "allora_action_provider",
     "BasenameActionProvider",
     "basename_action_provider",
     "CdpApiActionProvider",
