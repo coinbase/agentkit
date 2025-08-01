@@ -1,5 +1,13 @@
 # Coinbase Create Onchain Agent Changelog
 
+## 0.5.2
+
+### Patch Changes
+
+- [#809](https://github.com/coinbase/agentkit/pull/809) [`059d96d`](https://github.com/coinbase/agentkit/commit/059d96d91e545e643c698cb386415621cb32ab6a) Thanks [@phdargen](https://github.com/phdargen)! - Fixed bugs in next template configs
+
+- [#805](https://github.com/coinbase/agentkit/pull/805) [`082163f`](https://github.com/coinbase/agentkit/commit/082163fa7ada25d9b3d8b5597ccd8de3b85457f1) Thanks [@phdargen](https://github.com/phdargen)! - Fixed a bug in wallet config
+
 ## 0.5.1
 
 ### Patch Changes
