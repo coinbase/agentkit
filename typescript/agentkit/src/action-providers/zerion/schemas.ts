@@ -8,7 +8,7 @@ export const GetWalletPortfolioSchema = z
     walletAddress: z
       .string()
       .describe(
-        "The wallet address to fetch portfolio for (defaults to connected wallet if not provided)",
+        "The wallet address to fetch portfolio for. Defaults is empty string, which will raise an error later if not provided.",
       ),
   })
   .strip()

@@ -1,5 +1,5 @@
 ---
-"@coinbase/agentkit": minor
+"@coinbase/agentkit": patch
 ---
 
-Add Zerion API for portfolio and DeFi positions
+Added Zerion API for portfolio and DeFi positions

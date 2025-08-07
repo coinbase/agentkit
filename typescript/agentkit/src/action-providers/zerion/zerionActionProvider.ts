@@ -22,8 +22,8 @@ export interface ZerionActionProviderConfig {
  * ZerionActionProvider provides actions for zerion operations.
  *
  * @description
- * This provider is designed to provide blockchain-agnostic operations.
- * It supports all blockchain networks.
+ * This provider is designed to provide EVM-based operations.
+ * It supports all EVM-based networks.
  */
 export class ZerionActionProvider extends ActionProvider {
   private readonly apiKey: string;

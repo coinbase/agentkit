@@ -1,10 +1,14 @@
 # Zerion Action Provider
 
-This directory contains the **ZerionActionProvider** implementation, which provides actions for zerion operations.
+This directory contains the **ZerionActionProvider** implementation, which provides actions for Zerion operations.
 
 ## Overview
 
-The ZerionActionProvider is designed to work with EvmWalletProvider for blockchain interactions. It provides a set of actions that enable [describe the main purpose/functionality].
+The ZerionActionProvider is designed as a portfolio tracker that can get the portfolio overview in USD and in-depth DeFi position of any EVM wallet address.
+
+## Pre-requisite
+
+To get an API key, please fill out the form in [Zerion API](https://zerion.io/api) landing page, then your API key will be activated within 2 business days. You can join Zerion Discord and DM the moderator to activate it if you're in a rush.
 
 ## Directory Structure
 
