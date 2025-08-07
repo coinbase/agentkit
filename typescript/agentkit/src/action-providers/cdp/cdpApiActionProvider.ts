@@ -1,10 +1,12 @@
 import { z } from "zod";
 import { Network } from "../../network";
-import { WalletProvider } from "../../wallet-providers";
+import { EvmWalletProvider, WalletProvider } from "../../wallet-providers";
 import { isWalletProviderWithClient } from "../../wallet-providers/cdpShared";
 import { CreateAction } from "../actionDecorator";
 import { ActionProvider } from "../actionProvider";
 import { RequestFaucetFundsV2Schema, SwapSchema } from "./schemas";
+import { getTokenDetails } from "./utils";
+import { Hex, formatUnits, parseUnits, maxUint256, encodeFunctionData, erc20Abi } from "viem";
 
 /**
  * CdpApiActionProvider is an action provider for CDP API.
@@ -86,63 +88,259 @@ from another wallet and provide the user with your wallet details.`,
    *
    * @param walletProvider - The wallet provider to perform the swap with.
    * @param args - The input arguments for the swap action.
-   * @returns A confirmation message with transaction details.
+   * @returns A JSON string with detailed swap execution information.
    */
   @CreateAction({
     name: "swap",
-    description: `This tool swaps tokens using the CDP API. It takes the wallet, from asset ID, to asset ID, and amount as input.
-Swaps are currently supported on EVM networks like Base and Ethereum.
-Example usage:
-- Swap 0.1 ETH to USDC: { fromAssetId: "eth", toAssetId: "usdc", amount: "0.1" }
-- Swap 100 USDC to ETH: { fromAssetId: "usdc", toAssetId: "eth", amount: "100" }`,
+    description: `
+This tool executes a token swap using the CDP Swap API.
+It takes the following inputs:
+- fromToken: The contract address of the token to sell
+- toToken: The contract address of the token to buy
+- fromAmount: The amount of fromToken to swap in whole units (e.g. 1 ETH or 10 USDC)
+- slippageBps: (Optional) Maximum allowed slippage in basis points (100 = 1%)
+Important notes:
+- The contract address for native ETH is "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+- If needed, it will automatically approve the permit2 contract to spend the fromToken
+`,
     schema: SwapSchema,
   })
   async swap(walletProvider: WalletProvider, args: z.infer<typeof SwapSchema>): Promise<string> {
+    // Get CDP SDK network
     const network = walletProvider.getNetwork();
     const networkId = network.networkId!;
+    const cdpNetwork = this.#getCdpSdkNetwork(networkId);
 
-    if (isWalletProviderWithClient(walletProvider)) {
-      if (network.protocolFamily === "evm") {
+    // Sanity checks
+    if (!isWalletProviderWithClient(walletProvider))
+      return JSON.stringify({
+        success: false,
+        error: "Wallet provider is not a CDP Wallet Provider.",
+      });
+
+    if (network.protocolFamily !== "evm")
+      return JSON.stringify({
+        success: false,
+        error: "CDP Swap API is currently only supported on EVM networks.",
+      });
+
+    if (networkId !== "base-mainnet" && networkId !== "ethereum-mainnet")
+      return JSON.stringify({
+        success: false,
+        error: "CDP Swap API is currently only supported on 'base-mainnet' or 'ethereum-mainnet'.",
+      });
+
+    try {
+      // Get token details
+      const { fromTokenDecimals, fromTokenName, toTokenName, toTokenDecimals } =
+        await getTokenDetails(
+          walletProvider as unknown as EvmWalletProvider,
+          args.fromToken,
+          args.toToken,
+        );
+
+      // Get the account for the wallet address
+      const account = await walletProvider.getClient().evm.getAccount({
+        address: walletProvider.getAddress() as Hex,
+      });
+
+      // Estimate swap price first to check liquidity, token balance and permit2 approval status
+      const swapPrice = await walletProvider.getClient().evm.getSwapPrice({
+        fromToken: args.fromToken as Hex,
+        toToken: args.toToken as Hex,
+        fromAmount: parseUnits(args.fromAmount, fromTokenDecimals),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        network: cdpNetwork as any,
+        taker: walletProvider.getAddress() as Hex,
+      });
+
+      // Check if liquidity is available
+      if (!swapPrice.liquidityAvailable) {
+        return JSON.stringify({
+          success: false,
+          error: `No liquidity available to swap ${args.fromAmount} ${fromTokenName} (${args.fromToken}) to ${toTokenName} (${args.toToken})`,
+        });
+      }
+
+      // Check if balance is enough
+      if (swapPrice.issues.balance) {
+        return JSON.stringify({
+          success: false,
+          error: `Balance is not enough to perform swap. Required: ${args.fromAmount} ${fromTokenName}, but only have ${formatUnits(
+            swapPrice.issues.balance.currentBalance,
+            fromTokenDecimals,
+          )} ${fromTokenName} (${args.fromToken})`,
+        });
+      }
+
+      // Check if allowance is enough
+      let approvalTxHash: Hex | null = null;
+      if (swapPrice.issues.allowance) {
         try {
-          const cdpNetwork = this.#getCdpSdkNetwork(networkId);
+          // Permit2 contract address
+          const spender = swapPrice.issues.allowance.spender as Hex;
 
-          // Get the account for the wallet address
-          const account = await walletProvider.getClient().evm.getAccount({
-            address: walletProvider.getAddress() as `0x${string}`,
+          approvalTxHash = await (walletProvider as unknown as EvmWalletProvider).sendTransaction({
+            to: args.fromToken as Hex,
+            data: encodeFunctionData({
+              abi: erc20Abi,
+              functionName: "approve",
+              args: [spender, maxUint256],
+            }),
           });
 
-          // Execute swap using the all-in-one pattern
-          const swapResult = await account.swap({
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            network: cdpNetwork as any,
-            from: args.fromAssetId,
-            to: args.toAssetId,
-            amount: args.amount,
-            slippageBps: 100, // 1% slippage tolerance
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            paymasterUrl: (walletProvider as any).getPaymasterUrl?.(),
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          } as any);
-
-          return `Successfully swapped ${args.amount} ${args.fromAssetId.toUpperCase()} to ${args.toAssetId.toUpperCase()}. Transaction hash: ${swapResult.transactionHash}`;
+          await (walletProvider as unknown as EvmWalletProvider).waitForTransactionReceipt(
+            approvalTxHash,
+          );
         } catch (error) {
-          throw new Error(`Swap failed: ${error}`);
+          return JSON.stringify({
+            success: false,
+            error: `Error approving token: ${error}`,
+          });
         }
-      } else {
-        throw new Error("Swap is currently only supported on EVM networks.");
       }
-    } else {
-      throw new Error("Wallet provider is not a CDP Wallet Provider.");
+
+      // Execute swap using the all-in-one pattern
+      const swapResult = (await account.swap({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        network: cdpNetwork as any,
+        fromToken: args.fromToken as Hex,
+        toToken: args.toToken as Hex,
+        fromAmount: parseUnits(args.fromAmount, fromTokenDecimals),
+        slippageBps: args.slippageBps,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      })) as any;
+
+      // Format the successful response
+      const formattedResponse = {
+        success: true,
+        ...(approvalTxHash ? { approvalTxHash } : {}),
+        transactionHash: swapResult,
+        fromAmount: args.fromAmount,
+        fromTokenName: fromTokenName,
+        fromToken: args.fromToken,
+        toAmount: formatUnits(BigInt(swapPrice.toAmount), toTokenDecimals),
+        minToAmount: formatUnits(BigInt(swapPrice.minToAmount), toTokenDecimals),
+        toTokenName: toTokenName,
+        toToken: args.toToken,
+        slippageBps: args.slippageBps,
+        network: networkId,
+      };
+
+      return JSON.stringify(formattedResponse);
+    } catch (error) {
+      return JSON.stringify({
+        success: false,
+        error: `Swap failed: ${error}`,
+      });
     }
   }
 
   /**
-   * Checks if the Cdp action provider supports the given network.
+   * Gets a price quote for swapping tokens using the CDP Swap API.
+   *
+   * @param walletProvider - The wallet provider to get the quote for.
+   * @param args - The input arguments for the swap price action.
+   * @returns A JSON string with detailed swap price quote information.
+   */
+  @CreateAction({
+    name: "get_swap_price",
+    description: `
+This tool fetches a price quote for swapping between two tokens using the CDP Swap API but does not execute a swap.
+It takes the following inputs:
+- fromToken: The contract address of the token to sell
+- toToken: The contract address of the token to buy
+- fromAmount: The amount of fromToken to swap in whole units (e.g. 1 ETH or 10 USDC)
+- slippageBps: (Optional) Maximum allowed slippage in basis points (100 = 1%)
+Important notes:
+- The contract address for native ETH is "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+`,
+    schema: SwapSchema,
+  })
+  async getSwapPrice(
+    walletProvider: WalletProvider,
+    args: z.infer<typeof SwapSchema>,
+  ): Promise<string> {
+    // Get CDP SDK network
+    const network = walletProvider.getNetwork();
+    const networkId = network.networkId!;
+    const cdpNetwork = this.#getCdpSdkNetwork(networkId);
+
+    // Sanity checks
+    if (!isWalletProviderWithClient(walletProvider))
+      return JSON.stringify({
+        success: false,
+        error: "Wallet provider is not a CDP Wallet Provider.",
+      });
+
+    if (network.protocolFamily !== "evm")
+      return JSON.stringify({
+        success: false,
+        error: "CDP Swap API is currently only supported on EVM networks.",
+      });
+
+    if (networkId !== "base-mainnet" && networkId !== "ethereum-mainnet")
+      return JSON.stringify({
+        success: false,
+        error: "CDP Swap API is currently only supported on 'base-mainnet' or 'ethereum-mainnet'.",
+      });
+
+    try {
+      // Get token details
+      const { fromTokenDecimals, toTokenDecimals, fromTokenName, toTokenName } =
+        await getTokenDetails(
+          walletProvider as unknown as EvmWalletProvider,
+          args.fromToken,
+          args.toToken,
+        );
+
+      // Get swap price quote
+      const swapPrice = (await walletProvider.getClient().evm.getSwapPrice({
+        fromToken: args.fromToken as Hex,
+        toToken: args.toToken as Hex,
+        fromAmount: parseUnits(args.fromAmount, fromTokenDecimals),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        network: cdpNetwork as any,
+        taker: walletProvider.getAddress() as Hex,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      })) as any;
+
+      const formattedResponse = {
+        success: true,
+        fromAmount: args.fromAmount,
+        fromTokenName: fromTokenName,
+        fromToken: args.fromToken,
+        toAmount: formatUnits(BigInt(swapPrice.toAmount), toTokenDecimals),
+        minToAmount: formatUnits(BigInt(swapPrice.minToAmount), toTokenDecimals),
+        toTokenName: toTokenName,
+        toToken: args.toToken,
+        slippageBps: args.slippageBps,
+        liquidityAvailable: swapPrice.liquidityAvailable,
+        ...(swapPrice.issues ? { issues: swapPrice.issues } : {}),
+        priceOfBuyTokenInSellToken: (
+          Number(args.fromAmount) / Number(formatUnits(BigInt(swapPrice.toAmount), toTokenDecimals))
+        ).toString(),
+        priceOfSellTokenInBuyToken: (
+          Number(formatUnits(BigInt(swapPrice.toAmount), toTokenDecimals)) / Number(args.fromAmount)
+        ).toString(),
+      };
+
+      return JSON.stringify(formattedResponse);
+    } catch (error) {
+      return JSON.stringify({
+        success: false,
+        error: `Error fetching swap price: ${error}`,
+      });
+    }
+  }
+
+  /**
+   * Checks if the CDP action provider supports the given network.
    *
    * NOTE: Network scoping is done at the action implementation level
    *
    * @param _ - The network to check.
-   * @returns True if the Cdp action provider supports the network, false otherwise.
+   * @returns True if the CDP action provider supports the network, false otherwise.
    */
   supportsNetwork = (_: Network) => true;
 

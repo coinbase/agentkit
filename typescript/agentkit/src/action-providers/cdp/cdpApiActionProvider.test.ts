@@ -4,14 +4,17 @@ import { WalletProvider } from "../../wallet-providers";
 import { WalletProviderWithClient } from "../../wallet-providers/cdpShared";
 import { CdpApiActionProvider } from "./cdpApiActionProvider";
 import { RequestFaucetFundsV2Schema, SwapSchema } from "./schemas";
+import * as utils from "./utils";
 
 // Mock the CDP SDK
 jest.mock("@coinbase/cdp-sdk");
+jest.mock("./utils");
 
 describe("CDP API Action Provider", () => {
   let actionProvider: CdpApiActionProvider;
   let mockWalletProvider: jest.Mocked<WalletProvider & WalletProviderWithClient>;
   let mockCdpClient: jest.Mocked<CdpClient>;
+  const mockGetTokenDetails = utils.getTokenDetails as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -24,6 +27,7 @@ describe("CDP API Action Provider", () => {
       evm: {
         requestFaucet: jest.fn() as any,
         getAccount: jest.fn() as any,
+        getSwapPrice: jest.fn() as any,
       },
       solana: {
         requestFaucet: jest.fn() as any,
@@ -37,6 +41,7 @@ describe("CDP API Action Provider", () => {
       getNetwork: jest.fn(),
       getAddress: jest.fn(),
       getClient: jest.fn(),
+      readContract: jest.fn(),
     } as any;
 
     actionProvider = new CdpApiActionProvider();
@@ -127,36 +132,25 @@ describe("CDP API Action Provider", () => {
   });
 
   describe("swap", () => {
-    it("should perform swap on base-sepolia", async () => {
+    const FROM_TOKEN = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"; // ETH
+    const TO_TOKEN = "0xA0b86991c6218b36c1d19D4a2e9EB0cE3606eB48"; // USDC
+
+    it("should throw an error for unsupported networks", async () => {
       const mockNetwork = { protocolFamily: "evm", networkId: "base-sepolia" };
       mockWalletProvider.getNetwork.mockReturnValue(mockNetwork as any);
       mockWalletProvider.getAddress.mockReturnValue("0x123456789");
       mockWalletProvider.getClient.mockReturnValue(mockCdpClient);
 
-      const mockAccount = { swap: jest.fn() };
-      (mockCdpClient.evm.getAccount as jest.Mock).mockResolvedValue(mockAccount);
-      mockAccount.swap.mockResolvedValue({
-        transactionHash: "0xswap123456",
-      });
-
       const result = await actionProvider.swap(mockWalletProvider, {
-        fromAssetId: "eth",
-        toAssetId: "usdc",
-        amount: "0.1",
-      });
-
-      expect(mockCdpClient.evm.getAccount).toHaveBeenCalledWith({
-        address: "0x123456789",
-      });
-      expect(mockAccount.swap).toHaveBeenCalledWith({
-        network: "base-sepolia",
-        from: "eth",
-        to: "usdc",
-        amount: "0.1",
+        fromToken: FROM_TOKEN,
+        toToken: TO_TOKEN,
+        fromAmount: "0.1",
         slippageBps: 100,
       });
-      expect(result).toContain("Successfully swapped 0.1 ETH to USDC");
-      expect(result).toContain("0xswap123456");
+
+      expect(JSON.parse(result).error).toContain(
+        "CDP Swap API is currently only supported on 'base-mainnet' or 'ethereum-mainnet'.",
+      );
     });
 
     it("should perform swap on base-mainnet", async () => {
@@ -167,24 +161,42 @@ describe("CDP API Action Provider", () => {
 
       const mockAccount = { swap: jest.fn() };
       (mockCdpClient.evm.getAccount as jest.Mock).mockResolvedValue(mockAccount);
-      mockAccount.swap.mockResolvedValue({
-        transactionHash: "0xswap789",
+      mockGetTokenDetails.mockResolvedValue({
+        fromTokenDecimals: 18,
+        toTokenDecimals: 6,
+        fromTokenName: "ETH",
+        toTokenName: "USDC",
       });
+      (mockCdpClient.evm.getSwapPrice as jest.Mock).mockResolvedValue({
+        liquidityAvailable: true,
+        issues: {},
+        toAmount: "990000", // 0.99 USDC
+        minToAmount: "980000",
+      });
+      mockAccount.swap.mockResolvedValue("0xswap789");
 
       const result = await actionProvider.swap(mockWalletProvider, {
-        fromAssetId: "usdc",
-        toAssetId: "eth",
-        amount: "100",
-      });
-
-      expect(mockAccount.swap).toHaveBeenCalledWith({
-        network: "base", // Should convert base-mainnet to base
-        from: "usdc",
-        to: "eth",
-        amount: "100",
+        fromToken: FROM_TOKEN,
+        toToken: TO_TOKEN,
+        fromAmount: "0.1",
         slippageBps: 100,
       });
-      expect(result).toContain("Successfully swapped 100 USDC to ETH");
+
+      expect(mockCdpClient.evm.getAccount).toHaveBeenCalledWith({
+        address: "0x123456789",
+      });
+      expect(mockAccount.swap).toHaveBeenCalledWith({
+        network: "base",
+        fromToken: FROM_TOKEN,
+        toToken: TO_TOKEN,
+        fromAmount: 100000000000000000n, // 0.1 ETH
+        slippageBps: 100,
+      });
+
+      const parsedResult = JSON.parse(result);
+      console.log(parsedResult);
+      expect(parsedResult.success).toBe(true);
+      expect(parsedResult.transactionHash).toBe("0xswap789");
     });
 
     it("should throw error for non-EVM networks", async () => {
@@ -192,46 +204,60 @@ describe("CDP API Action Provider", () => {
       mockWalletProvider.getNetwork.mockReturnValue(mockNetwork as any);
       mockWalletProvider.getClient.mockReturnValue(mockCdpClient);
 
-      await expect(
-        actionProvider.swap(mockWalletProvider, {
-          fromAssetId: "sol",
-          toAssetId: "usdc",
-          amount: "1",
-        }),
-      ).rejects.toThrow("Swap is currently only supported on EVM networks");
+      const result = await actionProvider.swap(mockWalletProvider, {
+        fromToken: "So11111111111111111111111111111111111111112",
+        toToken: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyB7uee",
+        fromAmount: "1",
+        slippageBps: 100,
+      });
+      expect(JSON.parse(result).error).toContain(
+        "CDP Swap API is currently only supported on EVM networks.",
+      );
     });
 
     it("should throw error for wallet provider without client", async () => {
       const mockWalletWithoutClient = {
-        getNetwork: jest.fn().mockReturnValue({ protocolFamily: "evm", networkId: "base-sepolia" }),
+        getNetwork: jest.fn().mockReturnValue({ protocolFamily: "evm", networkId: "base-mainnet" }),
       } as any;
 
-      await expect(
-        actionProvider.swap(mockWalletWithoutClient, {
-          fromAssetId: "eth",
-          toAssetId: "usdc",
-          amount: "0.1",
-        }),
-      ).rejects.toThrow("Wallet provider is not a CDP Wallet Provider");
+      const result = await actionProvider.swap(mockWalletWithoutClient, {
+        fromToken: FROM_TOKEN,
+        toToken: TO_TOKEN,
+        fromAmount: "0.1",
+        slippageBps: 100,
+      });
+      expect(JSON.parse(result).error).toBe("Wallet provider is not a CDP Wallet Provider.");
     });
 
     it("should handle swap errors", async () => {
-      const mockNetwork = { protocolFamily: "evm", networkId: "base-sepolia" };
+      const mockNetwork = { protocolFamily: "evm", networkId: "base-mainnet" };
       mockWalletProvider.getNetwork.mockReturnValue(mockNetwork as any);
       mockWalletProvider.getAddress.mockReturnValue("0x123456789");
       mockWalletProvider.getClient.mockReturnValue(mockCdpClient);
+      mockGetTokenDetails.mockResolvedValue({
+        fromTokenDecimals: 18,
+        toTokenDecimals: 6,
+        fromTokenName: "ETH",
+        toTokenName: "USDC",
+      });
+      (mockCdpClient.evm.getSwapPrice as jest.Mock).mockResolvedValue({
+        liquidityAvailable: true,
+        issues: {},
+        toAmount: "990000",
+        minToAmount: "980000",
+      });
 
       const mockAccount = { swap: jest.fn() };
       (mockCdpClient.evm.getAccount as jest.Mock).mockResolvedValue(mockAccount);
       mockAccount.swap.mockRejectedValue(new Error("Insufficient liquidity"));
 
-      await expect(
-        actionProvider.swap(mockWalletProvider, {
-          fromAssetId: "eth",
-          toAssetId: "usdc",
-          amount: "1000",
-        }),
-      ).rejects.toThrow("Swap failed: Error: Insufficient liquidity");
+      const result = await actionProvider.swap(mockWalletProvider, {
+        fromToken: FROM_TOKEN,
+        toToken: TO_TOKEN,
+        fromAmount: "1000",
+        slippageBps: 100,
+      });
+      expect(JSON.parse(result).error).toBe("Swap failed: Error: Insufficient liquidity");
     });
   });
 
@@ -252,21 +278,21 @@ describe("CDP API Action Provider", () => {
   describe("SwapSchema", () => {
     it("should validate correct swap input", () => {
       const validInput = {
-        fromAssetId: "eth",
-        toAssetId: "usdc",
-        amount: "0.1",
+        fromToken: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        toToken: "0xA0b86991c6218b36c1d19D4a2e9EB0cE3606eB48",
+        fromAmount: "0.1",
       };
       const result = SwapSchema.safeParse(validInput);
       expect(result.success).toBe(true);
-      expect(result.data).toEqual(validInput);
+      expect(result.data).toEqual({ ...validInput, slippageBps: 100 });
     });
 
-    it("should validate swap input with network", () => {
+    it("should validate swap input with optional slippageBps", () => {
       const validInput = {
-        fromAssetId: "usdc",
-        toAssetId: "eth",
-        amount: "100",
-        network: "base-sepolia",
+        fromToken: "0xA0b86991c6218b36c1d19D4a2e9EB0cE3606eB48",
+        toToken: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        fromAmount: "100",
+        slippageBps: 50,
       };
       const result = SwapSchema.safeParse(validInput);
       expect(result.success).toBe(true);
@@ -275,8 +301,8 @@ describe("CDP API Action Provider", () => {
 
     it("should fail validation when missing required fields", () => {
       const invalidInput = {
-        fromAssetId: "eth",
-        // missing toAssetId and amount
+        fromToken: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        // missing toToken and fromAmount
       };
       const result = SwapSchema.safeParse(invalidInput);
       expect(result.success).toBe(false);
