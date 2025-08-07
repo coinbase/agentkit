@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Network } from "../../network";
-import { EvmWalletProvider, WalletProvider } from "../../wallet-providers";
+import { CdpSmartWalletProvider, EvmWalletProvider, WalletProvider } from "../../wallet-providers";
 import { isWalletProviderWithClient } from "../../wallet-providers/cdpShared";
 import { CreateAction } from "../actionDecorator";
 import { ActionProvider } from "../actionProvider";
@@ -139,11 +139,6 @@ Important notes:
           args.toToken,
         );
 
-      // Get the account for the wallet address
-      const account = await walletProvider.getClient().evm.getAccount({
-        address: walletProvider.getAddress() as Hex,
-      });
-
       // Estimate swap price first to check liquidity, token balance and permit2 approval status
       const swapPrice = await walletProvider.getClient().evm.getSwapPrice({
         fromToken: args.fromToken as Hex,
@@ -199,6 +194,14 @@ Important notes:
           });
         }
       }
+
+      // Get the account for the wallet address
+      const account =
+        walletProvider.getName() === "cdp_smart_wallet"
+          ? (walletProvider as unknown as CdpSmartWalletProvider).getSmartAccount()
+          : await walletProvider.getClient().evm.getAccount({
+              address: walletProvider.getAddress() as Hex,
+            });
 
       // Execute swap using the all-in-one pattern
       const swapResult = (await account.swap({

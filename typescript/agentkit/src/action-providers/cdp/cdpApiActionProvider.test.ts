@@ -42,6 +42,7 @@ describe("CDP API Action Provider", () => {
       getAddress: jest.fn(),
       getClient: jest.fn(),
       readContract: jest.fn(),
+      getName: jest.fn(),
     } as any;
 
     actionProvider = new CdpApiActionProvider();
@@ -158,6 +159,7 @@ describe("CDP API Action Provider", () => {
       mockWalletProvider.getNetwork.mockReturnValue(mockNetwork as any);
       mockWalletProvider.getAddress.mockReturnValue("0x123456789");
       mockWalletProvider.getClient.mockReturnValue(mockCdpClient);
+      mockWalletProvider.getName.mockReturnValue("cdp_evm_wallet"); // Not cdp_smart_wallet, so it will use getAccount
 
       const mockAccount = { swap: jest.fn() };
       (mockCdpClient.evm.getAccount as jest.Mock).mockResolvedValue(mockAccount);
@@ -234,6 +236,7 @@ describe("CDP API Action Provider", () => {
       mockWalletProvider.getNetwork.mockReturnValue(mockNetwork as any);
       mockWalletProvider.getAddress.mockReturnValue("0x123456789");
       mockWalletProvider.getClient.mockReturnValue(mockCdpClient);
+      mockWalletProvider.getName.mockReturnValue("cdp_evm_wallet"); // Not cdp_smart_wallet, so it will use getAccount
       mockGetTokenDetails.mockResolvedValue({
         fromTokenDecimals: 18,
         toTokenDecimals: 6,
