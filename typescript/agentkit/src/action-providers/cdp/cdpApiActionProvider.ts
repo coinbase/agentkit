@@ -84,6 +84,104 @@ from another wallet and provide the user with your wallet details.`,
   }
 
   /**
+   * Gets a price quote for swapping tokens using the CDP Swap API.
+   *
+   * @param walletProvider - The wallet provider to get the quote for.
+   * @param args - The input arguments for the swap price action.
+   * @returns A JSON string with detailed swap price quote information.
+   */
+  @CreateAction({
+    name: "get_swap_price",
+    description: `
+This tool fetches a price quote for swapping between two tokens using the CDP Swap API but does not execute a swap.
+It takes the following inputs:
+- fromToken: The contract address of the token to sell
+- toToken: The contract address of the token to buy
+- fromAmount: The amount of fromToken to swap in whole units (e.g. 1 ETH or 10 USDC)
+- slippageBps: (Optional) Maximum allowed slippage in basis points (100 = 1%)
+Important notes:
+- The contract address for native ETH is "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+`,
+    schema: SwapSchema,
+  })
+  async getSwapPrice(
+    walletProvider: WalletProvider,
+    args: z.infer<typeof SwapSchema>,
+  ): Promise<string> {
+    // Get CDP SDK network
+    const network = walletProvider.getNetwork();
+    const networkId = network.networkId!;
+    const cdpNetwork = this.#getCdpSdkNetwork(networkId);
+
+    // Sanity checks
+    if (!isWalletProviderWithClient(walletProvider))
+      return JSON.stringify({
+        success: false,
+        error: "Wallet provider is not a CDP Wallet Provider.",
+      });
+
+    if (network.protocolFamily !== "evm")
+      return JSON.stringify({
+        success: false,
+        error: "CDP Swap API is currently only supported on EVM networks.",
+      });
+
+    if (networkId !== "base-mainnet" && networkId !== "ethereum-mainnet")
+      return JSON.stringify({
+        success: false,
+        error: "CDP Swap API is currently only supported on 'base-mainnet' or 'ethereum-mainnet'.",
+      });
+
+    try {
+      // Get token details
+      const { fromTokenDecimals, toTokenDecimals, fromTokenName, toTokenName } =
+        await getTokenDetails(
+          walletProvider as unknown as EvmWalletProvider,
+          args.fromToken,
+          args.toToken,
+        );
+
+      // Get swap price quote
+      const swapPrice = (await walletProvider.getClient().evm.getSwapPrice({
+        fromToken: args.fromToken as Hex,
+        toToken: args.toToken as Hex,
+        fromAmount: parseUnits(args.fromAmount, fromTokenDecimals),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        network: cdpNetwork as any,
+        taker: walletProvider.getAddress() as Hex,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      })) as any;
+
+      const formattedResponse = {
+        success: true,
+        fromAmount: args.fromAmount,
+        fromTokenName: fromTokenName,
+        fromToken: args.fromToken,
+        toAmount: formatUnits(BigInt(swapPrice.toAmount), toTokenDecimals),
+        minToAmount: formatUnits(BigInt(swapPrice.minToAmount), toTokenDecimals),
+        toTokenName: toTokenName,
+        toToken: args.toToken,
+        slippageBps: args.slippageBps,
+        liquidityAvailable: swapPrice.liquidityAvailable,
+        ...(swapPrice.issues ? { issues: swapPrice.issues } : {}),
+        priceOfBuyTokenInSellToken: (
+          Number(args.fromAmount) / Number(formatUnits(BigInt(swapPrice.toAmount), toTokenDecimals))
+        ).toString(),
+        priceOfSellTokenInBuyToken: (
+          Number(formatUnits(BigInt(swapPrice.toAmount), toTokenDecimals)) / Number(args.fromAmount)
+        ).toString(),
+      };
+
+      return JSON.stringify(formattedResponse);
+    } catch (error) {
+      return JSON.stringify({
+        success: false,
+        error: `Error fetching swap price: ${error}`,
+      });
+    }
+  }
+
+  /**
    * Swaps tokens using the CDP client.
    *
    * @param walletProvider - The wallet provider to perform the swap with.
@@ -212,6 +310,8 @@ Important notes:
         fromAmount: parseUnits(args.fromAmount, fromTokenDecimals),
         slippageBps: args.slippageBps,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        paymasterUrl: (walletProvider as any).getPaymasterUrl?.(),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       })) as any;
 
       // Format the successful response
@@ -235,104 +335,6 @@ Important notes:
       return JSON.stringify({
         success: false,
         error: `Swap failed: ${error}`,
-      });
-    }
-  }
-
-  /**
-   * Gets a price quote for swapping tokens using the CDP Swap API.
-   *
-   * @param walletProvider - The wallet provider to get the quote for.
-   * @param args - The input arguments for the swap price action.
-   * @returns A JSON string with detailed swap price quote information.
-   */
-  @CreateAction({
-    name: "get_swap_price",
-    description: `
-This tool fetches a price quote for swapping between two tokens using the CDP Swap API but does not execute a swap.
-It takes the following inputs:
-- fromToken: The contract address of the token to sell
-- toToken: The contract address of the token to buy
-- fromAmount: The amount of fromToken to swap in whole units (e.g. 1 ETH or 10 USDC)
-- slippageBps: (Optional) Maximum allowed slippage in basis points (100 = 1%)
-Important notes:
-- The contract address for native ETH is "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-`,
-    schema: SwapSchema,
-  })
-  async getSwapPrice(
-    walletProvider: WalletProvider,
-    args: z.infer<typeof SwapSchema>,
-  ): Promise<string> {
-    // Get CDP SDK network
-    const network = walletProvider.getNetwork();
-    const networkId = network.networkId!;
-    const cdpNetwork = this.#getCdpSdkNetwork(networkId);
-
-    // Sanity checks
-    if (!isWalletProviderWithClient(walletProvider))
-      return JSON.stringify({
-        success: false,
-        error: "Wallet provider is not a CDP Wallet Provider.",
-      });
-
-    if (network.protocolFamily !== "evm")
-      return JSON.stringify({
-        success: false,
-        error: "CDP Swap API is currently only supported on EVM networks.",
-      });
-
-    if (networkId !== "base-mainnet" && networkId !== "ethereum-mainnet")
-      return JSON.stringify({
-        success: false,
-        error: "CDP Swap API is currently only supported on 'base-mainnet' or 'ethereum-mainnet'.",
-      });
-
-    try {
-      // Get token details
-      const { fromTokenDecimals, toTokenDecimals, fromTokenName, toTokenName } =
-        await getTokenDetails(
-          walletProvider as unknown as EvmWalletProvider,
-          args.fromToken,
-          args.toToken,
-        );
-
-      // Get swap price quote
-      const swapPrice = (await walletProvider.getClient().evm.getSwapPrice({
-        fromToken: args.fromToken as Hex,
-        toToken: args.toToken as Hex,
-        fromAmount: parseUnits(args.fromAmount, fromTokenDecimals),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        network: cdpNetwork as any,
-        taker: walletProvider.getAddress() as Hex,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      })) as any;
-
-      const formattedResponse = {
-        success: true,
-        fromAmount: args.fromAmount,
-        fromTokenName: fromTokenName,
-        fromToken: args.fromToken,
-        toAmount: formatUnits(BigInt(swapPrice.toAmount), toTokenDecimals),
-        minToAmount: formatUnits(BigInt(swapPrice.minToAmount), toTokenDecimals),
-        toTokenName: toTokenName,
-        toToken: args.toToken,
-        slippageBps: args.slippageBps,
-        liquidityAvailable: swapPrice.liquidityAvailable,
-        ...(swapPrice.issues ? { issues: swapPrice.issues } : {}),
-        priceOfBuyTokenInSellToken: (
-          Number(args.fromAmount) / Number(formatUnits(BigInt(swapPrice.toAmount), toTokenDecimals))
-        ).toString(),
-        priceOfSellTokenInBuyToken: (
-          Number(formatUnits(BigInt(swapPrice.toAmount), toTokenDecimals)) / Number(args.fromAmount)
-        ).toString(),
-      };
-
-      return JSON.stringify(formattedResponse);
-    } catch (error) {
-      return JSON.stringify({
-        success: false,
-        error: `Error fetching swap price: ${error}`,
       });
     }
   }
