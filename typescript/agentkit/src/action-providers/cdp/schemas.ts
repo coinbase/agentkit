@@ -25,7 +25,7 @@ export const SwapSchema = z
       .describe("The token contract address to swap to"),
     fromAmount: z
       .string()
-      .describe("The amount of fromToken to sell in whole units (e.g., 1.5 WETH, 10 USDC)"),
+      .describe("The amount of fromToken to sell in whole units (e.g., 1.5 WETH, 10.5 USDC)"),
     slippageBps: z
       .number()
       .int()

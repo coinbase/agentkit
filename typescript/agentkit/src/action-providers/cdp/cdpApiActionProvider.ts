@@ -93,11 +93,11 @@ from another wallet and provide the user with your wallet details.`,
   @CreateAction({
     name: "get_swap_price",
     description: `
-This tool fetches a price quote for swapping between two tokens using the CDP Swap API but does not execute a swap.
+This tool fetches a price quote for swapping (trading) between two tokens using the CDP Swap API but does not execute a swap.
 It takes the following inputs:
 - fromToken: The contract address of the token to sell
 - toToken: The contract address of the token to buy
-- fromAmount: The amount of fromToken to swap in whole units (e.g. 1 ETH or 10 USDC)
+- fromAmount: The amount of fromToken to swap in whole units (e.g. 1 ETH or 10.5 USDC)
 - slippageBps: (Optional) Maximum allowed slippage in basis points (100 = 1%)
 Important notes:
 - The contract address for native ETH is "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
@@ -157,18 +157,18 @@ Important notes:
         fromAmount: args.fromAmount,
         fromTokenName: fromTokenName,
         fromToken: args.fromToken,
-        toAmount: formatUnits(BigInt(swapPrice.toAmount), toTokenDecimals),
-        minToAmount: formatUnits(BigInt(swapPrice.minToAmount), toTokenDecimals),
+        toAmount: formatUnits(swapPrice.toAmount, toTokenDecimals),
+        minToAmount: formatUnits(swapPrice.minToAmount, toTokenDecimals),
         toTokenName: toTokenName,
         toToken: args.toToken,
         slippageBps: args.slippageBps,
         liquidityAvailable: swapPrice.liquidityAvailable,
-        ...(swapPrice.issues ? { issues: swapPrice.issues } : {}),
+        balanceEnough: swapPrice.issues.balance === undefined,
         priceOfBuyTokenInSellToken: (
-          Number(args.fromAmount) / Number(formatUnits(BigInt(swapPrice.toAmount), toTokenDecimals))
+          Number(args.fromAmount) / Number(formatUnits(swapPrice.toAmount, toTokenDecimals))
         ).toString(),
         priceOfSellTokenInBuyToken: (
-          Number(formatUnits(BigInt(swapPrice.toAmount), toTokenDecimals)) / Number(args.fromAmount)
+          Number(formatUnits(swapPrice.toAmount, toTokenDecimals)) / Number(args.fromAmount)
         ).toString(),
       };
 
@@ -191,11 +191,11 @@ Important notes:
   @CreateAction({
     name: "swap",
     description: `
-This tool executes a token swap using the CDP Swap API.
+This tool executes a token swap (trade) using the CDP Swap API.
 It takes the following inputs:
 - fromToken: The contract address of the token to sell
 - toToken: The contract address of the token to buy
-- fromAmount: The amount of fromToken to swap in whole units (e.g. 1 ETH or 10 USDC)
+- fromAmount: The amount of fromToken to swap in whole units (e.g. 1 ETH or 10.5 USDC)
 - slippageBps: (Optional) Maximum allowed slippage in basis points (100 = 1%)
 Important notes:
 - The contract address for native ETH is "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
@@ -237,6 +237,14 @@ Important notes:
           args.toToken,
         );
 
+      // Get the account for the wallet address
+      const isSmartWallet = walletProvider.getName() === "cdp_smart_wallet_provider";
+      const account = isSmartWallet
+        ? (walletProvider as unknown as CdpSmartWalletProvider).getSmartAccount()
+        : await walletProvider.getClient().evm.getAccount({
+            address: walletProvider.getAddress() as Hex,
+          });
+
       // Estimate swap price first to check liquidity, token balance and permit2 approval status
       const swapPrice = await walletProvider.getClient().evm.getSwapPrice({
         fromToken: args.fromToken as Hex,
@@ -244,7 +252,7 @@ Important notes:
         fromAmount: parseUnits(args.fromAmount, fromTokenDecimals),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         network: cdpNetwork as any,
-        taker: walletProvider.getAddress() as Hex,
+        taker: account.address as Hex,
       });
 
       // Check if liquidity is available
@@ -293,14 +301,6 @@ Important notes:
         }
       }
 
-      // Get the account for the wallet address
-      const account =
-        walletProvider.getName() === "cdp_smart_wallet"
-          ? (walletProvider as unknown as CdpSmartWalletProvider).getSmartAccount()
-          : await walletProvider.getClient().evm.getAccount({
-              address: walletProvider.getAddress() as Hex,
-            });
-
       // Execute swap using the all-in-one pattern
       const swapResult = (await account.swap({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -310,7 +310,11 @@ Important notes:
         fromAmount: parseUnits(args.fromAmount, fromTokenDecimals),
         slippageBps: args.slippageBps,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        paymasterUrl: (walletProvider as any).getPaymasterUrl?.(),
+        paymasterUrl: (walletProvider as unknown as CdpSmartWalletProvider).getPaymasterUrl(),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        signerAddress: isSmartWallet
+          ? ((walletProvider as unknown as CdpSmartWalletProvider).getOwnerAccount().address as Hex)
+          : (account.address as Hex),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       })) as any;
 
@@ -322,8 +326,8 @@ Important notes:
         fromAmount: args.fromAmount,
         fromTokenName: fromTokenName,
         fromToken: args.fromToken,
-        toAmount: formatUnits(BigInt(swapPrice.toAmount), toTokenDecimals),
-        minToAmount: formatUnits(BigInt(swapPrice.minToAmount), toTokenDecimals),
+        toAmount: formatUnits(swapPrice.toAmount, toTokenDecimals),
+        minToAmount: formatUnits(swapPrice.minToAmount, toTokenDecimals),
         toTokenName: toTokenName,
         toToken: args.toToken,
         slippageBps: args.slippageBps,

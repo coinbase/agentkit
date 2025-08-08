@@ -160,6 +160,9 @@ describe("CDP API Action Provider", () => {
       mockWalletProvider.getAddress.mockReturnValue("0x123456789");
       mockWalletProvider.getClient.mockReturnValue(mockCdpClient);
       mockWalletProvider.getName.mockReturnValue("cdp_evm_wallet"); // Not cdp_smart_wallet, so it will use getAccount
+      (mockWalletProvider as any).getPaymasterUrl = jest
+        .fn()
+        .mockReturnValue("https://paymaster.example");
 
       const mockAccount = { swap: jest.fn() };
       (mockCdpClient.evm.getAccount as jest.Mock).mockResolvedValue(mockAccount);
@@ -187,13 +190,15 @@ describe("CDP API Action Provider", () => {
       expect(mockCdpClient.evm.getAccount).toHaveBeenCalledWith({
         address: "0x123456789",
       });
-      expect(mockAccount.swap).toHaveBeenCalledWith({
-        network: "base",
-        fromToken: FROM_TOKEN,
-        toToken: TO_TOKEN,
-        fromAmount: 100000000000000000n, // 0.1 ETH
-        slippageBps: 100,
-      });
+      expect(mockAccount.swap).toHaveBeenCalledWith(
+        expect.objectContaining({
+          network: "base",
+          fromToken: FROM_TOKEN,
+          toToken: TO_TOKEN,
+          fromAmount: 100000000000000000n, // 0.1 ETH
+          slippageBps: 100,
+        }),
+      );
 
       const parsedResult = JSON.parse(result);
       console.log(parsedResult);
@@ -237,6 +242,9 @@ describe("CDP API Action Provider", () => {
       mockWalletProvider.getAddress.mockReturnValue("0x123456789");
       mockWalletProvider.getClient.mockReturnValue(mockCdpClient);
       mockWalletProvider.getName.mockReturnValue("cdp_evm_wallet"); // Not cdp_smart_wallet, so it will use getAccount
+      (mockWalletProvider as any).getPaymasterUrl = jest
+        .fn()
+        .mockReturnValue("https://paymaster.example");
       mockGetTokenDetails.mockResolvedValue({
         fromTokenDecimals: 18,
         toTokenDecimals: 6,
