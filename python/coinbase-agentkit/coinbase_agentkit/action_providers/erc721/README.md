@@ -6,7 +6,7 @@ This directory contains the **ERC721ActionProvider** implementation, which provi
 
 ```
 erc721/
-├── erc721_action_provider.py      # Main provider with ERC721 token functionality
+├── erc721_action_provider.py     # Main provider with ERC721 token functionality
 ├── constants.py                  # Constants including ERC20 ABI
 ├── schemas.py                    # Pydantic schemas for action inputs
 ├── validators.py                 # Input validation utilities
@@ -16,7 +16,7 @@ erc721/
 # From python/coinbase-agentkit/
 tests/action_providers/erc721/
 ├── conftest.py                    # Test configuration
-└── test_erc721_action_provider.py  # Test for ERC721 action provider
+└── test_erc721_action_provider.py # Test for ERC721 action provider
 ```
 
 ## Actions
