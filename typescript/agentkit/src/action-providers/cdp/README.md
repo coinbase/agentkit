@@ -6,11 +6,15 @@ This directory contains the **CdpV2ActionProvider** implementation, which provid
 
 ```
 cdp/
-├── cdpApiActionProvider.ts          # Provider for CDP API interactions
-├── cdpApiActionProvider.test.ts     # Tests for CDP API provider
-├── schemas.ts                         # Action schemas for CDP operations
-├── index.ts                           # Main exports
-└── README.md                          # This file
+├── cdpApiActionProvider.ts              # Provider for CDP API interactions
+├── cdpApiActionProvider.test.ts         # Tests for CDP API provider
+├── cdpEvmWalletActionProvider.ts        # Provider for CDP EVM Wallet operations
+├── cdpSmartWalletActionProvider.ts      # Provider for CDP Smart Wallet operations
+├── cdpEvmWalletActionProvider.test.ts   # Tests for CDP EVM Wallet provider
+├── cdpSmartWalletActionProvider.test.ts # Tests for CDP Smart Wallet provider
+├── schemas.ts                           # Action schemas for CDP operations
+├── index.ts                             # Main exports
+└── README.md                            # This file
 ```
 
 ## Actions
@@ -21,6 +25,16 @@ cdp/
 
   - Available only on Base Sepolia, Ethereum Sepolia or Solana Devnet
 
+### CDP EVM Wallet Actions
+
+- `list_spend_permissions`: Lists spend permissions that have been granted to the current EVM wallet by a smart account.
+- `use_spend_permission`: Uses a spend permission to spend tokens on behalf of a smart account that the current EVM wallet has permission to spend.
+
+### CDP Smart Wallet Actions
+
+- `list_spend_permissions`: Lists spend permissions that have been granted to the current smart wallet by a smart account.
+- `use_spend_permission`: Uses a spend permission to spend tokens on behalf of a smart account that the current smart wallet has permission to spend.
+
 ## Adding New Actions
 
 To add new CDP actions:
@@ -28,6 +42,8 @@ To add new CDP actions:
 1. Define your action schema in `schemas.ts`
 2. Implement the action in the appropriate provider file:
    - CDP API actions in `cdpApiActionProvider.ts`
+   - CDP EVM Wallet actions in `cdpEvmWalletActionProvider.ts`
+   - CDP Smart Wallet actions in `cdpSmartWalletActionProvider.ts`
 3. Add corresponding tests
 
 ## Network Support

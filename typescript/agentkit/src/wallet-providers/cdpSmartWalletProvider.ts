@@ -53,8 +53,9 @@ interface ConfigureCdpSmartWalletProviderWithWalletOptions {
  * A wallet provider that uses the Coinbase CDP SDK smart wallets.
  */
 export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletProviderWithClient {
+  public smartAccount: EvmSmartAccount;
+
   #publicClient: PublicClient;
-  #smartAccount: EvmSmartAccount;
   #ownerAccount: LocalAccount | EvmServerAccount;
   #cdp: CdpClient;
   #network: Network;
@@ -68,7 +69,7 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
   private constructor(config: ConfigureCdpSmartWalletProviderWithWalletOptions) {
     super();
 
-    this.#smartAccount = config.smartAccount;
+    this.smartAccount = config.smartAccount;
     this.#ownerAccount = config.ownerAccount;
     this.#cdp = config.cdp;
     this.#publicClient = config.publicClient;
@@ -167,8 +168,8 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
     ownerAddress: Address;
   }> {
     return {
-      name: this.#smartAccount.name,
-      address: this.#smartAccount.address as Address,
+      name: this.smartAccount.name,
+      address: this.smartAccount.address as Address,
       ownerAddress: this.#ownerAccount.address as Address,
     };
   }
@@ -194,7 +195,7 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async signTypedData(typedData: any): Promise<Hex> {
     const { domain, types, primaryType, message } = typedData;
-    return await this.#smartAccount.signTypedData({
+    return await this.smartAccount.signTypedData({
       domain,
       types,
       primaryType,
@@ -231,7 +232,7 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
     ];
 
     const userOperation = await this.#cdp.evm.sendUserOperation({
-      smartAccount: this.#smartAccount,
+      smartAccount: this.smartAccount,
       network: this.#getCdpSdkNetwork(),
       calls,
       paymasterUrl: this.#paymasterUrl,
@@ -246,7 +247,7 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
    * @returns The address of the smart wallet.
    */
   getAddress(): string {
-    return this.#smartAccount.address;
+    return this.smartAccount.address;
   }
 
   /**
@@ -291,7 +292,7 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
    * @returns The balance of the wallet in wei
    */
   async getBalance(): Promise<bigint> {
-    return await this.#publicClient.getBalance({ address: this.#smartAccount.address });
+    return await this.#publicClient.getBalance({ address: this.smartAccount.address });
   }
 
   /**
@@ -306,7 +307,7 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
     // This is a simplified implementation - in practice you might want to poll
     // the CDP API for user operation status
     return this.#cdp.evm.waitForUserOperation({
-      smartAccountAddress: this.#smartAccount.address,
+      smartAccountAddress: this.smartAccount.address,
       userOpHash,
     });
   }

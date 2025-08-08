@@ -172,6 +172,32 @@ const agent = createReactAgent({
 ## Action Providers
 
 <details>
+<summary><strong>CDP EVM Wallet</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>list_spend_permissions</code></td>
+    <td width="768">Lists spend permissions that have been granted to the current EVM wallet by a smart account.</td>
+</tr>
+<tr>
+    <td width="200"><code>use_spend_permission</code></td>
+    <td width="768">Uses a spend permission to spend tokens on behalf of a smart account that the current EVM wallet has permission to spend.</td>
+</tr>
+</table>
+</details>
+<details>
+<summary><strong>CDP Smart Wallet</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>list_spend_permissions</code></td>
+    <td width="768">Lists spend permissions that have been granted to the current smart wallet by a smart account.</td>
+</tr>
+<tr>
+    <td width="200"><code>use_spend_permission</code></td>
+    <td width="768">Uses a spend permission to spend tokens on behalf of a smart account that the current smart wallet has permission to spend.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Across</strong></summary>
 <table width="100%">
 <tr>

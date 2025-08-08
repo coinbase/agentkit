@@ -25,3 +25,36 @@ export const SwapSchema = z
   })
   .strip()
   .describe("Instructions for swapping tokens");
+
+/**
+ * Input schema for listing spend permissions action.
+ */
+export const ListSpendPermissionsSchema = z
+  .object({
+    smartAccountAddress: z
+      .string()
+      .describe("The smart account address that has granted spend permissions"),
+    network: z
+      .string()
+      .optional()
+      .describe("The network to list permissions on (defaults to wallet's network)"),
+  })
+  .strip()
+  .describe("Instructions for listing spend permissions for a smart account");
+
+/**
+ * Input schema for using a spend permission action.
+ */
+export const UseSpendPermissionSchema = z
+  .object({
+    smartAccountAddress: z
+      .string()
+      .describe("The smart account address that has granted the spend permission"),
+    value: z.string().describe("The amount to spend (in the token's units)"),
+    network: z
+      .string()
+      .optional()
+      .describe("The network to perform the spend on (defaults to wallet's network)"),
+  })
+  .strip()
+  .describe("Instructions for using a spend permission");

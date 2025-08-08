@@ -1,7 +1,7 @@
 import {
   AgentKit,
   cdpApiActionProvider,
-  erc721ActionProvider,
+  erc20ActionProvider,
   pythActionProvider,
   walletActionProvider,
   CdpSmartWalletProvider,
@@ -19,6 +19,7 @@ dotenv.config();
 type WalletData = {
   smartAccountName?: string;
   smartWalletAddress: Address;
+  ownerAddress: Address;
 };
 
 /**
@@ -79,12 +80,15 @@ async function initializeAgent() {
 
     let walletData: WalletData | null = null;
     let smartAccountName: string | undefined = undefined;
-
+    let smartWalletAddress: Address | undefined = undefined;
+    let ownerAddress: Address | undefined = undefined;
     // Read existing wallet data if available
     if (fs.existsSync(walletDataFile)) {
       try {
         walletData = JSON.parse(fs.readFileSync(walletDataFile, "utf8")) as WalletData;
         smartAccountName = walletData.smartAccountName;
+        smartWalletAddress = walletData.smartWalletAddress;
+        ownerAddress = walletData.ownerAddress;
       } catch (error) {
         console.error(`Error reading wallet data for ${networkId}:`, error);
         // Continue without wallet data
@@ -95,13 +99,15 @@ async function initializeAgent() {
     const walletProvider = await CdpSmartWalletProvider.configureWithWallet({
       networkId,
       smartAccountName,
+      address: smartWalletAddress,
+      owner: ownerAddress,
     });
 
     const agentKit = await AgentKit.from({
       walletProvider,
       actionProviders: [
         cdpApiActionProvider(),
-        erc721ActionProvider(),
+        erc20ActionProvider(),
         pythActionProvider(),
         walletActionProvider(),
       ],
@@ -115,6 +121,7 @@ async function initializeAgent() {
       JSON.stringify({
         smartAccountName: data.name,
         smartWalletAddress: data.address,
+        ownerAddress: data.ownerAddress,
       } as WalletData),
     );
 
