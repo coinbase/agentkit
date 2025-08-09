@@ -1,5 +1,17 @@
 # AgentKit Changelog
 
+## 0.10.0
+
+### Minor Changes
+
+- [#818](https://github.com/coinbase/agentkit/pull/818) [`bc3d1d5`](https://github.com/coinbase/agentkit/commit/bc3d1d5f03f81f1438f31b983797de9696639994) Thanks [@0xRAG](https://github.com/0xRAG)! - Added ListSpendPermissions and UseSpendPermission actions to new CdpEvmWalletActionProvider and CdpSmartWalletActionProvider
+
+### Patch Changes
+
+- [#816](https://github.com/coinbase/agentkit/pull/816) [`1b1db57`](https://github.com/coinbase/agentkit/commit/1b1db57f9815ab25a658adfcf542037751a38144) Thanks [@pcminh0505](https://github.com/pcminh0505)! - Added Zerion API for portfolio and DeFi positions
+
+- [#814](https://github.com/coinbase/agentkit/pull/814) [`3211ad0`](https://github.com/coinbase/agentkit/commit/3211ad06a87f0ab3bb1a49f415cfda0b3f8b2db4) Thanks [@phdargen](https://github.com/phdargen)! - Added paymaster capability to CdpSmartWallet
+
 ## 0.9.1
 
 ### Patch Changes
