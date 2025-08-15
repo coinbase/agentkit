@@ -1,5 +1,11 @@
 # AgentKit Changelog
 
+## 0.10.1
+
+### Patch Changes
+
+- [#824](https://github.com/coinbase/agentkit/pull/824) [`6442bdd`](https://github.com/coinbase/agentkit/commit/6442bdd72c8fc67b854a62fefaf17552549e38e7) Thanks [@phdargen](https://github.com/phdargen)! - Added getPublicClient() for EvmWalletProviders and custom RPC_URL
+
 ## 0.10.0
 
 ### Minor Changes
