@@ -33,3 +33,4 @@ export * from "./x402";
 export * from "./zerion";
 export * from "./zerodev";
 export * from "./zora";
+export * from "./dexpaprika";
