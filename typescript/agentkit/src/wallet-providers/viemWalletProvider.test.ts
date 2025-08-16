@@ -94,6 +94,8 @@ jest.mock("viem", () => {
     fromHex: jest.fn(),
     formatEther: jest.fn(),
     privateKeyToAccount: jest.fn(),
+    isHex: jest.fn(value => typeof value === "string" && value.startsWith("0x")),
+    toHex: jest.fn(value => `0x${value}`),
   };
 });
 
@@ -222,7 +224,17 @@ describe("ViemWalletProvider", () => {
       const signature = await provider.signMessage(MOCK_MESSAGE);
       expect(mockWalletClient.signMessage).toHaveBeenCalledWith({
         account: mockWalletClient.account,
-        message: MOCK_MESSAGE,
+        message: { raw: `0x${MOCK_MESSAGE}` },
+      });
+      expect(signature).toBe(MOCK_SIGNATURE);
+    });
+
+    it("should sign a hex message", async () => {
+      const hexMessage = "0x48656c6c6f2c20576f726c6421"; // "Hello, World!" in hex
+      const signature = await provider.signMessage(hexMessage);
+      expect(mockWalletClient.signMessage).toHaveBeenCalledWith({
+        account: mockWalletClient.account,
+        message: { raw: hexMessage },
       });
       expect(signature).toBe(MOCK_SIGNATURE);
     });
