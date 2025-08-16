@@ -15,13 +15,25 @@ export const RequestFaucetFundsV2Schema = z
  */
 export const SwapSchema = z
   .object({
-    fromAssetId: z.string().describe("The asset ID to swap from (e.g., 'eth', 'usdc')"),
-    toAssetId: z.string().describe("The asset ID to swap to (e.g., 'eth', 'usdc')"),
-    amount: z.string().describe("The amount to swap (in the from asset's units)"),
-    network: z
+    fromToken: z
       .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
+      .describe("The token contract address to swap from"),
+    toToken: z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
+      .describe("The token contract address to swap to"),
+    fromAmount: z
+      .string()
+      .describe("The amount of fromToken to sell in whole units (e.g., 1.5 WETH, 10.5 USDC)"),
+    slippageBps: z
+      .number()
+      .int()
+      .min(0)
+      .max(10000)
       .optional()
-      .describe("The network to perform the swap on (defaults to wallet's network)"),
+      .default(100)
+      .describe("The maximum acceptable slippage in basis points (0-10000, default: 100 = 1%)"),
   })
   .strip()
   .describe("Instructions for swapping tokens");

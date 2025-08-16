@@ -69,8 +69,8 @@ importers:
         specifier: ^0.1.0
         version: 0.1.0
       '@coinbase/cdp-sdk':
-        specifier: ^1.34.0
-        version: 1.34.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.2)(utf-8-validate@5.0.10)
+        specifier: ^1.35.0
+        version: 1.35.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.2)(utf-8-validate@5.0.10)
       '@coinbase/coinbase-sdk':
         specifier: ^0.20.0
         version: 0.20.0(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.2)
@@ -929,8 +929,8 @@ packages:
   '@changesets/write@0.4.0':
     resolution: {integrity: sha512-CdTLvIOPiCNuH71pyDu3rA+Q0n65cmAbXnwWH84rKGiFumFzkmHNT8KHTMEchcxN+Kl8I54xGUhJ7l3E7X396Q==}
 
-  '@coinbase/cdp-sdk@1.34.0':
-    resolution: {integrity: sha512-1E7kbTldmoJ46QxqOZrLylhDKsixf0L51N0tHHFORA3xVM6VRoDUKzDAPASkcrh4AMimbZty1+ZqFboak4QGcA==}
+  '@coinbase/cdp-sdk@1.35.0':
+    resolution: {integrity: sha512-T/jpDVl5fdTRG/wd/oheSBsyfGvOLdZgajnsSwz+y2SCP0VpvKHzUWYZqNXXAuK0+WHC4bfcE0Ga6qar+BCjiQ==}
 
   '@coinbase/coinbase-sdk@0.20.0':
     resolution: {integrity: sha512-OoMMktKbjmeEwtwQCK3kIIoX5M+hNelxAGX5Llymvw6bmyrMDaEBZ/Myga9kaLJ+7Hi5Y4jPDy4Cy2MGxxXg6w==}
@@ -5497,7 +5497,7 @@ snapshots:
       human-id: 4.1.1
       prettier: 2.8.8
 
-  '@coinbase/cdp-sdk@1.34.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.2)(utf-8-validate@5.0.10)':
+  '@coinbase/cdp-sdk@1.35.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.2)(utf-8-validate@5.0.10)':
     dependencies:
       '@solana/spl-token': 0.4.13(@solana/web3.js@1.98.1(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.2)(utf-8-validate@5.0.10)
       '@solana/web3.js': 1.98.1(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)
