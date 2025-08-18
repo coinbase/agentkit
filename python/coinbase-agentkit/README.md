@@ -731,7 +731,7 @@ You can enable gasless transactions by providing a paymaster URL:
 ```python
 from coinbase_agentkit import CdpSmartWalletProvider, CdpSmartWalletProviderConfig
 
-wallet_provider = CdpSmartWalletProvider(CdpSmartWalletProvideronfig(
+wallet_provider = CdpSmartWalletProvider(CdpSmartWalletProviderConfig(
     api_key_id="CDP API KEY ID",
     api_key_secret="CDP API KEY SECRET",
     wallet_secret="CDP WALLET SECRET",
