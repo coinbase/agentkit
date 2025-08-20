@@ -383,6 +383,43 @@ const agent = createReactAgent({
 </table>
 </details>
 <details>
+<summary><strong>Superfluid</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>create_pool</code></td>
+    <td width="768">Creates a new Superfluid pool for a Supertoken.</td>
+</tr>
+<tr>
+    <td width="200"><code>update_pool</code></td>
+    <td width="768">Updates an existing Superfluid pool with recipients and flow rates.</td>
+</tr>
+<tr>
+    <td width="200"><code>query_streams</code></td>
+    <td width="768">Queries existing Superfluid streams using Graphql.</td>
+</tr>
+<tr>
+    <td width="200"><code>create_stream</code></td>
+    <td width="768">Creates a new Superfluid stream to an address with a given flow rate.</td>
+</tr>
+<tr>
+    <td width="200"><code>update_stream</code></td>
+    <td width="768">Updates an existing Superfluid stream with a new flow rate.</td>
+</tr>
+<tr>
+    <td width="200"><code>delete_stream</code></td>
+    <td width="768">Stops an existing Superfluid stream.</td>
+</tr>
+<tr>
+    <td width="200"><code>create_super_token</code></td>
+    <td width="768">Creates a new Supertoken implementation for an existing ERC20 token.</td>
+</tr>
+<tr>
+    <td width="200"><code>wrap_superfluid_token</code></td>
+    <td width="768">Wraps an ERC20 token into its Superfluid Super token implementation.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Twitter</strong></summary>
 <table width="100%">
 <tr>

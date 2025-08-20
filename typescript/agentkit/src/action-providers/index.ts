@@ -20,6 +20,7 @@ export * from "./moonwell";
 export * from "./morpho";
 export * from "./opensea";
 export * from "./spl";
+export * from "./superfluid";
 export * from "./truemarkets";
 export * from "./twitter";
 export * from "./wallet";

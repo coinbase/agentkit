@@ -57,6 +57,7 @@
     "canonicalize": "^2.1.0",
     "decimal.js": "^10.5.0",
     "ethers": "^6.13.5",
+    "graphql-request": "^7.2.0",
     "md5": "^2.3.0",
     "opensea-js": "^7.1.18",
     "reflect-metadata": "^0.2.2",
