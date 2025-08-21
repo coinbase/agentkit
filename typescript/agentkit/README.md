@@ -220,6 +220,15 @@ const agent = createReactAgent({
 </table>
 </details>
 <details>
+<summary><strong>Clanker</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>clank_token</code></td>
+    <td width="768">Deploys an ERC20 Clanker token based on the supplied config.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Compound</strong></summary>
 <table width="100%">
 <tr>
