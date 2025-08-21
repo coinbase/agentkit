@@ -33,4 +33,5 @@ export * from "./vaultsfyi";
 export * from "./x402";
 export * from "./zerion";
 export * from "./zerodev";
+export * from "./zeroX";
 export * from "./zora";

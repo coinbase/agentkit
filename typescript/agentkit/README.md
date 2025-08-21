@@ -524,6 +524,15 @@ it will return payment details that can be used on retry.</td>
 <tr>
     <td width="200"><code>make_http_request_with_x402</code></td>
     <td width="768">Combines make_http_request and retry_http_request_with_x402 into a single step.</td>
+<summary><strong>ZeroX</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_swap_price_quote_from_0x</code></td>
+    <td width="768">Fetches a price quote for swapping between two tokens using the 0x API.</td>
+</tr>
+<tr>
+    <td width="200"><code>execute_swap_on_0x</code></td>
+    <td width="768">Executes a token swap between two tokens using the 0x API.</td>
 </tr>
 </table>
 </details>
