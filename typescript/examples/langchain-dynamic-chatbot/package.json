@@ -1,0 +1,27 @@
+{
+  "name": "langchain-dynamic-chatbot",
+  "version": "1.0.0",
+  "description": "A chatbot example using AgentKit with Dynamic wallet provider",
+  "main": "chatbot.ts",
+  "scripts": {
+    "start": "ts-node chatbot.ts",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@coinbase/agentkit": "workspace:*",
+    "@coinbase/agentkit-langchain": "^0.3.0",
+    "@dynamic-labs-wallet/core": "^0.0.71",
+    "@dynamic-labs-wallet/node": "^0.0.71",
+    "@dynamic-labs-wallet/node-svm": "^0.0.71",
+    "@langchain/core": "^0.3.40",
+    "@langchain/langgraph": "^0.2.72",
+    "@langchain/openai": "*",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
