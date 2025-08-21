@@ -1,5 +1,15 @@
 # AgentKit Changelog
 
+## 0.10.1
+
+### Patch Changes
+
+- [#824](https://github.com/coinbase/agentkit/pull/824) [`6442bdd`](https://github.com/coinbase/agentkit/commit/6442bdd72c8fc67b854a62fefaf17552549e38e7) Thanks [@phdargen](https://github.com/phdargen)! - Added getPublicClient() for EvmWalletProviders and custom RPC_URL
+
+- [#817](https://github.com/coinbase/agentkit/pull/817) [`406f994`](https://github.com/coinbase/agentkit/commit/406f994d3ceec5f3f2092285d1c155b249581137) Thanks [@phdargen](https://github.com/phdargen)! - Fixed bugs in the CDP swap action
+
+- [#823](https://github.com/coinbase/agentkit/pull/823) [`4d0e5d1`](https://github.com/coinbase/agentkit/commit/4d0e5d199369a163e4c79cad3dcef175a8360d3a) Thanks [@gtspencer](https://github.com/gtspencer)! - Added superfluid action support to typescript agent
+
 ## 0.10.0
 
 ### Minor Changes
