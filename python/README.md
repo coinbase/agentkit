@@ -34,6 +34,12 @@ PydanticAI extension of AgentKit. Enables agentic workflows to interact with onc
 
 See [AgentKit PydanticAI](./framework-extensions/pydantic-ai/README.md) to get started!
 
+#### `coinbase-agentkit-autogen`
+
+Microsoft Autogen extension of AgentKit. Enables agentic workflows to interact with onchain actions.
+
+See [AgentKit Autogen](./framework-extensions/autogen/README.md)
+
 ### `create-onchain-agent`
 
 A quickstart CLI tool to scaffold out a chatbot using Coinbase AgentKit. Runnable via `pipx run create-onchain-agent`.
