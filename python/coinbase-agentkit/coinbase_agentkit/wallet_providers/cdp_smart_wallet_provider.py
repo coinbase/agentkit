@@ -135,6 +135,31 @@ class CdpSmartWalletProvider(EvmWalletProvider):
             wallet_secret=self._wallet_secret,
         )
 
+    def _get_cdp_sdk_network(self) -> str:
+        """Convert the internal network ID to the format expected by the CDP SDK.
+
+        Returns:
+            str: The network ID in CDP SDK format
+
+        Raises:
+            ValueError: If the network is not supported by CDP SDK
+
+        """
+        network_mapping = {
+            "base-sepolia": "base-sepolia",
+            "base-mainnet": "base",
+            "ethereum-mainnet": "ethereum",
+            "ethereum-sepolia": "ethereum-sepolia",
+            "polygon-mainnet": "polygon",
+            "arbitrum-mainnet": "arbitrum",
+            "optimism-mainnet": "optimism",
+        }
+
+        if self._network.network_id not in network_mapping:
+            raise ValueError(f"Unsupported network for smart wallets: {self._network.network_id}")
+
+        return network_mapping[self._network.network_id]
+
     def _run_async(self, coroutine):
         """Run an async coroutine synchronously.
 
@@ -231,7 +256,7 @@ class CdpSmartWalletProvider(EvmWalletProvider):
 
                 user_operation = await cdp.evm.send_user_operation(
                     smart_account=smart_account,
-                    network=self._network.network_id,
+                    network=self._get_cdp_sdk_network(),
                     calls=[EncodedCall(to=to, value=value_wei, data="0x")],
                     paymaster_url=self._paymaster_url,
                 )
@@ -289,7 +314,7 @@ class CdpSmartWalletProvider(EvmWalletProvider):
                 smart_account = await self._get_smart_account(cdp)
                 user_operation = await cdp.evm.send_user_operation(
                     smart_account=smart_account,
-                    network=self._network.network_id,
+                    network=self._get_cdp_sdk_network(),
                     calls=[
                         EncodedCall(
                             to=transaction["to"],
@@ -376,9 +401,7 @@ class CdpSmartWalletProvider(EvmWalletProvider):
                     types=types,
                     primary_type=primary_type,
                     message=message,
-                    network="base"
-                    if self.get_network().network_id == "base-mainnet"
-                    else self.get_network().network_id,
+                    network=self._get_cdp_sdk_network(),
                 )
 
         try:
@@ -420,7 +443,7 @@ class CdpSmartWalletProvider(EvmWalletProvider):
                 smart_account = await self._get_smart_account(cdp)
                 user_operation = await cdp.evm.send_user_operation(
                     smart_account=smart_account,
-                    network=self._network.network_id,
+                    network=self._get_cdp_sdk_network(),
                     calls=calls,
                     paymaster_url=self._paymaster_url,
                 )

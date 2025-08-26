@@ -18,6 +18,11 @@ import { Network, NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_VIEM_CHAIN } from "../ne
 import { EvmWalletProvider } from "./evmWalletProvider";
 import { WalletProviderWithClient, CdpWalletProviderConfig } from "./cdpShared";
 
+/**
+ * Supported network types for CDP SDK EVM transactions
+ */
+type CdpEvmNetwork = "base" | "base-sepolia" | "ethereum" | "ethereum-sepolia" | "polygon" | "arbitrum" | "optimism";
+
 interface ConfigureCdpEvmWalletProviderWithWalletOptions {
   /**
    * The CDP client of the wallet.
@@ -299,17 +304,27 @@ export class CdpEvmWalletProvider extends EvmWalletProvider implements WalletPro
   /**
    * Converts the internal network ID to the format expected by the CDP SDK.
    *
-   * @returns The network ID in CDP SDK format ("base-sepolia" or "base")
+   * @returns The network ID in CDP SDK format
    * @throws Error if the network is not supported
    */
-  #getCdpSdkNetwork(): "base-sepolia" | "base" {
+  #getCdpSdkNetwork(): CdpEvmNetwork {
     switch (this.#network.networkId) {
       case "base-sepolia":
         return "base-sepolia";
       case "base-mainnet":
         return "base";
+      case "ethereum-mainnet":
+        return "ethereum";
+      case "ethereum-sepolia":
+        return "ethereum-sepolia";
+      case "polygon-mainnet":
+        return "polygon";
+      case "arbitrum-mainnet":
+        return "arbitrum";
+      case "optimism-mainnet":
+        return "optimism";
       default:
-        throw new Error(`Unsupported network: ${this.#network.networkId}`);
+        throw new Error(`Unsupported network for CDP SDK: ${this.#network.networkId}`);
     }
   }
 }
