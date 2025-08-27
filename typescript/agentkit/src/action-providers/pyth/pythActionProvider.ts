@@ -31,7 +31,7 @@ export class PythActionProvider extends ActionProvider {
     if (args.tokenSymbol.toUpperCase() === "ETH") {
       return "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace";
     }
-    
+
     const url = `https://hermes.pyth.network/v2/price_feeds?query=${args.tokenSymbol}&asset_type=crypto`;
     const response = await fetch(url);
 

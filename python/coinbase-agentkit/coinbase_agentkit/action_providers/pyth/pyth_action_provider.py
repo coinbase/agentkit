@@ -45,12 +45,12 @@ class PythActionProvider(ActionProvider[WalletProvider]):
 
         """
         token_symbol = args["token_symbol"]
-        
+
         # Stop-gap solution: Return hardcoded price feed ID for ETH
         # This is temporary until proper new API link is provided after talking to the Pyth team
         if token_symbol.upper() == "ETH":
             return "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace"
-        
+
         url = f"https://hermes.pyth.network/v2/price_feeds?query={token_symbol}&asset_type=crypto"
         response = requests.get(url)
         response.raise_for_status()
