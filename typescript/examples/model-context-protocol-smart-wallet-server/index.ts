@@ -1,10 +1,10 @@
 import {
   AgentKit,
-  cdpApiActionProvider,
   erc20ActionProvider,
   erc721ActionProvider,
+  cdpApiActionProvider,
   pythActionProvider,
-  SmartWalletProvider,
+  CdpSmartWalletProvider,
   walletActionProvider,
   wethActionProvider,
 } from "@coinbase/agentkit";
@@ -68,7 +68,7 @@ async function initializeServer() {
       signer,
     };
 
-    const walletProvider = await SmartWalletProvider.configureWithWallet(config);
+    const walletProvider = await CdpSmartWalletProvider.configureWithWallet(config);
 
     if (!process.env.PRIVATE_KEY || !process.env.SMART_WALLET_ADDRESS) {
       console.log("Save your private key and smart wallet address to the environment variables");
@@ -85,10 +85,7 @@ async function initializeServer() {
         walletActionProvider(),
         erc20ActionProvider(),
         erc721ActionProvider(),
-        cdpApiActionProvider({
-          apiKeyId: config.apiKeyId,
-          apiKeySecret: config.apiKeySecret,
-        }),
+        cdpApiActionProvider(),
       ],
     });
 

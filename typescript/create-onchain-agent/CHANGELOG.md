@@ -1,5 +1,33 @@
 # Coinbase Create Onchain Agent Changelog
 
+## 0.5.3
+
+### Patch Changes
+
+- [#814](https://github.com/coinbase/agentkit/pull/814) [`3211ad0`](https://github.com/coinbase/agentkit/commit/3211ad06a87f0ab3bb1a49f415cfda0b3f8b2db4) Thanks [@phdargen](https://github.com/phdargen)! - Added paymaster capability to CdpSmartWallet
+
+## 0.5.2
+
+### Patch Changes
+
+- [#809](https://github.com/coinbase/agentkit/pull/809) [`059d96d`](https://github.com/coinbase/agentkit/commit/059d96d91e545e643c698cb386415621cb32ab6a) Thanks [@phdargen](https://github.com/phdargen)! - Fixed bugs in next template configs
+
+- [#805](https://github.com/coinbase/agentkit/pull/805) [`082163f`](https://github.com/coinbase/agentkit/commit/082163fa7ada25d9b3d8b5597ccd8de3b85457f1) Thanks [@phdargen](https://github.com/phdargen)! - Fixed a bug in wallet config
+
+## 0.5.1
+
+### Patch Changes
+
+- [#792](https://github.com/coinbase/agentkit/pull/792) [`1aa170f`](https://github.com/coinbase/agentkit/commit/1aa170f2a2c891779290e38ca9a6a185e3f9ae36) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Removed broken references
+
+## 0.5.0
+
+### Minor Changes
+
+- [#773](https://github.com/coinbase/agentkit/pull/773) [`463d310`](https://github.com/coinbase/agentkit/commit/463d3101147cacb0f2044162dd007489f97ef0a0) Thanks [@0xRAG](https://github.com/0xRAG)! - Upgraded to support updated CDP wallet providers
+
+- [#785](https://github.com/coinbase/agentkit/pull/785) [`2d13565`](https://github.com/coinbase/agentkit/commit/2d13565d91e64a13d3ecb8c300d8c0cd973d3fae) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Added Solana option to CLI
+
 ## 0.4.0
 
 ### Minor Changes
@@ -67,7 +95,7 @@
 
 ### Fixed
 
-- [#484](https://github.com/coinbase/agentkit/pull/484) [`a1dcd3f`](https://github.com/coinbase/agentkit/commit/a1dcd3fa32dac78a91eb99938e5608672ca005ee) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Added wallet persistance to all templates
+- [#484](https://github.com/coinbase/agentkit/pull/484) [`a1dcd3f`](https://github.com/coinbase/agentkit/commit/a1dcd3fa32dac78a91eb99938e5608672ca005ee) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Added wallet persistence to all templates
 
 - [#468](https://github.com/coinbase/agentkit/pull/468) [`b13c5e6`](https://github.com/coinbase/agentkit/commit/b13c5e685ebeed1d00963286067da1a106b18d37) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Fixed CDP env vars being required, when some cases are optional
 

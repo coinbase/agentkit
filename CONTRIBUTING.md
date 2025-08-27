@@ -47,14 +47,16 @@ agentkit/
 │   │   ├── langchain/
 │   │   └── openai-agents-sdk/
 │   └── examples/
-│       ├── langchain-cdp-server-chatbot/
+│       ├── langchain-cdp-chatbot/
 │       ├── langchain-cdp-smart-wallet-chatbot/
+│       ├── langchain-cdp-solana-chatbot/
 │       ├── langchain-eth-account-chatbot/
 │       ├── langchain-nillion-secretvault-chatbot/
 │       ├── langchain-twitter-chatbot/
 │       ├── openai-agents-sdk-cdp-chatbot/
 │       ├── openai-agents-sdk-cdp-voice-chatbot/
-│       └── openai-agents-sdk-smart-wallet-chatbot/
+│       ├── openai-agents-sdk-smart-wallet-chatbot/
+│       └── strands-agents-cdp-server-chatbot/
 ```
 
 ## Language-Specific Guides
@@ -90,6 +92,7 @@ These steps are highly dependent on the language you're working in, so check out
 
 Once you have your changes ready, there are a few more steps to open a PR and get it merged:
 
+- Note: We require ALL commits to be [signed](https://docs.github.com/en/authentication/)
 - Fill out the PR template completely with as much detail as possible
   - Ideally, include screenshots or videos of the changes in action
 - Link related issues, if any
@@ -106,6 +109,7 @@ Current list of maintainers:
 - [@rohan-agarwal-coinbase](https://github.com/rohan-agarwal-coinbase)
 - [@0xRAG](https://github.com/0xRAG)
 - [@yuga-cb](https://github.com/yuga-cb)
+- [@CarsonRoscoe](https://github.com/CarsonRoscoe)
 
 ## Releasing
 

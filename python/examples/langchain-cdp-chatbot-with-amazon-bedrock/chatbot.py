@@ -7,9 +7,8 @@ import time
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
-    CdpEvmServerWalletProvider,
-    CdpEvmServerWalletProviderConfig,
-    allora_action_provider,
+    CdpEvmWalletProvider,
+    CdpEvmWalletProviderConfig,
     cdp_api_action_provider,
     erc20_action_provider,
     pyth_action_provider,
@@ -26,14 +25,14 @@ from langgraph.prebuilt import create_react_agent
 load_dotenv()
 
 
-def initialize_agent(config: CdpEvmServerWalletProviderConfig):
+def initialize_agent(config: CdpEvmWalletProviderConfig):
     """Initialize the agent with CDP Agentkit.
 
     Args:
         config: Configuration for the CDP EVM Server Wallet Provider
 
     Returns:
-        tuple[Agent, CdpEvmServerWalletProvider]: The initialized agent and wallet provider
+        tuple[Agent, CdpEvmWalletProvider]: The initialized agent and wallet provider
 
     """
     # Initialize LLM
@@ -43,8 +42,8 @@ def initialize_agent(config: CdpEvmServerWalletProviderConfig):
     )
 
     # Initialize the wallet provider with the config
-    wallet_provider = CdpEvmServerWalletProvider(
-        CdpEvmServerWalletProviderConfig(
+    wallet_provider = CdpEvmWalletProvider(
+        CdpEvmWalletProviderConfig(
             api_key_id=config.api_key_id,  # CDP API Key ID
             api_key_secret=config.api_key_secret,  # CDP API Key Secret
             wallet_secret=config.wallet_secret,  # CDP Wallet Secret
@@ -63,7 +62,6 @@ def initialize_agent(config: CdpEvmServerWalletProviderConfig):
                 pyth_action_provider(),
                 wallet_action_provider(),
                 weth_action_provider(),
-                allora_action_provider(),
             ],
         )
     )
@@ -84,13 +82,14 @@ def initialize_agent(config: CdpEvmServerWalletProviderConfig):
             state_modifier=(
                 "You are a helpful agent that can interact onchain using the Coinbase Developer Platform AgentKit. "
                 "You are empowered to interact onchain using your tools. If you ever need funds, you can request "
-                "them from the faucet if you are on network ID 'base-sepolia'. If not, you can provide your wallet "
-                "details and request funds from the user. Before executing your first action, get the wallet details "
-                "to see what network you're on. If there is a 5XX (internal) HTTP error code, ask the user to try "
-                "again later. If someone asks you to do something you can't do with your currently available tools, "
-                "you must say so, and encourage them to implement it themselves using the CDP SDK + Agentkit, "
-                "recommend they go to docs.cdp.coinbase.com for more information. Be concise and helpful with your "
-                "responses. Refrain from restating your tools' descriptions unless it is explicitly requested."
+                "them from the faucet if you are on network ID 'base-sepolia', 'ethereum-sepolia', or 'solana-devnet'. "
+                "If not, you can provide your wallet details and request funds from the user. Before executing your "
+                "first action, get the wallet details to see what network you're on. If there is a 5XX (internal) "
+                "HTTP error code, ask the user to try again later. If someone asks you to do something you can't do "
+                "with your currently available tools, you must say so, and encourage them to implement it themselves "
+                "using the CDP SDK + Agentkit, recommend they go to docs.cdp.coinbase.com for more information. "
+                "Be concise and helpful with your responses. Refrain from restating your tools' descriptions unless "
+                "it is explicitly requested."
             ),
         ),
         wallet_provider,
@@ -127,7 +126,7 @@ def setup():
     )
 
     # Create the wallet provider config
-    config = CdpEvmServerWalletProviderConfig(
+    config = CdpEvmWalletProviderConfig(
         api_key_id=os.getenv("CDP_API_KEY_ID"),
         api_key_secret=os.getenv("CDP_API_KEY_SECRET"),
         wallet_secret=os.getenv("CDP_WALLET_SECRET"),

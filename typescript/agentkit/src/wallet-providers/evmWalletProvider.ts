@@ -12,6 +12,7 @@ import {
   ContractFunctionArgs,
   Address,
   Account,
+  PublicClient,
 } from "viem";
 
 /**
@@ -93,4 +94,9 @@ export abstract class EvmWalletProvider extends WalletProvider {
   >(
     params: ReadContractParameters<abi, functionName, args>,
   ): Promise<ReadContractReturnType<abi, functionName, args>>;
+
+  /**
+   * Get the underlying Viem PublicClient for read-only blockchain operations.
+   */
+  abstract getPublicClient(): PublicClient;
 }

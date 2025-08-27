@@ -2,7 +2,6 @@
 
 from .action_decorator import create_action
 from .action_provider import Action, ActionProvider
-from .allora.allora_action_provider import AlloraActionProvider, allora_action_provider
 from .basename.basename_action_provider import (
     BasenameActionProvider,
     basename_action_provider,
@@ -27,13 +26,12 @@ from .twitter.twitter_action_provider import TwitterActionProvider, twitter_acti
 from .wallet.wallet_action_provider import WalletActionProvider, wallet_action_provider
 from .weth.weth_action_provider import WethActionProvider, weth_action_provider
 from .wow.wow_action_provider import WowActionProvider, wow_action_provider
+from .x402.x402_action_provider import x402_action_provider, x402ActionProvider
 
 __all__ = [
     "Action",
     "ActionProvider",
     "create_action",
-    "AlloraActionProvider",
-    "allora_action_provider",
     "BasenameActionProvider",
     "basename_action_provider",
     "CdpApiActionProvider",
@@ -64,4 +62,6 @@ __all__ = [
     "weth_action_provider",
     "WowActionProvider",
     "wow_action_provider",
+    "x402ActionProvider",
+    "x402_action_provider",
 ]

@@ -59,6 +59,9 @@ export interface ZeroDevWalletProviderConfig {
    * If not provided, it will be computed from the signer.
    */
   address?: Address;
+
+  /** Optional RPC URL override for Viem public client */
+  rpcUrl?: string;
 }
 
 /**
@@ -99,9 +102,10 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
     this.#intentClient = intentClient;
 
     // Create public client
+    const rpcUrl = config.rpcUrl || process.env.RPC_URL;
     this.#publicClient = createPublicClient({
       chain: NETWORK_ID_TO_VIEM_CHAIN[this.#network.networkId!],
-      transport: http(),
+      transport: rpcUrl ? http(rpcUrl) : http(),
     });
   }
 
@@ -313,6 +317,15 @@ export class ZeroDevWalletProvider extends EvmWalletProvider {
    */
   getName(): string {
     return "zerodev_wallet_provider";
+  }
+
+  /**
+   * Gets the Viem PublicClient used for read-only operations.
+   *
+   * @returns The Viem PublicClient instance used for read-only operations.
+   */
+  getPublicClient(): PublicClient {
+    return this.#publicClient;
   }
 
   /**

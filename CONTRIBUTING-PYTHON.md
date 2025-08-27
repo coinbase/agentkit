@@ -170,9 +170,13 @@ Wallet providers give an agent access to a wallet. AgentKit currently supports t
 
 EVM:
 
-- [CdpEvmServerWalletProvider](./python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_evm_server_wallet_provider.py)
-- [CdpEvmSmartWalletProvider](./python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_evm_smart_wallet_provider.py)
+- [CdpEvmWalletProvider](./python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_evm_wallet_provider.py)
+- [CdpSmartWalletProvider](./python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_smart_wallet_provider.py)
 - [EthAccountWalletProvider](./python/coinbase-agentkit/coinbase_agentkit/wallet_providers/eth_account_wallet_provider.py)
+
+Solana:
+
+- [CdpSolanaWalletProvider](./python/coinbase-agentkit/coinbase_agentkit/wallet_providers/cdp_solana_wallet_provider.py)
 
 ### Adding a new EVM wallet provider
 
@@ -194,7 +198,7 @@ Integrations into AI Agent frameworks are specific to the framework itself, so w
 
 ### Local Testing
 
-A good way to test new actions locally is by using the chatbot example in `python/examples/langchain-smart-wallet-chatbot`. See the [chatbot README](./python/examples/langchain-smart-wallet-chatbot/README.md) for instructions on setting up and running the chatbot.
+A good way to test new actions locally is by using the chatbot example in `python/examples/langchain-cdp-smart-wallet-chatbot`. See the [chatbot README](./python/examples/langchain-cdp-smart-wallet-chatbot/README.md) for instructions on setting up and running the chatbot.
 
 The flow is:
 

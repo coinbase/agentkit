@@ -4,8 +4,8 @@ from pydantic import BaseModel, ConfigDict
 
 from .action_providers import Action, ActionProvider, wallet_action_provider
 from .wallet_providers import (
-    CdpEvmServerWalletProvider,
-    CdpEvmServerWalletProviderConfig,
+    CdpEvmWalletProvider,
+    CdpEvmWalletProviderConfig,
     WalletProvider,
 )
 
@@ -40,8 +40,8 @@ class AgentKit:
         if not config:
             config = AgentKitConfig()
 
-        self.wallet_provider = config.wallet_provider or CdpEvmServerWalletProvider(
-            CdpEvmServerWalletProviderConfig(
+        self.wallet_provider = config.wallet_provider or CdpEvmWalletProvider(
+            CdpEvmWalletProviderConfig(
                 api_key_id=config.cdp_api_key_id,
                 api_key_secret=config.cdp_api_key_secret,
                 wallet_secret=config.cdp_wallet_secret,

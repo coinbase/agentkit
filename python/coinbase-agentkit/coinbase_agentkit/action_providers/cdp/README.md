@@ -27,7 +27,10 @@ tests/action_providers/cdp/
 - `address_reputation`: Returns onchain activity metrics
 - `request_faucet_funds`: Request testnet funds from CDP faucet
 
-  - Available only on Base Sepolia
+  - Available on Base Sepolia, Ethereum Sepolia, and Solana Devnet
+  - Supported assets:
+    - Base Sepolia / Ethereum Sepolia: ETH (default), USDC, EURC, CBBTC
+    - Solana Devnet: SOL (default), USDC
 
 ### CDP Wallet Actions
 

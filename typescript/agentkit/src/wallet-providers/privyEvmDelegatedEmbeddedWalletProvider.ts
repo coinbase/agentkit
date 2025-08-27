@@ -40,6 +40,9 @@ export interface PrivyEvmDelegatedEmbeddedWalletConfig extends PrivyWalletConfig
 
   /** The wallet type to use */
   walletType: "embedded";
+
+  /** Optional RPC URL for Viem public client */
+  rpcUrl?: string;
 }
 
 /**
@@ -85,9 +88,10 @@ export class PrivyEvmDelegatedEmbeddedWalletProvider extends WalletProvider {
       throw new Error(`Chain with ID ${chainId} not found`);
     }
 
+    const rpcUrl = config.rpcUrl || process.env.RPC_URL;
     this.#publicClient = createPublicClient({
       chain,
-      transport: http(),
+      transport: rpcUrl ? http(rpcUrl) : http(),
     });
   }
 
@@ -187,6 +191,15 @@ export class PrivyEvmDelegatedEmbeddedWalletProvider extends WalletProvider {
    */
   getName(): string {
     return "privy_evm_embedded_wallet_provider";
+  }
+
+  /**
+   * Gets the Viem PublicClient used for read-only operations.
+   *
+   * @returns The Viem PublicClient instance used for read-only operations.
+   */
+  getPublicClient(): PublicClient {
+    return this.#publicClient;
   }
 
   /**

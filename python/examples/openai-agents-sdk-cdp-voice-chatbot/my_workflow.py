@@ -8,8 +8,8 @@ from agents.voice import VoiceWorkflowBase, VoiceWorkflowHelper
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
-    CdpEvmServerWalletProvider,
-    CdpEvmServerWalletProviderConfig,
+    CdpEvmWalletProvider,
+    CdpEvmWalletProviderConfig,
     cdp_api_action_provider,
     compound_action_provider,
     erc20_action_provider,
@@ -22,19 +22,19 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def initialize_agent(config: CdpEvmServerWalletProviderConfig):
+def initialize_agent(config: CdpEvmWalletProviderConfig):
     """Initialize the agent with CDP Agentkit.
 
     Args:
         config: Configuration for the CDP EVM Server Wallet Provider
 
     Returns:
-        tuple[Agent, CdpEvmServerWalletProvider]: The initialized agent and wallet provider
+        tuple[Agent, CdpEvmWalletProvider]: The initialized agent and wallet provider
 
     """
     # Initialize the wallet provider with the config
-    wallet_provider = CdpEvmServerWalletProvider(
-        CdpEvmServerWalletProviderConfig(
+    wallet_provider = CdpEvmWalletProvider(
+        CdpEvmWalletProviderConfig(
             api_key_id=config.api_key_id,  # CDP API Key ID
             api_key_secret=config.api_key_secret,  # CDP API Key Secret
             wallet_secret=config.wallet_secret,  # CDP Wallet Secret
@@ -116,7 +116,7 @@ def setup():
     )
 
     # Create the wallet provider config
-    config = CdpEvmServerWalletProviderConfig(
+    config = CdpEvmWalletProviderConfig(
         api_key_id=os.getenv("CDP_API_KEY_ID"),
         api_key_secret=os.getenv("CDP_API_KEY_SECRET"),
         wallet_secret=os.getenv("CDP_WALLET_SECRET"),

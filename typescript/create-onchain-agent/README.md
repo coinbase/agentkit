@@ -8,8 +8,8 @@
 
 Before using `create-onchain-agent`, ensure you have the following installed:
 
-- **Node.js** (v18 or later) – [Download here](https://nodejs.org/)
-- **npm** (v9 or later) – Comes bundled with Node.js
+- **Node.js** (v22 or later) – [Download here](https://nodejs.org/)
+- **npm** (v10 or later) – Comes bundled with Node.js
 
 ## Usage
 
@@ -45,7 +45,7 @@ agentkit generate create-agent
 
 > **Note**: If the above commands print the error `agentkit: not found`, ensure the agentkit cli is installed by running the following command:
 > ```bash
-> npm install -g create-onchain-agent/@latest
+> npm install -g create-onchain-agent@latest
 > ```
 
 ## Features

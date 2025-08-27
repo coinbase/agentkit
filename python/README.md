@@ -22,6 +22,18 @@ OpenAI Agents SDK extension of AgentKit. Enables agentic workflows to interact w
 
 See [AgentKit OpenAI Agents SDK](./framework-extensions/openai-agents-sdk/README.md) to get started!
 
+#### `coinbase-agentkit-strands-agents`
+
+Strands Agents extension of AgentKit. Enables agentic workflows to interact with onchain actions.
+
+See [AgentKit Strands Agents](./framework-extensions/strands-agents/README.md) to get started!
+
+#### `coinbase-agentkit-pydantic-ai`
+
+PydanticAI extension of AgentKit. Enables agentic workflows to interact with onchain actions.
+
+See [AgentKit PydanticAI](./framework-extensions/pydantic-ai/README.md) to get started!
+
 ### `create-onchain-agent`
 
 A quickstart CLI tool to scaffold out a chatbot using Coinbase AgentKit. Runnable via `pipx run create-onchain-agent`.

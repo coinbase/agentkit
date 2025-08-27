@@ -1,9 +1,9 @@
 import {
   ActionProvider,
   AgentKit,
-  cdpApiActionProvider,
+  legacyCdpApiActionProvider,
   jupiterActionProvider,
-  PrivyWalletConfig,
+  PrivySvmWalletConfig,
   PrivyWalletProvider,
   splActionProvider,
   walletActionProvider,
@@ -65,14 +65,14 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{
 
   try {
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
-    const config: PrivyWalletConfig = {
+    const config: PrivySvmWalletConfig = {
       appId: process.env.PRIVY_APP_ID as string,
       appSecret: process.env.PRIVY_APP_SECRET as string,
       walletId: process.env.PRIVY_WALLET_ID as string,
       authorizationPrivateKey: process.env.PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY,
       authorizationKeyId: process.env.PRIVY_WALLET_AUTHORIZATION_KEY_ID,
-      chainType: "solana",
       networkId: process.env.NETWORK_ID,
+      walletType: "server",
     };
     // Try to load saved wallet data
     if (fs.existsSync(WALLET_DATA_FILE)) {
@@ -92,7 +92,7 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{
     const canUseCdpApi = process.env.CDP_API_KEY_ID && process.env.CDP_API_KEY_SECRET;
     if (canUseCdpApi) {
       actionProviders.push(
-        cdpApiActionProvider({
+        legacyCdpApiActionProvider({
           apiKeyId: process.env.CDP_API_KEY_ID,
           apiKeySecret: process.env.CDP_API_KEY_SECRET,
         }),

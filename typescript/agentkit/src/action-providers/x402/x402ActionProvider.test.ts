@@ -104,15 +104,6 @@ const MOCK_PAYMENT_RESPONSE = {
   payer: "0xa8c1a5D3C372C65c04f91f87a43F549619A9483f" as `0x${string}`,
 };
 
-const MOCK_PAID_REQUEST_RESPONSE = {
-  success: true,
-  url: "https://www.x402.org/protected",
-  method: "GET",
-  status: 200,
-  data: "<!DOCTYPE html><html>...</html>",
-  paymentResponse: MOCK_PAYMENT_RESPONSE,
-};
-
 describe("X402ActionProvider", () => {
   let provider: X402ActionProvider;
 
@@ -162,163 +153,45 @@ describe("X402ActionProvider", () => {
     });
   });
 
-  describe("fetchPaymentInfo", () => {
-    it("should successfully fetch payment info for 402 response", async () => {
-      mockRequest.mockResolvedValue({
-        status: 402,
-        statusText: "Payment Required",
-        data: MOCK_PAYMENT_INFO_RESPONSE.data,
-        headers: {},
-        config: {} as AxiosRequestConfig,
-      } as AxiosResponse);
-
-      const result = await provider.fetchPaymentInfo(mockWalletProvider, {
-        url: "https://www.x402.org/protected",
-        method: "GET",
-      });
-
-      expect(mockRequest).toHaveBeenCalledWith({
-        url: "https://www.x402.org/protected",
-        method: "GET",
-        headers: undefined,
-        validateStatus: expect.any(Function),
-      });
-
-      const parsedResult = JSON.parse(result);
-      expect(parsedResult.paymentRequired).toBe(true);
-      expect(parsedResult.status).toBe(402);
-      expect(parsedResult.data).toEqual(MOCK_PAYMENT_INFO_RESPONSE.data);
-    });
-
-    it("should handle non-payment-protected endpoints", async () => {
+  describe("makeHttpRequest", () => {
+    it("should handle successful non-payment requests", async () => {
       mockRequest.mockResolvedValue({
         status: 200,
-        statusText: "OK",
-        data: { message: "No payment required" },
+        data: { message: "Success" },
         headers: {},
         config: {} as AxiosRequestConfig,
       } as AxiosResponse);
 
-      const result = await provider.fetchPaymentInfo(mockWalletProvider, {
+      const result = await provider.makeHttpRequest(mockWalletProvider, {
         url: "https://api.example.com/free",
         method: "GET",
       });
 
       const parsedResult = JSON.parse(result);
-      expect(parsedResult.paymentRequired).toBe(false);
+      expect(parsedResult.success).toBe(true);
       expect(parsedResult.status).toBe(200);
-      expect(parsedResult.data).toEqual({ message: "No payment required" });
+      expect(parsedResult.data).toEqual({ message: "Success" });
     });
 
-    it("should handle 402 errors with payment details in headers", async () => {
-      mockDecodeXPaymentResponse.mockReturnValue(MOCK_PAYMENT_RESPONSE);
-
-      const error = new Error("Payment required") as AxiosError;
-      error.isAxiosError = true;
-      error.response = {
+    it("should handle 402 responses with payment options", async () => {
+      mockRequest.mockResolvedValue({
         status: 402,
-        statusText: "Payment Required",
-        headers: {
-          "x-payment-response": "encoded-payment-data",
-        },
         data: MOCK_PAYMENT_INFO_RESPONSE.data,
-        config: {} as AxiosRequestConfig,
-      } as AxiosResponse;
-
-      mockRequest.mockRejectedValue(error);
-
-      const result = await provider.fetchPaymentInfo(mockWalletProvider, {
-        url: "https://www.x402.org/protected",
-        method: "GET",
-      });
-
-      expect(mockDecodeXPaymentResponse).toHaveBeenCalledWith("encoded-payment-data");
-
-      const parsedResult = JSON.parse(result);
-      expect(parsedResult.paymentRequired).toBe(true);
-      expect(parsedResult.status).toBe(402);
-      expect(parsedResult.paymentDetails).toEqual(MOCK_PAYMENT_RESPONSE);
-    });
-
-    it("should fallback to JSON.parse when decodeXPaymentResponse fails", async () => {
-      const paymentDetailsJson = '{"amount": "10000"}';
-      mockDecodeXPaymentResponse.mockImplementation(() => {
-        throw new Error("Decode failed");
-      });
-
-      const error = new Error("Payment required") as AxiosError;
-      error.isAxiosError = true;
-      error.response = {
-        status: 402,
-        statusText: "Payment Required",
-        headers: {
-          "x-payment-response": paymentDetailsJson,
-        },
-        data: MOCK_PAYMENT_INFO_RESPONSE.data,
-        config: {} as AxiosRequestConfig,
-      } as AxiosResponse;
-
-      mockRequest.mockRejectedValue(error);
-
-      const result = await provider.fetchPaymentInfo(mockWalletProvider, {
-        url: "https://www.x402.org/protected",
-        method: "GET",
-      });
-
-      const parsedResult = JSON.parse(result);
-      expect(parsedResult.paymentDetails).toEqual({ amount: "10000" });
-    });
-
-    it("should handle payment header parsing failures", async () => {
-      mockDecodeXPaymentResponse.mockImplementation(() => {
-        throw new Error("Decode failed");
-      });
-
-      const error = new Error("Payment required") as AxiosError;
-      error.isAxiosError = true;
-      error.response = {
-        status: 402,
-        statusText: "Payment Required",
-        headers: {
-          "x-payment-response": "invalid-json",
-        },
-        data: MOCK_PAYMENT_INFO_RESPONSE.data,
-        config: {} as AxiosRequestConfig,
-      } as AxiosResponse;
-
-      mockRequest.mockRejectedValue(error);
-
-      const result = await provider.fetchPaymentInfo(mockWalletProvider, {
-        url: "https://www.x402.org/protected",
-        method: "GET",
-      });
-
-      const parsedResult = JSON.parse(result);
-      expect(parsedResult.paymentDetails.error).toBe("Failed to decode payment response");
-      expect(parsedResult.paymentDetails.rawHeader).toBe("invalid-json");
-    });
-
-    it("should handle non-402 HTTP errors", async () => {
-      const error = new Error("Server error") as AxiosError;
-      error.isAxiosError = true;
-      error.response = {
-        status: 500,
-        statusText: "Internal Server Error",
         headers: {},
-        data: { error: "Internal server error" },
         config: {} as AxiosRequestConfig,
-      } as AxiosResponse;
+      } as AxiosResponse);
 
-      mockRequest.mockRejectedValue(error);
-
-      const result = await provider.fetchPaymentInfo(mockWalletProvider, {
-        url: "https://api.example.com/endpoint",
+      const result = await provider.makeHttpRequest(mockWalletProvider, {
+        url: "https://www.x402.org/protected",
         method: "GET",
       });
 
-      expect(result).toContain("Error fetching payment info");
-      expect(result).toContain("HTTP 500");
-      expect(result).toContain("Internal server error");
+      const parsedResult = JSON.parse(result);
+      expect(parsedResult.status).toBe("error_402_payment_required");
+      expect(parsedResult.acceptablePaymentOptions).toEqual(
+        MOCK_PAYMENT_INFO_RESPONSE.data.accepts,
+      );
+      expect(parsedResult.nextSteps).toBeDefined();
     });
 
     it("should handle network errors", async () => {
@@ -328,196 +201,148 @@ describe("X402ActionProvider", () => {
 
       mockRequest.mockRejectedValue(error);
 
-      const result = await provider.fetchPaymentInfo(mockWalletProvider, {
+      const result = await provider.makeHttpRequest(mockWalletProvider, {
         url: "https://api.example.com/endpoint",
         method: "GET",
       });
 
-      expect(result).toContain("Error fetching payment info");
-      expect(result).toContain("Network error");
+      const parsedResult = JSON.parse(result);
+      expect(parsedResult.error).toBe(true);
+      expect(parsedResult.message).toContain("Network error");
     });
   });
 
-  describe("paidRequest", () => {
-    it("should successfully make a paid request with payment response", async () => {
+  describe("retryHttpRequestWithX402", () => {
+    it("should successfully retry with payment", async () => {
       mockDecodeXPaymentResponse.mockReturnValue(MOCK_PAYMENT_RESPONSE);
 
       mockRequest.mockResolvedValue({
         status: 200,
         statusText: "OK",
-        data: MOCK_PAID_REQUEST_RESPONSE.data,
+        data: { message: "Paid content" },
         headers: {
-          "x-payment-response": "encoded-payment-response",
+          "x-payment-response": "encoded-payment-data",
         },
         config: {} as AxiosRequestConfig,
       } as AxiosResponse);
 
-      const result = await provider.paidRequest(mockWalletProvider, {
+      const result = await provider.retryWithX402(mockWalletProvider, {
+        url: "https://www.x402.org/protected",
+        method: "GET",
+        selectedPaymentOption: {
+          scheme: "exact",
+          network: "base-sepolia",
+          maxAmountRequired: "10000",
+          asset: "0x456",
+        },
+      });
+
+      // Update expectation to accept the payment selector function
+      expect(mockWithPaymentInterceptor).toHaveBeenCalledWith(
+        mockAxiosInstance,
+        "mock-signer",
+        expect.any(Function),
+      );
+
+      const parsedResult = JSON.parse(result);
+      expect(parsedResult.status).toBe("success");
+      expect(parsedResult.details.paymentProof).toEqual({
+        transaction: MOCK_PAYMENT_RESPONSE.transaction,
+        network: MOCK_PAYMENT_RESPONSE.network,
+        payer: MOCK_PAYMENT_RESPONSE.payer,
+      });
+    });
+
+    it("should handle network errors during payment", async () => {
+      const error = new Error("Network error") as AxiosError;
+      error.isAxiosError = true;
+      error.request = {};
+
+      mockRequest.mockRejectedValue(error);
+
+      const result = await provider.retryWithX402(mockWalletProvider, {
+        url: "https://www.x402.org/protected",
+        method: "GET",
+        selectedPaymentOption: {
+          scheme: "exact",
+          network: "base-sepolia",
+          maxAmountRequired: "10000",
+          asset: "0x456",
+        },
+      });
+
+      const parsedResult = JSON.parse(result);
+      expect(parsedResult.error).toBe(true);
+      expect(parsedResult.message).toContain("Network error");
+    });
+  });
+
+  describe("makeHttpRequestWithX402", () => {
+    it("should handle successful direct payment requests", async () => {
+      mockDecodeXPaymentResponse.mockReturnValue(MOCK_PAYMENT_RESPONSE);
+
+      mockRequest.mockResolvedValue({
+        status: 200,
+        statusText: "OK",
+        data: { message: "Paid content" },
+        headers: {
+          "x-payment-response": "encoded-payment-data",
+        },
+        config: {} as AxiosRequestConfig,
+      } as AxiosResponse);
+
+      const result = await provider.makeHttpRequestWithX402(mockWalletProvider, {
         url: "https://www.x402.org/protected",
         method: "GET",
       });
 
       expect(mockWithPaymentInterceptor).toHaveBeenCalledWith(mockAxiosInstance, "mock-signer");
 
-      expect(mockRequest).toHaveBeenCalledWith({
-        url: "https://www.x402.org/protected",
-        method: "GET",
-        headers: undefined,
-        data: undefined,
-      });
-
       const parsedResult = JSON.parse(result);
       expect(parsedResult.success).toBe(true);
-      expect(parsedResult.status).toBe(200);
-      expect(parsedResult.paymentResponse).toEqual(MOCK_PAYMENT_RESPONSE);
+      expect(parsedResult.data).toEqual({ message: "Paid content" });
+      expect(parsedResult.paymentProof).toEqual({
+        transaction: MOCK_PAYMENT_RESPONSE.transaction,
+        network: MOCK_PAYMENT_RESPONSE.network,
+        payer: MOCK_PAYMENT_RESPONSE.payer,
+      });
     });
 
-    it("should handle successful request without payment", async () => {
+    it("should handle successful non-payment requests", async () => {
       mockRequest.mockResolvedValue({
         status: 200,
         statusText: "OK",
-        data: { message: "Success" },
+        data: { message: "Free content" },
         headers: {},
         config: {} as AxiosRequestConfig,
       } as AxiosResponse);
 
-      const result = await provider.paidRequest(mockWalletProvider, {
+      const result = await provider.makeHttpRequestWithX402(mockWalletProvider, {
         url: "https://api.example.com/free",
         method: "GET",
       });
 
       const parsedResult = JSON.parse(result);
       expect(parsedResult.success).toBe(true);
-      expect(parsedResult.status).toBe(200);
-      expect(parsedResult.paymentResponse).toBe(null);
-    });
-
-    it("should fallback to JSON.parse when decodeXPaymentResponse fails", async () => {
-      const paymentResponseJson = '{"transaction": "0x123"}';
-
-      mockDecodeXPaymentResponse.mockImplementation(() => {
-        throw new Error("Decode failed");
-      });
-
-      mockRequest.mockResolvedValue({
-        status: 200,
-        statusText: "OK",
-        data: "Success",
-        headers: {
-          "x-payment-response": paymentResponseJson,
-        },
-        config: {} as AxiosRequestConfig,
-      } as AxiosResponse);
-
-      const result = await provider.paidRequest(mockWalletProvider, {
-        url: "https://www.x402.org/protected",
-        method: "GET",
-      });
-
-      const parsedResult = JSON.parse(result);
-      expect(parsedResult.paymentResponse).toEqual({ transaction: "0x123" });
-    });
-
-    it("should handle payment response parsing failures", async () => {
-      mockDecodeXPaymentResponse.mockImplementation(() => {
-        throw new Error("Decode failed");
-      });
-
-      mockRequest.mockResolvedValue({
-        status: 200,
-        statusText: "OK",
-        data: "Success",
-        headers: {
-          "x-payment-response": "invalid-json",
-        },
-        config: {} as AxiosRequestConfig,
-      } as AxiosResponse);
-
-      const result = await provider.paidRequest(mockWalletProvider, {
-        url: "https://www.x402.org/protected",
-        method: "GET",
-      });
-
-      const parsedResult = JSON.parse(result);
-      expect(parsedResult.paymentResponse.error).toBe("Failed to decode payment response");
-      expect(parsedResult.paymentResponse.rawHeader).toBe("invalid-json");
-    });
-
-    it("should handle HTTP errors", async () => {
-      const error = new Error("Bad request") as AxiosError;
-      error.isAxiosError = true;
-      error.response = {
-        status: 400,
-        statusText: "Bad Request",
-        headers: {},
-        data: { error: "Invalid parameters" },
-        config: {} as AxiosRequestConfig,
-      } as AxiosResponse;
-
-      mockRequest.mockRejectedValue(error);
-
-      const result = await provider.paidRequest(mockWalletProvider, {
-        url: "https://api.example.com/endpoint",
-        method: "POST",
-        body: { test: "data" },
-      });
-
-      expect(result).toContain("Error making paid request");
-      expect(result).toContain("HTTP 400");
-      expect(result).toContain("Invalid parameters");
+      expect(parsedResult.data).toEqual({ message: "Free content" });
+      expect(parsedResult.paymentProof).toBeNull();
     });
 
     it("should handle network errors", async () => {
-      const error = new Error("Connection timeout") as AxiosError;
+      const error = new Error("Network error") as AxiosError;
       error.isAxiosError = true;
       error.request = {};
 
       mockRequest.mockRejectedValue(error);
 
-      const result = await provider.paidRequest(mockWalletProvider, {
+      const result = await provider.makeHttpRequestWithX402(mockWalletProvider, {
         url: "https://api.example.com/endpoint",
         method: "GET",
       });
 
-      expect(result).toContain("Error making paid request");
-      expect(result).toContain("Network error");
-      expect(result).toContain("Connection timeout");
-    });
-
-    it("should handle generic errors", async () => {
-      const error = new Error("Something went wrong");
-
-      mockRequest.mockRejectedValue(error);
-
-      const result = await provider.paidRequest(mockWalletProvider, {
-        url: "https://api.example.com/endpoint",
-        method: "GET",
-      });
-
-      expect(result).toContain("Error making paid request");
-      expect(result).toContain("Something went wrong");
-    });
-
-    it("should pass through all request parameters", async () => {
-      mockRequest.mockResolvedValue({
-        status: 200,
-        data: "Success",
-        headers: {},
-      } as AxiosResponse);
-
-      await provider.paidRequest(mockWalletProvider, {
-        url: "https://api.example.com/endpoint",
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: { key: "value" },
-      });
-
-      expect(mockRequest).toHaveBeenCalledWith({
-        url: "https://api.example.com/endpoint",
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        data: { key: "value" },
-      });
+      const parsedResult = JSON.parse(result);
+      expect(parsedResult.error).toBe(true);
+      expect(parsedResult.message).toContain("Network error");
     });
   });
 });

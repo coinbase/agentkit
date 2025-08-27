@@ -1,5 +1,37 @@
 # AgentKit Changelog
 
+## 0.10.0
+
+### Minor Changes
+
+- [#818](https://github.com/coinbase/agentkit/pull/818) [`bc3d1d5`](https://github.com/coinbase/agentkit/commit/bc3d1d5f03f81f1438f31b983797de9696639994) Thanks [@0xRAG](https://github.com/0xRAG)! - Added ListSpendPermissions and UseSpendPermission actions to new CdpEvmWalletActionProvider and CdpSmartWalletActionProvider
+
+### Patch Changes
+
+- [#816](https://github.com/coinbase/agentkit/pull/816) [`1b1db57`](https://github.com/coinbase/agentkit/commit/1b1db57f9815ab25a658adfcf542037751a38144) Thanks [@pcminh0505](https://github.com/pcminh0505)! - Added Zerion API for portfolio and DeFi positions
+
+- [#814](https://github.com/coinbase/agentkit/pull/814) [`3211ad0`](https://github.com/coinbase/agentkit/commit/3211ad06a87f0ab3bb1a49f415cfda0b3f8b2db4) Thanks [@phdargen](https://github.com/phdargen)! - Added paymaster capability to CdpSmartWallet
+
+## 0.9.1
+
+### Patch Changes
+
+- [#614](https://github.com/coinbase/agentkit/pull/614) [`0633cce`](https://github.com/coinbase/agentkit/commit/0633cce4b5d5ee5c9bc56bf36eff90f2403007b3) Thanks [@phdargen](https://github.com/phdargen)! - Added TrueMarketsActionProvider for retrieving prediction market info
+
+- [#675](https://github.com/coinbase/agentkit/pull/675) [`ff02c51`](https://github.com/coinbase/agentkit/commit/ff02c51c91bb3b27133c97004ad1eec2bd4a4cbf) Thanks [@phdargen](https://github.com/phdargen)! - Added media upload support for TwitterActionProvider and embeds support for FarcasterActionProvider
+
+- [#704](https://github.com/coinbase/agentkit/pull/704) [`84c2d98`](https://github.com/coinbase/agentkit/commit/84c2d98d63cadbd89c317e54ebcdb001c694c8de) Thanks [@phdargen](https://github.com/phdargen)! - Added ZoraActionProvider for creating Zora coins
+
+- [#796](https://github.com/coinbase/agentkit/pull/796) [`73ea2e0`](https://github.com/coinbase/agentkit/commit/73ea2e07c9ef1bdc419e47cc69f0f23bafa91339) Thanks [@ya7ya](https://github.com/ya7ya)! - Added unwrap_eth action to the WethActionProvider
+
+## 0.9.0
+
+### Minor Changes
+
+- [#773](https://github.com/coinbase/agentkit/pull/773) [`463d310`](https://github.com/coinbase/agentkit/commit/463d3101147cacb0f2044162dd007489f97ef0a0) Thanks [@0xRAG](https://github.com/0xRAG)! - Upgraded cdp-sdk to latest, added CdpSmartWalletProvider, added CdpSolanaWalletProvider, and renamed the v1 CDP wallet providers/action providers to be prefixed with "Legacy"
+
+- [#785](https://github.com/coinbase/agentkit/pull/785) [`2d13565`](https://github.com/coinbase/agentkit/commit/2d13565d91e64a13d3ecb8c300d8c0cd973d3fae) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Upgraded x402ActionProvider
+
 ## 0.8.2
 
 ### Patch Changes
@@ -154,7 +186,7 @@
 - Added `privyWalletProvider` to use a Privy server wallet for agent actions.
 - Added gas configuration parameters (`gasLimitMultiplier`, `feePerGasMultiplier`) to `CdpWalletProvider` and `ViemWalletProvider`.
 - Added Solana chatbot example.
-- Added Privy EVM chatbot exmaple.
+- Added Privy EVM chatbot example.
 
 ## [0.1.2] - 2025-02-07
 

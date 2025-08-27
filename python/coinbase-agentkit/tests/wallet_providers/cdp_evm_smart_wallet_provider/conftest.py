@@ -6,9 +6,9 @@ import pytest
 from eth_account.account import Account
 
 from coinbase_agentkit.network import Network
-from coinbase_agentkit.wallet_providers.cdp_evm_smart_wallet_provider import (
-    CdpEvmSmartWalletProvider,
-    CdpEvmSmartWalletProviderConfig,
+from coinbase_agentkit.wallet_providers.cdp_smart_wallet_provider import (
+    CdpSmartWalletProvider,
+    CdpSmartWalletProviderConfig,
 )
 
 # =========================================================
@@ -43,7 +43,7 @@ MOCK_TRANSACTION = {"to": MOCK_ADDRESS_TO, "value": MOCK_ONE_ETH_WEI, "data": "0
 def mock_cdp_client():
     """Create a mock for CDP client."""
     with patch(
-        "coinbase_agentkit.wallet_providers.cdp_evm_smart_wallet_provider.CdpClient"
+        "coinbase_agentkit.wallet_providers.cdp_smart_wallet_provider.CdpClient"
     ) as mock_cdp_client:
         mock_instance = Mock()
         mock_cdp_client.return_value = mock_instance
@@ -84,9 +84,7 @@ def mock_smart_account():
 @pytest.fixture
 def mock_web3():
     """Create a mock Web3 instance."""
-    with patch(
-        "coinbase_agentkit.wallet_providers.cdp_evm_smart_wallet_provider.Web3"
-    ) as mock_web3:
+    with patch("coinbase_agentkit.wallet_providers.cdp_smart_wallet_provider.Web3") as mock_web3:
         mock_web3_instance = Mock()
         mock_web3.return_value = mock_web3_instance
 
@@ -111,7 +109,7 @@ def mock_web3():
 def mock_asyncio():
     """Create a mock for asyncio."""
     with patch(
-        "coinbase_agentkit.wallet_providers.cdp_evm_smart_wallet_provider.asyncio"
+        "coinbase_agentkit.wallet_providers.cdp_smart_wallet_provider.asyncio"
     ) as mock_asyncio:
         # Create a side effect for asyncio.run that handles the initialization coroutine
         def run_side_effect(coro):
@@ -142,7 +140,7 @@ def mock_network_id_to_chain():
     network_dict = {MOCK_NETWORK_ID: mock_chain}
 
     with patch(
-        "coinbase_agentkit.wallet_providers.cdp_evm_smart_wallet_provider.NETWORK_ID_TO_CHAIN",
+        "coinbase_agentkit.wallet_providers.cdp_smart_wallet_provider.NETWORK_ID_TO_CHAIN",
         network_dict,
     ):
         yield network_dict
@@ -157,7 +155,7 @@ def mocked_wallet_provider(
     mock_asyncio,
     mock_network_id_to_chain,
 ):
-    """Create a CdpEvmSmartWalletProvider instance with mocked dependencies."""
+    """Create a CdpSmartWalletProvider instance with mocked dependencies."""
 
     # Mock the async functions to return synchronously
     async def get_account_mock(*args, **kwargs):
@@ -170,7 +168,7 @@ def mocked_wallet_provider(
     mock_cdp_client.evm.get_smart_account.side_effect = get_smart_account_mock
 
     # Setup the configuration
-    config = CdpEvmSmartWalletProviderConfig(
+    config = CdpSmartWalletProviderConfig(
         network_id=MOCK_NETWORK_ID,
         api_key_id=MOCK_API_KEY_ID,
         api_key_secret=MOCK_API_KEY_SECRET,
@@ -181,8 +179,8 @@ def mocked_wallet_provider(
     )
 
     # Patch the initialization to avoid async calls
-    with patch.object(CdpEvmSmartWalletProvider, "__init__", return_value=None):
-        provider = CdpEvmSmartWalletProvider(config)
+    with patch.object(CdpSmartWalletProvider, "__init__", return_value=None):
+        provider = CdpSmartWalletProvider(config)
         provider._api_key_id = MOCK_API_KEY_ID
         provider._api_key_secret = MOCK_API_KEY_SECRET
         provider._wallet_secret = MOCK_WALLET_SECRET
