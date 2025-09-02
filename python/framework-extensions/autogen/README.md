@@ -20,7 +20,6 @@ pip install coinbase-agentkit coinbase-agentkit-autogen
 Set the following environment variables:
 
 ```bash
-# TODO ENV check
 export OPENAI_API_KEY=<your-openai-api-key>
 export CDP_API_KEY_ID=<your-cdp-api-key-id>
 export CDP_API_KEY_PRIVATE=<your-cdp-api-key-private>
@@ -46,7 +45,7 @@ model_client = OpenAIChatCompletionClient(model="gpt-4o-mini")
 tools = get_autogen_tools(agentKit)
 
 agent = AssistantAgent(
-    name="assistant"
+    name="assistant",
     model_client=model_client,
     tools=tools,
     system_message="You are a helpful agent"
@@ -61,6 +60,8 @@ await main()
 ```
 
 For AgentKit configuration options, see the [Coinbase Agentkit README](https://github.com/coinbase/agentkit/blob/main/python/coinbase-agentkit/README.md).
+
+For Autogen configuration options, see the [Autogen Documentation](https://microsoft.github.io/autogen/stable/index.html)
 
 For a full example, see the [chatbot example](https://github.com/coinbase/agentkit/blob/main/python/examples/autogen-cdp-chatbot/chatbot.py).
 
