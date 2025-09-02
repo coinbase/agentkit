@@ -27,7 +27,7 @@ coinbase-agentkit-autogen = { path = "../../../python/framework-extensions/autog
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.langchain-twitter-chatbot]
+[tool.autogen-cdp-chatbot]
 private = true
 
 [tool.ruff]
