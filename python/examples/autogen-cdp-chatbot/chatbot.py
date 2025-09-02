@@ -1,7 +1,6 @@
 import asyncio
 import json
 import os
-import sys
 import time
 
 from autogen_agentchat.agents import AssistantAgent
@@ -50,6 +49,7 @@ def initialize_agent(
             network_id=config.network_id,  # Network ID - Optional, will default to 'base-sepolia'
             address=config.address,  # Wallet Address - Optional, will trigger idempotency flow if not provided
             idempotency_key=config.idempotency_key,  # Idempotency Key - Optional, seeds generation of a new wallet
+            rpc_url=config.rpc_url,  # Optional RPC URL override
         )
     )
 
@@ -192,7 +192,7 @@ async def run_autonomous_mode(agent_executor: AssistantAgent, interval=10) -> No
         except KeyboardInterrupt:
             print("Goodbye Agent!")
             await agent_executor._model_client.close()
-            sys.exit(0)
+            return
 
 
 # Chat Mode
@@ -223,7 +223,7 @@ async def run_chat_mode(agent_executor: AssistantAgent) -> None:
         except KeyboardInterrupt:
             print("Goodbye Agent!")
             await agent_executor._model_client.close()
-            sys.exit(0)
+            return
 
 
 # Mode Selection
