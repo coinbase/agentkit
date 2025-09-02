@@ -27,9 +27,14 @@ describe("PythActionProvider", () => {
         json: async () => [{ id: "some-price-feed-id", attributes: { base: "BTC" } }],
       });
 
-      await expect(provider.fetchPriceFeed({ tokenSymbol: "ETH" })).rejects.toThrow(
-        "No price feed found for ETH",
+      await expect(provider.fetchPriceFeed({ tokenSymbol: "SOL" })).rejects.toThrow(
+        "No price feed found for SOL",
       );
+    });
+
+    it("should return hardcoded price feed ID for ETH", async () => {
+      const priceFeedId = await provider.fetchPriceFeed({ tokenSymbol: "ETH" });
+      expect(priceFeedId).toEqual("0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace");
     });
 
     it("should throw an error if the response is not ok", async () => {
