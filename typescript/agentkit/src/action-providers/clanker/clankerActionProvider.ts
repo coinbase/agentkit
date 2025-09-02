@@ -1,19 +1,10 @@
-/**
- * Clanker Action Provider
- *
- * This file contains the implementation of the ClankerActionProvider,
- * which provides actions for clanker operations.
- *
- * @module clanker
- */
-
 import { z } from "zod";
 import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
 import { EvmWalletProvider } from "../../wallet-providers";
 import { ClankTokenSchema } from "./schemas";
-import { makeClanker } from "./utils/clankerBridge";
+import { createClankerClient } from "./utils";
 
 /**
  * ClankerActionProvider provides actions for clanker operations.
@@ -44,8 +35,16 @@ export class ClankerActionProvider extends ActionProvider<EvmWalletProvider> {
   @CreateAction({
     name: "clank_token",
     description: `
-This tool will launch a token (called a Clanker, named after the token launch protocol).
-Clanker tokens can only be launched when your network ID is 'base-mainnet'.
+his tool will launch a Clanker token using the Clanker SDK.
+It takes the following inputs:
+- tokenName: The name of the deployed token
+- tokenSymbol: The symbol of the deployed token  
+- description: An optional description of the token or token project
+- socialMediaUrls: An optional array of social media links for the token, each with a platform and url
+- image: A normal or ipfs URL pointing to the image of the token
+- vaultPercentage: The percentage of the token supply to allocate to a vault accessible to the deployed after the lockup period with optional vesting
+- lockDuration_Days: The lock duration of the tokens in the vault (in days) (minimum 7 days)
+- vestingDuration_Days: The duration (in days) that the token should vest after lockup period, vesting is linear.
   `,
     schema: ClankTokenSchema,
   })
@@ -59,7 +58,7 @@ Clanker tokens can only be launched when your network ID is 'base-mainnet'.
       return `Can't Clank token; network must be Base Mainnet`;
     }
 
-    const clanker = await makeClanker(walletProvider, networkId);
+    const clanker = await createClankerClient(walletProvider, networkId);
 
     const lockDuration = args.lockDuration_Days * 24 * 60 * 60;
     const vestingDuration = args.vestingDuration_Days * 24 * 60 * 60;
@@ -68,36 +67,40 @@ Clanker tokens can only be launched when your network ID is 'base-mainnet'.
       name: args.tokenName,
       symbol: args.tokenSymbol,
       image: args.image,
+      description: args.description,
+      socialMediaUrls: args.socialMediaUrls,
       context: {
-        interface: "Clanker SDK",
-        platform: "Clanker",
-        messageId: "Deploy Example",
-        id: "TKN-1",
+        interface: args.interface,
+        id: args.id,
       },
       tokenAdmin: walletProvider.getAddress() as `0x${string}`,
       vault: {
-        percentage: args.vestingPercentage,
+        percentage: args.vaultPercentage,
         lockupDuration: lockDuration,
         vestingDuration: vestingDuration,
       },
     };
 
-    const res = await clanker.deploy(tokenConfig);
+    try {
+      const res = await clanker.deploy(tokenConfig);
 
-    if ("error" in res) {
-      return `There was an error deploying the clanker token: ${res}`;
+      if ("error" in res) {
+        return `There was an error deploying the clanker token: ${res}`;
+      }
+
+      const { txHash } = res;
+
+      const confirmed = await res.waitForTransaction();
+      if ("error" in confirmed) {
+        return `There was an error confirming the clanker token deployment: ${confirmed}`;
+      }
+
+      const { address } = confirmed;
+
+      return `Clanker token deployed at ${address}!  View the transaction at ${txHash}, or view the token page at https://clanker.world/clanker/${address}`;
+    } catch (error) {
+      return `There was an error deploying the clanker token: ${error}`;
     }
-
-    const { txHash } = res;
-
-    const confirmed = await res.waitForTransaction();
-    if ("error" in confirmed) {
-      return `There was an error confirming the clanker token deployment: ${confirmed}`;
-    }
-
-    const { address } = confirmed;
-
-    return `Clanker token deployed at ${address}!  View the transaction at ${txHash}`;
   }
 
   /**
@@ -107,7 +110,6 @@ Clanker tokens can only be launched when your network ID is 'base-mainnet'.
    * @returns True if the network is supported
    */
   supportsNetwork(network: Network): boolean {
-    // all protocol networks
     return network.protocolFamily === "evm" && network.networkId == "base-mainnet";
   }
 }

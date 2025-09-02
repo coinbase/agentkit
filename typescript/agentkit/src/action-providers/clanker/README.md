@@ -18,7 +18,7 @@ clanker/
 ├── schemas.ts                      # Action schemas and types
 ├── index.ts                        # Package exports
 ├── utils/
-│   ├── clankerBridge.ts            # Helprs to wrap the EVMWalletProvider in the type the Clanker SDK expects
+│   ├── clankerBridge.ts            # Helpers to wrap the EVMWalletProvider in the type the Clanker SDK expects
 └── README.md                       # Documentation (this file)
 ```
 

@@ -7,14 +7,14 @@ import { ClankTokenSchema } from "./schemas";
 import { EvmWalletProvider } from "../../wallet-providers";
 import { Network } from "../../network";
 
-import { makeClanker } from "./utils/clankerBridge";
+import { createClankerClient } from "./utils";
 
 jest.mock("./utils/clankerBridge", () => ({
-  makeClanker: jest.fn(),
+  createClankerClient: jest.fn(),
 }));
 
-type MakeClanker = typeof makeClanker;
-const makeClankerMock = makeClanker as jest.MockedFunction<MakeClanker>;
+type CreateClankerClient = typeof createClankerClient;
+const createClankerClientMock = createClankerClient as jest.MockedFunction<CreateClankerClient>;
 
 const DEPLOYED_HASH = "0xdeadbeef";
 const DEPLOYED_TOKEN_ADDRESS = "0xabc123abc123abc123abc123abc123abc123abc1";
@@ -43,7 +43,9 @@ describe("Clanker action provider tests", () => {
       })),
     };
 
-    makeClankerMock.mockResolvedValue(fakeClanker as unknown as Awaited<ReturnType<MakeClanker>>);
+    createClankerClientMock.mockResolvedValue(
+      fakeClanker as unknown as Awaited<ReturnType<CreateClankerClient>>,
+    );
   });
 
   describe("network validation", () => {
@@ -78,9 +80,11 @@ describe("Clanker action provider tests", () => {
         tokenName: "testTokenName",
         tokenSymbol: "TTN",
         image: "https://test.com",
-        vestingPercentage: 10,
+        vaultPercentage: 10,
         vestingDuration_Days: 30,
         lockDuration_Days: 30,
+        interface: "CDP AgentKit",
+        id: "test-id",
       };
       const parseResult = ClankTokenSchema.safeParse(validInput);
       expect(parseResult.success).toBe(true);
@@ -88,7 +92,7 @@ describe("Clanker action provider tests", () => {
         expect(parseResult.data.tokenName).toBe("testTokenName");
         expect(parseResult.data.tokenSymbol).toBe("TTN");
         expect(parseResult.data.image).toBe("https://test.com");
-        expect(parseResult.data.vestingPercentage).toBe(10);
+        expect(parseResult.data.vaultPercentage).toBe(10);
         expect(parseResult.data.vestingDuration_Days).toBe(30);
         expect(parseResult.data.lockDuration_Days).toBe(30);
       }
@@ -110,16 +114,38 @@ describe("Clanker action provider tests", () => {
         tokenName: "testTokenName",
         tokenSymbol: "TTN",
         image: "https://test.com",
-        vestingPercentage: 10,
+        vaultPercentage: 10,
         vestingDuration_Days: 30,
         lockDuration_Days: 30,
+        interface: "CDP AgentKit",
+        id: "test-id",
       };
       const result = await provider.clankToken(mockWalletProvider, args);
       expect(result).toContain(`Clanker token deployed at ${DEPLOYED_TOKEN_ADDRESS}`);
       expect(result).toContain(`View the transaction at ${DEPLOYED_HASH}`);
       expect(mockWalletProvider.getNetwork).toHaveBeenCalled();
 
-      expect(makeClankerMock).toHaveBeenCalledWith(expect.any(Object), expect.any(String));
+      expect(createClankerClientMock).toHaveBeenCalledWith(expect.any(Object), expect.any(String));
+    });
+  });
+
+  describe("supportsNetwork", () => {
+    it("should return true for base-mainnet with evm protocol", () => {
+      expect(
+        provider.supportsNetwork({
+          protocolFamily: "evm",
+          networkId: "base-mainnet",
+        }),
+      ).toBe(true);
+    });
+
+    it("should return false for non-base networks", () => {
+      expect(
+        provider.supportsNetwork({
+          protocolFamily: "evm",
+          networkId: "ethereum-mainnet",
+        }),
+      ).toBe(false);
     });
   });
 });
