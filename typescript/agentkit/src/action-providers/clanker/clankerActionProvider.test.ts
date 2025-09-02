@@ -9,7 +9,7 @@ import { Network } from "../../network";
 
 import { createClankerClient } from "./utils";
 
-jest.mock("./utils/clankerBridge", () => ({
+jest.mock("./utils", () => ({
   createClankerClient: jest.fn(),
 }));
 
