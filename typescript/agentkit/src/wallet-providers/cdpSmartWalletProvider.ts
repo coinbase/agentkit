@@ -20,7 +20,14 @@ import { WalletProviderWithClient, CdpSmartWalletProviderConfig } from "./cdpSha
 /**
  * Supported network types for CDP SDK smart wallet operations
  */
-type CdpSmartWalletNetwork = "base" | "base-sepolia" | "ethereum" | "ethereum-sepolia" | "polygon" | "arbitrum" | "optimism";
+type CdpSmartWalletNetwork =
+  | "base"
+  | "base-sepolia"
+  | "ethereum"
+  | "ethereum-sepolia"
+  | "polygon"
+  | "arbitrum"
+  | "optimism";
 
 interface ConfigureCdpSmartWalletProviderWithWalletOptions {
   /**

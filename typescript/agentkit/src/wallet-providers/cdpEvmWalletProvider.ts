@@ -21,7 +21,14 @@ import { WalletProviderWithClient, CdpWalletProviderConfig } from "./cdpShared";
 /**
  * Supported network types for CDP SDK EVM transactions
  */
-type CdpEvmNetwork = "base" | "base-sepolia" | "ethereum" | "ethereum-sepolia" | "polygon" | "arbitrum" | "optimism";
+type CdpEvmNetwork =
+  | "base"
+  | "base-sepolia"
+  | "ethereum"
+  | "ethereum-sepolia"
+  | "polygon"
+  | "arbitrum"
+  | "optimism";
 
 interface ConfigureCdpEvmWalletProviderWithWalletOptions {
   /**
