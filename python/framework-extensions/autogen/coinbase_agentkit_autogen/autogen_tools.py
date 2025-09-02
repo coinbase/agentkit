@@ -125,12 +125,16 @@ class AutogenTool(BaseTool[BaseModel, Any]):
 
         kwargs = args.model_dump()
 
-        # Determine if the callable is asynchronous
-        if inspect.iscoroutinefunction(self._func):
-            return await self._func(**kwargs)
-        else:
-            # Run sync func in a thread to avoid blocking the event loop
-            return await asyncio.to_thread(self._func, **kwargs)
+        try:
+            # Determine if the callable is asynchronous
+            if inspect.iscoroutinefunction(self._func):
+                return await self._func(**kwargs)
+            else:
+                # Run sync func in a thread to avoid blocking the event loop
+                return await asyncio.to_thread(self._func, **kwargs)
+        except Exception as e:
+            # Handle exceptions raised during function execution
+            return f"Error executing tool: {e!s}"
 
 
 def get_autogen_tools(agent_kit: AgentKit) -> list[AutogenTool]:
