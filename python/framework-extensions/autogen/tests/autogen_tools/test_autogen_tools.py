@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 from coinbase_agentkit import AgentKit, AgentKitConfig
 from coinbase_agentkit_autogen import AutogenTool, get_autogen_tools
-from tests.autogen_tools.conftest import MockWalletProvider
+from tests.autogen_tools.conftest import ErrorActionProvider, MockWalletProvider
 
 """Test that actions are properly converted to AutogenTool."""
 
@@ -231,6 +231,29 @@ async def test_tool_invocation_with_no_schema(agent_kit: AgentKit):
     assert "Wallet: test_wallet" in result
     assert "Address: addr_9876543210" in result
     assert "Balance: 22.0" in result
+
+
+@pytest.mark.asyncio
+async def test_tool_with_error_action(wallet_provider: MockWalletProvider):
+    """Test that tools handle errors gracefully."""
+    agent_kit_with_error_action = AgentKit(
+        AgentKitConfig(
+            wallet_provider=wallet_provider,
+            action_providers=[ErrorActionProvider()],
+        )
+    )
+
+    tools = get_autogen_tools(agent_kit_with_error_action)
+
+    # find the tool that raises an error
+    error_tool = next(t for t in tools if "error_action" in t.name)
+    error_schema_model = error_tool.args_type()
+
+    result = await error_tool.run(error_schema_model(a=1, b=2))
+
+    # The result should be an error message string
+    assert isinstance(result, str)
+    assert "Error executing tool: Intentional error for testing" in result
 
 
 """Test integration with agent kit"""

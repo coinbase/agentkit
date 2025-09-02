@@ -115,3 +115,25 @@ def agent_kit(wallet_provider, action_provider):
             action_providers=[action_provider],
         )
     )
+
+
+class ErrorActionProvider(ActionProvider[MockWalletProvider]):
+    """Action provider that raises an error in its action."""
+
+    def __init__(self) -> None:
+        super().__init__("error_provider", [])
+
+    @create_action(
+        name="error_action",
+        description="A simple test action with error",
+        schema=AddNumbersSchema,
+    )
+    def error_action(self, wallet_provider: MockWalletProvider, args: dict):
+        """Actions that raises an error."""
+        _ = wallet_provider  # Unused but required by interface
+        raise ValueError("Intentional error for testing")
+
+    def supports_network(self, network: Network) -> bool:
+        """Check if the network is supported by this action provider."""
+        _ = network  # Unused but required by interface
+        return True
