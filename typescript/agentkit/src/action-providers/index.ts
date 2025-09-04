@@ -35,3 +35,4 @@ export * from "./zerion";
 export * from "./zerodev";
 export * from "./zeroX";
 export * from "./zora";
+export * from "./dexpaprika";
