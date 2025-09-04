@@ -17,8 +17,7 @@ clanker/
 ├── exampleAction.test.ts           # Example action test suite
 ├── schemas.ts                      # Action schemas and types
 ├── index.ts                        # Package exports
-├── utils/
-│   ├── clankerBridge.ts            # Helpers to wrap the EVMWalletProvider in the type the Clanker SDK expects
+├── utils.ts                        # Helpers to wrap the EVMWalletProvider in the type the Clanker SDK expects          
 └── README.md                       # Documentation (this file)
 ```
 
@@ -30,10 +29,15 @@ clanker/
   - **Input**:
     - `tokenName` (string): The name of the deployed token
     - `tokenSymbol` (string): The symbol of the deployed token
+    - `description` (string): Description of the token or token project
     - `image` (string): A url pointing to the image of the token
-    - `vestingPercentage` (number): The percentage of token that should be vested for the creator
+    - `vaultPercentage` (number): The percentage of token that should be vaulted for the creator
     - `vestingDuration_Days` (number): The duration (in days) that the token should vest after lockup period
     - `lockDuration_Days` (number): The lock duration of the token (minimum 7 days)
+    - `socialMediaUrls` (array): Socials for the token. These may be displayed on aggregators
+    - `interface` (string): System the token was deployed via. Defaults to "CDP AgentKit"
+    - `id` (string): User id of the poster on the social platform the token was deployed from. Used for provenance and will be verified by aggregators
+
   - **Output**: String describing the action result
   - **Example**:
     ```typescript
@@ -87,23 +91,6 @@ When implementing new actions, ensure to:
 1. Add unit tests for schema validations
 2. Test network support
 
-#### Example
-```
-Prompt: Can you clank a token with name [CDP Clanker], and symbol [CDPC] and image hosted at [https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQF6hcTTU1A8Ymi2VldXqCsPkBu_ltAhIKiRg&s]?  vest 10%, locked for 30 days, and then vested for 30 days.  do this on base-mainnet
-```
-
-```
--------------------
-Internal address: 0xE8D165388b13c460F02f4dC922309450a9bF6f22
-Clanker token deployed at 0x15E91EAF0848c8FEfE8c287923B5A78E254A76eb!  View the transaction at 0xf67befc5da942288a7bb4baee2cbbc1a09853e62552e736aa272b91e09f918fa
--------------------
-The Clanker token has been successfully deployed with the name "CDP Clanker" and symbol "CDPC." You can view the transaction [here](https://etherscan.io/tx/0xf67befc5da942288a7bb4baee2cbbc1a09853e62552e736aa272b91e09f918fa). The token address is 0x15E91EAF0848c8FEfE8c287923B5A78E254A76eb.
--------------------
-```
-
 ## Notes
 
-- Agent can define the description by adding a `description` field to the schema
-  - Currently description defaults to a short message describing who deployed it.
-- Likewise, agent can specify initial quote token.
 - Check the (Clanker docs)[https://github.com/clanker-devco/clanker-sdk] to see other configurable options (fees, admin, etc.).

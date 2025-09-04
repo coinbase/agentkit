@@ -54,8 +54,8 @@ It takes the following inputs:
   ): Promise<string> {
     const network = walletProvider.getNetwork();
     const networkId = network.networkId || "base-mainnet";
-    if (!networkId || networkId !== "base-mainnet") {
-      return `Can't Clank token; network must be Base Mainnet`;
+    if (!this.supportsNetwork(network)) {
+      return `Can't Clank token; network ${networkId} is not supported`;
     }
 
     const clanker = await createClankerClient(walletProvider, networkId);
@@ -67,8 +67,10 @@ It takes the following inputs:
       name: args.tokenName,
       symbol: args.tokenSymbol,
       image: args.image,
-      description: args.description,
-      socialMediaUrls: args.socialMediaUrls,
+      metadata: {
+        socialMediaUrls: args.socialMediaUrls,
+        description: args.description,
+      },
       context: {
         interface: args.interface,
         id: args.id,
@@ -79,6 +81,7 @@ It takes the following inputs:
         lockupDuration: lockDuration,
         vestingDuration: vestingDuration,
       },
+      chainId: Number(network.chainId) as 8453 | 84532 | 42161 | undefined,
     };
 
     try {
@@ -110,7 +113,11 @@ It takes the following inputs:
    * @returns True if the network is supported
    */
   supportsNetwork(network: Network): boolean {
-    return network.protocolFamily === "evm" && network.networkId == "base-mainnet";
+    return (
+      network.networkId === "base-mainnet" ||
+      network.networkId === "base-sepolia" ||
+      network.networkId === "arbitrum-mainnet"
+    );
   }
 }
 
