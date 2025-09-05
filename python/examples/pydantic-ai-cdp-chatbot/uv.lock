@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10, <4"
 
 [[package]]
@@ -653,7 +653,7 @@ wheels = [
 
 [[package]]
 name = "coinbase-agentkit"
-version = "0.7.1"
+version = "0.7.2"
 source = { editable = "../../coinbase-agentkit" }
 dependencies = [
     { name = "cdp-sdk" },
@@ -726,7 +726,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "coinbase-agentkit", specifier = ">=0.7.0,<0.8" },
+    { name = "coinbase-agentkit", specifier = ">=0.7.0,<0.9" },
     { name = "nest-asyncio", specifier = ">=1.6.0,<2" },
     { name = "pydantic-ai", specifier = ">=0.4.0,<0.5" },
     { name = "pytest-asyncio", specifier = ">=0.25.3,<0.26" },

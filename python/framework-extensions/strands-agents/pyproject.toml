@@ -18,7 +18,7 @@ keywords = [
     "agent",
 ]
 dependencies = [
-    "coinbase-agentkit>=0.7.1,<0.8",
+    "coinbase-agentkit>=0.7.1,<0.9",
     "python-dotenv>=1.0.1,<2",
     "nest-asyncio>=1.5.8,<2",
     "strands-agents>=1.0.1", 

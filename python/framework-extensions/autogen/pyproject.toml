@@ -16,7 +16,7 @@ keywords = [
     "agent",
 ]
 dependencies = [
-    "coinbase-agentkit>=0.7.0,<0.8",
+    "coinbase-agentkit>=0.7.0,<0.9",
     "autogen-agentchat>=0.7.1,<0.8",
     "autogen-ext[openai]>=0.7.1,<0.8",
     "python-dotenv>=1.0.1,<2",

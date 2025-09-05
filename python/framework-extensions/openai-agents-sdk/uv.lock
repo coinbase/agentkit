@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10, <4"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -695,7 +695,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "coinbase-agentkit", specifier = ">=0.7.0,<0.8" },
+    { name = "coinbase-agentkit", specifier = ">=0.7.0,<0.9" },
     { name = "nest-asyncio", specifier = ">=1.6.0,<2" },
     { name = "openai-agents", specifier = ">=0.0.6,<0.0.7" },
     { name = "pytest-asyncio", specifier = ">=0.25.3,<0.26" },

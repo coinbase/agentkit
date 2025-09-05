@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10, <4"
 
 [manifest]
@@ -640,7 +640,7 @@ wheels = [
 
 [[package]]
 name = "coinbase-agentkit"
-version = "0.7.1"
+version = "0.7.2"
 source = { editable = "../../coinbase-agentkit" }
 dependencies = [
     { name = "cdp-sdk" },
@@ -713,7 +713,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "coinbase-agentkit", specifier = ">=0.7.1,<0.8" },
+    { name = "coinbase-agentkit", specifier = ">=0.7.1,<0.9" },
     { name = "nest-asyncio", specifier = ">=1.5.8,<2" },
     { name = "python-dotenv", specifier = ">=1.0.1,<2" },
     { name = "strands-agents", specifier = ">=1.0.1" },

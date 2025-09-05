@@ -2,6 +2,20 @@
 
 <!-- towncrier release notes start -->
 
+## [0.7.2] - 2025-09-05
+
+### Added
+
+- Added optional custom rpc url ([#824](https://github.com/coinbase/agentkit/pull/824))
+
+### Fixed
+
+- Exposed erc721_action_provider in the public API to enable direct imports. ([#829](https://github.com/coinbase/agentkit/pull/829))
+- Fixed swap API action ([#836](https://github.com/coinbase/agentkit/pull/836))
+- Fixed ETH price feed in PythActionProvider
+- Fixed network support in CDP wallet providers
+
+
 ## [0.7.1] - 2025-08-01
 
 ### Added
