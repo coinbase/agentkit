@@ -1,5 +1,11 @@
 # AgentKit Changelog
 
+## 0.10.2
+
+### Patch Changes
+
+- [#831](https://github.com/coinbase/agentkit/pull/831) [`946994e`](https://github.com/coinbase/agentkit/commit/946994ee0338d2f6152970e0c15176fdae93030e) Thanks [@murrlincoln](https://github.com/murrlincoln)! - fixed ETH price feed in PythActionProvider
+
 ## 0.10.1
 
 ### Patch Changes
