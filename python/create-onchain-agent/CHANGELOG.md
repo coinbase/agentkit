@@ -2,6 +2,15 @@
 
 <!-- towncrier release notes start -->
 
+## [0.9.0] - 2025-09-05
+
+### Added
+
+- Bump coinbase-agentkit to 0.7.2 in beginner template and chatbot template
+- Bump coinbase-agentkit-langchain to 0.7.0 in beginner template and chatbot template
+- Bump coinbase-agentkit-openai-agents-sdk to 0.7.0 in beginner template and chatbot template
+
+
 ## [0.8.0] - 2025-07-18
 
 ### Added

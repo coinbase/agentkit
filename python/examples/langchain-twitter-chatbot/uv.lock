@@ -648,7 +648,7 @@ dev = [
 
 [[package]]
 name = "coinbase-agentkit-langchain"
-version = "0.6.0"
+version = "0.7.0"
 source = { editable = "../../framework-extensions/langchain" }
 dependencies = [
     { name = "coinbase-agentkit" },
@@ -659,7 +659,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "coinbase-agentkit", specifier = ">=0.7.0,<0.9" },
+    { name = "coinbase-agentkit", specifier = ">=0.7.2,<0.8" },
     { name = "langchain", specifier = ">=0.3.4,<0.4" },
     { name = "nest-asyncio", specifier = ">=1.5.8,<2" },
     { name = "python-dotenv", specifier = ">=1.0.1,<2" },

@@ -1,6 +1,6 @@
 [project]
 name = "coinbase-agentkit-strands-agents"
-version = "0.1.0"
+version = "0.2.0"
 description = "Coinbase AgentKit Strands Agents extension"
 authors = [{ name = "Uchenna Egbe", email = "ucheegbe@amazon.com" }]
 requires-python = "~=3.10"
@@ -18,7 +18,7 @@ keywords = [
     "agent",
 ]
 dependencies = [
-    "coinbase-agentkit>=0.7.1,<0.9",
+    "coinbase-agentkit>=0.7.2,<0.8",
     "python-dotenv>=1.0.1,<2",
     "nest-asyncio>=1.5.8,<2",
     "strands-agents>=1.0.1", 

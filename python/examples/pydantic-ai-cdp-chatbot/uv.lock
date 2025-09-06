@@ -726,7 +726,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "coinbase-agentkit", specifier = ">=0.7.0,<0.9" },
+    { name = "coinbase-agentkit", specifier = ">=0.7.2,<0.8" },
     { name = "nest-asyncio", specifier = ">=1.6.0,<2" },
     { name = "pydantic-ai", specifier = ">=0.4.0,<0.5" },
     { name = "pytest-asyncio", specifier = ">=0.25.3,<0.26" },

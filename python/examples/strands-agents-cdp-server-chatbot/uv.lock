@@ -700,7 +700,7 @@ dev = [
 
 [[package]]
 name = "coinbase-agentkit-strands-agents"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "../../framework-extensions/strands-agents" }
 dependencies = [
     { name = "coinbase-agentkit" },
@@ -713,7 +713,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "coinbase-agentkit", specifier = ">=0.7.1,<0.9" },
+    { name = "coinbase-agentkit", specifier = ">=0.7.2,<0.8" },
     { name = "nest-asyncio", specifier = ">=1.5.8,<2" },
     { name = "python-dotenv", specifier = ">=1.0.1,<2" },
     { name = "strands-agents", specifier = ">=1.0.1" },

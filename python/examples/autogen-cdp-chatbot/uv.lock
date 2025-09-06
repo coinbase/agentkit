@@ -718,7 +718,7 @@ dependencies = [
 requires-dist = [
     { name = "autogen-agentchat", specifier = ">=0.7.1,<0.8" },
     { name = "autogen-ext", extras = ["openai"], specifier = ">=0.7.1,<0.8" },
-    { name = "coinbase-agentkit", specifier = ">=0.7.0,<0.9" },
+    { name = "coinbase-agentkit", specifier = ">=0.7.2,<0.8" },
     { name = "nest-asyncio", specifier = ">=1.6.0,<2" },
     { name = "pytest-asyncio", specifier = ">=0.25.3,<0.26" },
     { name = "python-dotenv", specifier = ">=1.0.1,<2" },

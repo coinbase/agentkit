@@ -459,7 +459,7 @@ wheels = [
 
 [[package]]
 name = "cdp-sdk"
-version = "1.26.0"
+version = "1.31.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -475,9 +475,9 @@ dependencies = [
     { name = "urllib3" },
     { name = "web3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/89/cd/2e0f7918dc21a309388525ef9d2d8067d607c6ff959e76e99ed0335b572b/cdp_sdk-1.26.0.tar.gz", hash = "sha256:4de48c2f94e9a222833b29df847d6ccfc0bfa165bf0a7f787b035d1962f2285f", size = 276055, upload-time = "2025-08-01T00:26:10.073Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/34/fe/f1daa8e52f320063576318032c67dda346081b4bbb6be00c8bb99f2b12b0/cdp_sdk-1.31.2.tar.gz", hash = "sha256:47d17aaf3da5183123a64d38d3c02c2350758186c48e334b425d8b0f105b7fd8", size = 317633, upload-time = "2025-09-05T20:51:43.956Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/dc/33/b1b861de09d3a950501c16977e4113766dd444024ce355d56b4e4a5ca289/cdp_sdk-1.26.0-py3-none-any.whl", hash = "sha256:72d4b51e0b4b455367fb5e42ee5966313ff9cb70575e761501adf711eee680f1", size = 652515, upload-time = "2025-08-01T00:26:08.415Z" },
+    { url = "https://files.pythonhosted.org/packages/4a/bb/b5a152845d29f04ce51eff1703b1518f2272ff45e139cae9eacd1cc73584/cdp_sdk-1.31.2-py3-none-any.whl", hash = "sha256:a58a67e4bc1e1edd561a57d09e2d5eed847d378ba328ea6c7802634d00800415", size = 792613, upload-time = "2025-09-05T20:51:41.019Z" },
 ]
 
 [[package]]
@@ -677,7 +677,7 @@ wheels = [
 
 [[package]]
 name = "coinbase-agentkit"
-version = "0.7.1"
+version = "0.7.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cdp-sdk" },
@@ -694,14 +694,14 @@ dependencies = [
     { name = "web3" },
     { name = "x402" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b7/17/95dd9eaf0090604fd9e419eff11a4347a7692ee34a9d1d6416dc27835fc5/coinbase_agentkit-0.7.1.tar.gz", hash = "sha256:b2a3a482d895a138d292f189f2755e38c55166973a810f728219c62cd8f3d364", size = 109757, upload-time = "2025-08-01T20:43:02.154Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/19/91/9f3efe6d4737707341a4f054c7e236b485d42ec3105ba97db1e6ed747311/coinbase_agentkit-0.7.2.tar.gz", hash = "sha256:621935644118054772d9b047bed4dbca04cd28f6d67ea0779507d2c480a17b41", size = 114875, upload-time = "2025-09-06T00:13:29.564Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8c/75/c1eb762d9c9ce53ebf0013592186aef447d61f7da88165770ac1782821fa/coinbase_agentkit-0.7.1-py3-none-any.whl", hash = "sha256:26ee1b49f7495f37127860abe485762549a998c266ab1c41637043a3116e9bb4", size = 170267, upload-time = "2025-08-01T20:43:00.285Z" },
+    { url = "https://files.pythonhosted.org/packages/a7/0c/0dc601ace61f967eeced8b33c776d04b2cb08ee029c23a9aed91eaf2d747/coinbase_agentkit-0.7.2-py3-none-any.whl", hash = "sha256:32c097c4a0e87086d88ddb45082b3bf96d40cd20980a7052bffb1cc68f902b97", size = 179654, upload-time = "2025-09-06T00:13:27.834Z" },
 ]
 
 [[package]]
 name = "coinbase-agentkit-strands-agents"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "coinbase-agentkit" },
@@ -731,7 +731,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "coinbase-agentkit", specifier = ">=0.7.1,<0.9" },
+    { name = "coinbase-agentkit", specifier = ">=0.7.2,<0.8" },
     { name = "nest-asyncio", specifier = ">=1.5.8,<2" },
     { name = "python-dotenv", specifier = ">=1.0.1,<2" },
     { name = "strands-agents", specifier = ">=1.0.1" },

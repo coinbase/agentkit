@@ -2,6 +2,13 @@
 
 <!-- towncrier release notes start -->
 
+## [0.7.0] - 2025-09-05
+
+### Added
+
+- Bump coinbase-agentkit to 0.7.2
+
+
 ## [0.6.0] - 2025-07-18
 
 ### Added
