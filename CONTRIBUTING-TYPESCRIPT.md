@@ -15,7 +15,7 @@ This guide covers TypeScript-specific setup and development for AgentKit.
 
 ## Development Setup
 
-AgentKit uses Node.js v18.x or higher and pnpm 10.7.x or higher.
+AgentKit uses Node.js v22.x or higher and pnpm 10.7.x or higher.
 
 You can run the following commands in your terminal to check your local Node.js and pnpm versions:
 
@@ -200,8 +200,21 @@ Wallet providers give an agent access to a wallet. AgentKit currently supports t
 
 EVM:
 
-- [CdpWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/cdpWalletProvider.ts)
+- [CdpEvmWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/cdpEvmWalletProvider.ts)
+- [CdpSmartWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/cdpSmartWalletProvider.ts)
+- [LegacyCdpWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/legacyCdpWalletProvider.ts)
+- [LegacyCdpSmartWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/legacyCdpSmartWalletProvider.ts)
 - [ViemWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/viemWalletProvider.ts)
+- [ZeroDevWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/zeroDevWalletProvider.ts)
+- [PrivyEvmWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/privyEvmWalletProvider.ts)
+- [PrivyEvmDelegatedEmbeddedWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/privyEvmDelegatedEmbeddedWalletProvider.ts)
+
+Solana:
+
+- [CdpSolanaWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/cdpSolanaWalletProvider.ts)
+- [SolanaKeypairWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/solanaKeypairWalletProvider.ts)
+- [PrivySvmWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/privySvmWalletProvider.ts)
+
 
 ### Adding a new EVM wallet provider
 
@@ -217,14 +230,14 @@ Actions are necessary building blocks powering onchain AI applications, but they
 
 Integrations into AI Agent frameworks are specific to the framework itself, so we can't go into specific implementation details here, but we can offer up some examples and tips.
 
-- Check out how [AgentKit actions are mapped into LangChain Tools](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit-langchain/src/index.ts)
-- Check out how [AgentKit Actions are mapped into Eliza Actions](https://github.com/elizaOS/eliza/blob/develop/packages/plugin-agentkit/src/actions.ts#L31)
+- Check out how [AgentKit actions are mapped into LangChain Tools](https://github.com/coinbase/agentkit/blob/master/typescript/framework-extensions/langchain/src/index.ts)
+- Check out how [AgentKit Actions are mapped into Eliza Actions](https://github.com/elizaos-plugins/plugin-agentkit/blob/main/src/actions.ts#L25)
 
 ## Testing
 
 ### Local Testing
 
-A good way to test new actions locally is by using the chatbot example in `typescript/examples/langchain-smart-wallet-chatbot`. See the [chatbot README](https://github.com/coinbase/agentkit/blob/master/typescript/examples/langchain-smart-wallet-chatbot/README.md) for instructions on setting up and running the chatbot.
+A good way to test new actions locally is by using the chatbot example in `typescript/examples/langchain-cdp-smart-wallet-chatbot`. See the [chatbot README](https://github.com/coinbase/agentkit/blob/master/typescript/examples/langchain-cdp-smart-wallet-chatbot/README.md) for instructions on setting up and running the chatbot.
 
 The flow is:
 
@@ -284,7 +297,7 @@ To add a changeset, use `changesets` to create it for you:
 pnpm run changeset
 ```
 
-This will kick off an interactive prompt to help you create the changeset. Use the arrow keys to navigate the different options, and press the `Space` key to select an option. You should select the package(s) you are making a change to – most of the time this will be `@coinbase/agentkit`. Once selected, hit `Enter`. You'll then be prompted to specify the type of change you are making (major, minor or patch), starting with major. Most of the time you will not be making a major change, so hitting `Enter` will progress to the next step. If you're adding a new feature, you should select `minor`. If you're fixing a bug, you should select `patch`. Once selected, you will be prompted to provide a summary of your changes. This should be a short, specific description in the past tense (see above for examples).
+This will kick off an interactive prompt to help you create the changeset. Use the arrow keys to navigate the different options, and press the `Space` key to select an option. You should select the package(s) you are making a change to – most of the time this will be `@coinbase/agentkit`. Once selected, hit `Enter`. You'll then be prompted to specify the type of change you are making (major, minor or patch), starting with major. Most of the time you will not be making a major change, so hitting `Enter` will progress to the next step. For breaking changes, you should select `minor`. For new features like action providers or framework extensions or minor bug fixes, you should select `patch`. Once selected, you will be prompted to provide a summary of your changes. This should be a short, specific description in the past tense (see above for examples).
 
 Once complete, a new changeset will be created in the `.changeset` directory, which should be committed along with the changes in your Pull Request.
 

@@ -310,7 +310,7 @@ describe("PrivyEvmWalletProvider", () => {
     it("should transfer native tokens", async () => {
       const result = await provider.nativeTransfer(
         "0x1234567890123456789012345678901234567890" as Address,
-        "1.0",
+        "1000000000000000000", // 1 ETH in wei
       );
 
       expect(result).toBe(MOCK_TRANSACTION_HASH);

@@ -55,7 +55,7 @@ AgentKit is [Coinbase Developer Platform's](https://docs.cdp.coinbase.com) toolk
 
 _Prerequisites_:
 
-- [Node.js 18+](https://nodejs.org/en/download/)
+- [Node.js 22+](https://nodejs.org/en/download/)
 - [CDP Secret API Key](https://docs.cdp.coinbase.com/get-started/docs/cdp-api-keys#creating-secret-api-keys)
 - [OpenAI API Key](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key)
 
@@ -68,7 +68,7 @@ npm create onchain-agent@latest
 # Navigate to your project directory
 cd onchain-agent
 
-# At this point, fill in your CDP API key name, OpenAI API key, and any other environment variables in the .env.local file.
+# At this point, fill in your CDP API key id/secret, OpenAI API key, and any other environment variables in the .env.local file.
 # Then, rename the .env.local file to .env
 mv .env.local .env
 
@@ -104,7 +104,7 @@ pipx run create-onchain-agent
 # Navigate to your project directory
 cd onchain-agent
 
-# At this point, fill in your CDP API key name, OpenAI API key, and any other environment variables in the .env.local file.
+# At this point, fill in your CDP API key id/secret, OpenAI API key, and any other environment variables in the .env.local file.
 # Then, rename the .env.local file to .env
 mv .env.local .env
 
@@ -152,12 +152,14 @@ agentkit/
 │   │   └── model-context-protocol/
 │   └── examples/
 │       ├── langchain-cdp-chatbot/
-│       ├── langchain-cdp-v2-chatbot/
+│       ├── langchain-cdp-smart-wallet-chatbot/
 │       ├── langchain-farcaster-chatbot/
+│       ├── langchain-legacy-cdp-chatbot/
 │       ├── langchain-privy-chatbot/
 │       ├── langchain-solana-chatbot/
 │       ├── langchain-twitter-chatbot/
 │       ├── langchain-xmtp-chatbot/
+│       ├── langchain-zerodev-chatbot/
 │       ├── model-context-protocol-smart-wallet-server/
 │       └── vercel-ai-sdk-smart-wallet-chatbot/
 ├── python/
@@ -171,14 +173,19 @@ agentkit/
 │   ├── create-onchain-agent/
 │   ├── framework-extensions/
 │   │   ├── langchain/
-│   │   └── openai-agents-sdk/
+│   │   ├── openai-agents-sdk/
+│   │   └── strands-agents/
 │   └── examples/
 │       ├── langchain-cdp-chatbot/
+│       ├── langchain-cdp-smart-wallet-chatbot/
+│       ├── langchain-cdp-solana-chatbot/
 │       ├── langchain-eth-account-chatbot/
-│       ├── langchain-smart-wallet-chatbot/
+│       ├── langchain-nillion-secretvault-chatbot/
 │       ├── langchain-twitter-chatbot/
-│       └── openai-agents-cdp-voice-chatbot/
-│       └── openai-agents-sdk-smart-wallet-chatbot/
+│       ├── openai-agents-sdk-cdp-chatbot/
+│       ├── openai-agents-sdk-cdp-voice-chatbot/
+│       ├── openai-agents-sdk-smart-wallet-chatbot/
+│       └── strands-agents-cdp-server-chatbot/
 ```
 
 ## 🤝 Contributing
@@ -194,6 +201,8 @@ agentkit/
 - Python API References
   - [AgentKit](https://coinbase.github.io/agentkit/coinbase-agentkit/python/index.html)
   - [AgentKit Langchain Extension](https://coinbase.github.io/agentkit/coinbase-agentkit-langchain/python/index.html)
+  - [AgentKit OpenAI Agents SDK Extension](./python/framework-extensions/openai-agents-sdk/README.md)
+  - [AgentKit Strands Agents Extension](./python/framework-extensions/strands-agents/README.md)
 - Node.js API References
   - [AgentKit](https://coinbase.github.io/agentkit/agentkit/typescript/index.html)
   - [AgentKit Langchain Extension](https://coinbase.github.io/agentkit/agentkit-langchain/typescript/index.html)

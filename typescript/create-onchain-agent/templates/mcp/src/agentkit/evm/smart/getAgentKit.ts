@@ -3,7 +3,7 @@ import {
   cdpApiActionProvider,
   erc20ActionProvider,
   pythActionProvider,
-  SmartWalletProvider,
+  CdpSmartWalletProvider,
   walletActionProvider,
   wethActionProvider,
 } from "@coinbase/agentkit";
@@ -23,12 +23,16 @@ export async function getAgentKit(): Promise<AgentKit> {
       privateKey = (process.env.PRIVATE_KEY || generatePrivateKey()) as Hex;
     }
 
-    const signer = privateKeyToAccount(privateKey);
+    const owner = privateKeyToAccount(privateKey);
 
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
-    const walletProvider = await SmartWalletProvider.configureWithWallet({
+    const walletProvider = await CdpSmartWalletProvider.configureWithWallet({
+      apiKeyId: process.env.CDP_API_KEY_ID,
+      apiKeySecret: process.env.CDP_API_KEY_SECRET,
+      walletSecret: process.env.CDP_WALLET_SECRET,
       networkId: process.env.NETWORK_ID || "base-sepolia",
-      signer,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      owner: owner as any,
       paymasterUrl: undefined, // Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
     });
 
@@ -40,10 +44,7 @@ export async function getAgentKit(): Promise<AgentKit> {
         pythActionProvider(),
         walletActionProvider(),
         erc20ActionProvider(),
-        cdpApiActionProvider({
-          apiKeyName: process.env.CDP_API_KEY_NAME,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
-        }),
+        cdpApiActionProvider(),
       ],
     });
 

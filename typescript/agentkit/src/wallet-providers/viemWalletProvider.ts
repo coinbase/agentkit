@@ -9,7 +9,6 @@ import {
   PublicClient as ViemPublicClient,
   ReadContractParameters,
   ReadContractReturnType,
-  parseEther,
   Abi,
   ContractFunctionName,
   ContractFunctionArgs,
@@ -32,6 +31,11 @@ export interface ViemWalletProviderGasConfig {
    * An internal multiplier on fee per gas estimation.
    */
   feePerGasMultiplier?: number;
+
+  /**
+   * Optional RPC URL override for Viem public client.
+   */
+  rpcUrl?: string;
 }
 
 /**
@@ -53,9 +57,10 @@ export class ViemWalletProvider extends EvmWalletProvider {
     super();
 
     this.#walletClient = walletClient;
+    const rpcUrl = gasConfig?.rpcUrl || process.env.RPC_URL;
     this.#publicClient = createPublicClient({
       chain: walletClient.chain,
-      transport: http(),
+      transport: rpcUrl ? http(rpcUrl) : http(),
     });
     this.#gasLimitMultiplier = Math.max(gasConfig?.gasLimitMultiplier ?? 1.2, 1);
     this.#feePerGasMultiplier = Math.max(gasConfig?.feePerGasMultiplier ?? 1, 1);
@@ -188,6 +193,15 @@ export class ViemWalletProvider extends EvmWalletProvider {
   }
 
   /**
+   * Gets the Viem PublicClient used for read-only operations.
+   *
+   * @returns The Viem PublicClient instance used for read-only operations.
+   */
+  getPublicClient(): ViemPublicClient {
+    return this.#publicClient;
+  }
+
+  /**
    * Gets the balance of the wallet.
    *
    * @returns The balance of the wallet.
@@ -231,11 +245,11 @@ export class ViemWalletProvider extends EvmWalletProvider {
    * Transfer the native asset of the network.
    *
    * @param to - The destination address.
-   * @param value - The amount to transfer in whole units (e.g. ETH)
+   * @param value - The amount to transfer in atomic units (Wei)
    * @returns The transaction hash.
    */
   async nativeTransfer(to: `0x${string}`, value: string): Promise<`0x${string}`> {
-    const atomicAmount = parseEther(value);
+    const atomicAmount = BigInt(value);
 
     const tx = await this.sendTransaction({
       to: to,

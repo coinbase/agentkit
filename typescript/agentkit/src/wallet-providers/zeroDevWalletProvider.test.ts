@@ -364,9 +364,9 @@ describe("ZeroDevWalletProvider", () => {
 
     it("should handle native transfers using nativeTransfer method", async () => {
       const to = "0x1234567890123456789012345678901234567890";
-      const value = "1.0";
+      const value = "1000000000000000000"; // 1 ETH in wei
 
-      const valueInWei = BigInt(parseFloat(value) * 10 ** 18);
+      const valueInWei = BigInt(value);
 
       const txHash = await provider.nativeTransfer(to, value);
 

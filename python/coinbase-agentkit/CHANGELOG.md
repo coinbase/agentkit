@@ -2,6 +2,62 @@
 
 <!-- towncrier release notes start -->
 
+## [0.7.2] - 2025-09-05
+
+### Added
+
+- Added optional custom rpc url ([#824](https://github.com/coinbase/agentkit/pull/824))
+
+### Fixed
+
+- Exposed erc721_action_provider in the public API to enable direct imports. ([#829](https://github.com/coinbase/agentkit/pull/829))
+- Fixed swap API action ([#836](https://github.com/coinbase/agentkit/pull/836))
+- Fixed ETH price feed in PythActionProvider
+- Fixed network support in CDP wallet providers
+
+
+## [0.7.1] - 2025-08-01
+
+### Added
+
+- Removed AlloraActionProvider due to dependency violations ([#801](https://github.com/coinbase/agentkit/pull/801))
+
+
+## [0.7.0] - 2025-07-18
+
+### Added
+
+- Upgraded cdp-sdk to latest
+- Added CdpSolanaWalletProvider
+- Renamed CdpEvmServerWalletProvider to CdpEvmWalletProvider and upgraded it
+- Renamed CdpEvmSmartWalletProvider to CdpSmartWalletProvider and upgraded it
+- Upgraded CdpApiActionProvider and added swap
+- Added x402ActionProvider
+
+## [0.6.0] - 2025-05-30
+
+### Added
+
+- Renamed CDP env vars to modern naming convention
+- Renamed CDP wallet provider & action provider interfaces for new env var names
+
+
+## [0.5.1] - 2025-05-14
+
+### Fixed
+
+- Fixed a bug with server wallets as owner of smart wallets
+
+
+## [0.5.0] - 2025-05-14
+
+### Added
+
+- Added CdpEvmServerWalletProvider and removed CdpWalletProvider ([#705](https://github.com/coinbase/agentkit/pull/705))
+- Added CdpEvmSmartWalletProvider and removed SmartWalletProvider
+- Updated CdpApiActionProvider to new CDP SDK, and removed CdpWalletActionProvider
+
+
 ## [0.4.0] - 2025-04-04
 
 ### Added

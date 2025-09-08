@@ -1,12 +1,13 @@
-import { WalletProvider, CdpWalletProvider } from "./wallet-providers";
+import { WalletProvider, CdpSmartWalletProvider } from "./wallet-providers";
 import { Action, ActionProvider, walletActionProvider } from "./action-providers";
 
 /**
  * Configuration options for AgentKit
  */
 export type AgentKitOptions = {
-  cdpApiKeyName?: string;
-  cdpApiKeyPrivateKey?: string;
+  cdpApiKeyId?: string;
+  cdpApiKeySecret?: string;
+  cdpWalletSecret?: string;
   walletProvider?: WalletProvider;
   actionProviders?: ActionProvider[];
 };
@@ -47,15 +48,16 @@ export class AgentKit {
     let walletProvider: WalletProvider | undefined = config.walletProvider;
 
     if (!config.walletProvider) {
-      if (!config.cdpApiKeyName || !config.cdpApiKeyPrivateKey) {
+      if (!config.cdpApiKeyId || !config.cdpApiKeySecret || !config.cdpWalletSecret) {
         throw new Error(
-          "cdpApiKeyName and cdpApiKeyPrivateKey are required if not providing a walletProvider",
+          "cdpApiKeyId and cdpApiKeySecret are required if not providing a walletProvider",
         );
       }
 
-      walletProvider = await CdpWalletProvider.configureWithWallet({
-        apiKeyName: config.cdpApiKeyName,
-        apiKeyPrivateKey: config.cdpApiKeyPrivateKey,
+      walletProvider = await CdpSmartWalletProvider.configureWithWallet({
+        apiKeyId: config.cdpApiKeyId,
+        apiKeySecret: config.cdpApiKeySecret,
+        walletSecret: config.cdpWalletSecret,
       });
     }
 

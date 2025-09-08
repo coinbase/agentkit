@@ -78,4 +78,15 @@ ERC20_ABI = [
             },
         ],
     },
+    {
+        "type": "function",
+        "name": "name",
+        "stateMutability": "view",
+        "inputs": [],
+        "outputs": [
+            {
+                "type": "string",
+            },
+        ],
+    },
 ]

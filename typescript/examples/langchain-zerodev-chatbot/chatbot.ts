@@ -1,12 +1,12 @@
 import {
   AgentKit,
-  CdpWalletProvider,
+  CdpEvmWalletProvider,
   wethActionProvider,
   walletActionProvider,
   erc20ActionProvider,
   erc721ActionProvider,
   cdpApiActionProvider,
-  cdpWalletActionProvider,
+  cdpEvmWalletActionProvider,
   pythActionProvider,
   ViemWalletProvider,
   NETWORK_ID_TO_VIEM_CHAIN,
@@ -40,8 +40,8 @@ function validateEnvironment(): void {
   const requiredVars = [
     "OPENAI_API_KEY",
     "ZERODEV_PROJECT_ID",
-    "CDP_API_KEY_NAME",
-    "CDP_API_KEY_PRIVATE_KEY",
+    "CDP_API_KEY_ID",
+    "CDP_API_KEY_SECRET",
   ];
 
   requiredVars.forEach(varName => {
@@ -100,7 +100,7 @@ async function initializeAgent() {
 
     // Initialize Viem/CDP Wallet Provider
     let evmWalletProvider: EvmWalletProvider;
-    let cdpWalletProvider: CdpWalletProvider | undefined;
+    let cdpWalletProvider: CdpEvmWalletProvider | undefined;
 
     if (process.env.PRIVATE_KEY) {
       // Configure Viem Wallet Provider
@@ -119,16 +119,16 @@ async function initializeAgent() {
         chainId: NETWORK_ID_TO_VIEM_CHAIN[networkId].id.toString(),
       };
       evmWalletProvider = await PrivyEvmWalletProvider.configureWithWallet(privyConfig);
-    } else if (process.env.CDP_API_KEY_NAME && process.env.CDP_API_KEY_PRIVATE_KEY) {
+    } else if (process.env.CDP_API_KEY_ID && process.env.CDP_API_KEY_SECRET) {
       // Configure CDP Wallet Provider
       const cdpConfig = {
-        apiKeyName: process.env.CDP_API_KEY_NAME!,
-        apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY!,
+        apiKeyId: process.env.CDP_API_KEY_ID!,
+        apiKeySecret: process.env.CDP_API_KEY_SECRET!,
         cdpWalletData: walletDataStr || undefined,
         networkId: networkId,
       };
       cdpWalletProvider = evmWalletProvider =
-        await CdpWalletProvider.configureWithWallet(cdpConfig);
+        await CdpEvmWalletProvider.configureWithWallet(cdpConfig);
     } else {
       throw new Error("No wallet provider configured");
     }
@@ -156,14 +156,8 @@ async function initializeAgent() {
         walletActionProvider(),
         erc20ActionProvider(),
         erc721ActionProvider(),
-        cdpApiActionProvider({
-          apiKeyName: process.env.CDP_API_KEY_NAME!,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY!,
-        }),
-        cdpWalletActionProvider({
-          apiKeyName: process.env.CDP_API_KEY_NAME!,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY!,
-        }),
+        cdpApiActionProvider(),
+        cdpEvmWalletActionProvider(),
         zeroDevWalletActionProvider(),
       ],
     });

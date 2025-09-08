@@ -21,6 +21,9 @@ farcaster/
 
 - `post_cast`: Create a new Farcaster post
 
+  - Supports text content up to 280 characters
+  - Supports up to 2 embedded URLs via the optional `embeds` parameter
+
 ## Adding New Actions
 
 To add new Farcaster actions:
@@ -36,5 +39,6 @@ The Farcaster provider supports all EVM-compatible networks.
 ## Notes
 
 - Requires a Neynar API key. Visit the [Neynar Dashboard](https://dev.neynar.com/) to get your key.
+- Embeds allow you to attach URLs to casts that will render as rich previews in the Farcaster client
 
 For more information on the **Farcaster Protocol**, visit [Farcaster Documentation](https://docs.farcaster.xyz/).

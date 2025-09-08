@@ -1,6 +1,52 @@
 # Coinbase Create Onchain Agent Changelog
 
 <!-- towncrier release notes start -->
+
+## [0.9.0] - 2025-09-05
+
+### Added
+
+- Bump coinbase-agentkit to 0.7.2 in beginner template and chatbot template
+- Bump coinbase-agentkit-langchain to 0.7.0 in beginner template and chatbot template
+- Bump coinbase-agentkit-openai-agents-sdk to 0.7.0 in beginner template and chatbot template
+
+
+## [0.8.0] - 2025-07-18
+
+### Added
+
+- Upgraded to support the updated CDP wallet providers
+- Added Solana selection to CLI
+
+
+## [0.7.0] - 2025-05-30
+
+### Added
+
+- Bump coinbase-agentkit to 0.6.0 in beginner template and chatbot template
+- Bump coinbase-agentkit-langchain to 0.5.0 in beginner template and chatbot template
+- Bump coinbase-agentkit-openai-agents-sdk to 0.5.0 in beginner template and chatbot template
+- Renamed CDP env vars to modern naming convention
+
+
+## [0.6.1] - 2025-05-15
+
+### Added
+
+- Fixed bug where CLI would download stale cached templates
+- Bump coinbase-agentkit to 0.5.1 in beginner template and chatbot template
+
+
+## [0.6.0] - 2025-05-14
+
+### Added
+
+- Updated to support CdpEvmServerWalletProvider and CdpEvmSmartWalletProvider ([#705](https://github.com/coinbase/agentkit/pull/705))
+- Bump coinbase-agentkit to 0.5.0 in beginner template and chatbot template
+- Bump coinbase-agentkit-langchain to 0.4.0 in beginner template and chatbot template
+- Bump coinbase-agentkit-openai-agents-sdk to 0.4.0 in beginner template and chatbot template
+
+
 ## [0.5.0] - 2025-04-04
 
 ### Added
@@ -38,7 +84,7 @@
 
 ### Added
 
-- Added wallet persistance to all templates (#484)
+- Added wallet persistence to all templates (#484)
 
 ### Fixed
 

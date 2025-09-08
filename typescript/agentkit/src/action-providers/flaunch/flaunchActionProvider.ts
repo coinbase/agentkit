@@ -16,8 +16,6 @@ import {
   encodeFunctionData,
   decodeEventLog,
   parseEther,
-  createPublicClient,
-  http,
   zeroAddress,
   Address,
   formatEther,
@@ -367,12 +365,7 @@ It takes:
         permitSingle = message;
       }
 
-      const viemPublicClient = createPublicClient({
-        chain: NETWORK_ID_TO_VIEM_CHAIN[networkId],
-        transport: http(),
-      });
-
-      const quoteResult = await viemPublicClient.simulateContract({
+      const quoteResult = await walletProvider.getPublicClient().simulateContract({
         address: QuoterAddress[chainId],
         abi: QUOTER_ABI,
         functionName: "quoteExactInput",
@@ -488,11 +481,6 @@ It takes:
     }
 
     try {
-      const viemPublicClient = createPublicClient({
-        chain: NETWORK_ID_TO_VIEM_CHAIN[networkId],
-        transport: http(),
-      });
-
       let amountIn: bigint | undefined;
       let amountOutMin: bigint | undefined;
       let amountOut: bigint | undefined;
@@ -501,7 +489,7 @@ It takes:
       if (swapType === "EXACT_IN") {
         amountIn = parseEther(swapParams.amountIn!);
 
-        const quoteResult = await viemPublicClient.simulateContract({
+        const quoteResult = await walletProvider.getPublicClient().simulateContract({
           address: QuoterAddress[chainId],
           abi: QUOTER_ABI,
           functionName: "quoteExactInput",
@@ -537,7 +525,7 @@ It takes:
         // EXACT_OUT
         amountOut = parseEther(swapParams.amountOut!);
 
-        const quoteResult = await viemPublicClient.simulateContract({
+        const quoteResult = await walletProvider.getPublicClient().simulateContract({
           address: QuoterAddress[chainId],
           abi: QUOTER_ABI,
           functionName: "quoteExactOutput",

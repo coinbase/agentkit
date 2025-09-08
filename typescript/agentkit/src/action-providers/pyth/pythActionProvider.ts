@@ -26,6 +26,12 @@ export class PythActionProvider extends ActionProvider {
     schema: PythFetchPriceFeedIDSchema,
   })
   async fetchPriceFeed(args: z.infer<typeof PythFetchPriceFeedIDSchema>): Promise<string> {
+    // Stop-gap solution: Return hardcoded price feed ID for ETH
+    // This is temporary until proper new API link is provided after talking to the Pyth team
+    if (args.tokenSymbol.toUpperCase() === "ETH") {
+      return "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace";
+    }
+
     const url = `https://hermes.pyth.network/v2/price_feeds?query=${args.tokenSymbol}&asset_type=crypto`;
     const response = await fetch(url);
 

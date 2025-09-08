@@ -6,3 +6,10 @@ export const WrapEthSchema = z
   })
   .strip()
   .describe("Instructions for wrapping ETH to WETH");
+
+export const UnwrapEthSchema = z
+  .object({
+    amountToUnwrap: z.string().describe("Amount of WETH to unwrap in wei"),
+  })
+  .strip()
+  .describe("Instructions for unwrapping WETH to ETH");

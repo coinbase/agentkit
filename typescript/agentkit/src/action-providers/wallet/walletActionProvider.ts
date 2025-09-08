@@ -4,18 +4,31 @@ import { CreateAction } from "../actionDecorator";
 import { ActionProvider } from "../actionProvider";
 import { WalletProvider } from "../../wallet-providers";
 import { Network } from "../../network";
+import { formatUnits, parseUnits } from "viem";
 
 import { NativeTransferSchema, GetWalletDetailsSchema } from "./schemas";
 
 const PROTOCOL_FAMILY_TO_TERMINOLOGY: Record<
   string,
-  { unit: string; displayUnit: string; type: string; verb: string }
+  { unit: string; displayUnit: string; decimals: number; type: string; verb: string }
 > = {
-  evm: { unit: "WEI", displayUnit: "ETH", type: "Transaction hash", verb: "transaction" },
-  svm: { unit: "LAMPORTS", displayUnit: "SOL", type: "Signature", verb: "transfer" },
+  evm: {
+    unit: "WEI",
+    displayUnit: "ETH",
+    decimals: 18,
+    type: "Transaction hash",
+    verb: "transaction",
+  },
+  svm: { unit: "LAMPORTS", displayUnit: "SOL", decimals: 9, type: "Signature", verb: "transfer" },
 };
 
-const DEFAULT_TERMINOLOGY = { unit: "", displayUnit: "", type: "Hash", verb: "transfer" };
+const DEFAULT_TERMINOLOGY = {
+  unit: "",
+  displayUnit: "",
+  decimals: 0,
+  type: "Hash",
+  verb: "transfer",
+};
 
 /**
  * WalletActionProvider provides actions for getting basic wallet information.
@@ -67,6 +80,7 @@ export class WalletActionProvider extends ActionProvider {
         `  * Network ID: ${network.networkId || "N/A"}`,
         `  * Chain ID: ${network.chainId || "N/A"}`,
         `- Native Balance: ${balance.toString()} ${terminology.unit}`,
+        `- Native Balance: ${formatUnits(balance, terminology.decimals)} ${terminology.displayUnit}`,
       ].join("\n");
     } catch (error) {
       return `Error getting wallet details: ${error}`;
@@ -83,15 +97,11 @@ export class WalletActionProvider extends ActionProvider {
   @CreateAction({
     name: "native_transfer",
     description: `
-This tool will transfer native tokens from the wallet to another onchain address.
+This tool will transfer (send) native tokens from the wallet to another onchain address.
 
 It takes the following inputs:
-- amount: The amount to transfer in whole units (e.g. 1 ETH, 0.1 SOL)
+- amount: The amount to transfer in whole units (e.g. 4.2 ETH, 0.1 SOL)
 - destination: The address to receive the funds
-
-Important notes:
-- Ensure sufficient balance of the input asset before transferring
-- Ensure there is sufficient native token balance for gas fees
 `,
     schema: NativeTransferSchema,
   })
@@ -107,7 +117,8 @@ Important notes:
         args.to = `0x${args.to}`;
       }
 
-      const result = await walletProvider.nativeTransfer(args.to, args.value);
+      const amountInAtomicUnits = parseUnits(args.value, terminology.decimals);
+      const result = await walletProvider.nativeTransfer(args.to, amountInAtomicUnits.toString());
       return [
         `Transferred ${args.value} ${terminology.displayUnit} to ${args.to}`,
         `${terminology.type}: ${result}`,

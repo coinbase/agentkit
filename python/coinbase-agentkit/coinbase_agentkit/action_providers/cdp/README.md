@@ -1,17 +1,19 @@
-# CDP (Coinbase Developer Platform) Action Provider
+# CDP (Coinbase Developer Platform) Action Providers
 
-This directory contains the **CdpActionProvider** implementations, which provide actions to interact with the **Coinbase Developer Platform (CDP)** API and wallet services.
+This directory contains the **CDP Action Provider** implementations, which provide actions to interact with the **Coinbase Developer Platform (CDP)** API and wallet services.
 
 ## Directory Structure
 
 ```
 cdp/
-├── cdp_api_action_provider.py        # CDP API actions
-├── cdp_wallet_action_provider.py     # CDP Wallet actions
-├── constants.py                      # CDP constants
-├── schemas.py                        # CDP action schemas
-├── __init__.py                       # Main exports
-└── README.md                         # This file
+├── cdp_api_action_provider.py              # Provider for CDP API interactions
+├── cdp_evm_wallet_action_provider.py       # Provider for CDP EVM Wallet operations
+├── cdp_smart_wallet_action_provider.py     # Provider for CDP Smart Wallet operations
+├── constants.py                            # CDP constants
+├── swap_utils.py                           # Swap utility functions
+├── schemas.py                              # Action schemas for CDP operations
+├── __init__.py                             # Main exports
+└── README.md                               # This file
 
 # From python/coinbase-agentkit/
 tests/action_providers/cdp/
@@ -19,7 +21,8 @@ tests/action_providers/cdp/
 ├── test_api_address_reputation_action.py    # Tests for address reputation
 ├── test_api_faucet_funds.py                 # Tests for faucet funds
 ├── test_cdp_api_action_provider.py          # Tests for CDP API actions
-└── test_cdp_wallet_action_provider.py       # Tests for CDP Wallet actions
+├── test_cdp_evm_wallet_action_provider.py   # Tests for CDP EVM Wallet actions
+└── test_cdp_smart_wallet_action_provider.py # Tests for CDP Smart Wallet actions
 ```
 
 ## Actions
@@ -29,16 +32,20 @@ tests/action_providers/cdp/
 - `address_reputation`: Returns onchain activity metrics
 - `request_faucet_funds`: Request testnet funds from CDP faucet
 
-  - Available only on Base Sepolia
+  - Available on Base Sepolia, Ethereum Sepolia, and Solana Devnet
+  - Supported assets:
+    - Base Sepolia / Ethereum Sepolia: ETH (default), USDC, EURC, CBBTC
+    - Solana Devnet: SOL (default), USDC
 
-### CDP Wallet Actions
+### CDP EVM Wallet Actions
 
-- `deploy_contract`: Deploy a smart contract
-- `deploy_nft`: Deploy an NFT
-- `deploy_token`: Deploy a token
-- `trade`: Trade a token
+- `get_swap_price`: Fetches a price quote for swapping between two tokens using the CDP Swap API (does not execute swap)
+- `swap`: Executes a token swap using the CDP Swap API with automatic token approvals
 
-  - Available only on mainnet networks
+### CDP Smart Wallet Actions
+
+- `get_swap_price`: Fetches a price quote for swapping between two tokens using the CDP Swap API (does not execute swap)
+- `swap`: Executes a token swap using the CDP Swap API with automatic token approvals
 
 ## Adding New Actions
 
@@ -47,7 +54,8 @@ To add new CDP actions:
 1. Define your action schema in `schemas.py`
 2. Implement the action in the appropriate provider file:
    - CDP API actions in `cdp_api_action_provider.py`
-   - CDP Wallet actions in `cdp_wallet_action_provider.py`
+   - CDP EVM Wallet actions in `cdp_evm_wallet_action_provider.py`
+   - CDP Smart Wallet actions in `cdp_smart_wallet_action_provider.py`
 3. Add corresponding tests
 
 ## Network Support

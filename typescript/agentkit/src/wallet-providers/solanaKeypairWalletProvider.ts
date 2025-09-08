@@ -5,7 +5,6 @@ import {
   Keypair,
   PublicKey,
   VersionedTransaction,
-  LAMPORTS_PER_SOL,
   SystemProgram,
   MessageV0,
   ComputeBudgetProgram,
@@ -277,20 +276,19 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
    * Transfer SOL from the wallet to another address
    *
    * @param to - The base58 encoded address to transfer the SOL to
-   * @param value - The amount of SOL to transfer (as a decimal string, e.g. "0.0001")
+   * @param value - The amount to transfer in atomic units (Lamports)
    * @returns The signature
    */
   async nativeTransfer(to: string, value: string): Promise<string> {
     const initialBalance = await this.getBalance();
-    const solAmount = parseFloat(value);
-    const lamports = BigInt(Math.floor(solAmount * LAMPORTS_PER_SOL));
+    const lamports = BigInt(value);
 
     // Check if we have enough balance (including estimated fees)
     if (initialBalance < lamports + BigInt(5000)) {
       throw new Error(
-        `Insufficient balance. Have ${Number(initialBalance) / LAMPORTS_PER_SOL} SOL, need ${
-          solAmount + 0.000005
-        } SOL (including fees)`,
+        `Insufficient balance. Have ${Number(initialBalance)} lamports, need ${
+          Number(lamports) + 5000
+        } lamports (including fees)`,
       );
     }
 

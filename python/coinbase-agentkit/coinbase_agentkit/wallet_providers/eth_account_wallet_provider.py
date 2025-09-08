@@ -1,5 +1,6 @@
 """Eth account wallet provider."""
 
+import os
 from decimal import Decimal
 from typing import Any
 
@@ -45,6 +46,7 @@ class EthAccountWalletProvider(EvmWalletProvider):
         network_id = ""
         rpc_url = config.rpc_url
 
+        rpc_url = config.rpc_url or os.getenv("RPC_URL")
         if rpc_url is None:
             chain = NETWORK_ID_TO_CHAIN[CHAIN_ID_TO_NETWORK_ID[config.chain_id]]
             network_id = CHAIN_ID_TO_NETWORK_ID[config.chain_id]

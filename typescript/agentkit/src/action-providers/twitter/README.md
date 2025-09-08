@@ -19,6 +19,7 @@ twitter/
 - `account_mentions`: Get mentions for a specified Twitter (X) user
 - `post_tweet`: Post a new tweet
 - `post_tweet_reply`: Reply to a tweet
+- `upload_media`: Upload media files (images, videos) to Twitter
 
 ## Adding New Actions
 

@@ -1,7 +1,7 @@
 import { parseAbi } from "viem";
 import { base, baseSepolia } from "viem/chains";
 import { Addresses } from "./types";
-import { abi as ERC20_ABI } from "../erc20/constants";
+import { erc20Abi as ERC20_ABI } from "viem";
 
 // Re-export the ERC20 ABI from the erc20 action provider constants
 export { ERC20_ABI };

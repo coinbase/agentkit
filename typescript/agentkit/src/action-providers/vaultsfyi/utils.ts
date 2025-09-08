@@ -73,3 +73,56 @@ export async function parseAssetAmount(
   });
   return Math.floor(amount * 10 ** decimals);
 }
+
+/**
+ * Transform a vault from the API to a format that can be used by the agent
+ *
+ * @param vault - The vault to transform
+ * @param apyRange - The APY range to use
+ * @returns The transformed vault
+ */
+export function transformVault(vault: ApiVault, apyRange: "1day" | "7day" | "30day") {
+  return {
+    name: vault.name,
+    address: vault.address,
+    network: vault.network,
+    protocol: vault.protocol,
+    tvlInUsd: Number(vault.tvlDetails.tvlUsd),
+    numberOfHolders: vault.numberOfHolders,
+    apy: {
+      base: vault.apy.base[apyRange] / 100,
+      rewards: vault.apy.rewards?.[apyRange] ? vault.apy.rewards[apyRange] / 100 : undefined,
+      total: vault.apy.total[apyRange] / 100,
+    },
+    token: {
+      address: vault.token.assetAddress,
+      name: vault.token.name,
+      symbol: vault.token.symbol,
+    },
+    vaultsFyiScore: vault.score.vaultScore,
+    link: getVaultsLink(vault),
+  };
+}
+
+/**
+ * Transform a detailed vault from the API to a format that can be used by the agent
+ *
+ * @param vault - The vault to transform
+ * @param apyRange - The APY range to use
+ * @returns The transformed vault
+ */
+export function transformDetailedVault(vault: ApiVault, apyRange: "1day" | "7day" | "30day") {
+  return {
+    ...transformVault(vault, apyRange),
+    rewards: vault.rewards.map(reward => ({
+      apy: reward.apy[apyRange] / 100,
+      asset: {
+        address: reward.asset.assetAddress,
+        name: reward.asset.name,
+        symbol: reward.asset.symbol,
+      },
+    })),
+    description: vault.description,
+    additionalIncentives: vault.additionalIncentives,
+  };
+}

@@ -126,6 +126,11 @@ describe("FlaunchActionProvider", () => {
         return undefined;
       }),
       signTypedData: jest.fn().mockResolvedValue("0xsignature" as Hex),
+      getPublicClient: jest.fn().mockReturnValue({
+        simulateContract: jest.fn().mockResolvedValue({
+          result: [BigInt(1000000000000000000)],
+        }),
+      }),
     } as unknown as jest.Mocked<EvmWalletProvider>;
   });
 
