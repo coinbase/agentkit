@@ -236,6 +236,15 @@ const agent = createReactAgent({
 </table>
 </details>
 <details>
+<summary><strong>Base SQL API</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>execute_base_sql_query</code></td>
+    <td width="768">Queries the Base blockchain using SQL based on the defined tables and fields.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Clanker</strong></summary>
 <table width="100%">
 <tr>
