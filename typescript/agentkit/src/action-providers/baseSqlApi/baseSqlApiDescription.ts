@@ -308,6 +308,7 @@ const schemaJson = JSON.stringify(apiSchema, null, 2);
 
 export const description = `
     This action can call Coinbase's Base SQL API to retrieve onchain data on Base.
+    Call this action if the user requests historical data on Base.
     The SQL API schema is a set of opinionated tables and columns used to organize onchain data for efficient retrieval.
 
     The supported table names, and fields in each table, for SQL queries are defined in the json string:

@@ -14,42 +14,32 @@ Visit the [Base SQL API documentation](https://docs.cdp.coinbase.com/data/sql-ap
 baseSqlApi/
 ├── baseSqlApiActionProvider.ts       # Main provider implementation
 ├── baseSqlApiActionProvider.test.ts  # Provider test suite
-├── exampleAction.test.ts           # Example action test suite
+├── baseSqlApiDescription.ts        # Variables describing the action and valid SQL Schemas
 ├── schemas.ts                      # Action schemas and types
 ├── index.ts                        # Package exports
 ├── constants.ts                    # Constant variables
-├── baseSqlApiDescription.ts        # Variables describing the action and valid SQL Schemas
 └── README.md                       # Documentation (this file)
 ```
 
 ## Actions
 
-### Actions
+### Execute Query Action
 - `execute_base_sql_query`: Execute a SQL query for Base data
-  - **Purpose**: Demonstrates the basic structure of an action
+  - **Purpose**: Query any onchain Base historical data
   - **Input**:
-    - `fieldName` (string): A descriptive name for the field (1-100 chars)
-    - `amount` (string): The amount as a decimal string (e.g. "1.5")
-    - `optionalField` (string, optional): Optional parameter example
-  - **Output**: String describing the action result
+    - `sqlQuery` (string): The sql query to run
+  - **Output**: String describing the query result
   - **Example**:
     ```typescript
-    const result = await provider.exampleAction(walletProvider, {
-      fieldName: "test",
-      amount: "1.0"
+    const result = await provider.executeBaseSqlQuery({
+      sqlQuery: "SELECT size FROM base.blocks ORDER BY block_number DESC LIMIT 1",
     });
     ```
 
 ## Implementation Details
 
 ### Network Support
-This provider supports all evm networks.
-
-### Wallet Provider Integration
-This provider is specifically designed to work with EvmWalletProvider. Key integration points:
-- Network compatibility checks
-- Transaction signing and execution
-- Balance and account management
+This provider supports all evm networks, but can only be run against Base data.
 
 ## Adding New Actions
 

@@ -7,13 +7,9 @@ import { z } from "zod";
  * rules for action parameters in the baseSqlApi action provider.
  */
 
-/**
- * Example action schema demonstrating various field types and validations.
- * Replace or modify this with your actual action schemas.
- */
 export const BaseSqlApiSchema = z.object({
   /**
-   * A descriptive name for the field
+   * The SQL query to run
    */
   sqlQuery: z.string().describe("The sql query to execute, using the defined tables and fields"),
 });

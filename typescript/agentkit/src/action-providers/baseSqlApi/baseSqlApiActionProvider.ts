@@ -11,8 +11,7 @@ import { BASE_SQL_API_URL } from "./constants";
  * BaseSqlApiActionProvider provides actions for baseSqlApi operations.
  *
  * @description
- * This provider is designed to work with EvmWalletProvider for blockchain interactions.
- * It supports querying on the Base network.
+ * This provider supports SQL querying on the Base network.
  */
 export class BaseSqlApiActionProvider extends ActionProvider<EvmWalletProvider> {
   /**
@@ -28,7 +27,6 @@ export class BaseSqlApiActionProvider extends ActionProvider<EvmWalletProvider> 
    * @description
    * This action queries the Coinbase SQL API endpoint to efficiently retrieve onchain data on Base.
    *
-   * @param walletProvider - The wallet provider instance for blockchain interactions
    * @param args - Arguments defined by BaseSqlApiSchema, i.e. the SQL query to execute
    * @returns A promise that resolves to a string describing the query result
    */
@@ -37,10 +35,7 @@ export class BaseSqlApiActionProvider extends ActionProvider<EvmWalletProvider> 
     description,
     schema: BaseSqlApiSchema,
   })
-  async exampleAction(
-    walletProvider: EvmWalletProvider,
-    args: z.infer<typeof BaseSqlApiSchema>,
-  ): Promise<string> {
+  async executeBaseSqlQuery(args: z.infer<typeof BaseSqlApiSchema>): Promise<string> {
     try {
       const cdpApiKey = process.env.CDP_API_CLIENT_KEY;
 
@@ -58,11 +53,7 @@ export class BaseSqlApiActionProvider extends ActionProvider<EvmWalletProvider> 
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      console.log("Resp: " + response)
-
       const result = await response.text();
-
-      console.log("Result: " + result)
 
       return `Query executed with result: ${result}.`;
     } catch (error) {
@@ -73,11 +64,12 @@ export class BaseSqlApiActionProvider extends ActionProvider<EvmWalletProvider> 
   /**
    * Checks if this provider supports the given network.
    *
-   * @param network - The network to check support for
+   * @param _ - The network to check support for
    * @returns True if the network is supported
    */
-  supportsNetwork(network: Network): boolean {
-    return network.networkId === "base-mainnet";
+  supportsNetwork(_: Network): boolean {
+    // all networks
+    return true;
   }
 }
 
