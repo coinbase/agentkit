@@ -69,8 +69,6 @@ npm create onchain-agent@latest
 cd onchain-agent
 
 # At this point, fill in your CDP API key id/secret, OpenAI API key, and any other environment variables in the .env.local file.
-# Then, rename the .env.local file to .env
-mv .env.local .env
 
 # Install dependencies
 npm install
