@@ -160,6 +160,7 @@ def agent_kit():
 @pytest.fixture
 def minimal_agent_kit():
     """Create a minimal AgentKit instance for basic tests."""
+
     class MinimalActionProvider(ActionProvider[MockWalletProvider]):
         def __init__(self) -> None:
             super().__init__("minimal_provider", [])

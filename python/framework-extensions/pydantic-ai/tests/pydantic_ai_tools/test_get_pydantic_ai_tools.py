@@ -16,6 +16,7 @@ from tests.pydantic_ai_tools.conftest import MockWalletProvider
 
 """Test action annotation extraction."""
 
+
 def test_get_action_annotations_with_schema(agent_kit: AgentKit) -> None:
     """Test extracting annotations from an action with schema."""
     actions = agent_kit.get_actions()
@@ -28,6 +29,7 @@ def test_get_action_annotations_with_schema(agent_kit: AgentKit) -> None:
     assert "return" in annotations
     assert annotations["return"] is str
 
+
 def test_get_action_annotations_without_schema(agent_kit: AgentKit) -> None:
     """Test extracting annotations from an action without schema."""
     actions = agent_kit.get_actions()
@@ -37,6 +39,7 @@ def test_get_action_annotations_without_schema(agent_kit: AgentKit) -> None:
 
     # Should return empty dict for actions without schema
     assert annotations == {}
+
 
 def test_get_action_annotations_exception_handling(agent_kit: AgentKit) -> None:
     """Test that annotation extraction handles exceptions gracefully."""
@@ -54,6 +57,7 @@ def test_get_action_annotations_exception_handling(agent_kit: AgentKit) -> None:
 
 """Test basic tool conversion functionality."""
 
+
 @pytest.mark.asyncio
 async def test_basic_tool_conversion(agent_kit: AgentKit) -> None:
     """Test that actions are properly converted to PydanticAI Tools."""
@@ -62,6 +66,7 @@ async def test_basic_tool_conversion(agent_kit: AgentKit) -> None:
     assert len(tools) == 5  # Expected number of actions from MockActionProvider
     assert all(isinstance(tool, Tool) for tool in tools)
 
+
 @pytest.mark.asyncio
 async def test_minimal_conversion(minimal_agent_kit: AgentKit) -> None:
     """Test conversion with minimal agent kit."""
@@ -69,6 +74,7 @@ async def test_minimal_conversion(minimal_agent_kit: AgentKit) -> None:
 
     assert len(tools) == 1
     assert isinstance(tools[0], Tool)
+
 
 @pytest.mark.asyncio
 async def test_empty_agent_kit() -> None:
@@ -94,6 +100,7 @@ async def test_empty_agent_kit() -> None:
 
 """Test that converted tools conform to PydanticAI Tool interface."""
 
+
 @pytest.mark.asyncio
 async def test_tool_interface_conformance(agent_kit: AgentKit) -> None:
     """Test that converted tools conform to the PydanticAI Tool interface."""
@@ -110,6 +117,7 @@ async def test_tool_interface_conformance(agent_kit: AgentKit) -> None:
     assert isinstance(add_tool.name, str)
     assert isinstance(add_tool.description, str)
     assert callable(add_tool.function)
+
 
 @pytest.mark.asyncio
 async def test_tool_schema_structure(agent_kit: AgentKit) -> None:
@@ -130,6 +138,7 @@ async def test_tool_schema_structure(agent_kit: AgentKit) -> None:
     assert properties["a"]["type"] == "integer"
     assert properties["b"]["type"] == "integer"
 
+
 @pytest.mark.asyncio
 async def test_all_tools_have_valid_schemas(agent_kit: AgentKit) -> None:
     """Test that all converted tools have valid schemas."""
@@ -147,6 +156,7 @@ async def test_all_tools_have_valid_schemas(agent_kit: AgentKit) -> None:
 
 
 """Test that tool metadata is correctly preserved."""
+
 
 @pytest.mark.asyncio
 async def test_tool_metadata_preservation(agent_kit: AgentKit) -> None:
@@ -168,6 +178,7 @@ async def test_tool_metadata_preservation(agent_kit: AgentKit) -> None:
     assert subtract_tool.description == "Subtract second number from first number"
     assert multiply_tool.description == "Multiply two floating point numbers"
 
+
 @pytest.mark.asyncio
 async def test_tool_name_uniqueness(agent_kit: AgentKit) -> None:
     """Test that all tool names are unique."""
@@ -175,6 +186,7 @@ async def test_tool_name_uniqueness(agent_kit: AgentKit) -> None:
     tool_names = [tool.name for tool in tools]
 
     assert len(tool_names) == len(set(tool_names)), "Tool names should be unique"
+
 
 @pytest.mark.asyncio
 async def test_tool_descriptions_not_empty(agent_kit: AgentKit) -> None:
@@ -187,6 +199,7 @@ async def test_tool_descriptions_not_empty(agent_kit: AgentKit) -> None:
 
 """Test tool invocation and execution."""
 
+
 @pytest.mark.asyncio
 async def test_successful_tool_invocation(agent_kit: AgentKit) -> None:
     """Test that tools can be successfully invoked."""
@@ -197,6 +210,7 @@ async def test_successful_tool_invocation(agent_kit: AgentKit) -> None:
     result = add_tool.function(a=5, b=3)
     assert isinstance(result, str)
     assert result == "Addition result: 5 + 3 = 8"
+
 
 @pytest.mark.asyncio
 async def test_multiple_tool_invocations(agent_kit: AgentKit) -> None:
@@ -213,6 +227,7 @@ async def test_multiple_tool_invocations(agent_kit: AgentKit) -> None:
     subtract_result = subtract_tool.function(a=15, b=6)
     assert subtract_result == "Subtraction result: 15 - 6 = 9"
 
+
 @pytest.mark.asyncio
 async def test_float_tool_invocation(agent_kit: AgentKit) -> None:
     """Test tool invocation with float arguments."""
@@ -221,6 +236,7 @@ async def test_float_tool_invocation(agent_kit: AgentKit) -> None:
 
     result = multiply_tool.function(x=2.5, y=4.0)
     assert result == "Multiplication result: 2.5 * 4.0 = 10.0"
+
 
 @pytest.mark.asyncio
 async def test_optional_parameter_tool_invocation(agent_kit: AgentKit) -> None:
@@ -236,6 +252,7 @@ async def test_optional_parameter_tool_invocation(agent_kit: AgentKit) -> None:
     result2 = message_tool.function(content="Urgent message", priority="high")
     assert result2 == "Message [HIGH]: Urgent message"
 
+
 @pytest.mark.asyncio
 async def test_no_args_tool_invocation(agent_kit: AgentKit) -> None:
     """Test tool invocation for actions with no arguments."""
@@ -249,6 +266,7 @@ async def test_no_args_tool_invocation(agent_kit: AgentKit) -> None:
 
 
 """Test tool return type consistency."""
+
 
 @pytest.mark.asyncio
 async def test_string_conversion_of_complex_results(agent_kit: AgentKit) -> None:
@@ -277,6 +295,7 @@ async def test_string_conversion_of_complex_results(agent_kit: AgentKit) -> None
 
 """Test integration with PydanticAI framework."""
 
+
 @pytest.mark.asyncio
 async def test_tool_compatibility_with_pydantic_ai(agent_kit: AgentKit) -> None:
     """Test that tools are compatible with PydanticAI Agent."""
@@ -289,7 +308,7 @@ async def test_tool_compatibility_with_pydantic_ai(agent_kit: AgentKit) -> None:
         agent = Agent(
             model="test",  # Mock model name
             tools=tools,
-            system_prompt="You are a test agent with AgentKit tools."
+            system_prompt="You are a test agent with AgentKit tools.",
         )
 
         # Verify the agent was created successfully
@@ -298,6 +317,7 @@ async def test_tool_compatibility_with_pydantic_ai(agent_kit: AgentKit) -> None:
 
     except Exception as e:
         pytest.fail(f"Failed to create PydanticAI Agent with AgentKit tools: {e}")
+
 
 @pytest.mark.asyncio
 async def test_tool_schema_compatibility(agent_kit: AgentKit) -> None:
@@ -320,6 +340,7 @@ async def test_tool_schema_compatibility(agent_kit: AgentKit) -> None:
                 assert isinstance(schema["properties"], dict)
             if "required" in schema:
                 assert isinstance(schema["required"], list)
+
 
 @pytest.mark.asyncio
 async def test_agent_using_tools(agent_kit: AgentKit) -> None:

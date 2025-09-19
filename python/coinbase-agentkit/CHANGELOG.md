@@ -2,6 +2,14 @@
 
 <!-- towncrier release notes start -->
 
+## [0.7.3] - 2025-09-19
+
+### Fixed
+
+- Replace deprecated pydantic @validator and class config ([#579](https://github.com/coinbase/agentkit/pull/579))
+- Fixed pyth feed selection and added equity/fx/metal feeds ([#845](https://github.com/coinbase/agentkit/pull/845))
+
+
 ## [0.7.2] - 2025-09-05
 
 ### Added
