@@ -1,5 +1,21 @@
 # AgentKit Changelog
 
+## 0.10.2
+
+### Patch Changes
+
+- [#831](https://github.com/coinbase/agentkit/pull/831) [`946994e`](https://github.com/coinbase/agentkit/commit/946994ee0338d2f6152970e0c15176fdae93030e) Thanks [@murrlincoln](https://github.com/murrlincoln)! - fixed ETH price feed in PythActionProvider
+
+- [#841](https://github.com/coinbase/agentkit/pull/841) [`3fce4b3`](https://github.com/coinbase/agentkit/commit/3fce4b3f4da2ea0f133d29c980107083a8f7551c) Thanks [@phdargen](https://github.com/phdargen)! - Fixed image upload for flaunch action; Added support for fee splitter to flaunch action; Added tx logs to CdpSmartWalletProvider; Simplified gas estimation for CdpEvmWalletProvider
+
+- [#845](https://github.com/coinbase/agentkit/pull/845) [`a637444`](https://github.com/coinbase/agentkit/commit/a6374443a38ab361870bb2b3a1871e6f1b33a77b) Thanks [@phdargen](https://github.com/phdargen)! - Fixed Pyth price feed selection and added equity/fx/metal feeds
+
+- [#846](https://github.com/coinbase/agentkit/pull/846) [`d34a4cb`](https://github.com/coinbase/agentkit/commit/d34a4cb5c8bbc61e3d498637c9171120b5ff3d33) Thanks [@phdargen](https://github.com/phdargen)! - Added action to discover x402 services and fixed x402 request for smart wallets
+
+- [#388](https://github.com/coinbase/agentkit/pull/388) [`6a53dd5`](https://github.com/coinbase/agentkit/commit/6a53dd593351d8f61f53592c344a3287ffb5eaec) Thanks [@azf20](https://github.com/azf20)! - Allowed passing of a "hex" or bytes to "signMessage" for Viem & Viem-derived Wallet Providers
+
+- [#842](https://github.com/coinbase/agentkit/pull/842) [`0ec2f71`](https://github.com/coinbase/agentkit/commit/0ec2f713fe888ff71685deffa96b847be48c264e) Thanks [@phdargen](https://github.com/phdargen)! - Added base account action provider to list/use/revoke spending permissions
+
 ## 0.10.1
 
 ### Patch Changes
