@@ -1,5 +1,11 @@
 # Coinbase Create Onchain Agent Changelog
 
+## 0.5.5
+
+### Patch Changes
+
+- [#847](https://github.com/coinbase/agentkit/pull/847) [`bff37de`](https://github.com/coinbase/agentkit/commit/bff37de7a596867b8abd05db0a1d37e32f04adae) Thanks [@phdargen](https://github.com/phdargen)! - Added gitignore to templates; bumped agentkit/node/next versions; align mcp templates with new v2 wallet settings
+
 ## 0.5.4
 
 ### Patch Changes
