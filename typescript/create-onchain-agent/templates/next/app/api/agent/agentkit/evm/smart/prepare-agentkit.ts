@@ -1,15 +1,17 @@
 import {
   AgentKit,
   cdpApiActionProvider,
+  cdpSmartWalletActionProvider,
   erc20ActionProvider,
   pythActionProvider,
-  SmartWalletProvider,
+  CdpSmartWalletProvider,
   walletActionProvider,
   WalletProvider,
   wethActionProvider,
+  x402ActionProvider,
 } from "@coinbase/agentkit";
 import * as fs from "fs";
-import { Address, Hex } from "viem";
+import { Address, Hex, LocalAccount } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 /**
@@ -45,8 +47,9 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 const WALLET_DATA_FILE = "wallet_data.txt";
 
 type WalletData = {
-  privateKey: Hex;
+  privateKey?: Hex;
   smartWalletAddress: Address;
+  ownerAddress?: Address;
 };
 
 /**
@@ -70,36 +73,36 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{
   }
 
   let walletData: WalletData | null = null;
-  let privateKey: Hex | null = null;
+  let owner: Hex | LocalAccount | undefined = undefined;
 
   // Read existing wallet data if available
   if (fs.existsSync(WALLET_DATA_FILE)) {
     try {
       walletData = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8")) as WalletData;
-      privateKey = walletData.privateKey;
+      if (walletData.ownerAddress) owner = walletData.ownerAddress;
+      else if (walletData.privateKey) owner = privateKeyToAccount(walletData.privateKey as Hex);
+      else
+        console.log(
+          `No ownerAddress or privateKey found in ${WALLET_DATA_FILE}, will create a new CDP server account as owner`,
+        );
     } catch (error) {
       console.error("Error reading wallet data:", error);
     }
   }
 
-  if (!privateKey) {
-    if (walletData?.smartWalletAddress) {
-      throw new Error(
-        `I found your smart wallet but can't access your private key. Please either provide the private key in your .env, or delete ${WALLET_DATA_FILE} to create a new wallet.`,
-      );
-    }
-    privateKey = (process.env.PRIVATE_KEY || generatePrivateKey()) as Hex;
-  }
-
   try {
-    const signer = privateKeyToAccount(privateKey);
-
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
-    const walletProvider = await SmartWalletProvider.configureWithWallet({
+    const walletProvider = await CdpSmartWalletProvider.configureWithWallet({
+      apiKeyId: process.env.CDP_API_KEY_ID,
+      apiKeySecret: process.env.CDP_API_KEY_SECRET,
+      walletSecret: process.env.CDP_WALLET_SECRET,
       networkId: process.env.NETWORK_ID || "base-sepolia",
-      signer,
-      smartWalletAddress: walletData?.smartWalletAddress,
-      paymasterUrl: undefined, // Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      owner: owner as any,
+      address: walletData?.smartWalletAddress,
+      paymasterUrl: process.env.PAYMASTER_URL, // Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
+      rpcUrl: process.env.RPC_URL,
+      idempotencyKey: process.env.IDEMPOTENCY_KEY,
     });
 
     // Initialize AgentKit: https://docs.cdp.coinbase.com/agentkit/docs/agent-actions
@@ -110,22 +113,23 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{
         pythActionProvider(),
         walletActionProvider(),
         erc20ActionProvider(),
-        cdpApiActionProvider({
-          apiKeyId: process.env.CDP_API_KEY_ID,
-          apiKeySecret: process.env.CDP_API_KEY_SECRET,
-        }),
+        cdpApiActionProvider(),
+        cdpSmartWalletActionProvider(),
+        x402ActionProvider(),
       ],
     });
 
     // Save wallet data
-    const smartWalletAddress = walletProvider.getAddress();
-    fs.writeFileSync(
-      WALLET_DATA_FILE,
-      JSON.stringify({
-        privateKey,
-        smartWalletAddress,
-      } as WalletData),
-    );
+    if (!walletData) {
+      const exportedWallet = await walletProvider.exportWallet();
+      fs.writeFileSync(
+        WALLET_DATA_FILE,
+        JSON.stringify({
+          ownerAddress: exportedWallet.ownerAddress,
+          smartWalletAddress: exportedWallet.address,
+        } as WalletData),
+      );
+    }
 
     return { agentkit, walletProvider };
   } catch (error) {

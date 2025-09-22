@@ -6,7 +6,7 @@ ZeroDev is a smart wallet provider that enables your agents to:
 - Batch transactions (e.g. approve + transfer).
 - Spend tokens from one chain on another, i.e. "chain abstraction"
   - This means your agent can receive tokens on chain A, and spend the tokens on chain B.
-- Spend USDC/USDT interexchangably.
+- Spend USDC/USDT interchangeably.
 
 The best part is that ZeroDev can be used on top of any EVM wallet provider.  For example, if you are managing keys for your agents locally, you can use the ZeroDev with the Viem wallet provider.  If you are using a third-party signing service such as CDP or Privy, you can use those wallet providers with ZeroDev as well.
 
@@ -27,7 +27,7 @@ You can interact with this agent via chat.
 
 Try running the agent on Base but send USDC to it on Arbitrum.  In fact, feel free to send some USDT too.
 
-Then try asking the agent to do something on Base with their USDC/USDT.  For example, try transfering some USDC to yourself on Base, e.g. "send 1 USDC to <MY_ADDRESS>."
+Then try asking the agent to do something on Base with their USDC/USDT.  For example, try transferring some USDC to yourself on Base, e.g. "send 1 USDC to <MY_ADDRESS>."
 
 You will notice that:
 

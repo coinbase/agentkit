@@ -1,14 +1,14 @@
 import {
   AgentKit,
   cdpApiActionProvider,
+  cdpSmartWalletActionProvider,
   erc20ActionProvider,
   pythActionProvider,
-  SmartWalletProvider,
+  CdpSmartWalletProvider,
   walletActionProvider,
   wethActionProvider,
+  x402ActionProvider,
 } from "@coinbase/agentkit";
-import { Hex } from "viem";
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 /**
  * Get the AgentKit instance.
@@ -17,19 +17,17 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
  */
 export async function getAgentKit(): Promise<AgentKit> {
   try {
-    let privateKey: Hex | null = null;
-
-    if (!privateKey) {
-      privateKey = (process.env.PRIVATE_KEY || generatePrivateKey()) as Hex;
-    }
-
-    const signer = privateKeyToAccount(privateKey);
-
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
-    const walletProvider = await SmartWalletProvider.configureWithWallet({
+    const walletProvider = await CdpSmartWalletProvider.configureWithWallet({
+      apiKeyId: process.env.CDP_API_KEY_ID,
+      apiKeySecret: process.env.CDP_API_KEY_SECRET,
+      walletSecret: process.env.CDP_WALLET_SECRET,
       networkId: process.env.NETWORK_ID || "base-sepolia",
-      signer,
-      paymasterUrl: undefined, // Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
+      address: process.env.ADDRESS as `0x${string}` | undefined,
+      owner: process.env.OWNER_ADDRESS as `0x${string}` | undefined,
+      paymasterUrl: process.env.PAYMASTER_URL, // Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
+      rpcUrl: process.env.RPC_URL,
+      idempotencyKey: process.env.IDEMPOTENCY_KEY,
     });
 
     // Initialize AgentKit: https://docs.cdp.coinbase.com/agentkit/docs/agent-actions
@@ -40,10 +38,9 @@ export async function getAgentKit(): Promise<AgentKit> {
         pythActionProvider(),
         walletActionProvider(),
         erc20ActionProvider(),
-        cdpApiActionProvider({
-          apiKeyId: process.env.CDP_API_KEY_ID,
-          apiKeySecret: process.env.CDP_API_KEY_SECRET,
-        }),
+        cdpApiActionProvider(),
+        cdpSmartWalletActionProvider(),
+        x402ActionProvider(),
       ],
     });
 

@@ -14,7 +14,6 @@ import {
   TransactionRequest,
   createPublicClient,
   http,
-  parseEther,
 } from "viem";
 import { Network } from "../network";
 import { NETWORK_ID_TO_CHAIN_ID, getChain } from "../network/network";
@@ -40,6 +39,9 @@ export interface PrivyEvmDelegatedEmbeddedWalletConfig extends PrivyWalletConfig
 
   /** The wallet type to use */
   walletType: "embedded";
+
+  /** Optional RPC URL for Viem public client */
+  rpcUrl?: string;
 }
 
 /**
@@ -85,9 +87,10 @@ export class PrivyEvmDelegatedEmbeddedWalletProvider extends WalletProvider {
       throw new Error(`Chain with ID ${chainId} not found`);
     }
 
+    const rpcUrl = config.rpcUrl || process.env.RPC_URL;
     this.#publicClient = createPublicClient({
       chain,
-      transport: http(),
+      transport: rpcUrl ? http(rpcUrl) : http(),
     });
   }
 
@@ -190,6 +193,15 @@ export class PrivyEvmDelegatedEmbeddedWalletProvider extends WalletProvider {
   }
 
   /**
+   * Gets the Viem PublicClient used for read-only operations.
+   *
+   * @returns The Viem PublicClient instance used for read-only operations.
+   */
+  getPublicClient(): PublicClient {
+    return this.#publicClient;
+  }
+
+  /**
    * Gets the balance of the wallet.
    *
    * @returns The balance of the wallet in wei
@@ -206,6 +218,34 @@ export class PrivyEvmDelegatedEmbeddedWalletProvider extends WalletProvider {
         throw new Error(`Error getting balance: ${error.message}`);
       }
       throw new Error("Error getting balance");
+    }
+  }
+
+  /**
+   * Signs a raw hash.
+   *
+   * @param hash - The hash to sign.
+   * @returns The signed hash.
+   */
+  async sign(hash: `0x${string}`): Promise<Hex> {
+    const body = {
+      address: this.#address,
+      chain_type: "ethereum",
+      method: "personal_sign",
+      params: {
+        message: hash,
+        encoding: "hex",
+      },
+    };
+
+    try {
+      const response = await this.executePrivyRequest<PrivyResponse<{ signature: Hex }>>(body);
+      return response.data?.signature;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Hash signing failed: ${error.message}`);
+      }
+      throw new Error("Hash signing failed");
     }
   }
 
@@ -372,11 +412,11 @@ export class PrivyEvmDelegatedEmbeddedWalletProvider extends WalletProvider {
    * Transfer the native asset of the network.
    *
    * @param to - The destination address.
-   * @param value - The amount to transfer in Wei.
+   * @param value - The amount to transfer in atomic units (Wei).
    * @returns The transaction hash.
    */
   async nativeTransfer(to: string, value: string): Promise<Hex> {
-    const valueInWei = parseEther(value);
+    const valueInWei = BigInt(value);
     const valueHex = `0x${valueInWei.toString(16)}`;
 
     const body = {

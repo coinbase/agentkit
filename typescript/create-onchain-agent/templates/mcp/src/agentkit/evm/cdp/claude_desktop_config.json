@@ -6,7 +6,11 @@
       "env": {
         "CDP_API_KEY_ID": "",
         "CDP_API_KEY_SECRET": "",
-        "NETWORK_ID": "base-sepolia"
+        "CDP_WALLET_SECRET": "",
+        "NETWORK_ID": "base-sepolia",
+        "ADDRESS": "",
+        "RPC_URL": "",
+        "IDEMPOTENCY_KEY": ""
       }
     }
   }

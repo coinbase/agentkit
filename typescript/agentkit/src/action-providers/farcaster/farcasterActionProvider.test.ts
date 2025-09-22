@@ -27,6 +27,41 @@ describe("Farcaster Action Provider Input Schemas", () => {
       expect(result.data).toEqual(validInput);
     });
 
+    it("should successfully parse valid cast text with embeds", () => {
+      const validInput = {
+        castText: "Hello, Farcaster!",
+        embeds: [{ url: "https://example.com" }],
+      };
+      const result = FarcasterPostCastSchema.safeParse(validInput);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(validInput);
+    });
+
+    it("should fail when embed URL is invalid", () => {
+      const invalidInput = {
+        castText: "Hello, Farcaster!",
+        embeds: [{ url: "invalid-url" }],
+      };
+      const result = FarcasterPostCastSchema.safeParse(invalidInput);
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should fail when there are more than 2 embeds", () => {
+      const invalidInput = {
+        castText: "Hello, Farcaster!",
+        embeds: [
+          { url: "https://example1.com" },
+          { url: "https://example2.com" },
+          { url: "https://example3.com" },
+        ],
+      };
+      const result = FarcasterPostCastSchema.safeParse(invalidInput);
+
+      expect(result.success).toBe(false);
+    });
+
     it("should fail parsing cast text over 280 characters", () => {
       const invalidInput = {
         castText: "a".repeat(281),
@@ -123,6 +158,36 @@ describe("Farcaster Action Provider", () => {
         body: JSON.stringify({
           signer_uuid: mockConfig.signerUuid,
           text: args.castText,
+          embeds: undefined,
+        }),
+      });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(result).toContain("Successfully posted cast to Farcaster");
+      expect(result).toContain(JSON.stringify(mockCastResponse));
+    });
+
+    it("should successfully post a cast with embeds", async () => {
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(mockCastResponse),
+      });
+
+      const args = {
+        castText: "Hello, Farcaster!",
+        embeds: [{ url: "https://example.com" }],
+      };
+
+      const result = await actionProvider.postCast(args);
+
+      expect(mockFetch).toHaveBeenCalledWith("https://api.neynar.com/v2/farcaster/cast", {
+        method: "POST",
+        headers: {
+          api_key: mockConfig.neynarApiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          signer_uuid: mockConfig.signerUuid,
+          text: args.castText,
+          embeds: args.embeds,
         }),
       });
       expect(mockFetch).toHaveBeenCalledTimes(1);

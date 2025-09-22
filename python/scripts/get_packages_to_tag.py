@@ -7,7 +7,10 @@ PACKAGES_TO_TAG = [
     "coinbase-agentkit",
     "create-onchain-agent",
     "framework-extensions/langchain",
-    "framework-extensions/openai-agents-sdk"
+    "framework-extensions/openai-agents-sdk",
+    "framework-extensions/strands-agents",
+    "framework-extensions/pydantic-ai",
+    "framework-extensions/autogen"
 ]
 
 def main():

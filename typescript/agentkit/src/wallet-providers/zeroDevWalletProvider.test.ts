@@ -92,6 +92,7 @@ jest.mock("../analytics", () => ({
 
 const mockKernelAccount = {
   address: MOCK_ADDRESS,
+  sign: jest.fn(),
   signMessage: jest.fn(),
   signTypedData: jest.fn(),
 } as unknown as jest.Mocked<SmartAccount<KernelSmartAccountImplementation>>;
@@ -136,6 +137,7 @@ describe("ZeroDevWalletProvider", () => {
     } as unknown as TransactionReceipt);
     mockPublicClient.getBalance.mockResolvedValue(BigInt(1000000000000000000));
 
+    mockKernelAccount.sign.mockResolvedValue(MOCK_SIGNATURE as `0x${string}`);
     mockKernelAccount.signMessage.mockResolvedValue(MOCK_SIGNATURE as `0x${string}`);
     mockKernelAccount.signTypedData.mockResolvedValue(MOCK_SIGNATURE as `0x${string}`);
 
@@ -252,6 +254,17 @@ describe("ZeroDevWalletProvider", () => {
   // =========================================================
 
   describe("signing operations", () => {
+    it("should sign a hash", async () => {
+      const testHash =
+        "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" as `0x${string}`;
+      const signature = await provider.sign(testHash);
+
+      expect(mockKernelAccount.sign).toHaveBeenCalledWith({
+        hash: testHash,
+      });
+      expect(signature).toBe(MOCK_SIGNATURE);
+    });
+
     it("should sign messages", async () => {
       const message = "Hello, world!";
       const signature = await provider.signMessage(message);
@@ -364,9 +377,9 @@ describe("ZeroDevWalletProvider", () => {
 
     it("should handle native transfers using nativeTransfer method", async () => {
       const to = "0x1234567890123456789012345678901234567890";
-      const value = "1.0";
+      const value = "1000000000000000000"; // 1 ETH in wei
 
-      const valueInWei = BigInt(parseFloat(value) * 10 ** 18);
+      const valueInWei = BigInt(value);
 
       const txHash = await provider.nativeTransfer(to, value);
 

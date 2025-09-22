@@ -94,6 +94,8 @@ jest.mock("viem", () => {
     fromHex: jest.fn(),
     formatEther: jest.fn(),
     privateKeyToAccount: jest.fn(),
+    isHex: jest.fn(value => typeof value === "string" && value.startsWith("0x")),
+    toHex: jest.fn(value => `0x${value}`),
   };
 });
 
@@ -113,6 +115,7 @@ describe("ViemWalletProvider", () => {
 
     const mockAccount = {
       address: MOCK_ADDRESS as Address,
+      sign: jest.fn().mockResolvedValue(MOCK_SIGNATURE),
     } as unknown as jest.Mocked<Account>;
 
     mockPublicClient = {
@@ -218,11 +221,31 @@ describe("ViemWalletProvider", () => {
   });
 
   describe("signing operations", () => {
+    it("should sign a hash", async () => {
+      const testHash =
+        "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" as `0x${string}`;
+      const signature = await provider.sign(testHash);
+      expect(mockWalletClient.account?.sign).toHaveBeenCalledWith({
+        hash: testHash,
+      });
+      expect(signature).toBe(MOCK_SIGNATURE);
+    });
+
     it("should sign a message", async () => {
       const signature = await provider.signMessage(MOCK_MESSAGE);
       expect(mockWalletClient.signMessage).toHaveBeenCalledWith({
         account: mockWalletClient.account,
-        message: MOCK_MESSAGE,
+        message: { raw: `0x${MOCK_MESSAGE}` },
+      });
+      expect(signature).toBe(MOCK_SIGNATURE);
+    });
+
+    it("should sign a hex message", async () => {
+      const hexMessage = "0x48656c6c6f2c20576f726c6421"; // "Hello, World!" in hex
+      const signature = await provider.signMessage(hexMessage);
+      expect(mockWalletClient.signMessage).toHaveBeenCalledWith({
+        account: mockWalletClient.account,
+        message: { raw: hexMessage },
       });
       expect(signature).toBe(MOCK_SIGNATURE);
     });
@@ -314,21 +337,23 @@ describe("ViemWalletProvider", () => {
 
   describe("native token operations", () => {
     it("should transfer native tokens", async () => {
-      (viem.parseEther as jest.Mock).mockReturnValueOnce(BigInt(1000000000000000000));
+      const hash = await provider.nativeTransfer(MOCK_ADDRESS_TO as Address, "1000000000000000000");
 
-      const hash = await provider.nativeTransfer(MOCK_ADDRESS_TO as Address, "1.0");
-
-      expect(viem.parseEther as jest.Mock).toHaveBeenCalledWith("1.0");
-      expect(mockWalletClient.sendTransaction).toHaveBeenCalled();
+      expect(mockWalletClient.sendTransaction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: MOCK_ADDRESS_TO,
+          value: BigInt("1000000000000000000"),
+        }),
+      );
       expect(hash).toBe(MOCK_TRANSACTION_HASH);
     });
 
     it("should handle native transfer errors", async () => {
       mockWalletClient.sendTransaction.mockRejectedValueOnce(new Error("Transaction failed"));
 
-      await expect(provider.nativeTransfer(MOCK_ADDRESS_TO as Address, "1.0")).rejects.toThrow(
-        "Transaction failed",
-      );
+      await expect(
+        provider.nativeTransfer(MOCK_ADDRESS_TO as Address, "1000000000000000000"),
+      ).rejects.toThrow("Transaction failed");
     });
 
     it("should handle invalid address in native transfer", async () => {

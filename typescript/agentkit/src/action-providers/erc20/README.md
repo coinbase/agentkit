@@ -11,6 +11,7 @@ erc20/
 ├── constants.ts                   # Constants for ERC20 provider
 ├── schemas.ts                     # Token action schemas
 ├── index.ts                       # Main exports
+├── utils.ts                       # Utility functions
 └── README.md                      # This file
 ```
 
@@ -25,6 +26,12 @@ erc20/
 
   - Constructs and sends the transfer transaction
   - Returns the **transaction hash** upon success
+
+- `get_erc20_token_address`: Get the contract address for a token symbol
+
+  - Takes a token symbol (e.g. USDC, EURC, CBBTC) as input
+  - Returns the **contract address** for the token on the current network
+  - Provides available token symbols if the requested symbol is not found
 
 ## Adding New Actions
 

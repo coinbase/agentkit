@@ -3,7 +3,7 @@
 from unittest.mock import AsyncMock, Mock, patch
 
 from coinbase_agentkit.action_providers.cdp.cdp_api_action_provider import (
-    RequestFaucetFundsSchema,
+    RequestFaucetFundsV2Schema,
     cdp_api_action_provider,
 )
 from coinbase_agentkit.network import Network
@@ -17,13 +17,13 @@ from .conftest import (
 
 def test_request_faucet_funds_input_with_asset_id():
     """Test that RequestFaucetFundsInput accepts asset_id parameter."""
-    input_model = RequestFaucetFundsSchema(asset_id="eth")
+    input_model = RequestFaucetFundsV2Schema(asset_id="eth")
     assert input_model.asset_id == "eth"
 
 
 def test_request_faucet_funds_input_without_asset_id():
     """Test that RequestFaucetFundsInput works without asset_id parameter."""
-    input_model = RequestFaucetFundsSchema()
+    input_model = RequestFaucetFundsV2Schema()
     assert input_model.asset_id is None
 
 

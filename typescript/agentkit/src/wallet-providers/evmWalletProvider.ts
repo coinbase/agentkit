@@ -11,7 +11,8 @@ import {
   Abi,
   ContractFunctionArgs,
   Address,
-  Account,
+  PublicClient,
+  LocalAccount,
 } from "viem";
 
 /**
@@ -25,9 +26,13 @@ export abstract class EvmWalletProvider extends WalletProvider {
    *
    * @returns The signer.
    */
-  toSigner(): Account {
+  toSigner(): LocalAccount {
     return toAccount({
+      type: "local",
       address: this.getAddress() as Address,
+      sign: async ({ hash }) => {
+        return this.sign(hash as `0x${string}`);
+      },
       signMessage: async ({ message }) => {
         return this.signMessage(message as string | Uint8Array);
       },
@@ -39,6 +44,14 @@ export abstract class EvmWalletProvider extends WalletProvider {
       },
     });
   }
+
+  /**
+   * Sign a raw hash.
+   *
+   * @param hash - The hash to sign.
+   * @returns The signed hash.
+   */
+  abstract sign(hash: `0x${string}`): Promise<`0x${string}`>;
 
   /**
    * Sign a message.
@@ -93,4 +106,9 @@ export abstract class EvmWalletProvider extends WalletProvider {
   >(
     params: ReadContractParameters<abi, functionName, args>,
   ): Promise<ReadContractReturnType<abi, functionName, args>>;
+
+  /**
+   * Get the underlying Viem PublicClient for read-only blockchain operations.
+   */
+  abstract getPublicClient(): PublicClient;
 }

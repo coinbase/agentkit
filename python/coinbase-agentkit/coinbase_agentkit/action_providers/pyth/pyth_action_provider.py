@@ -1,26 +1,15 @@
 """Pyth action provider."""
 
+import json
 from typing import Any
 
 import requests
-from pydantic import BaseModel, Field
 
 from ...network import Network
 from ...wallet_providers import WalletProvider
 from ..action_decorator import create_action
 from ..action_provider import ActionProvider
-
-
-class FetchPriceFeedIdSchema(BaseModel):
-    """Input schema for fetching Pyth price feed ID."""
-
-    token_symbol: str = Field(..., description="The token symbol to fetch the price feed ID for.")
-
-
-class FetchPriceSchema(BaseModel):
-    """Input schema for fetching Pyth price."""
-
-    price_feed_id: str = Field(..., description="The Pyth price feed ID to fetch the price for.")
+from .schemas import FetchPriceFeedSchema, FetchPriceSchema
 
 
 class PythActionProvider(ActionProvider[WalletProvider]):
@@ -30,46 +19,124 @@ class PythActionProvider(ActionProvider[WalletProvider]):
         super().__init__("pyth", [])
 
     @create_action(
-        name="fetch_price_feed_id",
-        description="Fetch the price feed ID for a given token symbol (e.g. BTC, ETH, etc.) from Pyth.",
-        schema=FetchPriceFeedIdSchema,
+        name="fetch_price_feed",
+        description="""Fetch the price feed ID for a given token symbol from Pyth.
+
+    Inputs:
+    - tokenSymbol: The asset ticker/symbol to fetch the price feed ID for (e.g. BTC, ETH, COIN, XAU, EUR, etc.)
+    - quoteCurrency: The quote currency to filter by (defaults to USD)
+    - assetType: The asset type to search for (crypto, equity, fx, metal) - defaults to crypto
+
+    Examples:
+    - Crypto: BTC, ETH, SOL
+    - Equities: COIN, AAPL, TSLA
+    - FX: EUR, GBP, JPY
+    - Metals: XAU (Gold), XAG (Silver), XPT (Platinum), XPD (Palladium)
+    """,
+        schema=FetchPriceFeedSchema,
     )
-    def fetch_price_feed_id(self, args: dict[str, Any]) -> str:
+    def fetch_price_feed(self, args: dict[str, Any]) -> str:
         """Fetch the price feed ID for a given token symbol from Pyth.
 
         Args:
             args (dict[str, Any]): Input arguments for the action.
 
         Returns:
-            str: A message containing the action response or error details.
+            str: A JSON string containing the action response or error details.
 
         """
-        token_symbol = args["token_symbol"]
-        url = f"https://hermes.pyth.network/v2/price_feeds?query={token_symbol}&asset_type=crypto"
-        response = requests.get(url)
-        response.raise_for_status()
-        data = response.json()
+        validated_args = FetchPriceFeedSchema(**args)
+        token_symbol = validated_args.token_symbol
+        quote_currency = validated_args.quote_currency
+        asset_type = validated_args.asset_type
 
-        if not data:
-            raise ValueError(f"No price feed found for {token_symbol}")
+        url = f"https://hermes.pyth.network/v2/price_feeds?query={token_symbol}&asset_type={asset_type}"
 
-        filtered_data = [
-            item for item in data if item["attributes"]["base"].lower() == token_symbol.lower()
-        ]
-        if not filtered_data:
-            raise ValueError(f"No price feed found for {token_symbol}")
+        try:
+            response = requests.get(url)
+            if not response.ok:
+                return json.dumps(
+                    {
+                        "success": False,
+                        "error": f"HTTP error! status: {response.status}",
+                    }
+                )
 
-        return filtered_data[0]["id"]
+            data = response.json()
+
+            if not data:
+                return json.dumps(
+                    {
+                        "success": False,
+                        "error": f"No price feed found for {token_symbol}",
+                    }
+                )
+
+            # Filter data by token symbol and quote currency
+            filtered_data = [
+                item
+                for item in data
+                if (
+                    item["attributes"]["base"].lower() == token_symbol.lower()
+                    and item["attributes"]["quote_currency"].lower() == quote_currency.lower()
+                )
+            ]
+
+            if not filtered_data:
+                return json.dumps(
+                    {
+                        "success": False,
+                        "error": f"No price feed found for {token_symbol}/{quote_currency}",
+                    }
+                )
+
+            # For equities, select the regular feed over special market hours feeds
+            selected_feed = filtered_data[0]
+            if asset_type == "equity":
+                # Look for regular market feed (no PRE, POST, ON, EXT suffixes)
+                regular_market_feed = next(
+                    (
+                        item
+                        for item in filtered_data
+                        if not any(
+                            suffix in item["attributes"]["symbol"]
+                            for suffix in [".PRE", ".POST", ".ON", ".EXT"]
+                        )
+                    ),
+                    None,
+                )
+                if regular_market_feed:
+                    selected_feed = regular_market_feed
+
+            return json.dumps(
+                {
+                    "success": True,
+                    "priceFeedID": selected_feed["id"],
+                    "tokenSymbol": token_symbol,
+                    "quoteCurrency": quote_currency,
+                    "feedType": selected_feed["attributes"]["display_symbol"],
+                }
+            )
+
+        except Exception as e:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": f"Error fetching price feed: {e!s}",
+                }
+            )
 
     @create_action(
-        name="get_price",
-        description="""
-Fetch the price of a given price feed from Pyth. First fetch the price feed ID using the fetch_price_feed_id action.
+        name="fetch_price",
+        description="""Fetch the price of a price feed from Pyth.
+
+Inputs:
+- priceFeedID: Price feed ID (string)
 
 Important notes:
 - Do not assume that a random ID is a Pyth price feed ID. If you are confused, ask a clarifying question.
 - This action only fetches price inputs from Pyth price feeds. No other source.
-- If you are asked to fetch the price from Pyth for a ticker symbol such as BTC, you must first use the fetch_price_feed_id action.
+- If you are asked to fetch the price from Pyth for a ticker symbol such as BTC, you must first use the fetch_price_feed action to retrieve the price feed ID before invoking the fetch_price action
 """,
         schema=FetchPriceSchema,
     )
@@ -80,36 +147,64 @@ Important notes:
             args (dict[str, Any]): Input arguments for the action.
 
         Returns:
-            str: A message containing the action response or error details.
+            str: A JSON string containing the action response or error details.
 
         """
         try:
-            price_feed_id = args["price_feed_id"]
+            validated_args = FetchPriceSchema(**args)
+            price_feed_id = validated_args.price_feed_id
             url = f"https://hermes.pyth.network/v2/updates/price/latest?ids[]={price_feed_id}"
             response = requests.get(url)
-            response.raise_for_status()
+
+            if not response.ok:
+                return json.dumps(
+                    {
+                        "success": False,
+                        "error": f"HTTP error! status: {response.status}",
+                    }
+                )
+
             data = response.json()
             parsed_data = data["parsed"]
 
             if not parsed_data:
-                raise ValueError(f"No price data found for {price_feed_id}")
+                return json.dumps(
+                    {
+                        "success": False,
+                        "error": f"No price data found for {price_feed_id}",
+                    }
+                )
 
             price_info = parsed_data[0]["price"]
             price = int(price_info["price"])
             exponent = price_info["expo"]
 
+            # Format price
             if exponent < 0:
                 adjusted_price = price * 100
-                divisor = 10**-exponent
+                divisor = 10 ** (-exponent)
                 scaled_price = adjusted_price // divisor
-                price_str = f"{scaled_price // 100}.{scaled_price % 100:02}"
-                return price_str if not price_str.startswith(".") else f"0{price_str}"
+                price_str = f"{scaled_price // 100}.{scaled_price % 100:02d}"
+                formatted_price = price_str if not price_str.startswith(".") else f"0{price_str}"
+            else:
+                scaled_price = price // (10**exponent)
+                formatted_price = str(scaled_price)
 
-            scaled_price = price // (10**exponent)
+            return json.dumps(
+                {
+                    "success": True,
+                    "priceFeedID": price_feed_id,
+                    "price": formatted_price,
+                }
+            )
 
-            return str(scaled_price)
         except Exception as e:
-            return f"Error fetching price from Pyth: {e!s}"
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": f"Error fetching price from Pyth: {e!s}",
+                }
+            )
 
     def supports_network(self, network: Network) -> bool:
         """Check if network is supported by Pyth."""

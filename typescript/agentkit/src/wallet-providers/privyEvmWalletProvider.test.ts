@@ -18,6 +18,11 @@ const MOCK_TRANSACTION_HASH = "0xef01";
 const MOCK_SIGNATURE_HASH_1 = "0x1234";
 const MOCK_SIGNATURE_HASH_2 = "0x5678";
 const MOCK_SIGNATURE_HASH_3 = "0xabcd";
+const MOCK_HASH_SIGNATURE = "0xhash";
+
+jest.mock("../analytics", () => ({
+  sendAnalyticsEvent: jest.fn().mockImplementation(() => Promise.resolve()),
+}));
 
 jest.mock("@privy-io/server-auth", () => ({
   PrivyClient: jest.fn().mockImplementation(() => ({
@@ -71,6 +76,7 @@ jest.mock("@privy-io/server-auth/viem", () => ({
   createViemAccount: jest.fn().mockResolvedValue({
     address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
     type: "local",
+    sign: jest.fn().mockResolvedValue("0xhash"),
     signMessage: jest.fn().mockResolvedValue("0x1234"),
     signTypedData: jest.fn().mockResolvedValue("0x5678"),
     signTransaction: jest.fn().mockResolvedValue("0xabcd"),
@@ -129,6 +135,7 @@ jest.mock("viem", () => {
     createWalletClient: jest.fn().mockReturnValue({
       account: {
         address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+        sign: jest.fn().mockResolvedValue("0xhash"),
       },
       chain: {
         id: 1,
@@ -238,6 +245,13 @@ describe("PrivyEvmWalletProvider", () => {
       expect(provider.getName()).toBe("privy_evm_wallet_provider");
     });
 
+    it("should sign a hash", async () => {
+      const testHash =
+        "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" as `0x${string}`;
+      const result = await provider.sign(testHash);
+      expect(result).toBe(MOCK_HASH_SIGNATURE);
+    });
+
     it("should sign a message", async () => {
       const result = await provider.signMessage("Hello, world!");
       expect(result).toBe(MOCK_SIGNATURE_HASH_1);
@@ -310,7 +324,7 @@ describe("PrivyEvmWalletProvider", () => {
     it("should transfer native tokens", async () => {
       const result = await provider.nativeTransfer(
         "0x1234567890123456789012345678901234567890" as Address,
-        "1.0",
+        "1000000000000000000", // 1 ETH in wei
       );
 
       expect(result).toBe(MOCK_TRANSACTION_HASH);

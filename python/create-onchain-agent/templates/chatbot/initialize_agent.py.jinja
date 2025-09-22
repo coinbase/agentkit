@@ -8,12 +8,14 @@ from agents.agent import Agent{% endif %}
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
-    {% if _wallet_provider == "server" %}CdpEvmServerWalletProvider,
-    CdpEvmServerWalletProviderConfig,{% elif _wallet_provider == "smart" %}
-    CdpEvmSmartWalletProvider,
-    CdpEvmSmartWalletProviderConfig,{% elif _wallet_provider == "eth" %}
+    {% if _wallet_provider == "server" %}CdpEvmWalletProvider,
+    CdpEvmWalletProviderConfig,{% elif _wallet_provider == "smart" %}
+    CdpSmartWalletProvider,
+    CdpSmartWalletProviderConfig,{% elif _wallet_provider == "eth" %}
     EthAccountWalletProvider,
-    EthAccountWalletProviderConfig,{% endif %}
+    EthAccountWalletProviderConfig,{% elif _wallet_provider == "solana_server" %}
+    CdpSolanaWalletProvider,
+    CdpSolanaWalletProviderConfig,{% endif %}
     cdp_api_action_provider,
     erc20_action_provider,
     pyth_action_provider,
@@ -77,9 +79,9 @@ def initialize_agent(config):
     Returns:
         tuple[Agent, dict]: The initialized agent and its configuration
     """
-    {% if _wallet_provider == "server" %}# Initialize CDP Server Wallet Provider
-    wallet_provider = CdpEvmServerWalletProvider(
-        CdpEvmServerWalletProviderConfig(
+    {% if _wallet_provider == "server" %}# Initialize CDP EVM Wallet Provider
+    wallet_provider = CdpEvmWalletProvider(
+        CdpEvmWalletProviderConfig(
             api_key_id=config.api_key_id,
             api_key_secret=config.api_key_secret,
             wallet_secret=config.wallet_secret,
@@ -88,8 +90,8 @@ def initialize_agent(config):
             idempotency_key=config.idempotency_key,
         )
     ){% elif _wallet_provider == "smart" %}# Initialize CDP Smart Wallet Provider
-    wallet_provider = CdpEvmSmartWalletProvider(
-        CdpEvmSmartWalletProviderConfig(
+    wallet_provider = CdpSmartWalletProvider(
+        CdpSmartWalletProviderConfig(
             api_key_id=config.api_key_id,
             api_key_secret=config.api_key_secret,
             wallet_secret=config.wallet_secret,
@@ -103,6 +105,15 @@ def initialize_agent(config):
         EthAccountWalletProviderConfig(
             account=config.account,
             chain_id=config.chain_id,
+        )
+    ){% elif _wallet_provider == "solana_server" %}# Initialize CDP Solana Wallet Provider
+    wallet_provider = CdpSolanaWalletProvider(
+        CdpSolanaWalletProviderConfig(
+            api_key_id=config.api_key_id,
+            api_key_secret=config.api_key_secret,
+            wallet_secret=config.wallet_secret,
+            network_id=config.network_id,
+            address=config.address,
         )
     ){% endif %}
 

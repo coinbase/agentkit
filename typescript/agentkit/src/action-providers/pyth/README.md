@@ -15,9 +15,54 @@ pyth/
 
 ## Actions
 
-- `fetch_price_feed_id`: Fetch the price feed ID for a given asset
+- `fetch_price_feed`: Fetch the price feed ID for a given asset
 - `fetch_price`: Fetch the price for a given asset, by price feed ID
-  - Can be chained with `fetch_price_feed_id` to fetch the price feed ID first
+  - Can be chained with `fetch_price_feed` to fetch the price feed ID first
+
+## Supported Asset Types
+
+The Pyth action provider supports multiple asset classes:
+
+### Crypto
+- Examples: BTC, ETH, SOL
+- Default asset type
+
+### Equities
+- Examples: Coin (Coinbase), AAPL (Apple), TSLA (Tesla)
+
+### Foreign Exchange (FX)
+- Examples: EUR (Euro), GBP (British Pound), JPY (Japanese Yen)
+
+### Metals
+- Examples: XAU (Gold), XAG (Silver), XPT (Platinum), XPD (Palladium)
+
+## Usage Examples
+
+```typescript
+// Fetch crypto price feed ID
+const cryptoResult = await provider.fetchPriceFeed({
+  tokenSymbol: "BTC",
+  assetType: "crypto"
+});
+
+// Fetch gold price feed ID
+const goldResult = await provider.fetchPriceFeed({
+  tokenSymbol: "XAU",
+  assetType: "metal"
+});
+
+// Fetch Coinbase stock price feed ID
+const stockResult = await provider.fetchPriceFeed({
+  tokenSymbol: "COIN",
+  assetType: "equities"
+});
+
+// Fetch EUR/USD price feed ID
+const fxResult = await provider.fetchPriceFeed({
+  tokenSymbol: "EUR",
+  assetType: "fx"
+});
+```
 
 ## Adding New Actions
 
