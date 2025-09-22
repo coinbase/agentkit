@@ -24,4 +24,13 @@ export type ClaimRequest = {
   proof: string[];
 };
 
-export type ChainId = "1" | "146" | "8453";
+export type ChainId = "1" | "146" | "8453" | "42161" | "43114";
+
+export type StrategyResponse = {
+  id: string;
+  name: string;
+  description: string;
+  apy: string;
+  tvl: string;
+  riskLevel: string;
+};

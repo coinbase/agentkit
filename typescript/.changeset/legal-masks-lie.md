@@ -1,5 +1,5 @@
 ---
-"@coinbase/agentkit": minor
+"@coinbase/agentkit": patch
 ---
 
 Added YelayLite action provider

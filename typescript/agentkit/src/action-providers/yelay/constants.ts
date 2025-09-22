@@ -127,4 +127,10 @@ export const CONTRACTS_BY_CHAIN = {
   8453: {
     YieldExtractor: "0x4d6a89dc55d8bacc0cbc3824bd7e44fa051c3958",
   },
+  42161: {
+    YieldExtractor: "0x79b7e90F1BAe837362DBD2c83Bd0715c2De5E47f",
+  },
+  43114: {
+    YieldExtractor: "0x98732e2FEb854bAd400D4b5336f4439E7E53fe88",
+  },
 } as const;
