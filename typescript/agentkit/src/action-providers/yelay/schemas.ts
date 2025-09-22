@@ -9,7 +9,7 @@ export const YelayDepositSchema = z
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid integer or decimal value")
       .describe("The quantity of assets to deposit"),
-    receiver: z
+    vaultAddress: z
       .string()
       .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
       .describe("The vault address which will receive the shares"),

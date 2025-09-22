@@ -177,7 +177,7 @@ APY: 5.2%
     it("should deposit assets into a specified Yelay Vault", async () => {
       const args = {
         assets: MOCK_WHOLE_ASSETS,
-        receiver: MOCK_VAULT_ADDRESS,
+        vaultAddress: MOCK_VAULT_ADDRESS,
       };
       mockedFetch.mockResolvedValueOnce(mockFetchResult(200, mockVaults));
 
@@ -186,7 +186,7 @@ APY: 5.2%
       const response = await provider.deposit(mockWallet, args);
 
       expect(mockWallet.sendTransaction).toHaveBeenCalledWith({
-        to: args.receiver as `0x${string}`,
+        to: args.vaultAddress as `0x${string}`,
         data: encodeFunctionData({
           abi: YELAY_VAULT_ABI,
           functionName: "deposit",
@@ -205,7 +205,7 @@ APY: 5.2%
 
       const args = {
         assets: MOCK_WHOLE_ASSETS,
-        receiver: MOCK_VAULT_ADDRESS,
+        vaultAddress: MOCK_VAULT_ADDRESS,
       };
 
       const response = await provider.deposit(mockWallet, args);

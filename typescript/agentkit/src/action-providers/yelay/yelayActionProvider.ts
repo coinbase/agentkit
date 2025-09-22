@@ -112,7 +112,7 @@ APY: ${vault.apy}%
    - 1 WETH
    - 0.1 WETH
    - 0.01 WETH
- - receiver: The address of the Yelay Vault to deposit to
+ - vaultAddress: The address of the Yelay Vault to deposit to
  
  Important notes:
  - Make sure to use the exact amount provided. Do not convert units for assets for this action.
@@ -127,7 +127,7 @@ APY: ${vault.apy}%
       const chainId = wallet.getNetwork().chainId! as ChainId;
       const vaultsResponse = await fetch(`${YELAY_BACKEND_URL}/vaults?chainId=${chainId}`);
       const vaults = (await vaultsResponse.json()) as VaultsDetailsResponse[];
-      const vault = vaults.find(vault => vault.address === args.receiver);
+      const vault = vaults.find(vault => vault.address === args.vaultAddress);
 
       if (!vault) {
         return "Error: Vault not found";
@@ -138,7 +138,7 @@ APY: ${vault.apy}%
         return "Error: Assets amount must be greater than 0";
       }
 
-      await approve(wallet, vault.underlying, args.receiver, atomicAssets);
+      await approve(wallet, vault.underlying, args.vaultAddress, atomicAssets);
 
       const data = encodeFunctionData({
         abi: YELAY_VAULT_ABI,
@@ -146,11 +146,11 @@ APY: ${vault.apy}%
         args: [atomicAssets, RETAIL_POOL_ID, wallet.getAddress() as `0x${string}`],
       });
 
-      const txHash = await wallet.sendTransaction({ to: args.receiver as `0x${string}`, data });
+      const txHash = await wallet.sendTransaction({ to: args.vaultAddress as `0x${string}`, data });
 
       await wallet.waitForTransactionReceipt(txHash);
 
-      return `Deposited ${args.assets} to Yelay Vault ${args.receiver} with transaction hash: ${txHash}`;
+      return `Deposited ${args.assets} to Yelay Vault ${args.vaultAddress} with transaction hash: ${txHash}`;
     } catch (error) {
       return `Error depositing to Yelay Vault: ${error}`;
     }

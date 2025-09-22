@@ -40,7 +40,7 @@ yelay/
     ```typescript
     const result = await provider.deposit(walletProvider, {
       assets: "1.0",
-      receiver: "0x1234...",
+      vaultAddress: "0x1234...",
     });
     ```
 
