@@ -1,12 +1,3 @@
-/**
- * Yelay Action Provider
- *
- * This file contains the implementation of the YelayActionProvider,
- * which provides actions for yelay operations.
- *
- * @module yelay
- */
-
 import { z } from "zod";
 import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
@@ -26,12 +17,12 @@ import {
   YELAY_VAULT_ABI,
   YIELD_EXTRACTOR_ABI,
 } from "./constants";
-import { parseUnits, encodeFunctionData } from "viem";
+import { parseUnits, encodeFunctionData, formatUnits } from "viem";
 
 import { approve } from "../../utils";
 
-const SUPPORTED_NETWORKS = ["1", "146", "8453"]; // Mainnet, Sonic, Base
-
+// Mainnet, Sonic, Base, Arbitrum, Avalanche
+const SUPPORTED_CHAIN_IDS = ["1", "146", "8453", "42161", "43114"];
 /**
  * YelayActionProvider provides actions for yelay operations.
  *
@@ -55,10 +46,7 @@ export class YelayActionProvider extends ActionProvider<EvmWalletProvider> {
    */
   @CreateAction({
     name: "get_vaults",
-    description: `
-Getting Yelay vaults for the base network. 
-It takes:
-- chainId: The chain ID of the network`,
+    description: `Getting Yelay vaults for the base network`,
     schema: z.object({}),
   })
   async getVaults(wallet: EvmWalletProvider): Promise<string> {
@@ -181,8 +169,10 @@ APY: ${vault.apy}%
 This tool allows redeeming assets from a Yelay Vault. 
 It takes:
 - assets: The amount of assets to redeem in atomic units (wei)
-- receiver: The address to receive the shares
-- chainId: The chain ID of the network
+- vaultAddress: The address of the vault to redeem from
+
+Important notes:
+- Make sure to use the exact amount provided. Do not convert units for assets for this action.
 `,
     schema: YelayRedeemSchema,
   })
@@ -194,7 +184,7 @@ It takes:
       const chainId = wallet.getNetwork().chainId! as ChainId;
       const vaultsResponse = await fetch(`${YELAY_BACKEND_URL}/vaults?chainId=${chainId}`);
       const vaults = (await vaultsResponse.json()) as VaultsDetailsResponse[];
-      const vault = vaults.find(vault => vault.address === args.receiver);
+      const vault = vaults.find(vault => vault.address === args.vaultAddress);
 
       if (!vault) {
         return "Error: Vault not found";
@@ -211,11 +201,11 @@ It takes:
         args: [atomicAssets, RETAIL_POOL_ID, wallet.getAddress() as `0x${string}`],
       });
 
-      const txHash = await wallet.sendTransaction({ to: args.receiver as `0x${string}`, data });
+      const txHash = await wallet.sendTransaction({ to: args.vaultAddress as `0x${string}`, data });
 
       await wallet.waitForTransactionReceipt(txHash);
 
-      return `Redeemed ${args.assets} from Yelay Vault ${args.receiver} with transaction hash: ${txHash}`;
+      return `Redeemed ${args.assets} from Yelay Vault ${args.vaultAddress} with transaction hash: ${txHash}`;
     } catch (error) {
       return `Error redeeming from Yelay Vault: ${error}`;
     }
@@ -234,7 +224,6 @@ It takes:
 This tool allows claiming yield from a Yelay Vault. 
 It takes:
 - vaultAddress: The address of the Yelay Vault to claim yield from
-- chainId: The chain ID of the network
 `,
     schema: YelayClaimSchema,
   })
@@ -300,12 +289,23 @@ It takes:
     try {
       const chainId = wallet.getNetwork().chainId! as ChainId;
 
+      // Fetch vault details to get decimals
+      const vaultsResponse = await fetch(`${YELAY_BACKEND_URL}/vaults?chainId=${chainId}`);
+      const vaults = (await vaultsResponse.json()) as VaultsDetailsResponse[];
+      const vault = vaults.find(vault => vault.address === args.vaultAddress);
+
+      if (!vault) {
+        return "Error: Vault not found";
+      }
+
       const balance = (await wallet.readContract({
         address: args.vaultAddress as `0x${string}`,
         abi: YELAY_VAULT_ABI,
         functionName: "balanceOf",
         args: [wallet.getAddress(), RETAIL_POOL_ID],
       })) as bigint;
+
+      const balanceInWholeUnits = formatUnits(balance, vault.decimals);
 
       const balanceResponse = await fetch(
         `${YELAY_BACKEND_URL}/claim-proof?chainId=${chainId}&u=${wallet.getAddress()}&p=${RETAIL_POOL_ID}&v=${args.vaultAddress}`,
@@ -315,7 +315,7 @@ It takes:
       }
       const claimRequests: ClaimRequest[] = await balanceResponse.json();
       if (claimRequests.length === 0) {
-        return `User balance from Yelay Vault ${args.vaultAddress}: ${balance}`;
+        return `User balance from Yelay Vault ${args.vaultAddress}: ${balanceInWholeUnits}`;
       }
       const claimRequest = claimRequests[0];
       const yieldSharesClaimed = (await wallet.readContract({
@@ -326,7 +326,7 @@ It takes:
       })) as bigint;
 
       return `
-      User balance from Yelay Vault ${args.vaultAddress}: ${balance}
+      User balance from Yelay Vault ${args.vaultAddress}: ${balanceInWholeUnits}
       Yield shares generated: ${claimRequest.yieldSharesTotal}
       Yield shares claimed: ${yieldSharesClaimed}`;
     } catch (error) {
@@ -343,7 +343,7 @@ It takes:
   supportsNetwork(network: Network): boolean {
     return (
       network.protocolFamily === "evm" &&
-      (network.chainId ? SUPPORTED_NETWORKS.includes(network.chainId) : false)
+      (network.chainId ? SUPPORTED_CHAIN_IDS.includes(network.chainId) : false)
     );
   }
 }

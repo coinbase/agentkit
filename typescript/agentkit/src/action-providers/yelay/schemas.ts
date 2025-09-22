@@ -25,7 +25,7 @@ export const YelayRedeemSchema = z
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid integer or decimal value")
       .describe("The amount of assets to redeem"),
-    receiver: z
+    vaultAddress: z
       .string()
       .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
       .describe("The vault address from which will redeem the shares"),

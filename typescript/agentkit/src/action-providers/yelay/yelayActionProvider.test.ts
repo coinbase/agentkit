@@ -8,7 +8,7 @@ import {
   YELAY_VAULT_ABI,
   YIELD_EXTRACTOR_ABI,
 } from "./constants";
-import { encodeFunctionData, parseEther } from "viem";
+import { encodeFunctionData, parseEther, formatUnits } from "viem";
 
 const mockFetchResult = (status: number, data: object) => {
   return {
@@ -108,8 +108,8 @@ describe("YelayActionProvider", () => {
       ).toBe(true);
     });
 
-    it("should support the Base, Mainnet and Sonic networks", () => {
-      const networks = ["1", "146", "8453"];
+    it("should support the Base, Mainnet, Sonic, Arbitrum and Avalanche networks", () => {
+      const networks = ["1", "146", "8453", "42161", "43114"];
       networks.forEach(network => {
         expect(
           provider.supportsNetwork({
@@ -120,7 +120,7 @@ describe("YelayActionProvider", () => {
       });
     });
 
-    it("should not support other than base, mainnet and sonic networks", () => {
+    it("should not support other networks", () => {
       expect(
         provider.supportsNetwork({
           protocolFamily: "evm",
@@ -217,7 +217,7 @@ APY: 5.2%
     it("should redeem assets from a specified Yelay Vault", async () => {
       const args = {
         assets: MOCK_WHOLE_ASSETS,
-        receiver: MOCK_VAULT_ADDRESS,
+        vaultAddress: MOCK_VAULT_ADDRESS,
       };
 
       mockedFetch.mockResolvedValueOnce(mockFetchResult(200, mockVaults));
@@ -226,7 +226,7 @@ APY: 5.2%
       const atomicAssets = parseEther(MOCK_WHOLE_ASSETS);
 
       expect(mockWallet.sendTransaction).toHaveBeenCalledWith({
-        to: args.receiver as `0x${string}`,
+        to: args.vaultAddress as `0x${string}`,
         data: encodeFunctionData({
           abi: YELAY_VAULT_ABI,
           functionName: "redeem",
@@ -245,7 +245,7 @@ APY: 5.2%
 
       const args = {
         assets: MOCK_WHOLE_ASSETS,
-        receiver: MOCK_VAULT_ADDRESS,
+        vaultAddress: MOCK_VAULT_ADDRESS,
       };
 
       const response = await provider.redeem(mockWallet, args);
@@ -294,33 +294,43 @@ APY: 5.2%
       const args = {
         vaultAddress: MOCK_VAULT_ADDRESS,
       };
-      const balance = BigInt("1000");
+      const balance = BigInt("1000000000000000000"); // 1 ETH in wei
       const yieldSharesClaimed = BigInt("50");
+      const expectedBalanceInWholeUnits = formatUnits(balance, MOCK_DECIMALS);
 
       mockWallet.readContract
         .mockResolvedValueOnce(balance)
         .mockResolvedValueOnce(yieldSharesClaimed);
-      mockedFetch.mockResolvedValue(mockFetchResult(200, mockClaimProof));
+      mockedFetch
+        .mockResolvedValueOnce(mockFetchResult(200, mockVaults))
+        .mockResolvedValueOnce(mockFetchResult(200, mockClaimProof));
 
       const response = await provider.getBalance(mockWallet, args);
 
-      expect(response).toContain(`User balance from Yelay Vault ${MOCK_VAULT_ADDRESS}: ${balance}`);
+      expect(response).toContain(
+        `User balance from Yelay Vault ${MOCK_VAULT_ADDRESS}: ${expectedBalanceInWholeUnits}`,
+      );
       expect(response).toContain(`Yield shares generated: ${mockClaimProof[0].yieldSharesTotal}`);
       expect(response).toContain(`Yield shares claimed: ${yieldSharesClaimed}`);
     });
 
     it("should return only user balance when there is no claimable yield", async () => {
-      const balance = BigInt("1000");
+      const balance = BigInt("1000000000000000000"); // 1 ETH in wei
+      const expectedBalanceInWholeUnits = formatUnits(balance, MOCK_DECIMALS);
 
       mockWallet.readContract.mockResolvedValueOnce(balance);
-      mockedFetch.mockResolvedValue(mockFetchResult(200, []));
+      mockedFetch
+        .mockResolvedValueOnce(mockFetchResult(200, mockVaults))
+        .mockResolvedValueOnce(mockFetchResult(200, []));
 
       const args = {
         vaultAddress: MOCK_VAULT_ADDRESS,
       };
 
       const response = await provider.getBalance(mockWallet, args);
-      expect(response).toContain(`User balance from Yelay Vault ${MOCK_VAULT_ADDRESS}: ${balance}`);
+      expect(response).toContain(
+        `User balance from Yelay Vault ${MOCK_VAULT_ADDRESS}: ${expectedBalanceInWholeUnits}`,
+      );
     });
 
     it("should return error message when balance fails", async () => {
