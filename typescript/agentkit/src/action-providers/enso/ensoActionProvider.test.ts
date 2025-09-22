@@ -1,10 +1,11 @@
 import { getAddress } from "viem";
 import { EvmWalletProvider } from "../../wallet-providers";
-import { ENSO_ROUTERS } from "./constants";
+// import { ENSO_ROUTERS } from "./constants";
 import { ensoActionProvider } from "./ensoActionProvider";
 import { EnsoRouteSchema } from "./schemas";
 
 const MOCK_ADDRESS = "0x1234567890123456789012345678901234543210";
+const ENSO_ROUTER_BASE = "0xF75584eF6673aD213a685a1B58Cc0330B8eA22Cf";
 
 const WETH = "0x4200000000000000000000000000000000000006";
 const USDC = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913";
@@ -12,10 +13,9 @@ const USDC = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913";
 describe("Enso Route Schema", () => {
   it("should successfully parse valid input", () => {
     const validInput = {
-      network: "base-mainnet",
       tokenIn: USDC,
       tokenOut: WETH,
-      amountIn: BigInt(100e6),
+      amountIn: "100",
       slippage: 50,
     };
 
@@ -38,10 +38,9 @@ describe("Enso Route Action", () => {
   const actionProvider = ensoActionProvider();
   const chainId = 8453;
   const args = {
-    network: "base-mainnet",
     tokenIn: USDC,
     tokenOut: WETH,
-    amountIn: BigInt(100e6),
+    amountIn: "100",
   };
 
   beforeEach(async () => {
@@ -70,7 +69,7 @@ describe("Enso Route Action", () => {
     expect(mockWallet.sendTransaction).toHaveBeenNthCalledWith(
       2, // Second call
       expect.objectContaining({
-        to: ENSO_ROUTERS.get(chainId),
+        to: ENSO_ROUTER_BASE,
         value: BigInt(0),
       }),
     );
