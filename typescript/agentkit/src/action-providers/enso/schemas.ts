@@ -9,18 +9,19 @@ export interface EnsoActionProviderParams {
  */
 export const EnsoRouteSchema = z
   .object({
-    network: z.string().describe("The network to check the address on"),
     tokenIn: z
       .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
       .describe(
         "Address of the token to swap from. For ETH, use 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
       ),
     tokenOut: z
       .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
       .describe(
         "Address of the token to swap to, For ETH, use 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
       ),
-    amountIn: z.custom<bigint>().describe("Amount of tokenIn to swap in wei"),
+    amountIn: z.string().describe("Amount of tokenIn to swap in whole units (e.g. 100 USDC)"),
     slippage: z.number().optional().describe("Slippage in basis points (1/10000). Default - 50"),
   })
   .strip()

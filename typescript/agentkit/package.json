@@ -64,7 +64,7 @@
     "md5": "^2.3.0",
     "opensea-js": "^7.1.18",
     "reflect-metadata": "^0.2.2",
-    "@ensofinance/sdk": "^1.0.9",
+    "@ensofinance/sdk": "^2.0.6",
     "twitter-api-v2": "^1.18.2",
     "viem": "^2.22.16",
     "x402": "^0.6.0",

@@ -3,14 +3,13 @@ import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
 import { EnsoActionProviderParams, EnsoRouteSchema } from "./schemas";
-import { getAddress, Hex } from "viem";
+import { getAddress, Hex, parseUnits } from "viem";
 import { EvmWalletProvider } from "../../wallet-providers";
 import {
   ENSO_API_KEY,
   ENSO_ETH,
   ENSO_ROUTE_SINGLE_SIG,
   ENSO_SUPPORTED_NETWORKS,
-  ENSO_SUPPORTED_NETWORKS_SET,
 } from "./constants";
 import { EnsoClient, RouteParams } from "@ensofinance/sdk";
 
@@ -21,6 +20,8 @@ export class EnsoActionProvider extends ActionProvider<EvmWalletProvider> {
   readonly ensoClient: EnsoClient;
   /**
    * Constructor for the EnsoActionProvider
+   *
+   * @param params - The initialization parameters for the Enso action provider
    */
   constructor(params: EnsoActionProviderParams = {}) {
     super("enso", []);
@@ -44,20 +45,32 @@ export class EnsoActionProvider extends ActionProvider<EvmWalletProvider> {
     args: z.infer<typeof EnsoRouteSchema>,
   ): Promise<string> {
     try {
-      const chainId = ENSO_SUPPORTED_NETWORKS.get(args.network);
-      if (!chainId) {
-        return `Network ${args.network} is not supported by Enso`;
+      const chainId = Number(walletProvider.getNetwork().chainId);
+      if (!chainId || !ENSO_SUPPORTED_NETWORKS.has(chainId)) {
+        return `Network ${chainId} is not supported by Enso`;
       }
 
       const fromAddress = getAddress(walletProvider.getAddress());
       const tokenIn = getAddress(args.tokenIn);
       const tokenOut = getAddress(args.tokenOut);
 
+      const tokenInResponse = await this.ensoClient.getTokenData({
+        address: tokenIn,
+        chainId,
+      });
+
+      if (tokenInResponse.data.length !== 1) {
+        throw `Could not find data for provided tokenIn`;
+      }
+
+      const tokenInData = tokenInResponse.data[0];
+      const amountIn = parseUnits(args.amountIn, tokenInData.decimals).toString();
+
       const params: RouteParams = {
         chainId,
-        tokenIn,
-        tokenOut,
-        amountIn: args.amountIn.toString(),
+        tokenIn: [tokenIn],
+        tokenOut: [tokenOut],
+        amountIn: [amountIn],
         routingStrategy: "router",
         fromAddress,
         receiver: fromAddress,
@@ -68,7 +81,7 @@ export class EnsoActionProvider extends ActionProvider<EvmWalletProvider> {
         params.slippage = args.slippage;
       }
 
-      const routeData = await this.ensoClient.getRouterData(params);
+      const routeData = await this.ensoClient.getRouteData(params);
 
       if (!routeData.tx.data.startsWith(ENSO_ROUTE_SINGLE_SIG)) {
         return `Unsupported calldata returned from Enso API`;
@@ -78,10 +91,9 @@ export class EnsoActionProvider extends ActionProvider<EvmWalletProvider> {
       if (args.tokenIn.toLowerCase() !== ENSO_ETH.toLowerCase()) {
         const approval = await this.ensoClient.getApprovalData({
           chainId,
-          amount: args.amountIn.toString(),
+          amount: amountIn,
           fromAddress,
           tokenAddress: getAddress(args.tokenIn),
-          routingStrategy: "router",
         });
 
         const hash = await walletProvider.sendTransaction({
@@ -111,11 +123,8 @@ export class EnsoActionProvider extends ActionProvider<EvmWalletProvider> {
    * @returns True if the Enso action provider supports the network, false otherwise.
    */
   supportsNetwork = (network: Network) => {
-    const chainIdCheck =
-      network.chainId && ENSO_SUPPORTED_NETWORKS_SET.has(Number(network.chainId));
-    const networkIdCheck = network.networkId && ENSO_SUPPORTED_NETWORKS.has(network.networkId);
-
-    return Boolean(chainIdCheck) || Boolean(networkIdCheck);
+    const chainIdCheck = network.chainId && ENSO_SUPPORTED_NETWORKS.has(Number(network.chainId));
+    return Boolean(chainIdCheck);
   };
 }
 
