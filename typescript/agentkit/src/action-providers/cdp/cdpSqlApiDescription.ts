@@ -275,43 +275,110 @@ const apiSchema = [
       },
     ],
   },
-  {
-    tableName: "base.transfers",
-    fields: [
-      {
-        fieldName: "block_number",
-        type: "uint64",
-        description: "Block number containing the transfer",
-      },
-      { fieldName: "block_timestamp", type: "DateTime64", description: "Block timestamp" },
-      { fieldName: "transaction_to", type: "String", description: "Transaction recipient address" },
-      { fieldName: "transaction_from", type: "String", description: "Transaction sender address" },
-      { fieldName: "log_index", type: "uint32", description: "Log index within the transaction" },
-      { fieldName: "token_address", type: "String", description: "Token contract address" },
-      {
-        fieldName: "from_address",
-        type: "String",
-        description: "Address tokens were transferred from",
-      },
-      {
-        fieldName: "to_address",
-        type: "String",
-        description: "Address tokens were transferred to",
-      },
-      { fieldName: "value", type: "uint256", description: "Amount of tokens transferred" },
-      { fieldName: "action", type: "Enum8", description: "Action flag: 1 add, −1 reorg removal" },
-    ],
-  },
+  // not public yet
+  // {
+  //   tableName: "base.transfers",
+  //   fields: [
+  //     {
+  //       fieldName: "block_number",
+  //       type: "uint64",
+  //       description: "Block number containing the transfer",
+  //     },
+  //     { fieldName: "block_timestamp", type: "DateTime64", description: "Block timestamp" },
+  //     { fieldName: "transaction_to", type: "String", description: "Transaction recipient address" },
+  //     { fieldName: "transaction_from", type: "String", description: "Transaction sender address" },
+  //     { fieldName: "log_index", type: "uint32", description: "Log index within the transaction" },
+  //     { fieldName: "token_address", type: "String", description: "Token contract address" },
+  //     {
+  //       fieldName: "from_address",
+  //       type: "String",
+  //       description: "Address tokens were transferred from",
+  //     },
+  //     {
+  //       fieldName: "to_address",
+  //       type: "String",
+  //       description: "Address tokens were transferred to",
+  //     },
+  //     { fieldName: "value", type: "uint256", description: "Amount of tokens transferred" },
+  //     { fieldName: "action", type: "Enum8", description: "Action flag: 1 add, −1 reorg removal" },
+  //   ],
+  // },
 ];
 
 const schemaJson = JSON.stringify(apiSchema, null, 2);
 
 export const description = `
-    This action can call Coinbase's Base SQL API to retrieve onchain data on Base.
-    Call this action if the user requests historical data on Base.
-    The SQL API schema is a set of opinionated tables and columns used to organize onchain data for efficient retrieval.
-
-    The supported table names, and fields in each table, for SQL queries are defined in the json string:
+    This action executes read-only SQL queries against indexed blockchain data using the CDP SQL API.
     
+    **Use Cases:**
+    - Query transaction history and patterns
+    - Analyze event logs and smart contract interactions
+    - Retrieve block information and metadata
+    - Examine token transfers and DeFi activity
+    
+    **IMPORTANT Query Requirements:**
+    - Must be SELECT statements only (ClickHouse SQL dialect)
+    - Casts use the ::<Type> syntax (not CAST(... AS ...))
+    - Maximum query length: 10,000 characters
+    - Maximum result rows: 10,000
+    - Query timeout: 30 seconds
+    - Maximum JOINs: 5
+    - No cartesian products allowed
+    - No DDL/DML operations (INSERT, UPDATE, DELETE, etc.)
+    - Keep it simple and break down the task into several queries if appropriate.
+    
+    **Available Tables:**
+    - base.events: Decoded event logs with parameters and signatures
+    - base.transactions: Complete transaction data including gas and signatures
+    - base.blocks: Block information and metadata
+    - base.encoded_logs: Raw log data that couldn't be decoded
+    **Table Schema Details:**
     ${schemaJson}
+    
+    **Example Queries:**
+    
+    1. Get ERC-20 token transfers for USDC:
+    SELECT 
+      parameters['from']::String AS sender,
+      parameters['to']::String AS to,
+      parameters['value']::UInt256 AS amount,
+      address AS token_address
+    FROM base.events
+    WHERE 
+      event_signature = 'Transfer(address,address,uint256)'
+      AND address = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
+    LIMIT 10;
+    
+    2. Get swap events from Uniswap v2-style DEXes:
+    SELECT parameters ['to']::String AS to,
+        parameters ['amount0In']::UInt256 AS amount0In,
+        parameters ['amount0Out']::UInt256 AS amount0Out,
+        parameters ['amount1In']::UInt256 AS amount1In,
+        parameters ['amount1Out']::UInt256 AS amount1Out,
+        parameters ['sender']::String AS sender
+    FROM base.events
+    WHERE event_signature = 'Swap(address,uint256,uint256,uint256,uint256,address)'
+    LIMIT 10;
+    
+    3. Show me 10 rows from the events table:
+    SELECT * FROM base.events LIMIT 10;
+    
+    4. Aggregate ZORA content rewards by coin and currency for payout recipient 0x0bC5f409e4d9298B93E98920276128b89280d832:
+    SELECT 
+        parameters ['coin']::String as coin,
+        parameters ['currency']::String as currency,
+        sum(
+            (
+                replaceAll(
+                    splitByChar(' ', parameters ['marketRewards']::String) [1],
+                    '{',
+                    ''
+                )
+            )::UInt64
+        ) as market_rewards
+    FROM base.events
+    WHERE 
+        event_signature = 'CoinMarketRewardsV4(address,address,address,address,address,address,address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))'
+        AND parameters ['payoutRecipient']::String = lower('0x0bC5f409e4d9298B93E98920276128b89280d832')
+    GROUP BY coin, currency;
 `;

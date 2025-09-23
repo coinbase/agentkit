@@ -70,3 +70,17 @@ export const UseSpendPermissionSchema = z
   })
   .strip()
   .describe("Instructions for using a spend permission");
+
+/**
+ * Input schema for querying the CDP SQL API
+ */
+export const CdpSqlApiSchema = z.object({
+  sqlQuery: z
+    .string()
+    .min(1, "SQL query cannot be empty")
+    .max(10000, "Query exceeds maximum length of 10,000 characters")
+    .describe(
+      `The SQL query to execute using ClickHouse syntax. Must be a read-only SELECT statement. ` +
+        `Limitations: max 10,000 characters, max 5 JOINs, no cartesian products, 30s timeout. API supports a max of 10,000 result rows but limit it to 10 unless otherwise specified.`,
+    ),
+});
