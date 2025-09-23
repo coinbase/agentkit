@@ -288,8 +288,6 @@ It takes:
   ): Promise<string> {
     try {
       const chainId = wallet.getNetwork().chainId! as ChainId;
-
-      // Fetch vault details to get decimals
       const vaultsResponse = await fetch(`${YELAY_BACKEND_URL}/vaults?chainId=${chainId}`);
       const vaults = (await vaultsResponse.json()) as VaultsDetailsResponse[];
       const vault = vaults.find(vault => vault.address === args.vaultAddress);

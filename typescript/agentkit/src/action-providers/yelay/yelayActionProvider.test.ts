@@ -333,7 +333,19 @@ APY: 5.2%
       );
     });
 
+    it("should return error message when vault doesn't match", async () => {
+      mockedFetch.mockResolvedValueOnce(mockFetchResult(200, []));
+
+      const args = {
+        vaultAddress: MOCK_VAULT_ADDRESS,
+      };
+
+      const response = await provider.getBalance(mockWallet, args);
+      expect(response).toContain("Vault not found");
+    });
+
     it("should return error message when balance fails", async () => {
+      mockedFetch.mockResolvedValueOnce(mockFetchResult(200, mockVaults));
       mockWallet.readContract.mockRejectedValue(new Error("Balance failed"));
 
       const args = {
@@ -345,6 +357,7 @@ APY: 5.2%
     });
 
     it("should return error message when claim proof fails", async () => {
+      mockedFetch.mockResolvedValueOnce(mockFetchResult(200, mockVaults));
       mockedFetch.mockResolvedValue(mockFetchResult(500, mockClaimProof));
 
       const args = {
@@ -356,6 +369,7 @@ APY: 5.2%
     });
 
     it("should return error message when yield shares claimed fails", async () => {
+      mockedFetch.mockResolvedValueOnce(mockFetchResult(200, mockVaults));
       mockWallet.readContract.mockRejectedValue(new Error("Yield shares claimed failed"));
 
       const args = {
