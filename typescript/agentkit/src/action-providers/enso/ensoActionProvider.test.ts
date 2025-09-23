@@ -1,6 +1,5 @@
 import { getAddress } from "viem";
 import { EvmWalletProvider } from "../../wallet-providers";
-// import { ENSO_ROUTERS } from "./constants";
 import { ensoActionProvider } from "./ensoActionProvider";
 import { EnsoRouteSchema } from "./schemas";
 
@@ -36,7 +35,6 @@ describe("Enso Route Schema", () => {
 describe("Enso Route Action", () => {
   let mockWallet: jest.Mocked<EvmWalletProvider>;
   const actionProvider = ensoActionProvider();
-  const chainId = 8453;
   const args = {
     tokenIn: USDC,
     tokenOut: WETH,
@@ -48,6 +46,7 @@ describe("Enso Route Action", () => {
       getAddress: jest.fn().mockReturnValue(MOCK_ADDRESS),
       sendTransaction: jest.fn(),
       waitForTransactionReceipt: jest.fn(),
+      getNetwork: jest.fn().mockReturnValue({ chainId: "8453" }),
     } as unknown as jest.Mocked<EvmWalletProvider>;
   });
 
@@ -78,6 +77,9 @@ describe("Enso Route Action", () => {
   });
 
   it("should fail with an error", async () => {
+    // Add delay to avoid RPS limits
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     const error = new Error("Failed to route through Enso");
     mockWallet.sendTransaction.mockRejectedValue(error);
 
@@ -98,12 +100,12 @@ describe("Enso Route Action", () => {
 describe("supportsNetwork", () => {
   const actionProvider = ensoActionProvider();
 
-  it("should return true for base-mainnet", () => {
+  it("should return false for base-mainnet (supported only with chainId)", () => {
     const result = actionProvider.supportsNetwork({
       protocolFamily: "evm",
       networkId: "base-mainnet",
     });
-    expect(result).toBe(true);
+    expect(result).toBe(false);
   });
 
   it("should return true for 8453 (base)", () => {
@@ -120,14 +122,6 @@ describe("supportsNetwork", () => {
       networkId: "base-sepolia",
     });
     expect(result).toBe(false);
-  });
-
-  it("should return true for ETH Mainnet", () => {
-    const result = actionProvider.supportsNetwork({
-      protocolFamily: "evm",
-      networkId: "ethereum-mainnet",
-    });
-    expect(result).toBe(true);
   });
 
   it("should return true for 1 (mainnet)", () => {
