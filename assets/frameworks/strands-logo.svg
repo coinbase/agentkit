@@ -3,7 +3,7 @@
     <defs>
         <style>
             .container-rect {
-                fill: white;
+                fill: transparent;
                 stroke: #e0e0e0;
                 stroke-width: 1;
                 rx: 8;
