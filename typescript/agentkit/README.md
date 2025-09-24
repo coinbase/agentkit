@@ -313,6 +313,15 @@ const agent = createReactAgent({
 </table>
 </details>
 <details>
+<summary><strong>Enso</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>route</code></td>
+    <td width="768">Find and execute a route for entering or exiting any DeFi position or swapping any ERC20 tokens.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>ERC20</strong></summary>
 <table width="100%">
 <tr>

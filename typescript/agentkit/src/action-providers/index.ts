@@ -11,6 +11,7 @@ export * from "./cdp-legacy";
 export * from "./cdp";
 export * from "./compound";
 export * from "./defillama";
+export * from "./enso";
 export * from "./erc20";
 export * from "./erc721";
 export * from "./farcaster";
