@@ -7,7 +7,23 @@ const MOCK_ADDRESS = "0x1234567890123456789012345678901234543210";
 const ENSO_ROUTER_BASE = "0xF75584eF6673aD213a685a1B58Cc0330B8eA22Cf";
 
 const WETH = "0x4200000000000000000000000000000000000006";
-const USDC = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913";
+const USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+
+const mockGetTokenData = jest.fn();
+const mockGetRouteData = jest.fn();
+const mockGetApprovalData = jest.fn();
+
+jest.mock("@ensofinance/sdk", () => {
+  return {
+    EnsoClient: jest.fn().mockImplementation(() => {
+      return {
+        getTokenData: mockGetTokenData,
+        getRouteData: mockGetRouteData,
+        getApprovalData: mockGetApprovalData,
+      };
+    }),
+  };
+});
 
 describe("Enso Route Schema", () => {
   it("should successfully parse valid input", () => {
@@ -42,6 +58,31 @@ describe("Enso Route Action", () => {
   };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+    // Set up default mock responses for EnsoClient methods for successful scenarios
+    mockGetTokenData.mockResolvedValue({
+      data: [
+        {
+          address: USDC,
+          decimals: 6,
+          symbol: "USDC",
+        },
+      ],
+    });
+    mockGetRouteData.mockResolvedValue({
+      tx: {
+        to: ENSO_ROUTER_BASE,
+        value: "0",
+        data: "0xb94c3609000000000000000000000000f75584ef6673ad213a685a1b58cc0330b8ea22cf0000000000000000000000000000000000000000000000000000000005f5e100",
+      },
+    });
+    mockGetApprovalData.mockResolvedValue({
+      tx: {
+        to: USDC,
+        data: "0x095ea7b3000000000000000000000000f75584ef6673ad213a685a1b58cc0330b8ea22cf0000000000000000000000000000000000000000000000000000000005f5e100",
+      },
+    });
+
     mockWallet = {
       getAddress: jest.fn().mockReturnValue(MOCK_ADDRESS),
       sendTransaction: jest.fn(),
@@ -77,9 +118,6 @@ describe("Enso Route Action", () => {
   });
 
   it("should fail with an error", async () => {
-    // Add delay to avoid RPS limits
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
     const error = new Error("Failed to route through Enso");
     mockWallet.sendTransaction.mockRejectedValue(error);
 
