@@ -88,7 +88,7 @@ APY: ${vault.apy}%
         .join("----------------");
     } catch (error) {
       if (error instanceof Error) {
-        console.error("Error fetching vault data:", error.message);
+return "Error fetching vault data: " + error.message;
       }
       return "Yield backend is currently unavailable. Please try again later.";
     }
