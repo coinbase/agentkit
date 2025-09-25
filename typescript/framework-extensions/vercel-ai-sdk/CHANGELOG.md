@@ -1,5 +1,9 @@
 # @coinbase/agentkit-vercel-ai-sdk
 
+## 0.2.0
+
+- Ai-sdk v5 Support.
+
 ## 0.1.0
 
 ### Minor Changes
