@@ -342,5 +342,22 @@ describe("PrivySvmWalletProvider", () => {
 
       await expect(provider.getBalance()).rejects.toThrow("RPC endpoint error");
     });
+
+    it("should throw error when trying to get KeyPairSigner", async () => {
+      await expect(provider.getKeyPairSigner()).rejects.toThrow(
+        "getKeyPairSigner is not supported for PrivySvmWalletProvider",
+      );
+    });
+
+    it("should throw error when trying to convert to signer", async () => {
+      await expect(provider.toSigner()).rejects.toThrow(
+        "getKeyPairSigner is not supported for PrivySvmWalletProvider",
+      );
+    });
+
+    it("should return false for isKeyPairSigner", async () => {
+      const isValid = await provider.isKeyPairSigner();
+      expect(isValid).toBe(false);
+    });
   });
 });

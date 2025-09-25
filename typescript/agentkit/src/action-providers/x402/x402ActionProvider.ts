@@ -8,7 +8,7 @@ import {
   DirectX402RequestSchema,
   ListX402ServicesSchema,
 } from "./schemas";
-import { EvmWalletProvider } from "../../wallet-providers";
+import { EvmWalletProvider, WalletProvider, SvmWalletProvider } from "../../wallet-providers";
 import axios, { AxiosError } from "axios";
 import { withPaymentInterceptor, decodeXPaymentResponse } from "x402-axios";
 import { PaymentRequirements } from "x402/types";
@@ -27,7 +27,7 @@ const SUPPORTED_NETWORKS = ["base-mainnet", "base-sepolia", "solana-mainnet", "s
 /**
  * X402ActionProvider provides actions for making HTTP requests, with optional x402 payment handling.
  */
-export class X402ActionProvider extends ActionProvider<EvmWalletProvider> {
+export class X402ActionProvider extends ActionProvider<WalletProvider> {
   /**
    * Creates a new instance of X402ActionProvider.
    * Initializes the provider with x402 capabilities.
@@ -46,11 +46,11 @@ export class X402ActionProvider extends ActionProvider<EvmWalletProvider> {
   @CreateAction({
     name: "discover_x402_services",
     description:
-      "Discover available x402 services. Optionally filter by a maximum price in whole units of USDC (only USDC payment options will be considered when filter is applied).",
+      "Discover available x402 services. Only services available on the current network will be returned. Optionally filter by a maximum price in whole units of USDC (only USDC payment options will be considered when filter is applied).",
     schema: ListX402ServicesSchema,
   })
   async discoverX402Services(
-    walletProvider: EvmWalletProvider,
+    walletProvider: WalletProvider,
     args: z.infer<typeof ListX402ServicesSchema>,
   ): Promise<string> {
     try {
@@ -209,7 +209,7 @@ If you receive a 402 Payment Required response, use retry_http_request_with_x402
     schema: HttpRequestSchema,
   })
   async makeHttpRequest(
-    walletProvider: EvmWalletProvider,
+    walletProvider: WalletProvider,
     args: z.infer<typeof HttpRequestSchema>,
   ): Promise<string> {
     try {
@@ -291,7 +291,7 @@ DO NOT use this action directly without first trying make_http_request!`,
     schema: RetryWithX402Schema,
   })
   async retryWithX402(
-    walletProvider: EvmWalletProvider,
+    walletProvider: WalletProvider,
     args: z.infer<typeof RetryWithX402Schema>,
   ): Promise<string> {
     try {
@@ -311,8 +311,25 @@ DO NOT use this action directly without first trying make_http_request!`,
         );
       }
 
+      // Check if wallet provider is supported
+      if (
+        !(
+          walletProvider instanceof SvmWalletProvider || walletProvider instanceof EvmWalletProvider
+        )
+      ) {
+        return JSON.stringify(
+          {
+            error: true,
+            message: "Unsupported wallet provider",
+            details: "Only SvmWalletProvider and EvmWalletProvider are supported",
+          },
+          null,
+          2,
+        );
+      }
+
       // Make the request with payment handling
-      const account = walletProvider.toSigner();
+      const account = await walletProvider.toSigner();
 
       const paymentSelector = (accepts: PaymentRequirements[]) => {
         const { scheme, network, maxAmountRequired, asset } = args.selectedPaymentOption;
@@ -418,11 +435,27 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
     schema: DirectX402RequestSchema,
   })
   async makeHttpRequestWithX402(
-    walletProvider: EvmWalletProvider,
+    walletProvider: WalletProvider,
     args: z.infer<typeof DirectX402RequestSchema>,
   ): Promise<string> {
     try {
-      const account = walletProvider.toSigner();
+      if (
+        !(
+          walletProvider instanceof SvmWalletProvider || walletProvider instanceof EvmWalletProvider
+        )
+      ) {
+        return JSON.stringify(
+          {
+            error: true,
+            message: "Unsupported wallet provider",
+            details: "Only SvmWalletProvider and EvmWalletProvider are supported",
+          },
+          null,
+          2,
+        );
+      }
+      const account = await walletProvider.toSigner();
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const api = withPaymentInterceptor(axios.create({}), account as any);
 
@@ -468,8 +501,7 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
    * @param network - The network to check support for
    * @returns True if the network is supported, false otherwise
    */
-  supportsNetwork = (network: Network) =>
-    network.protocolFamily === "evm" && SUPPORTED_NETWORKS.includes(network.networkId!);
+  supportsNetwork = (network: Network) => SUPPORTED_NETWORKS.includes(network.networkId!);
 }
 
 export const x402ActionProvider = () => new X402ActionProvider();

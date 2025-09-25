@@ -114,6 +114,7 @@ async function initializeAgent() {
     const walletProvider = isSolana
       ? await CdpSolanaWalletProvider.configureWithWallet(cdpWalletConfig)
       : await CdpEvmWalletProvider.configureWithWallet(cdpWalletConfig);
+
     const actionProviders = [
       walletActionProvider(),
       cdpApiActionProvider(),
@@ -126,7 +127,7 @@ async function initializeAgent() {
             x402ActionProvider(),
           ]
         : isSolanaWalletProvider(walletProvider)
-          ? [splActionProvider()]
+          ? [splActionProvider(), x402ActionProvider()]
           : []),
     ];
 

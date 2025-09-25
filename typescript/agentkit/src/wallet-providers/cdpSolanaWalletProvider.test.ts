@@ -401,4 +401,25 @@ describe("CdpSolanaWalletProvider", () => {
       await expect(provider.nativeTransfer(invalidAddress, amount)).rejects.toThrow();
     });
   });
+
+  // =========================================================
+  // KeyPairSigner tests
+  // =========================================================
+
+  describe("KeyPairSigner", () => {
+    it("should handle errors when getting KeyPairSigner", async () => {
+      // Mock exportAccount to throw an error
+      mockCdpClient.solana.exportAccount = jest.fn().mockRejectedValue(new Error("Export failed"));
+
+      await expect(provider.getKeyPairSigner()).rejects.toThrow("Export failed");
+    });
+
+    it("should handle errors gracefully in isKeyPairSigner", async () => {
+      // Mock exportAccount to throw an error
+      mockCdpClient.solana.exportAccount = jest.fn().mockRejectedValue(new Error("Export failed"));
+
+      const isValid = await provider.isKeyPairSigner();
+      expect(isValid).toBe(false);
+    });
+  });
 });

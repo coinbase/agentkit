@@ -48,6 +48,7 @@
     "@jup-ag/api": "^6.0.39",
     "@privy-io/public-api": "2.18.5",
     "@privy-io/server-auth": "1.18.4",
+    "@solana/kit": "^2.1.1",
     "@solana/spl-token": "^0.4.12",
     "@solana/web3.js": "^1.98.1",
     "@zerodev/ecdsa-validator": "^5.4.5",
