@@ -162,14 +162,14 @@ APY: 5.2%
       mockedFetch.mockResolvedValue(mockFetchResult(500, mockVaults));
 
       const result = await provider.getVaults(mockWallet);
-      expect(result).toBe("Yield backend is currently unavailable. Please try again later.");
+      expect(result).toContain(`Error fetching vault data:`);
     });
 
     it("returns error message when APY API fails", async () => {
       mockedFetch.mockResolvedValue(mockFetchResult(500, mockAPYs));
 
       const result = await provider.getVaults(mockWallet);
-      expect(result).toBe("Yield backend is currently unavailable. Please try again later.");
+      expect(result).toContain(`Error fetching vault data:`);
     });
   });
 
