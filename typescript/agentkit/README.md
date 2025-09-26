@@ -324,6 +324,14 @@ const agent = createReactAgent({
     <td width="768">Transfers a specified amount of ERC-20 tokens to a destination address.</td>
 </tr>
 <tr>
+    <td width="200"><code>approve</code></td>
+    <td width="768">Approves a spender to transfer ERC-20 tokens on behalf of the wallet.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_allowance</code></td>
+    <td width="768">Checks the allowance amount for a spender of an ERC-20 token.</td>
+</tr>
+<tr>
     <td width="200"><code>get_erc20_token_address</code></td>
     <td width="768">Gets the contract address for frequently used ERC20 tokens on different networks by token symbol.</td>
 </tr>

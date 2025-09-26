@@ -2,14 +2,20 @@ import { z } from "zod";
 import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
-import { GetBalanceSchema, TransferSchema, GetTokenAddressSchema } from "./schemas";
+import {
+  GetBalanceSchema,
+  TransferSchema,
+  GetTokenAddressSchema,
+  ApproveSchema,
+  AllowanceSchema,
+} from "./schemas";
 import {
   BaseTokenToAssetId,
   BaseSepoliaTokenToAssetId,
   TOKEN_ADDRESSES_BY_SYMBOLS,
 } from "./constants";
 import { getTokenDetails } from "./utils";
-import { encodeFunctionData, Hex, getAddress, erc20Abi, parseUnits } from "viem";
+import { encodeFunctionData, Hex, getAddress, erc20Abi, parseUnits, formatUnits } from "viem";
 import { EvmWalletProvider, LegacyCdpWalletProvider } from "../../wallet-providers";
 
 /**
@@ -161,6 +167,109 @@ Important notes:
       }.\nTransaction hash for the transfer: ${hash}`;
     } catch (error) {
       return `Error transferring the asset: ${error}`;
+    }
+  }
+  /**
+   * Approves a spender to transfer a specified amount of tokens.
+   *
+   * @param walletProvider - The wallet provider to approve from.
+   * @param args - The input arguments for the action.
+   * @returns A message containing the approval details.
+   */
+  @CreateAction({
+    name: "approve",
+    description: `
+This tool will approve a spender to transfer ERC20 tokens from the wallet.
+
+It takes the following inputs:
+- amount: The amount to approve in whole units (e.g. 100 for 100 USDC)
+- tokenAddress: The contract address of the token to approve
+- spenderAddress: The spender address to approve
+
+Important notes:
+- This will overwrite any existing allowance
+- To revoke an allowance, set the amount to 0
+- Ensure you trust the spender address before approving
+- Never assume token addresses, they have to be provided as inputs. If only token symbol is provided, use the get_token_address tool to get the token address first
+`,
+    schema: ApproveSchema,
+  })
+  async approve(
+    walletProvider: EvmWalletProvider,
+    args: z.infer<typeof ApproveSchema>,
+  ): Promise<string> {
+    try {
+      // Get token details for better error messages and validation
+      const tokenAddress = getAddress(args.tokenAddress);
+      const tokenDetails = await getTokenDetails(walletProvider, args.tokenAddress);
+      if (!tokenDetails) {
+        return `Error: Could not fetch token details for ${args.tokenAddress}. Please verify the token address is correct.`;
+      }
+
+      // Convert amount to wei using token decimals
+      const amountInWei = parseUnits(String(args.amount), tokenDetails.decimals);
+
+      const hash = await walletProvider.sendTransaction({
+        to: tokenAddress as Hex,
+        data: encodeFunctionData({
+          abi: erc20Abi,
+          functionName: "approve",
+          args: [args.spenderAddress as Hex, amountInWei],
+        }),
+      });
+
+      await walletProvider.waitForTransactionReceipt(hash);
+
+      return `Approved ${args.amount} ${tokenDetails.name} (${args.tokenAddress}) for spender ${args.spenderAddress}.\nTransaction hash: ${hash}`;
+    } catch (error) {
+      return `Error approving tokens: ${error}`;
+    }
+  }
+  /**
+   * Checks the allowance for a spender of an ERC20 token.
+   *
+   * @param walletProvider - The wallet provider to check the allowance from.
+   * @param args - The input arguments containing tokenAddress and spender.
+   * @returns A message containing the allowance amount for the spender.
+   */
+  @CreateAction({
+    name: "get_allowance",
+    description: `
+This tool will get the allowance amount for a spender of an ERC20 token.
+
+It takes the following inputs:
+- tokenAddress: The contract address of the token to check allowance for
+- spenderAddress: The address to check allowance for
+
+Important notes:
+- Never assume token addresses, they have to be provided as inputs. If only token symbol is provided, use the get_token_address tool to get the token address first
+`,
+    schema: AllowanceSchema,
+  })
+  async getAllowance(
+    walletProvider: EvmWalletProvider,
+    args: z.infer<typeof AllowanceSchema>,
+  ): Promise<string> {
+    try {
+      // Get token details for proper formatting
+      const tokenDetails = await getTokenDetails(walletProvider, args.tokenAddress);
+      if (!tokenDetails) {
+        return `Error: Could not fetch token details for ${args.tokenAddress}. Please verify the token address is correct.`;
+      }
+
+      const allowance = await walletProvider.readContract({
+        address: args.tokenAddress as Hex,
+        abi: erc20Abi,
+        functionName: "allowance",
+        args: [walletProvider.getAddress() as Hex, args.spenderAddress as Hex],
+      });
+
+      // Format the allowance using token decimals
+      const formattedAllowance = formatUnits(allowance as bigint, tokenDetails.decimals);
+
+      return `Allowance for ${args.spenderAddress} to spend ${tokenDetails.name} (${args.tokenAddress}) is ${formattedAllowance} tokens`;
+    } catch (error) {
+      return `Error checking allowance: ${error}`;
     }
   }
 
