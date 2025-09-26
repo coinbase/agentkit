@@ -93,7 +93,7 @@ describe("CDP API Action Provider", () => {
       mockWalletProvider.getClient.mockReturnValue(mockCdpClient);
 
       await expect(actionProvider.faucet(mockWalletProvider, { assetId: "eth" })).rejects.toThrow(
-        "Faucet is only supported on 'base-sepolia' or 'ethereum-sepolia' evm networks",
+        "Faucet is only supported on base-sepolia or ethereum-sepolia evm networks",
       );
     });
 
@@ -103,18 +103,8 @@ describe("CDP API Action Provider", () => {
       mockWalletProvider.getClient.mockReturnValue(mockCdpClient);
 
       await expect(actionProvider.faucet(mockWalletProvider, { assetId: "sol" })).rejects.toThrow(
-        "Faucet is only supported on 'solana-devnet' solana networks",
+        "Faucet is only supported on solana-devnet svm networks",
       );
-    });
-
-    it("should throw error for wallet provider without client", async () => {
-      const mockWalletWithoutClient = {
-        getNetwork: jest.fn().mockReturnValue({ protocolFamily: "evm", networkId: "base-sepolia" }),
-      } as any;
-
-      await expect(
-        actionProvider.faucet(mockWalletWithoutClient, { assetId: "eth" }),
-      ).rejects.toThrow("Wallet provider is not a CDP Wallet Provider");
     });
   });
 
