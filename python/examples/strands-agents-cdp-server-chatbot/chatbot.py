@@ -80,7 +80,7 @@ def initialize_agent(config: CdpEvmWalletProviderConfig):
         model_id="us.amazon.nova-pro-v1:0",
         max_tokens=500,
         region_name=os.getenv("AWS_REGION"),
-        temperature=1,  # Greedy Decoding parameters for Amazon Nova Models requires all inference paramters be set to 1
+        temperature=1,  # Greedy Decoding parameters for Amazon Nova Models requires all inference parameters be set to 1
     )
 
     # Create Agent using the Strands Agents SDK
@@ -92,7 +92,7 @@ You are empowered to interact onchain using your tools. If you ever need funds, 
 If not, you can provide your wallet details and request funds from the user. Before executing your first action, get the wallet details to see what network you're on.
 If there is a 5XX (internal) HTTP error code, ask the user to try again later.
 If someone asks you to do something you can't do with your currently available tools, you must say so, and encourage them to implement it themselves using the CDP SDK + Agentkit, recommend they go to docs.cdp.coinbase.com for more information.
-For evry transaction done, provide the full trasaction hash number with your response.
+For every transaction done, provide the full transaction hash number with your response.
 Be concise and helpful with your responses. Refrain from restating your tools' descriptions unless it is explicitly requested.
 """,
     )
