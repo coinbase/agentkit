@@ -143,6 +143,7 @@ agentkit/
 │   │       └── wallet-providers/
 │   │           ├── cdp/
 │   │           ├── privy/
+|   |           ├── dynamic/
 │   │           └── viem/
 │   │       └── scripts/generate-action-provider/ # use this to create new actions
 │   ├── create-onchain-agent/
@@ -156,6 +157,7 @@ agentkit/
 │       ├── langchain-farcaster-chatbot/
 │       ├── langchain-legacy-cdp-chatbot/
 │       ├── langchain-privy-chatbot/
+|       ├── langchain-dynamic-chatbot/
 │       ├── langchain-solana-chatbot/
 │       ├── langchain-twitter-chatbot/
 │       ├── langchain-xmtp-chatbot/
@@ -273,6 +275,7 @@ AgentKit is proud to have support for the following protocols, frameworks, walle
 ### Wallets
 
 <a href="https://coinbase.com" target="_blank"><img src="./assets/wallets/coinbase.svg" width="100" height="auto" alt="Coinbase"></a>
+<a href="https://dynamic.xyz" target="_blank"><img src="./assets/wallets/dynamic.svg" width="100" height="auto" alt="Dynamic"></a>
 <a href="https://privy.io" target="_blank"><img src="./assets/wallets/privy.svg" width="100" height="auto" alt="Privy"></a>
 <a href="https://viem.sh" target="_blank"><img src="./assets/wallets/viem.svg" width="100" height="auto" alt="ViEM"></a>
 

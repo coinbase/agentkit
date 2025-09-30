@@ -14,3 +14,7 @@ export * from "./privyEvmWalletProvider";
 export * from "./privySvmWalletProvider";
 export * from "./privyEvmDelegatedEmbeddedWalletProvider";
 export * from "./zeroDevWalletProvider";
+export * from "./dynamicWalletProvider";
+export * from "./dynamicEvmWalletProvider";
+export * from "./dynamicSvmWalletProvider";
+export * from "./dynamicShared";
