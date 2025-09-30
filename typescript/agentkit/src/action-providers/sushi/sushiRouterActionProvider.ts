@@ -1,12 +1,20 @@
 import { z } from "zod";
-import { isExtractorSupportedChainId, nativeAddress } from "sushi/config";
-import { ViemWalletProvider } from "../../wallet-providers";
+import { EvmWalletProvider } from "../../wallet-providers";
 import { CreateAction } from "../actionDecorator";
 import { ActionProvider } from "../actionProvider";
 import { SushiQuoteSchema, SushiSwapSchema } from "./sushiRouterSchemas";
 import { Network } from "../../network";
-import { getSwap, SwapResponse } from "sushi";
-import { RouteStatus } from "sushi/router";
+import {
+  EvmNative,
+  getEvmChainById,
+  getSwap,
+  isRedSnwapperChainId,
+  isSwapApiSupportedChainId,
+  nativeAddress,
+  RouteStatus,
+  SwapApiSupportedChainId,
+  SwapResponse,
+} from "sushi/evm";
 import {
   Address,
   decodeEventLog,
@@ -17,16 +25,14 @@ import {
   parseUnits,
   TransactionReceipt,
 } from "viem";
-import { EvmChain } from "sushi/chain";
-import { routeProcessor5Abi_Route } from "./constants";
-import { Native } from "sushi/currency";
+import { routeProcessor9Abi_Route } from "./constants";
 
 /**
  * SushiRouterActionProvider is an action provider for Sushi.
  *
  * This provider is used for any action that uses the Sushi Router API.
  */
-export class SushiRouterActionProvider extends ActionProvider<ViemWalletProvider> {
+export class SushiRouterActionProvider extends ActionProvider<EvmWalletProvider> {
   /**
    * Constructor for the SushiRouterActionProvider class.
    */
@@ -58,13 +64,18 @@ Important notes:
     schema: SushiSwapSchema,
   })
   async swap(
-    walletProvider: ViemWalletProvider,
+    walletProvider: EvmWalletProvider,
     args: z.infer<typeof SushiSwapSchema>,
   ): Promise<string> {
     try {
-      // Compatible chainId is expected since it should be pre-checked in supportsNetwork
       const chainId = Number((await walletProvider.getNetwork()).chainId);
-      const chain = EvmChain.from(chainId)!;
+
+      // Compatible chainId is expected since it should be pre-checked in supportsNetwork
+      if (!isSwapApiSupportedChainId(chainId)) {
+        return `Unsupported chainId: ${chainId}`;
+      }
+
+      const chain = getEvmChainById(chainId)!;
 
       const decimalsIn = await fetchDecimals({ walletProvider, token: args.fromAssetAddress });
 
@@ -124,12 +135,17 @@ Important notes:
         return secondSwap.message;
       }
 
-      const swapHash = await walletProvider.sendTransaction(secondSwap.swap.tx);
-      const swapReceipt: TransactionReceipt =
+      const swapHash = await walletProvider.sendTransaction({
+        from: secondSwap.swap.tx.from,
+        to: secondSwap.swap.tx.to,
+        data: secondSwap.swap.tx.data,
+        value: BigInt(secondSwap.swap.tx.value || 0),
+      });
+      const swapReceipt: TransactionReceipt | { status: "failed" } =
         await walletProvider.waitForTransactionReceipt(swapHash);
 
-      if (swapReceipt.status === "reverted") {
-        return `Swap failed: Transaction Reverted.\n - Transaction hash: ${swapHash}\n - Transaction link: ${chain.getTxUrl(swapHash)}`;
+      if (swapReceipt.status === "reverted" || swapReceipt.status === "failed") {
+        return `Swap failed: Transaction Reverted.\n - Transaction hash: ${swapHash}\n - Transaction link: ${chain.getTransactionUrl(swapHash)}`;
       }
 
       // Find the Route event log, which includes the actual amountOut
@@ -137,13 +153,13 @@ Important notes:
         .filter(
           log =>
             encodeEventTopics({
-              abi: routeProcessor5Abi_Route,
+              abi: routeProcessor9Abi_Route,
               eventName: "Route",
             })[0] === log.topics[0],
         )
         .map(log =>
           decodeEventLog({
-            abi: routeProcessor5Abi_Route,
+            abi: routeProcessor9Abi_Route,
             data: log.data,
             topics: log.topics,
           }),
@@ -151,7 +167,7 @@ Important notes:
 
       return `Swapped ${formatUnits(routeLog.args.amountIn, secondSwap.swap.tokenFrom.decimals)} of ${secondSwap.swap.tokenFrom.symbol} (${args.fromAssetAddress}) for ${formatUnits(routeLog.args.amountOut, secondSwap.swap.tokenTo.decimals)} of ${secondSwap.swap.tokenTo.symbol} (${args.toAssetAddress}) on ${chain.shortName}
  - Transaction hash: ${swapHash}
- - Transaction link: ${chain.getTxUrl(swapHash)}`;
+ - Transaction link: ${chain.getTransactionUrl(swapHash)}`;
     } catch (error) {
       return `Error swapping tokens: ${error}`;
     }
@@ -166,7 +182,7 @@ Important notes:
    */
   @CreateAction({
     name: "quote",
-    description: `This tool will fetch a quote for a specified amount of a 'from token' (erc20) to a 'to token' (erc20).
+    description: `This tool will fetch a quote for a specified amount of a 'from token' (erc20 or native ETH) to a 'to token' (erc20 or native ETH).
 It takes the following inputs:
 - The human-readable amount of the 'from token' to fetch a quote for
 - The from token address to fetch a quote for
@@ -181,12 +197,16 @@ Important notes:
     schema: SushiQuoteSchema,
   })
   async quote(
-    walletProvider: ViemWalletProvider,
+    walletProvider: EvmWalletProvider,
     args: z.infer<typeof SushiQuoteSchema>,
   ): Promise<string> {
     try {
-      // Compatible chainId is expected since it should be pre-checked in supportsNetwork
       const chainId = Number((await walletProvider.getNetwork()).chainId);
+
+      // Compatible chainId is expected since it should be pre-checked in supportsNetwork
+      if (!isSwapApiSupportedChainId(chainId)) {
+        return `Unsupported chainId: ${chainId}`;
+      }
 
       const decimalsIn = await fetchDecimals({ walletProvider, token: args.fromAssetAddress });
 
@@ -201,7 +221,7 @@ Important notes:
         chainId,
         tokenIn: args.fromAssetAddress,
         tokenOut: args.toAssetAddress,
-        maxSlippage: 0.999, // ~100%
+        maxSlippage: 0.0005, // 0.05%
         recipient: walletProvider.getAddress() as Address,
       });
 
@@ -222,7 +242,7 @@ Important notes:
       return false;
     }
 
-    return isExtractorSupportedChainId(Number(network.chainId));
+    return isSwapApiSupportedChainId(Number(network.chainId));
   }
 }
 
@@ -239,11 +259,11 @@ async function fetchDecimals({
   walletProvider,
   token,
 }: {
-  walletProvider: ViemWalletProvider;
+  walletProvider: EvmWalletProvider;
   token: Address;
 }): Promise<{ success: true; decimals: number } | { success: false; message: string }> {
   const chainId = Number((await walletProvider.getNetwork()).chainId);
-  if (!isExtractorSupportedChainId(chainId)) {
+  if (!isSwapApiSupportedChainId(chainId)) {
     return {
       success: false,
       message: `Unsupported chainId: ${chainId}`,
@@ -251,7 +271,7 @@ async function fetchDecimals({
   }
 
   if (token === nativeAddress) {
-    return { success: true, decimals: Native.onChain(chainId).decimals };
+    return { success: true, decimals: EvmNative.fromChainId(chainId).decimals };
   }
 
   const decimals = (await walletProvider.readContract({
@@ -281,7 +301,7 @@ async function handleBalance({
   token,
   minAmount,
 }: {
-  walletProvider: ViemWalletProvider;
+  walletProvider: EvmWalletProvider;
   token: {
     address: Address;
     symbol: string;
@@ -339,13 +359,13 @@ async function handleGetSwap({
   recipient,
 }: {
   amount: bigint;
-  chainId: number;
+  chainId: SwapApiSupportedChainId;
   tokenIn: Address;
   tokenOut: Address;
   maxSlippage: number;
   recipient: Address;
 }): Promise<{ swap: SwapResponse<true>; message: string }> {
-  if (!isExtractorSupportedChainId(chainId)) {
+  if (!isRedSnwapperChainId(chainId)) {
     return {
       swap: { status: RouteStatus.NoWay },
       message: `Unsupported chainId: ${chainId}`,
@@ -358,11 +378,11 @@ async function handleGetSwap({
     tokenIn,
     tokenOut,
     maxSlippage,
-    includeTransaction: true,
-    to: recipient,
+    sender: recipient,
+    recipient,
   });
 
-  const chain = EvmChain.from(chainId)!;
+  const chain = getEvmChainById(chainId)!;
 
   if (swap.status === RouteStatus.NoWay) {
     return {
@@ -406,7 +426,7 @@ async function handleApproval({
   to,
   amount,
 }: {
-  walletProvider: ViemWalletProvider;
+  walletProvider: EvmWalletProvider;
   token: Address;
   to: Address;
   amount: bigint;
@@ -440,14 +460,23 @@ async function handleApproval({
   const approvalReceipt: TransactionReceipt =
     await walletProvider.waitForTransactionReceipt(approvalHash);
 
-  const chain = EvmChain.from(Number((await walletProvider.getNetwork()).chainId))!;
+  const chainId = Number((await walletProvider.getNetwork()).chainId);
+
+  if (!isSwapApiSupportedChainId(chainId)) {
+    return {
+      success: false,
+      message: `Unsupported chainId: ${chainId}`,
+    };
+  }
+
+  const chain = getEvmChainById(chainId);
 
   if (approvalReceipt.status === "reverted") {
     return {
       success: false,
       message: `Swap failed: Approval Reverted.
  - Transaction hash: ${approvalHash}
- - Transaction link: ${chain.getTxUrl(approvalHash)}`,
+ - Transaction link: ${chain.getTransactionUrl(approvalHash)}`,
     };
   }
 

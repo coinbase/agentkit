@@ -1,11 +1,10 @@
 import { z } from "zod";
-import { ViemWalletProvider } from "../../wallet-providers";
+import { EvmWalletProvider } from "../../wallet-providers";
 import { CreateAction } from "../actionDecorator";
 import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { FindTokenSchema } from "./sushiDataSchemas";
-import { EvmChain, isEvmChainId } from "sushi";
-import { SUSHI_DATA_API_HOST } from "sushi/config/subgraph";
+import { SUSHI_DATA_API_HOST, isEvmChainId, getEvmChainById } from "sushi/evm";
 import { isAddress } from "viem";
 
 /**
@@ -13,7 +12,7 @@ import { isAddress } from "viem";
  *
  * This provider is used for any action that uses the Sushi Data API.
  */
-export class SushiDataActionProvider extends ActionProvider<ViemWalletProvider> {
+export class SushiDataActionProvider extends ActionProvider<EvmWalletProvider> {
   /**
    * Constructor for the SushiDataActionProvider class.
    */
@@ -42,11 +41,14 @@ Important notes:
     schema: FindTokenSchema,
   })
   async findToken(
-    walletProvider: ViemWalletProvider,
+    walletProvider: EvmWalletProvider,
     args: z.infer<typeof FindTokenSchema>,
   ): Promise<string> {
     try {
       const chainId = Number((await walletProvider.getNetwork()).chainId);
+      if (!isEvmChainId(chainId)) {
+        return `Unsupported chainId: ${chainId}`;
+      }
 
       const request = await fetch(`${SUSHI_DATA_API_HOST}/graphql`, {
         method: "POST",
@@ -80,7 +82,7 @@ Important notes:
 
       const tokens = result.data.data.tokenList;
 
-      const chain = EvmChain.from(chainId)!;
+      const chain = getEvmChainById(chainId);
 
       let message = `Found ${tokens.length} tokens on ${chain.shortName}:`;
       tokens.forEach(token => {

@@ -1,4 +1,4 @@
-import { isExtractorSupportedChainId } from "sushi/config";
+import { isRedSnwapperChainId } from "sushi/evm";
 import type { Address } from "viem";
 import { z } from "zod";
 
@@ -53,7 +53,7 @@ export const SushiQuoteSchema = z
       .describe("The Ethereum address of the output asset"),
     chainId: z
       .number()
-      .refine(isExtractorSupportedChainId, { message: "Unsupported chainId" })
+      .refine(isRedSnwapperChainId, { message: "Unsupported chainId" })
       .describe("The chainId to get the quote for"),
   })
   .strip()

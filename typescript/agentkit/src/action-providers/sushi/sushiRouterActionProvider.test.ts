@@ -1,8 +1,7 @@
 import { ViemWalletProvider } from "../../wallet-providers";
 import { SushiQuoteSchema, SushiSwapSchema } from "./sushiRouterSchemas";
-import { getSwap, SwapResponse } from "sushi";
+import { getSwap, SwapResponse, nativeAddress, RouteStatus, getEvmChainById } from "sushi/evm";
 import { SushiRouterActionProvider } from "./sushiRouterActionProvider";
-import { RouteStatus } from "sushi/router";
 import {
   Address,
   encodeAbiParameters,
@@ -10,13 +9,19 @@ import {
   formatUnits,
   parseAbiParameters,
 } from "viem";
-import { routeProcessor5Abi_Route } from "./constants";
-import { nativeAddress } from "sushi/config";
+import { routeProcessor9Abi_Route } from "./constants";
 
 // Mock the entire module
-jest.mock("sushi");
+jest.mock("sushi/evm", () => {
+  const originalModule = jest.requireActual("sushi/evm");
+
+  return {
+    __esModule: true,
+    ...originalModule,
+    getSwap: jest.fn(originalModule.getSwap),
+  };
+});
 const mockedGetSwap = getSwap as jest.MockedFunction<typeof getSwap>;
-const EvmChain = jest.requireActual("sushi/chain").EvmChain;
 
 describe("Sushi Action Provider Input Schemas", () => {
   describe("Swap Schema", () => {
@@ -171,16 +176,18 @@ describe("Sushi Action Provider", () => {
   }) => [
     {
       data: encodeAbiParameters(
-        parseAbiParameters("address to, uint256 amountIn, uint256 amountOutMin, uint256 amountOut"),
-        [user, amountIn, amountOut, amountOut],
+        parseAbiParameters(
+          "address to, address tokenOut, uint256 amountIn, uint256 amountOut, int256 slippage, bytes32 diagnosticsFirst32",
+        ),
+        [user, tokenOut.address, amountIn, amountOut, 0n, `0x${"00".repeat(32)}`],
       ),
       topics: encodeEventTopics({
-        abi: routeProcessor5Abi_Route,
+        abi: routeProcessor9Abi_Route,
         eventName: "Route",
         args: {
           from: user,
           tokenIn: tokenIn.address,
-          tokenOut: tokenOut.address,
+          referralCode: 0,
         },
       }),
     },
@@ -210,6 +217,8 @@ describe("Sushi Action Provider", () => {
       data: "0x",
       from: user,
       value: BigInt(0),
+      gas: "1000000",
+      gasPrice: 1000000000,
     },
   });
 
@@ -292,8 +301,10 @@ describe("Sushi Action Provider", () => {
         `Swapped ${formatUnits(amountIn, tokenIn.decimals)} of ${tokenIn.symbol} (${tokenIn.address}) for ${formatUnits(amountOut, tokenOut.decimals)} of ${tokenOut.symbol} (${tokenOut.address})`,
       );
       expect(result).toContain(`Transaction hash: ${txHash}`);
-      expect(result).toContain(`Transaction link: ${EvmChain.from(chainId)!.getTxUrl(txHash)}`);
-      expect(result).toContain(`on ${EvmChain.from(chainId)!.shortName}`);
+      expect(result).toContain(
+        `Transaction link: ${getEvmChainById(chainId).getTransactionUrl(txHash)}`,
+      );
+      expect(result).toContain(`on ${getEvmChainById(chainId).shortName}`);
     });
 
     it("should successfully perform a swap (native -> token)", async () => {
@@ -340,8 +351,10 @@ describe("Sushi Action Provider", () => {
         `Swapped ${formatUnits(amountIn, nativeToken.decimals)} of ${nativeToken.symbol} (${nativeToken.address}) for ${formatUnits(amountOut, tokenOut.decimals)} of ${tokenOut.symbol} (${tokenOut.address})`,
       );
       expect(result).toContain(`Transaction hash: ${txHash}`);
-      expect(result).toContain(`Transaction link: ${EvmChain.from(chainId)!.getTxUrl(txHash)}`);
-      expect(result).toContain(`on ${EvmChain.from(chainId)!.shortName}`);
+      expect(result).toContain(
+        `Transaction link: ${getEvmChainById(chainId).getTransactionUrl(txHash)}`,
+      );
+      expect(result).toContain(`on ${getEvmChainById(chainId).shortName}`);
     });
 
     it("should fail if there isn't enough balance (native)", async () => {

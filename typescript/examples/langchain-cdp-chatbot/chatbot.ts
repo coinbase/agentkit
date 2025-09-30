@@ -10,6 +10,8 @@ import {
   CdpSolanaWalletProvider,
   splActionProvider,
   x402ActionProvider,
+  sushiDataActionProvider,
+  sushiRouterActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -124,6 +126,8 @@ async function initializeAgent() {
             erc20ActionProvider(),
             erc721ActionProvider(),
             x402ActionProvider(),
+            sushiRouterActionProvider(),
+            sushiDataActionProvider(),
           ]
         : isSolanaWalletProvider(walletProvider)
           ? [splActionProvider()]
