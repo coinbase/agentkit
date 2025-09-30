@@ -488,6 +488,23 @@ const agent = createReactAgent({
 </table>
 </details>
 <details>
+<summary><strong>Sushi</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>find-token</code></td>
+    <td width="768">Searches the Sushi Data API for up to 10 matching tokens by symbol or address.</td>
+</tr>
+<tr>
+    <td width="200"><code>quote</code></td>
+    <td width="768">Fetches an off-chain swap quote between ERC20 or native assets using the Sushi Swap API.</td>
+</tr>
+<tr>
+    <td width="200"><code>swap</code></td>
+    <td width="768">Executes a Sushi-routed swap after validating balances and approvals, returning the transaction hash.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Twitter</strong></summary>
 <table width="100%">
 <tr>
