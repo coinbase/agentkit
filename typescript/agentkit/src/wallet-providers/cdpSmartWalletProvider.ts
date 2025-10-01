@@ -342,7 +342,7 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
 
     // Append transaction logs if available
     if (receipt.status === "complete") {
-      const receiptTx = await this.#publicClient.getTransactionReceipt({
+      const receiptTx = await this.#publicClient.waitForTransactionReceipt({
         hash: receipt.transactionHash as Hex,
       });
       if (receiptTx.logs) return { ...receipt, logs: receiptTx.logs };

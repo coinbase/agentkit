@@ -4,7 +4,7 @@ import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
 import { EvmWalletProvider } from "../../wallet-providers";
 import { ClankTokenSchema } from "./schemas";
-import { createClankerClient } from "./utils";
+import { encodeFunctionData } from "viem";
 
 /**
  * ClankerActionProvider provides actions for clanker operations.
@@ -25,8 +25,7 @@ export class ClankerActionProvider extends ActionProvider<EvmWalletProvider> {
    * Clanker action provider
    *
    * @description
-   * This action deploys a clanker token using the Clanker sdk
-   * It automatically includes the coin in the Clanker ecosystem
+   * This action deploys a clanker token using the Clanker SDK
    *
    * @param walletProvider - The wallet provider instance for blockchain interactions
    * @param args - Clanker arguments (modify these to fine tune token deployment, like initial quote token and rewards config)
@@ -35,7 +34,7 @@ export class ClankerActionProvider extends ActionProvider<EvmWalletProvider> {
   @CreateAction({
     name: "clank_token",
     description: `
-his tool will launch a Clanker token using the Clanker SDK.
+This action deploys a clanker token using the Clanker SDK.
 It takes the following inputs:
 - tokenName: The name of the deployed token
 - tokenSymbol: The symbol of the deployed token  
@@ -58,7 +57,8 @@ It takes the following inputs:
       return `Can't Clank token; network ${networkId} is not supported`;
     }
 
-    const clanker = await createClankerClient(walletProvider, networkId);
+    const { Clanker } = await import("clanker-sdk/v4");
+    const clanker = new Clanker({ publicClient: walletProvider.getPublicClient() });
 
     const lockDuration = args.lockDuration_Days * 24 * 60 * 60;
     const vestingDuration = args.vestingDuration_Days * 24 * 60 * 60;
@@ -67,13 +67,17 @@ It takes the following inputs:
       name: args.tokenName,
       symbol: args.tokenSymbol,
       image: args.image,
-      metadata: {
-        socialMediaUrls: args.socialMediaUrls,
-        description: args.description,
-      },
+      ...(args.socialMediaUrls || args.description
+        ? {
+            metadata: {
+              ...(args.socialMediaUrls && { socialMediaUrls: args.socialMediaUrls }),
+              ...(args.description && { description: args.description }),
+            },
+          }
+        : {}),
       context: {
         interface: args.interface,
-        id: args.id,
+        ...(args.id && { id: args.id }),
       },
       tokenAdmin: walletProvider.getAddress() as `0x${string}`,
       vault: {
@@ -84,23 +88,68 @@ It takes the following inputs:
       chainId: Number(network.chainId) as 8453 | 84532 | 42161 | undefined,
     };
 
+    const deployTransaction = await clanker.getDeployTransaction(tokenConfig);
+    console.log("deployTransaction", deployTransaction);
+    console.log("tokenConfig", deployTransaction.args[0].tokenConfig);
+
+    // Encode the function data properly for sendTransaction
+    const data = encodeFunctionData({
+      abi: deployTransaction.abi,
+      functionName: deployTransaction.functionName,
+      args: deployTransaction.args,
+    });
+
     try {
-      const res = await clanker.deploy(tokenConfig);
+      const gas = await walletProvider.getPublicClient().estimateContractGas({
+        ...deployTransaction,
+        account: walletProvider.getAddress() as `0x${string}`,
+      });
+      console.log("estimateContractGas:", gas);
+    } catch (error) {
+      console.log("error in estimateContractGas", error);
+    }
 
-      if ("error" in res) {
-        return `There was an error deploying the clanker token: ${res}`;
+    try {
+      const gas = await walletProvider.getPublicClient().estimateGas({
+        account: walletProvider.getAddress() as `0x${string}`,
+        to: deployTransaction.address,
+        value: deployTransaction.value,
+        data: data,
+      });
+      console.log("estimateGas:", gas);
+    } catch (error) {
+      console.log("error in estimateGas", error);
+    }
+
+    try {
+      const txHash = await walletProvider.sendTransaction({
+        to: deployTransaction.address,
+        data,
+        value: deployTransaction.value,
+      });
+
+      const receipt = await walletProvider.waitForTransactionReceipt(txHash);
+      console.log("receipt", receipt);
+
+      if (receipt.status === "reverted" || receipt.status === "failed") 
+        return `The transaction reverted: ${receipt.status}`;
+
+      // Extract token address from logs
+      // The token address is in the first Transfer event from null address (token minting)
+      const transferEventSignature =
+        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+      const nullAddress = "0x0000000000000000000000000000000000000000000000000000000000000000";
+
+      const tokenLog = receipt.logs.find(
+        log => log.topics[0] === transferEventSignature && log.topics[1] === nullAddress,
+      );
+
+      const tokenAddress = tokenLog?.address;
+      if (tokenAddress) {
+        return `Clanker token deployed at address ${tokenAddress}! View the transaction at ${txHash}. View the token page at https://clanker.world/clanker/${tokenAddress}`;
       }
 
-      const { txHash } = res;
-
-      const confirmed = await res.waitForTransaction();
-      if ("error" in confirmed) {
-        return `There was an error confirming the clanker token deployment: ${confirmed}`;
-      }
-
-      const { address } = confirmed;
-
-      return `Clanker token deployed at ${address}!  View the transaction at ${txHash}, or view the token page at https://clanker.world/clanker/${address}`;
+      return `Clanker token deployed! View the transaction at ${txHash}`;
     } catch (error) {
       return `There was an error deploying the clanker token: ${error}`;
     }
@@ -112,13 +161,10 @@ It takes the following inputs:
    * @param network - The network to check support for
    * @returns True if the network is supported
    */
-  supportsNetwork(network: Network): boolean {
-    return (
-      network.networkId === "base-mainnet" ||
-      network.networkId === "base-sepolia" ||
-      network.networkId === "arbitrum-mainnet"
-    );
-  }
+  supportsNetwork = (network: Network) =>
+    network.networkId === "base-mainnet" ||
+    network.networkId === "base-sepolia" ||
+    network.networkId === "arbitrum-mainnet";
 }
 
 /**

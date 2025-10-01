@@ -43,9 +43,9 @@ export const ClankTokenSchema = z
       .describe('System the token was deployed via. Defaults to "CDP AgentKit".'),
     id: z
       .string()
-      .default("")
+      .optional()
       .describe(
-        "User id of the poster on the social platform the token was deployed from. Used for provenance and will be verified by aggregators.",
+        "User id of the poster on the social platform the token was deployed from (optional). Used for provenance and will be verified by aggregators.",
       ),
   })
   .strip()
