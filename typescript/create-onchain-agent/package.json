@@ -14,7 +14,7 @@
     "lint:fix": "eslint -c .eslintrc.json \"src/**/*.ts\" --fix",
     "check:types": "tsc --noEmit",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
-    "dev": "node --loader ts-node/esm src/cli.ts"
+    "dev": "tsx src/cli.ts"
   },
   "files": [
     "dist/**",
@@ -43,6 +43,7 @@
     "prompts": "^2.4.2"
   },
   "devDependencies": {
+    "tsx": "^4.7.1",
     "@types/cross-spawn": "^6.0.6",
     "@types/node": "^20.12.10",
     "@types/prompts": "^2.4.9"
