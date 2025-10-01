@@ -507,7 +507,6 @@ describe("Sushi Action Provider", () => {
         amount: formatUnits(amountIn, tokenIn.decimals),
         fromAssetAddress: tokenIn.address,
         toAssetAddress: tokenOut.address,
-        chainId: 1,
       };
 
       mockedGetSwap.mockReturnValue(
