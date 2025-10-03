@@ -1,5 +1,23 @@
 # AgentKit Changelog
 
+## 0.10.3
+
+### Patch Changes
+
+- [#853](https://github.com/coinbase/agentkit/pull/853) [`2fd229f`](https://github.com/coinbase/agentkit/commit/2fd229f7262de7493f93ed261c68d4316a66f33d) Thanks [@phdargen](https://github.com/phdargen)! - Added erc20 approval actions
+
+- [#859](https://github.com/coinbase/agentkit/pull/859) [`d153427`](https://github.com/coinbase/agentkit/commit/d153427838bf07c71d0b466ed24a810c0ebd4926) Thanks [@phdargen](https://github.com/phdargen)! - Fixed units and removed min amount in WETH action
+
+- [#852](https://github.com/coinbase/agentkit/pull/852) [`34d8217`](https://github.com/coinbase/agentkit/commit/34d82179f50609e47115269298a6abba0735104b) Thanks [@phdargen](https://github.com/phdargen)! - Added svm support for x402 action
+
+- [#741](https://github.com/coinbase/agentkit/pull/741) [`3fdd28a`](https://github.com/coinbase/agentkit/commit/3fdd28ac09ec43e0b5cc58e6eb59c069f02e8fca) Thanks [@Traf333](https://github.com/Traf333)! - Added YelayLite action provider
+
+- [#160](https://github.com/coinbase/agentkit/pull/160) [`78e00a8`](https://github.com/coinbase/agentkit/commit/78e00a8566fcbf7fd53c87f1c01c0746465d68fd) Thanks [@Brenzee](https://github.com/Brenzee)! - Added a new action provider to interact with Enso API
+
+- [#858](https://github.com/coinbase/agentkit/pull/858) [`043ef19`](https://github.com/coinbase/agentkit/commit/043ef19261d3f13b6c010f416cceef43f864e8ea) Thanks [@phdargen](https://github.com/phdargen)! - Fixed issue in retrieving tx logs in CdpSmartWalletProvider
+
+- [#854](https://github.com/coinbase/agentkit/pull/854) [`61d1fb9`](https://github.com/coinbase/agentkit/commit/61d1fb96999827a449e9ff5961020747f37fc446) Thanks [@phdargen](https://github.com/phdargen)! - Made the cdp v2 faucet available to all wallet providers
+
 ## 0.10.2
 
 ### Patch Changes
