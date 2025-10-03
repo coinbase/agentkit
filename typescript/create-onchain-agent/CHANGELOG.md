@@ -1,5 +1,11 @@
 # Coinbase Create Onchain Agent Changelog
 
+## 0.5.6
+
+### Patch Changes
+
+- [#854](https://github.com/coinbase/agentkit/pull/854) [`61d1fb9`](https://github.com/coinbase/agentkit/commit/61d1fb96999827a449e9ff5961020747f37fc446) Thanks [@phdargen](https://github.com/phdargen)! - Made the cdp v2 faucet available to all wallet providers
+
 ## 0.5.5
 
 ### Patch Changes
