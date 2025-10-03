@@ -616,7 +616,7 @@ wheels = [
 
 [[package]]
 name = "coinbase-agentkit"
-version = "0.7.3"
+version = "0.7.4"
 source = { editable = "../../coinbase-agentkit" }
 dependencies = [
     { name = "cdp-sdk" },
