@@ -1,0 +1,83 @@
+[tool.poetry]
+name = "cdp-crewai"
+version = "0.0.1"
+description = "CDP AgentKit Extension for CrewAI"
+authors = ["Coinbase <developer-platform@coinbase.com>"]
+readme = "README.md"
+license = "Apache-2.0"
+packages = [{ include = "cdp_crewai" }]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+crewai = "^0.100.0"
+cdp-sdk = "^0.15.0"
+langchain = "^0.3.4"
+langchain-openai = "^0.2.4"
+langgraph = "^0.2.39"
+python-dotenv = ">=0.19.0"
+pydantic = "^2.0"
+cdp-agentkit-core = "^0.0.11"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.7.1"
+python-lsp-server = "^1.12.0"
+ruff-lsp = "^0.0.58"
+pytest = "^8.3.3"
+pytest-cov = "^6.0.0"
+mypy = "^1.13.0"
+sphinx = "^8.0.2"
+sphinx-autobuild = "^2024.9.19"
+sphinxcontrib-napoleon = "^0.7"
+sphinx-autodoc-typehints = "^2.4.4"
+myst-parser = "^4.0.0"
+cdp-agentkit-core = { path = "../cdp-agentkit-core", develop = true }
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = ["./build/**", "./dist/**", "./docs/**"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "D", "UP", "B", "C4", "SIM", "RUF"]
+ignore = ["D213", "D203", "D100", "D104", "D107", "E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+known-first-party = ["cdp_agentkit_core", "cdp_langchain", "cdp"]
+
+[project]
+name = "cdp-crewai"
+version = "0.1.0"
+description = "CDP integration with CrewAI to enable agentic workflows"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+authors = [
+    { name = "Coinbase", email = "developer-platform@coinbase.com" },
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+[project.urls]
+Homepage = "https://github.com/coinbase/agentkit"
+Repository = "https://github.com/coinbase/agentkit.git" 
