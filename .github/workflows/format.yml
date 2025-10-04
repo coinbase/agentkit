@@ -8,7 +8,7 @@ jobs:
       run:
         working-directory: ./python/coinbase-agentkit
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -30,7 +30,7 @@ jobs:
   format-typescript:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup pnpm
         uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda
         with:
