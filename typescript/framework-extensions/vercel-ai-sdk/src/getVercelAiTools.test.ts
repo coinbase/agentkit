@@ -33,7 +33,7 @@ describe("getVercelAITools", () => {
     const tool = tools.testAction;
 
     expect((tool as { description?: string }).description).toBe(mockAction.description);
-    expect(tool.parameters).toBe(mockAction.schema);
+    expect(tool.inputSchema).toBe(mockAction.schema);
 
     // Test execution with required options
     const result = await tool.execute!(
