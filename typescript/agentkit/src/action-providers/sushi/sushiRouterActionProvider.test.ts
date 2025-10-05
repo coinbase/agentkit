@@ -94,7 +94,6 @@ describe("Sushi Action Provider Input Schemas", () => {
         fromAssetAddress: "0xe6b2af36b3bb8d47206a129ff11d5a2de2a63c83",
         amount: "0.0001",
         toAssetAddress: "0x1234567890123456789012345678901234567890",
-        chainId: 1,
       };
 
       const result = SushiQuoteSchema.safeParse(validInput);
