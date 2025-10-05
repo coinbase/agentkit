@@ -135,6 +135,8 @@ Successful responses include payment proof when payment was made:
 The x402 provider currently supports the following networks:
 - `base-mainnet`
 - `base-sepolia`
+- `solana-mainnet`
+- `solana-devnet`
 
 The provider requires EVM-compatible networks where the wallet can sign payment transactions.
 

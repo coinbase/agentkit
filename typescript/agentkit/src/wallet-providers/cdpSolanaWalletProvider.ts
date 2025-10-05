@@ -1,4 +1,5 @@
 import { CdpClient } from "@coinbase/cdp-sdk";
+import type { KeyPairSigner } from "@solana/kit";
 import {
   clusterApiUrl,
   ComputeBudgetProgram,
@@ -12,6 +13,7 @@ import {
   SystemProgram,
   VersionedTransaction,
 } from "@solana/web3.js";
+import bs58 from "bs58";
 import { Network } from "../network";
 import {
   SOLANA_DEVNET_NETWORK,
@@ -22,7 +24,7 @@ import {
   SOLANA_TESTNET_NETWORK_ID,
 } from "../network/svm";
 import { WalletProviderWithClient, CdpWalletProviderConfig } from "./cdpShared";
-import { SvmWalletProvider } from "./svmWalletProvider";
+import { SvmWalletProvider, createSignerFromBytes } from "./svmWalletProvider";
 
 interface ConfigureCdpSolanaWalletProviderWithWalletOptions {
   /**
@@ -51,9 +53,9 @@ interface ConfigureCdpSolanaWalletProviderWithWalletOptions {
  */
 export class CdpSolanaWalletProvider extends SvmWalletProvider implements WalletProviderWithClient {
   #connection: Connection;
-  #serverAccount: Awaited<ReturnType<typeof CdpClient.prototype.solana.createAccount>>;
   #cdp: CdpClient;
   #network: Network;
+  #serverAccount: Awaited<ReturnType<typeof CdpClient.prototype.solana.createAccount>>;
 
   /**
    * Constructs a new CdpSolanaWalletProvider.
@@ -283,6 +285,26 @@ export class CdpSolanaWalletProvider extends SvmWalletProvider implements Wallet
   }
 
   /**
+   * Sign a message.
+   *
+   * @param message - The message to sign as a Uint8Array
+   * @returns The signature as a Uint8Array
+   */
+  async signMessage(message: Uint8Array): Promise<Uint8Array> {
+    // Convert Uint8Array to string for CDP SDK
+    const messageString = Buffer.from(message).toString("utf8");
+
+    const { signature } = await this.#cdp.solana.signMessage({
+      address: this.#serverAccount.address,
+      message: messageString,
+    });
+
+    // Convert signature string back to Uint8Array
+    // CDP returns signature as a hex string, convert to bytes
+    return new Uint8Array(Buffer.from(signature, "hex"));
+  }
+
+  /**
    * Transfer SOL from the wallet to another address
    *
    * @param to - The base58 encoded address to transfer the SOL to
@@ -329,5 +351,23 @@ export class CdpSolanaWalletProvider extends SvmWalletProvider implements Wallet
     await this.waitForSignatureResult(signature);
 
     return signature;
+  }
+
+  /**
+   * Get the keypair signer for this wallet.
+   *
+   * @returns The KeyPairSigner
+   */
+  async getKeyPairSigner(): Promise<KeyPairSigner> {
+    // Export the private key from CDP
+    const exportedPrivateKey = await this.#cdp.solana.exportAccount({
+      address: this.#serverAccount.address,
+    });
+
+    // Decode the base58 encoded private key to get the full 64-byte key
+    const fullKeyBytes = bs58.decode(exportedPrivateKey);
+
+    // Create and return the KeyPairSigner using the full key bytes
+    return createSignerFromBytes(fullKeyBytes);
   }
 }

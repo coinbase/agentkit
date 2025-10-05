@@ -100,7 +100,7 @@ export class WalletActionProvider extends ActionProvider {
   @CreateAction({
     name: "native_transfer",
     description: `
-This tool will transfer (send) native tokens from the wallet to another onchain address.
+This tool will transfer (send) native tokens (ETH for EVM networks, SOL for SVM networks) from the wallet to another onchain address.
 
 It takes the following inputs:
 - amount: The amount to transfer in whole units (e.g. 4.2 ETH, 0.1 SOL)

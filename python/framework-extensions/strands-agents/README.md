@@ -48,7 +48,7 @@ tools = get_strands_tools(agentKit)
 
 llm = BedrockModel(
     model_id="us.amazon.nova-pro-v1:0",
-    region_name='us-east-1' ## set to the appropiate region with model access
+    region_name='us-east-1' ## set to the appropriate region with model access
 )
 
 agent = Agent(

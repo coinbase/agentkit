@@ -40,14 +40,9 @@ class EthAccountWalletProvider(EvmWalletProvider):
         self.config = config
         self.account = config.account
 
-        network_id = ""
-        rpc_url = config.rpc_url
-
-        rpc_url = config.rpc_url or os.getenv("RPC_URL")
-        if rpc_url is None:
-            chain = NETWORK_ID_TO_CHAIN[CHAIN_ID_TO_NETWORK_ID[config.chain_id]]
-            network_id = CHAIN_ID_TO_NETWORK_ID[config.chain_id]
-            rpc_url = chain.rpc_urls["default"].http[0]
+        chain = NETWORK_ID_TO_CHAIN[CHAIN_ID_TO_NETWORK_ID[config.chain_id]]
+        network_id = CHAIN_ID_TO_NETWORK_ID[config.chain_id]
+        rpc_url = config.rpc_url or os.getenv("RPC_URL") or chain.rpc_urls["default"].http[0]
 
         self.web3 = Web3(Web3.HTTPProvider(rpc_url))
         self.web3.middleware_onion.inject(

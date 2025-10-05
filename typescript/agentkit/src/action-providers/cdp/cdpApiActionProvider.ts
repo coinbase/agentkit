@@ -1,10 +1,15 @@
 import { z } from "zod";
 import { Network } from "../../network";
 import { WalletProvider } from "../../wallet-providers";
-import { isWalletProviderWithClient } from "../../wallet-providers/cdpShared";
 import { CreateAction } from "../actionDecorator";
 import { ActionProvider } from "../actionProvider";
 import { RequestFaucetFundsV2Schema } from "./schemas";
+import {
+  getCdpClient,
+  validateNetworkSupport,
+  handleEvmFaucet,
+  handleSvmFaucet,
+} from "./faucetUtils";
 
 /**
  * CdpApiActionProvider is an action provider for CDP API.
@@ -42,43 +47,14 @@ from another wallet and provide the user with your wallet details.`,
   ): Promise<string> {
     const network = walletProvider.getNetwork();
     const networkId = network.networkId!;
+    const address = walletProvider.getAddress();
 
-    if (isWalletProviderWithClient(walletProvider)) {
-      if (network.protocolFamily === "evm") {
-        if (networkId !== "base-sepolia" && networkId !== "ethereum-sepolia") {
-          throw new Error(
-            "Faucet is only supported on 'base-sepolia' or 'ethereum-sepolia' evm networks.",
-          );
-        }
+    const cdpClient = getCdpClient(walletProvider);
+    validateNetworkSupport(network, networkId);
 
-        const faucetTx = await walletProvider.getClient().evm.requestFaucet({
-          address: walletProvider.getAddress(),
-          token: (args.assetId || "eth") as "eth" | "usdc" | "eurc" | "cbbtc",
-          network: networkId,
-        });
-
-        return `Received ${
-          args.assetId || "ETH"
-        } from the faucet. Transaction hash: ${faucetTx.transactionHash}`;
-      } else if (network.protocolFamily === "svm") {
-        if (networkId !== "solana-devnet") {
-          throw new Error("Faucet is only supported on 'solana-devnet' solana networks.");
-        }
-
-        const faucetTx = await walletProvider.getClient().solana.requestFaucet({
-          address: walletProvider.getAddress(),
-          token: (args.assetId || "sol") as "sol" | "usdc",
-        });
-
-        return `Received ${
-          args.assetId || "SOL"
-        } from the faucet. Transaction signature hash: ${faucetTx.signature}`;
-      } else {
-        throw new Error("Faucet is only supported on Ethereum and Solana protocol families.");
-      }
-    } else {
-      throw new Error("Wallet provider is not a CDP Wallet Provider.");
-    }
+    return network.protocolFamily === "evm"
+      ? handleEvmFaucet(cdpClient, address, networkId, args)
+      : handleSvmFaucet(cdpClient, address, args);
   }
 
   /**

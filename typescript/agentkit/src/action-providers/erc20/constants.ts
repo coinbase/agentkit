@@ -43,8 +43,10 @@ export const TOKEN_ADDRESSES_BY_SYMBOLS = {
   },
   "arbitrum-mainnet": {
     USDC: "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+    WETH: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
   },
   "optimism-mainnet": {
     USDC: "0x0b2c639c533813f4aa9d7837caf62653d097ff85",
+    WETH: "0x4200000000000000000000000000000000000006",
   },
 } as const;

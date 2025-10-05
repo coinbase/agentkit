@@ -313,6 +313,15 @@ const agent = createReactAgent({
 </table>
 </details>
 <details>
+<summary><strong>Enso</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>route</code></td>
+    <td width="768">Find and execute a route for entering or exiting any DeFi position or swapping any ERC20 tokens.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>ERC20</strong></summary>
 <table width="100%">
 <tr>
@@ -322,6 +331,14 @@ const agent = createReactAgent({
 <tr>
     <td width="200"><code>transfer</code></td>
     <td width="768">Transfers a specified amount of ERC-20 tokens to a destination address.</td>
+</tr>
+<tr>
+    <td width="200"><code>approve</code></td>
+    <td width="768">Approves a spender to transfer ERC-20 tokens on behalf of the wallet.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_allowance</code></td>
+    <td width="768">Checks the allowance amount for a spender of an ERC-20 token.</td>
 </tr>
 <tr>
     <td width="200"><code>get_erc20_token_address</code></td>
@@ -663,6 +680,31 @@ it will return payment details that can be used on retry.</td>
 <tr>
     <td width="200"><code>make_http_request_with_x402</code></td>
     <td width="768">Combines make_http_request and retry_http_request_with_x402 into a single step.</td>
+</tr>
+</table>
+</details>
+<details>
+<summary><strong>Yelay</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_vaults</code></td>
+    <td width="768">Fetches a list of available Yelay Vaults with their current APYs and contract addresses.</td>
+</tr>
+<tr>
+    <td width="200"><code>deposit</code></td>
+    <td width="768">Deposits assets into a specified Yelay Vault.</td>
+</tr>
+<tr>
+    <td width="200"><code>redeem</code></td>
+    <td width="768">Withdraws assets from a Yelay Vault.</td>
+</tr>
+<tr>
+    <td width="200"><code>claim</code></td>
+    <td width="768">Claims accumulated yield from a Yelay Vault.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_balance</code></td>
+    <td width="768">Gets the user's balance and yield information for a specific vault.</td>
 </tr>
 </table>
 </details>

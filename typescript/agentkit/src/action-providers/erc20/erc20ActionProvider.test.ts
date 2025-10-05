@@ -1,5 +1,5 @@
 import { erc20ActionProvider } from "./erc20ActionProvider";
-import { TransferSchema, GetTokenAddressSchema } from "./schemas";
+import { TransferSchema, GetTokenAddressSchema, ApproveSchema, AllowanceSchema } from "./schemas";
 import { EvmWalletProvider } from "../../wallet-providers";
 
 const MOCK_AMOUNT = 15;
@@ -7,6 +7,7 @@ const MOCK_DECIMALS = 6;
 const MOCK_CONTRACT_ADDRESS = "0x1234567890123456789012345678901234567890";
 const MOCK_DESTINATION = "0x9876543210987654321098765432109876543210";
 const MOCK_ADDRESS = "0x1234567890123456789012345678901234567890";
+const MOCK_SPENDER = "0xabcdef1234567890123456789012345678901234";
 
 describe("Transfer Schema", () => {
   it("should successfully parse valid input", () => {
@@ -183,6 +184,266 @@ describe("GetTokenAddress Schema", () => {
     const result = GetTokenAddressSchema.safeParse(longInput);
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe("Approve Schema", () => {
+  it("should successfully parse valid input", () => {
+    const validInput = {
+      amount: MOCK_AMOUNT.toString(),
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      spenderAddress: MOCK_SPENDER,
+    };
+
+    const result = ApproveSchema.safeParse(validInput);
+
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual(validInput);
+  });
+
+  it("should fail parsing empty input", () => {
+    const emptyInput = {};
+    const result = ApproveSchema.safeParse(emptyInput);
+
+    expect(result.success).toBe(false);
+  });
+
+  it("should fail parsing invalid token address", () => {
+    const invalidInput = {
+      amount: MOCK_AMOUNT.toString(),
+      tokenAddress: "invalid-address",
+      spenderAddress: MOCK_SPENDER,
+    };
+    const result = ApproveSchema.safeParse(invalidInput);
+
+    expect(result.success).toBe(false);
+  });
+
+  it("should fail parsing invalid spender address", () => {
+    const invalidInput = {
+      amount: MOCK_AMOUNT.toString(),
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      spenderAddress: "invalid-address",
+    };
+    const result = ApproveSchema.safeParse(invalidInput);
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("Allowance Schema", () => {
+  it("should successfully parse valid input", () => {
+    const validInput = {
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      spenderAddress: MOCK_SPENDER,
+    };
+
+    const result = AllowanceSchema.safeParse(validInput);
+
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual(validInput);
+  });
+
+  it("should fail parsing empty input", () => {
+    const emptyInput = {};
+    const result = AllowanceSchema.safeParse(emptyInput);
+
+    expect(result.success).toBe(false);
+  });
+
+  it("should fail parsing invalid token address", () => {
+    const invalidInput = {
+      tokenAddress: "invalid-address",
+      spenderAddress: MOCK_SPENDER,
+    };
+    const result = AllowanceSchema.safeParse(invalidInput);
+
+    expect(result.success).toBe(false);
+  });
+
+  it("should fail parsing invalid spender address", () => {
+    const invalidInput = {
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      spenderAddress: "invalid-address",
+    };
+    const result = AllowanceSchema.safeParse(invalidInput);
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("Approve Action", () => {
+  const TRANSACTION_HASH = "0xapprove123456789";
+
+  let mockWallet: jest.Mocked<EvmWalletProvider>;
+  let mockMulticall: jest.Mock;
+
+  const actionProvider = erc20ActionProvider();
+
+  beforeEach(async () => {
+    mockMulticall = jest.fn();
+    const mockPublicClient = {
+      multicall: mockMulticall,
+      getCode: jest.fn().mockResolvedValue("0x"),
+    };
+
+    mockWallet = {
+      sendTransaction: jest.fn(),
+      waitForTransactionReceipt: jest.fn(),
+      getName: jest.fn().mockReturnValue("evm_wallet_provider"),
+      getNetwork: jest.fn().mockReturnValue({
+        networkId: "base-mainnet",
+      }),
+      getPublicClient: jest.fn().mockReturnValue(mockPublicClient),
+      getAddress: jest.fn().mockReturnValue(MOCK_ADDRESS),
+    } as unknown as jest.Mocked<EvmWalletProvider>;
+
+    mockWallet.sendTransaction.mockResolvedValue(TRANSACTION_HASH);
+    mockWallet.waitForTransactionReceipt.mockResolvedValue({});
+  });
+
+  it("should successfully approve tokens", async () => {
+    mockMulticall.mockResolvedValueOnce([
+      { result: "MockToken" }, // name
+      { result: MOCK_DECIMALS }, // decimals
+      { result: BigInt(100000 * 10 ** MOCK_DECIMALS) }, // balance
+    ]);
+
+    const args = {
+      amount: MOCK_AMOUNT.toString(),
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      spenderAddress: MOCK_SPENDER,
+    };
+
+    const response = await actionProvider.approve(mockWallet, args);
+
+    expect(mockMulticall).toHaveBeenCalled();
+    expect(mockWallet.sendTransaction).toHaveBeenCalled();
+    expect(mockWallet.waitForTransactionReceipt).toHaveBeenCalledWith(TRANSACTION_HASH);
+    expect(response).toContain(
+      `Approved ${MOCK_AMOUNT} MockToken (${MOCK_CONTRACT_ADDRESS}) for spender ${MOCK_SPENDER}`,
+    );
+    expect(response).toContain(`Transaction hash: ${TRANSACTION_HASH}`);
+  });
+
+  it("should fail with an error when token details cannot be fetched", async () => {
+    mockMulticall.mockRejectedValue(new Error("Failed to get token details"));
+
+    const args = {
+      amount: MOCK_AMOUNT.toString(),
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      spenderAddress: MOCK_SPENDER,
+    };
+
+    const response = await actionProvider.approve(mockWallet, args);
+
+    expect(mockMulticall).toHaveBeenCalled();
+    expect(response).toContain("Error: Could not fetch token details");
+  });
+
+  it("should fail with an error when transaction fails", async () => {
+    mockMulticall.mockResolvedValueOnce([
+      { result: "MockToken" }, // name
+      { result: MOCK_DECIMALS }, // decimals
+      { result: BigInt(100000 * 10 ** MOCK_DECIMALS) }, // balance
+    ]);
+
+    mockWallet.sendTransaction.mockRejectedValue(new Error("Transaction failed"));
+
+    const args = {
+      amount: MOCK_AMOUNT.toString(),
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      spenderAddress: MOCK_SPENDER,
+    };
+
+    const response = await actionProvider.approve(mockWallet, args);
+
+    expect(response).toContain("Error approving tokens: Error: Transaction failed");
+  });
+});
+
+describe("Get Allowance Action", () => {
+  let mockWallet: jest.Mocked<EvmWalletProvider>;
+  let mockMulticall: jest.Mock;
+  let mockReadContract: jest.Mock;
+
+  const actionProvider = erc20ActionProvider();
+
+  beforeEach(async () => {
+    mockMulticall = jest.fn();
+    mockReadContract = jest.fn();
+    const mockPublicClient = {
+      multicall: mockMulticall,
+      getCode: jest.fn().mockResolvedValue("0x"),
+    };
+
+    mockWallet = {
+      readContract: mockReadContract,
+      getName: jest.fn().mockReturnValue("evm_wallet_provider"),
+      getNetwork: jest.fn().mockReturnValue({
+        networkId: "base-mainnet",
+      }),
+      getPublicClient: jest.fn().mockReturnValue(mockPublicClient),
+      getAddress: jest.fn().mockReturnValue(MOCK_ADDRESS),
+    } as unknown as jest.Mocked<EvmWalletProvider>;
+  });
+
+  it("should successfully get allowance", async () => {
+    const allowanceAmount = BigInt(MOCK_AMOUNT * 10 ** MOCK_DECIMALS);
+
+    mockMulticall.mockResolvedValueOnce([
+      { result: "MockToken" }, // name
+      { result: MOCK_DECIMALS }, // decimals
+      { result: BigInt(100000 * 10 ** MOCK_DECIMALS) }, // balance
+    ]);
+
+    mockReadContract.mockResolvedValue(allowanceAmount);
+
+    const args = {
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      spenderAddress: MOCK_SPENDER,
+    };
+
+    const response = await actionProvider.getAllowance(mockWallet, args);
+
+    expect(mockMulticall).toHaveBeenCalled();
+    expect(mockReadContract).toHaveBeenCalled();
+    expect(response).toContain(
+      `Allowance for ${MOCK_SPENDER} to spend MockToken (${MOCK_CONTRACT_ADDRESS}) is ${MOCK_AMOUNT}`,
+    );
+  });
+
+  it("should fail with an error when token details cannot be fetched", async () => {
+    mockMulticall.mockRejectedValue(new Error("Failed to get token details"));
+
+    const args = {
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      spenderAddress: MOCK_SPENDER,
+    };
+
+    const response = await actionProvider.getAllowance(mockWallet, args);
+
+    expect(mockMulticall).toHaveBeenCalled();
+    expect(response).toContain("Error: Could not fetch token details");
+  });
+
+  it("should fail with an error when allowance read fails", async () => {
+    mockMulticall.mockResolvedValueOnce([
+      { result: "MockToken" }, // name
+      { result: MOCK_DECIMALS }, // decimals
+      { result: BigInt(100000 * 10 ** MOCK_DECIMALS) }, // balance
+    ]);
+
+    mockReadContract.mockRejectedValue(new Error("Allowance read failed"));
+
+    const args = {
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      spenderAddress: MOCK_SPENDER,
+    };
+
+    const response = await actionProvider.getAllowance(mockWallet, args);
+
+    expect(response).toContain("Error checking allowance: Error: Allowance read failed");
   });
 });
 

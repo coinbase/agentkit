@@ -332,9 +332,6 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async waitForTransactionReceipt(userOpHash: Hex): Promise<any> {
     // For smart wallets, we need to wait for the user operation to be confirmed
-    // This is a simplified implementation - in practice you might want to poll
-    // the CDP API for user operation status
-
     const receipt = await this.#cdp.evm.waitForUserOperation({
       smartAccountAddress: this.smartAccount.address,
       userOpHash,
@@ -342,7 +339,7 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
 
     // Append transaction logs if available
     if (receipt.status === "complete") {
-      const receiptTx = await this.#publicClient.getTransactionReceipt({
+      const receiptTx = await this.#publicClient.waitForTransactionReceipt({
         hash: receipt.transactionHash as Hex,
       });
       if (receiptTx.logs) return { ...receipt, logs: receiptTx.logs };

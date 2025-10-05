@@ -1,5 +1,7 @@
 """Tests for native transfer functionality."""
 
+from decimal import Decimal
+
 import pytest
 from pydantic import ValidationError
 from web3.types import HexStr
@@ -60,10 +62,15 @@ def test_native_transfer_success(wallet_action_provider, mock_wallet_provider):
     }
 
     result = wallet_action_provider.native_transfer(mock_wallet_provider, args)
-    expected = f"Successfully transferred {MOCK_ETH_AMOUNT} native tokens to {MOCK_ADDRESS}.\nTransaction hash: {MOCK_TX_HASH}"
-    assert result == expected
+    # Check for key parts of the response message
+    assert f"Transferred {MOCK_ETH_AMOUNT}" in result
+    assert MOCK_ADDRESS in result
+    assert MOCK_TX_HASH in result
 
-    mock_wallet_provider.native_transfer.assert_called_once_with(MOCK_ADDRESS, MOCK_ETH_AMOUNT)
+    # Verify native_transfer was called with Decimal, not string
+    mock_wallet_provider.native_transfer.assert_called_once_with(
+        MOCK_ADDRESS, Decimal(MOCK_ETH_AMOUNT)
+    )
 
 
 def test_native_transfer_error(wallet_action_provider, mock_wallet_provider):
@@ -77,9 +84,13 @@ def test_native_transfer_error(wallet_action_provider, mock_wallet_provider):
     }
 
     result = wallet_action_provider.native_transfer(mock_wallet_provider, args)
-    assert result == f"Error transferring native tokens: {error_message}"
+    assert "Error during" in result
+    assert error_message in result
 
-    mock_wallet_provider.native_transfer.assert_called_once_with(MOCK_ADDRESS, MOCK_ETH_AMOUNT)
+    # Verify native_transfer was called with Decimal, not string
+    mock_wallet_provider.native_transfer.assert_called_once_with(
+        MOCK_ADDRESS, Decimal(MOCK_ETH_AMOUNT)
+    )
 
 
 def test_native_transfer_insufficient_balance(wallet_action_provider, mock_wallet_provider):
@@ -93,6 +104,10 @@ def test_native_transfer_insufficient_balance(wallet_action_provider, mock_walle
     }
 
     result = wallet_action_provider.native_transfer(mock_wallet_provider, args)
-    assert result == f"Error transferring native tokens: {error_message}"
+    assert "Error during" in result
+    assert error_message in result
 
-    mock_wallet_provider.native_transfer.assert_called_once_with(MOCK_ADDRESS, MOCK_ETH_AMOUNT)
+    # Verify native_transfer was called with Decimal, not string
+    mock_wallet_provider.native_transfer.assert_called_once_with(
+        MOCK_ADDRESS, Decimal(MOCK_ETH_AMOUNT)
+    )

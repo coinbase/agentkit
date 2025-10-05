@@ -3,12 +3,20 @@ import { AxiosError } from "axios";
 import { getTokenDetails } from "../erc20/utils";
 import { TOKEN_ADDRESSES_BY_SYMBOLS } from "../erc20/constants";
 import { formatUnits, parseUnits } from "viem";
-import { EvmWalletProvider } from "../../wallet-providers";
+import { EvmWalletProvider, SvmWalletProvider, WalletProvider } from "../../wallet-providers";
 
 /**
  * Supported network types for x402 protocol
  */
 export type X402Network = "base" | "base-sepolia" | "solana" | "solana-devnet";
+
+/**
+ * USDC token addresses for Solana networks
+ */
+const SOLANA_USDC_ADDRESSES = {
+  "solana-devnet": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+  "solana-mainnet": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+} as const;
 
 /**
  * Converts the internal network ID to the format expected by the x402 protocol.
@@ -90,15 +98,16 @@ export function handleHttpError(error: AxiosError, url: string): string {
  */
 export async function formatPaymentOption(
   option: { asset: string; maxAmountRequired: string; network: string },
-  walletProvider: EvmWalletProvider,
+  walletProvider: WalletProvider,
 ): Promise<string> {
   const { asset, maxAmountRequired, network } = option;
 
   // Check if this is an EVM network and we can use ERC20 helpers
   const walletNetwork = walletProvider.getNetwork();
   const isEvmNetwork = walletNetwork.protocolFamily === "evm";
+  const isSvmNetwork = walletNetwork.protocolFamily === "svm";
 
-  if (isEvmNetwork) {
+  if (isEvmNetwork && walletProvider instanceof EvmWalletProvider) {
     const networkId = walletNetwork.networkId as keyof typeof TOKEN_ADDRESSES_BY_SYMBOLS;
     const tokenSymbols = TOKEN_ADDRESSES_BY_SYMBOLS[networkId];
 
@@ -124,7 +133,19 @@ export async function formatPaymentOption(
     }
   }
 
-  // Fallback to original format for non-EVM networks or when token details can't be fetched
+  if (isSvmNetwork && walletProvider instanceof SvmWalletProvider) {
+    // Check if the asset is USDC on Solana networks
+    const networkId = walletNetwork.networkId as keyof typeof SOLANA_USDC_ADDRESSES;
+    const usdcAddress = SOLANA_USDC_ADDRESSES[networkId];
+
+    if (usdcAddress && asset === usdcAddress) {
+      // USDC has 6 decimals on Solana
+      const formattedAmount = formatUnits(BigInt(maxAmountRequired), 6);
+      return `${formattedAmount} USDC on ${network} network`;
+    }
+  }
+
+  // Fallback to original format for non-EVM/SVM networks or when token details can't be fetched
   return `${asset} ${maxAmountRequired} on ${network} network`;
 }
 
@@ -135,16 +156,26 @@ export async function formatPaymentOption(
  * @param walletProvider - The wallet provider for network context
  * @returns True if the asset is USDC, false otherwise
  */
-export function isUsdcAsset(asset: string, walletProvider: EvmWalletProvider): boolean {
+export function isUsdcAsset(asset: string, walletProvider: WalletProvider): boolean {
   const walletNetwork = walletProvider.getNetwork();
   const isEvmNetwork = walletNetwork.protocolFamily === "evm";
+  const isSvmNetwork = walletNetwork.protocolFamily === "svm";
 
-  if (isEvmNetwork) {
+  if (isEvmNetwork && walletProvider instanceof EvmWalletProvider) {
     const networkId = walletNetwork.networkId as keyof typeof TOKEN_ADDRESSES_BY_SYMBOLS;
     const tokenSymbols = TOKEN_ADDRESSES_BY_SYMBOLS[networkId];
 
     if (tokenSymbols && tokenSymbols.USDC) {
       return asset.toLowerCase() === tokenSymbols.USDC.toLowerCase();
+    }
+  }
+
+  if (isSvmNetwork && walletProvider instanceof SvmWalletProvider) {
+    const networkId = walletNetwork.networkId as keyof typeof SOLANA_USDC_ADDRESSES;
+    const usdcAddress = SOLANA_USDC_ADDRESSES[networkId];
+
+    if (usdcAddress) {
+      return asset === usdcAddress;
     }
   }
 
@@ -162,13 +193,14 @@ export function isUsdcAsset(asset: string, walletProvider: EvmWalletProvider): b
 export async function convertWholeUnitsToAtomic(
   wholeUnits: number,
   asset: string,
-  walletProvider: EvmWalletProvider,
+  walletProvider: WalletProvider,
 ): Promise<string | null> {
   // Check if this is an EVM network and we can use ERC20 helpers
   const walletNetwork = walletProvider.getNetwork();
   const isEvmNetwork = walletNetwork.protocolFamily === "evm";
+  const isSvmNetwork = walletNetwork.protocolFamily === "svm";
 
-  if (isEvmNetwork) {
+  if (isEvmNetwork && walletProvider instanceof EvmWalletProvider) {
     const networkId = walletNetwork.networkId as keyof typeof TOKEN_ADDRESSES_BY_SYMBOLS;
     const tokenSymbols = TOKEN_ADDRESSES_BY_SYMBOLS[networkId];
 
@@ -192,6 +224,17 @@ export async function convertWholeUnitsToAtomic(
     }
   }
 
-  // Fallback to 18 decimals for unknown tokens or non-EVM networks
+  if (isSvmNetwork && walletProvider instanceof SvmWalletProvider) {
+    // Check if the asset is USDC on Solana networks
+    const networkId = walletNetwork.networkId as keyof typeof SOLANA_USDC_ADDRESSES;
+    const usdcAddress = SOLANA_USDC_ADDRESSES[networkId];
+
+    if (usdcAddress && asset === usdcAddress) {
+      // USDC has 6 decimals on Solana
+      return parseUnits(wholeUnits.toString(), 6).toString();
+    }
+  }
+
+  // Fallback to 18 decimals for unknown tokens or non-EVM/SVM networks
   return parseUnits(wholeUnits.toString(), 18).toString();
 }

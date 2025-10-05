@@ -5,7 +5,8 @@ import {
   walletActionProvider,
   erc20ActionProvider,
   pythActionProvider,
-  PrivyWalletConfig,
+  PrivyEvmWalletConfig,
+  PrivySvmWalletConfig,
   PrivyEvmWalletProvider,
   PrivySvmWalletProvider,
   cdpApiActionProvider,
@@ -75,13 +76,13 @@ async function initializeAgent() {
     const networkId = process.env.NETWORK_ID;
 
     if (networkId?.includes("solana")) {
-      const config: PrivyWalletConfig = {
+      const config: PrivySvmWalletConfig = {
         appId: process.env.PRIVY_APP_ID as string,
         appSecret: process.env.PRIVY_APP_SECRET as string,
         walletId: process.env.PRIVY_WALLET_ID as string,
         authorizationPrivateKey: process.env.PRIVY_WALLET_AUTHORIZATION_PRIVATE_KEY,
         authorizationKeyId: process.env.PRIVY_WALLET_AUTHORIZATION_KEY_ID,
-        chainType: "solana",
+        walletType: "server",
         networkId,
       };
 
@@ -95,7 +96,7 @@ async function initializeAgent() {
 
       walletProvider = await PrivyWalletProvider.configureWithWallet(config);
     } else {
-      const config: PrivyWalletConfig = {
+      const config: PrivyEvmWalletConfig = {
         appId: process.env.PRIVY_APP_ID as string,
         appSecret: process.env.PRIVY_APP_SECRET as string,
         chainId: process.env.CHAIN_ID,
@@ -133,10 +134,7 @@ async function initializeAgent() {
         pythActionProvider(),
         walletActionProvider(),
         erc20ActionProvider(),
-        cdpApiActionProvider({
-          apiKeyId: process.env.CDP_API_KEY_ID as string,
-          apiKeySecret: process.env.CDP_API_KEY_SECRET as string,
-        }),
+        cdpApiActionProvider(),
         splActionProvider(),
       ],
     });

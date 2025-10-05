@@ -2,6 +2,15 @@
 
 <!-- towncrier release notes start -->
 
+## [0.7.4] - 2025-10-03
+
+### Fixed
+
+- Made the cdp v2 faucet available to all wallet providers ([#854](https://github.com/coinbase/agentkit/pull/854))
+- Fixed units and removed min amount in WETH action ([#859](https://github.com/coinbase/agentkit/pull/859))
+- Fixed unit issues in balance/transfer actions and add approval actions ([#860](https://github.com/coinbase/agentkit/pull/860))
+
+
 ## [0.7.3] - 2025-09-19
 
 ### Fixed

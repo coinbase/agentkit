@@ -39,6 +39,41 @@ export const GetBalanceSchema = z
   .describe("Instructions for getting wallet balance");
 
 /**
+ * Input schema for approve action.
+ */
+export const ApproveSchema = z
+  .object({
+    amount: z.string().describe("The amount to approve in whole units (e.g. 100 for 100 USDC)"),
+    tokenAddress: z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
+      .describe("The contract address of the token"),
+    spenderAddress: z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
+      .describe("The address to approve for spending tokens"),
+  })
+  .strip()
+  .describe("Instructions for approving token spending");
+
+/**
+ * Input schema for allowance action.
+ */
+export const AllowanceSchema = z
+  .object({
+    tokenAddress: z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
+      .describe("The contract address of the token"),
+    spenderAddress: z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
+      .describe("The address to check allowance for"),
+  })
+  .strip()
+  .describe("Instructions for checking token allowance");
+
+/**
  * Input schema for get token address action.
  */
 export const GetTokenAddressSchema = z

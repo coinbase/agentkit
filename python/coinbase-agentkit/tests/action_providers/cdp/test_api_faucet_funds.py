@@ -41,7 +41,8 @@ def test_request_eth_without_asset_id(mock_wallet_testnet_provider, mock_transac
 
     # Setup mock loop
     mock_loop = Mock()
-    mock_loop.run_until_complete.return_value = MOCK_TX_HASH
+    expected_response = f"Received ETH from the faucet. Transaction hash: {MOCK_TX_HASH}"
+    mock_loop.run_until_complete.return_value = expected_response
 
     with patch("asyncio.get_event_loop", return_value=mock_loop):
         response = cdp_api_action_provider().request_faucet_funds(mock_wallet_testnet_provider, {})
@@ -64,7 +65,8 @@ def test_request_eth_with_asset_id(mock_wallet_testnet_provider, mock_transactio
 
     # Setup mock loop
     mock_loop = Mock()
-    mock_loop.run_until_complete.return_value = MOCK_TX_HASH
+    expected_response = f"Received eth from the faucet. Transaction hash: {MOCK_TX_HASH}"
+    mock_loop.run_until_complete.return_value = expected_response
 
     with patch("asyncio.get_event_loop", return_value=mock_loop):
         response = cdp_api_action_provider().request_faucet_funds(
@@ -89,7 +91,8 @@ def test_request_usdc(mock_wallet_testnet_provider, mock_transaction, mock_env):
 
     # Setup mock loop
     mock_loop = Mock()
-    mock_loop.run_until_complete.return_value = MOCK_TX_HASH
+    expected_response = f"Received usdc from the faucet. Transaction hash: {MOCK_TX_HASH}"
+    mock_loop.run_until_complete.return_value = expected_response
 
     with patch("asyncio.get_event_loop", return_value=mock_loop):
         response = cdp_api_action_provider().request_faucet_funds(

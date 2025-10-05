@@ -5,6 +5,7 @@ import { AxiosError, AxiosResponse, AxiosRequestConfig, AxiosInstance } from "ax
 import axios from "axios";
 import * as x402axios from "x402-axios";
 import * as x402Verify from "x402/verify";
+import * as utils from "./utils";
 
 // Mock external facilitator dependency
 jest.mock("@coinbase/x402", () => ({
@@ -15,6 +16,7 @@ jest.mock("@coinbase/x402", () => ({
 jest.mock("axios");
 jest.mock("x402-axios");
 jest.mock("x402/verify");
+jest.mock("./utils");
 
 // Create mock functions
 const mockRequest = jest.fn();
@@ -61,6 +63,10 @@ const mockAxios = {
 const mockWithPaymentInterceptor = jest.fn().mockReturnValue(mockAxiosInstance);
 const mockDecodeXPaymentResponse = jest.fn();
 const mockUseFacilitator = jest.fn();
+const mockIsUsdcAsset = jest.fn();
+const mockConvertWholeUnitsToAtomic = jest.fn();
+const mockFormatPaymentOption = jest.fn();
+const mockGetX402Network = jest.fn();
 
 // Override the mocked modules
 (axios as jest.Mocked<typeof axios>).create = mockAxios.create;
@@ -72,12 +78,26 @@ jest.mocked(x402axios.withPaymentInterceptor).mockImplementation(mockWithPayment
 jest.mocked(x402axios.decodeXPaymentResponse).mockImplementation(mockDecodeXPaymentResponse);
 jest.mocked(x402Verify.useFacilitator).mockImplementation(mockUseFacilitator);
 
+// Mock utils functions
+jest.mocked(utils.isUsdcAsset).mockImplementation(mockIsUsdcAsset);
+jest.mocked(utils.convertWholeUnitsToAtomic).mockImplementation(mockConvertWholeUnitsToAtomic);
+jest.mocked(utils.formatPaymentOption).mockImplementation(mockFormatPaymentOption);
+jest.mocked(utils.getX402Network).mockImplementation(mockGetX402Network);
+jest.mocked(utils.handleHttpError).mockImplementation((error, url) => {
+  return JSON.stringify({
+    error: true,
+    message: error instanceof Error ? error.message : "Network error",
+    url: url,
+  });
+});
+
 // Mock wallet provider
-const makeMockWalletProvider = (networkId: string) =>
-  ({
-    toSigner: jest.fn().mockReturnValue("mock-signer"),
-    getNetwork: jest.fn().mockReturnValue({ protocolFamily: "evm", networkId }),
-  }) as unknown as EvmWalletProvider;
+const makeMockWalletProvider = (networkId: string) => {
+  const mockProvider = Object.create(EvmWalletProvider.prototype);
+  mockProvider.toSigner = jest.fn().mockReturnValue("mock-signer");
+  mockProvider.getNetwork = jest.fn().mockReturnValue({ protocolFamily: "evm", networkId });
+  return mockProvider as EvmWalletProvider;
+};
 
 // Sample responses based on real examples
 const MOCK_PAYMENT_INFO_RESPONSE = {
@@ -136,6 +156,12 @@ describe("X402ActionProvider", () => {
             ("isAxiosError" in error || "response" in error || "request" in error),
         ),
       );
+
+    // Reset all utility mocks to default behavior
+    mockGetX402Network.mockImplementation(network => network.networkId);
+    mockIsUsdcAsset.mockReturnValue(false);
+    mockConvertWholeUnitsToAtomic.mockResolvedValue("100000");
+    mockFormatPaymentOption.mockResolvedValue("mocked payment option");
   });
 
   afterEach(() => {
@@ -158,8 +184,13 @@ describe("X402ActionProvider", () => {
       expect(provider.supportsNetwork(network)).toBe(false);
     });
 
-    it("should not support non-EVM networks", () => {
-      const network: Network = { protocolFamily: "solana", networkId: "mainnet" };
+    it("should support SVM networks", () => {
+      const network: Network = { protocolFamily: "svm", networkId: "solana-mainnet" };
+      expect(provider.supportsNetwork(network)).toBe(true);
+    });
+
+    it("should not support non-EVM/SVM networks", () => {
+      const network: Network = { protocolFamily: "bitcoin", networkId: "mainnet" };
       expect(provider.supportsNetwork(network)).toBe(false);
     });
   });
@@ -185,6 +216,9 @@ describe("X402ActionProvider", () => {
     });
 
     it("should handle 402 responses with payment options", async () => {
+      mockGetX402Network.mockReturnValue("base-sepolia");
+      mockFormatPaymentOption.mockResolvedValue("10000 USDC on base-sepolia network");
+
       mockRequest.mockResolvedValue({
         status: 402,
         data: MOCK_PAYMENT_INFO_RESPONSE.data,
@@ -246,6 +280,7 @@ describe("X402ActionProvider", () => {
       });
 
       mockUseFacilitator.mockReturnValue({ list: mockList });
+      mockGetX402Network.mockReturnValue("base-sepolia");
 
       const result = await provider.discoverX402Services(
         makeMockWalletProvider("base-sepolia"),
@@ -311,6 +346,15 @@ describe("X402ActionProvider", () => {
 
       mockUseFacilitator.mockReturnValue({ list: mockList });
 
+      // Mock the utility functions for this test
+      mockGetX402Network.mockReturnValue("base-sepolia");
+      mockIsUsdcAsset.mockReturnValue(true); // All assets are USDC
+      mockConvertWholeUnitsToAtomic
+        .mockResolvedValueOnce("100000") // 0.1 USDC in atomic units
+        .mockResolvedValueOnce("100000")
+        .mockResolvedValueOnce("100000");
+      mockFormatPaymentOption.mockResolvedValue("formatted payment option");
+
       const result = await provider.discoverX402Services(makeMockWalletProvider("base-sepolia"), {
         maxUsdcPrice: 0.1,
       });
@@ -339,6 +383,7 @@ describe("X402ActionProvider", () => {
   describe("retryHttpRequestWithX402", () => {
     it("should successfully retry with payment", async () => {
       mockDecodeXPaymentResponse.mockReturnValue(MOCK_PAYMENT_RESPONSE);
+      mockGetX402Network.mockReturnValue("base-sepolia");
 
       mockRequest.mockResolvedValue({
         status: 200,
@@ -383,6 +428,7 @@ describe("X402ActionProvider", () => {
       error.request = {};
 
       mockRequest.mockRejectedValue(error);
+      mockGetX402Network.mockReturnValue("base-sepolia");
 
       const result = await provider.retryWithX402(makeMockWalletProvider("base-sepolia"), {
         url: "https://www.x402.org/protected",
@@ -436,6 +482,8 @@ describe("X402ActionProvider", () => {
     });
 
     it("should handle successful non-payment requests", async () => {
+      mockDecodeXPaymentResponse.mockReturnValue(null); // No payment made
+
       mockRequest.mockResolvedValue({
         status: 200,
         statusText: "OK",

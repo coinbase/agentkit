@@ -1,7 +1,7 @@
 import {
   ActionProvider,
   AgentKit,
-  legacyCdpApiActionProvider,
+  cdpApiActionProvider,
   jupiterActionProvider,
   PrivySvmWalletConfig,
   PrivyWalletProvider,
@@ -91,12 +91,7 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{
     ];
     const canUseCdpApi = process.env.CDP_API_KEY_ID && process.env.CDP_API_KEY_SECRET;
     if (canUseCdpApi) {
-      actionProviders.push(
-        legacyCdpApiActionProvider({
-          apiKeyId: process.env.CDP_API_KEY_ID,
-          apiKeySecret: process.env.CDP_API_KEY_SECRET,
-        }),
-      );
+      actionProviders.push(cdpApiActionProvider());
     }
     const agentkit = await AgentKit.from({
       walletProvider,

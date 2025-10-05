@@ -306,6 +306,18 @@ This section provides a detailed list of all available action providers and thei
     <td width="200"><code>transfer</code></td>
     <td width="768">Transfers a specified amount of ERC-20 tokens to a destination address.</td>
 </tr>
+<tr>
+    <td width="200"><code>approve</code></td>
+    <td width="768">Approves a spender to transfer ERC-20 tokens from the wallet.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_allowance</code></td>
+    <td width="768">Checks the allowance amount for a spender of an ERC-20 token.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_erc20_token_address</code></td>
+    <td width="768">Gets the contract address for frequently used ERC-20 tokens on different networks by symbol.</td>
+</tr>
 </table>
 </details>
 
