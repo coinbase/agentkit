@@ -5,11 +5,11 @@ def test_supports_network(aave_provider):
     """Test that the AaveActionProvider correctly identifies supported networks."""
     supported_networks = [
         Network(protocol_family="evm", network_id="base-mainnet", chain_id="8453"),
-        Network(protocol_family="evm", network_id="base-sepolia", chain_id="84532"),
     ]
     unsupported_networks = [
         Network(protocol_family="evm", network_id="ethereum-mainnet", chain_id="1"),
         Network(protocol_family="evm", network_id="optimism-mainnet", chain_id="10"),
+        Network(protocol_family="evm", network_id="base-sepolia", chain_id="84532"),
     ]
     for network in supported_networks:
         assert aave_provider.supports_network(network)

@@ -90,7 +90,7 @@ class AaveActionProvider(ActionProvider[EvmWalletProvider]):
         description="""
 This tool allows supplying assets to Aave V3 protocol as collateral for borrowing or earning interest.
 It takes:
-- asset_id: The asset to supply, one of `weth`, `usdc`, `cbeth`, or `wsteth` (availability depends on network)
+- asset_id: The asset to supply, one of `weth`, `usdc`, `cbeth`, `wstETH`, `cbBTC`, or `GHO`
 - amount: The amount of tokens to supply in human-readable format
     Examples:
     - 1 WETH
@@ -227,7 +227,7 @@ Important notes:
         description="""
 This tool allows withdrawing assets from Aave V3 protocol.
 It takes:
-- asset_id: The asset to withdraw, one of `weth`, `usdc`, `cbeth`, or `wsteth` (availability depends on network)
+- asset_id: The asset to withdraw, one of `weth`, `usdc`, `cbeth`, `wstETH`, `cbBTC`, or `GHO`
 - amount: The amount of tokens to withdraw in human-readable format or 'max' to withdraw all
     Examples:
     - 1 WETH
@@ -337,7 +337,7 @@ Important notes:
         description="""
 This tool allows borrowing assets from Aave V3 protocol against your supplied collateral.
 It takes:
-- asset_id: The asset to borrow, one of `weth`, `usdc`, `cbeth`, or `wsteth` (availability depends on network)
+- asset_id: The asset to borrow, one of `weth`, `usdc`, `cbeth`, `wstETH`, `cbBTC`, or `GHO`
 - amount: The amount of tokens to borrow in human-readable format
     Examples:
     - 1 WETH
@@ -475,7 +475,7 @@ Important notes:
         description="""
 This tool allows repaying borrowed assets to Aave V3 protocol.
 It takes:
-- asset_id: The asset to repay, one of `weth`, `usdc`, `cbeth`, or `wsteth` (availability depends on network)
+- asset_id: The asset to repay, one of `weth`, `usdc`, `cbeth`, `wstETH`, `cbBTC`, or `GHO`
 - amount: The amount of tokens to repay in human-readable format or 'max' to repay all
     Examples:
     - 1 WETH
@@ -635,7 +635,7 @@ A higher health factor indicates lower liquidation risk.
         description="""
 This tool allows setting whether an asset is used as collateral in Aave V3 protocol.
 It takes:
-- asset_id: The asset to set as collateral, one of `weth`, `usdc`, `cbeth`, or `wsteth` (availability depends on network)
+- asset_id: The asset to set as collateral, one of `weth`, `usdc`, `cbeth`, `wstETH`, `cbBTC`, or `GHO`
 - use_as_collateral: Whether to use the asset as collateral (True) or not (False), defaults to True
 
 Important notes:
