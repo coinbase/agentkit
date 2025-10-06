@@ -194,13 +194,20 @@ def get_user_account_data(
         health_factor,
     ) = result
 
+    current_ltv_ratio = (
+        (Decimal(total_debt_base) / Decimal(total_collateral_base)) * Decimal(100)
+        if total_collateral_base > 0
+        else Decimal(0)
+    )
+
     return {
         # Convert base units (scaled by 10^8) to USD values
         "totalCollateralUSD": Decimal(total_collateral_base) / Decimal(10**8),
         "totalDebtUSD": Decimal(total_debt_base) / Decimal(10**8),
         "availableBorrowsUSD": Decimal(available_borrows_base) / Decimal(10**8),
         "currentLiquidationThreshold": Decimal(current_liquidation_threshold) / Decimal(10**4),
-        "ltv": Decimal(ltv) / Decimal(10**4),
+        "ltv": current_ltv_ratio,  # Current LTV ratio as percentage
+        "maxLtv": Decimal(ltv) / Decimal(10**4),  # Maximum LTV from protocol
         "healthFactor": Decimal(health_factor) / Decimal(10**18)
         if health_factor > 0
         else Decimal("inf"),
@@ -277,7 +284,8 @@ def get_portfolio_details_markdown(
         markdown += (
             f"**Liquidation Threshold:** {account_data['currentLiquidationThreshold']:.3%}\n"
         )
-        markdown += f"**Loan to Value:** {account_data['ltv']:.3%}\n"
+        markdown += f"**LTV:** {account_data['ltv']:.2f}%  # Current LTV ratio as percentage\n"
+        markdown += f"**Max LTV:** {account_data['maxLtv']:.3%}  # Maximum LTV from protocol\n"
 
         # Health factor with color indicators
         health_factor = account_data["healthFactor"]

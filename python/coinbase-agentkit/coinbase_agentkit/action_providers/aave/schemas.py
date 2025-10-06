@@ -8,9 +8,9 @@ from pydantic import BaseModel, Field
 class AaveSupplySchema(BaseModel):
     """Input schema for supplying assets to Aave."""
 
-    asset_id: Literal["weth", "usdc", "cbeth", "wsteth"] = Field(
+    asset_id: Literal["weth", "usdc", "cbeth", "wstETH", "cbBTC", "GHO"] = Field(
         ...,
-        description="The asset ID to supply to the Aave market, one of `weth`, `usdc`, `cbeth`, or `wsteth`",
+        description="The asset ID to supply to the Aave market, one of `weth`, `usdc`, `cbeth`, `wstETH`, `cbBTC`, or `GHO`",
     )
     amount: str = Field(
         ...,
@@ -29,9 +29,9 @@ class AaveSupplySchema(BaseModel):
 class AaveWithdrawSchema(BaseModel):
     """Input schema for withdrawing assets from Aave."""
 
-    asset_id: Literal["weth", "usdc", "cbeth", "wsteth"] = Field(
+    asset_id: Literal["weth", "usdc", "cbeth", "wstETH", "cbBTC", "GHO"] = Field(
         ...,
-        description="The asset ID to withdraw from the Aave market, one of `weth`, `usdc`, `cbeth`, or `wsteth`",
+        description="The asset ID to withdraw from the Aave market, one of `weth`, `usdc`, `cbeth`, `wstETH`, `cbBTC`, or `GHO`",
     )
     amount: str = Field(
         ...,
@@ -46,9 +46,9 @@ class AaveWithdrawSchema(BaseModel):
 class AaveBorrowSchema(BaseModel):
     """Input schema for borrowing assets from Aave."""
 
-    asset_id: Literal["weth", "usdc", "cbeth", "wsteth"] = Field(
+    asset_id: Literal["weth", "usdc", "cbeth", "wstETH", "cbBTC", "GHO"] = Field(
         ...,
-        description="The asset ID to borrow from the Aave market, one of `weth`, `usdc`, `cbeth`, or `wsteth`",
+        description="The asset ID to borrow from the Aave market, one of `weth`, `usdc`, `cbeth`, `wstETH`, `cbBTC`, or `GHO`",
     )
     amount: str = Field(
         ...,
@@ -71,9 +71,9 @@ class AaveBorrowSchema(BaseModel):
 class AaveRepaySchema(BaseModel):
     """Input schema for repaying borrowed assets to Aave."""
 
-    asset_id: Literal["weth", "usdc", "cbeth", "wsteth"] = Field(
+    asset_id: Literal["weth", "usdc", "cbeth", "wstETH", "cbBTC", "GHO"] = Field(
         ...,
-        description="The asset ID to repay to the Aave market, one of `weth`, `usdc`, `cbeth`, or `wsteth`",
+        description="The asset ID to repay to the Aave market, one of `weth`, `usdc`, `cbeth`, `wstETH`, `cbBTC`, or `GHO`",
     )
     amount: str = Field(
         ...,
@@ -92,8 +92,8 @@ class AaveRepaySchema(BaseModel):
 class AaveSetAsCollateralSchema(BaseModel):
     """Schema for setting an asset as collateral in Aave."""
 
-    asset_id: str = Field(
-        description="The asset ID to set as collateral, one of `weth`, `usdc`, `cbeth`, or `wsteth`",
+    asset_id: Literal["weth", "usdc", "cbeth", "wstETH", "cbBTC", "GHO"] = Field(
+        description="The asset ID to set as collateral, one of `weth`, `usdc`, `cbeth`, `wstETH`, `cbBTC`, or `GHO`",
     )
     use_as_collateral: bool = Field(
         default=True,

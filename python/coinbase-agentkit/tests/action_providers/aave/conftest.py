@@ -35,6 +35,6 @@ def aave_fixtures():
             "weth": "0x4200000000000000000000000000000000000006",
             "usdc": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
             "cbeth": "0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22",
-            "wsteth": "0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452",
+            "wstETH": "0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452",
         },
     }
