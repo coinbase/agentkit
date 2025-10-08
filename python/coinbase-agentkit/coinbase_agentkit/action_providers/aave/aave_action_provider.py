@@ -160,9 +160,7 @@ Important notes:
 
             # Approve Aave to spend tokens
             try:
-                _ = approve_token(
-                    wallet_provider, asset_address, pool_address, amount_atomic
-                )
+                _ = approve_token(wallet_provider, asset_address, pool_address, amount_atomic)
             except Exception as e:
                 return f"Error approving token for Aave: {e!s}"
 
@@ -527,9 +525,7 @@ Important notes:
 
             # Approve Aave to spend tokens (not needed for max amount, but safer to approve anyway)
             try:
-                _ = approve_token(
-                    wallet_provider, asset_address, pool_address, amount_atomic
-                )
+                _ = approve_token(wallet_provider, asset_address, pool_address, amount_atomic)
             except Exception as e:
                 return f"Error approving token: {e!s}"
 

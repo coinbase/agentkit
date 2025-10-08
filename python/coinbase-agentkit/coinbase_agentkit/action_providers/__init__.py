@@ -1,8 +1,8 @@
 """Action providers for AgentKit."""
 
+from .aave.aave_action_provider import AaveActionProvider, aave_action_provider
 from .action_decorator import create_action
 from .action_provider import Action, ActionProvider
-from .aave.aave_action_provider import AaveActionProvider, aave_action_provider
 from .basename.basename_action_provider import (
     BasenameActionProvider,
     basename_action_provider,

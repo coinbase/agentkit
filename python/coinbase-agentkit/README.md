@@ -222,6 +222,36 @@ agent_kit = AgentKit(AgentKitConfig(
 This section provides a detailed list of all available action providers and their actions.
 
 <details>
+<summary><strong>Aave</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>supply</code></td>
+    <td width="768">Supplies assets to Aave V3 protocol as collateral for borrowing or earning interest.</td>
+</tr>
+<tr>
+    <td width="200"><code>withdraw</code></td>
+    <td width="768">Withdraws assets from Aave V3 protocol.</td>
+</tr>
+<tr>
+    <td width="200"><code>borrow</code></td>
+    <td width="768">Borrows assets from Aave V3 protocol against supplied collateral.</td>
+</tr>
+<tr>
+    <td width="200"><code>repay</code></td>
+    <td width="768">Repays borrowed assets to Aave V3 protocol.</td>
+</tr>
+<tr>
+    <td width="200"><code>set_collateral</code></td>
+    <td width="768">Sets whether an asset is used as collateral in Aave V3 protocol.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_portfolio</code></td>
+    <td width="768">Gets portfolio details from Aave V3 protocol including supplied assets, borrowed assets, and health factor.</td>
+</tr>
+</table>
+</details>
+
+<details>
 <summary><strong>Basename</strong></summary>
 <table width="100%">
 <tr>

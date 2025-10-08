@@ -16,17 +16,20 @@ def test_supports_network(aave_provider):
     for network in unsupported_networks:
         assert not aave_provider.supports_network(network)
 
+
 def test_get_pool_address(aave_provider, aave_fixtures):
     """Test that the _get_pool_address method returns the correct address."""
     network = Network(protocol_family="evm", network_id="base-mainnet", chain_id="8453")
     # Convert both addresses to lowercase for case-insensitive comparison
     assert aave_provider._get_pool_address(network).lower() == aave_fixtures["pool_address"].lower()
 
+
 def test_get_asset_address(aave_provider, aave_fixtures):
     """Test that the _get_asset_address method returns the correct addresses."""
     network = Network(protocol_family="evm", network_id="base-mainnet", chain_id="8453")
     for asset_id, expected_address in aave_fixtures["asset_addresses"].items():
         assert aave_provider._get_asset_address(network, asset_id) == expected_address
+
 
 def test_get_asset_address_invalid(aave_provider):
     """Test that the _get_asset_address method raises an exception for invalid assets."""
@@ -36,6 +39,7 @@ def test_get_asset_address_invalid(aave_provider):
         raise AssertionError("Should have raised ValueError")
     except ValueError as e:
         assert "not supported" in str(e).lower()
+
 
 def test_get_asset_address_invalid_network(aave_provider):
     """Test that the _get_asset_address method raises an exception for invalid networks."""
