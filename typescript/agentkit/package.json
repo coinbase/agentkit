@@ -55,7 +55,7 @@
     "@zerodev/intent": "^0.0.24",
     "@zerodev/sdk": "^5.4.28",
     "@zoralabs/coins-sdk": "^0.2.8",
-    "axios": "^1.9.0",
+    "axios": "^1.12.0",
     "bs58": "^4.0.1",
     "canonicalize": "^2.1.0",
     "clanker-sdk": "^4.1.18",
