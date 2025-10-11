@@ -13,6 +13,12 @@ import {
 import { formatTimestamp, formatPeriod } from "./utils";
 import { FetchedPermission } from "./types";
 import { retryWithExponentialBackoff } from "../../utils";
+import {
+  fetchPermissions,
+  getPermissionStatus,
+  prepareSpendCallData,
+  prepareRevokeCallData,
+} from "@base-org/account/spend-permission";
 
 /**
  * Fetch spend permissions for a user account from a spender address
@@ -28,7 +34,6 @@ async function fetchUserSpendPermissions(
   tokenAddress?: Address,
 ): Promise<FetchedPermission[]> {
   try {
-    const { fetchPermissions } = await import("@base-org/account/spend-permission");
     const permissions = await fetchPermissions({
       account: userAccount,
       chainId: 8453,
@@ -257,9 +262,6 @@ Important notes:
       }
 
       // Check permission status and prepare spend call data
-      const { getPermissionStatus, prepareSpendCallData } = await import(
-        "@base-org/account/spend-permission"
-      );
       const status = await retryWithExponentialBackoff(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         () => getPermissionStatus(_permission as any),
@@ -405,7 +407,6 @@ Important notes:
       const _permission = permissions[permissionIndex - 1];
 
       // Prepare the revoke transaction
-      const { prepareRevokeCallData } = await import("@base-org/account/spend-permission");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const revokeCall = await prepareRevokeCallData(_permission as any);
 

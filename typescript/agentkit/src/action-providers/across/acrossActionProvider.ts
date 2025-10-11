@@ -8,6 +8,7 @@ import { EvmWalletProvider } from "../../wallet-providers";
 import { isAcrossSupportedTestnet } from "./utils";
 import { privateKeyToAccount } from "viem/accounts";
 import { erc20Abi as ERC20_ABI } from "viem";
+import { createAcrossClient } from "@across-protocol/app-sdk";
 /**
  * Configuration options for the SafeWalletProvider.
  */
@@ -68,10 +69,6 @@ export class AcrossActionProvider extends ActionProvider<EvmWalletProvider> {
     args: z.infer<typeof BridgeTokenSchema>,
   ): Promise<string> {
     try {
-      // Use dynamic import to get the Across SDK
-      const acrossModule = await import("@across-protocol/app-sdk");
-      const createAcrossClient = acrossModule.createAcrossClient;
-
       // Get recipient address if provided, otherwise use sender
       const address = walletProvider.getAddress() as Hex;
       const recipient = (args.recipient || address) as Hex;

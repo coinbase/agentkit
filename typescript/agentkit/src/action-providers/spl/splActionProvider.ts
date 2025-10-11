@@ -10,6 +10,14 @@ import {
   MessageV0,
   TransactionInstruction,
 } from "@solana/web3.js";
+import {
+  getMint,
+  getAssociatedTokenAddress,
+  getAccount,
+  TokenAccountNotFoundError,
+  createAssociatedTokenAccountInstruction,
+  createTransferCheckedInstruction,
+} from "@solana/spl-token";
 
 /**
  * SplActionProvider serves as a provider for SPL token actions.
@@ -52,9 +60,6 @@ export class SplActionProvider extends ActionProvider<SvmWalletProvider> {
       const connection = walletProvider.getConnection();
       const mintPubkey = new PublicKey(args.mintAddress);
       const ownerPubkey = new PublicKey(args.address);
-
-      const { getMint, getAssociatedTokenAddress, getAccount, TokenAccountNotFoundError } =
-        await import("@solana/spl-token");
 
       let mintInfo: Awaited<ReturnType<typeof getMint>>;
       try {
@@ -108,14 +113,6 @@ export class SplActionProvider extends ActionProvider<SvmWalletProvider> {
       const fromPubkey = walletProvider.getPublicKey();
       const toPubkey = new PublicKey(args.recipient);
       const mintPubkey = new PublicKey(args.mintAddress);
-
-      const {
-        getMint,
-        getAssociatedTokenAddress,
-        getAccount,
-        createAssociatedTokenAccountInstruction,
-        createTransferCheckedInstruction,
-      } = await import("@solana/spl-token");
 
       let mintInfo: Awaited<ReturnType<typeof getMint>>;
       try {

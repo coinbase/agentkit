@@ -1,5 +1,6 @@
 """Action providers for AgentKit."""
 
+from .aave.aave_action_provider import AaveActionProvider, aave_action_provider
 from .action_decorator import create_action
 from .action_provider import Action, ActionProvider
 from .basename.basename_action_provider import (
@@ -41,6 +42,8 @@ __all__ = [
     "Action",
     "ActionProvider",
     "create_action",
+    "AaveActionProvider",
+    "aave_action_provider",
     "BasenameActionProvider",
     "basename_action_provider",
     "CdpApiActionProvider",

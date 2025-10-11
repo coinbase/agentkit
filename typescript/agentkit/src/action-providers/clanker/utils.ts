@@ -1,6 +1,7 @@
 import { createWalletClient, http } from "viem";
 import { EvmWalletProvider } from "../../wallet-providers";
 import { NETWORK_ID_TO_VIEM_CHAIN } from "../../network";
+import { Clanker } from "clanker-sdk/v4";
 
 /**
  * Creates the client Clanker expects from the EvmWalletProvider
@@ -10,8 +11,6 @@ import { NETWORK_ID_TO_VIEM_CHAIN } from "../../network";
  * @returns The Clanker implementation
  */
 export async function createClankerClient(walletProvider: EvmWalletProvider, networkId: string) {
-  const { Clanker } = await import("clanker-sdk/v4");
-
   const account = walletProvider.toSigner();
 
   const publicClient = walletProvider.getPublicClient();

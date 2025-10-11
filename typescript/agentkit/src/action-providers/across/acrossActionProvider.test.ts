@@ -2,6 +2,7 @@ import { acrossActionProvider } from "./acrossActionProvider";
 import { EvmWalletProvider } from "../../wallet-providers";
 import { Network } from "../../network";
 import { createPublicClient, PublicClient } from "viem";
+import { createAcrossClient as mockCreateAcrossClient } from "@across-protocol/app-sdk";
 
 // Mock the necessary imports and modules
 jest.mock("viem", () => {
@@ -67,10 +68,14 @@ jest.mock("../../network", () => {
 });
 
 // Mock the Across SDK
-const mockCreateAcrossClient = jest.fn();
 jest.mock("@across-protocol/app-sdk", () => ({
-  createAcrossClient: mockCreateAcrossClient,
+  createAcrossClient: jest.fn(),
 }));
+
+// Cast the imported mock to a Jest mock function
+const mockedCreateAcrossClient = mockCreateAcrossClient as jest.MockedFunction<
+  typeof mockCreateAcrossClient
+>;
 
 // Default implementation for the createAcrossClient mock
 const defaultClientImplementation = () => ({
@@ -140,7 +145,7 @@ const defaultClientImplementation = () => ({
 });
 
 // Set the default implementation
-mockCreateAcrossClient.mockImplementation(() => {
+mockedCreateAcrossClient.mockImplementation(() => {
   const client = defaultClientImplementation();
   // Add the chains property to match what the code expects
   return {
@@ -157,7 +162,8 @@ mockCreateAcrossClient.mockImplementation(() => {
         network: "optimism",
       },
     ],
-  };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any;
 });
 
 // Mock the isTestnet function
@@ -180,7 +186,7 @@ describe("Across Action Provider", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset to default implementation
-    mockCreateAcrossClient.mockImplementation(() => {
+    mockedCreateAcrossClient.mockImplementation(() => {
       const client = defaultClientImplementation();
       // Add the chains property to match what the code expects
       return {
@@ -197,7 +203,8 @@ describe("Across Action Provider", () => {
             network: "optimism",
           },
         ],
-      };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
     });
 
     mockPublicClient = {
@@ -269,48 +276,52 @@ describe("Across Action Provider", () => {
 
     it("should fail when slippage is too high", async () => {
       // Override the default mock with high slippage for this test only
-      mockCreateAcrossClient.mockImplementationOnce(() => ({
-        getSupportedChains: jest.fn().mockResolvedValue([
-          {
-            chainId: 1,
-            inputTokens: [
+      mockedCreateAcrossClient.mockImplementationOnce(
+        () =>
+          ({
+            getSupportedChains: jest.fn().mockResolvedValue([
               {
-                symbol: "ETH",
-                address: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
-                decimals: 18,
+                chainId: 1,
+                inputTokens: [
+                  {
+                    symbol: "ETH",
+                    address: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+                    decimals: 18,
+                  },
+                ],
               },
-            ],
-          },
-        ]),
-        getAvailableRoutes: jest.fn().mockResolvedValue([
-          {
-            isNative: true,
-            originToken: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
-          },
-        ]),
-        getQuote: jest.fn().mockResolvedValue({
-          deposit: {
-            inputAmount: BigInt("1000000000000000000"), // 1 ETH
-            outputAmount: BigInt("800000000000000000"), // 0.8 ETH (20% difference)
-            spokePoolAddress: "0x1234567890123456789012345678901234567890",
-          },
-          limits: {
-            minDeposit: BigInt("100000000000000000"),
-            maxDeposit: BigInt("10000000000000000000"),
-          },
-        }),
-        simulateDepositTx: jest.fn().mockResolvedValue({
-          request: {
-            address: "0x1234567890123456789012345678901234567890",
-            abi: [],
-            functionName: "deposit",
-            args: [],
-          },
-        }),
-        waitForDepositTx: jest.fn().mockResolvedValue({
-          depositId: "123456",
-        }),
-      }));
+            ]),
+            getAvailableRoutes: jest.fn().mockResolvedValue([
+              {
+                isNative: true,
+                originToken: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+              },
+            ]),
+            getQuote: jest.fn().mockResolvedValue({
+              deposit: {
+                inputAmount: BigInt("1000000000000000000"), // 1 ETH
+                outputAmount: BigInt("800000000000000000"), // 0.8 ETH (20% difference)
+                spokePoolAddress: "0x1234567890123456789012345678901234567890",
+              },
+              limits: {
+                minDeposit: BigInt("100000000000000000"),
+                maxDeposit: BigInt("10000000000000000000"),
+              },
+            }),
+            simulateDepositTx: jest.fn().mockResolvedValue({
+              request: {
+                address: "0x1234567890123456789012345678901234567890",
+                abi: [],
+                functionName: "deposit",
+                args: [],
+              },
+            }),
+            waitForDepositTx: jest.fn().mockResolvedValue({
+              depositId: "123456",
+            }),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          }) as any,
+      );
 
       // Set a low max slippage
       const args = {

@@ -27,8 +27,8 @@ async function main() {
     const { walletKey, encryptionKey } = generateRandomKeys();
 
     console.log("📋 Your XMTP keys:");
-    console.log(`WALLET_KEY=${walletKey}`);
-    console.log(`ENCRYPTION_KEY=${encryptionKey}`);
+    console.log(`XMTP_WALLET_KEY=${walletKey}`);
+    console.log(`XMTP_DB_ENCRYPTION_KEY=${encryptionKey.slice(2)}`);
     console.log("\n✨ Copy these keys and add them to your .env file");
   } catch (error) {
     console.error("❌ Error generating keys:", error);

@@ -19,14 +19,15 @@
   "dependencies": {
     "@coinbase/agentkit": "workspace:*",
     "@coinbase/agentkit-langchain": "workspace:*",
+    "@langchain/core": "^0.3.19",
     "@langchain/langgraph": "^0.2.21",
     "@langchain/openai": "^0.3.14",
-    "@langchain/core": "^0.3.19",
+    "@xmtp/agent-sdk": "^1.1.4",
+    "@xmtp/content-type-transaction-reference": "^2.0.2",
+    "@xmtp/content-type-wallet-send-calls": "^2.0.0",
     "dotenv": "^16.4.5",
     "zod": "^3.22.4",
-    "@xmtp/node-sdk": "1.0.2",
-    "uint8arrays": "^5.1.0",
-    "viem": "^2.7.15"
+    "viem": "^2.22.16"
   },
   "devDependencies": {
     "@types/node": "^22.13.14",

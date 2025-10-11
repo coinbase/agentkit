@@ -1,6 +1,7 @@
 import { getAccountOutflowQuery } from "./queries";
 import { BASE_GRAPH_ENDPOINT } from "./endpoints";
 import { SuperfluidAccountResponse } from "./types";
+import { GraphQLClient } from "graphql-request";
 
 /**
  * Gets the current account outflows for the user
@@ -12,7 +13,6 @@ export async function getAccountOutflow(
   userId: string,
 ): Promise<SuperfluidAccountResponse | undefined> {
   try {
-    const { GraphQLClient } = await import("graphql-request");
     const client = new GraphQLClient(BASE_GRAPH_ENDPOINT);
 
     const variables = { id: userId.toLowerCase() };

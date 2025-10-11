@@ -6,6 +6,7 @@ import { CreateAction } from "../actionDecorator";
 import { Hex, encodeFunctionData } from "viem";
 import { Network } from "../../network";
 import { generateZoraTokenUri } from "./utils";
+import { createCoinCall, DeployCurrency, getCoinCreateFromLogs } from "@zoralabs/coins-sdk";
 
 const SUPPORTED_NETWORKS = ["base-mainnet", "base-sepolia"];
 
@@ -67,11 +68,6 @@ The action will return the transaction hash, coin address, and deployment detail
         category: args.category,
         pinataConfig: { jwt: this.#pinataJwt },
       });
-
-      // Dynamically import Zora SDK
-      const { createCoinCall, DeployCurrency, getCoinCreateFromLogs } = await import(
-        "@zoralabs/coins-sdk"
-      );
 
       // Create coin call
       const call = {
