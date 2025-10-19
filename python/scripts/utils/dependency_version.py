@@ -10,7 +10,7 @@ def read_dependency_version(file_path: str, dependency_name: str) -> str:
     with open(file_path, "r") as file:
         content = file.read()
 
-    pattern = rf'^\s+"{dependency_name}>=([0-9]+\.[0-9]+\.[0-9]+),.*$'
+    pattern = rf'^\s*{re.escape(dependency_name)}\s*=\s*">=([0-9]+\.[0-9]+\.[0-9]+),.*"$'
     
     for line in content.split("\n"):
         match = re.match(pattern, line)
@@ -29,8 +29,8 @@ def write_dependency_version(file_path: str, dependency_name: str, version: str)
         contents = file.read()
     
     min_version, max_version = calculate_dependency_range(version)
-    pattern = rf'"{dependency_name}>=([0-9]+\.[0-9]+\.[0-9]+),<[^"]+"'
-    replacement = f'"{dependency_name}{min_version},{max_version}"'
+    pattern = rf'{re.escape(dependency_name)}\s*=\s*">=([0-9]+\.[0-9]+\.[0-9]+),<[^"]+"'
+    replacement = f'{dependency_name} = "{min_version},{max_version}"'
     
     updated_content = re.sub(pattern, replacement, contents, flags=re.MULTILINE)
     
@@ -111,4 +111,4 @@ def write_dependency_version_legacy(file_path: str, dependency_name: str, versio
         raise ValueError(f"Could not update legacy dependency {dependency_name} in {file_path}")
     
     with open(file_path, "w") as file:
-        file.write("\n".join(new_lines)) 
+        file.write("\n".join(new_lines))
