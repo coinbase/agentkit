@@ -1,0 +1,65 @@
+# CDP AgentKit IQAI ADK Extension Examples - Chatbot TypeScript
+
+This example demonstrates a blockchain chatbot built with CDP AgentKit and IQAI ADK (Agent Development Kit for TypeScript).
+
+## Ask the chatbot to engage in the Web3 ecosystem!
+
+- "Transfer a portion of your ETH to a random address"
+- "What is the price of BTC?"
+- "Swap USDC to ETH" (base-mainnet only)
+- "Request funds" (testnets only)
+
+## Prerequisites
+
+### Checking Node Version
+
+Before using the example, ensure that you have the correct version of Node.js installed. The example requires Node.js 18 or higher. You can check your Node version by running:
+
+```bash
+node --version
+```
+
+If you don't have the correct version, you can install it using [nvm](https://github.com/nvm-sh/nvm):
+
+```bash
+nvm install node
+```
+
+This will automatically install and use the latest version of Node.
+
+### API Keys
+
+You'll need the following API keys:
+
+- [CDP API Key](https://portal.cdp.coinbase.com/access/api)
+- [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
+
+Once you have them, rename the `.env-local` file to `.env` and make sure you set the API keys to their corresponding environment variables:
+
+- "CDP_API_KEY_ID"
+- "CDP_API_KEY_SECRET"
+- "CDP_WALLET_SECRET"
+- "OPENAI_API_KEY"
+
+## Running the example
+
+From the root directory, run:
+
+```bash
+pnpm install
+pnpm build
+```
+
+This will install the dependencies and build the packages locally. The chatbot example uses the local `@coinbase/agentkit-iqai-adk` and `@coinbase/agentkit` packages. If you make changes to the packages, you can run `pnpm build` from root again to rebuild the packages, and your changes will be reflected in the chatbot example.
+
+Now from the `typescript/examples/iqai-adk-cdp-chatbot` directory, run:
+
+```bash
+pnpm start
+```
+
+Select "1. chat mode" and start telling your Agent to do things onchain!
+
+## License
+
+Apache-2.0

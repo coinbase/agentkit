@@ -28,6 +28,12 @@ Anthropic Model Context Protocol (MCP) extension of AgentKit. Enables agentic wo
 
 See [AgentKit Model Context Protocol](./framework-extensions/model-context-protocol/README.md) to get started!
 
+#### `@coinbase/agentkit-iqai-adk`
+
+IQAI ADK extension of AgentKit. Enables agentic workflows to interact with onchain actions.
+
+See [AgentKit IQAI ADK](./framework-extensions/iqai-adk/README.md) to get started!
+
 ### `create-onchain-agent`
 
 A quickstart CLI tool to scaffold out a fullstack chatbot application using Coinbase AgentKit. Runnable via `npm create onchain-agent@latest`.

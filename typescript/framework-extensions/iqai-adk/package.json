@@ -1,0 +1,48 @@
+{
+  "name": "@coinbase/agentkit-iqai-adk",
+  "version": "0.1.0",
+  "description": "ADK-TS extension of CDP Agentkit",
+  "repository": "https://github.com/coinbase/agentkit",
+  "author": "phdargen",
+  "license": "Apache-2.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint -c .eslintrc.json \"src/**/*.ts\"",
+    "lint:fix": "eslint -c .eslintrc.json \"src/**/*.ts\" --fix",
+    "format": "prettier -c .prettierrc --write \"**/*.{ts,js,cjs,json,md}\"",
+    "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\"",
+    "check": "tsc --noEmit",
+    "clean": "rm -rf dist/*",
+    "prepack": "tsc",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "coinbase",
+    "sdk",
+    "crypto",
+    "cdp",
+    "agentkit",
+    "ai",
+    "agent",
+    "nodejs",
+    "typescript",
+    "adk"
+  ],
+  "dependencies": {
+    "@coinbase/agentkit-model-context-protocol": "^0.2.0",
+    "@iqai/adk": "^0.3.7",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@coinbase/agentkit": "workspace:*"
+  },
+  "peerDependencies": {
+    "@coinbase/agentkit": ">=0.1.0",
+    "@iqai/adk": ">=0.1.0"
+  }
+}
