@@ -10,14 +10,6 @@ The FlaunchActionProvider is designed to work with EvmWalletProvider for blockch
 - Buying memecoin tokens with ETH
 - Selling memecoin tokens for ETH
 
-### Environment Variables
-
-```
-PINATA_JWT
-```
-
-Creating the flaunchActionProvider requires Pinata JWT. You can create one at https://app.pinata.cloud/developers/api-keys
-
 ## Directory Structure
 
 ```
@@ -36,12 +28,19 @@ flaunch/
 ### Launch Memecoin
 
 - `flaunch`: Create a new memecoin token
-  - **Purpose**: Launch a new memecoin with customizable metadata
+  - **Purpose**: Launch a new memecoin with customizable metadata and advanced configuration options
   - **Input**:
     - `name` (string): The name of the token
     - `symbol` (string): The symbol of the token
-    - `imageUrl` (string): URL to the token image
+    - `image` (string): Local image file path or URL to the token image
     - `description` (string): Description of the token
+    - `fairLaunchPercent` (number, optional): The percentage of tokens for fair launch (defaults to 60%)
+    - `fairLaunchDuration` (number, optional): The duration of the fair launch in minutes (defaults to 30 minutes)
+    - `initialMarketCapUSD` (number, optional): The initial market cap in USD (defaults to 10000 USD, range: 100-100000)
+    - `preminePercent` (number, optional): The percentage of total supply to premine (defaults to 0%, max is equal to fairLaunchPercent)
+    - `creatorFeeAllocationPercent` (number, optional): The percentage of fees allocated to creator and optional receivers (defaults to 80%)
+    - `creatorSplitPercent` (number, optional): The percentage of fees allocated to the creator (defaults to 100%)
+    - `splitReceivers` (array, optional): Array of fee split recipients with address and percentage
     - `websiteUrl` (string, optional): URL to the token website
     - `discordUrl` (string, optional): URL to the token Discord
     - `twitterUrl` (string, optional): URL to the token Twitter
@@ -52,8 +51,14 @@ flaunch/
     const result = await provider.flaunch(walletProvider, {
       name: "My Memecoin",
       symbol: "MEME",
-      imageUrl: "https://example.com/image.png",
+      image: "https://example.com/image.png",
       description: "A fun memecoin for the community",
+      fairLaunchPercent: 60,
+      fairLaunchDuration: 30,
+      initialMarketCapUSD: 10000,
+      preminePercent: 0,
+      creatorFeeAllocationPercent: 80,
+      creatorSplitPercent: 100,
     });
     ```
 
@@ -99,25 +104,22 @@ This provider supports the following networks:
 
 The provider requires:
 
-- A Pinata JWT for IPFS uploads (used for token metadata)
 - Access to Base network RPC endpoints
 
 ### Configuration
 
-When initializing the provider:
-
-```typescript
-const provider = new FlaunchActionProvider({
-  pinataJwt: "your-pinata-jwt", // Required for IPFS uploads
-});
+const provider = new FlaunchActionProvider();
 ```
+
+The provider automatically uses the Flaunch API for uploading images and token metadata to IPFS.
+This is rate limited to a maximum of 4 image uploads per minute per IP address.
 
 ### Key Contracts
 
 The provider interacts with several key contracts:
 
-- FastFlaunchZap: For launching new tokens
-- FlaunchPositionManager: For managing liquidity positions
+- FlaunchZap: For launching new tokens
+- FlaunchPositionManagerV1_1: For managing liquidity positions
 - UniversalRouter: For executing swaps
 - Permit2: For token approvals
 - FLETH: Protocol's ETH wrapper token
@@ -126,5 +128,10 @@ The provider interacts with several key contracts:
 
 - All token amounts should be specified in whole units (e.g. "1.5" ETH, not wei)
 - Slippage is optional and defaults to 5% if not specified
-- Token metadata (image, description, etc.) is stored on IPFS using Pinata
+- Token metadata (image, description, etc.) is stored on IPFS using Flaunch API
 - The provider handles Permit2 approvals automatically when selling tokens
+- Fair launch parameters allow customization of token distribution and launch mechanics
+- Fee allocation can be split between creator and additional recipients
+- Premine percentage cannot exceed the fair launch percentage
+- Initial market cap is set in USD and converted to appropriate token pricing
+- The provider supports both local image files and URLs for token images

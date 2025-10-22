@@ -30,10 +30,29 @@ tests/action_providers/erc20/
   - Takes a contract address as input
 
 - `transfer`: Transfer ERC20 tokens to another address
+
   - Takes amount, contract address, and destination as inputs
   - Constructs and sends the transfer transaction
   - Returns the **transaction hash** upon success
   - Handles decimal formatting automatically
+
+- `approve`: Approve a spender to transfer ERC20 tokens
+
+  - Allows a spender address to transfer tokens on behalf of the wallet
+  - Takes amount, contract address, and spender address as inputs
+  - Returns the **transaction hash** upon success
+  - Can be used to revoke allowances by setting amount to 0
+
+- `get_allowance`: Check the allowance for a spender of an ERC20 token
+
+  - Returns the current **allowance** amount for a spender
+  - Takes contract address and spender address as inputs
+  - Formats the allowance with the correct number of decimals
+
+- `get_erc20_token_address`: Get the contract address for a token symbol
+  - Takes a token symbol (e.g. USDC, EURC, CBBTC) as input
+  - Returns the **contract address** for the token on the current network
+  - Provides available token symbols if the requested symbol is not found
 
 ## Adding New Actions
 

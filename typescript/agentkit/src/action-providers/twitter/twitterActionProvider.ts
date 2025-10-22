@@ -8,6 +8,7 @@ import {
   TwitterAccountMentionsSchema,
   TwitterPostTweetSchema,
   TwitterPostTweetReplySchema,
+  TwitterUploadMediaSchema,
 } from "./schemas";
 
 /**
@@ -41,7 +42,8 @@ export interface TwitterActionProviderConfig {
  * @augments ActionProvider
  */
 export class TwitterActionProvider extends ActionProvider {
-  private readonly client: TwitterApi;
+  private client: TwitterApi | null = null;
+  private config: TwitterActionProviderConfig;
 
   /**
    * Constructor for the TwitterActionProvider class.
@@ -51,30 +53,28 @@ export class TwitterActionProvider extends ActionProvider {
   constructor(config: TwitterActionProviderConfig = {}) {
     super("twitter", []);
 
-    config.apiKey ||= process.env.TWITTER_API_KEY;
-    config.apiSecret ||= process.env.TWITTER_API_SECRET;
-    config.accessToken ||= process.env.TWITTER_ACCESS_TOKEN;
-    config.accessTokenSecret ||= process.env.TWITTER_ACCESS_TOKEN_SECRET;
+    // Store config for later use but don't initialize the client yet
+    this.config = { ...config };
 
-    if (!config.apiKey) {
+    // Set defaults from environment variables
+    this.config.apiKey ||= process.env.TWITTER_API_KEY;
+    this.config.apiSecret ||= process.env.TWITTER_API_SECRET;
+    this.config.accessToken ||= process.env.TWITTER_ACCESS_TOKEN;
+    this.config.accessTokenSecret ||= process.env.TWITTER_ACCESS_TOKEN_SECRET;
+
+    // Validate config
+    if (!this.config.apiKey) {
       throw new Error("TWITTER_API_KEY is not configured.");
     }
-    if (!config.apiSecret) {
+    if (!this.config.apiSecret) {
       throw new Error("TWITTER_API_SECRET is not configured.");
     }
-    if (!config.accessToken) {
+    if (!this.config.accessToken) {
       throw new Error("TWITTER_ACCESS_TOKEN is not configured.");
     }
-    if (!config.accessTokenSecret) {
+    if (!this.config.accessTokenSecret) {
       throw new Error("TWITTER_ACCESS_TOKEN_SECRET is not configured.");
     }
-
-    this.client = new TwitterApi({
-      appKey: config.apiKey,
-      appSecret: config.apiSecret,
-      accessToken: config.accessToken,
-      accessSecret: config.accessTokenSecret,
-    } as TwitterApiTokens);
   }
 
   /**
@@ -97,7 +97,7 @@ A failure response will return a message with a Twitter API request error:
   })
   async accountDetails(_: z.infer<typeof TwitterAccountDetailsSchema>): Promise<string> {
     try {
-      const response = await this.client.v2.me();
+      const response = await this.getClient().v2.me();
       response.data.url = `https://x.com/${response.data.username}`;
       return `Successfully retrieved authenticated user account details:\n${JSON.stringify(
         response,
@@ -127,7 +127,7 @@ A failure response will return a message with the Twitter API request error:
   })
   async accountMentions(args: z.infer<typeof TwitterAccountMentionsSchema>): Promise<string> {
     try {
-      const response = await this.client.v2.userMentionTimeline(args.userId);
+      const response = await this.getClient().v2.userMentionTimeline(args.userId);
       return `Successfully retrieved account mentions:\n${JSON.stringify(response)}`;
     } catch (error) {
       return `Error retrieving authenticated account mentions: ${error}`;
@@ -144,6 +144,8 @@ A failure response will return a message with the Twitter API request error:
     name: "post_tweet",
     description: `
 This tool will post a tweet on Twitter. The tool takes the text of the tweet as input. Tweets can be maximum 280 characters.
+Optionally, up to 4 media items (images, videos) can be attached to the tweet by providing their media IDs in the mediaIds array.
+Media IDs are obtained by first uploading the media using the upload_media action.
 
 A successful response will return a message with the API response as a JSON payload:
     {"data": {"text": "hello, world!", "id": "0123456789012345678", "edit_history_tweet_ids": ["0123456789012345678"]}}
@@ -154,10 +156,20 @@ A failure response will return a message with the Twitter API request error:
   })
   async postTweet(args: z.infer<typeof TwitterPostTweetSchema>): Promise<string> {
     try {
-      const response = await this.client.v2.tweet(args.tweet);
+      let mediaOptions = {};
+
+      if (args.mediaIds && args.mediaIds.length > 0) {
+        // Convert array to tuple format expected by the Twitter API
+        const mediaIdsTuple = args.mediaIds as unknown as [string, ...string[]];
+        mediaOptions = {
+          media: { media_ids: mediaIdsTuple },
+        };
+      }
+
+      const response = await this.getClient().v2.tweet(args.tweet, mediaOptions);
       return `Successfully posted to Twitter:\n${JSON.stringify(response)}`;
     } catch (error) {
-      return `Error posting to Twitter:\n${error}`;
+      return `Error posting to Twitter:\n${error} with media ids: ${args.mediaIds}`;
     }
   }
 
@@ -170,7 +182,10 @@ A failure response will return a message with the Twitter API request error:
   @CreateAction({
     name: "post_tweet_reply",
     description: `
-This tool will post a tweet on Twitter. The tool takes the text of the tweet as input. Tweets can be maximum 280 characters.
+This tool will post a reply to a tweet on Twitter. The tool takes the text of the reply and the ID of the tweet to reply to as input.
+Replies can be maximum 280 characters.
+Optionally, up to 4 media items (images, videos) can be attached to the reply by providing their media IDs in the mediaIds array.
+Media IDs can be obtained by first uploading the media using the upload_media action.
 
 A successful response will return a message with the API response as a JSON payload:
     {"data": {"text": "hello, world!", "id": "0123456789012345678", "edit_history_tweet_ids": ["0123456789012345678"]}}
@@ -181,13 +196,48 @@ A failure response will return a message with the Twitter API request error:
   })
   async postTweetReply(args: z.infer<typeof TwitterPostTweetReplySchema>): Promise<string> {
     try {
-      const response = await this.client.v2.tweet(args.tweetReply, {
+      const options: Record<string, unknown> = {
         reply: { in_reply_to_tweet_id: args.tweetId },
-      });
+      };
+
+      if (args.mediaIds && args.mediaIds.length > 0) {
+        // Convert array to tuple format expected by the Twitter API
+        const mediaIdsTuple = args.mediaIds as unknown as [string, ...string[]];
+        options.media = { media_ids: mediaIdsTuple };
+      }
+
+      const response = await this.getClient().v2.tweet(args.tweetReply, options);
 
       return `Successfully posted reply to Twitter:\n${JSON.stringify(response)}`;
     } catch (error) {
       return `Error posting reply to Twitter: ${error}`;
+    }
+  }
+
+  /**
+   * Upload media to Twitter.
+   *
+   * @param args - The arguments containing the file path
+   * @returns A JSON string containing the media ID or error message
+   */
+  @CreateAction({
+    name: "upload_media",
+    description: `
+This tool will upload media (images, videos, etc.) to Twitter.
+
+A successful response will return a message with the media ID:
+    Successfully uploaded media to Twitter: 1234567890
+
+A failure response will return a message with the Twitter API request error:
+    Error uploading media to Twitter: Invalid file format`,
+    schema: TwitterUploadMediaSchema,
+  })
+  async uploadMedia(args: z.infer<typeof TwitterUploadMediaSchema>): Promise<string> {
+    try {
+      const mediaId = await this.getClient().v1.uploadMedia(args.filePath);
+      return `Successfully uploaded media to Twitter: ${mediaId}`;
+    } catch (error) {
+      return `Error uploading media to Twitter: ${error}`;
     }
   }
 
@@ -200,6 +250,25 @@ A failure response will return a message with the Twitter API request error:
    */
   supportsNetwork(_: Network): boolean {
     return true;
+  }
+
+  /**
+   * Get the Twitter API client, initializing it if needed
+   *
+   * @returns The Twitter API client
+   */
+  private getClient(): TwitterApi {
+    if (!this.client) {
+      // Initialize client only when needed
+      const tokens: TwitterApiTokens = {
+        appKey: this.config.apiKey!,
+        appSecret: this.config.apiSecret!,
+        accessToken: this.config.accessToken!,
+        accessSecret: this.config.accessTokenSecret!,
+      };
+      this.client = new TwitterApi(tokens);
+    }
+    return this.client;
   }
 }
 

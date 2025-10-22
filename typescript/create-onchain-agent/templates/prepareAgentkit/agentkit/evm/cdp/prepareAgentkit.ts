@@ -1,8 +1,8 @@
 import {
   AgentKit,
   cdpApiActionProvider,
-  cdpWalletActionProvider,
-  CdpWalletProvider,
+  cdpEvmWalletActionProvider,
+  CdpEvmWalletProvider,
   erc20ActionProvider,
   pythActionProvider,
   walletActionProvider,
@@ -71,11 +71,12 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{
     }
 
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
-    const walletProvider = await CdpWalletProvider.configureWithWallet({
-      apiKeyName: process.env.CDP_API_KEY_NAME,
-      apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
+    const walletProvider = await CdpEvmWalletProvider.configureWithWallet({
+      apiKeyId: process.env.CDP_API_KEY_ID,
+      apiKeySecret: process.env.CDP_API_KEY_SECRET,
+      walletSecret: process.env.CDP_WALLET_SECRET,
       networkId: process.env.NETWORK_ID || "base-sepolia",
-      cdpWalletData: walletDataStr || undefined,
+      address: walletDataStr ? JSON.parse(walletDataStr).address : undefined,
     });
 
     // Initialize AgentKit: https://docs.cdp.coinbase.com/agentkit/docs/agent-actions
@@ -86,14 +87,8 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{
         pythActionProvider(),
         walletActionProvider(),
         erc20ActionProvider(),
-        cdpApiActionProvider({
-          apiKeyName: process.env.CDP_API_KEY_NAME,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
-        }),
-        cdpWalletActionProvider({
-          apiKeyName: process.env.CDP_API_KEY_NAME,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
-        }),
+        cdpApiActionProvider(),
+        cdpEvmWalletActionProvider(),
       ],
     });
 

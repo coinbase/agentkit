@@ -10,9 +10,9 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.2.1",
-    "@coinbase/agentkit": "^0.4.0",
-    "@coinbase/agentkit-langchain": "^0.3.0",
-    "@coinbase/agentkit-vercel-ai-sdk": "^0.1.0",
+    "@coinbase/agentkit": "latest",
+    "@coinbase/agentkit-langchain": "latest",
+    "@coinbase/agentkit-vercel-ai-sdk": "latest",
     "@langchain/core": "^0.3.19",
     "@langchain/langgraph": "^0.2.21",
     "@langchain/openai": "^0.3.14",
@@ -20,7 +20,7 @@
     "@tanstack/react-query": "^5",
     "ai": "^4.1.54",
     "bs58": "^6.0.0",
-    "next": "14.2.15",
+    "next": "15.5.3",
     "react": "^18",
     "react-dom": "^18",
     "react-markdown": "^10.0.0",
@@ -28,11 +28,11 @@
     "wagmi": "^2.11.0"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^22",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
-    "eslint-config-next": "14.2.15",
+    "eslint-config-next": "15.5.3",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"

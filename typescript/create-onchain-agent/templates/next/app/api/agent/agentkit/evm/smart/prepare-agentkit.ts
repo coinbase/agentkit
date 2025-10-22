@@ -1,16 +1,18 @@
 import {
   AgentKit,
   cdpApiActionProvider,
+  cdpSmartWalletActionProvider,
   erc20ActionProvider,
   pythActionProvider,
-  SmartWalletProvider,
+  CdpSmartWalletProvider,
   walletActionProvider,
   WalletProvider,
   wethActionProvider,
+  x402ActionProvider,
 } from "@coinbase/agentkit";
 import * as fs from "fs";
-import { Address, Hex } from "viem";
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { Address, Hex, LocalAccount } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 
 /**
  * AgentKit Integration Route
@@ -45,8 +47,9 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 const WALLET_DATA_FILE = "wallet_data.txt";
 
 type WalletData = {
-  privateKey: Hex;
+  privateKey?: Hex;
   smartWalletAddress: Address;
+  ownerAddress?: Address;
 };
 
 /**
@@ -63,38 +66,43 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{
   agentkit: AgentKit;
   walletProvider: WalletProvider;
 }> {
-  try {
-    let walletData: WalletData | null = null;
-    let privateKey: Hex | null = null;
+  if (!process.env.CDP_API_KEY_ID || !process.env.CDP_API_KEY_SECRET) {
+    throw new Error(
+      "I need both CDP_API_KEY_ID and CDP_API_KEY_SECRET in your .env file to connect to the Coinbase Developer Platform.",
+    );
+  }
 
-    // Read existing wallet data if available
-    if (fs.existsSync(WALLET_DATA_FILE)) {
-      try {
-        walletData = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8")) as WalletData;
-        privateKey = walletData.privateKey;
-      } catch (error) {
-        console.error("Error reading wallet data:", error);
-        // Continue without wallet data
-      }
-    }
+  let walletData: WalletData | null = null;
+  let owner: Hex | LocalAccount | undefined = undefined;
 
-    if (!privateKey) {
-      if (walletData?.smartWalletAddress) {
-        throw new Error(
-          `Smart wallet found but no private key provided. Either provide the private key, or delete ${WALLET_DATA_FILE} and try again.`,
+  // Read existing wallet data if available
+  if (fs.existsSync(WALLET_DATA_FILE)) {
+    try {
+      walletData = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8")) as WalletData;
+      if (walletData.ownerAddress) owner = walletData.ownerAddress;
+      else if (walletData.privateKey) owner = privateKeyToAccount(walletData.privateKey as Hex);
+      else
+        console.log(
+          `No ownerAddress or privateKey found in ${WALLET_DATA_FILE}, will create a new CDP server account as owner`,
         );
-      }
-      privateKey = (process.env.PRIVATE_KEY || generatePrivateKey()) as Hex;
+    } catch (error) {
+      console.error("Error reading wallet data:", error);
     }
+  }
 
-    const signer = privateKeyToAccount(privateKey);
-
+  try {
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
-    const walletProvider = await SmartWalletProvider.configureWithWallet({
+    const walletProvider = await CdpSmartWalletProvider.configureWithWallet({
+      apiKeyId: process.env.CDP_API_KEY_ID,
+      apiKeySecret: process.env.CDP_API_KEY_SECRET,
+      walletSecret: process.env.CDP_WALLET_SECRET,
       networkId: process.env.NETWORK_ID || "base-sepolia",
-      signer,
-      smartWalletAddress: walletData?.smartWalletAddress,
-      paymasterUrl: undefined, // Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      owner: owner as any,
+      address: walletData?.smartWalletAddress,
+      paymasterUrl: process.env.PAYMASTER_URL, // Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
+      rpcUrl: process.env.RPC_URL,
+      idempotencyKey: process.env.IDEMPOTENCY_KEY,
     });
 
     // Initialize AgentKit: https://docs.cdp.coinbase.com/agentkit/docs/agent-actions
@@ -105,22 +113,23 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{
         pythActionProvider(),
         walletActionProvider(),
         erc20ActionProvider(),
-        cdpApiActionProvider({
-          apiKeyName: process.env.CDP_API_KEY_NAME,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
-        }),
+        cdpApiActionProvider(),
+        cdpSmartWalletActionProvider(),
+        x402ActionProvider(),
       ],
     });
 
     // Save wallet data
-    const smartWalletAddress = await walletProvider.getAddress();
-    fs.writeFileSync(
-      WALLET_DATA_FILE,
-      JSON.stringify({
-        privateKey,
-        smartWalletAddress,
-      } as WalletData),
-    );
+    if (!walletData) {
+      const exportedWallet = await walletProvider.exportWallet();
+      fs.writeFileSync(
+        WALLET_DATA_FILE,
+        JSON.stringify({
+          ownerAddress: exportedWallet.ownerAddress,
+          smartWalletAddress: exportedWallet.address,
+        } as WalletData),
+      );
+    }
 
     return { agentkit, walletProvider };
   } catch (error) {

@@ -1,4 +1,5 @@
-import { PrivyClient } from "@privy-io/server-auth";
+import { PrivyClient, SolanaCaip2ChainId } from "@privy-io/server-auth";
+import type { KeyPairSigner } from "@solana/kit";
 import { SvmWalletProvider } from "./svmWalletProvider";
 import {
   RpcResponseAndContext,
@@ -21,6 +22,8 @@ export interface PrivySvmWalletConfig extends PrivyWalletConfig {
   networkId?: string;
   /** The connection to use for the wallet */
   connection?: Connection;
+  /** The wallet type to use */
+  walletType: "server";
 }
 
 /**
@@ -78,7 +81,10 @@ export class PrivySvmWalletProvider extends SvmWalletProvider {
   public static async configureWithWallet<T extends PrivySvmWalletProvider>(
     config: PrivySvmWalletConfig,
   ): Promise<T> {
-    const { wallet, privy } = await createPrivyWallet(config);
+    const { wallet, privy } = await createPrivyWallet({
+      ...config,
+      chainType: "solana",
+    });
 
     const connection =
       config.connection ??
@@ -119,7 +125,7 @@ export class PrivySvmWalletProvider extends SvmWalletProvider {
     try {
       const { hash } = await this.#privyClient.walletApi.solana.signAndSendTransaction({
         walletId: this.#walletId,
-        caip2: `solana:${this.#genesisHash.substring(0, 32)}`,
+        caip2: `solana:${this.#genesisHash.substring(0, 32)}` as SolanaCaip2ChainId,
         transaction,
       });
 
@@ -244,5 +250,24 @@ export class PrivySvmWalletProvider extends SvmWalletProvider {
    */
   getPublicKey(): PublicKey {
     return new PublicKey(this.#address);
+  }
+
+  /**
+   * Sign a message.
+   *
+   * @param _ - The message to sign as a Uint8Array (unused)
+   * @returns Never - throws an error as message signing is not supported yet
+   */
+  async signMessage(_: Uint8Array): Promise<Uint8Array> {
+    throw new Error("Message signing is not supported yet for PrivySvmWalletProvider");
+  }
+
+  /**
+   * Get the keypair signer for this wallet.
+   *
+   * @returns The KeyPairSigner
+   */
+  async getKeyPairSigner(): Promise<KeyPairSigner> {
+    throw new Error("getKeyPairSigner is not supported for PrivySvmWalletProvider");
   }
 }

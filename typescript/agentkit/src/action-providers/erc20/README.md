@@ -11,6 +11,7 @@ erc20/
 ├── constants.ts                   # Constants for ERC20 provider
 ├── schemas.ts                     # Token action schemas
 ├── index.ts                       # Main exports
+├── utils.ts                       # Utility functions
 └── README.md                      # This file
 ```
 
@@ -25,6 +26,25 @@ erc20/
 
   - Constructs and sends the transfer transaction
   - Returns the **transaction hash** upon success
+
+- `approve`: Approve a spender to transfer ERC20 tokens
+
+  - Allows a spender address to transfer tokens on behalf of the wallet
+  - Takes amount, token address, and spender address as inputs
+  - Returns the **transaction hash** upon success
+  - Can be used to revoke allowances by setting amount to 0
+
+- `get_allowance`: Check the allowance for a spender of an ERC20 token
+
+  - Returns the current **allowance** amount for a spender
+  - Takes token address and spender address as inputs
+  - Formats the allowance with the correct number of decimals
+
+- `get_erc20_token_address`: Get the contract address for a token symbol
+
+  - Takes a token symbol (e.g. USDC, EURC, CBBTC) as input
+  - Returns the **contract address** for the token on the current network
+  - Provides available token symbols if the requested symbol is not found
 
 ## Adding New Actions
 

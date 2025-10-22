@@ -94,14 +94,9 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{
       splActionProvider(),
       jupiterActionProvider(),
     ];
-    const canUseCdpApi = process.env.CDP_API_KEY_NAME && process.env.CDP_API_KEY_PRIVATE_KEY;
+    const canUseCdpApi = process.env.CDP_API_KEY_ID && process.env.CDP_API_KEY_SECRET;
     if (canUseCdpApi) {
-      actionProviders.push(
-        cdpApiActionProvider({
-          apiKeyName: process.env.CDP_API_KEY_NAME,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
-        }),
-      );
+      actionProviders.push(cdpApiActionProvider());
     }
     const agentkit = await AgentKit.from({
       walletProvider,

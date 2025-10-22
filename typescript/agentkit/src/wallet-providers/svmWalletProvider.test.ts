@@ -87,4 +87,22 @@ describe("SvmWalletProvider", () => {
     expect(getConnectionDescriptor).toBeDefined();
     expect(typeof getConnectionDescriptor!.value).toBe("function");
   });
+
+  it("should have toSigner method", () => {
+    const toSignerDescriptor = Object.getOwnPropertyDescriptor(
+      SvmWalletProvider.prototype,
+      "toSigner",
+    );
+    expect(toSignerDescriptor).toBeDefined();
+    expect(typeof toSignerDescriptor!.value).toBe("function");
+  });
+
+  it("should have isKeyPairSigner method", () => {
+    const isKeyPairSignerDescriptor = Object.getOwnPropertyDescriptor(
+      SvmWalletProvider.prototype,
+      "isKeyPairSigner",
+    );
+    expect(isKeyPairSignerDescriptor).toBeDefined();
+    expect(typeof isKeyPairSignerDescriptor!.value).toBe("function");
+  });
 });

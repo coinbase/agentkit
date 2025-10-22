@@ -69,7 +69,7 @@ export abstract class WalletProvider {
    * Transfer the native asset of the network.
    *
    * @param to - The destination address.
-   * @param value - The amount to transfer in whole units (e.g. ETH)
+   * @param value - The amount to transfer in atomic units (e.g. Wei for EVM, Lamports for Solana)
    * @returns The transaction hash.
    */
   abstract nativeTransfer(to: string, value: string): Promise<string>;

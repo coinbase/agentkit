@@ -9,10 +9,11 @@ import {
   PublicClient as ViemPublicClient,
   ReadContractParameters,
   ReadContractReturnType,
-  parseEther,
   Abi,
   ContractFunctionName,
   ContractFunctionArgs,
+  isHex,
+  toHex,
 } from "viem";
 import { EvmWalletProvider } from "./evmWalletProvider";
 import { Network } from "../network";
@@ -32,6 +33,11 @@ export interface ViemWalletProviderGasConfig {
    * An internal multiplier on fee per gas estimation.
    */
   feePerGasMultiplier?: number;
+
+  /**
+   * Optional RPC URL override for Viem public client.
+   */
+  rpcUrl?: string;
 }
 
 /**
@@ -53,12 +59,32 @@ export class ViemWalletProvider extends EvmWalletProvider {
     super();
 
     this.#walletClient = walletClient;
+    const rpcUrl = gasConfig?.rpcUrl || process.env.RPC_URL;
     this.#publicClient = createPublicClient({
       chain: walletClient.chain,
-      transport: http(),
+      transport: rpcUrl ? http(rpcUrl) : http(),
     });
     this.#gasLimitMultiplier = Math.max(gasConfig?.gasLimitMultiplier ?? 1.2, 1);
     this.#feePerGasMultiplier = Math.max(gasConfig?.feePerGasMultiplier ?? 1, 1);
+  }
+
+  /**
+   * Signs a raw hash.
+   *
+   * @param hash - The hash to sign.
+   * @returns The signed hash.
+   */
+  async sign(hash: `0x${string}`): Promise<`0x${string}`> {
+    const account = this.#walletClient.account;
+    if (!account) {
+      throw new Error("Account not found");
+    }
+
+    if (!account.sign) {
+      throw new Error("Account does not support raw hash signing");
+    }
+
+    return account.sign({ hash });
   }
 
   /**
@@ -67,13 +93,19 @@ export class ViemWalletProvider extends EvmWalletProvider {
    * @param message - The message to sign.
    * @returns The signed message.
    */
-  async signMessage(message: string): Promise<`0x${string}`> {
+  async signMessage(message: string | Uint8Array): Promise<`0x${string}`> {
     const account = this.#walletClient.account;
     if (!account) {
       throw new Error("Account not found");
     }
 
-    return this.#walletClient.signMessage({ account, message });
+    const _message =
+      typeof message === "string" ? (isHex(message) ? message : toHex(message)) : message;
+
+    return this.#walletClient.signMessage({
+      account,
+      message: { raw: _message },
+    });
   }
 
   /**
@@ -188,6 +220,15 @@ export class ViemWalletProvider extends EvmWalletProvider {
   }
 
   /**
+   * Gets the Viem PublicClient used for read-only operations.
+   *
+   * @returns The Viem PublicClient instance used for read-only operations.
+   */
+  getPublicClient(): ViemPublicClient {
+    return this.#publicClient;
+  }
+
+  /**
    * Gets the balance of the wallet.
    *
    * @returns The balance of the wallet.
@@ -231,11 +272,11 @@ export class ViemWalletProvider extends EvmWalletProvider {
    * Transfer the native asset of the network.
    *
    * @param to - The destination address.
-   * @param value - The amount to transfer in whole units (e.g. ETH)
+   * @param value - The amount to transfer in atomic units (Wei)
    * @returns The transaction hash.
    */
   async nativeTransfer(to: `0x${string}`, value: string): Promise<`0x${string}`> {
-    const atomicAmount = parseEther(value);
+    const atomicAmount = BigInt(value);
 
     const tx = await this.sendTransaction({
       to: to,

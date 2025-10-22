@@ -1,11 +1,10 @@
-import { SvmWalletProvider } from "./svmWalletProvider";
+import { SvmWalletProvider, createSignerFromBytes } from "./svmWalletProvider";
 import { Network } from "../network";
 import {
   Connection,
   Keypair,
   PublicKey,
   VersionedTransaction,
-  LAMPORTS_PER_SOL,
   SystemProgram,
   MessageV0,
   ComputeBudgetProgram,
@@ -27,6 +26,7 @@ import {
   SOLANA_TESTNET_GENESIS_BLOCK_HASH,
   SOLANA_TESTNET_NETWORK_ID,
 } from "../network/svm";
+import { KeyPairSigner } from "@solana/kit";
 
 /**
  * SolanaKeypairWalletProvider is a wallet provider that uses a local Solana keypair.
@@ -277,20 +277,19 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
    * Transfer SOL from the wallet to another address
    *
    * @param to - The base58 encoded address to transfer the SOL to
-   * @param value - The amount of SOL to transfer (as a decimal string, e.g. "0.0001")
+   * @param value - The amount to transfer in atomic units (Lamports)
    * @returns The signature
    */
   async nativeTransfer(to: string, value: string): Promise<string> {
     const initialBalance = await this.getBalance();
-    const solAmount = parseFloat(value);
-    const lamports = BigInt(Math.floor(solAmount * LAMPORTS_PER_SOL));
+    const lamports = BigInt(value);
 
     // Check if we have enough balance (including estimated fees)
     if (initialBalance < lamports + BigInt(5000)) {
       throw new Error(
-        `Insufficient balance. Have ${Number(initialBalance) / LAMPORTS_PER_SOL} SOL, need ${
-          solAmount + 0.000005
-        } SOL (including fees)`,
+        `Insufficient balance. Have ${Number(initialBalance)} lamports, need ${
+          Number(lamports) + 5000
+        } lamports (including fees)`,
       );
     }
 
@@ -325,6 +324,16 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
   }
 
   /**
+   * Sign a message.
+   *
+   * @param _ - The message to sign as a Uint8Array (unused)
+   * @returns Never - throws an error as message signing is not supported yet
+   */
+  async signMessage(_: Uint8Array): Promise<Uint8Array> {
+    throw new Error("Message signing is not supported yet for SolanaKeypairWalletProvider");
+  }
+
+  /**
    * Request SOL tokens from the Solana faucet. This method only works on devnet and testnet networks.
    *
    * @param lamports - The amount of lamports (1 SOL = 1,000,000,000 lamports) to request from the faucet
@@ -332,5 +341,14 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
    */
   async requestAirdrop(lamports: number): Promise<string> {
     return await this.#connection.requestAirdrop(this.#keypair.publicKey, lamports);
+  }
+
+  /**
+   * Get the keypair signer for this wallet.
+   *
+   * @returns The KeyPairSigner
+   */
+  async getKeyPairSigner(): Promise<KeyPairSigner> {
+    return createSignerFromBytes(this.#keypair.secretKey);
   }
 }

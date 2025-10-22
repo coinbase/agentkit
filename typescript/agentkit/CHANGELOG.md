@@ -1,5 +1,145 @@
 # AgentKit Changelog
 
+## 0.10.3
+
+### Patch Changes
+
+- [#853](https://github.com/coinbase/agentkit/pull/853) [`2fd229f`](https://github.com/coinbase/agentkit/commit/2fd229f7262de7493f93ed261c68d4316a66f33d) Thanks [@phdargen](https://github.com/phdargen)! - Added erc20 approval actions
+
+- [#859](https://github.com/coinbase/agentkit/pull/859) [`d153427`](https://github.com/coinbase/agentkit/commit/d153427838bf07c71d0b466ed24a810c0ebd4926) Thanks [@phdargen](https://github.com/phdargen)! - Fixed units and removed min amount in WETH action
+
+- [#852](https://github.com/coinbase/agentkit/pull/852) [`34d8217`](https://github.com/coinbase/agentkit/commit/34d82179f50609e47115269298a6abba0735104b) Thanks [@phdargen](https://github.com/phdargen)! - Added svm support for x402 action
+
+- [#741](https://github.com/coinbase/agentkit/pull/741) [`3fdd28a`](https://github.com/coinbase/agentkit/commit/3fdd28ac09ec43e0b5cc58e6eb59c069f02e8fca) Thanks [@Traf333](https://github.com/Traf333)! - Added YelayLite action provider
+
+- [#160](https://github.com/coinbase/agentkit/pull/160) [`78e00a8`](https://github.com/coinbase/agentkit/commit/78e00a8566fcbf7fd53c87f1c01c0746465d68fd) Thanks [@Brenzee](https://github.com/Brenzee)! - Added a new action provider to interact with Enso API
+
+- [#858](https://github.com/coinbase/agentkit/pull/858) [`043ef19`](https://github.com/coinbase/agentkit/commit/043ef19261d3f13b6c010f416cceef43f864e8ea) Thanks [@phdargen](https://github.com/phdargen)! - Fixed issue in retrieving tx logs in CdpSmartWalletProvider
+
+- [#854](https://github.com/coinbase/agentkit/pull/854) [`61d1fb9`](https://github.com/coinbase/agentkit/commit/61d1fb96999827a449e9ff5961020747f37fc446) Thanks [@phdargen](https://github.com/phdargen)! - Made the cdp v2 faucet available to all wallet providers
+
+## 0.10.2
+
+### Patch Changes
+
+- [#831](https://github.com/coinbase/agentkit/pull/831) [`946994e`](https://github.com/coinbase/agentkit/commit/946994ee0338d2f6152970e0c15176fdae93030e) Thanks [@murrlincoln](https://github.com/murrlincoln)! - fixed ETH price feed in PythActionProvider
+
+- [#841](https://github.com/coinbase/agentkit/pull/841) [`3fce4b3`](https://github.com/coinbase/agentkit/commit/3fce4b3f4da2ea0f133d29c980107083a8f7551c) Thanks [@phdargen](https://github.com/phdargen)! - Fixed image upload for flaunch action; Added support for fee splitter to flaunch action; Added tx logs to CdpSmartWalletProvider; Simplified gas estimation for CdpEvmWalletProvider
+
+- [#845](https://github.com/coinbase/agentkit/pull/845) [`a637444`](https://github.com/coinbase/agentkit/commit/a6374443a38ab361870bb2b3a1871e6f1b33a77b) Thanks [@phdargen](https://github.com/phdargen)! - Fixed Pyth price feed selection and added equity/fx/metal feeds
+
+- [#846](https://github.com/coinbase/agentkit/pull/846) [`d34a4cb`](https://github.com/coinbase/agentkit/commit/d34a4cb5c8bbc61e3d498637c9171120b5ff3d33) Thanks [@phdargen](https://github.com/phdargen)! - Added action to discover x402 services and fixed x402 request for smart wallets
+
+- [#388](https://github.com/coinbase/agentkit/pull/388) [`6a53dd5`](https://github.com/coinbase/agentkit/commit/6a53dd593351d8f61f53592c344a3287ffb5eaec) Thanks [@azf20](https://github.com/azf20)! - Allowed passing of a "hex" or bytes to "signMessage" for Viem & Viem-derived Wallet Providers
+
+- [#842](https://github.com/coinbase/agentkit/pull/842) [`0ec2f71`](https://github.com/coinbase/agentkit/commit/0ec2f713fe888ff71685deffa96b847be48c264e) Thanks [@phdargen](https://github.com/phdargen)! - Added base account action provider to list/use/revoke spending permissions
+
+## 0.10.1
+
+### Patch Changes
+
+- [#824](https://github.com/coinbase/agentkit/pull/824) [`6442bdd`](https://github.com/coinbase/agentkit/commit/6442bdd72c8fc67b854a62fefaf17552549e38e7) Thanks [@phdargen](https://github.com/phdargen)! - Added getPublicClient() for EvmWalletProviders and custom RPC_URL
+
+- [#836](https://github.com/coinbase/agentkit/pull/836) [`02205c8`](https://github.com/coinbase/agentkit/commit/02205c8d17a391d6cfc452774a9742ecf53456af) Thanks [@phdargen](https://github.com/phdargen)! - Refactored getCdpSdkNetwork
+
+- [#835](https://github.com/coinbase/agentkit/pull/835) [`5e133ea`](https://github.com/coinbase/agentkit/commit/5e133eac9e42b991b715a05fdd6f49be1ffc1c3e) Thanks [@phdargen](https://github.com/phdargen)! - Fixed unit issues in balance/transfer actions; Added new action to get frequently used token addresses by symbol
+
+- [#817](https://github.com/coinbase/agentkit/pull/817) [`406f994`](https://github.com/coinbase/agentkit/commit/406f994d3ceec5f3f2092285d1c155b249581137) Thanks [@phdargen](https://github.com/phdargen)! - Fixed bugs in the CDP swap action
+
+- [#833](https://github.com/coinbase/agentkit/pull/833) [`510dc2a`](https://github.com/coinbase/agentkit/commit/510dc2a8fd062af17af6b03dc9a73f987524d165) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Expanded network support for CDP wallet providers
+
+- [#823](https://github.com/coinbase/agentkit/pull/823) [`4d0e5d1`](https://github.com/coinbase/agentkit/commit/4d0e5d199369a163e4c79cad3dcef175a8360d3a) Thanks [@gtspencer](https://github.com/gtspencer)! - Added superfluid action support to typescript agent
+
+- [#825](https://github.com/coinbase/agentkit/pull/825) [`c55cefa`](https://github.com/coinbase/agentkit/commit/c55cefad19e640a848579d01b40bc9e340de5e0b) Thanks [@gtspencer](https://github.com/gtspencer)! - Added Clanker typescript action support
+
+- [#681](https://github.com/coinbase/agentkit/pull/681) [`88f6177`](https://github.com/coinbase/agentkit/commit/88f6177d84ddd587c0aec3cf66f0a76ee537dd2a) Thanks [@phdargen](https://github.com/phdargen)! - Added ZeroX Action Provider to enable token swaps using the 0x Protocol API
+
+## 0.10.0
+
+### Minor Changes
+
+- [#818](https://github.com/coinbase/agentkit/pull/818) [`bc3d1d5`](https://github.com/coinbase/agentkit/commit/bc3d1d5f03f81f1438f31b983797de9696639994) Thanks [@0xRAG](https://github.com/0xRAG)! - Added ListSpendPermissions and UseSpendPermission actions to new CdpEvmWalletActionProvider and CdpSmartWalletActionProvider
+
+### Patch Changes
+
+- [#816](https://github.com/coinbase/agentkit/pull/816) [`1b1db57`](https://github.com/coinbase/agentkit/commit/1b1db57f9815ab25a658adfcf542037751a38144) Thanks [@pcminh0505](https://github.com/pcminh0505)! - Added Zerion API for portfolio and DeFi positions
+
+- [#814](https://github.com/coinbase/agentkit/pull/814) [`3211ad0`](https://github.com/coinbase/agentkit/commit/3211ad06a87f0ab3bb1a49f415cfda0b3f8b2db4) Thanks [@phdargen](https://github.com/phdargen)! - Added paymaster capability to CdpSmartWallet
+
+## 0.9.1
+
+### Patch Changes
+
+- [#614](https://github.com/coinbase/agentkit/pull/614) [`0633cce`](https://github.com/coinbase/agentkit/commit/0633cce4b5d5ee5c9bc56bf36eff90f2403007b3) Thanks [@phdargen](https://github.com/phdargen)! - Added TrueMarketsActionProvider for retrieving prediction market info
+
+- [#675](https://github.com/coinbase/agentkit/pull/675) [`ff02c51`](https://github.com/coinbase/agentkit/commit/ff02c51c91bb3b27133c97004ad1eec2bd4a4cbf) Thanks [@phdargen](https://github.com/phdargen)! - Added media upload support for TwitterActionProvider and embeds support for FarcasterActionProvider
+
+- [#704](https://github.com/coinbase/agentkit/pull/704) [`84c2d98`](https://github.com/coinbase/agentkit/commit/84c2d98d63cadbd89c317e54ebcdb001c694c8de) Thanks [@phdargen](https://github.com/phdargen)! - Added ZoraActionProvider for creating Zora coins
+
+- [#796](https://github.com/coinbase/agentkit/pull/796) [`73ea2e0`](https://github.com/coinbase/agentkit/commit/73ea2e07c9ef1bdc419e47cc69f0f23bafa91339) Thanks [@ya7ya](https://github.com/ya7ya)! - Added unwrap_eth action to the WethActionProvider
+
+## 0.9.0
+
+### Minor Changes
+
+- [#773](https://github.com/coinbase/agentkit/pull/773) [`463d310`](https://github.com/coinbase/agentkit/commit/463d3101147cacb0f2044162dd007489f97ef0a0) Thanks [@0xRAG](https://github.com/0xRAG)! - Upgraded cdp-sdk to latest, added CdpSmartWalletProvider, added CdpSolanaWalletProvider, and renamed the v1 CDP wallet providers/action providers to be prefixed with "Legacy"
+
+- [#785](https://github.com/coinbase/agentkit/pull/785) [`2d13565`](https://github.com/coinbase/agentkit/commit/2d13565d91e64a13d3ecb8c300d8c0cd973d3fae) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Upgraded x402ActionProvider
+
+## 0.8.2
+
+### Patch Changes
+
+- [#753](https://github.com/coinbase/agentkit/pull/753) [`ff04ce9`](https://github.com/coinbase/agentkit/commit/ff04ce9dd8f6de48692560bd84b430c45576925e) Thanks [@phdargen](https://github.com/phdargen)! - Added a new action provider to call x402 protected api
+
+- [#700](https://github.com/coinbase/agentkit/pull/700) [`913beb0`](https://github.com/coinbase/agentkit/commit/913beb06541224b41d5a923474470ec9fee7de76) Thanks [@pawelpolak2](https://github.com/pawelpolak2)! - Improve the vaults.fyi provider
+
+## 0.8.1
+
+### Patch Changes
+
+- [#751](https://github.com/coinbase/agentkit/pull/751) [`97408c1`](https://github.com/coinbase/agentkit/commit/97408c1976995a8abff124cbc8baead3209da0b2) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Fixed an indirect dependency issue
+
+## 0.8.0
+
+### Minor Changes
+
+- [#732](https://github.com/coinbase/agentkit/pull/732) [`cd044db`](https://github.com/coinbase/agentkit/commit/cd044db7ae35140726c35ba82429b0f0885ccb60) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Renamed CDP env vars to modern naming convention
+
+## 0.7.2
+
+### Patch Changes
+
+- [#716](https://github.com/coinbase/agentkit/pull/716) [`30dc6bd`](https://github.com/coinbase/agentkit/commit/30dc6bdca68cb567f91123c21c1fe3a5774d4f6b) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Fixed CdpV2EvmWalletProvider sendTransaction to use EIP1559 transactions
+
+## 0.7.1
+
+### Patch Changes
+
+- [#610](https://github.com/coinbase/agentkit/pull/610) [`beb34c9`](https://github.com/coinbase/agentkit/commit/beb34c9a300c66ddb03c303685a322dc45e74a13) Thanks [@nowak-token](https://github.com/nowak-token)! - Fixed ReferenceError when initializing TwitterActionProvider by implementing lazy initialization pattern with proper null checks
+
+## 0.7.0
+
+### Minor Changes
+
+- [#665](https://github.com/coinbase/agentkit/pull/665) [`bfed1a0`](https://github.com/coinbase/agentkit/commit/bfed1a07a0c5443297af20fa566723fa20e8a00f) Thanks [@jstinhw](https://github.com/jstinhw)! - Added ZeroDevWalletProvider powered by ZeroDev smart account
+
+  This change introduced a new wallet provider, `ZeroDevWalletProvider` which allows AgentKit to use ZeroDev's chain-abstracted smart account with any EvmWalletProvider like cdpWalletProvider or privyEvmWalletProvider as the signer.
+
+- [#678](https://github.com/coinbase/agentkit/pull/678) [`f6b464a`](https://github.com/coinbase/agentkit/commit/f6b464a62f3593957648c2d2f5bdfbca292a1f68) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Added CdpV2EvmWalletProvider, CdpV2SolanaWalletProvider, and a unified CdpV2WalletProvider entrypoint
+
+## 0.6.2
+
+### Patch Changes
+
+- [#645](https://github.com/coinbase/agentkit/pull/645) [`8fdb847`](https://github.com/coinbase/agentkit/commit/8fdb847c32cc90b1500d3883cc2f68b97b90ba86) Thanks [@pawelpolak2](https://github.com/pawelpolak2)! - Add vaults.fyi provider
+
+## 0.6.1
+
+### Patch Changes
+
+- [#656](https://github.com/coinbase/agentkit/pull/656) [`8465c35`](https://github.com/coinbase/agentkit/commit/8465c355a648601e2de8ea858d3571922eb3ec52) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Fixed Privy dependency on @privy-io/public-api
+
 ## 0.6.0
 
 ### Minor Changes
@@ -100,7 +240,7 @@
 - Added `privyWalletProvider` to use a Privy server wallet for agent actions.
 - Added gas configuration parameters (`gasLimitMultiplier`, `feePerGasMultiplier`) to `CdpWalletProvider` and `ViemWalletProvider`.
 - Added Solana chatbot example.
-- Added Privy EVM chatbot exmaple.
+- Added Privy EVM chatbot example.
 
 ## [0.1.2] - 2025-02-07
 

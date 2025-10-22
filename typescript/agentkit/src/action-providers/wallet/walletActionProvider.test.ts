@@ -1,6 +1,7 @@
 import { WalletProvider } from "../../wallet-providers";
 import { walletActionProvider } from "./walletActionProvider";
 import { NativeTransferSchema } from "./schemas";
+import { formatUnits, parseUnits } from "viem";
 
 describe("Wallet Action Provider", () => {
   const MOCK_ADDRESS = "0xe6b2af36b3bb8d47206a129ff11d5a2de2a63c83";
@@ -52,6 +53,7 @@ describe("Wallet Action Provider", () => {
         `  * Network ID: ${MOCK_EVM_NETWORK.networkId}`,
         `  * Chain ID: ${MOCK_EVM_NETWORK.chainId}`,
         `- Native Balance: ${MOCK_ETH_BALANCE.toString()} WEI`,
+        `- Native Balance: ${formatUnits(MOCK_ETH_BALANCE, 18)} ETH`,
       ].join("\n");
 
       expect(response).toBe(expectedResponse);
@@ -72,6 +74,7 @@ describe("Wallet Action Provider", () => {
         `  * Network ID: ${MOCK_SOLANA_NETWORK.networkId}`,
         `  * Chain ID: N/A`,
         `- Native Balance: ${MOCK_SOL_BALANCE.toString()} LAMPORTS`,
+        `- Native Balance: ${formatUnits(MOCK_SOL_BALANCE, 9)} SOL`,
       ].join("\n");
 
       expect(response).toBe(expectedResponse);
@@ -91,6 +94,7 @@ describe("Wallet Action Provider", () => {
         `  * Protocol Family: ${MOCK_UNKNOWN_NETWORK.protocolFamily}`,
         `  * Network ID: ${MOCK_UNKNOWN_NETWORK.networkId}`,
         `  * Chain ID: N/A`,
+        `- Native Balance: ${MOCK_ETH_BALANCE.toString()} `,
         `- Native Balance: ${MOCK_ETH_BALANCE.toString()} `,
       ].join("\n");
 
@@ -153,7 +157,10 @@ describe("Wallet Action Provider", () => {
 
       const response = await actionProvider.nativeTransfer(mockWallet, args);
 
-      expect(mockWallet.nativeTransfer).toHaveBeenCalledWith(MOCK_DESTINATION, MOCK_AMOUNT);
+      expect(mockWallet.nativeTransfer).toHaveBeenCalledWith(
+        MOCK_DESTINATION,
+        parseUnits(MOCK_AMOUNT, 18).toString(),
+      );
       expect(response).toBe(
         `Transferred ${MOCK_AMOUNT} ETH to ${MOCK_DESTINATION}\nTransaction hash: ${MOCK_TRANSACTION_HASH}`,
       );
@@ -169,7 +176,10 @@ describe("Wallet Action Provider", () => {
 
       const response = await actionProvider.nativeTransfer(mockWallet, args);
 
-      expect(mockWallet.nativeTransfer).toHaveBeenCalledWith(MOCK_DESTINATION, MOCK_AMOUNT);
+      expect(mockWallet.nativeTransfer).toHaveBeenCalledWith(
+        MOCK_DESTINATION,
+        parseUnits(MOCK_AMOUNT, 9).toString(),
+      );
       expect(response).toBe(
         `Transferred ${MOCK_AMOUNT} SOL to ${MOCK_DESTINATION}\nSignature: ${MOCK_SIGNATURE}`,
       );

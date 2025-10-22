@@ -3,7 +3,7 @@ import {
   AgentKit,
   cdpApiActionProvider,
   erc20ActionProvider,
-  PrivyWalletConfig,
+  PrivyEvmWalletConfig,
   PrivyWalletProvider,
   pythActionProvider,
   walletActionProvider,
@@ -58,9 +58,15 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{
   agentkit: AgentKit;
   walletProvider: WalletProvider;
 }> {
+  if (!process.env.PRIVY_APP_ID || !process.env.PRIVY_APP_SECRET) {
+    throw new Error(
+      "I need both PRIVY_APP_ID and PRIVY_APP_SECRET in your .env file to set up your wallet.",
+    );
+  }
+
   try {
     // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
-    const config: PrivyWalletConfig = {
+    const config: PrivyEvmWalletConfig = {
       appId: process.env.PRIVY_APP_ID as string,
       appSecret: process.env.PRIVY_APP_SECRET as string,
       walletId: process.env.PRIVY_WALLET_ID as string,
@@ -92,14 +98,9 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{
       walletActionProvider(),
       erc20ActionProvider(),
     ];
-    const canUseCdpApi = process.env.CDP_API_KEY_NAME && process.env.CDP_API_KEY_PRIVATE_KEY;
+    const canUseCdpApi = process.env.CDP_API_KEY_ID && process.env.CDP_API_KEY_SECRET;
     if (canUseCdpApi) {
-      actionProviders.push(
-        cdpApiActionProvider({
-          apiKeyName: process.env.CDP_API_KEY_NAME,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
-        }),
-      );
+      actionProviders.push(cdpApiActionProvider());
     }
     const agentkit = await AgentKit.from({
       walletProvider,

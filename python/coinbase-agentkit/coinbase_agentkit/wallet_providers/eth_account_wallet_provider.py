@@ -1,12 +1,13 @@
 """Eth account wallet provider."""
 
+import os
 from decimal import Decimal
 from typing import Any
 
 from eth_account.account import LocalAccount
 from eth_account.datastructures import SignedTransaction
 from eth_account.messages import encode_defunct
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from web3 import Web3
 from web3.middleware import SignAndSendRawMiddlewareBuilder
 from web3.types import BlockIdentifier, ChecksumAddress, HexStr, TxParams
@@ -23,10 +24,7 @@ class EthAccountWalletProviderConfig(BaseModel):
     gas: EvmGasConfig | None = Field(None, description="Gas configuration settings")
     rpc_url: str | None = Field(None, description="Optional RPC URL to override default chain RPC")
 
-    class Config:
-        """Configuration for EthAccountWalletProvider."""
-
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class EthAccountWalletProvider(EvmWalletProvider):
@@ -42,13 +40,9 @@ class EthAccountWalletProvider(EvmWalletProvider):
         self.config = config
         self.account = config.account
 
-        network_id = ""
-        rpc_url = config.rpc_url
-
-        if rpc_url is None:
-            chain = NETWORK_ID_TO_CHAIN[CHAIN_ID_TO_NETWORK_ID[config.chain_id]]
-            network_id = CHAIN_ID_TO_NETWORK_ID[config.chain_id]
-            rpc_url = chain.rpc_urls["default"].http[0]
+        chain = NETWORK_ID_TO_CHAIN[CHAIN_ID_TO_NETWORK_ID[config.chain_id]]
+        network_id = CHAIN_ID_TO_NETWORK_ID[config.chain_id]
+        rpc_url = config.rpc_url or os.getenv("RPC_URL") or chain.rpc_urls["default"].http[0]
 
         self.web3 = Web3(Web3.HTTPProvider(rpc_url))
         self.web3.middleware_onion.inject(

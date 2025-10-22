@@ -6,6 +6,7 @@ import { CreateAction } from "../actionDecorator";
 import { SwapTokenSchema } from "./schemas";
 import { PublicKey, VersionedTransaction } from "@solana/web3.js";
 import { createJupiterApiClient, SwapRequest } from "@jup-ag/api";
+import { getMint } from "@solana/spl-token";
 
 /**
  * JupiterActionProvider handles token swaps using Jupiter's API.
@@ -45,8 +46,6 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
       const userPublicKey = walletProvider.getPublicKey();
       const inputMint = new PublicKey(args.inputMint);
       const outputMint = new PublicKey(args.outputMint);
-
-      const { getMint } = await import("@solana/spl-token");
 
       let mintInfo: Awaited<ReturnType<typeof getMint>>;
       try {

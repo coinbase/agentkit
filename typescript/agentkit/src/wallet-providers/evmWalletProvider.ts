@@ -1,6 +1,7 @@
 // TODO: Improve type safety
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { toAccount } from "viem/accounts";
 import { WalletProvider } from "./walletProvider";
 import {
   TransactionRequest,
@@ -9,6 +10,9 @@ import {
   ContractFunctionName,
   Abi,
   ContractFunctionArgs,
+  Address,
+  PublicClient,
+  LocalAccount,
 } from "viem";
 
 /**
@@ -17,6 +21,38 @@ import {
  * @abstract
  */
 export abstract class EvmWalletProvider extends WalletProvider {
+  /**
+   * Convert the wallet provider to a Signer.
+   *
+   * @returns The signer.
+   */
+  toSigner(): LocalAccount {
+    return toAccount({
+      type: "local",
+      address: this.getAddress() as Address,
+      sign: async ({ hash }) => {
+        return this.sign(hash as `0x${string}`);
+      },
+      signMessage: async ({ message }) => {
+        return this.signMessage(message as string | Uint8Array);
+      },
+      signTransaction: async transaction => {
+        return this.signTransaction(transaction as TransactionRequest);
+      },
+      signTypedData: async typedData => {
+        return this.signTypedData(typedData);
+      },
+    });
+  }
+
+  /**
+   * Sign a raw hash.
+   *
+   * @param hash - The hash to sign.
+   * @returns The signed hash.
+   */
+  abstract sign(hash: `0x${string}`): Promise<`0x${string}`>;
+
   /**
    * Sign a message.
    *
@@ -70,4 +106,9 @@ export abstract class EvmWalletProvider extends WalletProvider {
   >(
     params: ReadContractParameters<abi, functionName, args>,
   ): Promise<ReadContractReturnType<abi, functionName, args>>;
+
+  /**
+   * Get the underlying Viem PublicClient for read-only blockchain operations.
+   */
+  abstract getPublicClient(): PublicClient;
 }

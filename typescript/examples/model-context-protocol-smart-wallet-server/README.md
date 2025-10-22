@@ -36,8 +36,8 @@ You'll need to configure the Claude desktop config file with your CDP API keys. 
 
 1. Update the `args` path to match the location of your built index.js file
 2. Set your CDP API keys in the `env` section:
-   - "CDP_API_KEY_NAME"
-   - "CDP_API_KEY_PRIVATE_KEY"
+   - "CDP_API_KEY_ID"
+   - "CDP_API_KEY_SECRET"
    - "PRIVATE_KEY" (optional, will generate a new private key if not provided)
    - "SMART_WALLET_ADDRESS" (optional, will generate a new smart wallet address if not provided)
 

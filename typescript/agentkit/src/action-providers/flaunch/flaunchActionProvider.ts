@@ -1,12 +1,3 @@
-/**
- * Flaunch Action Provider
- *
- * This file contains the implementation of the FlaunchActionProvider,
- * which provides actions for flaunch operations.
- *
- * @module flaunch
- */
-
 import { z } from "zod";
 import { ActionProvider } from "../actionProvider";
 import { Network, NETWORK_ID_TO_VIEM_CHAIN } from "../../network";
@@ -14,15 +5,15 @@ import { CreateAction } from "../actionDecorator";
 import { EvmWalletProvider } from "../../wallet-providers";
 import {
   encodeFunctionData,
-  decodeEventLog,
   parseEther,
-  createPublicClient,
-  http,
   zeroAddress,
   Address,
   formatEther,
   maxUint160,
   Hex,
+  zeroHash,
+  parseUnits,
+  encodeAbiParameters,
 } from "viem";
 import { base } from "viem/chains";
 import {
@@ -31,81 +22,56 @@ import {
   BuyCoinWithCoinInputSchema,
   SellCoinSchema,
 } from "./schemas";
+import { generateTokenUri } from "./metadata_utils";
+import { ethRequiredToFlaunch, getMemecoinAddressFromReceipt } from "./client_utils";
 import {
-  ethToMemecoin,
-  generateTokenUri,
   getAmountWithSlippage,
-  getSwapAmountsFromReceipt,
   memecoinToEthWithPermit2,
-} from "./utils";
+  getSwapAmountsFromReceipt,
+  buyFlaunchCoin,
+} from "./swap_utils";
 import {
-  FastFlaunchZapAddress,
-  FlaunchPositionManagerAddress,
+  FlaunchPositionManagerV1_1Address,
   FLETHHooksAddress,
   FLETHAddress,
   QuoterAddress,
   UniversalRouterAddress,
-  FAST_FLAUNCH_ZAP_ABI,
-  POSITION_MANAGER_ABI,
   QUOTER_ABI,
   UNIVERSAL_ROUTER_ABI,
   Permit2Address,
   PERMIT2_ABI,
   PERMIT_TYPES,
   ERC20_ABI,
+  FlaunchZapAddress,
+  FLAUNCH_ZAP_ABI,
+  AddressFeeSplitManagerAddress,
+  TOTAL_SUPPLY,
 } from "./constants";
-import { BuySwapAmounts, PermitSingle, SellSwapAmounts } from "./types";
+import { PermitSingle, SellSwapAmounts } from "./types";
 
 const SUPPORTED_NETWORKS = ["base-mainnet", "base-sepolia"];
-
-/**
- * Configuration options for the FarcasterActionProvider.
- */
-export interface FlaunchActionProviderConfig {
-  /**
-   * Pinata JWT.
-   */
-  pinataJwt?: string;
-}
 
 /**
  * FlaunchActionProvider provides actions for flaunch operations.
  *
  * @description
  * This provider is designed to work with EvmWalletProvider for blockchain interactions.
- * It supports all evm networks.
  */
 export class FlaunchActionProvider extends ActionProvider<EvmWalletProvider> {
-  private readonly pinataJwt: string;
-
   /**
    * Constructor for the FlaunchActionProvider.
    *
-   * @param config - The configuration options for the FlaunchActionProvider.
    */
-  constructor(config: FlaunchActionProviderConfig = {}) {
+  constructor() {
     super("flaunch", []);
-
-    const pinataJwt = config.pinataJwt || process.env.PINATA_JWT;
-
-    if (!pinataJwt) {
-      throw new Error("PINATA_JWT is not configured.");
-    }
-
-    this.pinataJwt = pinataJwt;
   }
 
   /**
-   * Example action implementation.
-   * Replace or modify this with your actual action.
-   *
-   * @description
-   * This is a template action that demonstrates the basic structure.
-   * Replace it with your actual implementation.
+   * Launches a new memecoin using the flaunch protocol.
    *
    * @param walletProvider - The wallet provider instance for blockchain interactions
    * @param args - Arguments defined by FlaunchSchema
-   * @returns A promise that resolves to a string describing the action result
+   * @returns A promise that resolves to a string describing the transaction result
    */
   @CreateAction({
     name: "flaunch",
@@ -115,16 +81,22 @@ This tool allows launching a new memecoin using the flaunch protocol.
 It takes:
 - name: The name of the token
 - symbol: The symbol of the token
-- imageUrl: URL to the token image
+- image: Local image file path or URL to the token image
 - description: Description of the token
-
-- websiteUrl: (optional) URL to the token website
-- discordUrl: (optional) URL to the token Discord
-- twitterUrl: (optional) URL to the token Twitter
-- telegramUrl: (optional) URL to the token Telegram
+- fairLaunchPercent: The percentage of tokens for fair launch (defaults to 60%)
+- fairLaunchDuration: The duration of the fair launch in minutes (defaults to 30 minutes)
+- initialMarketCapUSD: The initial market cap in USD (defaults to 10000 USD)
+- preminePercent: The percentage of total supply to premine (defaults to 0%, max is equal to fairLaunchPercent)
+- creatorFeeAllocationPercent: The percentage of fees allocated to creator and optional receivers (defaults to 80%)
+- creatorSplitPercent: The percentage of fees allocated to the creator (defaults to 100%), remainder goes to fee split recipients
+- splitReceivers: Array of fee split recipients with address and percentage (optional)
+- websiteUrl: URL to the token website (optional)
+- discordUrl: URL to the token Discord (optional)
+- twitterUrl: URL to the token Twitter (optional)
+- telegramUrl: URL to the token Telegram (optional)
 
 Note:
-- If the optional fields are not provided, don't include them in the call.
+- splitReceivers must add up to exactly 100% if provided.
     `,
     schema: FlaunchSchema,
   })
@@ -141,11 +113,44 @@ Note:
         throw new Error("Chain ID is not set.");
       }
 
-      // upload image & token uri to ipfs
-      const tokenUri = await generateTokenUri(args.name, {
-        pinataConfig: { jwt: this.pinataJwt },
+      // Validate that premineAmount does not exceed fairLaunchPercent
+      if (args.preminePercent > args.fairLaunchPercent) {
+        throw new Error(
+          `premineAmount (${args.preminePercent}%) cannot exceed fairLaunchPercent (${args.fairLaunchPercent}%)`,
+        );
+      }
+
+      // Prepare launch parameters
+      const initialMCapInUSDCWei = parseUnits(args.initialMarketCapUSD.toString(), 6);
+      const initialPriceParams = encodeAbiParameters([{ type: "uint256" }], [initialMCapInUSDCWei]);
+
+      const fairLaunchInBps = BigInt(args.fairLaunchPercent * 100);
+
+      // Convert premine percentage to token amount and calculate ETH required
+      const premineAmount = (TOTAL_SUPPLY * BigInt(Math.floor(args.preminePercent * 100))) / 10000n;
+      const ethRequired =
+        args.preminePercent > 0
+          ? await ethRequiredToFlaunch(walletProvider, {
+              premineAmount,
+              initialPriceParams,
+              slippagePercent: 5,
+            })
+          : 0n;
+
+      // Check ETH balance
+      if (ethRequired > 0n) {
+        const ethBalance = await walletProvider.getBalance();
+        if (ethBalance < ethRequired) {
+          throw new Error(
+            `Insufficient ETH balance. Required: ${formatEther(ethRequired)} ETH, Available: ${formatEther(ethBalance)} ETH`,
+          );
+        }
+      }
+
+      // Upload image & token uri to ipfs
+      const tokenUri = await generateTokenUri(args.name, args.symbol, {
         metadata: {
-          imageUrl: args.imageUrl,
+          image: args.image,
           description: args.description,
           websiteUrl: args.websiteUrl,
           discordUrl: args.discordUrl,
@@ -154,48 +159,109 @@ Note:
         },
       });
 
-      const data = encodeFunctionData({
-        abi: FAST_FLAUNCH_ZAP_ABI,
-        functionName: "flaunch",
-        args: [
+      // Fee split configuration
+      const creatorFeeAllocationInBps = args.creatorFeeAllocationPercent * 100;
+      let creatorShare = 10000000n;
+      let recipientShares: { recipient: Address; share: bigint }[] = [];
+      if (args.creatorSplitPercent !== undefined && args.splitReceivers !== undefined) {
+        const VALID_SHARE_TOTAL = 10000000n; // 5 decimals as BigInt, 100 * 10^5
+        creatorShare = (BigInt(args.creatorSplitPercent) * VALID_SHARE_TOTAL) / 100n;
+
+        recipientShares = args.splitReceivers.map(receiver => {
+          return {
+            recipient: receiver.address as Address,
+            share: (BigInt(receiver.percent) * VALID_SHARE_TOTAL) / 100n,
+          };
+        });
+
+        const totalRecipientShares = recipientShares.reduce((acc, curr) => acc + curr.share, 0n);
+        const totalRecipientPercent = (totalRecipientShares * 100n) / VALID_SHARE_TOTAL;
+
+        // Check that recipient shares add up to 100%
+        if (totalRecipientPercent !== 100n) {
+          throw new Error(
+            `Recipient shares must add up to exactly 100%, but they add up to ${totalRecipientPercent}%`,
+          );
+        }
+
+        const remainderShares = VALID_SHARE_TOTAL - totalRecipientShares;
+        creatorShare += remainderShares;
+      }
+
+      const initializeData = encodeAbiParameters(
+        [
           {
-            name: args.name,
-            symbol: args.symbol,
-            tokenUri,
-            creator: walletProvider.getAddress(),
+            type: "tuple",
+            name: "params",
+            components: [
+              { type: "uint256", name: "creatorShare" },
+              {
+                type: "tuple[]",
+                name: "recipientShares",
+                components: [
+                  { type: "address", name: "recipient" },
+                  { type: "uint256", name: "share" },
+                ],
+              },
+            ],
           },
         ],
+        [
+          {
+            creatorShare,
+            recipientShares,
+          },
+        ],
+      );
+
+      const flaunchParams = {
+        name: args.name,
+        symbol: args.symbol,
+        tokenUri,
+        initialTokenFairLaunch: (TOTAL_SUPPLY * fairLaunchInBps) / 10000n,
+        fairLaunchDuration: BigInt(args.fairLaunchDuration * 60),
+        premineAmount,
+        creator: walletProvider.getAddress() as Address,
+        creatorFeeAllocation: creatorFeeAllocationInBps,
+        flaunchAt: 0n,
+        initialPriceParams,
+        feeCalculatorParams: "0x" as Hex,
+      };
+
+      const treasuryManagerParams = {
+        manager: AddressFeeSplitManagerAddress[chainId],
+        initializeData,
+        depositData: "0x" as Hex,
+      };
+
+      const whitelistParams = {
+        merkleRoot: zeroHash,
+        merkleIPFSHash: "",
+        maxTokens: 0n,
+      };
+
+      const airdropParams = {
+        airdropIndex: 0n,
+        airdropAmount: 0n,
+        airdropEndTime: 0n,
+        merkleRoot: zeroHash,
+        merkleIPFSHash: "",
+      };
+
+      const data = encodeFunctionData({
+        abi: FLAUNCH_ZAP_ABI,
+        functionName: "flaunch",
+        args: [flaunchParams, whitelistParams, airdropParams, treasuryManagerParams],
       });
 
       const hash = await walletProvider.sendTransaction({
-        to: FastFlaunchZapAddress[chainId],
+        to: FlaunchZapAddress[chainId],
         data,
+        value: ethRequired,
       });
-
       const receipt = await walletProvider.waitForTransactionReceipt(hash);
 
-      const filteredPoolCreatedEvent = receipt.logs
-        .map(log => {
-          try {
-            if (
-              log.address.toLowerCase() !== FlaunchPositionManagerAddress[chainId].toLowerCase()
-            ) {
-              return null;
-            }
-
-            const event = decodeEventLog({
-              abi: POSITION_MANAGER_ABI,
-              data: log.data,
-              topics: log.topics,
-            });
-            return event.eventName === "PoolCreated" ? event.args : null;
-          } catch {
-            return null;
-          }
-        })
-        .filter((event): event is NonNullable<typeof event> => event !== null)[0];
-
-      const memecoinAddress = filteredPoolCreatedEvent._memecoin;
+      const memecoinAddress = getMemecoinAddressFromReceipt(receipt, chainId);
       const chainSlug = Number(chainId) === base.id ? "base" : "base-sepolia";
 
       return `Flaunched\n ${JSON.stringify({
@@ -238,7 +304,7 @@ It takes:
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof BuyCoinWithETHInputSchema>,
   ): Promise<string> {
-    return this._buyFlaunchCoin(
+    return buyFlaunchCoin(
       walletProvider,
       args.coinAddress,
       "EXACT_IN",
@@ -273,7 +339,7 @@ It takes:
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof BuyCoinWithCoinInputSchema>,
   ): Promise<string> {
-    return this._buyFlaunchCoin(
+    return buyFlaunchCoin(
       walletProvider,
       args.coinAddress,
       "EXACT_OUT",
@@ -367,12 +433,7 @@ It takes:
         permitSingle = message;
       }
 
-      const viemPublicClient = createPublicClient({
-        chain: NETWORK_ID_TO_VIEM_CHAIN[networkId],
-        transport: http(),
-      });
-
-      const quoteResult = await viemPublicClient.simulateContract({
+      const quoteResult = await walletProvider.getPublicClient().simulateContract({
         address: QuoterAddress[chainId],
         abi: QUOTER_ABI,
         functionName: "quoteExactInput",
@@ -384,7 +445,7 @@ It takes:
               {
                 fee: 0,
                 tickSpacing: 60,
-                hooks: FlaunchPositionManagerAddress[chainId],
+                hooks: FlaunchPositionManagerV1_1Address[chainId],
                 hookData: "0x",
                 intermediateCurrency: FLETHAddress[chainId],
               },
@@ -456,171 +517,11 @@ It takes:
     // all protocol networks
     return network.protocolFamily === "evm" && SUPPORTED_NETWORKS.includes(network.networkId!);
   }
-
-  /**
-   * Handles the process of buying a flaunch coin with ETH.
-   *
-   * @param walletProvider - The wallet provider instance
-   * @param coinAddress - The address of the flaunch coin
-   * @param swapType - The type of swap (EXACT_IN or EXACT_OUT)
-   * @param swapParams - Parameters specific to the swap type
-   * @param swapParams.amountIn - The amount of ETH to spend (for EXACT_IN)
-   * @param swapParams.amountOut - The amount of coins to buy (for EXACT_OUT)
-   * @param slippagePercent - The slippage percentage
-   * @returns A promise that resolves to a string describing the transaction result
-   */
-  private async _buyFlaunchCoin(
-    walletProvider: EvmWalletProvider,
-    coinAddress: string,
-    swapType: "EXACT_IN" | "EXACT_OUT",
-    swapParams: {
-      amountIn?: string;
-      amountOut?: string;
-    },
-    slippagePercent: number,
-  ): Promise<string> {
-    const network = walletProvider.getNetwork();
-    const chainId = network.chainId;
-    const networkId = network.networkId;
-
-    if (!chainId || !networkId) {
-      throw new Error("Chain ID is not set.");
-    }
-
-    try {
-      const viemPublicClient = createPublicClient({
-        chain: NETWORK_ID_TO_VIEM_CHAIN[networkId],
-        transport: http(),
-      });
-
-      let amountIn: bigint | undefined;
-      let amountOutMin: bigint | undefined;
-      let amountOut: bigint | undefined;
-      let amountInMax: bigint | undefined;
-
-      if (swapType === "EXACT_IN") {
-        amountIn = parseEther(swapParams.amountIn!);
-
-        const quoteResult = await viemPublicClient.simulateContract({
-          address: QuoterAddress[chainId],
-          abi: QUOTER_ABI,
-          functionName: "quoteExactInput",
-          args: [
-            {
-              exactAmount: amountIn,
-              exactCurrency: zeroAddress, // ETH
-              path: [
-                {
-                  fee: 0,
-                  tickSpacing: 60,
-                  hookData: "0x",
-                  hooks: FLETHHooksAddress[chainId],
-                  intermediateCurrency: FLETHAddress[chainId],
-                },
-                {
-                  fee: 0,
-                  tickSpacing: 60,
-                  hooks: FlaunchPositionManagerAddress[chainId],
-                  hookData: "0x",
-                  intermediateCurrency: coinAddress,
-                },
-              ],
-            },
-          ],
-        });
-        amountOutMin = getAmountWithSlippage(
-          quoteResult.result[0], // amountOut
-          (slippagePercent / 100).toFixed(18).toString(),
-          swapType,
-        );
-      } else {
-        // EXACT_OUT
-        amountOut = parseEther(swapParams.amountOut!);
-
-        const quoteResult = await viemPublicClient.simulateContract({
-          address: QuoterAddress[chainId],
-          abi: QUOTER_ABI,
-          functionName: "quoteExactOutput",
-          args: [
-            {
-              path: [
-                {
-                  intermediateCurrency: zeroAddress,
-                  fee: 0,
-                  tickSpacing: 60,
-                  hookData: "0x",
-                  hooks: FLETHHooksAddress[chainId],
-                },
-                {
-                  intermediateCurrency: FLETHAddress[chainId],
-                  fee: 0,
-                  tickSpacing: 60,
-                  hooks: FlaunchPositionManagerAddress[chainId],
-                  hookData: "0x",
-                },
-              ],
-              exactCurrency: coinAddress as Address,
-              exactAmount: amountOut,
-            },
-          ],
-        });
-        amountInMax = getAmountWithSlippage(
-          quoteResult.result[0], // amountIn
-          (slippagePercent / 100).toFixed(18).toString(),
-          swapType,
-        );
-      }
-
-      const { commands, inputs } = ethToMemecoin({
-        sender: walletProvider.getAddress() as Address,
-        memecoin: coinAddress as Address,
-        chainId: Number(chainId),
-        referrer: zeroAddress,
-        swapType,
-        amountIn,
-        amountOutMin,
-        amountOut,
-        amountInMax,
-      });
-
-      const data = encodeFunctionData({
-        abi: UNIVERSAL_ROUTER_ABI,
-        functionName: "execute",
-        args: [commands, inputs],
-      });
-
-      const hash = await walletProvider.sendTransaction({
-        to: UniversalRouterAddress[chainId],
-        data,
-        value: swapType === "EXACT_IN" ? amountIn : amountInMax,
-      });
-
-      const receipt = await walletProvider.waitForTransactionReceipt(hash);
-      const swapAmounts = getSwapAmountsFromReceipt({
-        receipt,
-        coinAddress: coinAddress as Address,
-        chainId: Number(chainId),
-      }) as BuySwapAmounts;
-
-      const coinSymbol = await walletProvider.readContract({
-        address: coinAddress as Address,
-        abi: ERC20_ABI,
-        functionName: "symbol",
-      });
-
-      return `Bought ${formatEther(swapAmounts.coinsBought)} $${coinSymbol} for ${formatEther(swapAmounts.ethSold)} ETH\n
-        Tx hash: [${hash}](${NETWORK_ID_TO_VIEM_CHAIN[networkId].blockExplorers?.default.url}/tx/${hash})`;
-    } catch (error) {
-      return `Error buying coin: ${error}`;
-    }
-  }
 }
 
 /**
  * Factory function to create a new FlaunchActionProvider instance.
  *
- * @param config - Configuration options for the FlaunchActionProvider
  * @returns A new FlaunchActionProvider instance
  */
-export const flaunchActionProvider = (config?: FlaunchActionProviderConfig) =>
-  new FlaunchActionProvider(config);
+export const flaunchActionProvider = () => new FlaunchActionProvider();

@@ -13,6 +13,9 @@ import { PrivyWalletConfig, PrivyWalletExport } from "./privyShared";
 export interface PrivyEvmWalletConfig extends PrivyWalletConfig {
   /** Optional chain ID to connect to */
   chainId?: string;
+
+  /** Optional RPC URL override for Viem wallet/public clients */
+  rpcUrl?: string;
 }
 
 /**
@@ -125,10 +128,11 @@ export class PrivyEvmWalletProvider extends ViemWalletProvider {
       throw new Error(`Chain with ID ${chainId} not found`);
     }
 
+    const rpcUrl = config.rpcUrl || process.env.RPC_URL;
     const walletClient = createWalletClient({
       account,
       chain,
-      transport: http(),
+      transport: rpcUrl ? http(rpcUrl) : http(),
     });
     return new PrivyEvmWalletProvider(walletClient, { ...config, walletId });
   }
