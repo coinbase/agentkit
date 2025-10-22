@@ -1,0 +1,98 @@
+name: Publish Docs to Github Pages
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "pnpm"
+          cache-dependency-path: ./typescript
+
+      - name: Install and Build JSDocs
+        working-directory: ./typescript
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
+          pnpm run docs
+
+      - name: Build AgentKit JSDocs
+        run: |
+          mkdir -p docs/agentkit/typescript
+          cp -r typescript/agentkit/docs/* docs/agentkit/typescript
+
+      - name: Build AgentKit LangChain JSDocs
+        run: |
+          mkdir -p docs/agentkit-langchain/typescript
+          cp -r typescript/framework-extensions/langchain/docs/* docs/agentkit-langchain/typescript
+
+      - name: Build AgentKit Vercel AI SDK JSDocs
+        run: |
+          mkdir -p docs/agentkit-vercel-ai-sdk/typescript
+          cp -r typescript/framework-extensions/vercel-ai-sdk/docs/* docs/agentkit-vercel-ai-sdk/typescript
+
+      - name: Build AgentKit Model Context Protocol JSDocs
+        run: |
+          mkdir -p docs/agentkit-model-context-protocol/typescript
+          cp -r typescript/framework-extensions/model-context-protocol/docs/* docs/agentkit-model-context-protocol/typescript
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install dependencies for Coinbase AgentKit Python
+        run: |
+          cd python/coinbase-agentkit
+          uv sync --all-extras --dev
+          cd ..
+
+      - name: Build Sphinx Documentation for Coinbase AgentKit Python
+        run: |
+          cd python/coinbase-agentkit
+          make docs
+          cd docs
+          make html
+          cd ../../..
+          mkdir -p docs/coinbase-agentkit/python
+          cp -r python/coinbase-agentkit/docs/_build/html/* docs/coinbase-agentkit/python
+
+      - name: Install dependencies for Coinbase AgentKit LangChain Python
+        run: |
+          cd python/framework-extensions/langchain
+          uv sync --all-extras --dev
+          cd ../..
+
+      - name: Build Sphinx Documentation for Coinbase AgentKit LangChain Python
+        run: |
+          cd python/framework-extensions/langchain
+          make docs
+          cd docs
+          make html
+          cd ../../../..
+          mkdir -p docs/coinbase-agentkit-langchain/python
+          cp -r python/framework-extensions/langchain/docs/_build/html/* docs/coinbase-agentkit-langchain/python
+
+      - name: Deploy to Github Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          keep_files: false

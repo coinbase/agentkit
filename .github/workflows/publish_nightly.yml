@@ -1,0 +1,116 @@
+name: Publish Nightly Builds
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 21 * * *" # Run daily at 9 PM UTC / 5 PM EST
+
+jobs:
+  publish-npm-nightly:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    environment: npm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          registry-url: "https://registry.npmjs.org"
+          cache: "pnpm"
+          cache-dependency-path: ./typescript
+
+      - name: Install, build and publish
+        working-directory: ./typescript
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
+          pnpm changeset version --snapshot nightly
+          pnpm changeset publish --tag nightly
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-pypi-nightly:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package:
+          - coinbase-agentkit
+          - create-onchain-agent
+          - framework-extensions/langchain
+          - framework-extensions/openai-agents-sdk
+          - framework-extensions/strands-agents
+    environment:
+      name: pypi
+      url: https://pypi.org/p/coinbase-agentkit-langchain
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install jq
+        run: sudo apt-get install jq
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Version and Build Python package versions
+        run: |
+          cd "python/${{ matrix.package }}"
+          PKG_NAME=$(grep -m 1 '^name = ' pyproject.toml | cut -d '"' -f2)
+          CURRENT_VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml)
+
+          if [[ $CURRENT_VERSION == *".dev"* ]]; then
+            NEXT_VERSION=$(echo $CURRENT_VERSION | sed -E 's/\.dev[0-9]+$//')
+          else
+            MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
+            MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
+            PATCH=$(echo $CURRENT_VERSION | cut -d. -f3 | cut -d- -f1 | cut -d+ -f1)
+            NEXT_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
+          fi
+
+          TODAY=$(date +%Y%m%d)
+          ALL_VERSIONS=$(curl -s "https://pypi.org/pypi/$PKG_NAME/json" | jq -r '.releases | keys[]')
+          LATEST_NIGHTLY=$(echo "$ALL_VERSIONS" | grep -E "^${NEXT_VERSION}\.dev${TODAY}[0-9]$" | sort -V | tail -n1 || echo "")
+
+          if [ -z "$LATEST_NIGHTLY" ]; then
+            sed -i 's/^version=".*"/version = "'${NEXT_VERSION}.dev${TODAY}0'"/' pyproject.toml
+          else
+            BUILD_NUM=$(echo $LATEST_NIGHTLY | sed -E "s/.*\.dev${TODAY}([0-9])$/\1/")
+            NEXT_BUILD=$((BUILD_NUM + 1))
+            sed -i 's/^version=".*"/version = "'${NEXT_VERSION}.dev${TODAY}${NEXT_BUILD}'"/' pyproject.toml
+          fi
+
+          uv sync
+          uv build
+
+      - name: Publish Python packages
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: python/${{ matrix.package }}/dist/

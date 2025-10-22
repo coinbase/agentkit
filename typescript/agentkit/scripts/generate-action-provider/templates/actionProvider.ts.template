@@ -1,0 +1,35 @@
+/**
+ * {{name_pascal}} Action Provider
+ *
+ * This file contains the implementation of the {{name_pascal}}ActionProvider,
+ * which provides actions for {{name}} operations.
+ *
+ * @module {{name}}
+ */
+
+{# include header #}
+{% set header_template = "actionProvider/header/" + provider_key + ".ts.template" %}
+{% include header_template %}
+
+{# include class definition #}
+{% set class_template = "actionProvider/class/" + provider_key + ".ts.template" %}
+{% include class_template %}
+{
+  {# include constructor #}
+  {% include "actionProvider/constructor/default.ts.template" %}
+
+  {# include actions via root action template #}
+  {% include "action.ts.template" %}
+
+  {# include network support logic #}
+  {% if not protocol_family %}
+    {% include "actionProvider/networkSupport/networkSupportAll.ts.template" %}
+  {% elif protocol_family != "all" and networkIds|length == 0 %}
+    {% include "actionProvider/networkSupport/networkSupportProtocol.ts.template" %}
+  {% elif protocol_family != "all" and networkIds|length > 0 %}
+    {% include "actionProvider/networkSupport/networkSupportProtocolNetwork.ts.template" %}
+  {% endif %}
+}
+
+{# include factory function #}
+{% include "actionProvider/factory/default.ts.template" %}

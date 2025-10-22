@@ -1,0 +1,41 @@
+name: Publish Package to NPM
+
+on:
+  workflow_dispatch:
+    inputs:
+      directory:
+        description: "Directory within the 'typescript' folder containing the package to publish (e.g., agentkit)"
+        required: true
+        type: string
+        default: "agentkit"
+
+jobs:
+  deploy-npm-package:
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          registry-url: "https://registry.npmjs.org"
+          cache: "pnpm"
+          cache-dependency-path: ./typescript
+
+      - name: Install, build and publish package
+        working-directory: ./typescript/${{ inputs.directory }}
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
+          pnpm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

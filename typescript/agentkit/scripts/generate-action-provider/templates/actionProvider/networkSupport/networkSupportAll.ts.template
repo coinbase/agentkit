@@ -1,0 +1,10 @@
+/**
+ * Checks if this provider supports the given network.
+ *
+ * @param _ - The network to check support for
+ * @returns True if the network is supported
+ */
+supportsNetwork(_: Network): boolean {
+  // all networks
+  return true;
+} 

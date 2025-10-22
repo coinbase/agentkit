@@ -1,0 +1,56 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended",
+    "plugin:jsdoc/recommended"
+  ],
+  "plugins": ["@typescript-eslint", "prettier", "import"],
+  "env": {
+    "node": true,
+    "es6": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
+  "rules": {
+    "import/first": "error",
+    "prettier/prettier": "error",
+    "@typescript-eslint/member-ordering": "error",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_$"
+      }
+    ],
+    "jsdoc/tag-lines": ["error", "any", { "startLines": 1 }],
+    "jsdoc/check-alignment": "error",
+    "jsdoc/no-undefined-types": "off",
+    "jsdoc/check-param-names": "error",
+    "jsdoc/check-tag-names": "error",
+    "jsdoc/check-types": "error",
+    "jsdoc/implements-on-classes": "error",
+    "jsdoc/require-description": "error",
+    "jsdoc/require-jsdoc": [
+      "error",
+      {
+        "require": {
+          "FunctionDeclaration": true,
+          "MethodDefinition": true,
+          "ClassDeclaration": true,
+          "ArrowFunctionExpression": false,
+          "FunctionExpression": false
+        }
+      }
+    ],
+    "jsdoc/require-param": "error",
+    "jsdoc/require-param-description": "error",
+    "jsdoc/require-param-type": "off",
+    "jsdoc/require-returns": "error",
+    "jsdoc/require-returns-description": "error",
+    "jsdoc/require-returns-type": "off",
+    "jsdoc/require-hyphen-before-param-description": ["error", "always"]
+  }
+}

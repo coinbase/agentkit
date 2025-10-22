@@ -1,0 +1,8 @@
+packages:
+  - "agentkit"
+  - "create-onchain-agent"
+  - "create-onchain-agent/templates/*"
+  - "!create-onchain-agent/templates/next"
+  - "!create-onchain-agent/templates/mcp"
+  - "framework-extensions/*"
+  - "examples/*"

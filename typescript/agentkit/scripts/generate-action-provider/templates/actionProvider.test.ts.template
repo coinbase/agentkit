@@ -1,0 +1,28 @@
+/**
+ * {{name_pascal}}ActionProvider Tests
+ */
+
+{# include header #}
+{% include "actionProvider.test/header/default.ts.template" %}
+
+{# action provider tests #}
+describe("{{name_pascal}}ActionProvider", () => {
+
+  {# include setup #}
+  {% include "actionProvider.test/setup/default.ts.template" %}
+
+  {# include network support tests conditionally #}
+  {% if not protocol_family %}
+    {% include "actionProvider.test/networkSupport/default.ts.template" %}
+  {% elif protocol_family != "all" and networkIds|length == 0 %}
+    {% include "actionProvider.test/networkSupport/protocol.ts.template" %}
+  {% elif protocol_family != "all" and networkIds|length > 0 %}
+    {% include "actionProvider.test/networkSupport/protocolNetwork.ts.template" %}
+  {% endif %}
+
+  {# always include invalid tests if protocol is specified #}
+  {% if protocol_family %}
+    {% include "actionProvider.test/networkSupport/invalid.ts.template" %}
+  {% endif %}
+
+});

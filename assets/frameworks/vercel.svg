@@ -1,0 +1,46 @@
+<svg id="logo" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <foreignObject width="100%" height="100%">
+        <div xmlns="http://www.w3.org/1999/xhtml">
+            <style>
+                :root {
+                    --logo-color: white;
+                    --border-color: #404040;
+                }
+
+                @media (prefers-color-scheme: dark) {
+                    :root {
+                        --border-color: #404040;
+                        --logo-color: white;
+                    }
+                }
+
+                @media (prefers-color-scheme: light) {
+                    :root {
+                        --border-color: #e0e0e0;
+                        --logo-color: black;
+                    }
+                }
+
+                #container {
+                    box-sizing: border-box;
+                    border: 1px solid var(--border-color);
+                    border-radius: 8px;
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                div {
+                    width: 100%;
+                    height: 100%;
+                }
+            </style>
+            <div id="container">
+                <svg width="24" height="24" viewBox="0 0 72.19 62.5" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M36.09 0L72.19 62.5H0L36.09 0Z" fill="var(--logo-color)"/>
+                </svg>
+            </div>
+        </div>
+    </foreignObject>
+</svg>

@@ -1,0 +1,48 @@
+name: Publish Create Onchain Agent to PyPI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-pypi-create-onchain-agent:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./python/create-onchain-agent
+    environment:
+      name: pypi
+      url: https://pypi.org/p/create-onchain-agent
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Build package
+        id: build
+        run: |
+          uv build
+          echo "version=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml)" >> $GITHUB_OUTPUT
+
+      - name: Publish package
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: python/create-onchain-agent/dist/

@@ -1,0 +1,47 @@
+name: Version and Publish NPM
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  version-and-publish:
+    name: Version and Publish
+    runs-on: ubuntu-latest
+    environment: npm
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          registry-url: "https://registry.npmjs.org"
+          cache: "pnpm"
+          cache-dependency-path: ./typescript
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: ./typescript
+
+      - name: Version and/or Publish to NPM
+        uses: changesets/action@06245a4e0a36c064a573d4150030f5ec548e4fcc
+        with:
+          commit: "chore: version typescript packages"
+          title: "chore: version typescript packages"
+          version: pnpm run changeset:version
+          publish: pnpm run publish
+          cwd: ./typescript
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

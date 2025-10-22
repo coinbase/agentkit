@@ -1,0 +1,12 @@
+_templates_suffix: .jinja  # Ensures Copier recognizes Jinja templates
+_subdirectory: "."         # Ensures Copier copies from root of template
+_exclude:
+  - .venv                  # Ignore virtual environment
+  - __pycache__/           # Ignore Python cache files
+  - "*.pyc"                # Ignore compiled Python files
+  - "*.pyo"
+  - "*.swp"
+  - .DS_Store
+  - .copier-ignore
+  - 'poetry.lock'
+  - 'copier.yml'

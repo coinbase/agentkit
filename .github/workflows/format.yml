@@ -1,0 +1,47 @@
+name: Format
+on: [pull_request]
+
+jobs:
+  format-python:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./python/coinbase-agentkit
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+
+      - name: Ensure formatting
+        run: make format-check
+
+  format-typescript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "pnpm"
+          cache-dependency-path: ./typescript
+      - name: Ensure formatting
+        working-directory: ./typescript
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run format:check

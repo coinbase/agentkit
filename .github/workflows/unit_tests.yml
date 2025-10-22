@@ -2,78 +2,56 @@ name: Run Unit Tests
 on: [pull_request]
 
 jobs:
-  test-agentkit:
+  test-coinbase-agentkit-python:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./cdp-agentkit-core
+        working-directory: ./python/coinbase-agentkit
     strategy:
       matrix:
-        python: ['3.10', '3.11', '3.12']
-    
+        python: ["3.10", "3.11", "3.12"]
+
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
-        with:
-          path: ./cdp-agentkit-core/.venv
-          key: venv-agentkit-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('cdp-agentkit-core/poetry.lock') }}
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --with dev
+        run: uv sync --all-extras --dev
 
       - name: Run tests
-        run: poetry run make test
+        run: make test
 
-  test-langchain:
+  test-agentkit-typescript:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./cdp-langchain
     strategy:
       matrix:
-        python: ['3.10', '3.11', '3.12']
-    
+        node-version: ["18", "20"]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda
         with:
-          python-version: ${{ matrix.python }}
+          version: 10
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - uses: actions/setup-node@v4
         with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: true
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+          cache-dependency-path: ./typescript
 
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
-        with:
-          path: ./cdp-langchain/.venv
-          key: venv-langchain-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('cdp-langchain/poetry.lock') }}
-
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --with dev
-
-      - name: Run tests
-        run: poetry run make test
+      - name: Install and test AgentKit.js
+        working-directory: ./typescript
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run test

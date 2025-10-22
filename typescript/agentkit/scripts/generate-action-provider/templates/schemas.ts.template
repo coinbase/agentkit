@@ -1,0 +1,1 @@
+{% include "schemas/default.ts.template" %}

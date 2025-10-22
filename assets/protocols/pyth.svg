@@ -1,0 +1,61 @@
+<svg id="logo" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <foreignObject width="100%" height="100%">
+        <div xmlns="http://www.w3.org/1999/xhtml">
+            <style>
+                :root {
+                    --border-color: #404040;
+                    --hover-color: #2470FF;
+                    --logo-color: #E6DAFE;
+                }
+
+                @media (prefers-color-scheme: dark) {
+                    :root {
+                        --border-color: #404040;
+                        --hover-color: #2470FF;
+                        --logo-color: #E6DAFE;
+                    }
+                }
+
+                @media (prefers-color-scheme: light) {
+                    :root {
+                        --border-color: #e0e0e0;
+                        --hover-color: #2470FF;
+                        --logo-color: #9F8FD9;
+                    }
+                }
+
+                #container {
+                    box-sizing: border-box;
+                    border: 1px solid var(--border-color);
+                    border-radius: 8px;
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                #logo:hover {
+                    border-color: var(--hover-color);
+                }
+
+                div {
+                    width: 100%;
+                    height: 100%;
+                }
+            </style>
+            <div id="container">
+                <svg width="19" height="24" viewBox="0 0 1176 1474" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g clip-path="url(#clip-path-0)">
+                        <path d="M734.994 589.59C734.994 670.991 669.173 736.992 587.994 736.992V884.393C750.352 884.393 881.994 752.392 881.994 589.59C881.994 426.789 750.352 294.787 587.994 294.787C534.473 294.787 484.209 309.121 440.994 334.254C353.099 385.188 293.994 480.456 293.994 589.59V1326.6L426.167 1459.13L440.994 1474V589.59C440.994 508.189 506.815 442.189 587.994 442.189C669.173 442.189 734.994 508.189 734.994 589.59Z" fill="var(--logo-color)"/>
+                        <path d="M588 0C480.891 0 380.498 28.7336 294 78.9342C238.617 111.001 189.019 151.868 147 199.669C55.5156 303.603 0 440.138 0 589.606V1031.81L147 1179.21V589.606C147 458.672 203.779 341.004 294 260.003C336.418 222.002 386.216 192.002 441 172.669C486.942 156.268 536.474 147.402 588 147.402C831.537 147.402 1029 345.404 1029 589.606C1029 833.809 831.537 1031.81 588 1031.81V1179.21C912.783 1179.21 1176 915.21 1176 589.606C1176 264.003 912.783 0 588 0Z" fill="var(--logo-color)"/>
+                    </g>
+                    <defs>
+                        <clipPath id="clip-path-0">
+                            <rect width="1176" height="1474" fill="white"/>
+                        </clipPath>
+                    </defs>
+                </svg>
+            </div>
+        </div>
+    </foreignObject>
+</svg>

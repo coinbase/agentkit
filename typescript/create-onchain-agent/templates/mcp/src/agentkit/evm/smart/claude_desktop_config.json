@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "agentkit": {
+      "command": "node",
+      "args": ["{absolutePath}/build/index.js"],
+      "env": {
+        "CDP_API_KEY_ID": "",
+        "CDP_API_KEY_SECRET": "",
+        "CDP_WALLET_SECRET": "",
+        "NETWORK_ID": "base-sepolia",
+        "ADDRESS": "",
+        "OWNER_ADDRESS": "",
+        "PAYMASTER_URL": "",
+        "RPC_URL": "",
+        "IDEMPOTENCY_KEY": ""
+      }
+    }
+  }
+}
