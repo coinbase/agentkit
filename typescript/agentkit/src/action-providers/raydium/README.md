@@ -1,5 +1,9 @@
 # Raydium Action Provider for CDP AgentKit
 
+![Raydium](./raydium.jpg)
+
+*submitted by teddynix as part of the Solana Cypherpunk Hackathon, Oct 2025*
+
 This directory contains the **RaydiumActionProvider** implementation, which provides actions for AI agents to interact with **Raydium**, a leading automated market maker (AMM) and DEX on Solana.
 
 ## overview
@@ -122,7 +126,7 @@ Potential future actions:
 - Get historical price data
 - Query pool APY/APR calculations
 
-## Dependencies
+## dependencies
 
 This action provider uses:
 - `@solana/web3.js` - Solana blockchain interaction
