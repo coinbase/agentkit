@@ -1,5 +1,17 @@
 # AgentKit Changelog
 
+## Unreleased
+
+### Features
+
+- Added Raydium Action Provider for Solana DEX interactions with COMPLETE on-chain execution
+  - `get_pools`: Fetches live pool data from Raydium API
+  - `get_price`: Queries actual on-chain pool reserves for real-time prices
+  - `get_pool_info`: Decodes actual pool state from blockchain
+  - `swap`: **Executes REAL swaps on-chain** - fetches complete pool keys from Raydium API, builds swap transactions using Raydium SDK, and executes on Solana mainnet
+  - All actions use real data and execute actual blockchain transactions
+  - Production-ready for Raydium-specific trading strategies
+
 ## 0.10.3
 
 ### Patch Changes
