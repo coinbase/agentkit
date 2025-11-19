@@ -22,6 +22,7 @@ dependencies = [
     "pydantic-ai>=0.4.0,<0.5",
     "setuptools>=69.0.3,<70",
     "nest-asyncio>=1.6.0,<2",
+    "openai<=1.99.1"
 ]
 
 [dependency-groups]
