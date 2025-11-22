@@ -13,7 +13,7 @@ jobs:
       id-token: write
     environment: npm
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Configure Git
         run: |
@@ -60,7 +60,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Configure Git
         run: |
