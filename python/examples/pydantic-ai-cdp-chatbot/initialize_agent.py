@@ -24,16 +24,7 @@ async def initialize_agent(config: CdpEvmWalletProviderConfig):
 
     """
     # Initialize CDP Server Wallet Provider
-    wallet_provider = CdpEvmWalletProvider(
-        CdpEvmWalletProviderConfig(
-            api_key_id=config.api_key_id,
-            api_key_secret=config.api_key_secret,
-            wallet_secret=config.wallet_secret,
-            network_id=config.network_id,
-            address=config.address,
-            idempotency_key=config.idempotency_key,
-        )
-    )
+    wallet_provider = CdpEvmWalletProvider(config)
 
     # Initialize AgentKit
     agentkit = AgentKit(
@@ -54,7 +45,7 @@ async def initialize_agent(config: CdpEvmWalletProviderConfig):
 
     # Create Agent using Pydantic AI
     agent = Agent(
-        model="openai:gpt-4o-mini",
+        model="openai:gpt-5-mini",
         name="CDP Agent",
         system_prompt=(
             "You are a helpful agent that can interact onchain using the Coinbase Developer Platform AgentKit. "
