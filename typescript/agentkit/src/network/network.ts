@@ -8,7 +8,7 @@ import {
   base,
   arbitrum,
   optimism,
-  polygonMumbai,
+  polygonAmoy,
   polygon,
 } from "viem/chains";
 import * as chains from "viem/chains";
@@ -20,7 +20,7 @@ export const CHAIN_ID_TO_NETWORK_ID: Record<number, string> = {
   1: "ethereum-mainnet",
   11155111: "ethereum-sepolia",
   137: "polygon-mainnet",
-  80001: "polygon-mumbai",
+  80002: "polygon-amoy",
   8453: "base-mainnet",
   84532: "base-sepolia",
   42161: "arbitrum-mainnet",
@@ -49,7 +49,7 @@ export const NETWORK_ID_TO_VIEM_CHAIN: Record<string, Chain> = {
   "ethereum-mainnet": mainnet,
   "ethereum-sepolia": sepolia,
   "polygon-mainnet": polygon,
-  "polygon-mumbai": polygonMumbai,
+  "polygon-amoy": polygonAmoy,
   "base-mainnet": base,
   "base-sepolia": baseSepolia,
   "arbitrum-mainnet": arbitrum,
