@@ -368,7 +368,13 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
         },
       });
 
-      return JSON.stringify(positions);
+      return JSON.stringify({
+        ...positions,
+        data: positions.data.map(p => ({
+          ...p,
+          apy: transformApy(p.apy),
+        })),
+      });
     } catch (error) {
       return `Failed to fetch positions: ${error instanceof Error ? error.message : String(error)}`;
     }

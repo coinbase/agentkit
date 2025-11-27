@@ -487,10 +487,10 @@ describe("VaultsfyiActionProvider", () => {
   });
 
   describe("wallet positions action", () => {
-    it("should return the response", async () => {
+    it("should transform the response correctly", async () => {
       mockedFetch.mockResolvedValue(
         mockFetchResult(200, {
-          mainnet: [
+          data: [
             {
               vaultName: "vault-1",
               vaultAddress: "0x123",
@@ -504,9 +504,9 @@ describe("VaultsfyiActionProvider", () => {
               balanceLp: (10 ** 18).toString(),
               unclaimedUsd: "100",
               apy: {
-                base: 100,
-                rewards: 100,
-                total: 100,
+                base: 0.1,
+                reward: 0.1,
+                total: 0.1,
               },
             },
           ],
@@ -514,7 +514,7 @@ describe("VaultsfyiActionProvider", () => {
       );
       const response = await provider.positions(mockWalletProvider);
       expect(JSON.parse(response)).toStrictEqual({
-        mainnet: [
+        data: [
           {
             vaultName: "vault-1",
             vaultAddress: "0x123",
@@ -528,9 +528,9 @@ describe("VaultsfyiActionProvider", () => {
             balanceLp: (10 ** 18).toString(),
             unclaimedUsd: "100",
             apy: {
-              base: 100,
-              rewards: 100,
-              total: 100,
+              base: "10.00%",
+              reward: "10.00%",
+              total: "10.00%",
             },
           },
         ],
