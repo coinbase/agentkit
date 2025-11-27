@@ -13,22 +13,23 @@ import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
 import { EvmWalletProvider } from "../../wallet-providers";
 import {
-  claimActionSchema,
-  depositActionSchema,
-  redeemActionSchema,
+  executeStepActionSchema,
+  transactionContextActionSchema,
   VaultDetailsActionSchema,
   VaultHistoricalDataActionSchema,
   VaultsActionSchema,
+  claimRewardsActionSchema,
+  benchmarkActionSchema,
+  historicalBenchmarkActionSchema,
+  totalVaultReturnsActionSchema,
+  userEventsActionSchema,
 } from "./schemas";
-import { executeActions, parseAssetAmount, transformDetailedVault, transformVault } from "./utils";
-import { VAULTSFYI_SUPPORTED_CHAINS, VAULTS_API_URL } from "./constants";
-import { fetchVaultActions } from "./api/actions";
-import { fetchVault, fetchVaults } from "./api/vaults";
-import { ApiError, Balances, Positions } from "./api/types";
-import { fetchVaultHistoricalData } from "./api/historicalData";
+import { executeActions, transformApy, transformApyObject, transformVault } from "./utils";
+import { getNetworkNameFromChainId, SUPPORTED_CHAIN_IDS } from "./constants";
+import { getVaultsSdk } from "./sdk";
 
 /**
- * Configuration options for the OpenseaActionProvider.
+ * Configuration options for the VaultsfyiActionProvider.
  */
 export interface VaultsfyiActionProviderConfig {
   /**
@@ -71,24 +72,24 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
   @CreateAction({
     name: "vaults",
     description: `
-      This action returns a list of available vaults.
+      This action returns a list of available vaults. All asset/lp token amounts returned are in the smallest unit of the token.
       Small vaults (under 100k TVL) are probably best avoided as they may be more risky. Unless the user is looking for high-risk, high-reward opportunities, don't include them.
       When the user asks for best vaults, optimize for apy, and if the user asks for safest/reliable vaults, optimize for TVL.
-      Try to take a reasonable number of results so its easier to analyze the data. Include vaults.fyi links for each vault.
-      Format result apys as: x% (base: x%, rewards: x%) if rewards apy is available, otherwise: x%
+      Include vaults.fyi links for each vault.
+      By default, it's best to check only the vaults for the users network (check with another action if you're not sure).
       Examples:
       User: "Show me the best vaults"
-      args: { sort: { field: 'apy', direction: 'desc' }, take: 5 }
+      args: { sort: { field: 'apy7day', direction: 'desc' }, perPage: 5 }
       User: "Show me the safest vaults"
-      args: { sort: { field: 'tvl', direction: 'desc' }, take: 5 }
+      args: { sort: { field: 'tvl', direction: 'desc' }, perPage: 5 }
       User: "Show me the best vaults on Arbitrum"
-      args: { network: 'arbitrum', sort: { field: 'apy', direction: 'desc' }, take: 5 }
+      args: { allowedNetworks: ['arbitrum'], sort: { field: 'apy7day', direction: 'desc' }, perPage: 5 }
       User: "I want to earn yield on my usdc on base!"
-      args: { token: 'usdc', network: 'base', sort: { field: 'apy', direction: 'desc' }, take: 5 }
+      args: { allowedAssets: ['usdc'], allowedNetworks: ['base'], sort: { field: 'apy7day', direction: 'desc' }, perPage: 5 }
       User: "What are some of the most profitable degen vaults on polygon"
-      args: { network: 'polygon', sort: { field: 'apy', direction: 'desc' }, take: 5, minTvl: 0 }
+      args: { allowedNetworks: ['polygon'], sort: { field: 'apy7day', direction: 'desc' }, perPage: 5, minTvl: 0 }
       User: "Show me some more of those"
-      args: { network: 'polygon', sort: { field: 'apy', direction: 'desc' }, take: 5, minTvl: 0, page: 2 }
+      args: { allowedNetworks: ['polygon'], sort: { field: 'apy7day', direction: 'desc' }, perPage: 5, minTvl: 0, page: 2 }
       All optional fields should be null if not specified.
     `,
     schema: VaultsActionSchema,
@@ -97,44 +98,31 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
     wallet: EvmWalletProvider,
     args: z.infer<typeof VaultsActionSchema>,
   ): Promise<string> {
-    const apyRange = args.apyRange ?? "7day";
-    const vaults = await fetchVaults(args, this.apiKey);
-    if ("error" in vaults) {
-      return `Failed to fetch vaults: ${vaults.error}, ${vaults.message}`;
+    try {
+      const sdk = getVaultsSdk(this.apiKey);
+      const vaults = await sdk.getAllVaults({
+        query: {
+          page: args.page || 1,
+          perPage: args.perPage || 5,
+          allowedAssets: args.allowedAssets ? args.allowedAssets : undefined,
+          allowedNetworks: args.allowedNetworks ? args.allowedNetworks : undefined,
+          allowedProtocols: args.allowedProtocols ? args.allowedProtocols : undefined,
+          minTvl: args.minTvl ?? 100_000,
+          onlyTransactional: true,
+          sortBy: args.sort?.field,
+          sortOrder: args.sort?.direction,
+        },
+      });
+
+      const transformedVaults = vaults.data.map(transformVault);
+
+      return JSON.stringify({
+        ...vaults,
+        data: transformedVaults,
+      });
+    } catch (error) {
+      return `Failed to fetch vaults: ${error instanceof Error ? error.message : String(error)}`;
     }
-    if (args.protocol && !vaults.find(vault => vault.protocol === args.protocol)) {
-      const supportedProtocols = vaults
-        .map(vault => vault.protocol)
-        .filter((value, index, self) => self.indexOf(value) === index);
-      return `Protocol ${args.protocol} is not supported. Supported protocols are: ${supportedProtocols.join(", ")}`;
-    }
-
-    const transformedVaults = vaults.map(vault => transformVault(vault, apyRange));
-
-    const filteredVaults = transformedVaults.filter(vault =>
-      args.protocol ? vault.protocol === args.protocol : true,
-    );
-    const sortedVaults = filteredVaults.sort((a, b) => {
-      if (args.sort?.field === "tvl") {
-        return args.sort.direction === "asc" ? a.tvlInUsd - b.tvlInUsd : b.tvlInUsd - a.tvlInUsd;
-      } else if (args.sort?.field === "apy") {
-        return args.sort.direction === "asc"
-          ? a.apy.total - b.apy.total
-          : b.apy.total - a.apy.total;
-      }
-      return a.name.localeCompare(b.name);
-    });
-
-    const take = args.take || 10;
-    const page = args.page || 1;
-    const start = (page - 1) * take;
-    const end = start + take;
-    const results = sortedVaults.slice(start, end);
-    return JSON.stringify({
-      totalResults: sortedVaults.length,
-      nextPage: end < sortedVaults.length,
-      results,
-    });
   }
 
   /**
@@ -145,16 +133,9 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
    * @returns A detailed view of a single vault.
    */
   @CreateAction({
-    name: "vault_details",
-    description: `
-      This action returns a more detailed view of a single vault. Additional details include:
-      - Description
-      - Additional incentives (points etc)
-      - Rewards breakdown
-      Params: 
-      - vaultAddress: The address of the vault to fetch details for
-      - network: The network of the vault
-      - apyRange: The APY moving average range (default: 7day)
+    name: "detailed_vault",
+    description: `This action returns single vault details.
+      All asset/lp token amounts returned are in the smallest unit of the token.
     `,
     schema: VaultDetailsActionSchema,
   })
@@ -162,11 +143,18 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
     wallet: EvmWalletProvider,
     args: z.infer<typeof VaultDetailsActionSchema>,
   ): Promise<string> {
-    const vault = await fetchVault(args, this.apiKey);
-    if ("error" in vault) {
-      return `Failed to fetch vault: ${vault.error}, ${vault.message}`;
+    try {
+      const sdk = getVaultsSdk(this.apiKey);
+      const vault = await sdk.getVault({
+        path: {
+          vaultAddress: args.vaultAddress,
+          network: args.network,
+        },
+      });
+      return JSON.stringify(transformVault(vault));
+    } catch (error) {
+      return `Failed to fetch vault: ${error instanceof Error ? error.message : String(error)}`;
     }
-    return JSON.stringify(transformDetailedVault(vault, args.apyRange ?? "7day"));
   }
 
   /**
@@ -179,60 +167,67 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
   @CreateAction({
     name: "vault_historical_data",
     description: `
-      This action returns a historical data of a vault. It returns the APY and TVL data closest to the given date.
-      Always check if the results date is close to the requested date, as the data may not be available for the exact date.
-      If there is a more than 7 day difference between the requested date and the resulting date, don't provide the data, but rather with a message explaining the missing data.
-      If the resulting date is a lot later than the requested date, the reason for missing data might be that the vault has not been deployed yet.
-      Example queries:
-      params: { vaultAddress: "0x1234567890abcdef1234567890abcdef12345678", network: "arbitrum", date: "2025-01-01T00:00:00Z" }
-      result: { ..., date: "2025-02-16T14:59:59.000Z" }
-      response: "The requested date was 2025-01-01T00:00:00Z, but the closest data available is from 2025-02-16T14:59:59.000Z. This may indicate that the vault was not deployed at the requested date."
-    `,
+      This action returns a historical APY, TVL and share price of a vault. 
+      It returns an array of data points with the requested granularity. (hourly, daily weekly), 
+      The pricing is 3 credits base and 3 credits for each datapoint. 
+      Estimate the credits usage and warn the user before executing the action.
+      All asset/lp token amounts returned are in the smallest unit of the token.
+`,
     schema: VaultHistoricalDataActionSchema,
   })
   async vaultHistoricalData(
     wallet: EvmWalletProvider,
     args: z.infer<typeof VaultHistoricalDataActionSchema>,
   ): Promise<string> {
-    const data = await fetchVaultHistoricalData(args, this.apiKey);
-    if ("error" in data) {
-      return `Failed to fetch vault: ${data.error}, ${data.message}`;
-    }
-    return JSON.stringify({
-      apy: {
-        apy: {
-          base: data.apy.apy.base / 100,
-          rewards: data.apy.apy.rewards ? data.apy.apy.rewards / 100 : undefined,
-          total: data.apy.apy.total / 100,
+    try {
+      const sdk = getVaultsSdk(this.apiKey);
+      const data = await sdk.getVaultHistoricalData({
+        path: {
+          vaultAddress: args.vaultAddress,
+          network: args.network,
         },
-        date: new Date(data.apy.timestamp * 1000).toISOString(),
-        blockNumber: data.apy.blockNumber,
-      },
-      tvl: {
-        tvlInUsd: data.tvl.tvlDetails.tvlUsd,
-        date: new Date(data.tvl.timestamp * 1000).toISOString(),
-        blockNumber: data.tvl.blockNumber,
-      },
-    });
+        query: {
+          granularity: args.granularity,
+          fromTimestamp: Math.floor(new Date(args.fromDate).getTime() / 1000),
+          toTimestamp: Math.floor(new Date(args.toDate).getTime() / 1000),
+          apyInterval: args.apyInterval,
+          page: args.page,
+          perPage: args.perPage,
+        },
+      });
+      return JSON.stringify({
+        ...data,
+        data: data.data.map(d => ({
+          ...d,
+          timestamp: new Date(d.timestamp * 1000).toISOString(),
+          apy: transformApy(d.apy),
+        })),
+      });
+    } catch (error) {
+      return `Failed to fetch vault historical data: ${error instanceof Error ? error.message : String(error)}`;
+    }
   }
 
   /**
-   * Deposit action
+   * Transaction context action
    *
    * @param wallet - The wallet provider instance for blockchain interactions
    * @param args - Input arguments
    * @returns A result message
    */
   @CreateAction({
-    name: "deposit",
+    name: "transaction_context",
     description: `
-      This action deposits assets into a selected vault. Before depositing make sure you have the required assets in your wallet using the wallet-balances action.
-      Even if you received the balance from some other source, double-check the user balance.
-      Use examples:
+      This action returns the transaction context for a given vault. It returns a list of steps for a deposit/redeem from a vault. 
+      These steps can be executed using the execute_step action. Check the "redeemStepsType"/"depositStepsType" to see if it's "instant" or "complex". 
+      Complex steps might require delay between steps like request and claim flows. Status of these can usually be found in the "vaultSpecificData" field of the context.
+      All asset/lp token amounts returned are in the smallest unit of the token. For example, USDC has 6 decimals, so 1000 USDC is 1000000000. Use smallest unit for the amount field in the execute_step action.
+      Usage examples:
       User: "Deposit 1000 USDC into the vault"
       actions:
-       - check wallet balance for USDC
-       - deposit USDC into the vault if balance is sufficient
+       - check if the wallet has 1000 USDC
+       - check vault context to see the deposit steps
+       - execute the deposit steps sequentially
       User: "I want more yield on my DAI"
       actions:
        - check positions that the user already has for dai
@@ -246,92 +241,71 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
        - create a diversified strategy using the users assets
        - propose the strategy to the user before executing
     `,
-    schema: depositActionSchema,
+    schema: transactionContextActionSchema,
   })
-  async deposit(
+  async transactionContext(
     wallet: EvmWalletProvider,
-    args: z.infer<typeof depositActionSchema>,
+    args: z.infer<typeof transactionContextActionSchema>,
   ): Promise<string> {
-    const actions = await fetchVaultActions({
-      action: "deposit",
-      args: { ...args, amount: await parseAssetAmount(wallet, args.assetAddress, args.amount) },
-      sender: wallet.getAddress(),
-      apiKey: this.apiKey,
-    });
-    if ("error" in actions) {
-      return `Failed to fetch deposit transactions: ${actions.error}, ${actions.message}`;
+    try {
+      const sdk = getVaultsSdk(this.apiKey);
+      const context = await sdk.getTransactionsContext({
+        path: {
+          userAddress: wallet.getAddress(),
+          vaultAddress: args.vaultAddress,
+          network: args.network,
+        },
+      });
+      return JSON.stringify(context);
+    } catch (error) {
+      return `Failed to fetch transaction context: ${error instanceof Error ? error.message : String(error)}`;
     }
-
-    await executeActions(wallet, actions);
-
-    return "Deposit successful";
   }
 
   /**
-   * Redeem action
+   * Deposit action
    *
    * @param wallet - The wallet provider instance for blockchain interactions
    * @param args - Input arguments
    * @returns A result message
    */
   @CreateAction({
-    name: "redeem",
+    name: "execute_step",
     description: `
-      This action redeems assets from a selected vault. Before redeeming make sure you have the required lp tokens in your wallet using the positions action.
-      Even if you received the lp tokens from some other source, double-check the amount before redeeming.
-      lp tokens aren't always 1:1 with the underlying asset, so make sure to check the amount of lp tokens you have before redeeming even if you know the amount of the underlying asset you want to redeem.
-    `,
-    schema: redeemActionSchema,
+      This action executes a given step on a vault. If you're not sure what steps are available, use the transaction context to get more information.
+      The amount should be a in smallest unit of the token (f.e. 1000000 for 1 USDC) and for redeeming should be the amount of lpTokens in smallest units.
+      If you want to redeem all shares, use {"amount":"all"}.
+      Even if you received the balance from some other source, double-check the user balance with idle_assets/positions/context actions before deposit/redeem.`,
+    schema: executeStepActionSchema,
   })
-  async redeem(
+  async executeStep(
     wallet: EvmWalletProvider,
-    args: z.infer<typeof redeemActionSchema>,
+    args: z.infer<typeof executeStepActionSchema>,
   ): Promise<string> {
-    const actions = await fetchVaultActions({
-      action: "redeem",
-      args: { ...args, amount: await parseAssetAmount(wallet, args.assetAddress, args.amount) },
-      sender: wallet.getAddress(),
-      apiKey: this.apiKey,
-    });
-    if ("error" in actions) {
-      return `Failed to fetch redeem transactions: ${actions.error}, ${actions.message}`;
+    try {
+      const sdk = getVaultsSdk(this.apiKey);
+      const amount = args.amount === "all" ? 0 : args.amount;
+      const actions = await sdk.getActions({
+        path: {
+          action: args.action,
+          userAddress: wallet.getAddress(),
+          vaultAddress: args.vaultAddress,
+          network: args.network,
+        },
+        query: {
+          assetAddress: args.assetAddress,
+          amount: amount ? amount.toString() : undefined,
+          all: args.amount === "all",
+        },
+      });
+      console.log("actions", actions);
+
+      await executeActions(wallet, actions);
+
+      return `Successfully executed ${args.action} step`;
+    } catch (error) {
+      return `Failed to execute step: ${error instanceof Error ? error.message : String(error)}`;
     }
-
-    await executeActions(wallet, actions);
-
-    return "Redeem successful";
-  }
-
-  /**
-   * Claim rewards action
-   *
-   * @param wallet - The wallet provider instance for blockchain interactions
-   * @param args - Input arguments
-   * @returns A result message
-   */
-  @CreateAction({
-    name: "claim_rewards",
-    description: `
-      This action claims rewards from a selected vault.
-      assetAddress is the address of the vaults underlying token.
-      If you're not sure what vaults have rewards claimable, use the positions action.
-    `,
-    schema: claimActionSchema,
-  })
-  async claim(wallet: EvmWalletProvider, args: z.infer<typeof claimActionSchema>): Promise<string> {
-    const actions = await fetchVaultActions({
-      action: "claim-rewards",
-      args,
-      sender: wallet.getAddress(),
-      apiKey: this.apiKey,
-    });
-    if ("error" in actions) {
-      return `Failed to fetch claim transactions: ${actions.error}, ${actions.message}`;
-    }
-
-    await executeActions(wallet, actions);
-
-    return "Claim successful";
   }
 
   /**
@@ -341,9 +315,10 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
    * @returns A record of the users balances
    */
   @CreateAction({
-    name: "user_wallet_balances",
+    name: "user_idle_assets",
     description: `
     This action returns the users wallet balances of all tokens supported by vaults.fyi. Useful when you don't know token addresses but want to check if the user has an asset.
+    All asset/lp token amounts returned are in the smallest unit of the token.
     Example queries:
     User: "What tokens do I have?"
     User: "What tokens do I have on Arbitrum?"
@@ -351,35 +326,19 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
     `,
     schema: z.object({}),
   })
-  async balances(wallet: EvmWalletProvider): Promise<string> {
-    const params = new URLSearchParams({
-      account: wallet.getAddress(),
-    });
-    const result = await fetch(`${VAULTS_API_URL}/portfolio/wallet-balances?${params.toString()}`, {
-      method: "GET",
-      headers: {
-        "x-api-key": this.apiKey,
-      },
-    });
-    const balances = (await result.json()) as Balances | ApiError;
-    if ("error" in balances) {
-      return `Failed to fetch wallet balances: ${balances.error}, ${balances.message}`;
-    }
+  async idleAssets(wallet: EvmWalletProvider): Promise<string> {
+    try {
+      const sdk = getVaultsSdk(this.apiKey);
+      const idleAssets = await sdk.getIdleAssets({
+        path: {
+          userAddress: wallet.getAddress(),
+        },
+      });
 
-    const entries = Object.entries(balances).map(
-      ([network, balances]: [string, Balances[string]]) => {
-        return [
-          network,
-          balances.map(balance => ({
-            address: balance.address,
-            name: balance.name,
-            symbol: balance.symbol,
-            balance: Number(balance.balance) / 10 ** balance.decimals,
-          })),
-        ];
-      },
-    );
-    return JSON.stringify(Object.fromEntries(entries));
+      return JSON.stringify(idleAssets);
+    } catch (error) {
+      return `Failed to fetch idle assets: ${error instanceof Error ? error.message : String(error)}`;
+    }
   }
 
   /**
@@ -392,6 +351,7 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
     name: "positions",
     description: `
       This action returns the users positions in vaults.
+      All asset/lp token amounts returned are in the smallest unit of the token.
       Example queries:
       User: "Show me my positions"
       User: "What vaults am i invested in?"
@@ -401,42 +361,247 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
     schema: z.object({}),
   })
   async positions(wallet: EvmWalletProvider): Promise<string> {
-    const result = await fetch(`${VAULTS_API_URL}/portfolio/positions/${wallet.getAddress()}`, {
-      method: "GET",
-      headers: {
-        "x-api-key": this.apiKey,
-      },
-    });
-    const positions = (await result.json()) as Positions | ApiError;
-    if ("error" in positions) {
-      return `Failed to fetch positions: ${positions.error}, ${positions.message}`;
-    }
+    try {
+      const sdk = getVaultsSdk(this.apiKey);
+      const positions = await sdk.getPositions({
+        path: {
+          userAddress: wallet.getAddress(),
+        },
+      });
 
-    const entries = Object.entries(positions).map(
-      ([network, positions]: [string, Positions[string]]) => {
-        return [
-          network,
-          positions.map(position => ({
-            name: position.vaultName,
-            vaultAddress: position.vaultAddress,
-            asset: {
-              address: position.asset.assetAddress,
-              name: position.asset.name,
-              symbol: position.asset.symbol,
-            },
-            underlyingTokenBalance: Number(position.balanceNative) / 10 ** position.asset.decimals,
-            lpTokenBalance: Number(position.balanceLp) / 10 ** position.asset.decimals,
-            unclaimedRewards: Number(position.unclaimedUsd) > 0,
-            apy: {
-              base: position.apy.base / 100,
-              rewards: position.apy.rewards / 100,
-              total: position.apy.total / 100,
-            },
-          })),
-        ];
-      },
-    );
-    return JSON.stringify(Object.fromEntries(entries));
+      return JSON.stringify(positions);
+    } catch (error) {
+      return `Failed to fetch positions: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }
+
+  /**
+   * Rewards context action
+   *
+   * @param wallet - The wallet provider instance for blockchain interactions
+   * @returns A record of rewards that are available to the user each with a unique claim id
+   */
+  @CreateAction({
+    name: "rewards_context",
+    description: `
+      This action returns a record of rewards that are available to the user each with a unique claim id. You can use these ids in the claim_rewards action to claim specific rewards.
+      All asset/lp token amounts returned are in the smallest unit of the token.
+    `,
+    schema: z.object({}),
+  })
+  async rewardsContext(wallet: EvmWalletProvider): Promise<string> {
+    try {
+      const sdk = getVaultsSdk(this.apiKey);
+      const context = await sdk.getRewardsTransactionsContext({
+        path: {
+          userAddress: wallet.getAddress(),
+        },
+      });
+      return JSON.stringify(context);
+    } catch (error) {
+      return `Failed to fetch rewards context: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }
+
+  /**
+   * Claim rewards action
+   *
+   * @param wallet - The wallet provider instance for blockchain interactions
+   * @param args - Input arguments: claimIds
+   * @returns A message indicating the success of the claim
+   */
+  @CreateAction({
+    name: "claim_rewards",
+    description: `
+      This action claims rewards for a given reward id.
+    `,
+    schema: claimRewardsActionSchema,
+  })
+  async claimRewards(
+    wallet: EvmWalletProvider,
+    args: z.infer<typeof claimRewardsActionSchema>,
+  ): Promise<string> {
+    const chainId = wallet.getNetwork().chainId;
+    if (!chainId) return "Invalid network";
+    const networkName = getNetworkNameFromChainId(chainId);
+    if (!networkName) return "Invalid network";
+    try {
+      const sdk = getVaultsSdk(this.apiKey);
+      const actions = await sdk.getRewardsClaimActions({
+        path: {
+          userAddress: wallet.getAddress(),
+        },
+        query: {
+          claimIds: args.claimIds,
+        },
+      });
+
+      if (Object.keys(actions).some(network => network !== networkName)) {
+        return `Error: You're trying to claim rewards from a different network. Agent network is ${networkName}.`;
+      }
+      if (!actions[networkName]) return "No actions found";
+      await executeActions(wallet, actions[networkName]);
+
+      return `Successfully claimed rewards for ${args.claimIds.length} rewards`;
+    } catch (error) {
+      return `Failed to claim rewards: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }
+
+  /**
+   * Benchmark APY action
+   *
+   * @param wallet - The wallet provider instance for blockchain interactions
+   * @param args - Input arguments: network, benchmarkCode
+   * @returns benchmark APY data
+   */
+  @CreateAction({
+    name: "benchmark_apy",
+    description: `
+      This action retrieves benchmark APY data for the specified network and benchmark code. It's a weighted average of top yields for the network and asset. Can be used to benchmark vaults against.
+    `,
+    schema: benchmarkActionSchema,
+  })
+  async benchmarkApy(
+    wallet: EvmWalletProvider,
+    args: z.infer<typeof benchmarkActionSchema>,
+  ): Promise<string> {
+    try {
+      const sdk = getVaultsSdk(this.apiKey);
+      const benchmark = await sdk.getBenchmarks({
+        path: {
+          network: args.network,
+        },
+        query: {
+          code: args.benchmarkCode,
+        },
+      });
+      return JSON.stringify({
+        ...benchmark,
+        apy: benchmark.apy ? transformApyObject(benchmark.apy) : null,
+        timestamp: new Date(benchmark.timestamp * 1000).toISOString(),
+      });
+    } catch (error) {
+      return `Failed to fetch benchmark: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }
+
+  /**
+   * Historical benchmark APY action
+   *
+   * @param wallet - The wallet provider instance for blockchain interactions
+   * @param args - Input arguments: network, benchmarkCode, fromDate, toDate, page, perPage
+   * @returns A list of historical benchmark APY data
+   */
+  @CreateAction({
+    name: "historical_benchmark_apy",
+    description: `
+      This action retrieves historical benchmark APY data for the specified network and benchmark code. It's a weighted average of top yields for the network and asset. Can be used to benchmark vaults against.
+    `,
+    schema: historicalBenchmarkActionSchema,
+  })
+  async historicalBenchmarkApy(
+    wallet: EvmWalletProvider,
+    args: z.infer<typeof historicalBenchmarkActionSchema>,
+  ): Promise<string> {
+    try {
+      const sdk = getVaultsSdk(this.apiKey);
+      const historicalBenchmarks = await sdk.getHistoricalBenchmarks({
+        path: {
+          network: args.network,
+        },
+        query: {
+          code: args.benchmarkCode,
+          fromTimestamp: Math.floor(new Date(args.fromDate).getTime() / 1000),
+          toTimestamp: Math.floor(new Date(args.toDate).getTime() / 1000),
+          page: args.page,
+          perPage: args.perPage,
+        },
+      });
+      return JSON.stringify({
+        ...historicalBenchmarks,
+        data: historicalBenchmarks.data.map(d => ({
+          timestamp: new Date(d.timestamp * 1000).toISOString(),
+          apy: d.apy ? transformApyObject(d.apy) : null,
+        })),
+      });
+    } catch (error) {
+      return `Failed to fetch historical benchmark: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }
+
+  /**
+   * Total vault returns action
+   *
+   * @param wallet - The wallet provider instance for blockchain interactions
+   * @param args - Input arguments: vaultAddress, network, userAddress
+   * @returns An amount of the users total returns
+   */
+  @CreateAction({
+    name: "total_vault_returns",
+    description: `
+      This action retrieves the total returns earned by a given user for a given vault. Uses your address if userAddress not specified.
+      "returnsNative" amounts returned are in the smallest unit of the token.
+    `,
+    schema: totalVaultReturnsActionSchema,
+  })
+  async totalVaultReturns(
+    wallet: EvmWalletProvider,
+    args: z.infer<typeof totalVaultReturnsActionSchema>,
+  ): Promise<string> {
+    try {
+      const sdk = getVaultsSdk(this.apiKey);
+      const totalReturns = await sdk.getUserVaultTotalReturns({
+        path: {
+          vaultAddress: args.vaultAddress,
+          network: args.network,
+          userAddress: args.userAddress || wallet.getAddress(),
+        },
+      });
+      return JSON.stringify(totalReturns);
+    } catch (error) {
+      return `Failed to fetch total vault returns: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }
+
+  /**
+   * User events action
+   *
+   * @param wallet - The wallet provider instance for blockchain interactions
+   * @param args - Input arguments: vaultAddress, network, userAddress
+   * @returns A list of the users actions on a vault
+   */
+  @CreateAction({
+    name: "user_events",
+    description: `
+      This action retrieves historical actions performed by a given user on a given vault.
+      All asset/lp token amounts returned are in the smallest unit of the token.
+    `,
+    schema: userEventsActionSchema,
+  })
+  async userEvents(
+    wallet: EvmWalletProvider,
+    args: z.infer<typeof userEventsActionSchema>,
+  ): Promise<string> {
+    try {
+      const sdk = getVaultsSdk(this.apiKey);
+      const userEvents = await sdk.getUserVaultEvents({
+        path: {
+          vaultAddress: args.vaultAddress,
+          network: args.network,
+          userAddress: args.userAddress || wallet.getAddress(),
+        },
+      });
+      return JSON.stringify({
+        ...userEvents,
+        data: userEvents.data.map(d => ({
+          ...d,
+          timestamp: new Date(d.timestamp * 1000).toISOString(),
+        })),
+      });
+    } catch (error) {
+      return `Failed to fetch user events: ${error instanceof Error ? error.message : String(error)}`;
+    }
   }
 
   /**
@@ -448,7 +613,7 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
   supportsNetwork(network: Network): boolean {
     return (
       network.protocolFamily == "evm" &&
-      (network.chainId ? Object.keys(VAULTSFYI_SUPPORTED_CHAINS).includes(network.chainId) : false)
+      (network.chainId ? SUPPORTED_CHAIN_IDS.includes(network.chainId) : false)
     );
   }
 }

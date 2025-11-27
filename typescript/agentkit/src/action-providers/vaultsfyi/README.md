@@ -15,11 +15,7 @@ vaultsfyi/
 ├── schemas.ts                      # Action schemas and types
 ├── constants.ts                    # Provider constants
 ├── utils.ts                        # Provider utility functions
-├── /api
-    ├── actions.ts                  # vaultsfyi transactional API actions
-    ├── types.ts                    # vaultsfyi API types
-    ├── vaults.ts                   # vaults list getter
-    ├── historicalData.ts           # vaults historical data getter
+├── sdk.ts                          # vaultsfyi SDK client
 ├── index.ts                        # Package exports
 └── README.md                       # Documentation (this file)
 ```
@@ -27,12 +23,15 @@ vaultsfyi/
 ## Actions
 - `vaults`: Get the list of available vaults on vaultsfyi.
 - `vault_details`: Get details of a specific vault.
-- `historical_data`: Get historical data for a specific vault.
-- `deposit`: Deposit assets into a vault.
-- `redeem`: Redeem assets from a vault.
-- `claim`: Claim rewards from a vault.
-- `user-wallet-balances`: Get the user's native token and compatible ERC20 token balances.
-- `positions`: Get the user's positions in vaults.
+- `vault_historical_data`: Get historical data for a specific vault.
+- `transaction_context`: Get the transaction context for a vault.
+- `execute_step`: Execute a step in a vault.
+- `rewards_context`: Get the rewards context for a vault.
+- `claim_rewards`: Claim rewards from a vault.
+- `benchmark_apy`: Get the benchmark APY for a vault.
+- `historical_benchmark_apy`: Get the historical benchmark APY for a vault.
+- `total_vault_returns`: Get the total returns for a vault.
+- `user_events`: Get the user's events for a vault.
 
 ## Network Support
 This provider supports selected evm networks.
