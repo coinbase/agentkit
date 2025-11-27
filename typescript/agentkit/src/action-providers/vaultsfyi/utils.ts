@@ -25,7 +25,6 @@ export async function executeActions(
 ) {
   for (let i = actions.currentActionIndex; i < actions.actions.length; i++) {
     const action = actions.actions[i];
-    console.log("action", action);
     const txHash = await wallet.sendTransaction({
       to: action.tx.to as Address,
       data: action.tx.data as Hex,
@@ -102,7 +101,6 @@ export function transformApyObject(apy: ApyObject) {
  * @returns The transformed apy
  */
 export function transformApy(apy: Apy) {
-  console.log("apy", apy);
   return {
     base: `${(apy.base * 100).toFixed(2)}%`,
     reward: `${(apy.reward * 100).toFixed(2)}%`,

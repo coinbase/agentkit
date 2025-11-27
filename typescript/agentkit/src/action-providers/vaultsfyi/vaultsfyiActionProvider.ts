@@ -298,7 +298,6 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
           all: args.amount === "all",
         },
       });
-      console.log("actions", actions);
 
       await executeActions(wallet, actions);
 
