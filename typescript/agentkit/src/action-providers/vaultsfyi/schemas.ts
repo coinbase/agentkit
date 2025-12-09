@@ -65,7 +65,6 @@ export const VaultHistoricalDataActionSchema = z.object({
  */
 export const transactionContextActionSchema = z.object({
   vaultAddress: z.string().describe("The address of the vault to interact with"),
-  assetAddress: z.string().describe("The address of the vault's underlying token"),
   network: NetworkSchema.describe("The network of the vault"),
 });
 
@@ -82,6 +81,7 @@ export const executeStepActionSchema = transactionContextActionSchema.extend({
       "start-redeem-cooldown",
     ])
     .describe("The action to execute"),
+  assetAddress: z.string().describe("The address of the vault's underlying token"),
   amount: z.coerce
     .bigint()
     .or(z.literal("all"))

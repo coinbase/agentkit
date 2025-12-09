@@ -12,5 +12,5 @@ export const SUPPORTED_CHAIN_IDS = SUPPORTED_NETWORKS.map(network =>
  * @returns The network name
  */
 export function getNetworkNameFromChainId(chainId: string): string | undefined {
-  return SUPPORTED_NETWORKS.find(network => viemChains[network]?.id === chainId);
+  return SUPPORTED_NETWORKS.find(network => viemChains[network]?.id.toString() === chainId);
 }

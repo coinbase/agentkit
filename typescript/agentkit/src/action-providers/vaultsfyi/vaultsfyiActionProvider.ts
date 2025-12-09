@@ -617,7 +617,7 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
    */
   supportsNetwork(network: Network): boolean {
     return (
-      network.protocolFamily == "evm" &&
+      network.protocolFamily === "evm" &&
       (network.chainId ? SUPPORTED_CHAIN_IDS.includes(network.chainId) : false)
     );
   }
