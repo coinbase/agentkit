@@ -629,5 +629,5 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
  * @param config - Configuration options for the provider
  * @returns A new VaultsfyiActionProvider instance
  */
-export const vaultsfyiActionProvider = (config: VaultsfyiActionProviderConfig) =>
+export const vaultsfyiActionProvider = (config: VaultsfyiActionProviderConfig = {}) =>
   new VaultsfyiActionProvider(config);
