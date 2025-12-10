@@ -1,4 +1,4 @@
-import { Address, erc20Abi, Hex, parseUnits } from "viem";
+import { Address, Hex } from "viem";
 import { EvmWalletProvider } from "../../wallet-providers";
 import { VaultsSdk } from "@vaultsfyi/sdk";
 
@@ -32,27 +32,6 @@ export async function executeActions(
     });
     await wallet.waitForTransactionReceipt(txHash);
   }
-}
-
-/**
- * Parse an asset amount with decimals
- *
- * @param wallet - The wallet provider
- * @param assetAddress - The address of the asset
- * @param amount - The amount to parse
- * @returns The parsed amount
- */
-export async function parseAssetAmount(
-  wallet: EvmWalletProvider,
-  assetAddress: string,
-  amount: number,
-): Promise<string> {
-  const decimals = await wallet.readContract({
-    address: assetAddress as Address,
-    abi: erc20Abi,
-    functionName: "decimals",
-  });
-  return parseUnits(amount.toString(), decimals).toString();
 }
 
 type Apy = {
