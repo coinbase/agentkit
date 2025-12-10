@@ -575,24 +575,44 @@ const agent = createReactAgent({
     <td width="768">Gets historical APY and TVL data for a specific vault over time.</td>
 </tr>
 <tr>
-    <td width="200"><code>deposit</code></td>
-    <td width="768">Deposits assets into a selected vault to start earning yield.</td>
+    <td width="200"><code>transaction_context</code></td>
+    <td width="768">Gets the available balances and operations for a given vault.</td>
 </tr>
 <tr>
-    <td width="200"><code>redeem</code></td>
-    <td width="768">Redeems assets from a vault to withdraw principal and earned yield.</td>
+    <td width="200"><code>execute_step</code></td>
+    <td width="768">Executes an operation on a given vault.</td>
 </tr>
 <tr>
-    <td width="200"><code>claim</code></td>
-    <td width="768">Claims rewards from a vault without withdrawing the principal deposit.</td>
-</tr>
-<tr>
-    <td width="200"><code>balances</code></td>
-    <td width="768">Retrieves user's native token and ERC20 token balances across supported networks.</td>
+    <td width="200"><code>user_idle_assets</code></td>
+    <td width="768">Gets the user's idle assets.</td>
 </tr>
 <tr>
     <td width="200"><code>positions</code></td>
     <td width="768">Gets user's current positions in vaults including balances and unclaimed rewards.</td>
+</tr>
+<tr>
+    <td width="200"><code>rewards_context</code></td>
+    <td width="768">Gets the available rewards for a given user.</td>
+</tr>
+<tr>
+    <td width="200"><code>claim_rewards</code></td>
+    <td width="768">Claims requested rewards for a given user.</td>
+</tr>
+<tr>
+    <td width="200"><code>benchmark_apy</code></td>
+    <td width="768">Gets the benchmark APY.</td>
+</tr>
+<tr>
+    <td width="200"><code>historical_benchmark_apy</code></td>
+    <td width="768">Gets the historical benchmark APY.</td>
+</tr>
+<tr>
+    <td width="200"><code>total_vault_returns</code></td>
+    <td width="768">Gets the total returns for a given vault.</td>
+</tr>
+<tr>
+    <td width="200"><code>user_events</code></td>
+    <td width="768">Gets the user's events for a given vault.</td>
 </tr>
 </table>
 </details>

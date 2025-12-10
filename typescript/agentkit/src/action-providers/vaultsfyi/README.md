@@ -26,10 +26,12 @@ vaultsfyi/
 - `vault_historical_data`: Get historical data for a specific vault.
 - `transaction_context`: Get the transaction context for a vault.
 - `execute_step`: Execute a step in a vault.
-- `rewards_context`: Get the rewards context for a vault.
-- `claim_rewards`: Claim rewards from a vault.
-- `benchmark_apy`: Get the benchmark APY for a vault.
-- `historical_benchmark_apy`: Get the historical benchmark APY for a vault.
+- `user_idle_assets`: Get the user's idle assets.
+- `positions`: Get the user's positions.
+- `rewards_context`: Get the rewards context.
+- `claim_rewards`: Claim rewards.
+- `benchmark_apy`: Get the benchmark APY.
+- `historical_benchmark_apy`: Get the historical benchmark APY.
 - `total_vault_returns`: Get the total returns for a vault.
 - `user_events`: Get the user's events for a vault.
 
