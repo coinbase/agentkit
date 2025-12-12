@@ -315,7 +315,7 @@ polygon_amoy = Chain(
     native_currency={"name": "POL", "symbol": "POL", "decimals": 18},
     rpc_urls={
         "default": {
-            "http": ["https://polygon-amoy-bor-rpc.publicnode.com"],
+            "http": ["https://rpc-amoy.polygon.technology"],
         },
     },
     block_explorers={
