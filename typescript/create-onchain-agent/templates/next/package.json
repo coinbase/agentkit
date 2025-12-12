@@ -18,7 +18,7 @@
     "@langchain/openai": "^0.3.14",
     "@solana/web3.js": "^1.98.0",
     "@tanstack/react-query": "^5",
-    "ai": "^4.1.54",
+    "ai": "^5.0.52",
     "bs58": "^6.0.0",
     "next": "^16.0.8",
     "react": "^19.2.1",

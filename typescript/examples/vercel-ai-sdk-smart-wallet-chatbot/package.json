@@ -17,7 +17,7 @@
     "@ai-sdk/openai": "^1.1.9",
     "@coinbase/agentkit": "workspace:*",
     "@coinbase/agentkit-vercel-ai-sdk": "workspace:*",
-    "ai": "^4.1.16",
+    "ai": "^5.0.52",
     "dotenv": "^16.4.5",
     "tsx": "^4.7.1",
     "viem": "^2.24.1",
