@@ -309,20 +309,20 @@ optimism = Chain(
     },
 )
 
-polygon_mumbai = Chain(
-    id="80001",
-    name="Polygon Mumbai",
-    native_currency={"name": "MATIC", "symbol": "MATIC", "decimals": 18},
+polygon_amoy = Chain(
+    id="80002",
+    name="Polygon Amoy",
+    native_currency={"name": "POL", "symbol": "POL", "decimals": 18},
     rpc_urls={
         "default": {
-            "http": ["https://rpc.ankr.com/polygon_mumbai"],
+            "http": ["https://rpc-amoy.polygon.technology"],
         },
     },
     block_explorers={
         "default": {
             "name": "PolygonScan",
-            "url": "https://mumbai.polygonscan.com",
-            "api_url": "https://api-testnet.polygonscan.com/api",
+            "url": "https://amoy.polygonscan.com/",
+            "api_url": "https://api.etherscan.io/v2/api",
         },
     },
     contracts={
@@ -347,7 +347,7 @@ polygon = Chain(
         "default": {
             "name": "PolygonScan",
             "url": "https://polygonscan.com",
-            "api_url": "https://api.polygonscan.com/api",
+            "api_url": "https://api.etherscan.io/v2/api",
         },
     },
     contracts={
