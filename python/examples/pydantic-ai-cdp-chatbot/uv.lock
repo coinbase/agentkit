@@ -718,6 +718,7 @@ source = { editable = "../../framework-extensions/pydantic-ai" }
 dependencies = [
     { name = "coinbase-agentkit" },
     { name = "nest-asyncio" },
+    { name = "openai" },
     { name = "pydantic-ai" },
     { name = "pytest-asyncio" },
     { name = "python-dotenv" },
@@ -728,6 +729,7 @@ dependencies = [
 requires-dist = [
     { name = "coinbase-agentkit", specifier = ">=0.7.2,<0.8" },
     { name = "nest-asyncio", specifier = ">=1.6.0,<2" },
+    { name = "openai", specifier = "<=1.99.1" },
     { name = "pydantic-ai", specifier = ">=0.4.0,<0.5" },
     { name = "pytest-asyncio", specifier = ">=0.25.3,<0.26" },
     { name = "python-dotenv", specifier = ">=1.0.1,<2" },
@@ -1939,7 +1941,7 @@ wheels = [
 
 [[package]]
 name = "openai"
-version = "1.99.6"
+version = "1.99.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -1951,9 +1953,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/11/45/38a87bd6949236db5ae3132f41d5861824702b149f86d2627d6900919103/openai-1.99.6.tar.gz", hash = "sha256:f48f4239b938ef187062f3d5199a05b69711d8b600b9a9b6a3853cd271799183", size = 505364, upload-time = "2025-08-09T15:20:54.438Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/03/30/f0fb7907a77e733bb801c7bdcde903500b31215141cdb261f04421e6fbec/openai-1.99.1.tar.gz", hash = "sha256:2c9d8e498c298f51bb94bcac724257a3a6cac6139ccdfc1186c6708f7a93120f", size = 497075, upload-time = "2025-08-05T19:42:36.131Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d6/dd/9aa956485c2856346b3181542fbb0aea4e5b457fa7a523944726746da8da/openai-1.99.6-py3-none-any.whl", hash = "sha256:e40d44b2989588c45ce13819598788b77b8fb80ba2f7ae95ce90d14e46f1bd26", size = 786296, upload-time = "2025-08-09T15:20:51.95Z" },
+    { url = "https://files.pythonhosted.org/packages/54/15/9c85154ffd283abfc43309ff3aaa63c3fd02f7767ee684e73670f6c5ade2/openai-1.99.1-py3-none-any.whl", hash = "sha256:8eeccc69e0ece1357b51ca0d9fb21324afee09b20c3e5b547d02445ca18a4e03", size = 767827, upload-time = "2025-08-05T19:42:34.192Z" },
 ]
 
 [[package]]

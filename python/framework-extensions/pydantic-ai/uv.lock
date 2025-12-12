@@ -737,6 +737,7 @@ source = { editable = "." }
 dependencies = [
     { name = "coinbase-agentkit" },
     { name = "nest-asyncio" },
+    { name = "openai" },
     { name = "pydantic-ai" },
     { name = "pytest-asyncio" },
     { name = "python-dotenv" },
@@ -764,6 +765,7 @@ dev = [
 requires-dist = [
     { name = "coinbase-agentkit", specifier = ">=0.7.2,<0.8" },
     { name = "nest-asyncio", specifier = ">=1.6.0,<2" },
+    { name = "openai", specifier = "<=1.99.1" },
     { name = "pydantic-ai", specifier = ">=0.4.0,<0.5" },
     { name = "pytest-asyncio", specifier = ">=0.25.3,<0.26" },
     { name = "python-dotenv", specifier = ">=1.0.1,<2" },
