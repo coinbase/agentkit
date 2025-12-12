@@ -30,7 +30,7 @@
 - [🤝 Contributing](#-contributing)
 - [📜 Documentation](#-documentation)
 - [🌙 Nightly Builds](#-nightly-builds)
-- [🚨 Security and bug reports](#-security-and-bug-reports)
+- [🚨 Security and Bug Reports](#-security-and-bug-reports)
 - [📧 Contact](#-contact)
 - [🔗 Supported Wallets, Protocols, and Frameworks](#-supported-wallets-protocols-and-frameworks)
 - [📝 License](#-license)
@@ -172,10 +172,13 @@ agentkit/
 │   │           └── viem/
 │   ├── create-onchain-agent/
 │   ├── framework-extensions/
+│   │   ├── autogen/
 │   │   ├── langchain/
 │   │   ├── openai-agents-sdk/
+│   │   ├── pydantic-ai/
 │   │   └── strands-agents/
 │   └── examples/
+│       ├── autogen-cdp-chatbot/
 │       ├── langchain-cdp-chatbot/
 │       ├── langchain-cdp-smart-wallet-chatbot/
 │       ├── langchain-cdp-solana-chatbot/
@@ -185,6 +188,7 @@ agentkit/
 │       ├── openai-agents-sdk-cdp-chatbot/
 │       ├── openai-agents-sdk-cdp-voice-chatbot/
 │       ├── openai-agents-sdk-smart-wallet-chatbot/
+│       ├── pydantic-ai-cdp-chatbot/
 │       └── strands-agents-cdp-server-chatbot/
 ```
 
@@ -306,7 +310,6 @@ AgentKit is proud to have support for the following protocols, frameworks, walle
 <a href="https://base.org" target="_blank"><img src="./assets/networks/base.svg" width="100" height="auto" alt="Base"></a>
 <a href="https://ethereum.org" target="_blank"><img src="./assets/networks/ethereum.svg" width="100" height="auto" alt="Ethereum"></a>
 <a href="https://solana.com" target="_blank"><img src="./assets/networks/solana.svg" width="100" height="auto" alt="Solana"></a>
-
 
 Note: We support all EVM and SVM networks, with deep protocol support for the above networks. Please don't hesitate to make contributions to add more support for your preferred networks.
 
