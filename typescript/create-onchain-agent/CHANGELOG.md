@@ -1,5 +1,11 @@
 # Coinbase Create Onchain Agent Changelog
 
+## 0.5.7
+
+### Patch Changes
+
+- [#887](https://github.com/coinbase/agentkit/pull/887) [`0a82321`](https://github.com/coinbase/agentkit/commit/0a8232168f5a69ae3ce273cfbc70d47134cce3d6) Thanks [@phdargen](https://github.com/phdargen)! - Updated to next 16, react 19 and tailwind 4
+
 ## 0.5.6
 
 ### Patch Changes
