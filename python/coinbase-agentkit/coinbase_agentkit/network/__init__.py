@@ -7,7 +7,7 @@ from .chain_definitions import (
     optimism,
     optimism_sepolia,
     polygon,
-    polygon_mumbai,
+    polygon_amoy,
     sepolia,
 )
 from .network import (
@@ -30,6 +30,6 @@ __all__ = [
     "base",
     "arbitrum",
     "optimism",
-    "polygon_mumbai",
+    "polygon_amoy",
     "polygon",
 ]
