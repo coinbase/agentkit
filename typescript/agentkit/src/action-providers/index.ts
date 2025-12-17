@@ -19,6 +19,7 @@ export * from "./farcaster";
 export * from "./jupiter";
 export * from "./messari";
 export * from "./pyth";
+export * from "./raydium";
 export * from "./moonwell";
 export * from "./morpho";
 export * from "./opensea";
