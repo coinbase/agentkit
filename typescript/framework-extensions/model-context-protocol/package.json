@@ -39,7 +39,7 @@
     "mcp"
   ],
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.6.1",
+    "@modelcontextprotocol/sdk": "^1.24.0",
     "zod": "^3.22.4",
     "zod-to-json-schema": "^3.24.3"
   },

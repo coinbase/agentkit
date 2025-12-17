@@ -13,7 +13,7 @@
   "dependencies": {
     "@coinbase/agentkit": "latest",
     "@coinbase/agentkit-model-context-protocol": "latest",
-    "@modelcontextprotocol/sdk": "^1.6.1",
+    "@modelcontextprotocol/sdk": "^1.24.0",
     "@solana/web3.js": "^1.98.0",
     "bs58": "^6.0.0",
     "viem": "^2.24.1"
