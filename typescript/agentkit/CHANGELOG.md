@@ -1,5 +1,24 @@
 # AgentKit Changelog
 
+## 0.10.4
+
+### Patch Changes
+
+- [#883](https://github.com/coinbase/agentkit/pull/883) [`02f9291`](https://github.com/coinbase/agentkit/commit/02f9291ef09c6edab2bb81ed6de81a06206e866d) Thanks [@pawelpolak2](https://github.com/pawelpolak2)! - Updated Vaults.fyi provider to use the v2 API
+
+- [#863](https://github.com/coinbase/agentkit/pull/863) [`2471251`](https://github.com/coinbase/agentkit/commit/24712518430c787f5c543781b39116708a2d759a) Thanks [@phdargen](https://github.com/phdargen)! - Converted all dynamic to static imports
+
+- [#880](https://github.com/coinbase/agentkit/pull/880) [`f76a238`](https://github.com/coinbase/agentkit/commit/f76a238d2114d3dfe222ef89e111aa4d06d5fe95) Thanks [@phdargen](https://github.com/phdargen)! - Fixed broken create-onchain-agent builds due to breaking changes in newer zora sdk versions
+
+- [#309](https://github.com/coinbase/agentkit/pull/309) [`7260a56`](https://github.com/coinbase/agentkit/commit/7260a5694b20fedfe6dfe12a18c0298ddda2c236) Thanks [@LufyCZ](https://github.com/LufyCZ)! - - Added `sushiRouterActionProvider` to provide swap and quote functionality using the Sushi Router API.
+
+  - Added `swap` action for swaps.
+  - Added `quote` action for fetching quotes for swaps.
+  - Added `sushiDataActionProvider` to provide token finding functionality using the Sushi Data API.
+  - Added `find-tokens` action for fetching tokens by symbols or addresses.
+
+- [#864](https://github.com/coinbase/agentkit/pull/864) [`8515a32`](https://github.com/coinbase/agentkit/commit/8515a3271dd65a61ee9244e4cd162609811e2583) Thanks [@phdargen](https://github.com/phdargen)! - Updated xmtp chatbot to use CDP v2 wallets and new xmtp/agent-sdk
+
 ## 0.10.3
 
 ### Patch Changes
