@@ -15,7 +15,7 @@
   "dependencies": {
     "@coinbase/agentkit": "workspace:*",
     "@coinbase/agentkit-langchain": "workspace:*",
-    "@langchain/core": "0.3.30",
+    "@langchain/core": "0.3.80",
     "@langchain/langgraph": "^0.2.39",
     "@langchain/openai": "^0.3.16",
     "dotenv": "^16.4.5",
