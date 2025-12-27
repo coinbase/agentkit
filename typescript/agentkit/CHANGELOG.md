@@ -1,5 +1,13 @@
 # AgentKit Changelog
 
+## 0.10.5
+
+### Patch Changes
+
+- [#898](https://github.com/coinbase/agentkit/pull/898) [`16fb4a1`](https://github.com/coinbase/agentkit/commit/16fb4a1c4674787ac8442efc88e0830573f3208d) Thanks [@phdargen](https://github.com/phdargen)! - Updated x402 actions to v2 and improved discovery and query/body parameter handling
+
+- [#882](https://github.com/coinbase/agentkit/pull/882) [`8eab8b8`](https://github.com/coinbase/agentkit/commit/8eab8b85a496249e8e080a78c4ecf9b92f6c8504) Thanks [@sanketsaagar](https://github.com/sanketsaagar)! - Updated polygon network apiUrl for both mainnet and amoy
+
 ## 0.10.4
 
 ### Patch Changes
