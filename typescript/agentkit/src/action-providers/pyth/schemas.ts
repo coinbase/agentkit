@@ -5,7 +5,15 @@ import { z } from "zod";
  */
 export const PythFetchPriceFeedIDSchema = z
   .object({
-    tokenSymbol: z.string().describe("The token symbol to fetch the price feed ID for"),
+    tokenSymbol: z.string().describe("The asset ticker/symbol to fetch the price feed ID for"),
+    quoteCurrency: z
+      .string()
+      .default("USD")
+      .describe("The quote currency to filter by (defaults to USD)"),
+    assetType: z
+      .enum(["crypto", "equity", "fx", "metal"])
+      .default("crypto")
+      .describe("The asset type to search for (crypto, equity, fx, metal)"),
   })
   .strict();
 

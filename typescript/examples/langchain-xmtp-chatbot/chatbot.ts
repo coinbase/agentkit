@@ -2,29 +2,33 @@ import * as dotenv from "dotenv";
 import * as fs from "fs";
 import {
   AgentKit,
-  CdpWalletProvider,
+  CdpEvmWalletProvider,
   walletActionProvider,
   erc20ActionProvider,
   cdpApiActionProvider,
-  cdpWalletActionProvider,
+  cdpEvmWalletActionProvider,
+  pythActionProvider,
+  wethActionProvider,
+  x402ActionProvider,
+  NETWORK_ID_TO_VIEM_CHAIN,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
 import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
+import { Agent as XMTPAgent, type MessageContext, type AgentMiddleware } from "@xmtp/agent-sdk";
 import {
-  Client,
-  IdentifierKind,
-  Signer,
-  // type Conversation,
-  type DecodedMessage,
-  type XmtpEnv,
-} from "@xmtp/node-sdk";
-import { fromString } from "uint8arrays";
-import { createWalletClient, http, toBytes } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
-import { sepolia } from "viem/chains";
+  TransactionReferenceCodec,
+  ContentTypeTransactionReference,
+  type TransactionReference,
+} from "@xmtp/content-type-transaction-reference";
+import {
+  ContentTypeWalletSendCalls,
+  WalletSendCallsCodec,
+  type WalletSendCallsParams,
+} from "@xmtp/content-type-wallet-send-calls";
+import { parseEther, createPublicClient, http, formatEther, Chain } from "viem";
 
 // Initialize environment variables
 dotenv.config();
@@ -36,10 +40,24 @@ const STORAGE_DIR = ".data/wallets";
 const memoryStore: Record<string, MemorySaver> = {};
 const agentStore: Record<string, Agent> = {};
 
+// Initialize public client
+const networkId = process.env.NETWORK_ID || "base-sepolia";
+const chain = NETWORK_ID_TO_VIEM_CHAIN[networkId as keyof typeof NETWORK_ID_TO_VIEM_CHAIN];
+const chainId = `0x${chain.id.toString(16)}` as `0x${string}`;
+const publicClient = createPublicClient({
+  chain: chain as Chain,
+  transport: process.env.RPC_URL ? http(process.env.RPC_URL) : http(),
+});
+
 interface AgentConfig {
   configurable: {
     thread_id: string;
   };
+}
+
+interface WalletData {
+  name?: string;
+  address: `0x${string}`;
 }
 
 type Agent = ReturnType<typeof createReactAgent>;
@@ -59,10 +77,11 @@ function ensureLocalStorage() {
  * @param userId - The unique identifier for the user
  * @param walletData - The wallet data to be saved
  */
-async function saveWalletData(userId: string, walletData: string) {
+function saveWalletData(userId: string, walletData: WalletData): void {
   const localFilePath = `${STORAGE_DIR}/${userId}.json`;
   try {
-    fs.writeFileSync(localFilePath, walletData);
+    fs.writeFileSync(localFilePath, JSON.stringify(walletData, null, 2));
+    console.log(`Wallet data saved for user ${userId}`);
   } catch (error) {
     console.error(`Failed to save wallet data to file: ${error}`);
   }
@@ -72,89 +91,18 @@ async function saveWalletData(userId: string, walletData: string) {
  * Get wallet data from storage.
  *
  * @param userId - The unique identifier for the user
- * @returns The wallet data as a string, or null if not found
+ * @returns The wallet data, or null if not found
  */
-async function getWalletData(userId: string): Promise<string | null> {
+function getWalletData(userId: string): WalletData | null {
   const localFilePath = `${STORAGE_DIR}/${userId}.json`;
   try {
     if (fs.existsSync(localFilePath)) {
-      return fs.readFileSync(localFilePath, "utf8");
+      return JSON.parse(fs.readFileSync(localFilePath, "utf8"));
     }
   } catch (error) {
     console.warn(`Could not read wallet data from file: ${error}`);
   }
   return null;
-}
-
-/**
- * Create a viem signer from a wallet private key.
- *
- * @param walletKey - The private key of the wallet
- * @returns A Signer instance for XMTP
- */
-const createSigner = (walletKey: string): Signer => {
-  const account = privateKeyToAccount(walletKey as `0x${string}`);
-  const wallet = createWalletClient({
-    account,
-    chain: sepolia,
-    transport: http(),
-  });
-
-  return {
-    type: "EOA" as const,
-    getIdentifier: () => ({
-      identifierKind: IdentifierKind.Ethereum,
-      identifier: account.address.toLowerCase(),
-    }),
-    signMessage: async (message: string) => {
-      const signature = await wallet.signMessage({
-        message,
-        account,
-      });
-      return toBytes(signature);
-    },
-  };
-};
-
-/**
- * Convert hex encryption key to appropriate format for XMTP.
- *
- * @param key - The hex string to convert
- * @returns The key as a Uint8Array
- */
-function getEncryptionKeyFromHex(key: string): Uint8Array {
-  const hexString = key.startsWith("0x") ? key.slice(2) : key;
-  return fromString(hexString, "hex");
-}
-
-/**
- * Initialize the XMTP client.
- *
- * @returns An initialized XMTP Client instance
- */
-async function initializeXmtpClient() {
-  const { WALLET_KEY, ENCRYPTION_KEY, XMTP_ENV } = process.env;
-
-  if (!WALLET_KEY || !ENCRYPTION_KEY || !XMTP_ENV) {
-    throw new Error("Some environment variables are not set. Please check your .env file.");
-  }
-
-  const signer = createSigner(WALLET_KEY);
-  const encryptionKey = getEncryptionKeyFromHex(ENCRYPTION_KEY);
-  const env: XmtpEnv = XMTP_ENV as XmtpEnv;
-
-  const client = await Client.create(signer, encryptionKey, { env });
-
-  await client.conversations.sync();
-
-  const identifier = await signer.getIdentifier();
-  const address = identifier.identifier;
-
-  console.log(
-    `Agent initialized on ${env} network\nSend a message on http://xmtp.chat/dm/${address}?env=${env}`,
-  );
-
-  return client;
 }
 
 /**
@@ -177,34 +125,33 @@ async function initializeAgent(userId: string): Promise<{ agent: Agent; config: 
       model: "gpt-4o-mini",
     });
 
-    const storedWalletData = await getWalletData(userId);
+    const storedWalletData = getWalletData(userId);
 
     console.log(
       `Creating new agent for user: ${userId}, wallet data: ${storedWalletData ? "Found" : "Not found"}`,
     );
 
-    const config = {
-      apiKeyName: process.env.CDP_API_KEY_NAME,
-      apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-      cdpWalletData: storedWalletData || undefined,
+    // Configure CDP Wallet Provider with CDP v2
+    const walletProvider = await CdpEvmWalletProvider.configureWithWallet({
+      apiKeyId: process.env.CDP_API_KEY_ID,
+      apiKeySecret: process.env.CDP_API_KEY_SECRET,
+      walletSecret: process.env.CDP_WALLET_SECRET,
+      idempotencyKey: process.env.IDEMPOTENCY_KEY,
+      address: storedWalletData?.address, // Retrieve existing wallet if available
       networkId: process.env.NETWORK_ID || "base-sepolia",
-    };
-
-    const walletProvider = await CdpWalletProvider.configureWithWallet(config);
+      rpcUrl: process.env.RPC_URL,
+    });
 
     const agentkit = await AgentKit.from({
       walletProvider,
       actionProviders: [
         walletActionProvider(),
         erc20ActionProvider(),
-        cdpApiActionProvider({
-          apiKeyName: process.env.CDP_API_KEY_NAME,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-        }),
-        cdpWalletActionProvider({
-          apiKeyName: process.env.CDP_API_KEY_NAME,
-          apiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-        }),
+        wethActionProvider(),
+        cdpApiActionProvider(),
+        cdpEvmWalletActionProvider(),
+        pythActionProvider(),
+        x402ActionProvider(),
       ],
     });
 
@@ -219,39 +166,29 @@ async function initializeAgent(userId: string): Promise<{ agent: Agent; config: 
       configurable: { thread_id: userId },
     };
 
+    const canUseFaucet = walletProvider.getNetwork().networkId == "base-sepolia";
+    const faucetMessage = `If you ever need funds, you can request them from the faucet.`;
+    const cantUseFaucetMessage = `If you need funds, you can request funds from the user. Advise the user to use the "/fund <amountInETH>" command to send ETH to your wallet.`;
     const agent = createReactAgent({
       llm,
       tools,
       checkpointSaver: memoryStore[userId],
       messageModifier: `
-        You are a DeFi Payment Agent that assists users with sending payments and managing their crypto assets.
-        You can interact with the blockchain using Coinbase Developer Platform AgentKit.
-
-        When a user asks you to make a payment or check their balance:
-        1. Always check the wallet details first to see what network you're on
-        2. If on base-sepolia testnet, you can request funds from the faucet if needed
-        3. For mainnet operations, provide wallet details and request funds from the user
-
-        Your default network is Base Sepolia testnet.
-        Your main and only token for transactions is USDC. Token address is 0x036CbD53842c5426634e7929541eC2318f3dCF7e. USDC is gasless on Base.
-
-        You can only perform payment and wallet-related tasks. For other requests, politely explain that you're 
-        specialized in processing payments and can't assist with other tasks.
-                
-        If you encounter an error:
-        - For 5XX errors: Ask the user to try again later
-        - For other errors: Provide clear troubleshooting advice and offer to retry
-        
-        Be concise, helpful, and security-focused in all your interactions.
+        You are a helpful agent that can interact onchain using the Coinbase Developer Platform AgentKit. You are 
+        empowered to interact onchain using your tools. 
+        Before executing your first action, get the wallet details to see your address and what network you're on. 
+        ${canUseFaucet ? faucetMessage : cantUseFaucetMessage}.
+        If someone asks you to do something you can't do with your currently available tools, you must say so, and 
+        encourage them to implement it themselves using the CDP SDK + Agentkit, recommend they go to 
+        docs.cdp.coinbase.com for more information. Be concise and helpful with your responses. Refrain from 
+        restating your tools' descriptions unless it is explicitly requested.
       `,
     });
 
     agentStore[userId] = agent;
 
     const exportedWallet = await walletProvider.exportWallet();
-    const walletDataJson = JSON.stringify(exportedWallet);
-    await saveWalletData(userId, walletDataJson);
-    console.log(`Wallet data saved for user ${userId}`);
+    saveWalletData(userId, exportedWallet);
 
     return { agent, config: agentConfig };
   } catch (error) {
@@ -290,59 +227,51 @@ async function processMessage(agent: Agent, config: AgentConfig, message: string
 /**
  * Handle incoming XMTP messages.
  *
- * @param message - The decoded XMTP message
- * @param client - The XMTP client instance
+ * @param ctx - The message context from XMTP agent SDK
  */
-async function handleMessage(message: DecodedMessage, client: Client) {
+async function handleMessage(ctx: MessageContext) {
   try {
-    const senderAddress = message.senderInboxId;
-    const botAddress = client.inboxId.toLowerCase();
+    const userId = ctx.message.senderInboxId;
+    console.log(`Received message from ${userId}: ${ctx.message.content}`);
 
-    // Ignore messages from the bot itself
-    if (senderAddress.toLowerCase() === botAddress) {
-      return;
-    }
+    const { agent, config } = await initializeAgent(userId);
+    const response = await processMessage(agent, config, String(ctx.message.content));
 
-    console.log(`Received message from ${senderAddress}: ${message.content}`);
-
-    const { agent, config } = await initializeAgent(senderAddress);
-    const response = await processMessage(agent, config, message.content);
-
-    // Get the conversation and send response
-    const conversation = await client.conversations.getConversationById(message.conversationId);
-    if (!conversation) {
-      throw new Error(`Could not find conversation for ID: ${message.conversationId}`);
-    }
-    await conversation.send(response);
-    console.log(`Sent response to ${senderAddress}: ${response}`);
+    await ctx.sendText(response);
+    console.log(`Sent response to ${userId}: ${response}`);
   } catch (error) {
     console.error("Error handling message:", error);
-    // Send error message back to user
-    const conversation = await client.conversations.getConversationById(message.conversationId);
-    if (!conversation) {
-      console.error(`Could not find conversation for ID: ${message.conversationId}`);
-      return;
-    }
-    await conversation.send(
+    await ctx.sendText(
       "I encountered an error while processing your request. Please try again later.",
     );
   }
 }
 
 /**
- * Start listening for XMTP messages.
+ * Transaction reference middleware to handle confirmed transactions
  *
- * @param client - The XMTP client instance
+ * @param ctx - The message context from XMTP agent SDK
+ * @param next - The next middleware function in the chain
  */
-async function startMessageListener(client: Client) {
-  console.log("Starting message listener...");
-  const stream = await client.conversations.streamAllMessages();
-  for await (const message of stream) {
-    if (message) {
-      await handleMessage(message, client);
-    }
+const transactionReferenceMiddleware: AgentMiddleware = async (ctx, next) => {
+  // Check if this is a transaction reference message
+  if (ctx.message.contentType?.sameAs(ContentTypeTransactionReference)) {
+    const transactionRef = ctx.message.content as TransactionReference;
+
+    await ctx.sendText(
+      `✅ Transaction confirmed!\n` +
+        `🔗 Network: ${transactionRef.networkId}\n` +
+        `📄 Hash: ${transactionRef.reference}\n` +
+        `${transactionRef.metadata ? `📝 Transaction metadata received` : ""}`,
+    );
+
+    // Don't continue to other handlers since we handled this message
+    return;
   }
-}
+
+  // Continue to next middleware/handler
+  await next();
+};
 
 /**
  * Validates that required environment variables are set.
@@ -352,10 +281,11 @@ function validateEnvironment(): void {
 
   const requiredVars = [
     "OPENAI_API_KEY",
-    "CDP_API_KEY_NAME",
-    "CDP_API_KEY_PRIVATE_KEY",
-    "WALLET_KEY",
-    "ENCRYPTION_KEY",
+    "CDP_API_KEY_ID",
+    "CDP_API_KEY_SECRET",
+    "CDP_WALLET_SECRET",
+    "XMTP_WALLET_KEY",
+    "XMTP_DB_ENCRYPTION_KEY",
   ];
 
   requiredVars.forEach(varName => {
@@ -375,6 +305,10 @@ function validateEnvironment(): void {
   if (!process.env.NETWORK_ID) {
     console.warn("Warning: NETWORK_ID not set, defaulting to base-sepolia");
   }
+
+  if (!process.env.XMTP_ENV) {
+    console.warn("Warning: XMTP_ENV not set, defaulting to dev");
+  }
 }
 
 /**
@@ -386,8 +320,101 @@ async function main(): Promise<void> {
   validateEnvironment();
   ensureLocalStorage();
 
-  const xmtpClient = await initializeXmtpClient();
-  await startMessageListener(xmtpClient);
+  // Create XMTP agent using environment variables with transaction codecs
+  const xmtpAgent = await XMTPAgent.createFromEnv({
+    env: (process.env.XMTP_ENV as "local" | "dev" | "production") || "dev",
+    codecs: [new WalletSendCallsCodec(), new TransactionReferenceCodec()],
+  });
+
+  // Apply the transaction reference middleware
+  xmtpAgent.use(transactionReferenceMiddleware);
+
+  // Handle /fund command - triggers an ETH transaction from user wallet to agent wallet
+  xmtpAgent.on("text", async ctx => {
+    const message = ctx.message.content as string;
+    if (!message.startsWith("/fund")) {
+      handleMessage(ctx);
+      return;
+    }
+
+    const agentAddress = xmtpAgent.address;
+    if (!agentAddress) {
+      await ctx.sendText("Agent address not found");
+      return;
+    }
+    const senderAddress = await ctx.getSenderAddress();
+
+    const parts = message.split(" ");
+    if (parts.length < 2) {
+      await ctx.sendText("Please provide an ETH amount. Usage: /fund <amountInETH>");
+      return;
+    }
+
+    const amount = parseFloat(parts[1]);
+    if (isNaN(amount) || amount <= 0) {
+      await ctx.sendText("Please provide a valid ETH amount. Usage: /fund <amountInETH>");
+      return;
+    }
+
+    // Convert amount to wei
+    const amountInWei = parseEther(amount.toString());
+
+    // Check user's balance
+    const balance = await publicClient.getBalance({
+      address: senderAddress as `0x${string}`,
+    });
+
+    if (balance < amountInWei) {
+      await ctx.sendText(
+        `❌ Insufficient balance. You have ${formatEther(balance)} ETH but trying to send ${amount} ETH.`,
+      );
+      return;
+    }
+
+    const walletSendCalls: WalletSendCallsParams = {
+      version: "1.0",
+      from: senderAddress as `0x${string}`,
+      chainId: chainId,
+      calls: [
+        {
+          to: agentAddress as `0x${string}`,
+          value: `0x${amountInWei.toString(16)}`,
+          metadata: {
+            description: `Send ${amount} ETH to the agent's wallet ${agentAddress}`,
+            transactionType: "transfer",
+            currency: "ETH",
+            amount: amountInWei.toString(),
+            decimals: "18",
+            toAddress: agentAddress,
+          },
+        },
+      ],
+    };
+
+    // Send transaction request to user
+    await ctx.conversation.send(walletSendCalls, ContentTypeWalletSendCalls);
+
+    // Send a follow-up message about transaction references
+    await ctx.sendText(
+      `💡 Please sign the transaction in your wallet to send ${amount} ETH to the agent's wallet ${agentAddress}.`,
+    );
+  });
+
+  // Log when agent starts
+  xmtpAgent.on("start", () => {
+    const env = process.env.XMTP_ENV || "dev";
+    console.log(`Agent initialized on ${env} network`);
+    console.log(`Agent address: ${xmtpAgent.address}`);
+    console.log(`Send a message on http://xmtp.chat/dm/${xmtpAgent.address}?env=${env}`);
+    console.log(`Listening for messages...`);
+  });
+
+  // Handle errors
+  xmtpAgent.on("unhandledError", error => {
+    console.error("Unhandled error:", error);
+  });
+
+  await xmtpAgent.start();
 }
 
 // Start the chatbot

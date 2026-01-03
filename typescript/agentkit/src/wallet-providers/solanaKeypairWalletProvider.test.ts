@@ -227,7 +227,7 @@ describe("SolanaKeypairWalletProvider", () => {
 
     it("should transfer native tokens", async () => {
       const destination = "EQJqzeeVEnm8rKWQJ5SMTtQBD4xEgixwgzNWKkpeFRZ9";
-      const signature = await wallet.nativeTransfer(destination, "0.1");
+      const signature = await wallet.nativeTransfer(destination, "100000000"); // 0.1 SOL in lamports
 
       expect(signature).toBe("signature123");
     });
@@ -238,7 +238,8 @@ describe("SolanaKeypairWalletProvider", () => {
 
       const destination = "EQJqzeeVEnm8rKWQJ5SMTtQBD4xEgixwgzNWKkpeFRZ9";
 
-      await expect(wallet.nativeTransfer(destination, "1.0")).rejects.toThrow(
+      await expect(wallet.nativeTransfer(destination, "1000000000")).rejects.toThrow(
+        // 1 SOL in lamports
         "Insufficient balance",
       );
     });

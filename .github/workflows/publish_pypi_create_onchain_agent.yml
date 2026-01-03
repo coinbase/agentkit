@@ -46,10 +46,3 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: python/create-onchain-agent/dist/
-
-      - name: Tag package
-        run: |
-          TAG="create-onchain-agent-python@v${{ steps.build.outputs.version }}"
-          MESSAGE="Release create-onchain-agent-python version ${{ steps.build.outputs.version }}"
-          git tag -a $TAG -m "$MESSAGE"
-          git push origin $TAG

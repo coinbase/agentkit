@@ -1,8 +1,0 @@
-def test_handles_invalid_network_objects(provider):
-    """Test that provider handles invalid network objects."""
-    network = Network(protocol_family="invalid")
-    assert provider.supports_network(network) is False
-    {% if network_ids|length %}
-    network = Network(protocol_family="{{ protocol_family }}")
-    assert provider.supports_network(network) is False
-    {% endif %} 

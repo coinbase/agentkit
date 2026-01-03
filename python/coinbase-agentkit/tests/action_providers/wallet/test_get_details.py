@@ -4,7 +4,6 @@ from coinbase_agentkit.network import Network
 
 from .conftest import (
     MOCK_ADDRESS,
-    MOCK_BALANCE,
     MOCK_NETWORK,
     MOCK_PROVIDER_NAME,
 )
@@ -22,16 +21,16 @@ def test_get_wallet_details_success(wallet_action_provider, mock_wallet_provider
         mock_wallet_provider, GetWalletDetailsSchema()
     )
 
-    expected_response = f"""Wallet Details:
-- Provider: {MOCK_PROVIDER_NAME}
-- Address: {MOCK_ADDRESS}
-- Network:
-  * Protocol Family: {MOCK_NETWORK.protocol_family}
-  * Network ID: {MOCK_NETWORK.network_id or "N/A"}
-  * Chain ID: {str(MOCK_NETWORK.chain_id) if MOCK_NETWORK.chain_id else "N/A"}
-- Native Balance: {MOCK_BALANCE}"""
+    # Verify key parts of the response are present
+    assert MOCK_PROVIDER_NAME in result
+    assert MOCK_ADDRESS in result
+    assert MOCK_NETWORK.protocol_family in result
+    assert str(MOCK_NETWORK.network_id) in result
+    assert str(MOCK_NETWORK.chain_id) in result
 
-    assert result == expected_response
+    # Verify both balance formats are present (WEI and ETH)
+    assert "Native Balance: 1000000000000000000 WEI" in result
+    assert "Native Balance: 1 ETH" in result
 
 
 def test_get_wallet_details_missing_network_ids(wallet_action_provider, mock_wallet_provider):

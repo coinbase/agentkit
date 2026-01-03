@@ -4,6 +4,7 @@ import os
 import re
 import shutil
 import sys
+import time
 import zipfile
 from pathlib import Path
 
@@ -24,8 +25,13 @@ if sys.version_info.major != REQUIRED_MAJOR or sys.version_info.minor not in ALL
     sys.exit(1)
 
 # GitHub repo and folder path
-GITHUB_ZIP_URL = "https://github.com/coinbase/agentkit/archive/refs/heads/main.zip"
-TEMPLATES_SUBDIR = "agentkit-main/python/create-onchain-agent/templates"
+GITHUB_REPO = "coinbase/agentkit"
+GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/commits/main"
+GITHUB_ZIP_URL_TEMPLATE = f"https://github.com/{GITHUB_REPO}/archive/"
+# The template subdirectory path will change based on how the zip is downloaded
+# For main.zip it will be "agentkit-main/..."
+# For commit SHA it will be "agentkit-{commit_sha}/..."
+TEMPLATES_SUBDIR_PREFIX = "python/create-onchain-agent/templates"
 LOCAL_CACHE_DIR = Path(platformdirs.user_cache_dir("create-onchain-agent"))
 
 console = Console()
@@ -53,6 +59,12 @@ EVM_NETWORKS = [
     ("optimism-sepolia", "Optimism Sepolia"),
     ("polygon-mainnet", "Polygon Mainnet"),
     ("polygon-mumbai", "Polygon Mumbai"),
+]
+
+SVM_NETWORKS = [
+    ("solana-mainnet", "Solana Mainnet"),
+    ("solana-devnet", "Solana Devnet"),
+    ("solana-testnet", "Solana Testnet"),
 ]
 
 # Framework constants
@@ -101,22 +113,65 @@ def get_template_path(template_name: str, templates_path: str | None = None) -> 
 
     # If the template is already downloaded, return its path
     if extract_path.exists():
-        return str(extract_path)
+        # Always check for the latest version
+        shutil.rmtree(extract_path, ignore_errors=True)
+        if zip_path.exists():
+            zip_path.unlink()
+
+    # Get the latest commit SHA from the GitHub API
+    commit_sha = None
+    try:
+        response = requests.get(GITHUB_API_URL, timeout=10)
+        response.raise_for_status()
+        commit_sha = response.json()["sha"]
+        github_zip_url = f"{GITHUB_ZIP_URL_TEMPLATE}{commit_sha}.zip"
+    except (requests.RequestException, KeyError) as e:
+        console.print(f"[yellow]Warning: Could not fetch latest commit SHA: {e}[/yellow]")
+        # Fallback to a direct reference that won't be cached
+        github_zip_url = (
+            f"{GITHUB_ZIP_URL_TEMPLATE}refs/heads/main.zip?timestamp={int(time.time())}"
+        )
 
     # Download the zip file
-    response = requests.get(GITHUB_ZIP_URL)
+    response = requests.get(github_zip_url)
     response.raise_for_status()
 
     with open(zip_path, "wb") as f:
         f.write(response.content)
 
-    # Extract the template
+    # Determine the root directory within the ZIP
+    root_dir = None
+
     with zipfile.ZipFile(zip_path, "r") as zip_ref:
+        # Get all directories at the root level
+        root_dirs = set()
+        for file_info in zip_ref.infolist():
+            parts = file_info.filename.split("/")
+            if len(parts) > 1:
+                root_dirs.add(parts[0])
+
+        if len(root_dirs) == 1:
+            root_dir = next(iter(root_dirs))
+        else:
+            raise ValueError(f"Expected one root directory in ZIP, found: {root_dirs}")
+
+        # Construct the expected template path using the detected root directory
+        templates_subdir = f"{root_dir}/{TEMPLATES_SUBDIR_PREFIX}/{template_name}"
+
+        # Check if the template directory exists in the ZIP
+        template_path_exists = any(
+            file_info.filename.startswith(templates_subdir + "/")
+            for file_info in zip_ref.infolist()
+        )
+
+        if not template_path_exists:
+            raise FileNotFoundError(f"Template path {templates_subdir} not found in ZIP.")
+
+        # Extract the template
         zip_ref.extractall(LOCAL_CACHE_DIR)
 
-    template_path = LOCAL_CACHE_DIR / TEMPLATES_SUBDIR / template_name
-    if not template_path.exists():
-        raise FileNotFoundError(f"Template path {TEMPLATES_SUBDIR}/{template_name} not found in ZIP.")
+    # Use the detected root directory for the template path
+    template_path = LOCAL_CACHE_DIR / f"{root_dir}/{TEMPLATES_SUBDIR_PREFIX}/{template_name}"
 
     # Move extracted template to a stable path
     shutil.move(str(template_path), str(extract_path))
@@ -135,6 +190,7 @@ def get_network_choices(network_type: str) -> list:
             and any(net in id for net in ["sepolia", "mumbai", "devnet", "testnet"])
         )
     ]
+
 
 def create_advanced_project(templates_path: str | None = None):
     """Create a new onchain agent project with advanced setup."""
@@ -169,8 +225,7 @@ def create_advanced_project(templates_path: str | None = None):
 
     # Choose framework
     framework_choices = [
-        name + (" (default)" if id == "langchain" else "")
-        for name, id in FRAMEWORKS
+        name + (" (default)" if id == "langchain" else "") for name, id in FRAMEWORKS
     ]
     framework_name = questionary.select(
         "Choose your agent framework:",
@@ -184,13 +239,12 @@ def create_advanced_project(templates_path: str | None = None):
     # Look up the framework ID from the name
     framework = next(id for name, id in FRAMEWORKS if name == framework_name)
 
-    # Choose network type
-    network_type = questionary.select(
-        "Choose network type:",
+    # Choose network family
+    network_family = questionary.select(
+        "Choose network family:",
         choices=[
-            "Mainnet",
-            "Testnet",
-            "Custom Chain ID",
+            "Ethereum Virtual Machine (EVM)",
+            "Solana Virtual Machine (SVM)",
         ],
         style=custom_style,
     ).ask()
@@ -198,68 +252,90 @@ def create_advanced_project(templates_path: str | None = None):
     network = None
     chain_id = None
     rpc_url = None
+    wallet_provider = None
 
-    if network_type == "Custom Chain ID":
-        # Handle custom EVM network
-        chain_id = questionary.text(
-            "Enter your chain ID:",
-            validate=lambda text: text.strip().isdigit() or "Chain ID must be a number",
-            style=custom_style,
-        ).ask()
-
-        rpc_url = questionary.text(
-            "Enter your RPC URL:",
-            validate=lambda text: (
-                text.strip().startswith(("http://", "https://"))
-                or "RPC URL must start with http:// or https://"
-            ),
-            style=custom_style,
-        ).ask()
-
-        wallet_provider = "eth"  # Default to eth wallet provider for custom networks
-    else:
-        # Filter networks based on mainnet/testnet selection
-        network_choices = get_network_choices(network_type.lower())
+    if network_family == "Solana Virtual Machine (SVM)":
+        # Handle Solana network selection
+        network_choices = list(SVM_NETWORKS)
         network_name = questionary.select(
             "Choose a network:",
+            choices=[name for _, name in network_choices],
+            style=custom_style,
+        ).ask()
+        network = next(id for id, name in network_choices if name == network_name)
+        wallet_provider = "solana_server"  # Currently only one Solana wallet provider
+    else:
+        # Choose network type for EVM
+        network_type = questionary.select(
+            "Choose network type:",
             choices=[
-                name + (" (default)" if id == "base-sepolia" else "")
-                for name, id in network_choices
+                "Mainnet",
+                "Testnet",
+                "Custom Chain ID",
             ],
-            default="Base Sepolia (default)" if network_type == "Testnet" else None,
             style=custom_style,
         ).ask()
 
-        # Remove " (default)" suffix if present
-        network_name = network_name.replace(" (default)", "")
-        network = next(id for name, id in network_choices if name == network_name)
-
-    # Determine wallet provider
-    if network:
-        if network in CDP_SUPPORTED_NETWORKS:
-            wallet_choices = [
-                "Smart Wallet Provider",
-                "CDP Wallet Provider",
-                "Ethereum Account Wallet Provider",
-            ]
-            wallet_selection = questionary.select(
-                "Select a wallet provider:",
-                choices=wallet_choices,
-                default="Smart Wallet Provider",
+        if network_type == "Custom Chain ID":
+            # Handle custom EVM network
+            chain_id = questionary.text(
+                "Enter your chain ID:",
+                validate=lambda text: text.strip().isdigit() or "Chain ID must be a number",
                 style=custom_style,
             ).ask()
 
-            if wallet_selection.startswith("CDP"):
-                wallet_provider = "cdp"
-            elif wallet_selection.startswith("Smart"):
-                wallet_provider = "smart"
-            else:
-                wallet_provider = "eth"
+            rpc_url = questionary.text(
+                "Enter your RPC URL:",
+                validate=lambda text: (
+                    text.strip().startswith(("http://", "https://"))
+                    or "RPC URL must start with http:// or https://"
+                ),
+                style=custom_style,
+            ).ask()
+
+            wallet_provider = "eth"  # Default to eth wallet provider for custom networks
         else:
-            console.print(
-                f"[yellow]⚠️ CDP is not supported on {network}. Defaulting to Ethereum Account Wallet Provider.[/yellow]"
-            )
-            wallet_provider = "eth"
+            # Filter networks based on mainnet/testnet selection
+            network_choices = get_network_choices(network_type.lower())
+            network_name = questionary.select(
+                "Choose a network:",
+                choices=[
+                    name + (" (default)" if id == "base-sepolia" else "")
+                    for name, id in network_choices
+                ],
+                default="Base Sepolia (default)" if network_type == "Testnet" else None,
+                style=custom_style,
+            ).ask()
+
+            # Remove " (default)" suffix if present
+            network_name = network_name.replace(" (default)", "")
+            network = next(id for name, id in network_choices if name == network_name)
+
+            # Determine wallet provider
+            if network in CDP_SUPPORTED_NETWORKS:
+                wallet_choices = [
+                    "CDP EVM Wallet Provider",
+                    "CDP Smart Wallet Provider",
+                    "Ethereum Account Wallet Provider",
+                ]
+                wallet_selection = questionary.select(
+                    "Select a wallet provider:",
+                    choices=wallet_choices,
+                    default="CDP EVM Wallet Provider",
+                    style=custom_style,
+                ).ask()
+
+                if wallet_selection.startswith("CDP EVM"):
+                    wallet_provider = "server"
+                elif wallet_selection.startswith("CDP Smart"):
+                    wallet_provider = "smart"
+                else:
+                    wallet_provider = "eth"
+            else:
+                console.print(
+                    f"[yellow]⚠️ CDP is not supported on {network}. Defaulting to Ethereum Account Wallet Provider.[/yellow]"
+                )
+                wallet_provider = "eth"
 
     console.print(f"\n[blue]Creating your onchain agent project: {project_name}[/blue]")
 
@@ -306,6 +382,7 @@ def create_advanced_project(templates_path: str | None = None):
         console.print(f"[red]Error: {e!s}[/red]")
         return
 
+
 def create_beginner_project(templates_path: str | None = None):
     """Create a new onchain agent project with simplified setup."""
     # Prompt for project name (default: "onchain-agent")
@@ -338,8 +415,7 @@ def create_beginner_project(templates_path: str | None = None):
         package_name = suggested_package_name
 
     framework_choices = [
-        name + (" (default)" if id == "langchain" else "")
-        for name, id in FRAMEWORKS
+        name + (" (default)" if id == "langchain" else "") for name, id in FRAMEWORKS
     ]
     framework_name = questionary.select(
         "Choose your agent framework:",
@@ -398,6 +474,7 @@ def create_beginner_project(templates_path: str | None = None):
     except FileNotFoundError as e:
         console.print(f"[red]Error: {e!s}[/red]")
         return
+
 
 @click.command()
 @click.option("--templates-path", type=str, help="Path to local template directory", default=None)

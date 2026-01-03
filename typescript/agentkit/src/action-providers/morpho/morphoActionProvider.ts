@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { Decimal } from "decimal.js";
 import { encodeFunctionData, Hex, parseUnits } from "viem";
-import { abi } from "../erc20/constants";
+import { erc20Abi as abi } from "viem";
 import { ActionProvider } from "../actionProvider";
 import { EvmWalletProvider } from "../../wallet-providers";
 import { CreateAction } from "../actionDecorator";

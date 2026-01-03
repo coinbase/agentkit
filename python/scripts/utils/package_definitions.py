@@ -51,6 +51,39 @@ FRAMEWORK_PACKAGES = [
                 "version_key": "version"
             }
         ]
+    },
+    {
+        "name": "framework-extensions/strands-agents",
+        "package_name": "coinbase-agentkit-strands-agents",
+        "path": "../framework-extensions/strands-agents/pyproject.toml",
+        "files": [
+            {
+                "path": "../framework-extensions/strands-agents/pyproject.toml",
+                "version_key": "version"
+            }
+        ]
+    },
+    {
+        "name": "framework-extensions/pydantic-ai",
+        "package_name": "coinbase-agentkit-pydantic-ai",
+        "path": "../framework-extensions/pydantic-ai/pyproject.toml",
+        "files": [
+            {
+                "path": "../framework-extensions/pydantic-ai/pyproject.toml",
+                "version_key": "version"
+            }
+        ]
+    },
+    {
+        "name": "framework-extensions/autogen",
+        "package_name": "coinbase-agentkit-autogen",
+        "path": "../framework-extensions/autogen/pyproject.toml",
+        "files": [
+            {
+                "path": "../framework-extensions/autogen/pyproject.toml",
+                "version_key": "version"
+            }
+        ]
     }
 ]
 

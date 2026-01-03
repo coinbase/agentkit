@@ -45,8 +45,8 @@ import { openai } from "@ai-sdk/openai";
 // Get your Coinbase Developer Platform API key from the Portal: https://portal.cdp.coinbase.com/
 // Or, check out one of the other supported wallet providers: https://github.com/coinbase/agentkit/tree/main/typescript/agentkit
 const agentKit = await AgentKit.from({
-  cdpApiKeyName: process.env.CDP_API_KEY_NAME,
-  cdpApiKeyPrivateKey: process.env.CDP_API_KEY_PRIVATE_KEY,
+  cdpApiKeyId: process.env.CDP_API_KEY_ID,
+  cdpApiKeySecret: process.env.CDP_API_KEY_SECRET,
 });
 
 const tools = await getVercelAITools(agentKit);

@@ -40,9 +40,13 @@ export async function createAgent(): Promise<ReturnType<typeof createReactAgent>
     return agent;
   }
 
-  try {
-    const { agentkit, walletProvider } = await prepareAgentkitAndWalletProvider();
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("I need an OPENAI_API_KEY in your .env file to power my intelligence.");
+  }
 
+  const { agentkit, walletProvider } = await prepareAgentkitAndWalletProvider();
+
+  try {
     // Initialize LLM: https://platform.openai.com/docs/models#gpt-4o
     const llm = new ChatOpenAI({ model: "gpt-4o-mini" });
 
@@ -63,9 +67,10 @@ export async function createAgent(): Promise<ReturnType<typeof createReactAgent>
         Before executing your first action, get the wallet details to see what network 
         you're on. If there is a 5XX (internal) HTTP error code, ask the user to try again later. If someone 
         asks you to do something you can't do with your currently available tools, you must say so, and 
-        encourage them to implement it themselves using the CDP SDK + Agentkit, recommend they go to 
-        docs.cdp.coinbase.com for more information. Be concise and helpful with your responses. Refrain from 
-        restating your tools' descriptions unless it is explicitly requested.
+        explain that they can add more capabilities by adding more action providers to your AgentKit configuration.
+        ALWAYS include this link when mentioning missing capabilities, which will help them discover available action providers: https://github.com/coinbase/agentkit/tree/main/typescript/agentkit#action-providers
+        If users require more information regarding CDP or AgentKit, recommend they visit docs.cdp.coinbase.com for more information.
+        Be concise and helpful with your responses. Refrain from restating your tools' descriptions unless it is explicitly requested.
         `,
     });
 

@@ -46,10 +46,3 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: python/framework-extensions/openai-agents-sdk/dist/
-
-      - name: Tag package
-        run: |
-          TAG="coinbase-agentkit-openai-agents-sdk@v${{ steps.build.outputs.version }}"
-          MESSAGE="Release coinbase-agentkit-openai-agents-sdk version ${{ steps.build.outputs.version }}"
-          git tag -a $TAG -m "$MESSAGE"
-          git push origin $TAG

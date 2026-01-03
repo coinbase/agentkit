@@ -21,7 +21,7 @@ Set the following environment variables:
 
 ```bash
 export OPENAI_API_KEY=<your-openai-api-key>
-export CDP_API_KEY_NAME=<your-cdp-api-key-name>
+export CDP_API_KEY_ID=<your-cdp-api-key-id>
 export CDP_API_KEY_PRIVATE=<your-cdp-api-key-private>
 ```
 
@@ -47,7 +47,7 @@ agent = create_react_agent(
 
 For AgentKit configuration options, see the [Coinbase Agentkit README](https://github.com/coinbase/agentkit/blob/master/python/coinbase-agentkit/README.md).
 
-For a full example, see the [chatbot example](https://github.com/coinbase/agentkit/blob/master/python/examples/langchain-smart-wallet-chatbot/chatbot.py).
+For a full example, see the [chatbot example](https://github.com/coinbase/agentkit/blob/main/python/examples/langchain-cdp-smart-wallet-chatbot/chatbot.py).
 
 ## Contributing
 

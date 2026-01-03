@@ -61,7 +61,6 @@ Currently aiming to support [all frameworks supported by Virtuals](https://white
 - [ ] Claude MCP support
 - [ ] GAME by Virtuals
 - [ ] CrewAI
-- [ ] AutoGen
 - [ ] AutoGPT
 
 ### Additional Frameworks
@@ -69,7 +68,6 @@ Currently aiming to support [all frameworks supported by Virtuals](https://white
 - [ ] Mastra
 - [ ] AgentForce
 - [ ] AWS Multi-agent
-- [ ] PydanticAI
 
 ## Infrastructure Improvements
 

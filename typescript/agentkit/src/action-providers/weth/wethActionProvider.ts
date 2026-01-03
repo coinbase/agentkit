@@ -2,10 +2,23 @@ import { z } from "zod";
 import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
-import { WrapEthSchema } from "./schemas";
-import { WETH_ABI, WETH_ADDRESS } from "./constants";
-import { encodeFunctionData, Hex } from "viem";
+import { WrapEthSchema, UnwrapEthSchema } from "./schemas";
+import { WETH_ABI } from "./constants";
+import { TOKEN_ADDRESSES_BY_SYMBOLS } from "../erc20/constants";
+import { encodeFunctionData, Hex, parseUnits, formatUnits, erc20Abi } from "viem";
 import { EvmWalletProvider } from "../../wallet-providers";
+
+/**
+ * Gets the WETH address for the given network.
+ *
+ * @param network - The network to get the WETH address for.
+ * @returns The WETH address for the network, or undefined if not supported.
+ */
+export const getWethAddress = (network: Network): string | undefined => {
+  const networkTokens =
+    TOKEN_ADDRESSES_BY_SYMBOLS[network.networkId as keyof typeof TOKEN_ADDRESSES_BY_SYMBOLS];
+  return networkTokens && "WETH" in networkTokens ? networkTokens.WETH : undefined;
+};
 
 /**
  * WethActionProvider is an action provider for WETH.
@@ -28,20 +41,10 @@ export class WethActionProvider extends ActionProvider<EvmWalletProvider> {
   @CreateAction({
     name: "wrap_eth",
     description: `
-    This tool can only be used to wrap ETH to WETH.
-Do not use this tool for any other purpose, or trading other assets.
+    This tool wraps ETH to WETH.
 
 Inputs:
-- Amount of ETH to wrap.
-
-Important notes:
-- The amount is a string and cannot have any decimal points, since the unit of measurement is wei.
-- Make sure to use the exact amount provided, and if there's any doubt, check by getting more information before continuing with the action.
-- 1 wei = 0.000000000000000001 WETH
-- Minimum purchase amount is 100000000000000 wei (0.0000001 WETH)
-- Only supported on the following networks:
-  - Base Sepolia (ie, 'base-sepolia')
-  - Base Mainnet (ie, 'base', 'base-mainnet')
+- Amount of ETH to wrap in human-readable format (e.g., 0.1 for 0.1 ETH).
 `,
     schema: WrapEthSchema,
   })
@@ -49,21 +52,101 @@ Important notes:
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof WrapEthSchema>,
   ): Promise<string> {
+    const network = walletProvider.getNetwork();
+    const wethAddress = getWethAddress(network);
+
+    if (!wethAddress) {
+      return `Error: WETH not supported on network ${network.networkId}`;
+    }
+
     try {
+      // Convert human-readable ETH amount to wei (ETH has 18 decimals)
+      const amountInWei = parseUnits(args.amountToWrap, 18);
+
+      // Check ETH balance before wrapping
+      const ethBalance = await walletProvider.getBalance();
+
+      if (ethBalance < amountInWei) {
+        const ethBalanceFormatted = formatUnits(ethBalance, 18);
+        return `Error: Insufficient ETH balance. Requested to wrap ${args.amountToWrap} ETH, but only ${ethBalanceFormatted} ETH is available.`;
+      }
+
       const hash = await walletProvider.sendTransaction({
-        to: WETH_ADDRESS as Hex,
+        to: wethAddress as Hex,
         data: encodeFunctionData({
           abi: WETH_ABI,
           functionName: "deposit",
         }),
-        value: BigInt(args.amountToWrap),
+        value: amountInWei,
       });
 
       await walletProvider.waitForTransactionReceipt(hash);
 
-      return `Wrapped ETH with transaction hash: ${hash}`;
+      return `Wrapped ${args.amountToWrap} ETH to WETH. Transaction hash: ${hash}`;
     } catch (error) {
       return `Error wrapping ETH: ${error}`;
+    }
+  }
+
+  /**
+   * Unwraps WETH to ETH.
+   *
+   * @param walletProvider - The wallet provider to use for the action.
+   * @param args - The input arguments for the action.
+   * @returns A message containing the transaction hash.
+   */
+  @CreateAction({
+    name: "unwrap_eth",
+    description: `
+    This tool unwraps WETH to ETH.
+
+Inputs:
+- Amount of WETH to unwrap in human-readable format (e.g., 0.1 for 0.1 WETH).
+`,
+    schema: UnwrapEthSchema,
+  })
+  async unwrapEth(
+    walletProvider: EvmWalletProvider,
+    args: z.infer<typeof UnwrapEthSchema>,
+  ): Promise<string> {
+    const network = walletProvider.getNetwork();
+    const wethAddress = getWethAddress(network);
+
+    if (!wethAddress) {
+      return `Error: WETH not supported on network ${network.networkId}`;
+    }
+
+    try {
+      // Convert human-readable WETH amount to wei (WETH has 18 decimals)
+      const amountInWei = parseUnits(args.amountToUnwrap, 18);
+
+      // Check WETH balance before unwrapping
+      const wethBalance = await walletProvider.readContract({
+        address: wethAddress as Hex,
+        abi: erc20Abi,
+        functionName: "balanceOf",
+        args: [walletProvider.getAddress() as Hex],
+      });
+
+      if (wethBalance < amountInWei) {
+        const wethBalanceFormatted = formatUnits(wethBalance, 18);
+        return `Error: Insufficient WETH balance. Requested to unwrap ${args.amountToUnwrap} WETH, but only ${wethBalanceFormatted} WETH is available.`;
+      }
+
+      const hash = await walletProvider.sendTransaction({
+        to: wethAddress as Hex,
+        data: encodeFunctionData({
+          abi: WETH_ABI,
+          functionName: "withdraw",
+          args: [amountInWei],
+        }),
+      });
+
+      await walletProvider.waitForTransactionReceipt(hash);
+
+      return `Unwrapped ${args.amountToUnwrap} WETH to ETH. Transaction hash: ${hash}`;
+    } catch (error) {
+      return `Error unwrapping WETH: ${error}`;
     }
   }
 
@@ -73,8 +156,9 @@ Important notes:
    * @param network - The network to check.
    * @returns True if the Weth action provider supports the network, false otherwise.
    */
-  supportsNetwork = (network: Network) =>
-    network.networkId === "base-mainnet" || network.networkId === "base-sepolia";
+  supportsNetwork = (network: Network) => {
+    return getWethAddress(network) !== undefined;
+  };
 }
 
 export const wethActionProvider = () => new WethActionProvider();

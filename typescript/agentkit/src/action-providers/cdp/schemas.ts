@@ -1,66 +1,9 @@
 import { z } from "zod";
-import { SolidityVersions } from "./constants";
-
-/**
- * Input schema for address reputation check.
- */
-export const AddressReputationSchema = z
-  .object({
-    address: z
-      .string()
-      .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
-      .describe("The Ethereum address to check"),
-    network: z.string().describe("The network to check the address on"),
-  })
-  .strip()
-  .describe("Input schema for address reputation check");
-
-/**
- * Input schema for deploy contract action.
- */
-export const DeployContractSchema = z
-  .object({
-    solidityVersion: z
-      .enum(Object.keys(SolidityVersions) as [string, ...string[]])
-      .describe("The solidity compiler version"),
-    solidityInputJson: z.string().describe("The input json for the solidity compiler"),
-    contractName: z.string().describe("The name of the contract class to be deployed"),
-    constructorArgs: z
-      .record(z.string(), z.any())
-      .describe("The constructor arguments for the contract")
-      .optional(),
-  })
-  .strip()
-  .describe("Instructions for deploying an arbitrary contract");
-
-/**
- * Input schema for deploy NFT action
- */
-export const DeployNftSchema = z
-  .object({
-    name: z.string().describe("The name of the NFT collection"),
-    symbol: z.string().describe("The symbol of the NFT collection"),
-    baseURI: z.string().describe("The base URI for the token metadata"),
-  })
-  .strip()
-  .describe("Instructions for deploying an NFT collection");
-
-/**
- * Input schema for deploy token action.
- */
-export const DeployTokenSchema = z
-  .object({
-    name: z.string().describe("The name of the token"),
-    symbol: z.string().describe("The token symbol"),
-    totalSupply: z.custom<bigint>().describe("The total supply of tokens to mint"),
-  })
-  .strip()
-  .describe("Instructions for deploying a token");
 
 /**
  * Input schema for request faucet funds action.
  */
-export const RequestFaucetFundsSchema = z
+export const RequestFaucetFundsV2Schema = z
   .object({
     assetId: z.string().optional().describe("The optional asset ID to request from faucet"),
   })
@@ -68,13 +11,62 @@ export const RequestFaucetFundsSchema = z
   .describe("Instructions for requesting faucet funds");
 
 /**
- * Input schema for trade action.
+ * Input schema for swap tokens action.
  */
-export const TradeSchema = z
+export const SwapSchema = z
   .object({
-    amount: z.custom<bigint>().describe("The amount of the from asset to trade"),
-    fromAssetId: z.string().describe("The from asset ID to trade"),
-    toAssetId: z.string().describe("The to asset ID to receive from the trade"),
+    fromToken: z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
+      .describe("The token contract address to swap from"),
+    toToken: z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
+      .describe("The token contract address to swap to"),
+    fromAmount: z
+      .string()
+      .describe("The amount of fromToken to sell in whole units (e.g., 1.5 WETH, 10.5 USDC)"),
+    slippageBps: z
+      .number()
+      .int()
+      .min(0)
+      .max(10000)
+      .optional()
+      .default(100)
+      .describe("The maximum acceptable slippage in basis points (0-10000, default: 100 = 1%)"),
   })
   .strip()
-  .describe("Instructions for trading assets");
+  .describe("Instructions for swapping tokens");
+
+/**
+ * Input schema for listing spend permissions action.
+ */
+export const ListSpendPermissionsSchema = z
+  .object({
+    smartAccountAddress: z
+      .string()
+      .describe("The smart account address that has granted spend permissions"),
+    network: z
+      .string()
+      .optional()
+      .describe("The network to list permissions on (defaults to wallet's network)"),
+  })
+  .strip()
+  .describe("Instructions for listing spend permissions for a smart account");
+
+/**
+ * Input schema for using a spend permission action.
+ */
+export const UseSpendPermissionSchema = z
+  .object({
+    smartAccountAddress: z
+      .string()
+      .describe("The smart account address that has granted the spend permission"),
+    value: z.string().describe("The amount to spend (in the token's units)"),
+    network: z
+      .string()
+      .optional()
+      .describe("The network to perform the spend on (defaults to wallet's network)"),
+  })
+  .strip()
+  .describe("Instructions for using a spend permission");

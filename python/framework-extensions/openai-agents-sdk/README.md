@@ -21,7 +21,7 @@ Set the following environment variables:
 
 ```bash
 export OPENAI_API_KEY=<your-openai-api-key>
-export CDP_API_KEY_NAME=<your-cdp-api-key-name>
+export CDP_API_KEY_ID=<your-cdp-api-key-id>
 export CDP_API_KEY_PRIVATE=<your-cdp-api-key-private>
 ```
 

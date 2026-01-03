@@ -1,5 +1,6 @@
 """Wallet action provider for basic wallet operations."""
 
+from decimal import Decimal
 from typing import Any
 
 from ...network import Network
@@ -7,6 +8,32 @@ from ...wallet_providers.wallet_provider import WalletProvider
 from ..action_decorator import create_action
 from ..action_provider import ActionProvider
 from .schemas import GetBalanceSchema, GetWalletDetailsSchema, NativeTransferSchema
+
+# Protocol-specific terminology for displaying balances and transactions
+PROTOCOL_FAMILY_TO_TERMINOLOGY = {
+    "evm": {
+        "unit": "WEI",
+        "display_unit": "ETH",
+        "decimals": 18,
+        "type": "Transaction hash",
+        "verb": "transaction",
+    },
+    "svm": {
+        "unit": "LAMPORTS",
+        "display_unit": "SOL",
+        "decimals": 9,
+        "type": "Signature",
+        "verb": "transfer",
+    },
+}
+
+DEFAULT_TERMINOLOGY = {
+    "unit": "",
+    "display_unit": "",
+    "decimals": 0,
+    "type": "Hash",
+    "verb": "transfer",
+}
 
 
 class WalletActionProvider(ActionProvider[WalletProvider]):
@@ -21,7 +48,7 @@ class WalletActionProvider(ActionProvider[WalletProvider]):
     This tool will return the details of the connected wallet including:
     - Wallet address
     - Network information (protocol family, network ID, chain ID)
-    - Native token balance
+    - Native token balance (ETH for EVM networks, SOL for SVM networks)
     - Wallet provider name
     """,
         schema=GetWalletDetailsSchema,
@@ -42,6 +69,12 @@ class WalletActionProvider(ActionProvider[WalletProvider]):
             network = wallet_provider.get_network()
             balance = wallet_provider.get_balance()
             provider_name = wallet_provider.get_name()
+            terminology = PROTOCOL_FAMILY_TO_TERMINOLOGY.get(
+                network.protocol_family, DEFAULT_TERMINOLOGY
+            )
+
+            # Format balance in whole units
+            formatted_balance = str(Decimal(balance) / (10 ** terminology["decimals"]))
 
             return f"""Wallet Details:
 - Provider: {provider_name}
@@ -50,7 +83,8 @@ class WalletActionProvider(ActionProvider[WalletProvider]):
   * Protocol Family: {network.protocol_family}
   * Network ID: {network.network_id or "N/A"}
   * Chain ID: {network.chain_id if network.chain_id else "N/A"}
-- Native Balance: {balance}"""
+- Native Balance: {balance} {terminology["unit"]}
+- Native Balance: {formatted_balance} {terminology["display_unit"]}"""
         except Exception as e:
             return f"Error getting wallet details: {e}"
 
@@ -81,11 +115,11 @@ class WalletActionProvider(ActionProvider[WalletProvider]):
     @create_action(
         name="native_transfer",
         description="""
-This tool will transfer native tokens from the wallet to another onchain address.
+This tool will transfer native tokens (ETH for EVM networks, SOL for SVM networks) from the wallet to another onchain address.
 
 It takes the following inputs:
-- to: The destination address to receive the funds (e.g. '0x5154eae861cac3aa757d6016babaf972341354cf')
-- value: The amount to transfer in whole units (e.g. '1.5' for 1.5 ETH)
+- to: The destination address to receive the funds
+- value: The amount to transfer in whole units (e.g. '4.2' for 4.2 ETH, '0.1' for 0.1 SOL)
 
 Important notes:
 - Ensure sufficient balance of the input asset before transferring
@@ -106,10 +140,22 @@ Important notes:
         """
         try:
             validated_args = NativeTransferSchema(**args)
-            tx_hash = wallet_provider.native_transfer(validated_args.to, validated_args.value)
-            return f"Successfully transferred {validated_args.value} native tokens to {validated_args.to}.\nTransaction hash: {tx_hash}"
+            network = wallet_provider.get_network()
+            terminology = PROTOCOL_FAMILY_TO_TERMINOLOGY.get(
+                network.protocol_family, DEFAULT_TERMINOLOGY
+            )
+
+            # Convert string to Decimal for wallet provider
+            value_decimal = Decimal(validated_args.value)
+
+            tx_hash = wallet_provider.native_transfer(validated_args.to, value_decimal)
+            return f"Transferred {validated_args.value} {terminology['display_unit']} to {validated_args.to}\n{terminology['type']}: {tx_hash}"
         except Exception as e:
-            return f"Error transferring native tokens: {e}"
+            network = wallet_provider.get_network()
+            terminology = PROTOCOL_FAMILY_TO_TERMINOLOGY.get(
+                network.protocol_family, DEFAULT_TERMINOLOGY
+            )
+            return f"Error during {terminology['verb']}: {e}"
 
     def supports_network(self, network: Network) -> bool:
         """Check if network is supported by wallet actions.

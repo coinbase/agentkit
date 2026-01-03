@@ -2,7 +2,7 @@
   "name": "create-onchain-agent",
   "description": "Instantly create onchain-agent applications with Coinbase AgentKit.",
   "repository": "https://github.com/coinbase/agentkit",
-  "version": "0.3.2",
+  "version": "0.5.7",
   "author": "Coinbase Inc.",
   "license": "Apache-2.0",
   "scripts": {
@@ -14,7 +14,7 @@
     "lint:fix": "eslint -c .eslintrc.json \"src/**/*.ts\" --fix",
     "check:types": "tsc --noEmit",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
-    "dev": "node --loader ts-node/esm src/cli.ts"
+    "dev": "pnpm run build && node dist/esm/create.js"
   },
   "files": [
     "dist/**",
@@ -43,6 +43,7 @@
     "prompts": "^2.4.2"
   },
   "devDependencies": {
+    "tsx": "^4.7.1",
     "@types/cross-spawn": "^6.0.6",
     "@types/node": "^20.12.10",
     "@types/prompts": "^2.4.9"

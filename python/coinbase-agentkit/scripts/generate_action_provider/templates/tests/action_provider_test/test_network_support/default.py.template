@@ -1,8 +1,0 @@
-def test_supports_all_networks(provider):
-    """Test that provider supports all networks."""
-    network = Network(
-        protocol_family="any-protocol",
-        network_id="any-network",
-        chain_id="any-chain-id",
-    )
-    assert provider.supports_network(network) is True 

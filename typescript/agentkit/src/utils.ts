@@ -1,19 +1,6 @@
 import { encodeFunctionData } from "viem";
 import { EvmWalletProvider } from "./wallet-providers";
-
-const ERC20_ABI = [
-  {
-    inputs: [
-      { name: "spender", type: "address" },
-      { name: "amount", type: "uint256" },
-    ],
-    name: "approve",
-    outputs: [{ name: "", type: "bool" }],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-] as const;
-
+import { erc20Abi } from "viem";
 /**
  * Approves a spender to spend tokens on behalf of the owner
  *
@@ -31,7 +18,7 @@ export async function approve(
 ): Promise<string> {
   try {
     const data = encodeFunctionData({
-      abi: ERC20_ABI,
+      abi: erc20Abi,
       functionName: "approve",
       args: [spenderAddress as `0x${string}`, amount],
     });
@@ -61,4 +48,55 @@ export async function approve(
  */
 export function applyGasMultiplier(gas: bigint, multiplier: number): bigint {
   return BigInt(Math.round(Number(gas) * multiplier));
+}
+
+/**
+ * Utility function to sleep for a given number of milliseconds
+ *
+ * @param ms - Number of milliseconds to sleep
+ * @returns Promise that resolves after the specified delay
+ */
+const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Retry function with exponential backoff
+ *
+ * @param fn - The function to retry
+ * @param maxRetries - Maximum number of retries (default: 3)
+ * @param baseDelay - Base delay in milliseconds for retries (default: 1000)
+ * @param initialDelay - Initial delay before the first attempt in milliseconds (default: 0)
+ * @returns Promise that resolves with the function result or rejects with the last error
+ */
+export async function retryWithExponentialBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000,
+  initialDelay: number = 0,
+): Promise<T> {
+  let lastError: Error;
+
+  // Wait before the first attempt if initialDelay is specified
+  if (initialDelay > 0) {
+    await sleep(initialDelay);
+  }
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+
+      // If this was the last attempt, throw the error
+      if (attempt === maxRetries) {
+        throw lastError;
+      }
+
+      // Wait after failed attempt with exponential backoff
+      // Calculate delay with exponential backoff: baseDelay * 2^attempt
+      const delay = baseDelay * Math.pow(2, attempt);
+      await sleep(delay);
+    }
+  }
+
+  throw lastError!;
 }

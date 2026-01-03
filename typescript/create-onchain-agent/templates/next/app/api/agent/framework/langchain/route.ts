@@ -46,6 +46,11 @@ export async function POST(
     return NextResponse.json({ response: agentResponse });
   } catch (error) {
     console.error("Error processing request:", error);
-    return NextResponse.json({ error: "Failed to process message" });
+    return NextResponse.json({
+      error:
+        error instanceof Error
+          ? error.message
+          : "I'm sorry, I encountered an issue processing your message. Please try again later.",
+    });
   }
 }

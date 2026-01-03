@@ -6,8 +6,8 @@
       "env": {
         "PRIVATE_KEY": "",
         "NETWORK_ID": "base-sepolia",
-        "CDP_API_KEY_NAME": "",
-        "CDP_API_KEY_PRIVATE_KEY": ""
+        "CDP_API_KEY_ID": "",
+        "CDP_API_KEY_SECRET": ""
       }
     }
   }

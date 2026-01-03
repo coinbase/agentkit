@@ -73,6 +73,24 @@ describe("WalletProvider", () => {
     nativeTransfer(_to: string, _value: string): Promise<string> {
       return Promise.resolve("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef");
     }
+    /**
+     * Converts the wallet provider to a signer.
+     *
+     * @returns The signer object.
+     */
+    toSigner(): {
+      address: string;
+      signMessage: (message: string) => Promise<string>;
+      signTransaction: (transaction: unknown) => Promise<string>;
+      signTypedData: (typedData: unknown) => Promise<string>;
+    } {
+      return {
+        address: this.getAddress(),
+        signMessage: async (_message: string) => "0xsigned",
+        signTransaction: async (_transaction: unknown) => "0xsigned",
+        signTypedData: async (_typedData: unknown) => "0xsigned",
+      };
+    }
   }
 
   beforeEach(() => {
@@ -120,5 +138,16 @@ describe("WalletProvider", () => {
         resolve(null);
       }, 0),
     );
+  });
+
+  it("should convert wallet provider to signer", () => {
+    const provider = new MockWalletProvider();
+    const signer = provider.toSigner();
+
+    expect(signer).toBeDefined();
+    expect(signer.address).toBe(MOCK_ADDRESS);
+    expect(signer.signMessage).toBeDefined();
+    expect(signer.signTransaction).toBeDefined();
+    expect(signer.signTypedData).toBeDefined();
   });
 });

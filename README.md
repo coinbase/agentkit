@@ -30,7 +30,7 @@
 - [🤝 Contributing](#-contributing)
 - [📜 Documentation](#-documentation)
 - [🌙 Nightly Builds](#-nightly-builds)
-- [🚨 Security and bug reports](#-security-and-bug-reports)
+- [🚨 Security and Bug Reports](#-security-and-bug-reports)
 - [📧 Contact](#-contact)
 - [🔗 Supported Wallets, Protocols, and Frameworks](#-supported-wallets-protocols-and-frameworks)
 - [📝 License](#-license)
@@ -55,7 +55,7 @@ AgentKit is [Coinbase Developer Platform's](https://docs.cdp.coinbase.com) toolk
 
 _Prerequisites_:
 
-- [Node.js 18+](https://nodejs.org/en/download/)
+- [Node.js 22+](https://nodejs.org/en/download/)
 - [CDP Secret API Key](https://docs.cdp.coinbase.com/get-started/docs/cdp-api-keys#creating-secret-api-keys)
 - [OpenAI API Key](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key)
 
@@ -68,7 +68,7 @@ npm create onchain-agent@latest
 # Navigate to your project directory
 cd onchain-agent
 
-# At this point, fill in your CDP API key name, OpenAI API key, and any other environment variables in the .env.local file.
+# At this point, fill in your CDP API key id/secret, OpenAI API key, and any other environment variables in the .env.local file.
 # Then, rename the .env.local file to .env
 mv .env.local .env
 
@@ -104,7 +104,7 @@ pipx run create-onchain-agent
 # Navigate to your project directory
 cd onchain-agent
 
-# At this point, fill in your CDP API key name, OpenAI API key, and any other environment variables in the .env.local file.
+# At this point, fill in your CDP API key id/secret, OpenAI API key, and any other environment variables in the .env.local file.
 # Then, rename the .env.local file to .env
 mv .env.local .env
 
@@ -152,11 +152,14 @@ agentkit/
 │   │   └── model-context-protocol/
 │   └── examples/
 │       ├── langchain-cdp-chatbot/
+│       ├── langchain-cdp-smart-wallet-chatbot/
 │       ├── langchain-farcaster-chatbot/
+│       ├── langchain-legacy-cdp-chatbot/
 │       ├── langchain-privy-chatbot/
 │       ├── langchain-solana-chatbot/
 │       ├── langchain-twitter-chatbot/
 │       ├── langchain-xmtp-chatbot/
+│       ├── langchain-zerodev-chatbot/
 │       ├── model-context-protocol-smart-wallet-server/
 │       └── vercel-ai-sdk-smart-wallet-chatbot/
 ├── python/
@@ -169,15 +172,24 @@ agentkit/
 │   │           └── viem/
 │   ├── create-onchain-agent/
 │   ├── framework-extensions/
+│   │   ├── autogen/
 │   │   ├── langchain/
-│   │   └── openai-agents-sdk/
+│   │   ├── openai-agents-sdk/
+│   │   ├── pydantic-ai/
+│   │   └── strands-agents/
 │   └── examples/
+│       ├── autogen-cdp-chatbot/
 │       ├── langchain-cdp-chatbot/
+│       ├── langchain-cdp-smart-wallet-chatbot/
+│       ├── langchain-cdp-solana-chatbot/
 │       ├── langchain-eth-account-chatbot/
-│       ├── langchain-smart-wallet-chatbot/
+│       ├── langchain-nillion-secretvault-chatbot/
 │       ├── langchain-twitter-chatbot/
-│       └── openai-agents-cdp-voice-chatbot/
-│       └── openai-agents-sdk-smart-wallet-chatbot/
+│       ├── openai-agents-sdk-cdp-chatbot/
+│       ├── openai-agents-sdk-cdp-voice-chatbot/
+│       ├── openai-agents-sdk-smart-wallet-chatbot/
+│       ├── pydantic-ai-cdp-chatbot/
+│       └── strands-agents-cdp-server-chatbot/
 ```
 
 ## 🤝 Contributing
@@ -193,6 +205,8 @@ agentkit/
 - Python API References
   - [AgentKit](https://coinbase.github.io/agentkit/coinbase-agentkit/python/index.html)
   - [AgentKit Langchain Extension](https://coinbase.github.io/agentkit/coinbase-agentkit-langchain/python/index.html)
+  - [AgentKit OpenAI Agents SDK Extension](./python/framework-extensions/openai-agents-sdk/README.md)
+  - [AgentKit Strands Agents Extension](./python/framework-extensions/strands-agents/README.md)
 - Node.js API References
   - [AgentKit](https://coinbase.github.io/agentkit/agentkit/typescript/index.html)
   - [AgentKit Langchain Extension](https://coinbase.github.io/agentkit/agentkit-langchain/typescript/index.html)
@@ -289,13 +303,13 @@ AgentKit is proud to have support for the following protocols, frameworks, walle
 <a href="https://sdk.vercel.ai" target="_blank"><img src="./assets/frameworks/vercel.svg" width="100" height="auto" alt="Vercel AI SDK"></a>
 <a href="https://modelcontextprotocol.io/" target="_blank"><img src="./assets/frameworks/modelcontextprotocol.svg" width="100" height="auto" alt="Model Context Protocol"></a>
 <a href="https://platform.openai.com/docs/guides/agents-sdk" target="_blank"><img src="./assets/frameworks/openai.svg" width="100" height="auto" alt="Agents SDK"></a>
+<a href="https://strandsagents.com/latest/documentation/docs/" target="_blank"><img src="./assets/frameworks/strands-logo.svg" width="100" height="auto" alt="Strands Agents"></a>
 
 ### Networks
 
 <a href="https://base.org" target="_blank"><img src="./assets/networks/base.svg" width="100" height="auto" alt="Base"></a>
 <a href="https://ethereum.org" target="_blank"><img src="./assets/networks/ethereum.svg" width="100" height="auto" alt="Ethereum"></a>
 <a href="https://solana.com" target="_blank"><img src="./assets/networks/solana.svg" width="100" height="auto" alt="Solana"></a>
-
 
 Note: We support all EVM and SVM networks, with deep protocol support for the above networks. Please don't hesitate to make contributions to add more support for your preferred networks.
 

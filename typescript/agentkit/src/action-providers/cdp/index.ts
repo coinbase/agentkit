@@ -1,3 +1,5 @@
 export * from "./schemas";
 export * from "./cdpApiActionProvider";
-export * from "./cdpWalletActionProvider";
+export * from "./cdpSmartWalletActionProvider";
+export * from "./cdpEvmWalletActionProvider";
+export * from "./spendPermissionUtils";

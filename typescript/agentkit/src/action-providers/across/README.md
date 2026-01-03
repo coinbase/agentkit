@@ -36,7 +36,7 @@ The status of bridge deposit can only be checked on Mainnets.
 
 ## ⚠️ Warning
 
-Before briding funds, always make sure that you have access to the destination address on the destination chain!
+Before bridging funds, always make sure that you have access to the destination address on the destination chain!
 
 Note that when using a CDP server wallet with CdpWalletProvider, a new wallet address is generated for each chain. This means that if you bridge tokens to the sender's address on one chain, you may not be able to access those funds on the destination chain within AgentKit since a different wallet address will be used. 
 While you can export the private key to access funds in external wallets, it's recommended to either use ViemWalletProvider for consistent addresses across chains or ensure the destination address is different from the sender's address.

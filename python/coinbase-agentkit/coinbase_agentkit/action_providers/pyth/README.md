@@ -6,7 +6,8 @@ This directory contains the **PythActionProvider** implementation, which provide
 
 ```
 pyth/
-├── pyth_action_provider.py    # Pyth action provider
+├── pyth_action_provider.py    # Main provider with Pyth functionality
+├── schemas.py                 # Price feed action schemas
 ├── __init__.py                # Main exports
 └── README.md                  # This file
 
@@ -18,9 +19,26 @@ tests/action_providers/pyth/
 
 ## Actions
 
-- `fetch_price_feed_id`: Fetch the price feed ID for a given asset
+- `fetch_price_feed`: Fetch the price feed ID for a given asset
 - `fetch_price`: Fetch the price for a given asset, by price feed ID
-  - Can be chained with `fetch_price_feed_id` to fetch the price feed ID first
+  - Can be chained with `fetch_price_feed` to fetch the price feed ID first
+
+## Supported Asset Types
+
+The Pyth action provider supports multiple asset classes:
+
+### Crypto
+- Examples: BTC, ETH, SOL
+- Default asset type
+
+### Equities
+- Examples: COIN (Coinbase), AAPL (Apple), TSLA (Tesla)
+
+### Foreign Exchange (FX)
+- Examples: EUR (Euro), GBP (British Pound), JPY (Japanese Yen)
+
+### Metals
+- Examples: XAU (Gold), XAG (Silver), XPT (Platinum), XPD (Palladium)
 
 ## Adding New Actions
 

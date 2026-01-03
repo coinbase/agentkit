@@ -24,6 +24,6 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.0",
-    "ts-node": "^10.9.2"
+    "tsx": "^4.7.1"
   }
 }
