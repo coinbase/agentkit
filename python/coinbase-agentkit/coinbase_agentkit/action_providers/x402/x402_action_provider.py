@@ -1,5 +1,4 @@
-"""x402 action provider."""
-
+import base64
 import json
 from typing import Any
 
@@ -14,7 +13,7 @@ from ..action_decorator import create_action
 from ..action_provider import ActionProvider
 from .schemas import DirectX402RequestSchema, HttpRequestSchema, RetryWithX402Schema
 
-SUPPORTED_NETWORKS = ["base-mainnet", "base-sepolia"]
+SUPPORTED_NETWORKS = ["base-mainnet", "base-sepolia", "eip155:8453", "eip155:84532"]
 
 
 class x402ActionProvider(ActionProvider[EvmWalletProvider]):  # noqa: N801
@@ -76,14 +75,30 @@ If you receive a 402 Payment Required response, use retry_http_request_with_x402
                 )
 
             # Parse payment requirements from 402 response
-            payment_requirements = [
-                PaymentRequirements(**accept) for accept in response.json().get("accepts", [])
-            ]
+            payment_requirements = []
+            
+            # x402 v2: Check for PAYMENT-REQUIRED header (Base64 encoded JSON)
+            v2_header = response.headers.get("PAYMENT-REQUIRED")
+            if v2_header:
+                try:
+                    decoded_reqs = json.loads(base64.b64decode(v2_header).decode("utf-8"))
+                    # Normalize v2 keys to v1 internal model if needed, but here we expect list of accepts
+                    accepts = decoded_reqs.get("accepts") or [decoded_reqs]
+                    payment_requirements = [PaymentRequirements(**accept) for accept in accepts]
+                except Exception as e:
+                    print(f"Failed to parse x402 v2 header: {e}")
+
+            # Fallback to v1: Body-based "accepts"
+            if not payment_requirements:
+                payment_requirements = [
+                    PaymentRequirements(**accept) for accept in response.json().get("accepts", [])
+                ]
 
             return json.dumps(
                 {
                     "status": "error_402_payment_required",
                     "acceptablePaymentOptions": [req.dict() for req in payment_requirements],
+                    "protocolVersion": "v2" if v2_header else "v1",
                     "nextSteps": [
                         "Inform the user that the requested server replied with a 402 Payment Required response.",
                         f"The payment options are: {', '.join(f'{req.asset} {req.max_amount_required} {req.network}' for req in payment_requirements)}",
@@ -171,20 +186,25 @@ DO NOT use this action directly without first trying make_http_request!""",
             session = x402_requests(account, payment_requirements_selector=payment_selector)
 
             # Pass the payment data to the session request
+            # x402-v2: Re-inject identity if provided
+            headers = args.get("headers") or {}
+            if args.get("identity"):
+                headers["x-wallet-identity"] = args["identity"]
+
             response = session.request(
                 url=args["url"],
                 method=args["method"] or "GET",
-                headers=args.get("headers"),
+                headers=headers,
                 data=args.get("body"),
             )
 
             # Extract payment proof if available
             payment_proof = None
-            if "x-payment-response" in response.headers:
+            # Check both x-payment-response (v1) and PAYMENT-RESPONSE (v2)
+            payment_resp_header = response.headers.get("PAYMENT-RESPONSE") or response.headers.get("x-payment-response")
+            if payment_resp_header:
                 try:
-                    payment_proof = decode_x_payment_response(
-                        response.headers["x-payment-response"]
-                    )
+                    payment_proof = decode_x_payment_response(payment_resp_header)
                 except Exception as e:
                     print("Failed to decode payment proof:", str(e))
                     pass
@@ -268,11 +288,11 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
 
             # Extract payment proof if available
             payment_proof = None
-            if "x-payment-response" in response.headers:
+            # Check both x-payment-response (v1) and PAYMENT-RESPONSE (v2)
+            payment_resp_header = response.headers.get("PAYMENT-RESPONSE") or response.headers.get("x-payment-response")
+            if payment_resp_header:
                 try:
-                    payment_proof = decode_x_payment_response(
-                        response.headers["x-payment-response"]
-                    )
+                    payment_proof = decode_x_payment_response(payment_resp_header)
                 except Exception as e:
                     print("Failed to decode payment proof:", str(e))
                     pass
