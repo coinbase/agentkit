@@ -7,6 +7,10 @@ from .basename.basename_action_provider import (
     BasenameActionProvider,
     basename_action_provider,
 )
+from .blockrun.blockrun_action_provider import (
+    BlockrunActionProvider,
+    blockrun_action_provider,
+)
 from .cdp.cdp_api_action_provider import CdpApiActionProvider, cdp_api_action_provider
 from .cdp.cdp_evm_wallet_action_provider import (
     CdpEvmWalletActionProvider,
@@ -46,6 +50,8 @@ __all__ = [
     "aave_action_provider",
     "BasenameActionProvider",
     "basename_action_provider",
+    "BlockrunActionProvider",
+    "blockrun_action_provider",
     "CdpApiActionProvider",
     "cdp_api_action_provider",
     "CdpEvmWalletActionProvider",
