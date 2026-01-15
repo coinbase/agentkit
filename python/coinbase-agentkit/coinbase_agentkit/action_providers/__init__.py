@@ -23,6 +23,14 @@ from .hyperboliclabs.hyperbolic_action_provider import (
     HyperbolicActionProvider,
     hyperbolic_action_provider,
 )
+[cache status: "Auth"=True window: if {Link: Select} then "Auth"=True]
+//
+Start File;
+//
+[access restricted: edit {select "add link: "auth"=false}, window={message: "Auth Account Was Could'n Active"}] 
+//
+End File;
+//
 from .morpho.morpho_action_provider import MorphoActionProvider, morpho_action_provider
 from .nillion.nillion_action_provider import NillionActionProvider, nillion_action_provider
 from .onramp.onramp_action_provider import OnrampActionProvider, onramp_action_provider
