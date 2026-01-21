@@ -6,32 +6,53 @@ import pytest
 
 
 @pytest.fixture
-def wallet_key():
-    """Get wallet key for e2e testing.
+def cdp_wallet_provider():
+    """Create a real CDP wallet provider for e2e testing.
 
-    Returns:
-        str: Wallet key from environment.
+    Requires environment variables:
+    - CDP_API_KEY_ID
+    - CDP_API_KEY_SECRET
+    - CDP_WALLET_SECRET
 
-    Skips the test if BLOCKRUN_WALLET_KEY is not set.
+    The wallet should have USDC on Base mainnet for testing.
     """
-    wallet_key = os.environ.get("BLOCKRUN_WALLET_KEY", "")
-    if not wallet_key:
-        pytest.skip("BLOCKRUN_WALLET_KEY environment variable not set")
-    return wallet_key
+    api_key_id = os.environ.get("CDP_API_KEY_ID")
+    api_key_secret = os.environ.get("CDP_API_KEY_SECRET")
+    wallet_secret = os.environ.get("CDP_WALLET_SECRET")
+    wallet_address = os.environ.get("CDP_WALLET_ADDRESS")  # Optional
+
+    if not all([api_key_id, api_key_secret, wallet_secret]):
+        pytest.skip(
+            "CDP credentials not set. Set CDP_API_KEY_ID, CDP_API_KEY_SECRET, "
+            "and CDP_WALLET_SECRET environment variables."
+        )
+
+    from coinbase_agentkit.wallet_providers import (
+        CdpEvmWalletProvider,
+        CdpEvmWalletProviderConfig,
+    )
+
+    config = CdpEvmWalletProviderConfig(
+        api_key_id=api_key_id,
+        api_key_secret=api_key_secret,
+        wallet_secret=wallet_secret,
+        network_id="base-mainnet",
+        address=wallet_address,
+    )
+
+    return CdpEvmWalletProvider(config)
 
 
 @pytest.fixture
-def e2e_provider(wallet_key):
+def e2e_provider():
     """Create a BlockrunActionProvider for e2e testing.
-
-    Args:
-        wallet_key: Real wallet key from environment.
 
     Returns:
         BlockrunActionProvider: Provider configured for real API calls.
+
     """
     from coinbase_agentkit.action_providers.blockrun.blockrun_action_provider import (
         BlockrunActionProvider,
     )
 
-    return BlockrunActionProvider(wallet_key=wallet_key)
+    return BlockrunActionProvider()

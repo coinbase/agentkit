@@ -32,7 +32,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-blockrun = ["blockrun-llm>=0.2.0"]
+# BlockRun uses built-in x402 support - no extra dependencies needed
 
 [tool.hatch.metadata]
 allow-direct-references = true

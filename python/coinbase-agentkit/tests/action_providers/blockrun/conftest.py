@@ -1,75 +1,83 @@
 """Test fixtures for BlockRun action provider."""
 
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 
 @pytest.fixture
-def mock_wallet_key():
-    """Mock wallet key for testing."""
-    return "0x" + "a" * 64
-
-
-@pytest.fixture
-def real_wallet_key():
-    """Real wallet key for e2e testing.
-
-    Returns:
-        str: Wallet key from environment.
-
-    Skips the test if BLOCKRUN_WALLET_KEY is not set.
-    """
-    wallet_key = os.environ.get("BLOCKRUN_WALLET_KEY", "")
-    if not wallet_key:
-        pytest.skip("BLOCKRUN_WALLET_KEY environment variable not set")
-    return wallet_key
-
-
-@pytest.fixture
 def mock_wallet_provider():
-    """Create a mock wallet provider for testing."""
+    """Create a mock wallet provider for testing.
+
+    The wallet provider has a to_signer() method that returns a signer
+    object compatible with the x402 library.
+    """
     mock_provider = MagicMock()
-    mock_provider._account = MagicMock()
-    mock_provider._account.key = MagicMock()
-    mock_provider._account.key.hex.return_value = "0x" + "b" * 64
+    mock_signer = MagicMock()
+    mock_signer.address = "0x1234567890123456789012345678901234567890"
+    mock_provider.to_signer.return_value = mock_signer
+    mock_provider.get_address.return_value = "0x1234567890123456789012345678901234567890"
     return mock_provider
 
 
 @pytest.fixture
-def mock_llm_client():
-    """Create a mock LLMClient for testing."""
-    mock_client = MagicMock()
+def mock_x402_session():
+    """Create a mock x402 session for testing."""
+    mock_session = MagicMock()
 
-    # Setup mock chat_completion response
+    # Setup mock response
     mock_response = MagicMock()
-    mock_response.choices = [MagicMock()]
-    mock_response.choices[0].message.content = "This is a test response from the LLM."
-    mock_response.usage = MagicMock()
-    mock_response.usage.prompt_tokens = 10
-    mock_response.usage.completion_tokens = 20
-    mock_response.usage.total_tokens = 30
-    mock_client.chat_completion.return_value = mock_response
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": "chatcmpl-123",
+        "object": "chat.completion",
+        "created": 1677652288,
+        "model": "openai/gpt-4o-mini",
+        "choices": [
+            {
+                "index": 0,
+                "message": {
+                    "role": "assistant",
+                    "content": "This is a test response from the LLM.",
+                },
+                "finish_reason": "stop",
+            }
+        ],
+        "usage": {
+            "prompt_tokens": 10,
+            "completion_tokens": 20,
+            "total_tokens": 30,
+        },
+    }
+    mock_response.raise_for_status = MagicMock()
 
-    return mock_client
+    mock_session.post.return_value = mock_response
+    mock_session.get.return_value = mock_response
+
+    return mock_session
 
 
 @pytest.fixture
-def provider(mock_wallet_key, mock_llm_client):
-    """Create a BlockrunActionProvider with a mock wallet key and client.
+def provider(mock_x402_session):
+    """Create a BlockrunActionProvider with mocked x402 session.
 
     Args:
-        mock_wallet_key: Mock wallet key for authentication.
-        mock_llm_client: Mock LLMClient to use in the provider.
+        mock_x402_session: Mock x402 session for HTTP requests.
 
     Returns:
-        BlockrunActionProvider: Provider with mock wallet key and client.
+        BlockrunActionProvider: Provider configured for testing.
+
     """
     from coinbase_agentkit.action_providers.blockrun.blockrun_action_provider import (
         BlockrunActionProvider,
     )
 
-    provider = BlockrunActionProvider(wallet_key=mock_wallet_key)
-    provider._client = mock_llm_client
-    return provider
+    with patch(
+        "coinbase_agentkit.action_providers.blockrun.blockrun_action_provider.x402_requests"
+    ) as mock_x402_requests:
+        mock_x402_requests.return_value = mock_x402_session
+        provider = BlockrunActionProvider()
+        # Store the mock for use in tests
+        provider._mock_x402_requests = mock_x402_requests
+        provider._mock_session = mock_x402_session
+        yield provider

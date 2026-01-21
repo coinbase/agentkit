@@ -37,3 +37,9 @@ class ListModelsSchema(BaseModel):
     """Schema for listing available models."""
 
     pass
+
+
+class GetUsdcBalanceSchema(BaseModel):
+    """Schema for getting USDC balance."""
+
+    pass
