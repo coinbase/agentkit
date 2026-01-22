@@ -119,6 +119,28 @@ result = agentkit.execute_action("chat_completion", {
 })
 ```
 
+### `get_usdc_balance`
+
+Check your wallet's USDC balance on Base before making requests.
+
+```python
+result = agentkit.execute_action("get_usdc_balance", {})
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "balance": 5.123456,
+  "formatted_balance": "5.123456 USDC",
+  "wallet_address": "0x...",
+  "usdc_contract": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  "network": "base-mainnet"
+}
+```
+
+If balance is low (< 0.10 USDC), a warning and funding suggestions are included.
+
 ### `list_models`
 
 List all available models with descriptions. No parameters required.
