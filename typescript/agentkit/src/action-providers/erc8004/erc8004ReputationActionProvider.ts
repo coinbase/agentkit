@@ -8,13 +8,11 @@ import {
   GiveFeedbackSchema,
   RevokeFeedbackSchema,
   AppendResponseSchema,
-  GetReputationSummarySchema,
-  ReadFeedbackSchema,
-  GetClientsSchema,
+  GetAgentFeedbackSchema,
 } from "./reputationSchemas";
 import { getChainIdFromNetwork, getRegistryAddress, isNetworkSupported } from "./constants";
 import { REPUTATION_REGISTRY_ABI, IDENTITY_REGISTRY_ABI } from "./abi";
-import { PinataConfig, ipfsToHttpUrl } from "./utils";
+import { PinataConfig, ipfsToHttpUrl, getAgent0SDK } from "./utils";
 import { uploadFeedbackToIPFS } from "./utils_rep";
 
 /**
@@ -59,7 +57,7 @@ The value + valueDecimals pair represents a signed fixed-point number.
 The feedback is automatically:
 1. Generated as an ERC-8004 compliant JSON file
 2. Uploaded to IPFS via Pinata
-3. Submitted onchain with the IPFS URI and keccak256 hash
+3. Submitted onchain with the IPFS URI
 
 Examples:
 | tag1             | What it measures          | Human value | value | valueDecimals |
@@ -71,8 +69,6 @@ Examples:
 | responseTime     | Response time (ms)        | 560ms       | 560   | 0             |
 | revenues         | Cumulative revenues (USD) | $560        | 560   | 0             |
 | tradingYield     | Yield (with tag2=period)  | -3.2%       | -32   | 1             |
-
-IMPORTANT: Always ignore optional fields: endpoint, mcp, a2a, oasf, proofOfPayment, and comment, unless you are explicitly asked to use them. Do not ask the user to provide them.
 `,
     schema: GiveFeedbackSchema,
   })
@@ -93,7 +89,7 @@ IMPORTANT: Always ignore optional fields: endpoint, mcp, a2a, oasf, proofOfPayme
       const identityRegistryAddress = getRegistryAddress("identity", chainId);
       const clientAddress = walletProvider.getAddress();
 
-      // Check that the client is not the owner of the agent (prevent self-feedback)
+      // Check that the client is not the owner of the agent
       const agentOwner = await walletProvider.readContract({
         address: identityRegistryAddress,
         abi: IDENTITY_REGISTRY_ABI,
@@ -115,15 +111,15 @@ IMPORTANT: Always ignore optional fields: endpoint, mcp, a2a, oasf, proofOfPayme
         valueDecimals: args.valueDecimals ?? 0,
         tag1: args.tag1,
         tag2: args.tag2,
-        endpoint: args.endpoint,
-        mcp: args.mcp,
-        a2a: args.a2a,
-        oasf: args.oasf,
-        proofOfPayment: args.proofOfPayment,
+        endpoint: undefined,
+        mcp: undefined,
+        a2a: undefined,
+        oasf: undefined,
+        proofOfPayment: undefined,
         comment: args.comment,
       });
 
-      // Submit feedback on-chain with IPFS URI and hash
+      // Submit feedback onchain with IPFS URI and hash
       const hash = await walletProvider.sendTransaction({
         to: reputationRegistryAddress,
         data: encodeFunctionData({
@@ -135,7 +131,7 @@ IMPORTANT: Always ignore optional fields: endpoint, mcp, a2a, oasf, proofOfPayme
             args.valueDecimals ?? 0,
             args.tag1 ?? "",
             args.tag2 ?? "",
-            args.endpoint ?? "",
+            "",
             feedbackUri,
             feedbackHash,
           ],
@@ -147,7 +143,7 @@ IMPORTANT: Always ignore optional fields: endpoint, mcp, a2a, oasf, proofOfPayme
       const httpUrl = ipfsToHttpUrl(feedbackUri);
 
       const commentLine = args.comment ? `\nComment: ${args.comment}` : "";
-      return `Feedback submitted successfully!\n\nAgent ID: ${args.agentId}\nValue: ${args.value}${args.valueDecimals ? ` (${args.valueDecimals} decimals)` : ""}\nTags: ${args.tag1 || "(none)"}${args.tag2 ? `, ${args.tag2}` : ""}\nEndpoint: ${args.endpoint || "(none)"}${commentLine}\n\nFeedback File:\n- IPFS URI: ${feedbackUri}\n- HTTP Gateway: ${httpUrl}\n- Hash: ${feedbackHash}\n\nTransaction hash: ${hash}`;
+      return `Feedback submitted successfully!\n\nAgent ID: ${args.agentId}\nValue: ${args.value}${args.valueDecimals ? ` (${args.valueDecimals} decimals)` : ""}\nTags: ${args.tag1 || "(none)"}${args.tag2 ? `, ${args.tag2}` : ""}${commentLine}\n\nFeedback File:\n- IPFS URI: ${feedbackUri}\n- HTTP Gateway: ${httpUrl}\n- Hash: ${feedbackHash}\n\nTransaction hash: ${hash}`;
     } catch (error) {
       return `Error giving feedback: ${error}`;
     }
@@ -254,174 +250,84 @@ The response is stored as a URI pointing to off-chain content.
   }
 
   /**
-   * Gets aggregated reputation statistics for an agent.
+   * Gets feedback entries for an agent.
    *
    * @param walletProvider - The wallet provider to use for reading
-   * @param args - The agentId and optional tag filters
-   * @returns A message with the reputation summary
+   * @param args - The agentId and optional filters
+   * @returns A message with the list of feedback entries
    */
   @CreateAction({
-    name: "get_reputation_summary",
+    name: "get_agent_feedback",
     description: `
-Gets aggregated reputation statistics for an agent from trusted clients.
+Gets feedback entries for an agent. Useful for:
+- Viewing all feedback received by an agent
+- Filtering by reviewer addresses, value range, or tags
 
-Per ERC-8004 spec, clientAddresses MUST be provided to mitigate Sybil/spam attacks.
-Results without filtering by clientAddresses would be vulnerable to fake feedback.
-
-Returns:
-- Total feedback count from specified clients
-- Summary value (aggregated rating)
-- Value decimals
-
-You can additionally filter by tag1 and/or tag2 for category-specific summaries.
-This is a read-only operation that doesn't require gas.
+This is a read-only operation using indexed data for fast queries.
 `,
-    schema: GetReputationSummarySchema,
+    schema: GetAgentFeedbackSchema,
   })
-  async getReputationSummary(
+  async getAgentFeedback(
     walletProvider: EvmWalletProvider,
-    args: z.infer<typeof GetReputationSummarySchema>,
+    args: z.infer<typeof GetAgentFeedbackSchema>,
   ): Promise<string> {
     try {
+      const sdk = getAgent0SDK(walletProvider);
       const network = walletProvider.getNetwork();
       const chainId = getChainIdFromNetwork(network);
-      const registryAddress = getRegistryAddress("reputation", chainId);
 
-      const result = await walletProvider.readContract({
-        address: registryAddress,
-        abi: REPUTATION_REGISTRY_ABI,
-        functionName: "getSummary",
-        args: [
-          BigInt(args.agentId),
-          args.clientAddresses as Hex[],
-          args.tag1 ?? "",
-          args.tag2 ?? "",
-        ],
-      });
-
-      const [count, summaryValue, summaryValueDecimals] = result as [bigint, bigint, number];
-
-      // Format the summary value with decimals
-      let formattedValue = summaryValue.toString();
-      if (summaryValueDecimals > 0) {
-        const valueStr = summaryValue.toString().padStart(summaryValueDecimals + 1, "0");
-        const intPart = valueStr.slice(0, -summaryValueDecimals) || "0";
-        const decPart = valueStr.slice(-summaryValueDecimals);
-        formattedValue = `${intPart}.${decPart}`;
+      // Handle agentId format - add chainId if not present
+      let agentId = args.agentId;
+      if (!agentId.includes(":")) {
+        agentId = `${chainId}:${agentId}`;
       }
 
-      const clientFilter = `\nClients: ${args.clientAddresses.length} trusted address(es)`;
-      const tagFilter =
-        args.tag1 || args.tag2
-          ? `\nTags: ${args.tag1 || "(any)"}${args.tag2 ? ` / ${args.tag2}` : ""}`
-          : "";
+      const feedbackItems = await sdk.searchFeedback(
+        {
+          agentId,
+          reviewers: args.reviewerAddresses,
+          includeRevoked: args.includeRevoked ?? false,
+        },
+        {
+          minValue: args.minValue,
+          maxValue: args.maxValue,
+        },
+      );
 
-      return `Reputation Summary for Agent ${args.agentId}${clientFilter}${tagFilter}\n\nFeedback Count: ${count}\nSummary Value: ${formattedValue}${summaryValueDecimals > 0 ? ` (${summaryValueDecimals} decimals)` : ""}`;
-    } catch (error) {
-      return `Error getting reputation summary: ${error}`;
-    }
-  }
+      // Apply pageSize limit (SDK may return all results)
+      const pageSize = args.pageSize ?? 20;
+      const limitedItems = feedbackItems.slice(0, pageSize);
 
-  /**
-   * Reads a specific feedback entry.
-   *
-   * @param walletProvider - The wallet provider to use for reading
-   * @param args - The agentId, clientAddress, and feedbackIndex
-   * @returns A message with the feedback details
-   */
-  @CreateAction({
-    name: "read_feedback",
-    description: `
-Reads a specific feedback entry from the Reputation Registry.
-
-Returns the feedback value, decimals, tags, and revocation status.
-This is a read-only operation that doesn't require gas.
-`,
-    schema: ReadFeedbackSchema,
-  })
-  async readFeedback(
-    walletProvider: EvmWalletProvider,
-    args: z.infer<typeof ReadFeedbackSchema>,
-  ): Promise<string> {
-    try {
-      const network = walletProvider.getNetwork();
-      const chainId = getChainIdFromNetwork(network);
-      const registryAddress = getRegistryAddress("reputation", chainId);
-
-      const result = await walletProvider.readContract({
-        address: registryAddress,
-        abi: REPUTATION_REGISTRY_ABI,
-        functionName: "readFeedback",
-        args: [BigInt(args.agentId), args.clientAddress as Hex, BigInt(args.feedbackIndex)],
-      });
-
-      const [value, valueDecimals, tag1, tag2, isRevoked] = result as [
-        bigint,
-        number,
-        string,
-        string,
-        boolean,
-      ];
-
-      // Format the value with decimals
-      let formattedValue = value.toString();
-      if (valueDecimals > 0) {
-        const valueStr = value.toString().padStart(valueDecimals + 1, "0");
-        const intPart = valueStr.slice(0, -valueDecimals) || "0";
-        const decPart = valueStr.slice(-valueDecimals);
-        formattedValue = `${intPart}.${decPart}`;
+      if (limitedItems.length === 0) {
+        return `Agent ${args.agentId} has no feedback yet.`;
       }
 
-      return `Feedback Entry\n\nAgent ID: ${args.agentId}\nClient: ${args.clientAddress}\nFeedback Index: ${args.feedbackIndex}\n\nValue: ${formattedValue}${valueDecimals > 0 ? ` (${valueDecimals} decimals)` : ""}\nTag 1: ${tag1 || "(none)"}\nTag 2: ${tag2 || "(none)"}\nRevoked: ${isRevoked ? "Yes" : "No"}`;
-    } catch (error) {
-      return `Error reading feedback: ${error}`;
-    }
-  }
+      // Format the response
+      const feedbackList = limitedItems
+        .map(feedback => {
+          const reviewer = feedback.reviewer ? `Reviewer: ${feedback.reviewer}` : "";
+          const value = feedback.value !== undefined ? `\n  Value: ${feedback.value}` : "";
+          const tags = feedback.tags?.length ? `\n  Tags: ${feedback.tags.join(", ")}` : "";
+          const endpoint = feedback.endpoint ? `\n  Endpoint: ${feedback.endpoint}` : "";
+          const revoked =
+            feedback.isRevoked !== undefined ? `\n  Revoked: ${feedback.isRevoked}` : "";
+          const timestamp = feedback.createdAt
+            ? `\n  Created: ${new Date(feedback.createdAt * 1000).toISOString()}`
+            : "";
 
-  /**
-   * Gets the list of clients who have given feedback to an agent.
-   *
-   * @param walletProvider - The wallet provider to use for reading
-   * @param args - The agentId to get clients for
-   * @returns A message with the list of client addresses
-   */
-  @CreateAction({
-    name: "get_feedback_clients",
-    description: `
-Gets the list of client addresses who have given feedback to an agent.
+          return `- ${reviewer}${value}${tags}${endpoint}${revoked}${timestamp}`;
+        })
+        .join("\n\n");
 
-This is useful for iterating through all feedback entries.
-This is a read-only operation that doesn't require gas.
-`,
-    schema: GetClientsSchema,
-  })
-  async getClients(
-    walletProvider: EvmWalletProvider,
-    args: z.infer<typeof GetClientsSchema>,
-  ): Promise<string> {
-    try {
-      const network = walletProvider.getNetwork();
-      const chainId = getChainIdFromNetwork(network);
-      const registryAddress = getRegistryAddress("reputation", chainId);
+      let response = `Feedback for Agent ${args.agentId} (${limitedItems.length} entries):\n\n${feedbackList}`;
 
-      const clients = await walletProvider.readContract({
-        address: registryAddress,
-        abi: REPUTATION_REGISTRY_ABI,
-        functionName: "getClients",
-        args: [BigInt(args.agentId)],
-      });
-
-      const clientList = clients as Hex[];
-
-      if (clientList.length === 0) {
-        return `Agent ${args.agentId} has not received any feedback yet.`;
+      if (feedbackItems.length > pageSize) {
+        response += `\n\n(${feedbackItems.length - pageSize} more results available, increase pageSize to see more)`;
       }
 
-      const clientListStr = clientList.map((c, i) => `${i + 1}. ${c}`).join("\n");
-
-      return `Feedback Clients for Agent ${args.agentId}\n\nTotal: ${clientList.length} clients\n\n${clientListStr}`;
+      return response;
     } catch (error) {
-      return `Error getting clients: ${error}`;
+      return `Error getting agent feedback: ${error}`;
     }
   }
 

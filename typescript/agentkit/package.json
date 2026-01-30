@@ -40,6 +40,7 @@
   ],
   "dependencies": {
     "@across-protocol/app-sdk": "^0.2.0",
+    "agent0-sdk": "^1.4.2",
     "@alloralabs/allora-sdk": "^0.1.0",
     "@base-org/account": "^2.2.0",
     "@coinbase/cdp-sdk": "^1.38.0",

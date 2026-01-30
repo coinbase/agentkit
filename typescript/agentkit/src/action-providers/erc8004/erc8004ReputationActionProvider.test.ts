@@ -6,12 +6,11 @@ import {
   GiveFeedbackSchema,
   RevokeFeedbackSchema,
   AppendResponseSchema,
-  GetReputationSummarySchema,
-  ReadFeedbackSchema,
-  GetClientsSchema,
+  GetAgentFeedbackSchema,
 } from "./reputationSchemas";
 import { EvmWalletProvider } from "../../wallet-providers";
 import * as utilsRep from "./utils_rep";
+import * as utils from "./utils";
 
 const MOCK_AGENT_ID = "123";
 const MOCK_ADDRESS = "0x1234567890123456789012345678901234567890";
@@ -31,7 +30,6 @@ describe("Reputation Schema Validation", () => {
         valueDecimals: 0,
         tag1: "quality",
         tag2: "response-time",
-        endpoint: "/api/v1/chat",
       };
 
       const result = GiveFeedbackSchema.safeParse(validInput);
@@ -93,47 +91,11 @@ describe("Reputation Schema Validation", () => {
       expect(GiveFeedbackSchema.safeParse(yieldInput).success).toBe(true);
     });
 
-    it("should accept optional MCP context", () => {
-      const inputWithMcp = {
-        agentId: MOCK_AGENT_ID,
-        value: 85,
-        mcp: { tool: "getWeather" },
-      };
-
-      const result = GiveFeedbackSchema.safeParse(inputWithMcp);
-      expect(result.success).toBe(true);
-      expect(result.data?.mcp?.tool).toBe("getWeather");
-    });
-
-    it("should accept optional A2A context", () => {
-      const inputWithA2a = {
-        agentId: MOCK_AGENT_ID,
-        value: 85,
-        a2a: { skills: ["skill1", "skill2"], taskId: "task-123" },
-      };
-
-      const result = GiveFeedbackSchema.safeParse(inputWithA2a);
-      expect(result.success).toBe(true);
-      expect(result.data?.a2a?.skills).toHaveLength(2);
-    });
-
     it("should fail parsing tag1 too long", () => {
       const invalidInput = {
         agentId: MOCK_AGENT_ID,
         value: 85,
         tag1: "a".repeat(51),
-      };
-
-      const result = GiveFeedbackSchema.safeParse(invalidInput);
-
-      expect(result.success).toBe(false);
-    });
-
-    it("should fail parsing endpoint too long", () => {
-      const invalidInput = {
-        agentId: MOCK_AGENT_ID,
-        value: 85,
-        endpoint: "a".repeat(201),
       };
 
       const result = GiveFeedbackSchema.safeParse(invalidInput);
@@ -237,124 +199,56 @@ describe("Reputation Schema Validation", () => {
     });
   });
 
-  describe("GetReputationSummarySchema", () => {
-    it("should successfully parse valid input with clientAddresses and tags", () => {
+  describe("GetAgentFeedbackSchema", () => {
+    it("should successfully parse valid input with all filters", () => {
       const validInput = {
         agentId: MOCK_AGENT_ID,
-        clientAddresses: [MOCK_CLIENT_ADDRESS],
+        reviewerAddresses: [MOCK_CLIENT_ADDRESS],
+        minValue: 50,
+        maxValue: 100,
         tag1: "quality",
-        tag2: "speed",
+        includeRevoked: false,
+        pageSize: 20,
       };
 
-      const result = GetReputationSummarySchema.safeParse(validInput);
+      const result = GetAgentFeedbackSchema.safeParse(validInput);
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(validInput);
     });
 
-    it("should successfully parse input with only required fields", () => {
+    it("should successfully parse input with only agentId", () => {
       const validInput = {
         agentId: MOCK_AGENT_ID,
-        clientAddresses: [MOCK_CLIENT_ADDRESS],
       };
 
-      const result = GetReputationSummarySchema.safeParse(validInput);
+      const result = GetAgentFeedbackSchema.safeParse(validInput);
 
       expect(result.success).toBe(true);
     });
 
-    it("should accept multiple client addresses", () => {
+    it("should accept agentId with chainId prefix", () => {
       const validInput = {
-        agentId: MOCK_AGENT_ID,
-        clientAddresses: [
-          MOCK_CLIENT_ADDRESS,
-          "0xabcdef1234567890123456789012345678901234",
-          "0x1111111111111111111111111111111111111111",
-        ],
+        agentId: "84532:123",
       };
 
-      const result = GetReputationSummarySchema.safeParse(validInput);
+      const result = GetAgentFeedbackSchema.safeParse(validInput);
       expect(result.success).toBe(true);
-      expect(result.data?.clientAddresses).toHaveLength(3);
     });
 
-    it("should fail parsing without clientAddresses (required per ERC-8004 spec)", () => {
+    it("should reject pageSize greater than 50", () => {
       const invalidInput = {
         agentId: MOCK_AGENT_ID,
-        tag1: "quality",
+        pageSize: 51,
       };
 
-      const result = GetReputationSummarySchema.safeParse(invalidInput);
-      expect(result.success).toBe(false);
-    });
-
-    it("should fail parsing with empty clientAddresses array", () => {
-      const invalidInput = {
-        agentId: MOCK_AGENT_ID,
-        clientAddresses: [],
-      };
-
-      const result = GetReputationSummarySchema.safeParse(invalidInput);
-      expect(result.success).toBe(false);
-    });
-
-    it("should fail parsing with invalid client address format", () => {
-      const invalidInput = {
-        agentId: MOCK_AGENT_ID,
-        clientAddresses: ["not-an-address"],
-      };
-
-      const result = GetReputationSummarySchema.safeParse(invalidInput);
+      const result = GetAgentFeedbackSchema.safeParse(invalidInput);
       expect(result.success).toBe(false);
     });
 
     it("should fail parsing empty input", () => {
       const emptyInput = {};
-      const result = GetReputationSummarySchema.safeParse(emptyInput);
-
-      expect(result.success).toBe(false);
-    });
-  });
-
-  describe("ReadFeedbackSchema", () => {
-    it("should successfully parse valid input", () => {
-      const validInput = {
-        agentId: MOCK_AGENT_ID,
-        clientAddress: MOCK_CLIENT_ADDRESS,
-        feedbackIndex: MOCK_FEEDBACK_INDEX,
-      };
-
-      const result = ReadFeedbackSchema.safeParse(validInput);
-
-      expect(result.success).toBe(true);
-      expect(result.data).toEqual(validInput);
-    });
-
-    it("should fail parsing invalid client address", () => {
-      const invalidInput = {
-        agentId: MOCK_AGENT_ID,
-        clientAddress: "not-an-address",
-        feedbackIndex: MOCK_FEEDBACK_INDEX,
-      };
-
-      const result = ReadFeedbackSchema.safeParse(invalidInput);
-
-      expect(result.success).toBe(false);
-    });
-  });
-
-  describe("GetClientsSchema", () => {
-    it("should successfully parse valid input", () => {
-      const validInput = { agentId: MOCK_AGENT_ID };
-      const result = GetClientsSchema.safeParse(validInput);
-
-      expect(result.success).toBe(true);
-      expect(result.data).toEqual(validInput);
-    });
-
-    it("should fail parsing empty input", () => {
-      const emptyInput = {};
-      const result = GetClientsSchema.safeParse(emptyInput);
+      const result = GetAgentFeedbackSchema.safeParse(emptyInput);
 
       expect(result.success).toBe(false);
     });
@@ -412,7 +306,6 @@ describe("Give Feedback Action", () => {
       valueDecimals: 0,
       tag1: "quality",
       tag2: "speed",
-      endpoint: "/api/v1",
     };
 
     const response = await actionProvider.giveFeedback(mockWallet, args);
@@ -439,7 +332,6 @@ describe("Give Feedback Action", () => {
       valueDecimals: 0,
       tag1: "",
       tag2: "",
-      endpoint: "",
     };
 
     const response = await actionProvider.giveFeedback(mockWallet, args);
@@ -458,7 +350,6 @@ describe("Give Feedback Action", () => {
       valueDecimals: 0,
       tag1: "",
       tag2: "",
-      endpoint: "",
     };
 
     const response = await providerWithoutJwt.giveFeedback(mockWallet, args);
@@ -477,7 +368,6 @@ describe("Give Feedback Action", () => {
       valueDecimals: 0,
       tag1: "",
       tag2: "",
-      endpoint: "",
     };
 
     const response = await actionProvider.giveFeedback(mockWallet, args);
@@ -496,7 +386,6 @@ describe("Give Feedback Action", () => {
       valueDecimals: 0,
       tag1: "",
       tag2: "",
-      endpoint: "",
     };
 
     const response = await actionProvider.giveFeedback(mockWallet, args);
@@ -613,13 +502,15 @@ describe("Append Response Action", () => {
   });
 });
 
-describe("Get Reputation Summary Action", () => {
+describe("Get Agent Feedback Action", () => {
   let mockWallet: jest.Mocked<EvmWalletProvider>;
   let actionProvider: ERC8004ReputationActionProvider;
+  let mockSdk: { searchFeedback: jest.Mock };
+  let getAgent0SDKSpy: jest.SpyInstance;
 
   beforeEach(() => {
     mockWallet = {
-      readContract: jest.fn(),
+      getPublicClient: jest.fn().mockReturnValue({ transport: { url: "https://rpc.example.com" } }),
       getName: jest.fn().mockReturnValue("evm_wallet_provider"),
       getNetwork: jest.fn().mockReturnValue({
         protocolFamily: "evm",
@@ -627,221 +518,129 @@ describe("Get Reputation Summary Action", () => {
       }),
     } as unknown as jest.Mocked<EvmWalletProvider>;
 
+    mockSdk = {
+      searchFeedback: jest.fn(),
+    };
+
+    getAgent0SDKSpy = jest.spyOn(utils, "getAgent0SDK").mockReturnValue(mockSdk as never);
     actionProvider = erc8004ReputationActionProvider();
   });
 
-  it("should successfully get reputation summary with clientAddresses", async () => {
-    mockWallet.readContract.mockResolvedValue([BigInt(10), BigInt(850), 1]);
+  afterEach(() => {
+    getAgent0SDKSpy.mockRestore();
+  });
+
+  it("should successfully get agent feedback", async () => {
+    mockSdk.searchFeedback.mockResolvedValue([
+      {
+        reviewer: MOCK_CLIENT_ADDRESS,
+        value: 85,
+        tags: ["quality"],
+        isRevoked: false,
+        createdAt: 1700000000,
+      },
+    ]);
 
     const args = {
       agentId: MOCK_AGENT_ID,
-      clientAddresses: [MOCK_CLIENT_ADDRESS],
-      tag1: "",
-      tag2: "",
     };
 
-    const response = await actionProvider.getReputationSummary(mockWallet, args);
+    const response = await actionProvider.getAgentFeedback(mockWallet, args);
 
-    expect(mockWallet.readContract).toHaveBeenCalled();
-    expect(response).toContain("Reputation Summary");
+    expect(mockSdk.searchFeedback).toHaveBeenCalledWith(
+      { agentId: "84532:123", reviewers: undefined, includeRevoked: false },
+      { minValue: undefined, maxValue: undefined },
+    );
+    expect(response).toContain("Feedback for Agent");
     expect(response).toContain(MOCK_AGENT_ID);
-    expect(response).toContain("Feedback Count: 10");
-    expect(response).toContain("85.0");
-    expect(response).toContain("1 trusted address");
+    expect(response).toContain("Reviewer:");
+    expect(response).toContain("Value: 85");
+    expect(response).toContain("Tags: quality");
   });
 
-  it("should successfully get reputation summary with multiple clients and tag filters", async () => {
-    mockWallet.readContract.mockResolvedValue([BigInt(5), BigInt(90), 0]);
+  it("should handle multiple feedback entries", async () => {
+    mockSdk.searchFeedback.mockResolvedValue([
+      { reviewer: MOCK_CLIENT_ADDRESS, value: 85, tags: ["quality"], isRevoked: false },
+      {
+        reviewer: "0xabcdef1234567890123456789012345678901234",
+        value: 90,
+        tags: ["speed"],
+        isRevoked: false,
+      },
+    ]);
 
     const args = {
       agentId: MOCK_AGENT_ID,
-      clientAddresses: [MOCK_CLIENT_ADDRESS, "0xabcdef1234567890123456789012345678901234"],
-      tag1: "quality",
-      tag2: "speed",
     };
 
-    const response = await actionProvider.getReputationSummary(mockWallet, args);
+    const response = await actionProvider.getAgentFeedback(mockWallet, args);
 
-    expect(mockWallet.readContract).toHaveBeenCalled();
-    expect(response).toContain("2 trusted address");
-    expect(response).toContain("quality");
-    expect(response).toContain("speed");
-    expect(response).toContain("Feedback Count: 5");
+    expect(response).toContain("2 entries");
+    expect(response).toContain("Value: 85");
+    expect(response).toContain("Value: 90");
   });
 
-  it("should pass clientAddresses to the contract call", async () => {
-    mockWallet.readContract.mockResolvedValue([BigInt(5), BigInt(90), 0]);
+  it("should apply filters correctly", async () => {
+    mockSdk.searchFeedback.mockResolvedValue([]);
 
     const args = {
       agentId: MOCK_AGENT_ID,
-      clientAddresses: [MOCK_CLIENT_ADDRESS],
-      tag1: "",
-      tag2: "",
+      reviewerAddresses: [MOCK_CLIENT_ADDRESS],
+      minValue: 50,
+      maxValue: 100,
+      includeRevoked: true,
     };
 
-    await actionProvider.getReputationSummary(mockWallet, args);
+    await actionProvider.getAgentFeedback(mockWallet, args);
 
-    expect(mockWallet.readContract).toHaveBeenCalledWith(
-      expect.objectContaining({
-        functionName: "getSummary",
-        args: [BigInt(MOCK_AGENT_ID), [MOCK_CLIENT_ADDRESS], "", ""],
-      }),
+    expect(mockSdk.searchFeedback).toHaveBeenCalledWith(
+      { agentId: "84532:123", reviewers: [MOCK_CLIENT_ADDRESS], includeRevoked: true },
+      { minValue: 50, maxValue: 100 },
     );
   });
 
-  it("should handle error when getting summary fails", async () => {
-    mockWallet.readContract.mockRejectedValue(new Error("Read failed"));
-
-    const args = {
-      agentId: MOCK_AGENT_ID,
-      clientAddresses: [MOCK_CLIENT_ADDRESS],
-      tag1: "",
-      tag2: "",
-    };
-
-    const response = await actionProvider.getReputationSummary(mockWallet, args);
-
-    expect(response).toContain("Error getting reputation summary");
-  });
-});
-
-describe("Read Feedback Action", () => {
-  let mockWallet: jest.Mocked<EvmWalletProvider>;
-  let actionProvider: ERC8004ReputationActionProvider;
-
-  beforeEach(() => {
-    mockWallet = {
-      readContract: jest.fn(),
-      getName: jest.fn().mockReturnValue("evm_wallet_provider"),
-      getNetwork: jest.fn().mockReturnValue({
-        protocolFamily: "evm",
-        networkId: "base-sepolia",
-      }),
-    } as unknown as jest.Mocked<EvmWalletProvider>;
-
-    actionProvider = erc8004ReputationActionProvider();
-  });
-
-  it("should successfully read feedback", async () => {
-    mockWallet.readContract.mockResolvedValue([BigInt(85), 0, "quality", "speed", false]);
-
-    const args = {
-      agentId: MOCK_AGENT_ID,
-      clientAddress: MOCK_CLIENT_ADDRESS,
-      feedbackIndex: MOCK_FEEDBACK_INDEX,
-    };
-
-    const response = await actionProvider.readFeedback(mockWallet, args);
-
-    expect(mockWallet.readContract).toHaveBeenCalled();
-    expect(response).toContain("Feedback Entry");
-    expect(response).toContain(MOCK_AGENT_ID);
-    expect(response).toContain(MOCK_CLIENT_ADDRESS);
-    expect(response).toContain("Value: 85");
-    expect(response).toContain("quality");
-    expect(response).toContain("speed");
-    expect(response).toContain("Revoked: No");
-  });
-
-  it("should show revoked status correctly", async () => {
-    mockWallet.readContract.mockResolvedValue([BigInt(85), 0, "quality", "", true]);
-
-    const args = {
-      agentId: MOCK_AGENT_ID,
-      clientAddress: MOCK_CLIENT_ADDRESS,
-      feedbackIndex: MOCK_FEEDBACK_INDEX,
-    };
-
-    const response = await actionProvider.readFeedback(mockWallet, args);
-
-    expect(response).toContain("Revoked: Yes");
-  });
-
-  it("should handle feedback with decimals", async () => {
-    mockWallet.readContract.mockResolvedValue([BigInt(8550), 2, "quality", "", false]);
-
-    const args = {
-      agentId: MOCK_AGENT_ID,
-      clientAddress: MOCK_CLIENT_ADDRESS,
-      feedbackIndex: MOCK_FEEDBACK_INDEX,
-    };
-
-    const response = await actionProvider.readFeedback(mockWallet, args);
-
-    expect(response).toContain("85.50");
-  });
-
-  it("should handle error when reading feedback fails", async () => {
-    mockWallet.readContract.mockRejectedValue(new Error("Read failed"));
-
-    const args = {
-      agentId: MOCK_AGENT_ID,
-      clientAddress: MOCK_CLIENT_ADDRESS,
-      feedbackIndex: MOCK_FEEDBACK_INDEX,
-    };
-
-    const response = await actionProvider.readFeedback(mockWallet, args);
-
-    expect(response).toContain("Error reading feedback");
-  });
-});
-
-describe("Get Clients Action", () => {
-  let mockWallet: jest.Mocked<EvmWalletProvider>;
-  let actionProvider: ERC8004ReputationActionProvider;
-
-  beforeEach(() => {
-    mockWallet = {
-      readContract: jest.fn(),
-      getName: jest.fn().mockReturnValue("evm_wallet_provider"),
-      getNetwork: jest.fn().mockReturnValue({
-        protocolFamily: "evm",
-        networkId: "base-sepolia",
-      }),
-    } as unknown as jest.Mocked<EvmWalletProvider>;
-
-    actionProvider = erc8004ReputationActionProvider();
-  });
-
-  it("should successfully get clients list", async () => {
-    const mockClients = [MOCK_CLIENT_ADDRESS, "0xabcdef1234567890123456789012345678901234"];
-    mockWallet.readContract.mockResolvedValue(mockClients);
+  it("should handle agent with no feedback", async () => {
+    mockSdk.searchFeedback.mockResolvedValue([]);
 
     const args = {
       agentId: MOCK_AGENT_ID,
     };
 
-    const response = await actionProvider.getClients(mockWallet, args);
+    const response = await actionProvider.getAgentFeedback(mockWallet, args);
 
-    expect(mockWallet.readContract).toHaveBeenCalled();
-    expect(response).toContain("Feedback Clients");
-    expect(response).toContain(MOCK_AGENT_ID);
-    expect(response).toContain("Total: 2 clients");
-    expect(response).toContain(MOCK_CLIENT_ADDRESS);
+    expect(response).toContain("has no feedback yet");
   });
 
-  it("should handle empty clients list", async () => {
-    mockWallet.readContract.mockResolvedValue([]);
+  it("should respect pageSize limit", async () => {
+    const manyFeedback = Array(30).fill({
+      reviewer: MOCK_CLIENT_ADDRESS,
+      value: 85,
+      tags: ["quality"],
+      isRevoked: false,
+    });
+    mockSdk.searchFeedback.mockResolvedValue(manyFeedback);
+
+    const args = {
+      agentId: MOCK_AGENT_ID,
+      pageSize: 10,
+    };
+
+    const response = await actionProvider.getAgentFeedback(mockWallet, args);
+
+    expect(response).toContain("10 entries");
+    expect(response).toContain("20 more results available");
+  });
+
+  it("should handle error when getting feedback fails", async () => {
+    mockSdk.searchFeedback.mockRejectedValue(new Error("SDK error"));
 
     const args = {
       agentId: MOCK_AGENT_ID,
     };
 
-    const response = await actionProvider.getClients(mockWallet, args);
+    const response = await actionProvider.getAgentFeedback(mockWallet, args);
 
-    expect(response).toContain("has not received any feedback yet");
-  });
-
-  it("should handle error when getting clients fails", async () => {
-    mockWallet.readContract.mockRejectedValue(new Error("Read failed"));
-
-    const args = {
-      agentId: MOCK_AGENT_ID,
-    };
-
-    const response = await actionProvider.getClients(mockWallet, args);
-
-    expect(response).toContain("Error getting clients");
+    expect(response).toContain("Error getting agent feedback");
   });
 });
 

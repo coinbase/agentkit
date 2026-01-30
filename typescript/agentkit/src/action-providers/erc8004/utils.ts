@@ -2,11 +2,39 @@
  * Shared utilities for ERC-8004 action providers
  */
 
+import { SDK as Agent0SDK } from "agent0-sdk";
+import { EvmWalletProvider } from "../../wallet-providers";
+import { getChainIdFromNetwork } from "./constants";
+
 /**
  * Configuration for Pinata IPFS service
  */
 export interface PinataConfig {
   jwt: string;
+}
+
+/**
+ * Creates an Agent0SDK instance from a wallet provider.
+ *
+ * @param walletProvider - The wallet provider to extract chain and RPC information from
+ * @returns An initialized Agent0SDK instance
+ * @throws Error if unable to determine RPC URL
+ */
+export function getAgent0SDK(walletProvider: EvmWalletProvider): Agent0SDK {
+  const network = walletProvider.getNetwork();
+  const chainId = getChainIdFromNetwork(network);
+
+  const publicClient = walletProvider.getPublicClient();
+  const rpcUrl = publicClient.transport.url;
+
+  if (!rpcUrl) {
+    throw new Error("Unable to determine RPC URL from wallet provider");
+  }
+
+  return new Agent0SDK({
+    chainId,
+    rpcUrl,
+  });
 }
 
 /**

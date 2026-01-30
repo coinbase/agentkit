@@ -1,54 +1,6 @@
 import { z } from "zod";
 
 /**
- * MCP context schema for feedback
- */
-const McpContextSchema = z
-  .object({
-    tool: z.string().optional().describe("The MCP tool name being rated"),
-    prompt: z.string().optional().describe("The MCP prompt name being rated"),
-    resource: z.string().optional().describe("The MCP resource name being rated"),
-  })
-  .optional()
-  .describe("MCP-specific context for the feedback");
-
-/**
- * A2A context schema for feedback
- */
-const A2aContextSchema = z
-  .object({
-    skills: z.array(z.string()).optional().describe("A2A skill identifiers"),
-    contextId: z.string().optional().describe("A2A context identifier"),
-    taskId: z.string().optional().describe("A2A task identifier"),
-  })
-  .optional()
-  .describe("A2A-specific context for the feedback");
-
-/**
- * OASF context schema for feedback
- */
-const OasfContextSchema = z
-  .object({
-    skills: z.array(z.string()).optional().describe("OASF skill identifiers"),
-    domains: z.array(z.string()).optional().describe("OASF domain identifiers"),
-  })
-  .optional()
-  .describe("OASF-specific context for the feedback");
-
-/**
- * Proof of payment schema for feedback (e.g., x402)
- */
-const ProofOfPaymentSchema = z
-  .object({
-    fromAddress: z.string().describe("The address that sent payment"),
-    toAddress: z.string().describe("The address that received payment"),
-    chainId: z.string().describe("The chain ID where payment occurred"),
-    txHash: z.string().describe("The transaction hash of the payment"),
-  })
-  .optional()
-  .describe("Proof of payment context (e.g., for x402)");
-
-/**
  * Input schema for giving feedback to an agent.
  *
  * The value + valueDecimals pair represents a signed fixed-point number (int128).
@@ -95,18 +47,6 @@ export const GiveFeedbackSchema = z
       .describe(
         "Secondary category tag for more specific categorization (e.g., 'day', 'week', 'month' for yield periods)",
       ),
-    endpoint: z
-      .string()
-      .max(200)
-      .optional()
-      .default("")
-      .describe(
-        "The endpoint or service being rated (e.g., '/api/v1/chat', 'https://agent.example.com/GetPrice')",
-      ),
-    mcp: McpContextSchema,
-    a2a: A2aContextSchema,
-    oasf: OasfContextSchema,
-    proofOfPayment: ProofOfPaymentSchema,
     comment: z
       .string()
       .max(500)
@@ -158,55 +98,31 @@ export const AppendResponseSchema = z
   );
 
 /**
- * Input schema for getting reputation summary.
- * Per ERC-8004 spec: clientAddresses MUST be provided (non-empty) to mitigate Sybil/spam attacks.
+ * Input schema for getting an agent's feedback entries.
+ * Uses the agent0 SDK's indexed subgraph for fast queries.
  */
-export const GetReputationSummarySchema = z
+export const GetAgentFeedbackSchema = z
   .object({
-    agentId: z.string().describe("The agent ID to get reputation summary for"),
-    clientAddresses: z
-      .array(z.string().regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format"))
-      .min(1, "At least one client address is required to mitigate Sybil/spam attacks")
-      .describe(
-        "Array of client addresses to filter by. Required per ERC-8004 spec to prevent Sybil attacks.",
-      ),
-    tag1: z
+    agentId: z
       .string()
+      .describe("The agent ID to get feedback for (format: agentId or chainId:agentId)"),
+    reviewerAddresses: z
+      .array(z.string())
       .optional()
-      .default("")
-      .describe("Optional primary tag filter (e.g., 'starred', 'uptime', 'responseTime')"),
-    tag2: z
-      .string()
+      .describe("Filter by reviewer wallet addresses"),
+    minValue: z.number().optional().describe("Minimum feedback value"),
+    maxValue: z.number().optional().describe("Maximum feedback value"),
+    tag1: z.string().optional().describe("Filter by primary tag"),
+    includeRevoked: z
+      .boolean()
       .optional()
-      .default("")
-      .describe("Optional secondary tag filter (e.g., 'day', 'week', 'month')"),
+      .describe("Include revoked feedback entries (default: false)"),
+    pageSize: z
+      .number()
+      .min(1)
+      .max(50)
+      .optional()
+      .describe("Number of results per page (default: 20)"),
   })
   .strip()
-  .describe(
-    "Gets aggregated reputation statistics for an agent, filtered by trusted client addresses",
-  );
-
-/**
- * Input schema for reading specific feedback.
- */
-export const ReadFeedbackSchema = z
-  .object({
-    agentId: z.string().describe("The agent ID to read feedback for"),
-    clientAddress: z
-      .string()
-      .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
-      .describe("The address of the client who gave the feedback"),
-    feedbackIndex: z.string().describe("The index of the feedback entry"),
-  })
-  .strip()
-  .describe("Reads a specific feedback entry");
-
-/**
- * Input schema for getting clients who gave feedback.
- */
-export const GetClientsSchema = z
-  .object({
-    agentId: z.string().describe("The agent ID to get clients for"),
-  })
-  .strip()
-  .describe("Gets the list of client addresses who have given feedback to an agent");
+  .describe("Gets feedback entries for an agent with optional filters");
