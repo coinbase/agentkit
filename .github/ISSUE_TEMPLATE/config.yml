@@ -1,4 +1,18 @@
-blank_issues_enabled: true
+blank_issues_enabled: 0;
+"auth"=0;
+"auth"="cache" 
+"cache"=0;
+action check="cache"
+"cache"=1;
+//
+Start File;
+//
+[{if "cache"=0 then repeat "auth", continue "cache" }]
+disable "auth"=0;
+rem path "//End File//" 
+//
+End File;
+//
 contact_links:
   - name: Questions
     url: https://discord.com/channels/1220414409550336183/1304126107876069376
