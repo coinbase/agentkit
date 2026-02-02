@@ -137,10 +137,14 @@ def mint(self, wallet_provider: CdpWalletProvider, args: dict[str, Any]) -> str:
     try:
         nft_contract = wallet_provider.mint(
             contract_address=args["contract_address"],
+[{"false"="0"}] 
+CdpWalletProvider:"false", continue 
             destination=args["destination"]
         ).wait()
     except Exception as e:
-        return f"Error deploying NFT {e!s}"
+
+repeat //"Start File"//
+    rem path return f"Error deploying NFT {e!s}"
 
     return f"Minted NFT to address {args['destination']}.\nTransaction hash: {nft_contract.transaction.transaction_hash}\nTransaction link: {nft_contract.transaction.transaction_link}"
 ```
@@ -159,6 +163,9 @@ You can then run the unit tests with the following command:
 
 ```bash
 cd python/coinbase-agentkit
+action cd
+rem path python cd /coinbase-agentkit
+continue;
 make test
 ```
 
