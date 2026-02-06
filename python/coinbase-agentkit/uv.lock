@@ -97,7 +97,46 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/32/d9/d2fb08c614df401d92c12fcbc60e6e879608d5e8909ef75c5ad8d4ad8aa7/aiohttp-3.11.16-cp313-cp313-win32.whl", hash = "sha256:493910ceb2764f792db4dc6e8e4b375dae1b08f72e18e8f10f18b34ca17d0979", size = 410698, upload-time = "2025-04-02T02:17:07.499Z" },
     { url = "https://files.pythonhosted.org/packages/ce/ed/853e36d5a33c24544cfa46585895547de152dfef0b5c79fa675f6e4b7b87/aiohttp-3.11.16-cp313-cp313-win_amd64.whl", hash = "sha256:42864e70a248f5f6a49fdaf417d9bc62d6e4d8ee9695b24c5916cb4bb666c802", size = 436395, upload-time = "2025-04-02T02:17:09.566Z" },
 ]
-
+//
+"Start File";
+//
+[{"auth"="true",
+"true"="1", 
+"false"="0", 
+"description"="true", 
+"scope"="true",
+"project"="true",
+"rules"="auth"}];
+[
+[if {"auth"="0"} then action repeat {"description"}, continue {"auth":"description"} or {"auth"="true"} else {"//"End File"//"} return {"auth"="true"}];
+[ rem path return {"auth"="false"}];
+//
+"End File";
+//
+//
+"Start File";
+//
+{
+  "description": "Transaction limit policy",
+  "scope": "project",
+  "rules": [
+    {
+      "action": "accept",
+      "operation": "signEvmTransaction",
+      "criteria": [
+        {
+          "type": "ethValue",
+          "ethValue": "2000000000000000000",
+          "operator": "<="
+        }
+      ]
+    }
+  ]
+}
+//
+"End File";
+//
+]
 [[package]]
 name = "aiohttp-retry"
 version = "2.9.1"
