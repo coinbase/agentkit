@@ -1101,6 +1101,200 @@ agentkit = AgentKit(AgentKitConfig(
 # - Signing messages: wallet_provider.sign_message(message)
 ```
 
+## Handling Retries and Timeouts
+
+When building AI agents that interact with blockchain networks and APIs, it's important to handle transient failures gracefully. AgentKit provides utilities and patterns for implementing retry logic and timeout handling.
+
+### Retry Strategies
+
+For operations that may fail due to temporary network issues or rate limiting, implement retry logic with exponential backoff:
+
+```python
+import time
+from typing import TypeVar, Callable
+
+T = TypeVar('T')
+
+def retry_with_exponential_backoff(
+    fn: Callable[[], T],
+    max_retries: int = 3,
+    base_delay: float = 1.0,
+    initial_delay: float = 0.0
+) -> T:
+    """
+    Retry a function with exponential backoff.
+
+    Args:
+        fn: Function to retry
+        max_retries: Maximum number of retries (default: 3)
+        base_delay: Base delay in seconds between retries (default: 1.0)
+        initial_delay: Initial delay before first attempt (default: 0.0)
+
+    Returns:
+        Result from the function
+
+    Raises:
+        Exception: The last error if all retries fail
+    """
+    if initial_delay > 0:
+        time.sleep(initial_delay)
+
+    last_error = None
+    for attempt in range(max_retries + 1):
+        try:
+            return fn()
+        except Exception as error:
+            last_error = error
+
+            if attempt == max_retries:
+                raise last_error
+
+            # Calculate delay with exponential backoff: base_delay * 2^attempt
+            delay = base_delay * (2 ** attempt)
+            time.sleep(delay)
+
+    raise last_error
+```
+
+### Example: Retrying Token Transfers
+
+```python
+from coinbase_agentkit import AgentKit, AgentKitConfig
+
+agent_kit = AgentKit(AgentKitConfig(
+    wallet_provider=wallet_provider,
+    action_providers=[wallet_action_provider()],
+))
+
+# Retry a transfer operation
+def transfer_with_retry(to: str, amount: str) -> str:
+    """Transfer tokens with automatic retry on transient failures."""
+    return retry_with_exponential_backoff(
+        lambda: agent_kit.run(
+            action="transfer",
+            params={
+                "to": to,
+                "amount": amount,
+                "asset_id": "eth"
+            }
+        ),
+        max_retries=3,
+        base_delay=2.0
+    )
+
+try:
+    result = transfer_with_retry(
+        "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+        "0.01"
+    )
+    print(f"Transfer successful: {result}")
+except Exception as e:
+    print(f"Transfer failed after retries: {e}")
+```
+
+### Handling Timeouts
+
+For HTTP requests and API calls, always set appropriate timeouts:
+
+```python
+import requests
+
+def fetch_with_timeout(url: str, timeout: int = 30) -> dict:
+    """
+    Fetch data from an API with timeout.
+
+    Args:
+        url: API endpoint URL
+        timeout: Timeout in seconds (default: 30)
+
+    Returns:
+        JSON response data
+    """
+    response = requests.get(url, timeout=timeout)
+    response.raise_for_status()
+    return response.json()
+
+# Example: Fetch token price with timeout
+try:
+    price_data = retry_with_exponential_backoff(
+        lambda: fetch_with_timeout("https://api.example.com/price/eth", timeout=30),
+        max_retries=3,
+        base_delay=1.0
+    )
+except requests.Timeout:
+    print("Request timed out after 30 seconds")
+except Exception as e:
+    print(f"Failed to fetch price: {e}")
+```
+
+### Transaction Confirmation Polling
+
+When waiting for blockchain transaction confirmations, implement polling with a timeout:
+
+```python
+import time
+
+def wait_for_transaction(
+    wallet_provider,
+    tx_hash: str,
+    timeout_seconds: int = 120,
+    poll_interval: int = 5
+) -> dict:
+    """
+    Wait for a transaction to be confirmed.
+
+    Args:
+        wallet_provider: Wallet provider instance
+        tx_hash: Transaction hash to monitor
+        timeout_seconds: Maximum time to wait (default: 120)
+        poll_interval: Seconds between checks (default: 5)
+
+    Returns:
+        Transaction receipt
+
+    Raises:
+        TimeoutError: If transaction is not confirmed within timeout
+    """
+    start_time = time.time()
+
+    while time.time() - start_time < timeout_seconds:
+        try:
+            receipt = wallet_provider.get_transaction_receipt(tx_hash)
+            if receipt:
+                return receipt
+        except Exception as error:
+            print(f"Error checking transaction: {error}")
+
+        time.sleep(poll_interval)
+
+    raise TimeoutError(
+        f"Transaction {tx_hash} not confirmed after {timeout_seconds}s"
+    )
+```
+
+### Best Practices
+
+**When to use retries:**
+- ✅ Network connectivity issues
+- ✅ Rate limiting (HTTP 429)
+- ✅ Temporary service unavailability (HTTP 503)
+- ✅ RPC endpoint failures
+- ❌ Invalid parameters (HTTP 400)
+- ❌ Authentication failures (HTTP 401, 403)
+- ❌ Insufficient balance errors
+
+**Recommended timeout values:**
+- **Fast operations** (< 30s): Balance checks, address lookups
+- **Medium operations** (30-90s): Token transfers, NFT minting
+- **Long operations** (90-300s): Smart contract deployments, complex DeFi interactions
+
+**Error handling tips:**
+- Always log retry attempts for debugging
+- Set maximum retry limits to prevent infinite loops
+- Use exponential backoff to avoid overwhelming services
+- Implement circuit breakers for repeated failures
+- Provide fallback behavior when operations fail
+
 ## Contributing
 
 See [CONTRIBUTING.md](https://github.com/coinbase/agentkit/blob/main/CONTRIBUTING.md) for more information.
