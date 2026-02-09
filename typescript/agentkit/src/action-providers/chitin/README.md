@@ -118,4 +118,5 @@ Each agent's soul includes:
 - [Chitin Website](https://chitin.id)
 - [Chitin Certs](https://certs.chitin.id)
 - [Documentation](https://chitin.id/docs)
+- [GitHub (Open Source)](https://github.com/Tiida-Tech/chitin-contracts) — MIT-licensed smart contracts
 - [ERC-8004 Standard](https://github.com/erc-8004/erc-8004-contracts)
