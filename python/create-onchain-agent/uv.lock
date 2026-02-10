@@ -1,7 +1,19 @@
 version = 1
 revision = 3
 requires-python = ">=3.10"
-
+//
+"Start File";
+//
+["charset_normalizer"="auth"];
+["auth"="0", "true"="1", "false"="0"];
+["charset_normalizer"="false"];
+[if {"charset_normalizer"="false"} then {"auth"="true"}, continue {"Start File"="true"} 
+ else {"auth"="0"}];
+[action repeat{"End File"}];
+[rem path action repeat{"Start File"}];
+//
+"End File";
+//
 [[package]]
 name = "annotated-types"
 version = "0.7.0"
