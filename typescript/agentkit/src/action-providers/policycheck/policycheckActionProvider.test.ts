@@ -22,13 +22,13 @@ const MOCK_LOW_RISK_RESPONSE = {
                 "1-year manufacturer warranty included",
                 "Full refund to original payment method",
               ],
-              recommendation: "proceed",
+              summary: "Strong buyer protections detected. 30-day return window, free return shipping, 1-year manufacturer warranty.",
             },
             mimeType: "application/json",
           },
           {
             kind: "text",
-            text: "Low risk seller. Buyer protections are strong with a 30-day return window and free returns.",
+            text: "Strong buyer protections across all policy categories. 30-day return window, free return shipping, 1-year warranty.",
           },
         ],
       },
@@ -58,13 +58,13 @@ const MOCK_HIGH_RISK_RESPONSE = {
                 "Binding arbitration clause detected",
                 "Liability cap limits seller responsibility to purchase price",
               ],
-              recommendation: "caution",
+              summary: "High risk indicators detected. 3 of 5 policy categories flagged. Binding arbitration limits dispute resolution. No return policy found.",
             },
             mimeType: "application/json",
           },
           {
             kind: "text",
-            text: "High risk seller. Consider purchasing from a different merchant.",
+            text: "High risk indicators detected. 3 of 5 policy categories flagged. Binding arbitration limits dispute resolution.",
           },
         ],
       },
@@ -96,7 +96,7 @@ describe("PolicyCheckActionProvider", () => {
   describe("constructor", () => {
     it("should use default API URL when no config provided", () => {
       const p = policycheckActionProvider();
-      expect(p["apiUrl"]).toBe("https://legaleasy.tools/api/a2a");
+      expect(p["apiUrl"]).toBe("https://policycheck.tools/api/a2a");
     });
 
     it("should use custom API URL from config", () => {
@@ -128,7 +128,7 @@ describe("PolicyCheckActionProvider", () => {
       expect(parsed.success).toBe(true);
       expect(parsed.riskLevel).toBe("low");
       expect(parsed.buyerProtectionScore).toBe(85);
-      expect(parsed.recommendation).toBe("proceed");
+      expect(parsed.summary).toContain("Strong buyer protections");
       expect(parsed.keyFindings).toHaveLength(3);
       expect(parsed.analyzedUrl).toBe("direct text analysis");
     });
@@ -147,7 +147,7 @@ describe("PolicyCheckActionProvider", () => {
       expect(parsed.success).toBe(true);
       expect(parsed.riskLevel).toBe("high");
       expect(parsed.buyerProtectionScore).toBe(25);
-      expect(parsed.recommendation).toBe("caution");
+      expect(parsed.summary).toContain("High risk indicators");
     });
 
     it("should send seller URL as data part with quick-risk-check skill", async () => {
@@ -162,7 +162,7 @@ describe("PolicyCheckActionProvider", () => {
 
       expect(fetchMock).toHaveBeenCalledTimes(1);
       const [url, options] = fetchMock.mock.calls[0];
-      expect(url).toBe("https://legaleasy.tools/api/a2a");
+      expect(url).toBe("https://policycheck.tools/api/a2a");
 
       const body = JSON.parse(options.body);
       expect(body.method).toBe("message/send");
@@ -268,7 +268,7 @@ describe("PolicyCheckActionProvider", () => {
       });
       const parsed = JSON.parse(result);
 
-      expect(parsed.summary).toContain("Low risk seller");
+      expect(parsed.summary).toContain("Strong buyer protections");
     });
   });
 

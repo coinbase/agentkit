@@ -3,7 +3,7 @@ import { ActionProvider } from "../actionProvider";
 import { CreateAction } from "../actionDecorator";
 import { PolicyCheckAnalyzeSchema, PolicyCheckUrlSchema } from "./schemas";
 
-const POLICYCHECK_A2A_URL = "https://legaleasy.tools/api/a2a";
+const POLICYCHECK_A2A_URL = "https://policycheck.tools/api/a2a";
 
 /**
  * Configuration options for the PolicyCheck action provider.
@@ -16,9 +16,13 @@ export interface PolicyCheckConfig {
 }
 
 /**
- * PolicyCheckActionProvider enables AI agents to verify e-commerce seller policies
- * before making purchases. It analyzes return policies, shipping terms, warranty
- * coverage, and terms of service to assess buyer protection and risk levels.
+ * PolicyCheckActionProvider provides seller policy risk intelligence for AI agents
+ * involved in e-commerce. It analyzes return policies, shipping terms, warranty
+ * coverage, and terms of service to produce risk data including risk level
+ * classifications, buyer protection scores, and key findings.
+ *
+ * The agent should use this data alongside other context (purchase amount, buyer
+ * risk tolerance, item category) to make its own purchase decisions.
  *
  * This is a walletless action provider — no wallet is required.
  */
@@ -36,29 +40,27 @@ export class PolicyCheckActionProvider extends ActionProvider {
   }
 
   /**
-   * Analyze seller policies to assess buyer protection before a purchase.
+   * Get seller policy risk data to inform purchase decisions.
    *
    * @param args - The input arguments (policyText and/or sellerUrl).
-   * @returns A string containing the risk assessment with score, findings, and recommendation.
+   * @returns A string containing the risk data with scores, findings, and factual summary.
    */
   @CreateAction({
     name: "policycheck_analyze",
-    description: `Analyze an e-commerce seller's policies to assess buyer protection risk BEFORE making a purchase. Returns a risk level (low/medium/high/critical), buyer protection score (0-100), key findings about return policy, shipping, warranty, and terms, and a recommendation on whether to proceed.
-
-Use this action whenever an agent is about to complete a purchase from an online store. Provide either the full policy text or the seller's URL.
+    description: `Get seller policy risk data to inform purchase decisions. Analyzes return policies, shipping terms, warranty coverage, and terms of service. Returns risk level (low/medium/high/critical), buyer protection score (0-100), key findings about specific policy issues, and a factual summary. The agent should use this data alongside other context (purchase amount, buyer risk tolerance, item category) to make its own purchase decision.
 
 Inputs:
 - policyText: The full text of the seller's policy to analyze. Provide this OR sellerUrl.
 - sellerUrl: The URL of the e-commerce store. The service will find and analyze policies automatically. Provide this OR policyText.
 
-Example risk factors detected:
-- No return policy or very short return windows
-- Binding arbitration clauses that waive right to class action
-- Liability caps that limit seller responsibility
+Risk factors detected include:
+- Missing or restrictive return policies
+- Binding arbitration clauses affecting dispute resolution options
+- Liability caps limiting seller responsibility
 - Missing warranty information
-- Restocking fees or buyer-pays-return-shipping policies
+- Restocking fees or buyer-pays-return-shipping terms
 
-Important: If the buyer protection score is below 50, recommend the user reconsider the purchase.`,
+A buyer protection score below 50 indicates limited policy protections. Binding arbitration clauses affect dispute resolution options. Missing return policies are notable risk factors.`,
     schema: PolicyCheckAnalyzeSchema,
   })
   async analyze(args: z.infer<typeof PolicyCheckAnalyzeSchema>): Promise<string> {
@@ -137,8 +139,7 @@ Important: If the buyer protection score is below 50, recommend the user reconsi
           riskLevel: analysisData.riskLevel,
           buyerProtectionScore: analysisData.buyerProtectionScore,
           keyFindings: analysisData.keyFindings,
-          recommendation: analysisData.recommendation,
-          summary: summaryText || undefined,
+          summary: (analysisData.summary as string) || summaryText || undefined,
           analyzedUrl: args.sellerUrl || "direct text analysis",
         });
       }
@@ -172,9 +173,7 @@ Important: If the buyer protection score is below 50, recommend the user reconsi
    */
   @CreateAction({
     name: "policycheck_check_url",
-    description: `Quick check of an e-commerce seller's URL to assess buyer protection before purchasing. Provide the store URL and the service will find and analyze the seller's policies automatically. Returns risk level, buyer protection score, and key findings.
-
-Use this as a fast pre-purchase verification step when you have a seller's URL.
+    description: `Quick seller policy risk check by URL. Provide the store URL and the service will find and analyze the seller's policies automatically. Returns risk level, buyer protection score, key findings, and a factual summary.
 
 Inputs:
 - sellerUrl: The URL of the e-commerce store to check (e.g., 'https://example-store.com').`,
