@@ -6,6 +6,8 @@ import {
   FEE_TIER_MAP,
   ERC20_ABI,
   V4_ACTIONS,
+  MIN_SQRT_RATIO,
+  MAX_SQRT_RATIO,
 } from "./constants";
 import type { EvmWalletProvider } from "../../wallet-providers";
 
@@ -158,6 +160,13 @@ export function getSwapDirection(tokenIn: `0x${string}`, poolKey: PoolKey): bool
  * @returns The slippage-adjusted amount.
  */
 export function applySlippage(amount: bigint, slippagePercent: number, isMinimum: boolean): bigint {
+  // Prevent overflow by limiting acceptable input amounts
+  // Max reasonable amount: 2^128 - 1 (3.4e38) which covers all practical token amounts
+  const MAX_ACCEPTABLE_AMOUNT = BigInt("340282366920938463463374607431768211455");
+  if (amount > MAX_ACCEPTABLE_AMOUNT) {
+    throw new Error("Amount exceeds maximum safe value for slippage calculation");
+  }
+
   const slippageBps = BigInt(Math.floor(slippagePercent * 100)); // 0.5% → 50 bps
   const bpsBase = 10000n;
 
@@ -267,6 +276,9 @@ export function encodeSwapExactInSingle(
   amountIn: bigint,
   amountOutMinimum: bigint,
 ): `0x${string}` {
+  // Set sqrtPriceLimitX96 based on swap direction to allow max price movement
+  const sqrtPriceLimitX96 = zeroForOne ? MIN_SQRT_RATIO + 1n : MAX_SQRT_RATIO - 1n;
+
   return encodeAbiParameters(
     parseAbiParameters(
       "(address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks), bool, uint128, uint128, uint160, bytes",
@@ -282,7 +294,7 @@ export function encodeSwapExactInSingle(
       zeroForOne,
       amountIn,
       amountOutMinimum,
-      0n, // sqrtPriceLimitX96 = 0 for no limit
+      sqrtPriceLimitX96,
       "0x", // hookData = empty
     ],
   );
@@ -303,6 +315,9 @@ export function encodeSwapExactOutSingle(
   amountOut: bigint,
   amountInMaximum: bigint,
 ): `0x${string}` {
+  // Set sqrtPriceLimitX96 based on swap direction to allow max price movement
+  const sqrtPriceLimitX96 = zeroForOne ? MIN_SQRT_RATIO + 1n : MAX_SQRT_RATIO - 1n;
+
   return encodeAbiParameters(
     parseAbiParameters(
       "(address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks), bool, uint128, uint128, uint160, bytes",
@@ -318,7 +333,7 @@ export function encodeSwapExactOutSingle(
       zeroForOne,
       amountOut,
       amountInMaximum,
-      0n, // sqrtPriceLimitX96 = 0 for no limit
+      sqrtPriceLimitX96,
       "0x", // hookData = empty
     ],
   );
@@ -340,9 +355,21 @@ export function encodeSettleAll(currency: `0x${string}`, maxAmount: bigint): `0x
  *
  * @param currency - The currency to take.
  * @param minAmount - The minimum amount to take.
+ * @param recipient - The recipient address (defaults to the swap executor if not provided).
  * @returns The encoded take parameters.
  */
-export function encodeTakeAll(currency: `0x${string}`, minAmount: bigint): `0x${string}` {
+export function encodeTakeAll(
+  currency: `0x${string}`,
+  minAmount: bigint,
+  recipient?: `0x${string}`,
+): `0x${string}` {
+  if (recipient) {
+    return encodeAbiParameters(parseAbiParameters("address, uint128, address"), [
+      currency,
+      minAmount,
+      recipient,
+    ]);
+  }
   return encodeAbiParameters(parseAbiParameters("address, uint128"), [currency, minAmount]);
 }
 
@@ -368,6 +395,7 @@ export function encodeV4SwapInput(actions: number[], params: `0x${string}`[]): `
  * @param amountIn - The exact input amount.
  * @param amountOutMinimum - The minimum output amount.
  * @param deadline - The transaction deadline as a bigint.
+ * @param recipient - The recipient address (defaults to swap executor if not provided).
  * @returns The swap data containing commands, inputs, and deadline.
  */
 export function buildExactInputSwapData(
@@ -376,6 +404,7 @@ export function buildExactInputSwapData(
   amountIn: bigint,
   amountOutMinimum: bigint,
   deadline: bigint,
+  recipient?: `0x${string}`,
 ): { commands: `0x${string}`; inputs: `0x${string}`[]; deadline: bigint } {
   // Encode sub-actions
   const swapParams = encodeSwapExactInSingle(poolKey, zeroForOne, amountIn, amountOutMinimum);
@@ -386,6 +415,7 @@ export function buildExactInputSwapData(
   const takeParams = encodeTakeAll(
     zeroForOne ? poolKey.currency1 : poolKey.currency0,
     amountOutMinimum,
+    recipient,
   );
 
   // V4_SWAP = 0x10
@@ -412,6 +442,7 @@ export function buildExactInputSwapData(
  * @param amountOut - The exact output amount.
  * @param amountInMaximum - The maximum input amount.
  * @param deadline - The transaction deadline as a bigint.
+ * @param recipient - The recipient address (defaults to swap executor if not provided).
  * @returns The swap data containing commands, inputs, and deadline.
  */
 export function buildExactOutputSwapData(
@@ -420,6 +451,7 @@ export function buildExactOutputSwapData(
   amountOut: bigint,
   amountInMaximum: bigint,
   deadline: bigint,
+  recipient?: `0x${string}`,
 ): { commands: `0x${string}`; inputs: `0x${string}`[]; deadline: bigint } {
   // Encode sub-actions for exact output
   const swapParams = encodeSwapExactOutSingle(poolKey, zeroForOne, amountOut, amountInMaximum);
@@ -427,7 +459,11 @@ export function buildExactOutputSwapData(
     zeroForOne ? poolKey.currency0 : poolKey.currency1,
     amountInMaximum,
   );
-  const takeParams = encodeTakeAll(zeroForOne ? poolKey.currency1 : poolKey.currency0, amountOut);
+  const takeParams = encodeTakeAll(
+    zeroForOne ? poolKey.currency1 : poolKey.currency0,
+    amountOut,
+    recipient,
+  );
 
   // V4_SWAP = 0x10
   const commands = "0x10" as `0x${string}`;

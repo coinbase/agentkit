@@ -13,6 +13,8 @@ import {
   ERC20_ABI,
   DEFAULT_DEADLINE_SECONDS,
   DEFAULT_FEE,
+  MIN_SQRT_RATIO,
+  MAX_SQRT_RATIO,
 } from "./constants";
 import {
   getTokenInfo,
@@ -85,11 +87,14 @@ Important notes:
 
       // Build the pool key
       const poolKey = buildPoolKey(tokenIn.address, tokenOut.address, DEFAULT_FEE);
-      getSwapDirection(tokenIn.address, poolKey);
+      const zeroForOne = getSwapDirection(tokenIn.address, poolKey);
       const amountIn = parseUnits(args.amountIn, tokenIn.decimals);
 
       // Calculate slippage-adjusted minimum output
       const slippage = parseFloat(args.slippageTolerance || "0.5");
+
+      // Set sqrtPriceLimitX96 based on swap direction
+      const sqrtPriceLimitX96 = zeroForOne ? MIN_SQRT_RATIO + 1n : MAX_SQRT_RATIO - 1n;
 
       try {
         // Call the quoter to get the expected output
@@ -103,7 +108,7 @@ Important notes:
               tokenOut: tokenOut.address,
               fee: DEFAULT_FEE,
               amountIn,
-              sqrtPriceLimitX96: 0n,
+              sqrtPriceLimitX96,
             },
           ],
         })) as [bigint, bigint, number, bigint];
@@ -177,9 +182,10 @@ Important notes:
         return this.unsupportedNetworkError(network);
       }
 
-      // Resolve tokens
+      // Resolve tokens and recipient
       const tokenIn = await getTokenInfo(walletProvider, args.tokenIn);
       const tokenOut = await getTokenInfo(walletProvider, args.tokenOut);
+      const recipient = args.recipient || (walletProvider.getAddress() as `0x${string}`);
       const amountIn = parseUnits(args.amountIn, tokenIn.decimals);
 
       // Ensure sufficient balance
@@ -222,6 +228,9 @@ Important notes:
       // Calculate deadline
       const deadline = BigInt(Math.floor(Date.now() / 1000) + DEFAULT_DEADLINE_SECONDS);
 
+      // Set sqrtPriceLimitX96 based on swap direction
+      const sqrtPriceLimitX96 = zeroForOne ? MIN_SQRT_RATIO + 1n : MAX_SQRT_RATIO - 1n;
+
       // Get quote for minimum output amount
       let amountOutMin: bigint;
       try {
@@ -235,7 +244,7 @@ Important notes:
               tokenOut: tokenOut.address,
               fee: DEFAULT_FEE,
               amountIn,
-              sqrtPriceLimitX96: 0n,
+              sqrtPriceLimitX96,
             },
           ],
         })) as [bigint, bigint, number, bigint];
@@ -252,6 +261,7 @@ Important notes:
         amountIn,
         amountOutMin,
         deadline,
+        recipient,
       );
 
       // Encode the execute() call
@@ -338,6 +348,7 @@ Important notes:
 
       const tokenIn = await getTokenInfo(walletProvider, args.tokenIn);
       const tokenOut = await getTokenInfo(walletProvider, args.tokenOut);
+      const recipient = args.recipient || (walletProvider.getAddress() as `0x${string}`);
       const amountOut = parseUnits(args.amountOut, tokenOut.decimals);
 
       // Build pool key and determine direction
@@ -349,7 +360,10 @@ Important notes:
 
       const slippage = parseFloat(args.slippageTolerance || "0.5");
 
-      // CRITICAL FIX: Get quote for exact output to determine required input amount
+      // Set sqrtPriceLimitX96 based on swap direction
+      const sqrtPriceLimitX96 = zeroForOne ? MIN_SQRT_RATIO + 1n : MAX_SQRT_RATIO - 1n;
+
+      // Get quote for exact output to determine required input amount
       let amountInExpected: bigint;
       try {
         const [amountIn] = (await walletProvider.readContract({
@@ -362,7 +376,7 @@ Important notes:
               tokenOut: tokenOut.address,
               fee: DEFAULT_FEE,
               amountOut,
-              sqrtPriceLimitX96: 0n,
+              sqrtPriceLimitX96,
             },
           ],
         })) as [bigint, bigint, number, bigint];
@@ -416,6 +430,7 @@ Important notes:
         amountOut,
         maxInputAmount,
         deadline,
+        recipient,
       );
 
       // Encode the execute() call
@@ -484,7 +499,7 @@ Important notes:
    */
   private getAddresses(network: Network) {
     const id = network.networkId;
-    return id ? UNISWAP_V4_ADDRESSES[id] ?? null : null;
+    return id ? (UNISWAP_V4_ADDRESSES[id] ?? null) : null;
   }
 
   /**

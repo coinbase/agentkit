@@ -22,7 +22,7 @@ This action provider enables AI agents to interact with Uniswap V4's protocol on
 
 | Network | Network ID | Status |
 |---------|------------|--------|
-| Base Mainnet | `base` | ✅ Supported |
+| Base Mainnet | `base-mainnet` | ✅ Supported |
 | Base Sepolia (Testnet) | `base-sepolia` | ✅ Supported |
 | Ethereum Mainnet | `ethereum-mainnet` | 🔜 Coming Soon |
 | Arbitrum | `arbitrum` | 🔜 Coming Soon |
@@ -104,8 +104,8 @@ This provider uses Uniswap V4's **singleton PoolManager** architecture:
 | Contract | Address |
 |----------|---------|
 | PoolManager | `0x498581ff718922c3f8e6a244956af099b2652b2b` |
-| Universal Router | `0x6fF5693b99212Da76ad316178A184AB56D299b43` |
-| Quoter | `0x52f00940fcc88e426b4613f4e6e0f1a24dca9f0b` |
+| Universal Router | `0x6ff5693b99212da76ad316178a184ab56d299b43` |
+| Quoter | `0x0d5e0f971ed27fbff6c2837bf31316121532048d` |
 
 ## Key Differences from V3
 

@@ -20,7 +20,7 @@ describe("UniswapV4ActionProvider", () => {
   let mockWallet: jest.Mocked<EvmWalletProvider>;
 
   const mockNetwork: Network = {
-    networkId: "base",
+    networkId: "base-mainnet",
     chainId: "8453",
     protocolFamily: "evm",
   };
@@ -90,7 +90,7 @@ describe("UniswapV4ActionProvider", () => {
     it("should return false for non-EVM networks", () => {
       expect(
         provider.supportsNetwork({
-          networkId: "base",
+          networkId: "base-mainnet",
           chainId: "8453",
           protocolFamily: "evm",
         }),
@@ -132,7 +132,7 @@ describe("UniswapV4ActionProvider", () => {
       expect(result).toContain("Quote for Uniswap V4 swap:");
       expect(result).toContain("Expected output:");
       expect(result).toContain("Minimum output");
-      expect(result).toContain("Network: base");
+      expect(result).toContain("Network: base-mainnet");
       expect(mockWallet.readContract).toHaveBeenCalled();
     });
 
@@ -202,6 +202,45 @@ describe("UniswapV4ActionProvider", () => {
 
       expect(result).toContain("Successfully swapped on Uniswap V4!");
       expect(result).toContain("ETH");
+      expect(mockWallet.sendTransaction).toHaveBeenCalled();
+    });
+
+    it("should execute swap with custom recipient", async () => {
+      mockWallet.getBalance.mockResolvedValue(parseEther("10"));
+      mockWallet.readContract
+        .mockResolvedValueOnce(6) // tokenOut decimals
+        .mockResolvedValueOnce("USDC") // tokenOut symbol
+        .mockResolvedValueOnce([parseUnits("2000", 6), 0n, 0, 0n]); // quoter
+
+      const result = await provider.swapExactInput(mockWallet, {
+        tokenIn: "native",
+        tokenOut: USDC_ADDRESS,
+        amountIn: "1",
+        slippageTolerance: "0.5",
+        recipient: RECIPIENT_ADDRESS,
+      });
+
+      expect(result).toContain("Successfully swapped");
+      // Should have sent transaction with recipient encoded in the data
+      expect(mockWallet.sendTransaction).toHaveBeenCalled();
+    });
+
+    it("should default to wallet address when recipient not provided", async () => {
+      mockWallet.getBalance.mockResolvedValue(parseEther("10"));
+      mockWallet.readContract
+        .mockResolvedValueOnce(6) // tokenOut decimals
+        .mockResolvedValueOnce("USDC") // tokenOut symbol
+        .mockResolvedValueOnce([parseUnits("2000", 6), 0n, 0, 0n]); // quoter
+
+      await provider.swapExactInput(mockWallet, {
+        tokenIn: "native",
+        tokenOut: USDC_ADDRESS,
+        amountIn: "1",
+        slippageTolerance: "0.5",
+        // No recipient provided
+      });
+
+      // Transaction should have defaulted to wallet address as expected
       expect(mockWallet.sendTransaction).toHaveBeenCalled();
     });
 
@@ -353,6 +392,25 @@ describe("UniswapV4ActionProvider", () => {
       expect(result).toContain("Received: 1000 USDC (exact)");
     });
 
+    it("should execute swap with custom recipient", async () => {
+      mockWallet.getBalance.mockResolvedValue(parseEther("10"));
+      mockWallet.readContract
+        .mockResolvedValueOnce(6) // tokenOut decimals
+        .mockResolvedValueOnce("USDC") // tokenOut symbol
+        .mockResolvedValueOnce([parseUnits("0.5", 18), 0n, 0, 0n]); // quoter
+
+      const result = await provider.swapExactOutput(mockWallet, {
+        tokenIn: "native",
+        tokenOut: USDC_ADDRESS,
+        amountOut: "1000",
+        slippageTolerance: "0.5",
+        recipient: RECIPIENT_ADDRESS,
+      });
+
+      expect(result).toContain("Successfully swapped");
+      expect(mockWallet.sendTransaction).toHaveBeenCalled();
+    });
+
     it("should return error for unsupported network", async () => {
       mockWallet.getNetwork.mockReturnValue({
         networkId: "unsupported-network",
@@ -458,7 +516,7 @@ describe("UniswapV4ActionProvider", () => {
 
       // Verify that sendTransaction was called for approval and swap
       expect(mockWallet.sendTransaction).toHaveBeenCalledTimes(2); // approve + swap
-      
+
       // Verify success
       expect(result).toContain("Successfully swapped");
     });
@@ -478,10 +536,10 @@ describe("UniswapV4ActionProvider", () => {
       });
 
       // Verify that quoteExactOutputSingle was called
-      const quoterCalls = mockWallet.readContract.mock.calls.filter(
-        call => call[0].address && call[0].functionName === "quoteExactOutputSingle"
+      const _quoterCalls = mockWallet.readContract.mock.calls.filter(
+        call => call[0].address && call[0].functionName === "quoteExactOutputSingle",
       );
-      
+
       // Should have called quoter
       expect(mockWallet.readContract).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -491,7 +549,7 @@ describe("UniswapV4ActionProvider", () => {
               amountOut: parseUnits("1000", 6),
             }),
           ]),
-        })
+        }),
       );
     });
 

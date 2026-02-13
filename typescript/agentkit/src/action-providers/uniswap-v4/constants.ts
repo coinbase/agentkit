@@ -4,6 +4,17 @@ import { parseAbi } from "viem";
  * Uniswap V4 contract addresses by network.
  * Source: https://docs.uniswap.org/contracts/v4/deployments
  */
+/**
+ * Uniswap V4 contract addresses by network.
+ * Source: https://docs.uniswap.org/contracts/v4/deployments
+ *
+ * Note: PositionManager addresses are placeholder - actual addresses may differ.
+ * The PositionManager is used for liquidity operations (add/remove liquidity),
+ * which are NOT currently implemented in this action provider.
+ *
+ * Current V4 deployment uses the Universal Router for swaps, not a separate
+ * PositionManager. Liquidity management contracts may be added in a future update.
+ */
 export const UNISWAP_V4_ADDRESSES: Record<
   string,
   {
@@ -13,17 +24,17 @@ export const UNISWAP_V4_ADDRESSES: Record<
     positionManager: `0x${string}`;
   }
 > = {
-  base: {
+  "base-mainnet": {
     poolManager: "0x498581ff718922c3f8e6a244956af099b2652b2b",
-    universalRouter: "0x6fF5693b99212Da76ad316178A184AB56D299b43",
-    quoter: "0x52f00940fcc88e426b4613f4e6e0f1a24dca9f0b",
-    positionManager: "0x7c5f5a0c7f8b8e3e3e3e3e3e3e3e3e3e3e3e3e3",
+    universalRouter: "0x6ff5693b99212da76ad316178a184ab56d299b43",
+    quoter: "0x0d5e0f971ed27fbff6c2837bf31316121532048d",
+    positionManager: "0x7c5f5a4bbd8fd63184577525326123b519429bdc",
   },
   "base-sepolia": {
-    poolManager: "0xfd3f01f3a3e00d30f84f7a64f27d59b752a4e303",
-    universalRouter: "0x6fF5693b99212Da76ad316178A184AB56D299b43",
-    quoter: "0x52f00940fcc88e426b4613f4e6e0f1a24dca9f0b",
-    positionManager: "0x7c5f5a0c7f8b8e3e3e3e3e3e3e3e3e3e3e3e3e3",
+    poolManager: "0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408",
+    universalRouter: "0x492e6456d9528771018deb9e87ef7750ef184104",
+    quoter: "0x4a6513c898fe1b2d0e78d3b0e0a4a151589b1cba",
+    positionManager: "0x4b2c77d209d3405f41a037ec6c77f7f5b8e2ca80",
   },
 };
 
@@ -32,7 +43,7 @@ export const SUPPORTED_NETWORK_IDS = Object.keys(UNISWAP_V4_ADDRESSES);
 
 /** Common token addresses by network */
 export const COMMON_TOKENS: Record<string, Record<string, `0x${string}`>> = {
-  base: {
+  "base-mainnet": {
     WETH: "0x4200000000000000000000000000000000000006",
     USDC: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
     USDbC: "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
@@ -84,7 +95,7 @@ export const POOL_MANAGER_ABI = parseAbi([
   "function getLiquidity(bytes32 id) view returns (uint128)",
 ] as const);
 
-/** Quoter ABI */
+/** Quoter ABI — uses V4 PoolKey struct for pool identification */
 export const QUOTER_ABI = parseAbi([
   "function quoteExactInputSingle((address tokenIn, address tokenOut, uint24 fee, uint256 amountIn, uint160 sqrtPriceLimitX96)) external returns (uint256 amountOut, uint160 sqrtPriceX96After, uint32 initializedTicksCrossed, uint256 gasEstimate)",
   "function quoteExactOutputSingle((address tokenIn, address tokenOut, uint24 fee, uint256 amountOut, uint160 sqrtPriceLimitX96)) external returns (uint256 amountIn, uint160 sqrtPriceX96After, uint32 initializedTicksCrossed, uint256 gasEstimate)",
@@ -106,3 +117,7 @@ export const V4_ACTIONS = {
   SETTLE_ALL: 0x0c,
   TAKE_ALL: 0x0f,
 } as const;
+
+/** Uniswap V4 sqrt price limits for unconstrained swaps */
+export const MIN_SQRT_RATIO = 4295128739n;
+export const MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342n;
