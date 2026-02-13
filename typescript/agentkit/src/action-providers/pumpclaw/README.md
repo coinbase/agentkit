@@ -35,13 +35,6 @@ To add new PumpClaw actions:
 
 The PumpClaw provider supports Base mainnet only.
 
-## PumpClaw Advantages
-
-- **FREE deployment**: 0 ETH cost to create tokens
-- **80% creator fees**: Creators earn 80% of all trading fees
-- **LP locked forever**: Liquidity cannot be rugged
-- **Uniswap V4**: Built on the latest Uniswap infrastructure
-
 ## Contract Addresses
 
 - **Factory**: `0xe5bCa0eDe9208f7Ee7FCAFa0415Ca3DC03e16a90` (Base mainnet)
@@ -49,6 +42,6 @@ The PumpClaw provider supports Base mainnet only.
 
 ## Notes
 
-PumpClaw is a free token launcher that uses Uniswap V4 to provide deep liquidity and fair token launches. The protocol is designed to prevent rug pulls by locking liquidity forever and rewarding creators with a significant share of trading fees.
+PumpClaw is a token launcher on Base that uses Uniswap V4 for liquidity provisioning. Liquidity is locked at creation time and trading fees are split between the token creator and protocol.
 
-For more information on the **PumpClaw protocol**, visit [PumpClaw](https://pumpclaw.com).
+For more information, visit [pumpclaw.com](https://pumpclaw.com).

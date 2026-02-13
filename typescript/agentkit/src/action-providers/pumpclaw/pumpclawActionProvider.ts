@@ -24,8 +24,8 @@ import {
 /**
  * PumpclawActionProvider is an action provider for PumpClaw protocol interactions.
  *
- * PumpClaw is a free token launcher on Base using Uniswap V4. It allows anyone to
- * create tokens with 0 ETH cost, 80% creator fees, and LP locked forever.
+ * PumpClaw is a token launcher on Base that deploys ERC20 tokens with
+ * full-range Uniswap V4 liquidity. Liquidity is locked at creation time.
  *
  * @see https://pumpclaw.com
  */
@@ -53,19 +53,14 @@ Inputs:
 - Token name and symbol
 - Image URL for the token
 - Total supply (default: 1B tokens)
-- Initial FDV (default: 10 ETH)
+- Initial FDV in ETH (default: 10 ETH)
 - Creator address (optional, defaults to sender)
-
-PumpClaw advantages:
-- FREE deployment (0 ETH cost)
-- 80% creator fees on all trades
-- LP locked forever (cannot rug)
-- Built on Uniswap V4 for deep liquidity
 
 Important notes:
 - Amounts are in wei (no decimal points)
 - Default total supply: 1,000,000,000 tokens (1B)
 - Default initial FDV: 10 ETH
+- Liquidity is locked at creation time
 - Only supported on Base mainnet`,
     schema: PumpclawCreateTokenInput,
   })
@@ -101,12 +96,6 @@ Important notes:
 
 Transaction hash: ${txHash}
 
-Key features:
-- FREE deployment (0 ETH)
-- 80% creator fees
-- LP locked forever
-- Built on Uniswap V4
-
 The token contract address can be found in the transaction logs (TokenCreated event).`;
     } catch (error) {
       return `Error creating PumpClaw token: ${error}`;
@@ -132,7 +121,7 @@ Returns token details including name, symbol, image URL, total supply,
 creator address, pool address, and creation timestamp.
 
 Important notes:
-- Only works with PumpClaw tokens
+- Only works with tokens created via PumpClaw factory
 - Supported on Base mainnet only`,
     schema: PumpclawGetTokenInfoInput,
   })
@@ -174,12 +163,7 @@ Image URL: ${imageUrl}
 Total Supply: ${formattedSupply} ${symbol}
 Creator: ${creator}
 Pool Address: ${pool}
-Created: ${new Date(Number(createdAt) * 1000).toISOString()}
-
-PumpClaw features:
-- FREE deployment (0 ETH)
-- 80% creator fees
-- LP locked forever`;
+Created: ${new Date(Number(createdAt) * 1000).toISOString()}`;
     } catch (error) {
       return `Error getting token information: ${error}`;
     }
@@ -271,7 +255,6 @@ Inputs:
 Important notes:
 - Amounts are in wei (no decimal points). 1 ETH = 10^18 wei.
 - The minTokensOut protects against slippage — the transaction reverts if received amount is less.
-- 80% of fees go to the token creator
 - Only supported on Base mainnet`,
     schema: PumpclawBuyTokenInput,
   })
@@ -326,7 +309,6 @@ Important notes:
 - Amounts are in wei (no decimal points). 1 token = 10^decimals wei.
 - The minEthOut protects against slippage — the transaction reverts if received amount is less.
 - Token approval for the SwapRouter is handled automatically.
-- 80% of fees go to the token creator
 - Only supported on Base mainnet`,
     schema: PumpclawSellTokenInput,
   })
