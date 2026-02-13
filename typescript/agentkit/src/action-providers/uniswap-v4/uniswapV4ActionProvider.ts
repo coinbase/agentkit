@@ -317,7 +317,7 @@ It takes the following inputs:
 - tokenOut: The contract address of the token to buy.
 - amountOut: The exact amount of output token desired.
 - slippageTolerance: Optional maximum slippage percentage (default: 0.5%).
-- recipient: Optional recipient address.
+- recipient: Optional recipient address (defaults to wallet address).
 
 Important notes:
 - Use when the user says "I want exactly 100 USDC" rather than "sell 0.05 ETH".
@@ -347,27 +347,69 @@ Important notes:
       // Calculate deadline
       const deadline = BigInt(Math.floor(Date.now() / 1000) + DEFAULT_DEADLINE_SECONDS);
 
-      // Note: For exact output, we need to estimate the max input required
-      // The actual implementation would use a quoter for this
-      // For now, we'll estimate based on the expected input
-
       const slippage = parseFloat(args.slippageTolerance || "0.5");
 
-      // For exact output swaps, we need to approve a max amount
-      // In a real implementation, we'd get a quote for the expected input
-      // Here we use a simplified approach with a placeholder max input
-
-      // Ensure ERC20 approval for max amount
-      if (!tokenIn.isNative) {
-        // For demo purposes, approving a large amount (in practice, should be calculated)
-        const maxAmount = parseUnits("1000000", tokenIn.decimals); // 1M tokens as max
-        await ensureApproval(walletProvider, tokenIn.address, addresses.universalRouter, maxAmount);
+      // CRITICAL FIX: Get quote for exact output to determine required input amount
+      let amountInExpected: bigint;
+      try {
+        const [amountIn] = (await walletProvider.readContract({
+          address: addresses.quoter,
+          abi: QUOTER_ABI,
+          functionName: "quoteExactOutputSingle",
+          args: [
+            {
+              tokenIn: tokenIn.address,
+              tokenOut: tokenOut.address,
+              fee: DEFAULT_FEE,
+              amountOut,
+              sqrtPriceLimitX96: 0n,
+            },
+          ],
+        })) as [bigint, bigint, number, bigint];
+        amountInExpected = amountIn;
+      } catch {
+        return `Error: Could not get quote for swap. The pool may not exist or have insufficient liquidity.`;
       }
 
-      // Build the swap transaction data
-      // For exact output, we calculate a maximum input based on the expected amount
-      const maxInputAmount = applySlippage(amountOut, slippage, false); // Simplified estimate
+      // Calculate maximum input with slippage tolerance
+      const maxInputAmount = applySlippage(amountInExpected, slippage, false);
 
+      // CRITICAL FIX: Check balance before proceeding
+      if (tokenIn.isNative) {
+        const balance = await walletProvider.getBalance();
+        if (balance < maxInputAmount) {
+          const formattedBalance = formatUnits(balance, 18);
+          const formattedNeeded = formatUnits(maxInputAmount, 18);
+          return `Error: Insufficient ETH balance. Have: ${formattedBalance} ETH, Need: ~${formattedNeeded} ETH (including ${slippage}% slippage buffer)`;
+        }
+      } else {
+        const balance = (await walletProvider.readContract({
+          address: tokenIn.address,
+          abi: ERC20_ABI,
+          functionName: "balanceOf",
+          args: [walletProvider.getAddress() as `0x${string}`],
+        })) as bigint;
+        if (balance < maxInputAmount) {
+          const formattedBalance = formatUnits(balance, tokenIn.decimals);
+          const formattedNeeded = formatUnits(maxInputAmount, tokenIn.decimals);
+          return `Error: Insufficient ${tokenIn.symbol} balance. Have: ${formattedBalance} ${tokenIn.symbol}, Need: ~${formattedNeeded} ${tokenIn.symbol} (including ${slippage}% slippage buffer)`;
+        }
+      }
+
+      // CRITICAL FIX: Only approve the maxInputAmount, not a hardcoded 1M tokens
+      if (!tokenIn.isNative) {
+        const approvalTx = await ensureApproval(
+          walletProvider,
+          tokenIn.address,
+          addresses.universalRouter,
+          maxInputAmount,
+        );
+        if (approvalTx) {
+          // Approval was sent, continue
+        }
+      }
+
+      // Build the swap transaction data with proper maxInputAmount
       const swapData = buildExactOutputSwapData(
         poolKey,
         zeroForOne,
@@ -383,7 +425,7 @@ Important notes:
         args: [swapData.commands, swapData.inputs, swapData.deadline],
       });
 
-      // Send the swap transaction
+      // Send the swap transaction with proper ETH value
       const hash = await walletProvider.sendTransaction({
         to: addresses.universalRouter,
         data: txData,
@@ -404,11 +446,21 @@ Important notes:
       return [
         `Successfully swapped on Uniswap V4!`,
         `• Received: ${args.amountOut} ${tokenOut.symbol} (exact)`,
+        `• Maximum spent: ~${formatTokenAmount(maxInputAmount, tokenIn.decimals)} ${tokenIn.symbol}`,
         `• Transaction: ${hash}`,
         `• Network: ${network.networkId}`,
       ].join("\n");
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
+      if (msg.includes("insufficient funds")) {
+        return `Error: Insufficient balance for swap. Check your token balance.`;
+      }
+      if (msg.includes("Expired")) {
+        return `Error: Transaction deadline expired. Try again with a longer deadline.`;
+      }
+      if (msg.includes("Too much requested")) {
+        return `Error: Price moved beyond your slippage tolerance. Try increasing the slippage tolerance or try again later.`;
+      }
       return `Error executing Uniswap V4 exact output swap: ${msg}`;
     }
   }
@@ -432,7 +484,7 @@ Important notes:
    */
   private getAddresses(network: Network) {
     const id = network.networkId;
-    return id ? (UNISWAP_V4_ADDRESSES[id] ?? null) : null;
+    return id ? UNISWAP_V4_ADDRESSES[id] ?? null : null;
   }
 
   /**
