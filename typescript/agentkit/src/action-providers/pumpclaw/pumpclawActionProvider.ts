@@ -27,7 +27,7 @@ import {
  * PumpClaw is a free token launcher on Base using Uniswap V4. It allows anyone to
  * create tokens with 0 ETH cost, 80% creator fees, and LP locked forever.
  *
- * @see https://pumpclaw.fun
+ * @see https://pumpclaw.com
  */
 export class PumpclawActionProvider extends ActionProvider<EvmWalletProvider> {
   /**

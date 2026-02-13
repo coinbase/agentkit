@@ -51,4 +51,4 @@ The PumpClaw provider supports Base mainnet only.
 
 PumpClaw is a free token launcher that uses Uniswap V4 to provide deep liquidity and fair token launches. The protocol is designed to prevent rug pulls by locking liquidity forever and rewarding creators with a significant share of trading fees.
 
-For more information on the **PumpClaw protocol**, visit [PumpClaw](https://pumpclaw.fun).
+For more information on the **PumpClaw protocol**, visit [PumpClaw](https://pumpclaw.com).
