@@ -27,6 +27,11 @@ interface RequestResult {
   error: string | null;
 }
 
+interface ParseBodyResult {
+  parsed: boolean;
+  data: unknown;
+}
+
 type Verdict = "TRUSTED" | "CAUTION" | "RISKY" | "UNKNOWN";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -255,10 +260,30 @@ Returns APPROVED or REJECTED with reasoning. If the oracle is unavailable, this 
       );
     }
 
+    if (!reportResult.ok || !isRecord(reportResult.data)) {
+      return JSON.stringify(
+        {
+          success: false,
+          source: "robomoustachio_api",
+          mode: demo ? "demo" : "paid",
+          agentId: args.agentId,
+          verdict: "REJECTED",
+          threshold,
+          score: readNumber(scoreResult.data.score),
+          confidence: readNumber(scoreResult.data.confidence),
+          reason:
+            "Trust report unavailable. Defaulting to REJECTED for safety until full risk context is available.",
+          error: reportResult.error,
+        },
+        null,
+        2,
+      );
+    }
+
     const score = readNumber(scoreResult.data.score);
-    const reportData = reportResult.ok && isRecord(reportResult.data) ? reportResult.data : null;
-    const flagged = reportData ? readBoolean(reportData.flagged) === true : false;
-    const riskFactors = reportData ? readStringArray(reportData.riskFactors) : [];
+    const reportData = reportResult.data as Record<string, unknown>;
+    const flagged = readBoolean(reportData.flagged) === true;
+    const riskFactors = readStringArray(reportData.riskFactors);
     const hasRequiredScore = score !== null && score >= threshold;
     const approved = hasRequiredScore && !flagged;
 
@@ -268,10 +293,6 @@ Returns APPROVED or REJECTED with reasoning. If the oracle is unavailable, this 
 
     if (!approved && flagged) {
       reason = `Agent is flagged by trust report${riskFactors.length ? ` (${riskFactors.join(", ")})` : ""}.`;
-    }
-
-    if (!reportResult.ok) {
-      reason = `${reason} Report endpoint unavailable, score-only fallback was used.`;
     }
 
     return JSON.stringify(
@@ -302,7 +323,8 @@ Returns APPROVED or REJECTED with reasoning. If the oracle is unavailable, this 
   }
 
   private buildUrl(path: string, demoMode: boolean): string {
-    const url = new URL(path, `${this.config.baseUrl}/`);
+    const normalizedPath = path.replace(/^\/+/, "");
+    const url = new URL(normalizedPath, `${this.config.baseUrl}/`);
     if (demoMode) {
       url.searchParams.set("demo", "true");
     }
@@ -322,21 +344,30 @@ Returns APPROVED or REJECTED with reasoning. If the oracle is unavailable, this 
       });
 
       const rawText = await response.text();
-      const data = this.parseBody(rawText);
+      const parseResult = this.parseBody(rawText);
 
       if (!response.ok) {
         return {
           ok: false,
           status: response.status,
-          data,
-          error: this.describeHttpFailure(response.status, data, demoMode),
+          data: parseResult.data,
+          error: this.describeHttpFailure(response.status, parseResult.data, demoMode),
+        };
+      }
+
+      if (!parseResult.parsed) {
+        return {
+          ok: false,
+          status: response.status,
+          data: parseResult.data,
+          error: "Oracle returned invalid JSON for a successful response.",
         };
       }
 
       return {
         ok: true,
         status: response.status,
-        data,
+        data: parseResult.data,
         error: null,
       };
     } catch (error) {
@@ -357,14 +388,14 @@ Returns APPROVED or REJECTED with reasoning. If the oracle is unavailable, this 
     }
   }
 
-  private parseBody(rawText: string): unknown {
+  private parseBody(rawText: string): ParseBodyResult {
     if (rawText.trim().length === 0) {
-      return {};
+      return { parsed: true, data: {} };
     }
     try {
-      return JSON.parse(rawText);
+      return { parsed: true, data: JSON.parse(rawText) };
     } catch {
-      return { raw: rawText };
+      return { parsed: false, data: { raw: rawText } };
     }
   }
 

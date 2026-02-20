@@ -23,6 +23,25 @@ function makeResponse(
   } as unknown as Response;
 }
 
+function makeRawResponse(
+  status: number,
+  rawBody: string,
+  headers: Record<string, string> = { "content-type": "text/plain" },
+): Response {
+  const lowerHeaders = new Map<string, string>(
+    Object.entries(headers).map(([key, value]) => [key.toLowerCase(), value]),
+  );
+
+  return {
+    status,
+    ok: status >= 200 && status < 300,
+    headers: {
+      get: (name: string) => lowerHeaders.get(name.toLowerCase()) ?? null,
+    },
+    text: jest.fn().mockResolvedValue(rawBody),
+  } as unknown as Response;
+}
+
 describe("RobomoustachioActionProvider", () => {
   const provider = robomoustachioActionProvider();
 
@@ -69,6 +88,16 @@ describe("RobomoustachioActionProvider", () => {
     expect(result.success).toBe(false);
     expect(result.verdict).toBe("UNKNOWN");
     expect(result.status).toBe(404);
+  });
+
+  it("returns a structured error when score endpoint returns non-JSON success", async () => {
+    fetchMock.mockResolvedValueOnce(makeRawResponse(200, "Unauthorized"));
+
+    const result = JSON.parse(await provider.getAgentTrustScore({ agentId: "10" }));
+
+    expect(result.success).toBe(false);
+    expect(result.status).toBe(200);
+    expect(result.error).toContain("invalid JSON");
   });
 
   it("surfaces payment requirement details when demo mode is disabled", async () => {
@@ -179,5 +208,46 @@ describe("RobomoustachioActionProvider", () => {
     expect(result.verdict).toBe("REJECTED");
     expect(result.reason).toContain("flagged");
   });
-});
 
+  it("evaluateAgentRisk rejects when report endpoint is unavailable", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        makeResponse(200, {
+          agentId: "8",
+          score: 920,
+          confidence: 0.92,
+        }),
+      )
+      .mockResolvedValueOnce(
+        makeResponse(503, {
+          error: "Service unavailable",
+        }),
+      );
+
+    const result = JSON.parse(await provider.evaluateAgentRisk({ agentId: "8", scoreThreshold: 700 }));
+
+    expect(result.success).toBe(false);
+    expect(result.verdict).toBe("REJECTED");
+    expect(result.reason).toContain("Trust report unavailable");
+  });
+
+  it("preserves base path prefixes when constructing request URLs", async () => {
+    const prefixedProvider = robomoustachioActionProvider({
+      baseUrl: "https://example.com/api/v1",
+      defaultDemo: true,
+    });
+
+    fetchMock.mockResolvedValueOnce(
+      makeResponse(404, {
+        error: "missing",
+      }),
+    );
+
+    await prefixedProvider.getAgentTrustScore({ agentId: "2" });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://example.com/api/v1/score/2?demo=true",
+      expect.any(Object),
+    );
+  });
+});
