@@ -14,7 +14,7 @@ Privy's embedded wallets, when delegated, also enable you to securely provision 
 
 ## Requirements
 
-- Node.js 18+
+- [Node.js 18+](https://nodejs.org/en/download/current)
 - [Privy](https://dashboard.privy.io/apps) (see ENV Vars below for details)
 
 ### Checking Node Version
