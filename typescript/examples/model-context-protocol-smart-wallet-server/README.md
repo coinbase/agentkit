@@ -58,4 +58,4 @@ To use the chatbot, simply open Claude desktop after configuring your API keys. 
 
 ## License
 
-Apache-2.0
+[Apache-2.0](../../../LICENSE.md)
