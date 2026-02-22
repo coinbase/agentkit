@@ -91,4 +91,4 @@ The agent will start and listen for messages on the XMTP network. You can intera
 
 ## License
 
-Apache-2.0
+[Apache-2.0](../../../LICENSE.md)
