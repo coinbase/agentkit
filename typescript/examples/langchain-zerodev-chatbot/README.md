@@ -101,4 +101,4 @@ The agent is then initialized with the ZeroDev wallet provider, allowing it to u
 
 ## License
 
-Apache-2.0
+[Apache-2.0](../../../LICENSE.md)
