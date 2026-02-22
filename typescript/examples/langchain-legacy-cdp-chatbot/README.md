@@ -60,4 +60,4 @@ Select "1. chat mode" and start telling your Agent to do things onchain!
 
 ## License
 
-Apache-2.0
+[Apache-2.0](../../../LICENSE.md)
