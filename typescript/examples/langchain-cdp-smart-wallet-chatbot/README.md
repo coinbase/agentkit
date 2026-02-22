@@ -64,4 +64,4 @@ Select "1. chat mode" and start interacting with your Smart Wallet agent!
 
 ## License
 
-Apache-2.0
+[Apache-2.0](../../../LICENSE.md)
