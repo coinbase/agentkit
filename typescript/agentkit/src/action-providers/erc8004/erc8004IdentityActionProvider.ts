@@ -49,14 +49,25 @@ export class ERC8004IdentityActionProvider extends ActionProvider<EvmWalletProvi
    * Updates agent registration metadata by loading the current state, modifying and re-registering.
    *
    * @param walletProvider - The wallet provider to use for the transaction
-   * @param args - The agentId and optional fields to update (name, description, image)
-   * @returns A message confirming the metadata was updated
+   * @param args - The agentId and optional fields to update
+   * @returns A message confirming the update
    */
   @CreateAction({
     name: "update_agent_metadata",
     description: `
-Updates agent registration metadata (name, description, image).
-Example: "update description to 'A trading assistant agent'"
+Updates agent configuration. All fields are optional — only provide what you want to change.
+
+- Core: name, description, image
+- Endpoints: mcpEndpoint (auto-extracts tools/prompts/resources), a2aEndpoint (auto-extracts skills), ensName
+- Status: active, x402support
+- Trust: trustReputation, trustCryptoEconomic, trustTeeAttestation (replaces all trust settings when any is provided)
+- Taxonomies: oasfSkills, oasfDomains (OASF slugs to add)
+- Custom: metadata (key-value pairs)
+
+Examples:
+- "Set MCP endpoint to https://mcp.example.com/"
+- "Make the agent active and enable x402 support"
+- "Add OASF skill data_engineering/data_transformation_pipeline"
 `,
     schema: UpdateAgentMetadataSchema,
   })
@@ -70,11 +81,93 @@ Example: "update description to 'A trading assistant agent'"
       const fullAgentId = `${chainId}:${args.agentId}`;
       const sdk = getAgent0SDK(walletProvider, this.pinataConfig?.jwt);
 
+      const agent = await loadOrHydrateAgent(sdk, walletProvider, fullAgentId, args.agentId);
+      const updates: string[] = [];
+
+      // Core
+      if (args.name !== undefined || args.description !== undefined || args.image !== undefined) {
+        agent.updateInfo(args.name, args.description, args.image);
+        if (args.name !== undefined) updates.push(`Name: ${args.name}`);
+        if (args.description !== undefined) updates.push(`Description: ${args.description}`);
+        if (args.image !== undefined) updates.push(`Image: ${args.image}`);
+      }
+
+      // Endpoints
+      if (args.mcpEndpoint !== undefined) {
+        await agent.setMCP(args.mcpEndpoint);
+        const tools = agent.mcpTools ?? [];
+        updates.push(
+          `MCP endpoint: ${args.mcpEndpoint}` +
+            (tools.length ? ` (extracted ${tools.length} tools)` : ""),
+        );
+      }
+      if (args.a2aEndpoint !== undefined) {
+        await agent.setA2A(args.a2aEndpoint);
+        const skills = agent.a2aSkills ?? [];
+        updates.push(
+          `A2A endpoint: ${args.a2aEndpoint}` +
+            (skills.length ? ` (extracted ${skills.length} skills)` : ""),
+        );
+      }
+      if (args.ensName !== undefined) {
+        agent.setENS(args.ensName);
+        updates.push(`ENS: ${args.ensName}`);
+      }
+
+      // Status
+      if (args.active !== undefined) {
+        agent.setActive(args.active);
+        updates.push(`Active: ${args.active}`);
+      }
+      if (args.x402support !== undefined) {
+        agent.setX402Support(args.x402support);
+        updates.push(`x402 support: ${args.x402support}`);
+      }
+
+      // Trust models
+      const hasTrustFlag =
+        args.trustReputation !== undefined ||
+        args.trustCryptoEconomic !== undefined ||
+        args.trustTeeAttestation !== undefined;
+      if (hasTrustFlag) {
+        agent.setTrust(
+          args.trustReputation ?? false,
+          args.trustCryptoEconomic ?? false,
+          args.trustTeeAttestation ?? false,
+        );
+        const models: string[] = [];
+        if (args.trustReputation) models.push("reputation");
+        if (args.trustCryptoEconomic) models.push("crypto-economic");
+        if (args.trustTeeAttestation) models.push("tee-attestation");
+        updates.push(`Trust models: ${models.length > 0 ? models.join(", ") : "(none)"}`);
+      }
+
+      // OASF taxonomies
+      if (args.oasfSkills?.length) {
+        for (const skill of args.oasfSkills) {
+          agent.addSkill(skill, true);
+        }
+        updates.push(`OASF skills added: ${args.oasfSkills.join(", ")}`);
+      }
+      if (args.oasfDomains?.length) {
+        for (const domain of args.oasfDomains) {
+          agent.addDomain(domain, true);
+        }
+        updates.push(`OASF domains added: ${args.oasfDomains.join(", ")}`);
+      }
+
+      // Custom metadata
+      if (args.metadata && Object.keys(args.metadata).length > 0) {
+        agent.setMetadata(args.metadata);
+        const entries = Object.entries(args.metadata)
+          .map(([k, v]) => `${k}=${v}`)
+          .join(", ");
+        updates.push(`Metadata: ${entries}`);
+      }
+
+      // Re-register
       let newUri: string;
       let txHash: string;
-
-      const agent = await loadOrHydrateAgent(sdk, walletProvider, fullAgentId, args.agentId);
-      agent.updateInfo(args.name, args.description, args.image);
 
       if (this.pinataConfig) {
         const handle = await agent.registerIPFS();
@@ -90,16 +183,11 @@ Example: "update description to 'A trading assistant agent'"
         txHash = handle.hash;
       }
 
-      const updates: string[] = [];
-      if (args.name !== undefined) updates.push(`Name: ${args.name}`);
-      if (args.description !== undefined) updates.push(`Description: ${args.description}`);
-      if (args.image !== undefined) updates.push(`Image: ${args.image}`);
-
       const uriDisplay = newUri.startsWith("ipfs://")
         ? `Metadata URI: ${newUri}\nHTTP Gateway: ${ipfsToHttpUrl(newUri)}`
         : `Metadata URI: (onchain data URI)`;
 
-      return `Agent metadata updated successfully!\n\nAgent ID: ${args.agentId}\nUpdated fields:\n${updates.length > 0 ? updates.map(u => `- ${u}`).join("\n") : "(no changes)"}\n\n${uriDisplay}\nTransaction hash: ${txHash}`;
+      return `Agent updated successfully!\n\nAgent ID: ${args.agentId}\nUpdated fields:\n${updates.length > 0 ? updates.map(u => `- ${u}`).join("\n") : "(no changes)"}\n\n${uriDisplay}\nTransaction hash: ${txHash}`;
     } catch (error) {
       return `Error updating agent metadata: ${error}`;
     }
@@ -217,32 +305,38 @@ Supports pagination.
 
   /**
    * Searches for agents by capabilities, attributes, or reputation.
+   * Supports semantic (keyword) search, structured filters, sorting, and pagination.
    *
    * @param walletProvider - The wallet provider to use for reading
-   * @param args - Search filters including name, tools, skills, reputation
+   * @param args - Search filters including keyword, name, tools, skills, reputation
    * @returns A message with the list of matching agents
    */
   @CreateAction({
     name: "search_agents",
     description: `
-Search for registered agents by capabilities, attributes, or reputation.
-All filters are optional. Results are filtered by capabilities first, then by reputation.
+Search for registered agents using semantic search, structured filters, or both.
+All filters are optional. Only include filters that the user explicitly requests.
 
-Search filters:
-- name: Substring match on agent name
-- mcpTools: Filter by MCP tools the agent offers
-- a2aSkills: Filter by A2A skills
-- oasfSkills: Filter by OASF skill taxonomy
-- oasfDomains: Filter by OASF domain taxonomy
-- active: Only return active agents (default: true)
-- x402support: Filter by x402 payment support
+Discovery:
+- keyword: Natural-language semantic search (e.g. "financial data analysis agent")
+- name / description: Substring match
+
+Capabilities:
+- mcpTools, a2aSkills, oasfSkills, oasfDomains: Filter by specific capabilities
+- require: List of status/capability requirements (e.g. ["mcp", "active"]). Only add values the user explicitly asks for.
+
+Status & reputation:
 - minReputation / maxReputation: Filter by average reputation score
+- reputationTag: Only consider feedback with this tag
 
-Pagination:
-- limit: Maximum results to return (default: 10, max: 50)
+Scope:
+- networkId: Search a specific network (default: current network)
+
+Sorting & pagination:
+- sort: e.g. "averageValue:desc", "updatedAt:desc", "name:asc"
+- limit: Max results to return (default: 10, max: 50)
 - offset: Number of results to skip (default: 0)
 
-This is a read-only operation using indexed data for fast queries.
 `,
     schema: SearchAgentsSchema,
   })
@@ -251,48 +345,90 @@ This is a read-only operation using indexed data for fast queries.
     args: z.infer<typeof SearchAgentsSchema>,
   ): Promise<string> {
     try {
-      const sdk = getAgent0SDK(walletProvider);
-
       console.log("args", args);
-      const searchFilters = {
-        name: args.name,
-        mcpTools: args.mcpTools,
-        a2aSkills: args.a2aSkills,
-        active: args.active,
-        x402support: args.x402support,
+      const sdk = getAgent0SDK(walletProvider);
+      const network = walletProvider.getNetwork();
+      const currentChainId = getChainIdFromNetwork(network);
+
+      const requirements = new Set(args.require ?? []);
+
+      const hasReputationFilter =
+        args.minReputation !== undefined ||
+        args.maxReputation !== undefined ||
+        (args.reputationTag !== undefined && args.reputationTag !== "") ||
+        args.minCount !== undefined ||
+        args.maxCount !== undefined ||
+        (args.fromReviewers !== undefined && args.fromReviewers.length > 0);
+
+      const searchFilters: Record<string, unknown> = {
+        chains: [currentChainId],
+        ...(args.keyword && { keyword: args.keyword }),
+        ...(args.name && { name: args.name }),
+        ...(args.description && { description: args.description }),
+        ...(requirements.has("mcp") && { hasMCP: true }),
+        ...(requirements.has("a2a") && { hasA2A: true }),
+        ...(requirements.has("active") && { active: true }),
+        ...(requirements.has("x402") && { x402support: true }),
+        ...(hasReputationFilter && {
+          feedback: {
+            ...(args.minReputation !== undefined &&
+              args.minReputation > 0 && { minValue: args.minReputation }),
+            ...(args.maxReputation !== undefined &&
+              args.maxReputation < 100 && { maxValue: args.maxReputation }),
+            ...(args.minCount !== undefined && { minCount: args.minCount }),
+            ...(args.maxCount !== undefined && { maxCount: args.maxCount }),
+            ...(args.fromReviewers &&
+              args.fromReviewers.length > 0 && {
+                ...(args.fromReviewers && { fromReviewers: args.fromReviewers }),
+              }),
+            ...(args.reputationTag && { tag: args.reputationTag }),
+          },
+        }),
       };
 
-      const allAgents = await sdk.searchAgents(searchFilters);
+      const searchOptions: Record<string, unknown> = {};
+      if (args.sort) {
+        searchOptions.sort = [args.sort];
+      }
+      console.log("searchOptions", searchOptions);
+      console.log("searchFilters", searchFilters);
+
+      const allAgents = await sdk.searchAgents(searchFilters, searchOptions);
+      console.log("found agents number: ", allAgents.length);
 
       if (allAgents.length === 0) {
         return "No agents found matching the specified criteria.";
       }
 
-      // Apply action-level pagination
       const limit = args.limit ?? 10;
       const offset = args.offset ?? 0;
       const paginatedAgents = allAgents.slice(offset, offset + limit);
       const totalFound = allAgents.length;
       const hasMore = offset + limit < totalFound;
 
-      // Format the response
       const agentList = paginatedAgents
         .map(agent => {
-          const name = agent.name || "Unnamed";
-          const description = agent.description
-            ? `\n  Description: ${agent.description.slice(0, 100)}${agent.description.length > 100 ? "..." : ""}`
-            : "";
-          const tools = agent.mcpTools?.length ? `\n  MCP Tools: ${agent.mcpTools.join(", ")}` : "";
-          const skills = agent.a2aSkills?.length
-            ? `\n  A2A Skills: ${agent.a2aSkills.join(", ")}`
-            : "";
-          const status = agent.active !== undefined ? `\n  Active: ${agent.active}` : "";
+          const lines: string[] = [];
+          lines.push(`- Agent ID: ${agent.agentId}`);
+          lines.push(`  Name: ${agent.name || "Unnamed"}`);
 
-          return `- Agent ID: ${agent.agentId}\n  Name: ${name}${description}${tools}${skills}${status}`;
+          if (agent.description) {
+            const desc =
+              agent.description.length > 120
+                ? `${agent.description.slice(0, 120)}...`
+                : agent.description;
+            lines.push(`  Description: ${desc}`);
+          }
+          if (agent.averageValue !== undefined) lines.push(`  Reputation: ${agent.averageValue}`);
+          if (agent.feedbackCount) lines.push(`  Feedback count: ${agent.feedbackCount}`);
+          if (agent.semanticScore !== undefined)
+            lines.push(`  Relevance: ${agent.semanticScore.toFixed(3)}`);
+
+          return lines.join("\n");
         })
         .join("\n\n");
 
-      let response = `Found ${totalFound} agent(s) total, showing ${offset + 1}-${offset + paginatedAgents.length}:\n\n${agentList}`;
+      let response = `Found ${totalFound} agent(s) on ${network.networkId}, showing ${offset + 1}-${offset + paginatedAgents.length}:\n\n${agentList}`;
 
       if (hasMore) {
         response += `\n\n(More results available. Use offset: ${offset + limit} to fetch next page)`;

@@ -190,20 +190,20 @@ describe("Identity Schema Validation", () => {
       const result = SearchAgentsSchema.safeParse(validInput);
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({});
+      // limit has default(10) so empty input produces { limit: 10 }
+      expect(result.data).toEqual({ limit: 10 });
     });
 
     it("should successfully parse input with all filters", () => {
       const validInput = {
+        keyword: "financial data analysis",
         name: "AI",
-        mcpTools: ["code_generation", "data_analysis"],
-        a2aSkills: ["python"],
-        oasfSkills: ["data_engineering/data_transformation_pipeline"],
-        oasfDomains: ["finance_and_business/investment_services"],
-        active: true,
-        x402support: true,
+        description: "financial",
+        require: ["mcp", "active", "x402"],
         minReputation: 70,
         maxReputation: 100,
+        reputationTag: "enterprise",
+        sort: "averageValue:desc",
         limit: 10,
         offset: 5,
       };
@@ -212,6 +212,28 @@ describe("Identity Schema Validation", () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toMatchObject(validInput);
+    });
+
+    it("should strip unknown fields like networkId (schema does not validate it)", () => {
+      const inputWithUnknownField = {
+        networkId: "unsupported-network",
+      };
+
+      const result = SearchAgentsSchema.safeParse(inputWithUnknownField);
+
+      expect(result.success).toBe(true);
+      // networkId is not in schema, so it gets stripped; limit defaults to 10
+      expect(result.data).toEqual({ limit: 10 });
+    });
+
+    it("should successfully parse input with only keyword", () => {
+      const validInput = {
+        keyword: "agent that can analyze trading data",
+      };
+
+      const result = SearchAgentsSchema.safeParse(validInput);
+
+      expect(result.success).toBe(true);
     });
 
     it("should successfully parse input with only name filter", () => {
@@ -473,7 +495,7 @@ describe("Search Agents Action", () => {
     mockGetAgent0SDK.mockReturnValue(mockSdk as unknown as ReturnType<typeof getAgent0SDK>);
   });
 
-  it("should successfully search agents with no filters", async () => {
+  it("should pass only chains when no filters are set", async () => {
     mockSdk.searchAgents.mockResolvedValue([
       {
         agentId: "123",
@@ -484,34 +506,33 @@ describe("Search Agents Action", () => {
       },
     ]);
 
-    const response = await actionProvider.searchAgents(mockWallet, {});
+    const response = await actionProvider.searchAgents(mockWallet, { limit: 10 });
 
-    expect(mockSdk.searchAgents).toHaveBeenCalled();
-    expect(response).toContain("Found 1 agent(s) total");
+    expect(mockSdk.searchAgents).toHaveBeenCalledWith({ chains: [84532] }, expect.any(Object));
+    expect(response).toContain("Found 1 agent(s)");
+    expect(response).toContain("base-sepolia");
     expect(response).toContain("Test Agent");
   });
 
   it("should return no agents message when none found", async () => {
     mockSdk.searchAgents.mockResolvedValue([]);
 
-    const response = await actionProvider.searchAgents(mockWallet, {});
+    const response = await actionProvider.searchAgents(mockWallet, { limit: 10 });
 
     expect(response).toContain("No agents found");
   });
 
   it("should return limited results using action-level pagination", async () => {
-    // SDK now returns all results in a single call (no cursor-based pagination in 1.5.x)
     mockSdk.searchAgents.mockResolvedValue([
       { agentId: "1", name: "Agent 1" },
       { agentId: "2", name: "Agent 2" },
       { agentId: "3", name: "Agent 3" },
     ]);
 
-    // Request with limit=2, should show first 2 of 3 total
     const response = await actionProvider.searchAgents(mockWallet, { limit: 2 });
 
     expect(mockSdk.searchAgents).toHaveBeenCalledTimes(1);
-    expect(response).toContain("Found 3 agent(s) total");
+    expect(response).toContain("Found 3 agent(s)");
     expect(response).toContain("showing 1-2");
     expect(response).toContain("Agent 1");
     expect(response).toContain("Agent 2");
@@ -521,15 +542,143 @@ describe("Search Agents Action", () => {
   });
 
   it("should pass name filter to SDK and return matching agents", async () => {
-    // SDK handles name filtering server-side in 1.5.x; single call, returns matching agents
     mockSdk.searchAgents.mockResolvedValue([{ agentId: "2", name: "myAwesomeAgent" }]);
 
-    const response = await actionProvider.searchAgents(mockWallet, { name: "awesome" });
+    const response = await actionProvider.searchAgents(mockWallet, {
+      name: "awesome",
+      limit: 10,
+    });
 
     expect(mockSdk.searchAgents).toHaveBeenCalledTimes(1);
-    expect(mockSdk.searchAgents).toHaveBeenCalledWith(expect.objectContaining({ name: "awesome" }));
-    expect(response).toContain("Found 1 agent(s) total");
+    expect(mockSdk.searchAgents).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "awesome" }),
+      expect.any(Object),
+    );
+    expect(response).toContain("Found 1 agent(s)");
     expect(response).toContain("myAwesomeAgent");
+  });
+
+  it("should pass keyword for semantic search", async () => {
+    mockSdk.searchAgents.mockResolvedValue([
+      { agentId: "1", name: "Finance Bot", semanticScore: 0.92 },
+    ]);
+
+    const response = await actionProvider.searchAgents(mockWallet, {
+      keyword: "financial data analysis",
+      limit: 10,
+    });
+
+    expect(mockSdk.searchAgents).toHaveBeenCalledWith(
+      expect.objectContaining({ keyword: "financial data analysis" }),
+      expect.any(Object),
+    );
+    expect(response).toContain("Finance Bot");
+    expect(response).toContain("Relevance: 0.920");
+  });
+
+  it("should pass description filter to SDK", async () => {
+    mockSdk.searchAgents.mockResolvedValue([
+      { agentId: "1", name: "Data Agent", description: "Handles financial data" },
+    ]);
+
+    const response = await actionProvider.searchAgents(mockWallet, {
+      description: "financial",
+      limit: 10,
+    });
+
+    expect(mockSdk.searchAgents).toHaveBeenCalledWith(
+      expect.objectContaining({ description: "financial" }),
+      expect.any(Object),
+    );
+    expect(response).toContain("Data Agent");
+  });
+
+  it("should pass require filters to SDK", async () => {
+    mockSdk.searchAgents.mockResolvedValue([
+      { agentId: "1", name: "MCP Agent", mcp: "https://mcp.example.com" },
+    ]);
+
+    const response = await actionProvider.searchAgents(mockWallet, {
+      require: ["mcp", "active"],
+      limit: 10,
+    });
+
+    expect(mockSdk.searchAgents).toHaveBeenCalledWith(
+      expect.objectContaining({ hasMCP: true, active: true }),
+      expect.any(Object),
+    );
+    expect(mockSdk.searchAgents).toHaveBeenCalledWith(
+      expect.not.objectContaining({ hasA2A: expect.anything(), x402support: expect.anything() }),
+      expect.any(Object),
+    );
+    expect(response).toContain("MCP Agent");
+  });
+
+  it("should use wallet network when no filters are set", async () => {
+    mockSdk.searchAgents.mockResolvedValue([{ agentId: "1:5", name: "Mainnet Agent" }]);
+
+    const response = await actionProvider.searchAgents(mockWallet, {
+      limit: 10,
+    });
+
+    // Uses wallet network (base-sepolia = 84532) when no networkId in schema
+    expect(mockSdk.searchAgents).toHaveBeenCalledWith(
+      expect.objectContaining({ chains: [84532] }),
+      expect.any(Object),
+    );
+    expect(response).toContain("base-sepolia");
+  });
+
+  it("should pass sort option to SDK", async () => {
+    mockSdk.searchAgents.mockResolvedValue([{ agentId: "1", name: "Top Agent" }]);
+
+    await actionProvider.searchAgents(mockWallet, {
+      sort: "averageValue:desc",
+      limit: 10,
+    });
+
+    expect(mockSdk.searchAgents).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ sort: ["averageValue:desc"] }),
+    );
+  });
+
+  it("should pass reputation tag in feedback filters", async () => {
+    mockSdk.searchAgents.mockResolvedValue([
+      { agentId: "1", name: "Enterprise Agent", averageValue: 90 },
+    ]);
+
+    const response = await actionProvider.searchAgents(mockWallet, {
+      minReputation: 80,
+      reputationTag: "enterprise",
+      limit: 10,
+    });
+
+    expect(mockSdk.searchAgents).toHaveBeenCalledWith(
+      expect.objectContaining({
+        feedback: { minValue: 80, maxValue: undefined, tag: "enterprise" },
+      }),
+      expect.any(Object),
+    );
+    expect(response).toContain("Reputation: 90");
+  });
+
+  it("should include enriched output fields", async () => {
+    mockSdk.searchAgents.mockResolvedValue([
+      {
+        agentId: "1",
+        name: "Full Agent",
+        averageValue: 85,
+        feedbackCount: 12,
+      },
+    ]);
+
+    const response = await actionProvider.searchAgents(mockWallet, { limit: 10 });
+
+    expect(response).toContain("Agent ID: 1");
+    expect(response).toContain("Name: Full Agent");
+    expect(response).toContain("Reputation: 85");
+    expect(response).toContain("Feedback count: 12");
   });
 
   it("should support offset for pagination", async () => {
@@ -539,10 +688,9 @@ describe("Search Agents Action", () => {
       { agentId: "3", name: "Agent 3" },
     ]);
 
-    // Request with offset=1, limit=1
     const response = await actionProvider.searchAgents(mockWallet, { offset: 1, limit: 1 });
 
-    expect(response).toContain("Found 3 agent(s) total");
+    expect(response).toContain("Found 3 agent(s)");
     expect(response).toContain("showing 2-2");
     expect(response).toContain("Agent 2");
     expect(response).not.toContain("Agent 1");
@@ -552,7 +700,7 @@ describe("Search Agents Action", () => {
   it("should handle errors gracefully", async () => {
     mockSdk.searchAgents.mockRejectedValue(new Error("Network error"));
 
-    const response = await actionProvider.searchAgents(mockWallet, {});
+    const response = await actionProvider.searchAgents(mockWallet, { limit: 10 });
 
     expect(response).toContain("Error searching agents");
   });
