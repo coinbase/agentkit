@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { Hex, encodeFunctionData, zeroHash } from "viem";
 import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
@@ -10,10 +9,8 @@ import {
   AppendResponseSchema,
   GetAgentFeedbackSchema,
 } from "./reputationSchemas";
-import { getChainIdFromNetwork, getRegistryAddress, isNetworkSupported } from "./constants";
-import { REPUTATION_REGISTRY_ABI, IDENTITY_REGISTRY_ABI } from "./abi";
-import { PinataConfig, ipfsToHttpUrl, getAgent0SDK } from "./utils";
-import { uploadFeedbackToIPFS } from "./utils_rep";
+import { getChainIdFromNetwork, isNetworkSupported } from "./constants";
+import { PinataConfig, getAgent0SDK } from "./utils";
 
 /**
  * Configuration options for the ERC8004 Reputation Action Provider
@@ -43,6 +40,8 @@ export class ERC8004ReputationActionProvider extends ActionProvider<EvmWalletPro
 
   /**
    * Gives feedback to an agent.
+   * Core feedback data (value, tags, endpoint) is always stored onchain.
+   * When IPFS is configured (PINATA_JWT), an optional comment is also stored off-chain.
    *
    * @param walletProvider - The wallet provider to use for the transaction
    * @param args - The feedback details
@@ -54,10 +53,6 @@ export class ERC8004ReputationActionProvider extends ActionProvider<EvmWalletPro
 Submits feedback for an agent on the ERC-8004 Reputation Registry.
 The value + valueDecimals pair represents a signed fixed-point number.
 
-The feedback is automatically:
-1. Generated as an ERC-8004 compliant JSON file
-2. Uploaded to IPFS via Pinata
-3. Submitted onchain with the IPFS URI
 
 Examples:
 | tag1             | What it measures          | Human value | value | valueDecimals |
@@ -77,73 +72,46 @@ Examples:
     args: z.infer<typeof GiveFeedbackSchema>,
   ): Promise<string> {
     try {
-      if (!this.pinataConfig) {
-        return "Error: PINATA_JWT is required for giving feedback. Please configure the provider with a Pinata JWT.";
-      }
-
-      console.log("args", args);
-
       const network = walletProvider.getNetwork();
       const chainId = getChainIdFromNetwork(network);
-      const reputationRegistryAddress = getRegistryAddress("reputation", chainId);
-      const identityRegistryAddress = getRegistryAddress("identity", chainId);
       const clientAddress = walletProvider.getAddress();
 
-      // Check that the client is not the owner of the agent
-      const agentOwner = await walletProvider.readContract({
-        address: identityRegistryAddress,
-        abi: IDENTITY_REGISTRY_ABI,
-        functionName: "ownerOf",
-        args: [BigInt(args.agentId)],
-      });
+      const fullAgentId = args.agentId.includes(":") ? args.agentId : `${chainId}:${args.agentId}`;
 
-      if ((agentOwner as string).toLowerCase() === clientAddress.toLowerCase()) {
+      const sdk = getAgent0SDK(walletProvider, this.pinataConfig?.jwt);
+
+      const isOwner = await sdk.isAgentOwner(fullAgentId, clientAddress);
+      if (isOwner) {
         return "Error: You cannot give feedback to your own agent.";
       }
 
-      // Generate and upload feedback file to IPFS
-      const { feedbackUri, feedbackHash } = await uploadFeedbackToIPFS(this.pinataConfig, {
-        agentId: parseInt(args.agentId, 10),
-        chainId,
-        identityRegistryAddress,
-        clientAddress: clientAddress as Hex,
-        value: args.value,
-        valueDecimals: args.valueDecimals ?? 0,
-        tag1: args.tag1,
-        tag2: args.tag2,
-        endpoint: undefined,
-        mcp: undefined,
-        a2a: undefined,
-        oasf: undefined,
-        proofOfPayment: undefined,
-        comment: args.comment,
-      });
+      const decimals = args.valueDecimals ?? 0;
+      const humanValue =
+        decimals > 0
+          ? (args.value / Math.pow(10, decimals)).toFixed(decimals)
+          : args.value.toString();
 
-      // Submit feedback onchain with IPFS URI and hash
-      const hash = await walletProvider.sendTransaction({
-        to: reputationRegistryAddress,
-        data: encodeFunctionData({
-          abi: REPUTATION_REGISTRY_ABI,
-          functionName: "giveFeedback",
-          args: [
-            BigInt(args.agentId),
-            BigInt(args.value),
-            args.valueDecimals ?? 0,
-            args.tag1 ?? "",
-            args.tag2 ?? "",
-            "",
-            feedbackUri,
-            feedbackHash,
-          ],
-        }),
-      });
+      // Only pass the off-chain file when IPFS is configured
+      const feedbackFile =
+        this.pinataConfig && args.comment ? { comment: args.comment } : undefined;
 
-      await walletProvider.waitForTransactionReceipt(hash);
+      const handle = await sdk.giveFeedback(
+        fullAgentId,
+        humanValue,
+        args.tag1,
+        args.tag2,
+        undefined,
+        feedbackFile,
+      );
 
-      const httpUrl = ipfsToHttpUrl(feedbackUri);
+      await handle.waitMined();
 
-      const commentLine = args.comment ? `\nComment: ${args.comment}` : "";
-      return `Feedback submitted successfully!\n\nAgent ID: ${args.agentId}\nValue: ${args.value}${args.valueDecimals ? ` (${args.valueDecimals} decimals)` : ""}\nTags: ${args.tag1 || "(none)"}${args.tag2 ? `, ${args.tag2}` : ""}${commentLine}\n\nFeedback File:\n- IPFS URI: ${feedbackUri}\n- HTTP Gateway: ${httpUrl}\n- Hash: ${feedbackHash}\n\nTransaction hash: ${hash}`;
+      const commentLine = args.comment
+        ? this.pinataConfig
+          ? `\nComment: ${args.comment}`
+          : `\nComment: ${args.comment} (not persisted — configure PINATA_JWT for off-chain storage)`
+        : "";
+      return `Feedback submitted successfully!\n\nAgent ID: ${args.agentId}\nValue: ${args.value}${decimals ? ` (${decimals} decimals)` : ""}\nTags: ${args.tag1 || "(none)"}${args.tag2 ? `, ${args.tag2}` : ""}${commentLine}\n\nTransaction hash: ${handle.hash}`;
     } catch (error) {
       return `Error giving feedback: ${error}`;
     }
@@ -174,20 +142,13 @@ found by reading the feedback entries.
     try {
       const network = walletProvider.getNetwork();
       const chainId = getChainIdFromNetwork(network);
-      const registryAddress = getRegistryAddress("reputation", chainId);
+      const fullAgentId = args.agentId.includes(":") ? args.agentId : `${chainId}:${args.agentId}`;
 
-      const hash = await walletProvider.sendTransaction({
-        to: registryAddress,
-        data: encodeFunctionData({
-          abi: REPUTATION_REGISTRY_ABI,
-          functionName: "revokeFeedback",
-          args: [BigInt(args.agentId), BigInt(args.feedbackIndex)],
-        }),
-      });
+      const sdk = getAgent0SDK(walletProvider);
+      const handle = await sdk.revokeFeedback(fullAgentId, parseInt(args.feedbackIndex, 10));
+      await handle.waitMined();
 
-      await walletProvider.waitForTransactionReceipt(hash);
-
-      return `Feedback revoked successfully!\n\nAgent ID: ${args.agentId}\nFeedback Index: ${args.feedbackIndex}\nTransaction hash: ${hash}`;
+      return `Feedback revoked successfully!\n\nAgent ID: ${args.agentId}\nFeedback Index: ${args.feedbackIndex}\nTransaction hash: ${handle.hash}`;
     } catch (error) {
       return `Error revoking feedback: ${error}`;
     }
@@ -224,26 +185,19 @@ The response is stored as a URI pointing to off-chain content.
     try {
       const network = walletProvider.getNetwork();
       const chainId = getChainIdFromNetwork(network);
-      const registryAddress = getRegistryAddress("reputation", chainId);
+      const fullAgentId = args.agentId.includes(":") ? args.agentId : `${chainId}:${args.agentId}`;
+      const zeroHash = "0x" + "00".repeat(32);
 
-      const hash = await walletProvider.sendTransaction({
-        to: registryAddress,
-        data: encodeFunctionData({
-          abi: REPUTATION_REGISTRY_ABI,
-          functionName: "appendResponse",
-          args: [
-            BigInt(args.agentId),
-            args.clientAddress as Hex,
-            BigInt(args.feedbackIndex),
-            args.responseUri,
-            (args.responseHash as Hex) ?? zeroHash,
-          ],
-        }),
-      });
+      const sdk = getAgent0SDK(walletProvider);
+      const handle = await sdk.appendResponse(
+        fullAgentId,
+        args.clientAddress,
+        parseInt(args.feedbackIndex, 10),
+        { uri: args.responseUri, hash: args.responseHash ?? zeroHash },
+      );
+      await handle.waitMined();
 
-      await walletProvider.waitForTransactionReceipt(hash);
-
-      return `Response appended successfully!\n\nAgent ID: ${args.agentId}\nClient: ${args.clientAddress}\nFeedback Index: ${args.feedbackIndex}\nResponse URI: ${args.responseUri}\n\nTransaction hash: ${hash}`;
+      return `Response appended successfully!\n\nAgent ID: ${args.agentId}\nClient: ${args.clientAddress}\nFeedback Index: ${args.feedbackIndex}\nResponse URI: ${args.responseUri}\n\nTransaction hash: ${handle.hash}`;
     } catch (error) {
       return `Error appending response: ${error}`;
     }

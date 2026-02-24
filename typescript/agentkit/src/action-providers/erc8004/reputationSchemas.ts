@@ -10,7 +10,7 @@ import { z } from "zod";
  *   - Response time 560ms: value=560, valueDecimals=0, tag1="responseTime"
  *   - Trading yield -3.2%: value=-32, valueDecimals=1, tag1="tradingYield"
  *
- * Feedback is automatically uploaded to IPFS and the URI + hash are included onchain.
+ * Core feedback data is always stored onchain. When IPFS is configured, an off-chain feedback file (e.g. comment) is also uploaded.
  */
 export const GiveFeedbackSchema = z
   .object({
@@ -54,9 +54,7 @@ export const GiveFeedbackSchema = z
       .describe("Optional user review comment (max 500 characters)"),
   })
   .strip()
-  .describe(
-    "Submits feedback for an agent on the ERC-8004 Reputation Registry. Feedback file is automatically uploaded to IPFS.",
-  );
+  .describe("Submits feedback for an agent on the ERC-8004 Reputation Registry.");
 
 /**
  * Input schema for revoking feedback.

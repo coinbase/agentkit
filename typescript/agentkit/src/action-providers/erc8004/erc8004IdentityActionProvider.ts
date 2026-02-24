@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { encodeFunctionData, decodeEventLog } from "viem";
 import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
@@ -11,14 +10,14 @@ import {
   SearchAgentsSchema,
   GetAgentInfoSchema,
 } from "./identitySchemas";
-import { getChainIdFromNetwork, getRegistryAddress, isNetworkSupported } from "./constants";
-import { IDENTITY_REGISTRY_ABI } from "./abi";
-import { PinataConfig, ipfsToHttpUrl, getAgent0SDK } from "./utils";
+import { getChainIdFromNetwork, isNetworkSupported } from "./constants";
 import {
-  uploadAgentRegistration,
-  fetchAgentRegistration,
-  updateAgentRegistration,
-} from "./utils_id";
+  PinataConfig,
+  getAgent0SDK,
+  jsonToDataUri,
+  ipfsToHttpUrl,
+  loadOrHydrateAgent,
+} from "./utils";
 
 /**
  * Configuration options for the ERC8004 Identity Action Provider
@@ -47,7 +46,7 @@ export class ERC8004IdentityActionProvider extends ActionProvider<EvmWalletProvi
   }
 
   /**
-   * Updates agent registration metadata by fetching from IPFS, modifying, and re-uploading.
+   * Updates agent registration metadata by loading the current state, modifying and re-registering.
    *
    * @param walletProvider - The wallet provider to use for the transaction
    * @param args - The agentId and optional fields to update (name, description, image)
@@ -56,7 +55,7 @@ export class ERC8004IdentityActionProvider extends ActionProvider<EvmWalletProvi
   @CreateAction({
     name: "update_agent_metadata",
     description: `
-Updates agent registration metadata (name, description, image) stored in IPFS.
+Updates agent registration metadata (name, description, image).
 Example: "update description to 'A trading assistant agent'"
 `,
     schema: UpdateAgentMetadataSchema,
@@ -66,74 +65,48 @@ Example: "update description to 'A trading assistant agent'"
     args: z.infer<typeof UpdateAgentMetadataSchema>,
   ): Promise<string> {
     try {
-      if (!this.pinataConfig) {
-        return "Error: PINATA_JWT is required for IPFS uploads. Please configure the provider with a Pinata JWT.";
-      }
-
       const network = walletProvider.getNetwork();
       const chainId = getChainIdFromNetwork(network);
-      const registryAddress = getRegistryAddress("identity", chainId);
+      const fullAgentId = `${chainId}:${args.agentId}`;
+      const sdk = getAgent0SDK(walletProvider, this.pinataConfig?.jwt);
 
-      // Get current URI from on-chain
-      const currentUri = await walletProvider.readContract({
-        address: registryAddress,
-        abi: IDENTITY_REGISTRY_ABI,
-        functionName: "tokenURI",
-        args: [BigInt(args.agentId)],
-      });
+      let newUri: string;
+      let txHash: string;
 
-      if (!currentUri) {
-        return `Error: Agent ${args.agentId} has no registration URI set. Use register_agent first.`;
+      const agent = await loadOrHydrateAgent(sdk, walletProvider, fullAgentId, args.agentId);
+      agent.updateInfo(args.name, args.description, args.image);
+
+      if (this.pinataConfig) {
+        const handle = await agent.registerIPFS();
+        const { result } = await handle.waitMined();
+        newUri = result.agentURI ?? "";
+        txHash = handle.hash;
+      } else {
+        const regFile = agent.getRegistrationFile();
+        const dataUri = jsonToDataUri(regFile);
+        const handle = await agent.setAgentURI(dataUri);
+        await handle.waitMined();
+        newUri = dataUri;
+        txHash = handle.hash;
       }
 
-      // Fetch existing registration from IPFS
-      const existingRegistration = await fetchAgentRegistration(currentUri as string);
-
-      // Update with new values
-      const updatedRegistration = updateAgentRegistration(existingRegistration, {
-        name: args.name,
-        description: args.description,
-        image: args.image,
-      });
-
-      // Upload updated registration to IPFS
-      const ipfsUri = await uploadAgentRegistration(this.pinataConfig, {
-        agentId: parseInt(args.agentId, 10),
-        chainId,
-        registryAddress,
-        name: updatedRegistration.name,
-        description: updatedRegistration.description,
-        image: updatedRegistration.image,
-      });
-
-      // Set new URI onchain
-      const hash = await walletProvider.sendTransaction({
-        to: registryAddress,
-        data: encodeFunctionData({
-          abi: IDENTITY_REGISTRY_ABI,
-          functionName: "setAgentURI",
-          args: [BigInt(args.agentId), ipfsUri],
-        }),
-      });
-
-      await walletProvider.waitForTransactionReceipt(hash);
-
-      const httpUrl = ipfsToHttpUrl(ipfsUri);
-
-      // Build update summary
       const updates: string[] = [];
       if (args.name !== undefined) updates.push(`Name: ${args.name}`);
       if (args.description !== undefined) updates.push(`Description: ${args.description}`);
       if (args.image !== undefined) updates.push(`Image: ${args.image}`);
 
-      return `Agent metadata updated successfully!\n\nAgent ID: ${args.agentId}\nUpdated fields:\n${updates.length > 0 ? updates.map(u => `- ${u}`).join("\n") : "(no changes)"}\n\nNew Metadata URI: ${ipfsUri}\nHTTP Gateway: ${httpUrl}\nTransaction hash: ${hash}`;
+      const uriDisplay = newUri.startsWith("ipfs://")
+        ? `Metadata URI: ${newUri}\nHTTP Gateway: ${ipfsToHttpUrl(newUri)}`
+        : `Metadata URI: (onchain data URI)`;
+
+      return `Agent metadata updated successfully!\n\nAgent ID: ${args.agentId}\nUpdated fields:\n${updates.length > 0 ? updates.map(u => `- ${u}`).join("\n") : "(no changes)"}\n\n${uriDisplay}\nTransaction hash: ${txHash}`;
     } catch (error) {
       return `Error updating agent metadata: ${error}`;
     }
   }
 
   /**
-   * Registers a new agent (register + upload + set URI).
+   * Registers a new agent (register + set URI).
    * All fields are optional - defaults to "Agent <agentId>" for name, empty for others.
    *
    * @param walletProvider - The wallet provider to use
@@ -145,11 +118,10 @@ Example: "update description to 'A trading assistant agent'"
     description: `
 Registers a new agent on the ERC-8004 Identity Registry:
 1. Mints an agent NFT
-2. Generates and uploads registration JSON to IPFS
-3. Sets the agent URI on-chain
+2. Generates registration JSON and sets the agent URI
 
 All fields are optional! Proceed if not provided, metadata can be updated later with 'update_agent_metadata' action. 
-Never choose values optional fields unless explicitly asked to do so.
+Never choose values for optional fields unless explicitly asked to do so.
 `,
     schema: RegisterAgentSchema,
   })
@@ -158,75 +130,34 @@ Never choose values optional fields unless explicitly asked to do so.
     args: z.infer<typeof RegisterAgentSchema>,
   ): Promise<string> {
     try {
-      if (!this.pinataConfig) {
-        return "Error: PINATA_JWT is required for registration. Please configure the provider with a Pinata JWT.";
-      }
-      console.log("args", args);
-
       const network = walletProvider.getNetwork();
-      const chainId = getChainIdFromNetwork(network);
-      const registryAddress = getRegistryAddress("identity", chainId);
+      const sdk = getAgent0SDK(walletProvider, this.pinataConfig?.jwt);
 
-      // Register agent (mint NFT)
-      const registerHash = await walletProvider.sendTransaction({
-        to: registryAddress,
-        data: encodeFunctionData({
-          abi: IDENTITY_REGISTRY_ABI,
-          functionName: "register",
-          args: [],
-        }),
-      });
+      const agentName = args.name || "Agent";
+      const agent = sdk.createAgent(agentName, args.description || "", args.image);
 
-      const receipt = await walletProvider.waitForTransactionReceipt(registerHash);
+      if (this.pinataConfig) {
+        const handle = await agent.registerIPFS();
+        const { result } = await handle.waitMined();
 
-      // Parse the Registered event to get the agentId
-      let agentId: string | undefined;
-      for (const log of receipt.logs) {
-        try {
-          const decoded = decodeEventLog({
-            abi: IDENTITY_REGISTRY_ABI,
-            data: log.data,
-            topics: log.topics,
-          });
-          if (decoded.eventName === "Registered") {
-            agentId = (decoded.args as unknown as { agentId: bigint }).agentId.toString();
-            break;
-          }
-        } catch {
-          // Not the event we're looking for
-        }
+        const agentId = result.agentId!;
+        const agentURI = result.agentURI ?? "";
+        const httpUrl = ipfsToHttpUrl(agentURI);
+
+        return `Agent registered successfully!\n\nAgent ID: ${agentId}\nName: ${result.name || agentName}\nDescription: ${args.description || "(empty)"}\nImage: ${args.image || "(empty)"}\nNetwork: ${network.networkId}\n\nMetadata URI: ${agentURI}\nHTTP Gateway: ${httpUrl}\n\nTransaction hash: ${handle.hash}`;
       }
 
-      if (!agentId) {
-        return `Agent registered but could not parse agentId from event logs.\nRegister transaction: ${registerHash}\nPlease use get_agent_info or check the transaction on a block explorer to find your agentId.`;
-      }
+      // No IPFS: register with empty URI, then set a data URI containing the agentId
+      const handle = await agent.registerHTTP("");
+      const { result } = await handle.waitMined();
 
-      // Upload registration to IPFS (using defaults if not provided)
-      const agentName = args.name || `Agent ${agentId}`;
-      const ipfsUri = await uploadAgentRegistration(this.pinataConfig, {
-        agentId: parseInt(agentId, 10),
-        chainId,
-        registryAddress,
-        name: agentName,
-        description: args.description || "",
-        image: args.image || "",
-      });
+      const agentId = result.agentId!;
+      const regFile = agent.getRegistrationFile();
+      const dataUri = jsonToDataUri(regFile);
+      const handle2 = await agent.setAgentURI(dataUri);
+      await handle2.waitMined();
 
-      // Set agent URI onchain
-      const setUriHash = await walletProvider.sendTransaction({
-        to: registryAddress,
-        data: encodeFunctionData({
-          abi: IDENTITY_REGISTRY_ABI,
-          functionName: "setAgentURI",
-          args: [BigInt(agentId), ipfsUri],
-        }),
-      });
-
-      await walletProvider.waitForTransactionReceipt(setUriHash);
-
-      const httpUrl = ipfsToHttpUrl(ipfsUri);
-
-      return `Agent registered successfully!\n\nAgent ID: ${agentId}\nName: ${agentName}\nDescription: ${args.description || "(empty)"}\nImage: ${args.image || "(empty)"}\nNetwork: ${network.networkId}\n\nMetadata URI: ${ipfsUri}\nHTTP Gateway: ${httpUrl}\n\nTransactions:\n- Register: ${registerHash}\n- Set URI: ${setUriHash}`;
+      return `Agent registered successfully!\n\nAgent ID: ${agentId}\nName: ${result.name || agentName}\nDescription: ${args.description || "(empty)"}\nImage: ${args.image || "(empty)"}\nNetwork: ${network.networkId}\n\nMetadata: stored on-chain (data URI)\n\nTransaction hashes:\n- Register: ${handle.hash}\n- Set URI: ${handle2.hash}`;
     } catch (error) {
       return `Error during registration: ${error}`;
     }

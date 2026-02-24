@@ -1,40 +1,12 @@
-import { Hex } from "viem";
 import { NETWORK_ID_TO_CHAIN_ID, Network } from "../../network";
 
-// Chain IDs for supported networks
-export const SUPPORTED_CHAIN_IDS = {
-  ETHEREUM_MAINNET: 1,
-  ETHEREUM_SEPOLIA: 11155111,
-  BASE_MAINNET: 8453,
-  BASE_SEPOLIA: 84532,
-} as const;
-
-// Registry addresses by chain ID
-export const REGISTRY_ADDRESSES: Record<number, { identity: Hex; reputation: Hex }> = {
-  [SUPPORTED_CHAIN_IDS.ETHEREUM_MAINNET]: {
-    identity: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
-    reputation: "0x8004BAa17C55a88189AE136b182e5fdA19dE9b63",
-  },
-  [SUPPORTED_CHAIN_IDS.ETHEREUM_SEPOLIA]: {
-    identity: "0x8004A818BFB912233c491871b3d84c89A494BD9e",
-    reputation: "0x8004B663056A597Dffe9eCcC1965A193B7388713",
-  },
-  [SUPPORTED_CHAIN_IDS.BASE_MAINNET]: {
-    identity: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
-    reputation: "0x8004BAa17C55a88189AE136b182e5fdA19dE9b63",
-  },
-  [SUPPORTED_CHAIN_IDS.BASE_SEPOLIA]: {
-    identity: "0x8004A818BFB912233c491871b3d84c89A494BD9e",
-    reputation: "0x8004B663056A597Dffe9eCcC1965A193B7388713",
-  },
-};
-
-// Supported network IDs for ERC-8004
+// Supported network IDs for ERC-8004 - must match agent0 SDK (contracts.ts DEFAULT_REGISTRIES)
 export const SUPPORTED_NETWORK_IDS = [
-  "ethereum-mainnet",
-  "ethereum-sepolia",
-  "base-mainnet",
-  "base-sepolia",
+  "ethereum-mainnet", // 1
+  "ethereum-sepolia", // 11155111
+  "base-mainnet", // 8453
+  "base-sepolia", // 84532
+  "polygon-mainnet", // 137
 ] as const;
 
 export type SupportedNetworkId = (typeof SUPPORTED_NETWORK_IDS)[number];
@@ -60,25 +32,6 @@ export function getChainIdFromNetwork(network: Network): number {
   }
 
   return parseInt(chainIdStr, 10);
-}
-
-/**
- * Gets the registry address for a specific registry type and chain
- *
- * @param registry - The registry type ("identity" or "reputation")
- * @param chainId - The chain ID
- * @returns The registry address
- * @throws Error if chain is not supported
- */
-export function getRegistryAddress(registry: "identity" | "reputation", chainId: number): Hex {
-  const addresses = REGISTRY_ADDRESSES[chainId];
-  if (!addresses) {
-    throw new Error(
-      `Chain ID ${chainId} is not supported for ERC-8004. Supported chain IDs: ${Object.keys(REGISTRY_ADDRESSES).join(", ")}`,
-    );
-  }
-
-  return addresses[registry];
 }
 
 /**

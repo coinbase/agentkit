@@ -24,8 +24,8 @@ export const RegisterAgentSchema = z
   .describe("Registers a new agent.");
 
 /**
- * Input schema for updating agent metadata (IPFS registration file).
- * Retrieves existing JSON from IPFS, updates specified fields, uploads new JSON, and sets URI on-chain.
+ * Input schema for updating agent metadata.
+ * Loads current metadata, applies updates and stores the result on IPFS or onchain as a data URI.
  */
 export const UpdateAgentMetadataSchema = z
   .object({
@@ -39,9 +39,7 @@ export const UpdateAgentMetadataSchema = z
     image: z.string().optional().describe("New image URL for the agent (optional)"),
   })
   .strip()
-  .describe(
-    "Updates agent registration metadata: retrieves existing JSON from IPFS, updates specified fields, uploads new JSON to IPFS, and sets the new URI on-chain",
-  );
+  .describe("Updates agent registration metadata.");
 
 /**
  * Input schema for getting all agents owned by a wallet address.

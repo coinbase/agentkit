@@ -9,16 +9,12 @@ import {
   GetAgentFeedbackSchema,
 } from "./reputationSchemas";
 import { EvmWalletProvider } from "../../wallet-providers";
-import * as utilsRep from "./utils_rep";
 import * as utils from "./utils";
 
 // Mock utils to avoid loading the ESM-only agent0-sdk at module load time
 jest.mock("./utils", () => ({
   getAgent0SDK: jest.fn(),
-  uploadJsonToIPFS: jest.fn(),
-  uploadFileToIPFS: jest.fn(),
   ipfsToHttpUrl: jest.fn((uri: string) => uri),
-  formatCAIP10Address: jest.fn(),
 }));
 
 const MOCK_AGENT_ID = "123";
@@ -26,9 +22,6 @@ const MOCK_ADDRESS = "0x1234567890123456789012345678901234567890";
 const MOCK_CLIENT_ADDRESS = "0x9876543210987654321098765432109876543210";
 const TRANSACTION_HASH = "0xabcdef1234567890";
 const MOCK_FEEDBACK_INDEX = "0";
-const MOCK_IPFS_HASH = "bafkreitest123456789";
-const MOCK_FEEDBACK_URI = `ipfs://${MOCK_IPFS_HASH}`;
-const MOCK_FEEDBACK_HASH = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
 
 describe("Reputation Schema Validation", () => {
   describe("GiveFeedbackSchema", () => {
@@ -264,16 +257,34 @@ describe("Reputation Schema Validation", () => {
   });
 });
 
+/**
+ * Creates a mock TransactionHandle matching the agent0-sdk shape.
+ *
+ * @param hash - The transaction hash string.
+ * @param result - Optional result object to include in the mined receipt.
+ * @returns A mock transaction handle with hash and waitMined method.
+ */
+function mockTxHandle(hash: string, result: Record<string, unknown> = {}) {
+  return {
+    hash,
+    waitMined: jest.fn().mockResolvedValue({
+      receipt: { transactionHash: hash, status: "success", logs: [] },
+      result,
+    }),
+  };
+}
+
 describe("Give Feedback Action", () => {
   let mockWallet: jest.Mocked<EvmWalletProvider>;
   let actionProvider: ERC8004ReputationActionProvider;
-  let uploadFeedbackSpy: jest.SpyInstance;
+  let mockSdk: {
+    isAgentOwner: jest.Mock;
+    giveFeedback: jest.Mock;
+  };
+  let getAgent0SDKSpy: jest.SpyInstance;
 
   beforeEach(() => {
     mockWallet = {
-      sendTransaction: jest.fn(),
-      waitForTransactionReceipt: jest.fn(),
-      readContract: jest.fn(),
       getAddress: jest.fn().mockReturnValue(MOCK_ADDRESS),
       getName: jest.fn().mockReturnValue("evm_wallet_provider"),
       getNetwork: jest.fn().mockReturnValue({
@@ -282,33 +293,20 @@ describe("Give Feedback Action", () => {
       }),
     } as unknown as jest.Mocked<EvmWalletProvider>;
 
-    // Create provider with Pinata JWT configured
-    actionProvider = erc8004ReputationActionProvider({ pinataJwt: "test-jwt" });
+    mockSdk = {
+      isAgentOwner: jest.fn().mockResolvedValue(false),
+      giveFeedback: jest.fn().mockResolvedValue(mockTxHandle(TRANSACTION_HASH)),
+    };
 
-    // Mock the IPFS upload function
-    uploadFeedbackSpy = jest.spyOn(utilsRep, "uploadFeedbackToIPFS").mockResolvedValue({
-      feedbackUri: MOCK_FEEDBACK_URI,
-      feedbackHash: MOCK_FEEDBACK_HASH as `0x${string}`,
-      feedbackFile: {
-        agentRegistry: "eip155:84532:0x8004A818BFB912233c491871b3d84c89A494BD9e",
-        agentId: 123,
-        clientAddress: `eip155:84532:${MOCK_ADDRESS}`,
-        createdAt: new Date().toISOString(),
-        value: 85,
-        valueDecimals: 0,
-      },
-    });
+    getAgent0SDKSpy = jest.spyOn(utils, "getAgent0SDK").mockReturnValue(mockSdk as never);
+    actionProvider = erc8004ReputationActionProvider({ pinataJwt: "test-jwt" });
   });
 
   afterEach(() => {
-    uploadFeedbackSpy.mockRestore();
+    getAgent0SDKSpy.mockRestore();
   });
 
   it("should successfully submit feedback", async () => {
-    mockWallet.readContract.mockResolvedValue("0xdifferentowner1234567890123456789012345678");
-    mockWallet.sendTransaction.mockResolvedValue(TRANSACTION_HASH);
-    mockWallet.waitForTransactionReceipt.mockResolvedValue({});
-
     const args = {
       agentId: MOCK_AGENT_ID,
       value: 85,
@@ -319,22 +317,23 @@ describe("Give Feedback Action", () => {
 
     const response = await actionProvider.giveFeedback(mockWallet, args);
 
-    expect(uploadFeedbackSpy).toHaveBeenCalled();
-    expect(mockWallet.sendTransaction).toHaveBeenCalled();
-    expect(mockWallet.waitForTransactionReceipt).toHaveBeenCalledWith(TRANSACTION_HASH);
+    expect(mockSdk.isAgentOwner).toHaveBeenCalledWith("84532:123", MOCK_ADDRESS);
+    expect(mockSdk.giveFeedback).toHaveBeenCalledWith(
+      "84532:123",
+      "85",
+      "quality",
+      "speed",
+      undefined,
+      undefined,
+    );
     expect(response).toContain("Feedback submitted successfully!");
     expect(response).toContain(MOCK_AGENT_ID);
     expect(response).toContain("85");
     expect(response).toContain("quality");
-    expect(response).toContain(MOCK_FEEDBACK_URI);
     expect(response).toContain(TRANSACTION_HASH);
   });
 
   it("should successfully submit feedback with minimal input", async () => {
-    mockWallet.readContract.mockResolvedValue("0xdifferentowner1234567890123456789012345678");
-    mockWallet.sendTransaction.mockResolvedValue(TRANSACTION_HASH);
-    mockWallet.waitForTransactionReceipt.mockResolvedValue({});
-
     const args = {
       agentId: MOCK_AGENT_ID,
       value: 85,
@@ -345,12 +344,49 @@ describe("Give Feedback Action", () => {
 
     const response = await actionProvider.giveFeedback(mockWallet, args);
 
-    expect(uploadFeedbackSpy).toHaveBeenCalled();
-    expect(mockWallet.sendTransaction).toHaveBeenCalled();
+    expect(mockSdk.giveFeedback).toHaveBeenCalled();
     expect(response).toContain("Feedback submitted successfully!");
   });
 
-  it("should fail without Pinata JWT", async () => {
+  it("should convert fixed-point value to human-readable string", async () => {
+    const args = {
+      agentId: MOCK_AGENT_ID,
+      value: 9977,
+      valueDecimals: 2,
+      tag1: "uptime",
+      tag2: "",
+    };
+
+    await actionProvider.giveFeedback(mockWallet, args);
+
+    expect(mockSdk.giveFeedback).toHaveBeenCalledWith(
+      "84532:123",
+      "99.77",
+      "uptime",
+      "",
+      undefined,
+      undefined,
+    );
+  });
+
+  it("should pass comment as feedbackFile", async () => {
+    const args = {
+      agentId: MOCK_AGENT_ID,
+      value: 85,
+      valueDecimals: 0,
+      tag1: "",
+      tag2: "",
+      comment: "Great agent!",
+    };
+
+    await actionProvider.giveFeedback(mockWallet, args);
+
+    expect(mockSdk.giveFeedback).toHaveBeenCalledWith("84532:123", "85", "", "", undefined, {
+      comment: "Great agent!",
+    });
+  });
+
+  it("should successfully submit feedback without Pinata JWT when no comment", async () => {
     const providerWithoutJwt = erc8004ReputationActionProvider();
 
     const args = {
@@ -363,13 +399,12 @@ describe("Give Feedback Action", () => {
 
     const response = await providerWithoutJwt.giveFeedback(mockWallet, args);
 
-    expect(response).toContain("PINATA_JWT is required");
-    expect(mockWallet.sendTransaction).not.toHaveBeenCalled();
+    expect(response).toContain("Feedback submitted successfully!");
+    expect(mockSdk.giveFeedback).toHaveBeenCalled();
   });
 
-  it("should handle error when IPFS upload fails", async () => {
-    mockWallet.readContract.mockResolvedValue("0xdifferentowner1234567890123456789012345678");
-    uploadFeedbackSpy.mockRejectedValue(new Error("IPFS upload failed"));
+  it("should reject self-feedback", async () => {
+    mockSdk.isAgentOwner.mockResolvedValue(true);
 
     const args = {
       agentId: MOCK_AGENT_ID,
@@ -381,13 +416,12 @@ describe("Give Feedback Action", () => {
 
     const response = await actionProvider.giveFeedback(mockWallet, args);
 
-    expect(response).toContain("Error giving feedback");
-    expect(response).toContain("IPFS upload failed");
+    expect(response).toContain("You cannot give feedback to your own agent");
+    expect(mockSdk.giveFeedback).not.toHaveBeenCalled();
   });
 
-  it("should handle error when transaction fails", async () => {
-    mockWallet.readContract.mockResolvedValue("0xdifferentowner1234567890123456789012345678");
-    mockWallet.sendTransaction.mockRejectedValue(new Error("Transaction failed"));
+  it("should handle error when SDK giveFeedback fails", async () => {
+    mockSdk.giveFeedback.mockRejectedValue(new Error("Transaction failed"));
 
     const args = {
       agentId: MOCK_AGENT_ID,
@@ -407,11 +441,11 @@ describe("Give Feedback Action", () => {
 describe("Revoke Feedback Action", () => {
   let mockWallet: jest.Mocked<EvmWalletProvider>;
   let actionProvider: ERC8004ReputationActionProvider;
+  let mockSdk: { revokeFeedback: jest.Mock };
+  let getAgent0SDKSpy: jest.SpyInstance;
 
   beforeEach(() => {
     mockWallet = {
-      sendTransaction: jest.fn(),
-      waitForTransactionReceipt: jest.fn(),
       getName: jest.fn().mockReturnValue("evm_wallet_provider"),
       getNetwork: jest.fn().mockReturnValue({
         protocolFamily: "evm",
@@ -419,13 +453,19 @@ describe("Revoke Feedback Action", () => {
       }),
     } as unknown as jest.Mocked<EvmWalletProvider>;
 
+    mockSdk = {
+      revokeFeedback: jest.fn().mockResolvedValue(mockTxHandle(TRANSACTION_HASH)),
+    };
+
+    getAgent0SDKSpy = jest.spyOn(utils, "getAgent0SDK").mockReturnValue(mockSdk as never);
     actionProvider = erc8004ReputationActionProvider();
   });
 
-  it("should successfully revoke feedback", async () => {
-    mockWallet.sendTransaction.mockResolvedValue(TRANSACTION_HASH);
-    mockWallet.waitForTransactionReceipt.mockResolvedValue({});
+  afterEach(() => {
+    getAgent0SDKSpy.mockRestore();
+  });
 
+  it("should successfully revoke feedback", async () => {
     const args = {
       agentId: MOCK_AGENT_ID,
       feedbackIndex: MOCK_FEEDBACK_INDEX,
@@ -433,8 +473,7 @@ describe("Revoke Feedback Action", () => {
 
     const response = await actionProvider.revokeFeedback(mockWallet, args);
 
-    expect(mockWallet.sendTransaction).toHaveBeenCalled();
-    expect(mockWallet.waitForTransactionReceipt).toHaveBeenCalledWith(TRANSACTION_HASH);
+    expect(mockSdk.revokeFeedback).toHaveBeenCalledWith("84532:123", 0);
     expect(response).toContain("Feedback revoked successfully!");
     expect(response).toContain(MOCK_AGENT_ID);
     expect(response).toContain(MOCK_FEEDBACK_INDEX);
@@ -442,7 +481,7 @@ describe("Revoke Feedback Action", () => {
   });
 
   it("should handle error when revoking feedback fails", async () => {
-    mockWallet.sendTransaction.mockRejectedValue(new Error("Transaction failed"));
+    mockSdk.revokeFeedback.mockRejectedValue(new Error("Transaction failed"));
 
     const args = {
       agentId: MOCK_AGENT_ID,
@@ -458,11 +497,11 @@ describe("Revoke Feedback Action", () => {
 describe("Append Response Action", () => {
   let mockWallet: jest.Mocked<EvmWalletProvider>;
   let actionProvider: ERC8004ReputationActionProvider;
+  let mockSdk: { appendResponse: jest.Mock };
+  let getAgent0SDKSpy: jest.SpyInstance;
 
   beforeEach(() => {
     mockWallet = {
-      sendTransaction: jest.fn(),
-      waitForTransactionReceipt: jest.fn(),
       getName: jest.fn().mockReturnValue("evm_wallet_provider"),
       getNetwork: jest.fn().mockReturnValue({
         protocolFamily: "evm",
@@ -470,13 +509,19 @@ describe("Append Response Action", () => {
       }),
     } as unknown as jest.Mocked<EvmWalletProvider>;
 
+    mockSdk = {
+      appendResponse: jest.fn().mockResolvedValue(mockTxHandle(TRANSACTION_HASH)),
+    };
+
+    getAgent0SDKSpy = jest.spyOn(utils, "getAgent0SDK").mockReturnValue(mockSdk as never);
     actionProvider = erc8004ReputationActionProvider();
   });
 
-  it("should successfully append response", async () => {
-    mockWallet.sendTransaction.mockResolvedValue(TRANSACTION_HASH);
-    mockWallet.waitForTransactionReceipt.mockResolvedValue({});
+  afterEach(() => {
+    getAgent0SDKSpy.mockRestore();
+  });
 
+  it("should successfully append response", async () => {
     const args = {
       agentId: MOCK_AGENT_ID,
       clientAddress: MOCK_CLIENT_ADDRESS,
@@ -486,8 +531,11 @@ describe("Append Response Action", () => {
 
     const response = await actionProvider.appendResponse(mockWallet, args);
 
-    expect(mockWallet.sendTransaction).toHaveBeenCalled();
-    expect(mockWallet.waitForTransactionReceipt).toHaveBeenCalledWith(TRANSACTION_HASH);
+    const zeroHash = "0x" + "00".repeat(32);
+    expect(mockSdk.appendResponse).toHaveBeenCalledWith("84532:123", MOCK_CLIENT_ADDRESS, 0, {
+      uri: "ipfs://QmResponse",
+      hash: zeroHash,
+    });
     expect(response).toContain("Response appended successfully!");
     expect(response).toContain(MOCK_AGENT_ID);
     expect(response).toContain(MOCK_CLIENT_ADDRESS);
@@ -496,7 +544,7 @@ describe("Append Response Action", () => {
   });
 
   it("should handle error when appending response fails", async () => {
-    mockWallet.sendTransaction.mockRejectedValue(new Error("Transaction failed"));
+    mockSdk.appendResponse.mockRejectedValue(new Error("Transaction failed"));
 
     const args = {
       agentId: MOCK_AGENT_ID,
@@ -677,7 +725,7 @@ describe("supportsNetwork", () => {
     expect(
       actionProvider.supportsNetwork({
         protocolFamily: "evm",
-        networkId: "polygon-mainnet",
+        networkId: "arbitrum-mainnet",
       }),
     ).toBe(false);
   });

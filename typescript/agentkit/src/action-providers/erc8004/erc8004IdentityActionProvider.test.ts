@@ -11,6 +11,51 @@ import {
 import { EvmWalletProvider } from "../../wallet-providers";
 import { getAgent0SDK } from "./utils";
 
+// Configurable reject reason for updateAgentMetadata Agent mock (set in tests before calling)
+let updateAgentMockRejectReason: string | null = null;
+
+// Mock agent0-sdk (ESM-only) before loading the identity provider
+jest.mock("agent0-sdk", () => {
+  /** Mock Agent class simulating agent0-sdk Agent behavior for tests. */
+  const MockAgent = class {
+    updateInfo = jest.fn();
+    getRegistrationFile = jest.fn(() => this.regFile);
+    registerIPFS = jest.fn().mockImplementation(() => {
+      if (updateAgentMockRejectReason) {
+        return Promise.reject(new Error(updateAgentMockRejectReason));
+      }
+      return Promise.resolve({
+        hash: "0xhash",
+        waitMined: () => Promise.resolve({ result: { agentURI: "ipfs://Qm" } }),
+      });
+    });
+    setAgentURI = jest.fn().mockImplementation(() => {
+      if (updateAgentMockRejectReason) {
+        return Promise.reject(new Error(updateAgentMockRejectReason));
+      }
+      return Promise.resolve({
+        hash: "0xhash",
+        waitMined: () => Promise.resolve({}),
+      });
+    });
+
+    /**
+     * Creates a new MockAgent instance.
+     *
+     * @param _sdk - The SDK instance (unused).
+     * @param regFile - The registration file object.
+     */
+    constructor(
+      _sdk: unknown,
+      private regFile: Record<string, unknown>,
+    ) {}
+  };
+  return {
+    Agent: MockAgent,
+    IDENTITY_REGISTRY_ABI: [],
+  };
+});
+
 const MOCK_AGENT_ID = "123";
 const MOCK_ADDRESS = "0x1234567890123456789012345678901234567890";
 const _MOCK_URI = "ipfs://QmTest123456789";
@@ -238,6 +283,7 @@ describe("Identity Schema Validation", () => {
 
 describe("Register Agent Action", () => {
   let mockWallet: jest.Mocked<EvmWalletProvider>;
+  const { mockAgent, mockSdk } = createRegisterAgentMocks();
 
   beforeEach(() => {
     mockWallet = {
@@ -250,6 +296,11 @@ describe("Register Agent Action", () => {
       }),
       getAddress: jest.fn().mockReturnValue(MOCK_ADDRESS),
     } as unknown as jest.Mocked<EvmWalletProvider>;
+
+    mockGetAgent0SDK.mockImplementation((_w, jwt) => {
+      if (!jwt) throw new Error("PINATA_JWT is required");
+      return mockSdk as never;
+    });
   });
 
   it("should fail without Pinata JWT", async () => {
@@ -261,18 +312,25 @@ describe("Register Agent Action", () => {
   });
 
   it("should handle error when registration fails", async () => {
+    mockAgent.registerIPFS.mockRejectedValueOnce(new Error("Transaction failed"));
+
     const actionProvider = erc8004IdentityActionProvider({ pinataJwt: "test-jwt" });
-    mockWallet.sendTransaction.mockRejectedValue(new Error("Transaction failed"));
 
     const response = await actionProvider.registerAgent(mockWallet, {});
 
-    expect(mockWallet.sendTransaction).toHaveBeenCalled();
+    expect(mockSdk.createAgent).toHaveBeenCalled();
     expect(response).toContain("Error during registration");
   });
 });
 
 describe("Update Agent Metadata Action", () => {
   let mockWallet: jest.Mocked<EvmWalletProvider>;
+  const mockUpdateSdk = {
+    loadAgent: jest.fn().mockRejectedValue(new Error("loadAgent fails for data URIs")),
+    identityRegistryAddress: jest
+      .fn()
+      .mockReturnValue("0x1234567890123456789012345678901234567890"),
+  };
 
   beforeEach(() => {
     mockWallet = {
@@ -285,6 +343,12 @@ describe("Update Agent Metadata Action", () => {
         networkId: "base-sepolia",
       }),
     } as unknown as jest.Mocked<EvmWalletProvider>;
+
+    updateAgentMockRejectReason = null;
+    mockGetAgent0SDK.mockImplementation((_w, jwt) => {
+      if (!jwt) throw new Error("PINATA_JWT is required");
+      return mockUpdateSdk as never;
+    });
   });
 
   it("should fail without Pinata JWT", async () => {
@@ -301,8 +365,10 @@ describe("Update Agent Metadata Action", () => {
   });
 
   it("should fail when agent has no URI set", async () => {
-    const actionProvider = erc8004IdentityActionProvider({ pinataJwt: "test-jwt" });
+    updateAgentMockRejectReason = "Agent has no registration URI set";
     mockWallet.readContract.mockResolvedValue(null);
+
+    const actionProvider = erc8004IdentityActionProvider({ pinataJwt: "test-jwt" });
 
     const args = {
       agentId: MOCK_AGENT_ID,
@@ -315,8 +381,9 @@ describe("Update Agent Metadata Action", () => {
   });
 
   it("should handle error when updating metadata fails", async () => {
-    const actionProvider = erc8004IdentityActionProvider({ pinataJwt: "test-jwt" });
     mockWallet.readContract.mockRejectedValue(new Error("Read failed"));
+
+    const actionProvider = erc8004IdentityActionProvider({ pinataJwt: "test-jwt" });
 
     const args = {
       agentId: MOCK_AGENT_ID,
@@ -330,15 +397,56 @@ describe("Update Agent Metadata Action", () => {
 });
 
 // Mock the utils module (avoid loading real utils which imports the ESM-only agent0-sdk)
-jest.mock("./utils", () => ({
-  getAgent0SDK: jest.fn(),
-  uploadJsonToIPFS: jest.fn(),
-  uploadFileToIPFS: jest.fn(),
-  ipfsToHttpUrl: jest.fn((uri: string) => uri),
-  formatCAIP10Address: jest.fn(),
-}));
+jest.mock("./utils", () => {
+  const { Agent } = jest.requireMock("agent0-sdk");
+  return {
+    getAgent0SDK: jest.fn(),
+    ipfsToHttpUrl: jest.fn((uri: string) => uri),
+    loadOrHydrateAgent: jest
+      .fn()
+      .mockImplementation(
+        async (
+          sdk: { loadAgent: (id: string) => Promise<unknown> },
+          walletProvider: { readContract: (args: unknown) => Promise<unknown> },
+          fullAgentId: string,
+        ) => {
+          try {
+            return await sdk.loadAgent(fullAgentId);
+          } catch {
+            // fall through to readContract path
+          }
+          await walletProvider.readContract({});
+          return new Agent(null, {});
+        },
+      ),
+  };
+});
 
 const mockGetAgent0SDK = getAgent0SDK as jest.MockedFunction<typeof getAgent0SDK>;
+
+/**
+ * Creates mock agent and SDK objects for use in registerAgent tests.
+ *
+ * @returns An object containing mockAgent and mockSdk.
+ */
+function createRegisterAgentMocks() {
+  const mockHandle = {
+    hash: "0xhash",
+    waitMined: jest.fn().mockResolvedValue({
+      result: { agentId: "84532:1", agentURI: "ipfs://Qm", name: "Agent" },
+    }),
+  };
+  const mockAgent = {
+    registerIPFS: jest.fn().mockResolvedValue(mockHandle),
+    registerHTTP: jest.fn().mockResolvedValue(mockHandle),
+    setAgentURI: jest.fn().mockResolvedValue(mockHandle),
+    getRegistrationFile: jest.fn(() => ({ name: "Agent", description: "" })),
+  };
+  const mockSdk = {
+    createAgent: jest.fn().mockReturnValue(mockAgent),
+  };
+  return { mockAgent, mockSdk };
+}
 
 describe("Search Agents Action", () => {
   let mockWallet: jest.Mocked<EvmWalletProvider>;
@@ -550,7 +658,7 @@ describe("supportsNetwork", () => {
     expect(
       actionProvider.supportsNetwork({
         protocolFamily: "evm",
-        networkId: "polygon-mainnet",
+        networkId: "arbitrum-mainnet",
       }),
     ).toBe(false);
   });
