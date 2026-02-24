@@ -10,6 +10,8 @@ import {
   CdpSolanaWalletProvider,
   splActionProvider,
   x402ActionProvider,
+  erc8004IdentityActionProvider,
+  erc8004ReputationActionProvider,
 } from "@coinbase/agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
@@ -136,6 +138,8 @@ async function initializeAgent() {
             erc20ActionProvider(),
             erc721ActionProvider(),
             x402ActionProvider(x402Config),
+            erc8004IdentityActionProvider({ pinataJwt: process.env.PINATA_JWT }),
+            erc8004ReputationActionProvider({ pinataJwt: process.env.PINATA_JWT }),
           ]
         : isSolanaWalletProvider(walletProvider)
           ? [splActionProvider(), x402ActionProvider(x402Config)]
