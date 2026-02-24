@@ -76,7 +76,10 @@ export const SearchAgentsSchema = z
     a2aSkills: z.array(z.string()).optional().describe("Filter by A2A skills"),
     oasfSkills: z.array(z.string()).optional().describe("Filter by OASF skill taxonomy"),
     oasfDomains: z.array(z.string()).optional().describe("Filter by OASF domain taxonomy"),
-    active: z.boolean().optional().describe("Filter by active status (true=active only, false=inactive only, omit=all)"),
+    active: z
+      .boolean()
+      .optional()
+      .describe("Filter by active status (true=active only, false=inactive only, omit=all)"),
     x402support: z.boolean().optional().describe("Filter by x402 payment support"),
     minReputation: z.number().optional().describe("Minimum average reputation score"),
     maxReputation: z.number().optional().describe("Maximum average reputation score"),

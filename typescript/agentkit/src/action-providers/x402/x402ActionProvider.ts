@@ -849,7 +849,22 @@ These are the only services that can be called using make_http_request or make_h
     const client = new x402Client();
 
     if (walletProvider instanceof EvmWalletProvider) {
-      const signer = walletProvider.toSigner();
+      const account = walletProvider.toSigner();
+      const signer = {
+        ...account,
+        readContract: (args: {
+          address: `0x${string}`;
+          abi: readonly unknown[];
+          functionName: string;
+          args?: readonly unknown[];
+        }) =>
+          walletProvider.readContract({
+            address: args.address,
+            abi: args.abi as never,
+            functionName: args.functionName as never,
+            args: args.args as never,
+          }),
+      };
       registerExactEvmScheme(client, { signer });
     } else if (walletProvider instanceof SvmWalletProvider) {
       const signer = await walletProvider.toSigner();

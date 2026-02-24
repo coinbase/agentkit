@@ -12,6 +12,15 @@ import { EvmWalletProvider } from "../../wallet-providers";
 import * as utilsRep from "./utils_rep";
 import * as utils from "./utils";
 
+// Mock utils to avoid loading the ESM-only agent0-sdk at module load time
+jest.mock("./utils", () => ({
+  getAgent0SDK: jest.fn(),
+  uploadJsonToIPFS: jest.fn(),
+  uploadFileToIPFS: jest.fn(),
+  ipfsToHttpUrl: jest.fn((uri: string) => uri),
+  formatCAIP10Address: jest.fn(),
+}));
+
 const MOCK_AGENT_ID = "123";
 const MOCK_ADDRESS = "0x1234567890123456789012345678901234567890";
 const MOCK_CLIENT_ADDRESS = "0x9876543210987654321098765432109876543210";

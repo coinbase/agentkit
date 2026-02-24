@@ -329,10 +329,13 @@ describe("Update Agent Metadata Action", () => {
   });
 });
 
-// Mock the utils module
+// Mock the utils module (avoid loading real utils which imports the ESM-only agent0-sdk)
 jest.mock("./utils", () => ({
-  ...jest.requireActual("./utils"),
   getAgent0SDK: jest.fn(),
+  uploadJsonToIPFS: jest.fn(),
+  uploadFileToIPFS: jest.fn(),
+  ipfsToHttpUrl: jest.fn((uri: string) => uri),
+  formatCAIP10Address: jest.fn(),
 }));
 
 const mockGetAgent0SDK = getAgent0SDK as jest.MockedFunction<typeof getAgent0SDK>;
@@ -363,18 +366,15 @@ describe("Search Agents Action", () => {
   });
 
   it("should successfully search agents with no filters", async () => {
-    mockSdk.searchAgents.mockResolvedValue({
-      items: [
-        {
-          agentId: "123",
-          name: "Test Agent",
-          description: "A test agent",
-          mcpTools: ["code_generation"],
-          active: true,
-        },
-      ],
-      nextCursor: undefined,
-    });
+    mockSdk.searchAgents.mockResolvedValue([
+      {
+        agentId: "123",
+        name: "Test Agent",
+        description: "A test agent",
+        mcpTools: ["code_generation"],
+        active: true,
+      },
+    ]);
 
     const response = await actionProvider.searchAgents(mockWallet, {});
 
@@ -384,36 +384,25 @@ describe("Search Agents Action", () => {
   });
 
   it("should return no agents message when none found", async () => {
-    mockSdk.searchAgents.mockResolvedValue({
-      items: [],
-      nextCursor: undefined,
-    });
+    mockSdk.searchAgents.mockResolvedValue([]);
 
     const response = await actionProvider.searchAgents(mockWallet, {});
 
     expect(response).toContain("No agents found");
   });
 
-  it("should paginate through SDK results and return limited results", async () => {
-    // First SDK call returns 2 items with a cursor
-    mockSdk.searchAgents
-      .mockResolvedValueOnce({
-        items: [
-          { agentId: "1", name: "Agent 1" },
-          { agentId: "2", name: "Agent 2" },
-        ],
-        nextCursor: "cursor1",
-      })
-      // Second SDK call returns 1 more item, no more cursor
-      .mockResolvedValueOnce({
-        items: [{ agentId: "3", name: "Agent 3" }],
-        nextCursor: undefined,
-      });
+  it("should return limited results using action-level pagination", async () => {
+    // SDK now returns all results in a single call (no cursor-based pagination in 1.5.x)
+    mockSdk.searchAgents.mockResolvedValue([
+      { agentId: "1", name: "Agent 1" },
+      { agentId: "2", name: "Agent 2" },
+      { agentId: "3", name: "Agent 3" },
+    ]);
 
     // Request with limit=2, should show first 2 of 3 total
     const response = await actionProvider.searchAgents(mockWallet, { limit: 2 });
 
-    expect(mockSdk.searchAgents).toHaveBeenCalledTimes(2);
+    expect(mockSdk.searchAgents).toHaveBeenCalledTimes(1);
     expect(response).toContain("Found 3 agent(s) total");
     expect(response).toContain("showing 1-2");
     expect(response).toContain("Agent 1");
@@ -423,44 +412,24 @@ describe("Search Agents Action", () => {
     expect(response).toContain("offset: 2");
   });
 
-  it("should filter by name after fetching all SDK pages", async () => {
-    // SDK returns multiple pages, but only one agent matches the name filter
-    mockSdk.searchAgents
-      .mockResolvedValueOnce({
-        items: [
-          { agentId: "1", name: "Other Agent" },
-          { agentId: "2", name: "myAwesomeAgent" },
-        ],
-        nextCursor: "cursor1",
-      })
-      .mockResolvedValueOnce({
-        items: [{ agentId: "3", name: "Another Agent" }],
-        nextCursor: undefined,
-      });
+  it("should pass name filter to SDK and return matching agents", async () => {
+    // SDK handles name filtering server-side in 1.5.x; single call, returns matching agents
+    mockSdk.searchAgents.mockResolvedValue([{ agentId: "2", name: "myAwesomeAgent" }]);
 
     const response = await actionProvider.searchAgents(mockWallet, { name: "awesome" });
 
-    expect(mockSdk.searchAgents).toHaveBeenCalledTimes(2);
-    // Name filter should NOT be passed to SDK (we filter ourselves)
-    expect(mockSdk.searchAgents).toHaveBeenCalledWith(
-      expect.not.objectContaining({ name: "awesome" }),
-      expect.anything(),
-    );
+    expect(mockSdk.searchAgents).toHaveBeenCalledTimes(1);
+    expect(mockSdk.searchAgents).toHaveBeenCalledWith(expect.objectContaining({ name: "awesome" }));
     expect(response).toContain("Found 1 agent(s) total");
     expect(response).toContain("myAwesomeAgent");
-    expect(response).not.toContain("Other Agent");
-    expect(response).not.toContain("Another Agent");
   });
 
   it("should support offset for pagination", async () => {
-    mockSdk.searchAgents.mockResolvedValue({
-      items: [
-        { agentId: "1", name: "Agent 1" },
-        { agentId: "2", name: "Agent 2" },
-        { agentId: "3", name: "Agent 3" },
-      ],
-      nextCursor: undefined,
-    });
+    mockSdk.searchAgents.mockResolvedValue([
+      { agentId: "1", name: "Agent 1" },
+      { agentId: "2", name: "Agent 2" },
+      { agentId: "3", name: "Agent 3" },
+    ]);
 
     // Request with offset=1, limit=1
     const response = await actionProvider.searchAgents(mockWallet, { offset: 1, limit: 1 });

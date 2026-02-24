@@ -263,20 +263,14 @@ Supports pagination.
       const sdk = getAgent0SDK(walletProvider);
 
       // Search for agents owned by the specified wallet
-      const result = await sdk.searchAgents(
-        { owners: [walletAddress] },
-        {
-          pageSize: args.pageSize ?? 50,
-          cursor: args.cursor,
-        },
-      );
+      const result = await sdk.searchAgents({ owners: [walletAddress] });
 
-      if (result.items.length === 0) {
+      if (result.length === 0) {
         return `No agents found owned by ${walletAddress} on chain ${chainId}.`;
       }
 
       // Format the response
-      const agentList = result.items
+      const agentList = result
         .map(agent => {
           const name = agent.name || "Unnamed";
           const description = agent.description ? ` - ${agent.description.slice(0, 50)}...` : "";
@@ -284,13 +278,7 @@ Supports pagination.
         })
         .join("\n\n");
 
-      let response = `Found ${result.items.length} agent(s) owned by ${walletAddress}:\n\n${agentList}`;
-
-      if (result.nextCursor) {
-        response += `\n\n(More results available. Use cursor: "${result.nextCursor}" to fetch next page)`;
-      }
-
-      return response;
+      return `Found ${result.length} agent(s) owned by ${walletAddress}:\n\n${agentList}`;
     } catch (error) {
       return `Error retrieving owned agents: ${error}`;
     }
@@ -335,16 +323,6 @@ This is a read-only operation using indexed data for fast queries.
       const sdk = getAgent0SDK(walletProvider);
 
       console.log("args", args);
-      // Fetch all matching agents by paginating through the SDK
-      const allAgents: Array<{
-        agentId: string;
-        name: string;
-        description?: string;
-        mcpTools?: string[];
-        a2aSkills?: string[];
-        active?: boolean;
-      }> = [];
-
       const searchFilters = {
         name: args.name,
         mcpTools: args.mcpTools,
@@ -353,22 +331,7 @@ This is a read-only operation using indexed data for fast queries.
         x402support: args.x402support,
       };
 
-      // Paginate through all SDK results
-      let sdkCursor: string | undefined;
-      const sdkPageSize = 50; // SDK default
-      const maxPages = 20; // Safety limit to prevent infinite loops
-      let pageCount = 0;
-
-      do {
-        const searchResult = await sdk.searchAgents(searchFilters, {
-          pageSize: sdkPageSize,
-          cursor: sdkCursor,
-        });
-
-        allAgents.push(...searchResult.items);
-        sdkCursor = searchResult.nextCursor;
-        pageCount++;
-      } while (sdkCursor && pageCount < maxPages);
+      const allAgents = await sdk.searchAgents(searchFilters);
 
       if (allAgents.length === 0) {
         return "No agents found matching the specified criteria.";
