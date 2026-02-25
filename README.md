@@ -138,13 +138,13 @@ AgentKit is organized as two monorepos, one for Python and one for Typescript, e
 agentkit/
 ├── typescript/
 │   ├── agentkit/
+|   |   └── scripts/generate-action-provider/ # use this to create new actions
 │   │   └── src/
 │   │       ├── action-providers/ # find 50+ actions in here
 │   │       └── wallet-providers/
 │   │           ├── cdp/
 │   │           ├── privy/
 │   │           └── viem/
-│   │       └── scripts/generate-action-provider/ # use this to create new actions
 │   ├── create-onchain-agent/
 │   ├── framework-extensions/
 │   │   ├── langchain/
