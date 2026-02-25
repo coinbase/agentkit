@@ -3,7 +3,7 @@ import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
 import { GetSwapPriceSchema, ExecuteSwapSchema } from "./schemas";
-import { EvmWalletProvider, LegacyCdpWalletProvider } from "../../wallet-providers";
+import { EvmWalletProvider } from "../../wallet-providers";
 import {
   erc20Abi,
   formatUnits,
@@ -329,19 +329,9 @@ Important notes:
       let signature: Hex | undefined;
       if (quoteData.permit2?.eip712) {
         try {
-          // For LegacyCdpWalletProvider, remove EIP712Domain to avoid ambiguous primary types
-          const types =
-            walletProvider instanceof LegacyCdpWalletProvider
-              ? (() => {
-                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                  const { EIP712Domain, ...rest } = quoteData.permit2.eip712.types;
-                  return rest;
-                })()
-              : quoteData.permit2.eip712.types;
-
           const typedData = {
             domain: quoteData.permit2.eip712.domain,
-            types,
+            types: quoteData.permit2.eip712.types,
             primaryType: quoteData.permit2.eip712.primaryType,
             message: quoteData.permit2.eip712.message,
           } as const;

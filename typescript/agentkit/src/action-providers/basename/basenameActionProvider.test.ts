@@ -12,7 +12,6 @@ import {
 } from "./constants";
 import { RegisterBasenameSchema } from "./schemas";
 import { EvmWalletProvider } from "../../wallet-providers";
-import { Coinbase } from "@coinbase/coinbase-sdk";
 
 const MOCK_AMOUNT = "0.123";
 const MOCK_BASENAME = "test-basename";
@@ -42,7 +41,7 @@ describe("Register Basename Action", () => {
   /**
    * This is the default network.
    */
-  const NETWORK_ID = Coinbase.networks.BaseMainnet;
+  const NETWORK_ID = "base-mainnet";
 
   /**
    * This is a 40 character hexadecimal string that requires lowercase alpha characters.
@@ -65,7 +64,7 @@ describe("Register Basename Action", () => {
     mockWallet.waitForTransactionReceipt.mockResolvedValue({});
   });
 
-  it(`should Successfully respond with ${MOCK_BASENAME}.base.eth for network: ${Coinbase.networks.BaseMainnet}`, async () => {
+  it(`should Successfully respond with ${MOCK_BASENAME}.base.eth for network: base-mainnet`, async () => {
     const args = {
       amount: MOCK_AMOUNT,
       basename: MOCK_BASENAME,
@@ -75,7 +74,7 @@ describe("Register Basename Action", () => {
 
     mockWallet.getNetwork.mockReturnValue({
       protocolFamily: "evm",
-      networkId: Coinbase.networks.BaseMainnet,
+      networkId: "base-mainnet",
     });
 
     const response = await actionProvider.register(mockWallet, args);

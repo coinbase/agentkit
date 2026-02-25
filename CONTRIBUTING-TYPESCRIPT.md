@@ -202,8 +202,6 @@ EVM:
 
 - [CdpEvmWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/cdpEvmWalletProvider.ts)
 - [CdpSmartWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/cdpSmartWalletProvider.ts)
-- [LegacyCdpWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/legacyCdpWalletProvider.ts)
-- [LegacyCdpSmartWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/legacyCdpSmartWalletProvider.ts)
 - [ViemWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/viemWalletProvider.ts)
 - [ZeroDevWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/zeroDevWalletProvider.ts)
 - [PrivyEvmWalletProvider](https://github.com/coinbase/agentkit/blob/master/typescript/agentkit/src/wallet-providers/privyEvmWalletProvider.ts)

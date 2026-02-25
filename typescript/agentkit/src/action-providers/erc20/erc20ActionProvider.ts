@@ -9,14 +9,10 @@ import {
   ApproveSchema,
   AllowanceSchema,
 } from "./schemas";
-import {
-  BaseTokenToAssetId,
-  BaseSepoliaTokenToAssetId,
-  TOKEN_ADDRESSES_BY_SYMBOLS,
-} from "./constants";
+import { TOKEN_ADDRESSES_BY_SYMBOLS } from "./constants";
 import { getTokenDetails } from "./utils";
 import { encodeFunctionData, Hex, getAddress, erc20Abi, parseUnits, formatUnits } from "viem";
-import { EvmWalletProvider, LegacyCdpWalletProvider } from "../../wallet-providers";
+import { EvmWalletProvider } from "../../wallet-providers";
 
 /**
  * ERC20ActionProvider is an action provider for ERC20 tokens.
@@ -89,7 +85,6 @@ Important notes:
   ): Promise<string> {
     try {
       // Check token details
-      const tokenAddress = getAddress(args.tokenAddress);
       const tokenDetails = await getTokenDetails(walletProvider, args.tokenAddress);
       if (!tokenDetails) {
         return `Error: Could not fetch token details for ${args.tokenAddress}. Please verify the token address is correct.`;
@@ -122,35 +117,6 @@ Important notes:
         // If contract but not an ERC20 token (e.g a smart wallet), allow the transfer
       }
 
-      // Check if we can do gasless transfer
-      const isLegacyCdpWallet = walletProvider.getName() === "legacy_cdp_wallet_provider";
-      const network = walletProvider.getNetwork();
-      const canDoGasless =
-        isLegacyCdpWallet &&
-        ((network.networkId === "base-mainnet" && BaseTokenToAssetId.has(tokenAddress)) ||
-          (network.networkId === "base-sepolia" && BaseSepoliaTokenToAssetId.has(tokenAddress)));
-
-      if (canDoGasless) {
-        // Cast to LegacyCdpWalletProvider to access erc20Transfer
-        const cdpWallet = walletProvider as LegacyCdpWalletProvider;
-        const assetId =
-          network.networkId === "base-mainnet"
-            ? BaseTokenToAssetId.get(tokenAddress)!
-            : BaseSepoliaTokenToAssetId.get(tokenAddress)!;
-        const hash = await cdpWallet.gaslessERC20Transfer(
-          assetId,
-          args.destinationAddress as Hex,
-          BigInt(args.amount),
-        );
-
-        await walletProvider.waitForTransactionReceipt(hash);
-
-        return `Transferred ${args.amount} of ${args.tokenAddress} to ${
-          args.destinationAddress
-        } using gasless transfer.\nTransaction hash: ${hash}`;
-      }
-
-      // Fallback to regular transfer
       const hash = await walletProvider.sendTransaction({
         to: args.tokenAddress as Hex,
         data: encodeFunctionData({

@@ -52,7 +52,7 @@ pnpm build
 
 This will install the dependencies and build the packages locally. The chatbot example uses the local `@coinbase/agentkit-langchain` and `@coinbase/agentkit` packages. If you make changes to the packages, you can run `pnpm build` from root again to rebuild the packages, and your changes will be reflected in the chatbot example.
 
-Now from the `typescript/examples/langchain-cdp-v2-chatbot` directory, run:
+Now from the `typescript/examples/langchain-cdp-chatbot` directory, run:
 
 ```bash
 pnpm start
@@ -62,4 +62,4 @@ Select "1. chat mode" and start telling your Agent to do things onchain!
 
 ## License
 
-Apache-2.0
+[Apache-2.0](../../../LICENSE.md)
