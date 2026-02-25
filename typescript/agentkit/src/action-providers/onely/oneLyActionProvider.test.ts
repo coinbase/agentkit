@@ -12,7 +12,6 @@ describe("OneLyActionProvider", () => {
     it("should accept custom config", () => {
       const customProvider = oneLyActionProvider({
         apiKey: "test-key",
-        apiBase: "https://test.1ly.store",
       });
       expect(customProvider.name).toBe("onely");
     });
@@ -23,23 +22,17 @@ describe("OneLyActionProvider", () => {
       expect(provider.supportsNetwork({ networkId: "base-mainnet" } as any)).toBe(true);
     });
 
-    it("should support base-sepolia", () => {
-      expect(provider.supportsNetwork({ networkId: "base-sepolia" } as any)).toBe(true);
-    });
-
     it("should support solana-mainnet", () => {
       expect(provider.supportsNetwork({ networkId: "solana-mainnet" } as any)).toBe(true);
     });
 
-    it("should support solana-devnet", () => {
-      expect(provider.supportsNetwork({ networkId: "solana-devnet" } as any)).toBe(true);
+    it("should not support testnets", () => {
+      expect(provider.supportsNetwork({ networkId: "base-sepolia" } as any)).toBe(false);
+      expect(provider.supportsNetwork({ networkId: "solana-devnet" } as any)).toBe(false);
     });
 
-    it("should not support ethereum-mainnet", () => {
+    it("should not support other networks", () => {
       expect(provider.supportsNetwork({ networkId: "ethereum-mainnet" } as any)).toBe(false);
-    });
-
-    it("should not support arbitrum-mainnet", () => {
       expect(provider.supportsNetwork({ networkId: "arbitrum-mainnet" } as any)).toBe(false);
     });
   });
@@ -54,19 +47,19 @@ describe("OneLyActionProvider", () => {
 
     it("should include buyer actions", () => {
       const actionNames = provider.getActions(mockWalletProvider).map((a) => a.name);
-      expect(actionNames).toContain("onely_search");
-      expect(actionNames).toContain("onely_get_details");
-      expect(actionNames).toContain("onely_call");
-      expect(actionNames).toContain("onely_review");
+      expect(actionNames).toContain("OneLyActionProvider_onely_search");
+      expect(actionNames).toContain("OneLyActionProvider_onely_get_details");
+      expect(actionNames).toContain("OneLyActionProvider_onely_call");
+      expect(actionNames).toContain("OneLyActionProvider_onely_review");
     });
 
     it("should include seller actions", () => {
       const actionNames = provider.getActions(mockWalletProvider).map((a) => a.name);
-      expect(actionNames).toContain("onely_create_store");
-      expect(actionNames).toContain("onely_create_link");
-      expect(actionNames).toContain("onely_list_links");
-      expect(actionNames).toContain("onely_get_stats");
-      expect(actionNames).toContain("onely_withdraw");
+      expect(actionNames).toContain("OneLyActionProvider_onely_create_store");
+      expect(actionNames).toContain("OneLyActionProvider_onely_create_link");
+      expect(actionNames).toContain("OneLyActionProvider_onely_list_links");
+      expect(actionNames).toContain("OneLyActionProvider_onely_get_stats");
+      expect(actionNames).toContain("OneLyActionProvider_onely_withdraw");
     });
   });
 

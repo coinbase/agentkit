@@ -30,7 +30,7 @@ import { registerExactSvmScheme } from "@x402/svm/exact/client";
  * - SELLER ACTIONS: Create store, list APIs, view earnings, withdraw funds
  *
  * Production stats (Feb 2026): 5,297 stores, 53 APIs, 143 purchases, 5.3K users
- * Networks: Base (mainnet/sepolia) and Solana (mainnet/devnet)
+ * Networks: Base mainnet and Solana mainnet only (no testnets)
  * Payment: USDC via x402 protocol
  *
  * @example
@@ -43,19 +43,16 @@ import { registerExactSvmScheme } from "@x402/svm/exact/client";
  * ```
  */
 export class OneLyActionProvider extends ActionProvider<WalletProvider> {
-  private readonly config: Required<OneLyConfig>;
+  private readonly apiKey: string;
 
   /**
    * Creates a new instance of OneLyActionProvider.
    *
-   * @param config - Optional configuration for API key and custom API base
+   * @param config - Optional configuration for API key
    */
   constructor(config: OneLyConfig = {}) {
     super("onely", []);
-    this.config = {
-      apiKey: config.apiKey ?? process.env.ONELY_API_KEY ?? "",
-      apiBase: config.apiBase ?? ONELY_API_BASE,
-    };
+    this.apiKey = config.apiKey ?? process.env.ONELY_API_KEY ?? "";
   }
 
   // ==========================================
@@ -94,7 +91,7 @@ Returns listings with title, description, price, seller info, and buyer stats.`,
       if (args.maxPrice !== undefined) params.set("maxPrice", args.maxPrice.toString());
       if (args.minPrice !== undefined) params.set("minPrice", args.minPrice.toString());
 
-      const url = `${this.config.apiBase}/api/discover?${params}`;
+      const url = `${ONELY_API_BASE}/api/discover?${params}`;
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -168,7 +165,7 @@ Use this before calling an API to understand requirements and cost.`,
   ): Promise<string> {
     try {
       const { username, slug } = this.parseEndpoint(args.endpoint);
-      const linkUrl = `${this.config.apiBase}/api/link/${username}/${slug}`;
+      const linkUrl = `${ONELY_API_BASE}/api/link/${username}/${slug}`;
 
       const linkResponse = await fetch(linkUrl, {
         headers: { Accept: "application/json" },
@@ -206,7 +203,7 @@ Use this before calling an API to understand requirements and cost.`,
       }
 
       // Fetch reviews (optional)
-      const reviewsUrl = `${this.config.apiBase}/api/reviews?username=${username}&slug=${slug}&limit=5`;
+      const reviewsUrl = `${ONELY_API_BASE}/api/reviews?username=${username}&slug=${slug}&limit=5`;
       let reviewsData: any = null;
 
       try {
@@ -220,7 +217,7 @@ Use this before calling an API to understand requirements and cost.`,
 
       const result = {
         endpoint: `/api/link/${username}/${slug}`,
-        fullUrl: `${this.config.apiBase}/api/link/${username}/${slug}`,
+        fullUrl: `${ONELY_API_BASE}/api/link/${username}/${slug}`,
         ...linkData,
         paymentInfo: {
           networks: ["solana", "base"],
@@ -286,7 +283,7 @@ Returns API response data plus purchase metadata (purchaseId, reviewToken) for l
   ): Promise<string> {
     try {
       const endpointPath = this.parseEndpointToPath(args.endpoint);
-      const fullUrl = `${this.config.apiBase}${endpointPath}`;
+      const fullUrl = `${ONELY_API_BASE}${endpointPath}`;
       const requestHeaders: Record<string, string> = {
         "Content-Type": "application/json",
         ...(args.headers || {}),
@@ -406,16 +403,15 @@ Returns API response data plus purchase metadata (purchaseId, reviewToken) for l
   /**
    * Leave a review after purchasing an API.
    *
-   * @param walletProvider - Wallet provider (not used for review)
-   * @param args - Purchase ID, wallet, review token, rating (positive/negative), and optional comment
+   * @param walletProvider - Wallet provider to get address from
+   * @param args - Purchase ID, review token, rating (positive/negative), and optional comment
    * @returns JSON string confirming review submission
    *
    * @example
    * ```typescript
-   * await provider.review({
+   * await provider.review(walletProvider, {
    *   purchaseId: "...",
-   *   wallet: "0x...",
-   *   token: "...",
+   *   reviewToken: "...",
    *   positive: true,
    *   comment: "Great API!"
    * });
@@ -424,22 +420,26 @@ Returns API response data plus purchase metadata (purchaseId, reviewToken) for l
   @CreateAction({
     name: "onely_review",
     description: `Leave a review after purchasing an API on 1ly.store.
-Requires purchaseId, wallet address, and reviewToken from the API call response.
-Reviews can be positive (true) or negative (false) with optional comment.`,
+Requires purchaseId and reviewToken from the API call response.
+Wallet address is automatically obtained from your wallet.
+Reviews can be positive (true) or negative (false) with optional comment (max 500 chars).`,
     schema: OneLyReviewSchema,
   })
   async review(
-    _walletProvider: WalletProvider,
+    walletProvider: WalletProvider,
     args: z.infer<typeof OneLyReviewSchema>,
   ): Promise<string> {
     try {
-      const response = await fetch(`${this.config.apiBase}/api/reviews`, {
+      // Get wallet address from provider
+      const walletAddress = walletProvider.getAddress();
+
+      const response = await fetch(`${ONELY_API_BASE}/api/reviews`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           purchaseId: args.purchaseId,
-          wallet: args.wallet,
-          token: args.token,
+          wallet: walletAddress,
+          token: args.reviewToken,
           positive: args.positive,
           comment: args.comment,
         }),
@@ -520,14 +520,11 @@ This is the first step to become a seller on the marketplace.`,
       const address = walletProvider.getAddress();
       const network = walletProvider.getNetwork();
 
-      // Determine chain (base or solana)
-      const chain =
-        network.networkId === "solana-mainnet" || network.networkId === "solana-devnet"
-          ? "solana"
-          : "base";
+      // Determine chain (base or solana mainnet only)
+      const chain = network.networkId === "solana-mainnet" ? "solana" : "base";
 
       // Get nonce from 1ly
-      const nonceRes = await fetch(`${this.config.apiBase}/api/agent/auth/nonce`, {
+      const nonceRes = await fetch(`${ONELY_API_BASE}/api/agent/auth/nonce`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ address, chain }),
@@ -579,7 +576,7 @@ This is the first step to become a seller on the marketplace.`,
       }
 
       // Create store with signature
-      const signupRes = await fetch(`${this.config.apiBase}/api/agent/signup`, {
+      const signupRes = await fetch(`${ONELY_API_BASE}/api/agent/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -667,7 +664,7 @@ Returns the created listing with its endpoint URL for buyers to discover.`,
     args: z.infer<typeof OneLyCreateLinkSchema>,
   ): Promise<string> {
     try {
-      if (!this.config.apiKey) {
+      if (!this.apiKey) {
         return JSON.stringify(
           {
             error: true,
@@ -679,11 +676,11 @@ Returns the created listing with its endpoint URL for buyers to discover.`,
         );
       }
 
-      const response = await fetch(`${this.config.apiBase}/api/v1/links`, {
+      const response = await fetch(`${ONELY_API_BASE}/api/v1/links`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${this.config.apiKey}`,
+          Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
           title: args.title,
@@ -752,7 +749,7 @@ Returns array of all your listings with details, stats, and earnings.`,
     _args: z.infer<typeof OneLyListLinksSchema>,
   ): Promise<string> {
     try {
-      if (!this.config.apiKey) {
+      if (!this.apiKey) {
         return JSON.stringify(
           {
             error: true,
@@ -764,9 +761,9 @@ Returns array of all your listings with details, stats, and earnings.`,
         );
       }
 
-      const response = await fetch(`${this.config.apiBase}/api/v1/links`, {
+      const response = await fetch(`${ONELY_API_BASE}/api/v1/links`, {
         headers: {
-          Authorization: `Bearer ${this.config.apiKey}`,
+          Authorization: `Bearer ${this.apiKey}`,
         },
       });
 
@@ -832,7 +829,7 @@ Returns total earnings, sales count, and detailed revenue breakdown.`,
     args: z.infer<typeof OneLyGetStatsSchema>,
   ): Promise<string> {
     try {
-      if (!this.config.apiKey) {
+      if (!this.apiKey) {
         return JSON.stringify(
           {
             error: true,
@@ -848,10 +845,10 @@ Returns total earnings, sales count, and detailed revenue breakdown.`,
       if (args.period) params.set("period", args.period);
       if (args.linkId) params.set("linkId", args.linkId);
 
-      const url = `${this.config.apiBase}/api/v1/stats?${params}`;
+      const url = `${ONELY_API_BASE}/api/v1/stats?${params}`;
       const response = await fetch(url, {
         headers: {
-          Authorization: `Bearer ${this.config.apiKey}`,
+          Authorization: `Bearer ${this.apiKey}`,
         },
       });
 
@@ -886,25 +883,26 @@ Returns total earnings, sales count, and detailed revenue breakdown.`,
   }
 
   /**
-   * Withdraw earnings from your store.
+   * Withdraw earnings from your store to a Solana wallet.
    *
    * @param walletProvider - Wallet provider (not used but required by interface)
-   * @param args - Amount to withdraw in USDC and destination wallet address
+   * @param args - Amount to withdraw in USDC and destination Solana wallet address
    * @returns JSON string confirming withdrawal transaction
    *
    * @example
    * ```typescript
    * await provider.withdraw(walletProvider, {
    *   amount: "10.50",
-   *   walletAddress: "0x..."  // or Solana address
+   *   walletAddress: "YourSolanaAddress..."  // Solana only
    * });
    * ```
    */
   @CreateAction({
     name: "onely_withdraw",
-    description: `Withdraw earnings from your 1ly.store store.
+    description: `Withdraw earnings from your 1ly.store store to a Solana wallet.
 Requires API key from onely_create_store.
-Specify amount in USDC (e.g., "10.50") and destination wallet address (Base or Solana).
+Specify amount in USDC (e.g., "10.50") and destination Solana wallet address.
+Note: Withdrawals are Solana-only at this time.
 Returns transaction details once withdrawal is processed.`,
     schema: OneLyWithdrawSchema,
   })
@@ -913,7 +911,7 @@ Returns transaction details once withdrawal is processed.`,
     args: z.infer<typeof OneLyWithdrawSchema>,
   ): Promise<string> {
     try {
-      if (!this.config.apiKey) {
+      if (!this.apiKey) {
         return JSON.stringify(
           {
             error: true,
@@ -925,15 +923,16 @@ Returns transaction details once withdrawal is processed.`,
         );
       }
 
-      const response = await fetch(`${this.config.apiBase}/api/v1/withdrawals`, {
+      const response = await fetch(`${ONELY_API_BASE}/api/v1/withdrawals`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${this.config.apiKey}`,
+          Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
           amount: args.amount,
           walletAddress: args.walletAddress,
+          chain: "solana",
         }),
       });
 

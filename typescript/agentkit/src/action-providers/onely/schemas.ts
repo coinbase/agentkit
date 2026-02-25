@@ -54,10 +54,9 @@ export const OneLyCallSchema = z.object({
  */
 export const OneLyReviewSchema = z.object({
   purchaseId: z.string().describe("Purchase ID from the API call response"),
-  wallet: z.string().describe("Wallet address used for the purchase"),
-  token: z.string().describe("Review token from the API call response"),
+  reviewToken: z.string().describe("Review token from the API call response"),
   positive: z.boolean().describe("Whether the review is positive (true) or negative (false)"),
-  comment: z.string().optional().describe("Optional review comment"),
+  comment: z.string().max(500).optional().describe("Optional review comment (max 500 characters)"),
 });
 
 // ==========================================
@@ -144,7 +143,7 @@ export const OneLyWithdrawSchema = z.object({
   walletAddress: z
     .string()
     .min(26)
-    .describe("Destination wallet address (Base or Solana address)"),
+    .describe("Destination Solana wallet address (Solana only)"),
 });
 
 /**
@@ -155,9 +154,4 @@ export type OneLyConfig = {
    * API key for seller actions (obtained from onely_create_store)
    */
   apiKey?: string;
-
-  /**
-   * Custom API base URL (default: https://1ly.store)
-   */
-  apiBase?: string;
 };
