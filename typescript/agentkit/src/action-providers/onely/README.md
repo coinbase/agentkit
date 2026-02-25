@@ -1,6 +1,6 @@
 # OneLy Action Provider
 
-This directory contains the **OneLyActionProvider** implementation, which enables AI agents to be **both buyers AND sellers** on the 1ly x402 marketplace.
+This directory contains the **OneLyActionProvider** implementation, which enables AI agents to be **both buyers AND sellers** on the 1ly Agent Stores.
 
 ## Overview
 
