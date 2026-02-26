@@ -87,7 +87,9 @@ def test_cdp_client_errors(mocked_wallet_provider, mock_cdp_client):
     mock_cdp_client.solana.sign_message = AsyncMock(side_effect=Exception(rate_limit_error))
 
     with (
-        patch.object(CdpSolanaWalletProvider, "_run_async", side_effect=Exception(rate_limit_error)),
+        patch.object(
+            CdpSolanaWalletProvider, "_run_async", side_effect=Exception(rate_limit_error)
+        ),
         pytest.raises(Exception, match=rate_limit_error),
     ):
         mocked_wallet_provider.sign_message("test")
@@ -120,7 +122,9 @@ def test_transaction_specific_errors(mocked_wallet_provider, mock_cdp_client):
     mock_wallet.transfer = raise_timeout
 
     with (
-        patch.object(CdpSolanaWalletProvider, "_run_async", side_effect=TimeoutError(timeout_error)),
+        patch.object(
+            CdpSolanaWalletProvider, "_run_async", side_effect=TimeoutError(timeout_error)
+        ),
         pytest.raises(TimeoutError, match=timeout_error),
     ):
         mocked_wallet_provider.native_transfer("SomeAddress", Decimal("1.0"))
