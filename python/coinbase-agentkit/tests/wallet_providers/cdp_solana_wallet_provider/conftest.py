@@ -120,17 +120,13 @@ def mocked_wallet_provider(mock_cdp_client, mock_solana_client, mock_public_key)
         network_id=MOCK_NETWORK_ID,
     )
 
-    # Patch _run_async to handle initialization coroutines synchronously
+    # Patch _run_async only during init, then restore it
     mock_account = Mock(address=MOCK_ADDRESS)
-
-    def mock_run_async(self, coro):
-        # For initialize_wallet, return the mock account
-        if hasattr(coro, "__name__") and coro.__name__ == "initialize_wallet":
-            return mock_account
-        # For client.close, just return None
-        return None
-
-    with patch.object(CdpSolanaWalletProvider, "_run_async", mock_run_async):
+    original_run_async = CdpSolanaWalletProvider._run_async
+    CdpSolanaWalletProvider._run_async = lambda self, coro: mock_account
+    try:
         provider = CdpSolanaWalletProvider(config)
+    finally:
+        CdpSolanaWalletProvider._run_async = original_run_async
 
-        yield provider
+    yield provider
