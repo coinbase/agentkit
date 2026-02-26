@@ -371,8 +371,7 @@ class CdpEvmWalletProvider(EvmWalletProvider):
             # If we reach this point, there's already a running event loop
             # We need to run the coroutine in a new thread with a new event loop
             import concurrent.futures
-            import threading
-            
+
             def run_in_thread():
                 new_loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(new_loop)
@@ -380,11 +379,11 @@ class CdpEvmWalletProvider(EvmWalletProvider):
                     return new_loop.run_until_complete(coroutine)
                 finally:
                     new_loop.close()
-            
+
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 future = executor.submit(run_in_thread)
                 return future.result()
-                
+
         except RuntimeError:
             # No running event loop, safe to create and use a new one
             loop = asyncio.new_event_loop()

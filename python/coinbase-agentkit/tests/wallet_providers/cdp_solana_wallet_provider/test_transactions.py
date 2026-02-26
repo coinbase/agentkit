@@ -27,7 +27,9 @@ def test_native_transfer(mocked_wallet_provider, mock_cdp_client):
     mock_wallet.transfer = AsyncMock(return_value=mock_transaction)
     mock_cdp_client.solana.get_account = AsyncMock(return_value=mock_wallet)
 
-    with patch.object(CdpSolanaWalletProvider, "_run_async", return_value=MOCK_TRANSACTION_SIGNATURE):
+    with patch.object(
+        CdpSolanaWalletProvider, "_run_async", return_value=MOCK_TRANSACTION_SIGNATURE
+    ):
         tx_signature = mocked_wallet_provider.native_transfer(to_address, amount)
 
     assert tx_signature == MOCK_TRANSACTION_SIGNATURE
@@ -43,7 +45,9 @@ def test_native_transfer_full_sol(mocked_wallet_provider, mock_cdp_client):
     mock_wallet.transfer = AsyncMock(return_value=mock_transaction)
     mock_cdp_client.solana.get_account = AsyncMock(return_value=mock_wallet)
 
-    with patch.object(CdpSolanaWalletProvider, "_run_async", return_value=MOCK_TRANSACTION_SIGNATURE):
+    with patch.object(
+        CdpSolanaWalletProvider, "_run_async", return_value=MOCK_TRANSACTION_SIGNATURE
+    ):
         tx_signature = mocked_wallet_provider.native_transfer(to_address, amount)
 
     assert tx_signature == MOCK_TRANSACTION_SIGNATURE
@@ -59,7 +63,9 @@ def test_native_transfer_small_amount(mocked_wallet_provider, mock_cdp_client):
     mock_wallet.transfer = AsyncMock(return_value=mock_transaction)
     mock_cdp_client.solana.get_account = AsyncMock(return_value=mock_wallet)
 
-    with patch.object(CdpSolanaWalletProvider, "_run_async", return_value=MOCK_TRANSACTION_SIGNATURE):
+    with patch.object(
+        CdpSolanaWalletProvider, "_run_async", return_value=MOCK_TRANSACTION_SIGNATURE
+    ):
         tx_signature = mocked_wallet_provider.native_transfer(to_address, small_amount)
 
     assert tx_signature == MOCK_TRANSACTION_SIGNATURE

@@ -99,7 +99,9 @@ def test_init_with_missing_credentials():
 def test_init_with_invalid_network(mock_cdp_client):
     """Test initialization with invalid network."""
     # Use a known invalid network ID
-    with patch.object(CdpEvmWalletProvider, "_run_async", side_effect=ValueError("Invalid network ID")):
+    with patch.object(
+        CdpEvmWalletProvider, "_run_async", side_effect=ValueError("Invalid network ID")
+    ):
         config = CdpEvmWalletProviderConfig(
             api_key_id=MOCK_API_KEY_ID,
             api_key_secret=MOCK_API_KEY_SECRET,
@@ -113,7 +115,9 @@ def test_init_with_invalid_network(mock_cdp_client):
 
 def test_init_with_account_creation_error(mock_cdp_client):
     """Test initialization when account creation fails."""
-    with patch.object(CdpEvmWalletProvider, "_run_async", side_effect=Exception("Failed to create account")):
+    with patch.object(
+        CdpEvmWalletProvider, "_run_async", side_effect=Exception("Failed to create account")
+    ):
         config = CdpEvmWalletProviderConfig(
             api_key_id=MOCK_API_KEY_ID,
             api_key_secret=MOCK_API_KEY_SECRET,

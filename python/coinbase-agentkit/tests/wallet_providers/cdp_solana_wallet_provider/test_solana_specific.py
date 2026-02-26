@@ -35,7 +35,9 @@ def test_solana_network_configuration():
             patch(
                 "coinbase_agentkit.wallet_providers.cdp_solana_wallet_provider.SolanaClient"
             ) as mock_solana_client,
-            patch.object(CdpSolanaWalletProvider, "_run_async", return_value=Mock(address=MOCK_ADDRESS)),
+            patch.object(
+                CdpSolanaWalletProvider, "_run_async", return_value=Mock(address=MOCK_ADDRESS)
+            ),
         ):
             config = CdpSolanaWalletProviderConfig(
                 api_key_id=MOCK_API_KEY_ID,
@@ -128,7 +130,9 @@ def test_network_id_defaults():
     with (
         patch("coinbase_agentkit.wallet_providers.cdp_solana_wallet_provider.CdpClient"),
         patch("coinbase_agentkit.wallet_providers.cdp_solana_wallet_provider.SolanaClient"),
-        patch.object(CdpSolanaWalletProvider, "_run_async", return_value=Mock(address=MOCK_ADDRESS)),
+        patch.object(
+            CdpSolanaWalletProvider, "_run_async", return_value=Mock(address=MOCK_ADDRESS)
+        ),
         patch.dict(
             "os.environ",
             {

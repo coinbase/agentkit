@@ -179,7 +179,9 @@ def test_init_with_cdp_import_error():
 
 def test_init_with_account_creation_error(mock_cdp_client, mock_solana_client, mock_public_key):
     """Test initialization when account creation fails."""
-    with patch.object(CdpSolanaWalletProvider, "_run_async", side_effect=Exception("Failed to create account")):
+    with patch.object(
+        CdpSolanaWalletProvider, "_run_async", side_effect=Exception("Failed to create account")
+    ):
         config = CdpSolanaWalletProviderConfig(
             api_key_id=MOCK_API_KEY_ID,
             api_key_secret=MOCK_API_KEY_SECRET,
