@@ -50,7 +50,7 @@ export class AgentKit {
     if (!config.walletProvider) {
       if (!config.cdpApiKeyId || !config.cdpApiKeySecret || !config.cdpWalletSecret) {
         throw new Error(
-          "cdpApiKeyId and cdpApiKeySecret are required if not providing a walletProvider",
+          "cdpApiKeyId, cdpApiKeySecret and cdpWalletSecret are required if not providing a walletProvider",
         );
       }
 
