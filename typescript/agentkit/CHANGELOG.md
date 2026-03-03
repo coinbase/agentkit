@@ -1,5 +1,21 @@
 # AgentKit Changelog
 
+## 0.11.0
+
+### Minor Changes
+
+- [#923](https://github.com/coinbase/agentkit/pull/923) [`e809805`](https://github.com/coinbase/agentkit/commit/e8098053561b895e6309a8789266e2704c5353c7) Thanks [@phdargen](https://github.com/phdargen)! - Deprecated legacy cdp-wallet
+
+### Patch Changes
+
+- [#966](https://github.com/coinbase/agentkit/pull/966) [`b211701`](https://github.com/coinbase/agentkit/commit/b21170143825cb1892daaa8e52c68e9c8c446ae1) Thanks [@phdargen](https://github.com/phdargen)! - Bumped x402 packages and fix missing readContract interface
+
+- [#898](https://github.com/coinbase/agentkit/pull/898) [`16fb4a1`](https://github.com/coinbase/agentkit/commit/16fb4a1c4674787ac8442efc88e0830573f3208d) Thanks [@phdargen](https://github.com/phdargen)! - Updated x402 actions to v2 and improved discovery and query/body parameter handling
+
+- [#882](https://github.com/coinbase/agentkit/pull/882) [`8eab8b8`](https://github.com/coinbase/agentkit/commit/8eab8b85a496249e8e080a78c4ecf9b92f6c8504) Thanks [@sanketsaagar](https://github.com/sanketsaagar)! - Updated polygon network apiUrl for both mainnet and amoy
+
+- [#922](https://github.com/coinbase/agentkit/pull/922) [`e44e0e4`](https://github.com/coinbase/agentkit/commit/e44e0e458b5d8bbca941e6ac58386027f679f7a3) Thanks [@phdargen](https://github.com/phdargen)! - Added pre-registration of x402 services
+
 ## 0.10.4
 
 ### Patch Changes
