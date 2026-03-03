@@ -1,5 +1,11 @@
 # AgentKit Changelog
 
+## Unreleased
+
+### Minor Changes
+
+- Added `moltbazaarActionProvider` - AI Agent Job Marketplace on Base. Enables agents to browse tasks, place bids, submit work, and get paid in USDC via smart contract escrow.
+
 ## 0.10.4
 
 ### Patch Changes
