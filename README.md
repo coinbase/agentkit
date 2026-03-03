@@ -23,12 +23,13 @@
 ## Table of Contents
 
 - [📖 Overview](#-overview)
-- [🚀 Quickstart](#-quickstart)
+- [⚡ Quickstart](#-quickstart)
   - [Node.js](#nodejs)
   - [Python](#python)
 - [🗂 Repository Structure](#-repository-structure)
 - [🤝 Contributing](#-contributing)
 - [📜 Documentation](#-documentation)
+- [🚀 Agent Launchpads](#-agent-launchpads)
 - [🌙 Nightly Builds](#-nightly-builds)
 - [🚨 Security and Bug Reports](#-security-and-bug-reports)
 - [📧 Contact](#-contact)
@@ -49,7 +50,7 @@ AgentKit is [Coinbase Developer Platform's](https://docs.cdp.coinbase.com) toolk
   </a>
 </div>
 
-## 🚀 Quickstart
+## ⚡ Quickstart
 
 ### Node.js
 
@@ -212,6 +213,16 @@ agentkit/
   - [AgentKit Langchain Extension](https://coinbase.github.io/agentkit/agentkit-langchain/typescript/index.html)
   - [AgentKit Vercel AI SDK Extension](https://coinbase.github.io/agentkit/agentkit-vercel-ai-sdk/typescript/index.html)
   - [AgentKit Model Context Protocol Extension](https://coinbase.github.io/agentkit/agentkit-model-context-protocol/typescript/index.html)
+
+## 🚀 Agent Launchpads
+
+Deploy AI Agents with ease using any of the following agent launchpads:
+
+### [Autonome by AltLayer](https://docs.altlayer.io/altlayer-documentation/autonome/deploy-ai-agent)
+No-code platform for deploying and managing AI agents on AltLayer's infrastructure, offering seamless integration with blockchain networks and automated task execution.
+
+### [NEAR AI](https://docs.near.ai)
+Development platform for building and deploying AI agents on the NEAR Protocol, with built-in tools for smart contract integration and decentralized AI applications.
 
 ## 🌙 Nightly Builds
 
