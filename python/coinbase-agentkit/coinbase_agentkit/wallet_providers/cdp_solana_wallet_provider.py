@@ -76,11 +76,11 @@ class CdpSolanaWalletProvider(WalletProvider):
                             wallet = await cdp.solana.create_account()
                         return wallet
 
-                wallet = asyncio.run(initialize_wallet())
+                wallet = self._run_async(initialize_wallet())
                 self._address = wallet.address
 
             finally:
-                asyncio.run(client.close())
+                self._run_async(client.close())
 
         except ImportError as e:
             raise ImportError(
@@ -113,11 +113,32 @@ class CdpSolanaWalletProvider(WalletProvider):
 
         """
         try:
-            loop = asyncio.get_event_loop()
+            # Check if we're in an existing event loop
+            loop = asyncio.get_running_loop()
+            # If we reach this point, there's already a running event loop
+            # We need to run the coroutine in a new thread with a new event loop
+            import concurrent.futures
+
+            def run_in_thread():
+                new_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(new_loop)
+                try:
+                    return new_loop.run_until_complete(coroutine)
+                finally:
+                    new_loop.close()
+
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(run_in_thread)
+                return future.result()
+
         except RuntimeError:
+            # No running event loop, safe to create and use a new one
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-        return loop.run_until_complete(coroutine)
+            try:
+                return loop.run_until_complete(coroutine)
+            finally:
+                loop.close()
 
     def get_address(self) -> str:
         """Get the wallet address.

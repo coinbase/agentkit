@@ -120,9 +120,13 @@ def mocked_wallet_provider(mock_cdp_client, mock_solana_client, mock_public_key)
         network_id=MOCK_NETWORK_ID,
     )
 
-    # Patch asyncio.run to return the mock account
+    # Patch _run_async only during init, then restore it
     mock_account = Mock(address=MOCK_ADDRESS)
-    with patch("asyncio.run", return_value=mock_account):
+    original_run_async = CdpSolanaWalletProvider._run_async
+    CdpSolanaWalletProvider._run_async = lambda self, coro: mock_account
+    try:
         provider = CdpSolanaWalletProvider(config)
+    finally:
+        CdpSolanaWalletProvider._run_async = original_run_async
 
-        yield provider
+    yield provider
