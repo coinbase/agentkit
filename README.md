@@ -295,6 +295,7 @@ AgentKit is proud to have support for the following protocols, frameworks, walle
 <a href="https://superfluid.org" target="_blank"><img src="./assets/protocols/superfluid.svg" width="100" height="auto" alt="Superfluid"></a>
 <a href="https://zora.co" target="_blank"><img src="./assets/protocols/zora.svg" width="100" height="auto" alt="Zora"></a>
 <a href="https://allora.network" target="_blank"><img src="./assets/protocols/allora.svg" width="100" height="auto" alt="Allora"></a>
+<a href="https://dtelecom.org" target="_blank"><img src="./assets/protocols/dtelecom.svg" width="100" height="auto" alt="dTelecom"></a>
 
 ### Frameworks
 

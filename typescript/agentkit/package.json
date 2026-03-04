@@ -43,6 +43,7 @@
     "@alloralabs/allora-sdk": "^0.1.0",
     "@base-org/account": "^2.2.0",
     "@coinbase/cdp-sdk": "^1.38.0",
+    "@dtelecom/x402-client": "^0.1.3",
     "@ensofinance/sdk": "^2.0.6",
     "@jup-ag/api": "^6.0.39",
     "@privy-io/public-api": "2.18.5",
