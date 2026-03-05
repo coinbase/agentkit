@@ -16,6 +16,7 @@ export * from "./enso";
 export * from "./erc20";
 export * from "./erc721";
 export * from "./farcaster";
+export * from "./insumer";
 export * from "./jupiter";
 export * from "./messari";
 export * from "./pyth";
