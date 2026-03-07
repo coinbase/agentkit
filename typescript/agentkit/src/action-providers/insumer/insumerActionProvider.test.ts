@@ -93,7 +93,7 @@ const MOCK_BATCH_TRUST_RESPONSE = {
       },
       {
         error: {
-          wallet: "0x0000000000000000000000000000000000000000",
+          wallet: "not-a-valid-address",
           message: "Invalid wallet address",
         },
       },
@@ -296,7 +296,7 @@ describe("InsumerActionProvider", () => {
       const response = await provider.getBatchWalletTrustProfiles({
         wallets: [
           { wallet: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045" },
-          { wallet: "0x0000000000000000000000000000000000000000" },
+          { wallet: "not-a-valid-address" },
         ],
       });
 
