@@ -1,4 +1,4 @@
-import { WalletProvider } from "../../wallet-providers";
+import { WalletProvider, EvmWalletProvider } from "../../wallet-providers";
 import { walletActionProvider } from "./walletActionProvider";
 import { GetBalanceSchema, NativeTransferSchema, ReturnNativeBalanceSchema } from "./schemas";
 import { formatUnits, parseUnits } from "viem";
@@ -263,6 +263,33 @@ describe("Wallet Action Provider", () => {
 
   describe("Return Native Balance", () => {
     const MOCK_DESTINATION = "0x6fb9e80dDd0f5DC99D7cB38b07e8b298A57bF253";
+    const MOCK_MAX_FEE_PER_GAS = 10000000000n; // 10 gwei
+    // Must match the EVM_GAS_BUDGET constant defined in walletActionProvider.ts
+    const EVM_GAS_BUDGET = 21000n * 2n; // 42000 (2x buffer for provider gas-limit multipliers)
+    const MOCK_GAS_COST = EVM_GAS_BUDGET * MOCK_MAX_FEE_PER_GAS;
+
+    // Use Object.create to get an EvmWalletProvider instance without triggering the
+    // analytics-tracking fetch in the WalletProvider constructor.
+    let mockEvmWallet: EvmWalletProvider;
+    const mockPublicClient = {
+      estimateFeesPerGas: jest.fn().mockResolvedValue({
+        maxFeePerGas: MOCK_MAX_FEE_PER_GAS,
+        maxPriorityFeePerGas: 1000000000n,
+      }),
+    };
+
+    beforeEach(() => {
+      // Object.create bypasses the constructor but keeps instanceof EvmWalletProvider true.
+      mockEvmWallet = Object.create(EvmWalletProvider.prototype);
+      Object.assign(mockEvmWallet, {
+        getAddress: jest.fn().mockReturnValue(MOCK_ADDRESS),
+        getNetwork: jest.fn().mockReturnValue(MOCK_EVM_NETWORK),
+        getBalance: jest.fn().mockResolvedValue(MOCK_ETH_BALANCE),
+        getName: jest.fn().mockReturnValue(MOCK_PROVIDER_NAME),
+        nativeTransfer: jest.fn().mockResolvedValue(MOCK_TRANSACTION_HASH),
+        getPublicClient: jest.fn().mockReturnValue(mockPublicClient),
+      });
+    });
 
     it("should successfully parse valid input", () => {
       const validInput = { to: MOCK_DESTINATION };
@@ -275,7 +302,25 @@ describe("Wallet Action Provider", () => {
       expect(result.success).toBe(false);
     });
 
-    it("should return the entire ETH balance to the destination", async () => {
+    it("should return ETH balance minus gas fees via EvmWalletProvider", async () => {
+      const expectedTransferAmount = MOCK_ETH_BALANCE - MOCK_GAS_COST;
+
+      const response = await actionProvider.returnNativeBalance(mockEvmWallet, {
+        to: MOCK_DESTINATION,
+      });
+
+      expect(mockEvmWallet.getBalance).toHaveBeenCalled();
+      expect(mockEvmWallet.nativeTransfer).toHaveBeenCalledWith(
+        MOCK_DESTINATION,
+        expectedTransferAmount.toString(),
+      );
+      expect(response).toBe(
+        `Returned ${formatUnits(expectedTransferAmount, 18)} ETH to ${MOCK_DESTINATION}\nTransaction hash: ${MOCK_TRANSACTION_HASH}`,
+      );
+    });
+
+    it("should return the entire balance for EVM when provider is not EvmWalletProvider", async () => {
+      // Plain WalletProvider mock does not extend EvmWalletProvider → falls to fallback path
       mockWallet.getNetwork.mockReturnValue(MOCK_EVM_NETWORK);
       mockWallet.getBalance.mockResolvedValue(MOCK_ETH_BALANCE);
       mockWallet.nativeTransfer.mockResolvedValue(MOCK_TRANSACTION_HASH);
@@ -284,17 +329,17 @@ describe("Wallet Action Provider", () => {
         to: MOCK_DESTINATION,
       });
 
-      expect(mockWallet.getBalance).toHaveBeenCalled();
       expect(mockWallet.nativeTransfer).toHaveBeenCalledWith(
         MOCK_DESTINATION,
         MOCK_ETH_BALANCE.toString(),
       );
-      expect(response).toBe(
-        `Returned ${formatUnits(MOCK_ETH_BALANCE, 18)} ETH to ${MOCK_DESTINATION}\nTransaction hash: ${MOCK_TRANSACTION_HASH}`,
-      );
+      expect(response).toContain(`Returned ${formatUnits(MOCK_ETH_BALANCE, 18)} ETH`);
     });
 
-    it("should return the entire SOL balance to the destination", async () => {
+    it("should return SOL balance minus 5000 lamports transaction fee", async () => {
+      const SOL_TX_FEE = 5000n;
+      const expectedTransferAmount = MOCK_SOL_BALANCE - SOL_TX_FEE;
+
       mockWallet.getNetwork.mockReturnValue(MOCK_SOLANA_NETWORK);
       mockWallet.getBalance.mockResolvedValue(MOCK_SOL_BALANCE);
       mockWallet.nativeTransfer.mockResolvedValue(MOCK_SIGNATURE);
@@ -306,24 +351,47 @@ describe("Wallet Action Provider", () => {
       expect(mockWallet.getBalance).toHaveBeenCalled();
       expect(mockWallet.nativeTransfer).toHaveBeenCalledWith(
         MOCK_DESTINATION,
-        MOCK_SOL_BALANCE.toString(),
+        expectedTransferAmount.toString(),
       );
       expect(response).toBe(
-        `Returned ${formatUnits(MOCK_SOL_BALANCE, 9)} SOL to ${MOCK_DESTINATION}\nSignature: ${MOCK_SIGNATURE}`,
+        `Returned ${formatUnits(expectedTransferAmount, 9)} SOL to ${MOCK_DESTINATION}\nSignature: ${MOCK_SIGNATURE}`,
       );
     });
 
+    it("should return error when EVM balance is insufficient to cover gas fees", async () => {
+      const tinyBalance = 1000n; // smaller than any estimated gas cost
+      (mockEvmWallet.getBalance as jest.Mock).mockResolvedValue(tinyBalance);
+
+      const response = await actionProvider.returnNativeBalance(mockEvmWallet, {
+        to: MOCK_DESTINATION,
+      });
+
+      expect(response).toBe("Error: Insufficient balance to cover gas fees");
+      expect(mockEvmWallet.nativeTransfer).not.toHaveBeenCalled();
+    });
+
+    it("should return error when SVM balance is insufficient to cover transaction fee", async () => {
+      const tinyBalance = 100n; // smaller than 5000 lamport fee
+      mockWallet.getNetwork.mockReturnValue(MOCK_SOLANA_NETWORK);
+      mockWallet.getBalance.mockResolvedValue(tinyBalance);
+
+      const response = await actionProvider.returnNativeBalance(mockWallet, {
+        to: MOCK_DESTINATION,
+      });
+
+      expect(response).toBe("Error: Insufficient balance to cover transaction fee");
+      expect(mockWallet.nativeTransfer).not.toHaveBeenCalled();
+    });
+
     it("should prepend 0x to EVM destination address if missing", async () => {
-      mockWallet.getNetwork.mockReturnValue(MOCK_EVM_NETWORK);
-      mockWallet.getBalance.mockResolvedValue(MOCK_ETH_BALANCE);
-      mockWallet.nativeTransfer.mockResolvedValue(MOCK_TRANSACTION_HASH);
-
+      const expectedTransferAmount = MOCK_ETH_BALANCE - MOCK_GAS_COST;
       const destinationWithout0x = MOCK_DESTINATION.slice(2);
-      await actionProvider.returnNativeBalance(mockWallet, { to: destinationWithout0x });
 
-      expect(mockWallet.nativeTransfer).toHaveBeenCalledWith(
+      await actionProvider.returnNativeBalance(mockEvmWallet, { to: destinationWithout0x });
+
+      expect(mockEvmWallet.nativeTransfer).toHaveBeenCalledWith(
         `0x${destinationWithout0x}`,
-        MOCK_ETH_BALANCE.toString(),
+        expectedTransferAmount.toString(),
       );
     });
 
