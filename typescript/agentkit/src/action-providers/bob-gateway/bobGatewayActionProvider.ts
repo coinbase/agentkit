@@ -202,7 +202,7 @@ Use get_supported_routes to discover available tokens and chains. Checks token b
         srcChain,
         dstChain: "bitcoin",
         srcToken: args.tokenAddress,
-        dstToken: "BTC",
+        dstToken: "0x0000000000000000000000000000000000000000",
         amount: atomicAmount.toString(),
         sender: address,
         recipient: args.btcAddress,
@@ -351,7 +351,13 @@ Use get_supported_routes to discover available tokens and chains. Checks token b
     dstChain: string,
     dstToken: string,
   ): Promise<string | null> {
-    const normalizeToken = (t: string) => t.toLowerCase();
+    const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+    const normalizeToken = (t: string) => {
+      const lower = t.toLowerCase();
+      // Treat "btc" and the zero address as equivalent for bitcoin destinations
+      if (lower === "btc" || lower === ZERO_ADDRESS) return ZERO_ADDRESS;
+      return lower;
+    };
 
     const match = routes.find(
       r =>

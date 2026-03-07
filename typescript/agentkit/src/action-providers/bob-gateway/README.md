@@ -36,6 +36,10 @@ const provider = bobGatewayActionProvider({
 });
 ```
 
+## ETH Requirement
+
+BOB Gateway offramp transactions require the sender to include a small amount of native ETH (typically ~0.0005 ETH) as `msg.value` to cover bridge/solver inclusion fees. If the wallet has no native ETH, the transaction will revert. Ensure the wallet is funded with ETH before calling `swap_to_btc`, or swap a small amount of an ERC-20 (e.g. USDC) to ETH first.
+
 ## Network Support
 
 The provider accepts any EVM network. The source chain is resolved dynamically from the wallet's network ID by matching against chains returned by the Gateway API's `/v1/get-routes` endpoint (e.g. `base-mainnet` resolves to `base`).

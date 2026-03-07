@@ -207,12 +207,12 @@ const agent = createReactAgent({
 <summary><strong>BOB Gateway</strong></summary>
 <table width="100%">
 <tr>
-    <td width="200"><code>swap_to_btc</code></td>
-    <td width="768">Swaps EVM tokens (e.g., USDC, WBTC) to native BTC on Bitcoin via BOB Gateway.</td>
+    <td width="200"><code>get_supported_routes</code></td>
+    <td width="768">Lists available EVM-to-BTC swap routes with token symbols and contract addresses.</td>
 </tr>
 <tr>
-    <td width="200"><code>swap_from_btc</code></td>
-    <td width="768">Swaps native BTC to EVM tokens — returns a Bitcoin deposit address for the user to send BTC to.</td>
+    <td width="200"><code>swap_to_btc</code></td>
+    <td width="768">Swaps EVM tokens (e.g., USDC, WBTC) to native BTC on Bitcoin via BOB Gateway.</td>
 </tr>
 <tr>
     <td width="200"><code>get_orders</code></td>
