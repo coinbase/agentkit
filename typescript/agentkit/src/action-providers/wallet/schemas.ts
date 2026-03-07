@@ -22,3 +22,13 @@ export const NativeTransferSchema = z
   })
   .strip()
   .describe("Instructions for transferring native tokens");
+
+/**
+ * Input schema for return native balance action.
+ */
+export const ReturnNativeBalanceSchema = z
+  .object({
+    to: z.string().describe("The destination address to receive all native token funds"),
+  })
+  .strip()
+  .describe("Instructions for returning all native token balance to a destination address");

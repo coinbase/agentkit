@@ -2,11 +2,16 @@ import { z } from "zod";
 
 import { CreateAction } from "../actionDecorator";
 import { ActionProvider } from "../actionProvider";
-import { WalletProvider, CdpSmartWalletProvider } from "../../wallet-providers";
+import { WalletProvider, CdpSmartWalletProvider, EvmWalletProvider } from "../../wallet-providers";
 import { Network } from "../../network";
 import { formatUnits, parseUnits } from "viem";
 
-import { NativeTransferSchema, GetWalletDetailsSchema, GetBalanceSchema } from "./schemas";
+import {
+  NativeTransferSchema,
+  GetWalletDetailsSchema,
+  GetBalanceSchema,
+  ReturnNativeBalanceSchema,
+} from "./schemas";
 
 const PROTOCOL_FAMILY_TO_TERMINOLOGY: Record<
   string,
@@ -29,6 +34,12 @@ const DEFAULT_TERMINOLOGY = {
   type: "Hash",
   verb: "transfer",
 };
+
+// Standard gas units consumed by a simple EVM native transfer (intrinsic gas constant).
+// Multiplied by 2 to produce the effective gas budget: this covers the gas-limit multiplier
+// that wallet providers typically apply (default 1.2x) and minor fee fluctuations between
+// estimation time and transaction submission.
+const EVM_GAS_BUDGET = 21000n * 2n; // 42000
 
 /**
  * WalletActionProvider provides actions for getting basic wallet information.
@@ -150,6 +161,84 @@ It takes the following inputs:
       const result = await walletProvider.nativeTransfer(args.to, amountInAtomicUnits.toString());
       return [
         `Transferred ${args.value} ${terminology.displayUnit} to ${args.to}`,
+        `${terminology.type}: ${result}`,
+      ].join("\n");
+    } catch (error) {
+      const { protocolFamily } = walletProvider.getNetwork();
+      const terminology = PROTOCOL_FAMILY_TO_TERMINOLOGY[protocolFamily] || DEFAULT_TERMINOLOGY;
+      return `Error during ${terminology.verb}: ${error}`;
+    }
+  }
+
+  /**
+   * Returns the entire native token balance of the wallet minus gas fees to a destination address.
+   *
+   * @param walletProvider - The wallet provider to transfer from.
+   * @param args - The input arguments for the action.
+   * @returns A message containing the transfer details.
+   */
+  @CreateAction({
+    name: "return_native_balance",
+    description: `
+This tool will transfer the entire native token balance of the wallet to a destination address,
+automatically deducting the estimated network/gas fees so the transaction succeeds.
+
+It takes the following inputs:
+- to: The destination address to receive the native tokens
+
+Important notes:
+- The exact amount transferred will be the wallet balance minus the estimated transaction fees
+- A negligible dust amount may remain in the wallet after the transfer due to gas estimation buffers
+- The transfer will fail if the wallet balance is too low to cover even the gas fees
+`,
+    schema: ReturnNativeBalanceSchema,
+  })
+  async returnNativeBalance(
+    walletProvider: WalletProvider,
+    args: z.infer<typeof ReturnNativeBalanceSchema>,
+  ): Promise<string> {
+    try {
+      const { protocolFamily } = walletProvider.getNetwork();
+      const terminology = PROTOCOL_FAMILY_TO_TERMINOLOGY[protocolFamily] || DEFAULT_TERMINOLOGY;
+
+      if (protocolFamily === "evm" && !args.to.startsWith("0x")) {
+        args.to = `0x${args.to}`;
+      }
+
+      const balance = await walletProvider.getBalance();
+      let transferAmount: bigint;
+
+      if (protocolFamily === "evm" && walletProvider instanceof EvmWalletProvider) {
+        // For EVM networks, estimate gas fees and subtract them from the balance.
+        // A simple native transfer always uses 21000 gas units (intrinsic gas constant).
+        // EVM_GAS_BUDGET applies a 2x buffer to account for the gas-limit multiplier
+        // that wallet providers typically apply (default 1.2x) and fee fluctuations
+        // between estimation time and transaction submission.
+        const publicClient = walletProvider.getPublicClient();
+        const feeData = await publicClient.estimateFeesPerGas();
+        const maxFeePerGas = "maxFeePerGas" in feeData ? feeData.maxFeePerGas : feeData.gasPrice;
+        const gasCost = EVM_GAS_BUDGET * maxFeePerGas;
+
+        if (balance <= gasCost) {
+          return `Error: Insufficient balance to cover gas fees`;
+        }
+        transferAmount = balance - gasCost;
+      } else if (protocolFamily === "svm") {
+        // Standard Solana transaction fee is 5000 lamports
+        const SOL_TX_FEE = 5000n;
+        if (balance <= SOL_TX_FEE) {
+          return `Error: Insufficient balance to cover transaction fee`;
+        }
+        transferAmount = balance - SOL_TX_FEE;
+      } else {
+        // For networks where gas estimation is unavailable, transfer the full balance.
+        transferAmount = balance;
+      }
+
+      const result = await walletProvider.nativeTransfer(args.to, transferAmount.toString());
+      const formattedAmount = formatUnits(transferAmount, terminology.decimals);
+      return [
+        `Returned ${formattedAmount} ${terminology.displayUnit} to ${args.to}`,
         `${terminology.type}: ${result}`,
       ].join("\n");
     } catch (error) {
