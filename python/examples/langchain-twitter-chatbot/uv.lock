@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10, <4"
 resolution-markers = [
     "python_full_version >= '3.12.4'",
@@ -2614,15 +2614,16 @@ wheels = [
 
 [[package]]
 name = "x402"
-version = "2.0.0"
+version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "nest-asyncio" },
     { name = "pydantic" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/01/e1/b3d1c79afa25513d51ae1d9379c178eb2b4f1eb8b1b73a4207cfba7a91ea/x402-2.0.0.tar.gz", hash = "sha256:ba458b81f3889c0de5f140549998e32b1dfac36eee15f52ebc8035bb7c6c4958", size = 866901, upload-time = "2026-01-22T00:51:08.382Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/48/f5/dbb5772c02332340ae6e96780636127c6576c2428542a2bd69fa18468fb6/x402-2.3.0.tar.gz", hash = "sha256:e177c1a7d897996be7e4d5850868f3e2b5578225944030359937582d23ec416f", size = 897033, upload-time = "2026-03-06T02:42:18.181Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/63/82/fb15d27f1cf45d2e3fee17340672d38631df482f1be11029d5b4c2f72097/x402-2.0.0-py3-none-any.whl", hash = "sha256:9db08530b9daa0a00d8505f7cd0bddf45a27ff8948d11bb9961d324d10b91a50", size = 917873, upload-time = "2026-01-22T00:51:06.943Z" },
+    { url = "https://files.pythonhosted.org/packages/f5/9a/e65ea60426ce33037fd9f163f1c4eb9dc33796cee8d573943f394ee466a1/x402-2.3.0-py3-none-any.whl", hash = "sha256:f0329db2defaff76252b8753155df67aeb87889b2ee11bdfa4678719da96d40c", size = 957564, upload-time = "2026-03-06T02:42:16.546Z" },
 ]
 
 [package.optional-dependencies]
