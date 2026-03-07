@@ -1,11 +1,17 @@
 {
   "name": "agentkit-typescript-monorepo",
   "private": true,
-  "packageManager": "pnpm@10.7.0",
+  "packageManager": "yarn@1.22.22",
+  "workspaces": [
+    "agentkit",
+    "create-onchain-agent",
+    "framework-extensions/*",
+    "examples/*"
+  ],
   "scripts": {
     "build": "turbo run build",
     "changeset": "changeset",
-    "changeset:publish": "pnpm install --frozen-lockfile && pnpm run build && changeset publish",
+    "changeset:publish": "yarn install --frozen-lockfile && yarn run build && changeset publish",
     "changeset:version": "changeset version",
     "test": "turbo run test",
     "lint": "turbo run lint",
@@ -54,5 +60,10 @@
     "turbo": "^2.3.3",
     "typedoc": "^0.27.2",
     "typescript": "^5.4.5"
+  },
+  "resolutions": {
+    "viem": "2.38.3",
+    "opensea-js": "7.1.18",
+    "typescript": "5.8.2"
   }
 }

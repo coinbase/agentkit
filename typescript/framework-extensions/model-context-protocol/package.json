@@ -44,7 +44,7 @@
     "zod-to-json-schema": "^3.24.3"
   },
   "devDependencies": {
-    "@coinbase/agentkit": "workspace:*"
+    "@coinbase/agentkit": "*"
   },
   "peerDependencies": {
     "@coinbase/agentkit": ">=0.1.0"
