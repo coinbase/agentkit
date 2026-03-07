@@ -14,6 +14,7 @@ MOCK_TX_HASH = HexStr("0x742d35Cc6634C0532925a3b844Bc454e4438f44e")
 MOCK_ETH_AMOUNT = "0.0001"
 INVALID_ADDRESS = "not-an-address"
 INVALID_AMOUNT = "not-a-number"
+EVM_ZERO_ADDRESS = "0x" + "0" * 40
 
 
 def test_native_transfer_schema_valid():
@@ -111,3 +112,21 @@ def test_native_transfer_insufficient_balance(wallet_action_provider, mock_walle
     mock_wallet_provider.native_transfer.assert_called_once_with(
         MOCK_ADDRESS, Decimal(MOCK_ETH_AMOUNT)
     )
+
+
+def test_native_transfer_schema_rejects_zero_address():
+    """Test that NativeTransferSchema rejects the EVM zero address."""
+    with pytest.raises(ValidationError, match="Transfer to the zero address is not allowed"):
+        NativeTransferSchema(
+            to=EVM_ZERO_ADDRESS,
+            value=MOCK_ETH_AMOUNT,
+        )
+
+
+def test_native_transfer_schema_rejects_zero_address_no_prefix():
+    """Test that NativeTransferSchema rejects the zero address without 0x prefix."""
+    with pytest.raises(ValidationError, match="Transfer to the zero address is not allowed"):
+        NativeTransferSchema(
+            to="0" * 40,
+            value=MOCK_ETH_AMOUNT,
+        )

@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, Field, field_validator
 
-from .validators import positive_decimal_validator
+from .validators import positive_decimal_validator, zero_address_validator
 
 
 class GetWalletDetailsSchema(BaseModel):
@@ -28,6 +28,12 @@ class NativeTransferSchema(BaseModel):
         ..., description="The amount to transfer in whole units (e.g. '1.5' for 1.5 ETH)"
     )
 
+    @field_validator("to")
+    @classmethod
+    def validate_to(cls, v: str) -> str:
+        """Validate the destination address is not the zero address."""
+        return zero_address_validator(v)
+
     @field_validator("value")
     @classmethod
     def validate_value(cls, v: str) -> str:
@@ -42,3 +48,9 @@ class ReturnNativeBalanceSchema(BaseModel):
         ...,
         description="The destination address to receive all native token funds (e.g. '0x5154eae861cac3aa757d6016babaf972341354cf')",
     )
+
+    @field_validator("to")
+    @classmethod
+    def validate_to(cls, v: str) -> str:
+        """Validate the destination address is not the zero address."""
+        return zero_address_validator(v)

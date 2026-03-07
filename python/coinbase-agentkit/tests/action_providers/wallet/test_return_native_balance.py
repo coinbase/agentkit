@@ -18,6 +18,7 @@ from .conftest import MOCK_BALANCE
 
 MOCK_TX_HASH = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
 MOCK_DESTINATION = "0x6fb9e80dDd0f5DC99D7cB38b07e8b298A57bF253"
+EVM_ZERO_ADDRESS = "0x" + "0" * 40
 
 # max_fee_per_gas returned by mock estimate_fees()
 MOCK_MAX_FEE_PER_GAS = 10_000_000_000  # 10 gwei
@@ -50,6 +51,18 @@ def test_return_native_balance_schema_missing_to():
     """Test that ReturnNativeBalanceSchema rejects missing destination."""
     with pytest.raises(ValidationError):
         ReturnNativeBalanceSchema()
+
+
+def test_return_native_balance_schema_rejects_zero_address():
+    """Test that ReturnNativeBalanceSchema rejects the EVM zero address."""
+    with pytest.raises(ValidationError, match="Transfer to the zero address is not allowed"):
+        ReturnNativeBalanceSchema(to=EVM_ZERO_ADDRESS)
+
+
+def test_return_native_balance_schema_rejects_zero_address_no_prefix():
+    """Test that ReturnNativeBalanceSchema rejects the zero address without 0x prefix."""
+    with pytest.raises(ValidationError, match="Transfer to the zero address is not allowed"):
+        ReturnNativeBalanceSchema(to="0" * 40)
 
 
 def test_return_native_balance_success_evm_with_estimate_fees(wallet_action_provider):

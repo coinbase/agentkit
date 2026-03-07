@@ -41,6 +41,20 @@ const DEFAULT_TERMINOLOGY = {
 // estimation time and transaction submission.
 const EVM_GAS_BUDGET = 21000n * 2n; // 42000
 
+// The EVM zero address. Sending tokens here burns them permanently with no recovery.
+const EVM_ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+/**
+ * Returns an error string if the destination is the EVM zero address, or null if it is valid.
+ * Handles addresses with or without the 0x prefix.
+ */
+function validateNotZeroAddress(to: string, verb: string): string | null {
+  if (to.toLowerCase() === EVM_ZERO_ADDRESS) {
+    return `Error during ${verb}: Transfer to the zero address is not allowed`;
+  }
+  return null;
+}
+
 /**
  * WalletActionProvider provides actions for getting basic wallet information.
  */
@@ -157,6 +171,11 @@ It takes the following inputs:
         args.to = `0x${args.to}`;
       }
 
+      if (protocolFamily === "evm") {
+        const zeroAddressError = validateNotZeroAddress(args.to, terminology.verb);
+        if (zeroAddressError) return zeroAddressError;
+      }
+
       const amountInAtomicUnits = parseUnits(args.value, terminology.decimals);
       const result = await walletProvider.nativeTransfer(args.to, amountInAtomicUnits.toString());
       return [
@@ -203,6 +222,11 @@ Important notes:
 
       if (protocolFamily === "evm" && !args.to.startsWith("0x")) {
         args.to = `0x${args.to}`;
+      }
+
+      if (protocolFamily === "evm") {
+        const zeroAddressError = validateNotZeroAddress(args.to, terminology.verb);
+        if (zeroAddressError) return zeroAddressError;
       }
 
       const balance = await walletProvider.getBalance();
