@@ -17,6 +17,7 @@ export * from "./erc721";
 export * from "./farcaster";
 export * from "./jupiter";
 export * from "./messari";
+export * from "./mintclub";
 export * from "./pyth";
 export * from "./moonwell";
 export * from "./morpho";
