@@ -6,7 +6,7 @@ import { WalletProvider, CdpSmartWalletProvider } from "../../wallet-providers";
 import { Network } from "../../network";
 import { formatUnits, parseUnits } from "viem";
 
-import { NativeTransferSchema, GetWalletDetailsSchema } from "./schemas";
+import { NativeTransferSchema, GetWalletDetailsSchema, GetBalanceSchema } from "./schemas";
 
 const PROTOCOL_FAMILY_TO_TERMINOLOGY: Record<
   string,
@@ -87,6 +87,32 @@ export class WalletActionProvider extends ActionProvider {
       ].join("\n");
     } catch (error) {
       return `Error getting wallet details: ${error}`;
+    }
+  }
+
+  /**
+   * Gets the native currency balance of the connected wallet.
+   *
+   * @param walletProvider - The wallet provider to get the balance from.
+   * @param _ - Empty args object (not used).
+   * @returns A message containing the wallet address and balance information.
+   */
+  @CreateAction({
+    name: "get_balance",
+    description: "This tool will get the native currency balance of the connected wallet.",
+    schema: GetBalanceSchema,
+  })
+  async getBalance(
+    walletProvider: WalletProvider,
+    _: z.infer<typeof GetBalanceSchema>,
+  ): Promise<string> {
+    try {
+      const balance = await walletProvider.getBalance();
+      const address = walletProvider.getAddress();
+
+      return `Native balance at address ${address}: ${balance}`;
+    } catch (error) {
+      return `Error getting balance: ${error}`;
     }
   }
 

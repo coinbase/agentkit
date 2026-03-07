@@ -1,6 +1,6 @@
 import { WalletProvider } from "../../wallet-providers";
 import { walletActionProvider } from "./walletActionProvider";
-import { NativeTransferSchema } from "./schemas";
+import { GetBalanceSchema, NativeTransferSchema } from "./schemas";
 import { formatUnits, parseUnits } from "viem";
 
 describe("Wallet Action Provider", () => {
@@ -119,6 +119,39 @@ describe("Wallet Action Provider", () => {
 
       const response = await actionProvider.getWalletDetails(mockWallet, {});
       expect(response).toBe(`Error getting wallet details: ${error}`);
+    });
+  });
+
+  describe("getBalance", () => {
+    it("should return native balance for EVM networks", async () => {
+      mockWallet.getNetwork.mockReturnValue(MOCK_EVM_NETWORK);
+      mockWallet.getBalance.mockResolvedValue(MOCK_ETH_BALANCE);
+
+      const response = await actionProvider.getBalance(mockWallet, {});
+
+      expect(response).toBe(`Native balance at address ${MOCK_ADDRESS}: ${MOCK_ETH_BALANCE}`);
+    });
+
+    it("should return native balance for Solana networks", async () => {
+      mockWallet.getNetwork.mockReturnValue(MOCK_SOLANA_NETWORK);
+      mockWallet.getBalance.mockResolvedValue(MOCK_SOL_BALANCE);
+
+      const response = await actionProvider.getBalance(mockWallet, {});
+
+      expect(response).toBe(`Native balance at address ${MOCK_ADDRESS}: ${MOCK_SOL_BALANCE}`);
+    });
+
+    it("should handle errors when getting balance", async () => {
+      const error = new Error("Failed to get balance");
+      mockWallet.getBalance.mockRejectedValue(error);
+
+      const response = await actionProvider.getBalance(mockWallet, {});
+      expect(response).toBe(`Error getting balance: ${error}`);
+    });
+
+    it("should validate GetBalanceSchema with empty input", () => {
+      const result = GetBalanceSchema.safeParse({});
+      expect(result.success).toBe(true);
     });
   });
 
