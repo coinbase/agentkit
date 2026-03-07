@@ -7,7 +7,12 @@ from ...network import Network
 from ...wallet_providers.wallet_provider import WalletProvider
 from ..action_decorator import create_action
 from ..action_provider import ActionProvider
-from .schemas import GetBalanceSchema, GetWalletDetailsSchema, NativeTransferSchema
+from .schemas import (
+    GetBalanceSchema,
+    GetWalletDetailsSchema,
+    NativeTransferSchema,
+    ReturnNativeBalanceSchema,
+)
 
 # Protocol-specific terminology for displaying balances and transactions
 PROTOCOL_FAMILY_TO_TERMINOLOGY = {
@@ -150,6 +155,52 @@ Important notes:
 
             tx_hash = wallet_provider.native_transfer(validated_args.to, value_decimal)
             return f"Transferred {validated_args.value} {terminology['display_unit']} to {validated_args.to}\n{terminology['type']}: {tx_hash}"
+        except Exception as e:
+            network = wallet_provider.get_network()
+            terminology = PROTOCOL_FAMILY_TO_TERMINOLOGY.get(
+                network.protocol_family, DEFAULT_TERMINOLOGY
+            )
+            return f"Error during {terminology['verb']}: {e}"
+
+    @create_action(
+        name="return_native_balance",
+        description="""
+This tool will return (transfer) the entire native token balance of the wallet to a destination address.
+It is useful for sweeping all available funds to another address.
+
+It takes the following inputs:
+- to: The destination address to receive all native tokens
+
+Important notes:
+- On EVM networks, the transfer may fail if the wallet balance is insufficient to also cover gas fees.
+  Ensure the wallet has enough to cover both the transfer amount and gas costs.
+- On SVM networks, the full balance is transferred.
+""",
+        schema=ReturnNativeBalanceSchema,
+    )
+    def return_native_balance(self, wallet_provider: WalletProvider, args: dict[str, Any]) -> str:
+        """Return the entire native token balance to a destination address.
+
+        Args:
+            wallet_provider (WalletProvider): The wallet provider to transfer tokens from.
+            args (dict[str, Any]): Arguments containing the destination address.
+
+        Returns:
+            str: A message containing the transfer details and transaction hash.
+
+        """
+        try:
+            validated_args = ReturnNativeBalanceSchema(**args)
+            network = wallet_provider.get_network()
+            terminology = PROTOCOL_FAMILY_TO_TERMINOLOGY.get(
+                network.protocol_family, DEFAULT_TERMINOLOGY
+            )
+
+            balance = wallet_provider.get_balance()
+            formatted_balance = str(Decimal(balance) / (10 ** terminology["decimals"]))
+
+            tx_hash = wallet_provider.native_transfer(validated_args.to, Decimal(balance))
+            return f"Returned {formatted_balance} {terminology['display_unit']} to {validated_args.to}\n{terminology['type']}: {tx_hash}"
         except Exception as e:
             network = wallet_provider.get_network()
             terminology = PROTOCOL_FAMILY_TO_TERMINOLOGY.get(

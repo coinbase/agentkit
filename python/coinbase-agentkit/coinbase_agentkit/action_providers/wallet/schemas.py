@@ -33,3 +33,12 @@ class NativeTransferSchema(BaseModel):
     def validate_value(cls, v: str) -> str:
         """Validate the transfer value."""
         return positive_decimal_validator(v)
+
+
+class ReturnNativeBalanceSchema(BaseModel):
+    """Input schema for returning all native token balance to a destination address."""
+
+    to: str = Field(
+        ...,
+        description="The destination address to receive all native token funds (e.g. '0x5154eae861cac3aa757d6016babaf972341354cf')",
+    )

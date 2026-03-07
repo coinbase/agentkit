@@ -6,7 +6,12 @@ import { WalletProvider, CdpSmartWalletProvider } from "../../wallet-providers";
 import { Network } from "../../network";
 import { formatUnits, parseUnits } from "viem";
 
-import { NativeTransferSchema, GetWalletDetailsSchema, GetBalanceSchema } from "./schemas";
+import {
+  NativeTransferSchema,
+  GetWalletDetailsSchema,
+  GetBalanceSchema,
+  ReturnNativeBalanceSchema,
+} from "./schemas";
 
 const PROTOCOL_FAMILY_TO_TERMINOLOGY: Record<
   string,
@@ -150,6 +155,55 @@ It takes the following inputs:
       const result = await walletProvider.nativeTransfer(args.to, amountInAtomicUnits.toString());
       return [
         `Transferred ${args.value} ${terminology.displayUnit} to ${args.to}`,
+        `${terminology.type}: ${result}`,
+      ].join("\n");
+    } catch (error) {
+      const { protocolFamily } = walletProvider.getNetwork();
+      const terminology = PROTOCOL_FAMILY_TO_TERMINOLOGY[protocolFamily] || DEFAULT_TERMINOLOGY;
+      return `Error during ${terminology.verb}: ${error}`;
+    }
+  }
+
+  /**
+   * Returns the entire native token balance of the wallet to a destination address.
+   *
+   * @param walletProvider - The wallet provider to transfer from.
+   * @param args - The input arguments for the action.
+   * @returns A message containing the transfer details.
+   */
+  @CreateAction({
+    name: "return_native_balance",
+    description: `
+This tool will return (transfer) the entire native token balance of the wallet to a destination address.
+It is useful for sweeping all available funds to another address.
+
+It takes the following inputs:
+- to: The destination address to receive all native tokens
+
+Important notes:
+- On EVM networks, the transfer may fail if the wallet balance is insufficient to also cover gas fees.
+  Ensure the wallet has enough to cover both the transfer amount and gas costs.
+- On SVM networks, the full balance is transferred.
+`,
+    schema: ReturnNativeBalanceSchema,
+  })
+  async returnNativeBalance(
+    walletProvider: WalletProvider,
+    args: z.infer<typeof ReturnNativeBalanceSchema>,
+  ): Promise<string> {
+    try {
+      const { protocolFamily } = walletProvider.getNetwork();
+      const terminology = PROTOCOL_FAMILY_TO_TERMINOLOGY[protocolFamily] || DEFAULT_TERMINOLOGY;
+
+      if (protocolFamily === "evm" && !args.to.startsWith("0x")) {
+        args.to = `0x${args.to}`;
+      }
+
+      const balance = await walletProvider.getBalance();
+      const result = await walletProvider.nativeTransfer(args.to, balance.toString());
+      const formattedBalance = formatUnits(balance, terminology.decimals);
+      return [
+        `Returned ${formattedBalance} ${terminology.displayUnit} to ${args.to}`,
         `${terminology.type}: ${result}`,
       ].join("\n");
     } catch (error) {

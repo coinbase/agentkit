@@ -1,6 +1,6 @@
 import { WalletProvider } from "../../wallet-providers";
 import { walletActionProvider } from "./walletActionProvider";
-import { GetBalanceSchema, NativeTransferSchema } from "./schemas";
+import { GetBalanceSchema, NativeTransferSchema, ReturnNativeBalanceSchema } from "./schemas";
 import { formatUnits, parseUnits } from "viem";
 
 describe("Wallet Action Provider", () => {
@@ -257,6 +257,95 @@ describe("Wallet Action Provider", () => {
       mockWallet.nativeTransfer.mockRejectedValue(error);
 
       const response = await actionProvider.nativeTransfer(mockWallet, args);
+      expect(response).toBe(`Error during transfer: ${error}`);
+    });
+  });
+
+  describe("Return Native Balance", () => {
+    const MOCK_DESTINATION = "0x6fb9e80dDd0f5DC99D7cB38b07e8b298A57bF253";
+
+    it("should successfully parse valid input", () => {
+      const validInput = { to: MOCK_DESTINATION };
+      const result = ReturnNativeBalanceSchema.safeParse(validInput);
+      expect(result.success).toBe(true);
+    });
+
+    it("should fail parsing empty input", () => {
+      const result = ReturnNativeBalanceSchema.safeParse({});
+      expect(result.success).toBe(false);
+    });
+
+    it("should return the entire ETH balance to the destination", async () => {
+      mockWallet.getNetwork.mockReturnValue(MOCK_EVM_NETWORK);
+      mockWallet.getBalance.mockResolvedValue(MOCK_ETH_BALANCE);
+      mockWallet.nativeTransfer.mockResolvedValue(MOCK_TRANSACTION_HASH);
+
+      const response = await actionProvider.returnNativeBalance(mockWallet, {
+        to: MOCK_DESTINATION,
+      });
+
+      expect(mockWallet.getBalance).toHaveBeenCalled();
+      expect(mockWallet.nativeTransfer).toHaveBeenCalledWith(
+        MOCK_DESTINATION,
+        MOCK_ETH_BALANCE.toString(),
+      );
+      expect(response).toBe(
+        `Returned ${formatUnits(MOCK_ETH_BALANCE, 18)} ETH to ${MOCK_DESTINATION}\nTransaction hash: ${MOCK_TRANSACTION_HASH}`,
+      );
+    });
+
+    it("should return the entire SOL balance to the destination", async () => {
+      mockWallet.getNetwork.mockReturnValue(MOCK_SOLANA_NETWORK);
+      mockWallet.getBalance.mockResolvedValue(MOCK_SOL_BALANCE);
+      mockWallet.nativeTransfer.mockResolvedValue(MOCK_SIGNATURE);
+
+      const response = await actionProvider.returnNativeBalance(mockWallet, {
+        to: MOCK_DESTINATION,
+      });
+
+      expect(mockWallet.getBalance).toHaveBeenCalled();
+      expect(mockWallet.nativeTransfer).toHaveBeenCalledWith(
+        MOCK_DESTINATION,
+        MOCK_SOL_BALANCE.toString(),
+      );
+      expect(response).toBe(
+        `Returned ${formatUnits(MOCK_SOL_BALANCE, 9)} SOL to ${MOCK_DESTINATION}\nSignature: ${MOCK_SIGNATURE}`,
+      );
+    });
+
+    it("should prepend 0x to EVM destination address if missing", async () => {
+      mockWallet.getNetwork.mockReturnValue(MOCK_EVM_NETWORK);
+      mockWallet.getBalance.mockResolvedValue(MOCK_ETH_BALANCE);
+      mockWallet.nativeTransfer.mockResolvedValue(MOCK_TRANSACTION_HASH);
+
+      const destinationWithout0x = MOCK_DESTINATION.slice(2);
+      await actionProvider.returnNativeBalance(mockWallet, { to: destinationWithout0x });
+
+      expect(mockWallet.nativeTransfer).toHaveBeenCalledWith(
+        `0x${destinationWithout0x}`,
+        MOCK_ETH_BALANCE.toString(),
+      );
+    });
+
+    it("should handle ETH return balance errors", async () => {
+      mockWallet.getNetwork.mockReturnValue(MOCK_EVM_NETWORK);
+      const error = new Error("Failed to execute transfer");
+      mockWallet.getBalance.mockRejectedValue(error);
+
+      const response = await actionProvider.returnNativeBalance(mockWallet, {
+        to: MOCK_DESTINATION,
+      });
+      expect(response).toBe(`Error during transaction: ${error}`);
+    });
+
+    it("should handle SOL return balance errors", async () => {
+      mockWallet.getNetwork.mockReturnValue(MOCK_SOLANA_NETWORK);
+      const error = new Error("Failed to execute transfer");
+      mockWallet.getBalance.mockRejectedValue(error);
+
+      const response = await actionProvider.returnNativeBalance(mockWallet, {
+        to: MOCK_DESTINATION,
+      });
       expect(response).toBe(`Error during transfer: ${error}`);
     });
   });
