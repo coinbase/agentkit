@@ -1,0 +1,123 @@
+import { parseAbi } from "viem";
+
+/**
+ * Uniswap V4 contract addresses by network.
+ * Source: https://docs.uniswap.org/contracts/v4/deployments
+ */
+/**
+ * Uniswap V4 contract addresses by network.
+ * Source: https://docs.uniswap.org/contracts/v4/deployments
+ *
+ * Note: PositionManager addresses are placeholder - actual addresses may differ.
+ * The PositionManager is used for liquidity operations (add/remove liquidity),
+ * which are NOT currently implemented in this action provider.
+ *
+ * Current V4 deployment uses the Universal Router for swaps, not a separate
+ * PositionManager. Liquidity management contracts may be added in a future update.
+ */
+export const UNISWAP_V4_ADDRESSES: Record<
+  string,
+  {
+    poolManager: `0x${string}`;
+    universalRouter: `0x${string}`;
+    quoter: `0x${string}`;
+    positionManager: `0x${string}`;
+  }
+> = {
+  "base-mainnet": {
+    poolManager: "0x498581ff718922c3f8e6a244956af099b2652b2b",
+    universalRouter: "0x6ff5693b99212da76ad316178a184ab56d299b43",
+    quoter: "0x0d5e0f971ed27fbff6c2837bf31316121532048d",
+    positionManager: "0x7c5f5a4bbd8fd63184577525326123b519429bdc",
+  },
+  "base-sepolia": {
+    poolManager: "0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408",
+    universalRouter: "0x492e6456d9528771018deb9e87ef7750ef184104",
+    quoter: "0x4a6513c898fe1b2d0e78d3b0e0a4a151589b1cba",
+    positionManager: "0x4b2c77d209d3405f41a037ec6c77f7f5b8e2ca80",
+  },
+};
+
+/** Supported network IDs for this provider */
+export const SUPPORTED_NETWORK_IDS = Object.keys(UNISWAP_V4_ADDRESSES);
+
+/** Common token addresses by network */
+export const COMMON_TOKENS: Record<string, Record<string, `0x${string}`>> = {
+  "base-mainnet": {
+    WETH: "0x4200000000000000000000000000000000000006",
+    USDC: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    USDbC: "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
+    DAI: "0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb",
+    cbETH: "0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22",
+  },
+  "base-sepolia": {
+    WETH: "0x4200000000000000000000000000000000000006",
+    USDC: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+  },
+};
+
+/** Native ETH as a Currency (address(0)) */
+export const NATIVE_ETH = "0x0000000000000000000000000000000000000000" as `0x${string}`;
+
+/** Aliases that resolve to native ETH */
+export const NATIVE_ETH_ALIASES = ["native", "eth", NATIVE_ETH.toLowerCase()];
+
+/** Default values */
+export const DEFAULT_SLIPPAGE_TOLERANCE = 0.5; // 0.5%
+export const DEFAULT_FEE = 3000; // 0.3%
+export const DEFAULT_DEADLINE_SECONDS = 1800; // 30 minutes
+
+/** Standard fee tiers and corresponding tick spacings */
+export const FEE_TIER_MAP: Record<number, number> = {
+  100: 1, // 0.01%
+  500: 10, // 0.05%
+  3000: 60, // 0.3%
+  10000: 200, // 1.0%
+};
+
+/** ERC20 ABI for token operations */
+export const ERC20_ABI = parseAbi([
+  "function decimals() view returns (uint8)",
+  "function symbol() view returns (string)",
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+  "function balanceOf(address account) view returns (uint256)",
+] as const);
+
+/** Universal Router ABI */
+export const UNIVERSAL_ROUTER_ABI = parseAbi([
+  "function execute(bytes commands, bytes[] inputs, uint256 deadline) payable",
+] as const);
+
+/** PoolManager ABI for view functions */
+export const POOL_MANAGER_ABI = parseAbi([
+  "function getSlot0(bytes32 id) view returns (uint160 sqrtPriceX96, int24 tick, uint24 protocolFee, uint24 lpFee)",
+  "function getLiquidity(bytes32 id) view returns (uint128)",
+] as const);
+
+/** Quoter ABI — uses V4 PoolKey struct for pool identification */
+export const QUOTER_ABI = parseAbi([
+  "function quoteExactInputSingle((address tokenIn, address tokenOut, uint24 fee, uint256 amountIn, uint160 sqrtPriceLimitX96)) external returns (uint256 amountOut, uint160 sqrtPriceX96After, uint32 initializedTicksCrossed, uint256 gasEstimate)",
+  "function quoteExactOutputSingle((address tokenIn, address tokenOut, uint24 fee, uint256 amountOut, uint160 sqrtPriceLimitX96)) external returns (uint256 amountIn, uint160 sqrtPriceX96After, uint32 initializedTicksCrossed, uint256 gasEstimate)",
+] as const);
+
+/** Universal Router command bytes */
+export const COMMANDS = {
+  V4_SWAP: 0x10,
+  WRAP_ETH: 0x0b,
+  UNWRAP_WETH: 0x0c,
+} as const;
+
+/** V4 swap sub-action types */
+export const V4_ACTIONS = {
+  SWAP_EXACT_IN_SINGLE: 0x06,
+  SWAP_EXACT_IN: 0x07,
+  SWAP_EXACT_OUT_SINGLE: 0x08,
+  SWAP_EXACT_OUT: 0x09,
+  SETTLE_ALL: 0x0c,
+  TAKE_ALL: 0x0f,
+} as const;
+
+/** Uniswap V4 sqrt price limits for unconstrained swaps */
+export const MIN_SQRT_RATIO = 4295128739n;
+export const MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342n;
