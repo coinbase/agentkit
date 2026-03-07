@@ -1,0 +1,1 @@
+Add BlockRun action provider for pay-per-request LLM access via x402 micropayments. BlockRun enables agents to access multiple LLM providers (OpenAI, Anthropic, Google, DeepSeek) with USDC payments on Base chain. Install with `pip install coinbase-agentkit[blockrun]`.
