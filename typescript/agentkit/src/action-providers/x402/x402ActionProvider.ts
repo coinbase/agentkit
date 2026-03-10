@@ -13,6 +13,7 @@ import {
 } from "./schemas";
 import { EvmWalletProvider, WalletProvider, SvmWalletProvider } from "../../wallet-providers";
 import { x402Client, wrapFetchWithPayment } from "@x402/fetch";
+import { toClientEvmSigner } from "@x402/evm";
 import { registerExactEvmScheme } from "@x402/evm/exact/client";
 import { registerExactSvmScheme } from "@x402/svm/exact/client";
 import {
@@ -88,8 +89,6 @@ export class X402ActionProvider extends ActionProvider<WalletProvider> {
     args: z.infer<typeof ListX402ServicesSchema>,
   ): Promise<string> {
     try {
-      console.log("args", args);
-
       // Validate facilitator is allowed (known name or registered name)
       const { isAllowed, resolvedUrl } = validateFacilitator(
         args.facilitator,
@@ -382,8 +381,6 @@ DO NOT use this action directly without first trying make_http_request!`,
     args: z.infer<typeof RetryWithX402Schema>,
   ): Promise<string> {
     try {
-      console.log("args", args);
-
       // Check if service is registered
       if (!isUrlAllowed(args.url, this.registeredServices)) {
         return JSON.stringify(
@@ -849,7 +846,7 @@ These are the only services that can be called using make_http_request or make_h
     const client = new x402Client();
 
     if (walletProvider instanceof EvmWalletProvider) {
-      const signer = walletProvider.toSigner();
+      const signer = toClientEvmSigner(walletProvider.toSigner(), walletProvider.getPublicClient());
       registerExactEvmScheme(client, { signer });
     } else if (walletProvider instanceof SvmWalletProvider) {
       const signer = await walletProvider.toSigner();

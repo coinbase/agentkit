@@ -19,10 +19,10 @@ dependencies = [
     "coinbase-agentkit>=0.7.2,<0.8",
     "python-dotenv>=1.0.1,<2",
     "pytest-asyncio>=0.25.3,<0.26",
-    "pydantic-ai>=0.4.0,<0.5",
+    "pydantic-ai>=1.63,<2",
     "setuptools>=69.0.3,<70",
     "nest-asyncio>=1.6.0,<2",
-    "openai<=1.99.1"
+    "openai>=2.11.0"
 ]
 
 [dependency-groups]

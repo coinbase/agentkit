@@ -313,7 +313,12 @@ async def test_tool_compatibility_with_pydantic_ai(agent_kit: AgentKit) -> None:
 
         # Verify the agent was created successfully
         assert agent is not None
-        assert len(agent._function_tools) == len(tools)
+        # pydantic-ai 1.x uses _function_toolset, 0.x used _function_tools
+        if hasattr(agent, "_function_toolset"):
+            tool_count = len(agent._function_toolset.tools)
+        else:
+            tool_count = len(agent._function_tools)
+        assert tool_count == len(tools)
 
     except Exception as e:
         pytest.fail(f"Failed to create PydanticAI Agent with AgentKit tools: {e}")

@@ -9,6 +9,7 @@ import * as utils from "./utils";
 
 // Mock external modules
 jest.mock("@x402/fetch");
+jest.mock("@x402/evm");
 jest.mock("@x402/evm/exact/client");
 jest.mock("@x402/svm/exact/client");
 jest.mock("./utils");
@@ -76,6 +77,7 @@ global.fetch = mockFetch;
 const makeMockWalletProvider = (networkId: string) => {
   const mockProvider = Object.create(EvmWalletProvider.prototype);
   mockProvider.toSigner = jest.fn().mockReturnValue("mock-signer");
+  mockProvider.getPublicClient = jest.fn().mockReturnValue("mock-public-client");
   mockProvider.getNetwork = jest.fn().mockReturnValue({ protocolFamily: "evm", networkId });
   return mockProvider as EvmWalletProvider;
 };

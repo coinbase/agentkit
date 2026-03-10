@@ -120,9 +120,7 @@ async function initializeAgent() {
       registeredServices: networkId === "base-sepolia" ? ["https://www.x402.org/protected"] : [], // add approved x402 services
       allowDynamicServiceRegistration: false, // set to true to allow registering services discovered through facilitators bazaar
       maxPaymentUsdc: 1.0, // maximum payment per request in USDC
-      registeredFacilitators: {
-        "my-custom-facilitator": "https://my-custom-facilitator.example.com",
-      }, // add custom facilitators for discovery (CDP and PayAI are pre-registered), format: { "name": "https://url" }
+      registeredFacilitators: {}, // add custom facilitators for discovery (CDP and PayAI are pre-registered), format: { "name": "https://url" }
     };
 
     // action providers

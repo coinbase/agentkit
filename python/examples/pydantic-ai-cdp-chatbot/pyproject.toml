@@ -7,7 +7,7 @@ requires-python = "~=3.10"
 readme = "README.md"
 dependencies = [
     "python-dotenv>=1.0.1,<2",
-    "pydantic-ai>=0.4.0,<0.5",
+    "pydantic-ai>=1.63,<2",
     "coinbase-agentkit",
     "coinbase-agentkit-pydantic-ai",
 ]
