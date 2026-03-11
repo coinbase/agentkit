@@ -11,7 +11,9 @@ const EVM_ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
  * "0x000...000" and "000...000" (40 hex zeros) are rejected.
  */
 const isNotZeroAddress = (addr: string): boolean => {
-  const normalized = addr.startsWith("0x") ? addr.toLowerCase() : `0x${addr.toLowerCase()}`;
+  const lowerAddr = addr.toLowerCase();
+  const withoutPrefix = lowerAddr.startsWith("0x") ? lowerAddr.slice(2) : lowerAddr;
+  const normalized = `0x${withoutPrefix}`;
   return normalized !== EVM_ZERO_ADDRESS;
 };
 

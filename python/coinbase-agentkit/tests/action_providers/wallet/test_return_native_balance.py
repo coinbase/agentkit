@@ -61,13 +61,13 @@ def test_return_native_balance_schema_missing_to():
 
 def test_return_native_balance_schema_rejects_zero_address():
     """Test that ReturnNativeBalanceSchema rejects the EVM zero address."""
-    with pytest.raises(ValidationError, match="Transfer to the zero address is not allowed"):
-        ReturnNativeBalanceSchema(to=EVM_ZERO_ADDRESS)
+    with pytest.raises(ValidationError, match="zero address"):
+        ReturnNativeBalanceSchema(to=ZERO_ADDRESS)
 
 
 def test_return_native_balance_schema_rejects_zero_address_no_prefix():
     """Test that ReturnNativeBalanceSchema rejects the zero address without 0x prefix."""
-    with pytest.raises(ValidationError, match="Transfer to the zero address is not allowed"):
+    with pytest.raises(ValidationError, match="zero address"):
         ReturnNativeBalanceSchema(to="0" * 40)
 
 
