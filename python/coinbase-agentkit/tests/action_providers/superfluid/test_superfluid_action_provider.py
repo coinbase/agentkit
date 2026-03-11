@@ -24,7 +24,7 @@ from coinbase_agentkit.network import Network
 MOCK_TX_HASH = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
 MOCK_RECEIPT = {"status": 1, "transactionHash": MOCK_TX_HASH}
 MOCK_ADDRESS = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
-MOCK_RECIPIENT = "0x5154eae861cac3aa757d6016babaf972341354cf"
+MOCK_RECIPIENT = "0x5154eAE861cAc3aA757d6016babAF972341354cf"
 MOCK_TOKEN_ADDRESS = "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
@@ -39,6 +39,8 @@ def test_create_flowinput_model_valid():
     input_model = CreateFlowSchema(**valid_input)
 
     assert isinstance(input_model, CreateFlowSchema)
+    assert input_model.recipient == MOCK_RECIPIENT
+    assert input_model.token_address == MOCK_TOKEN_ADDRESS
     assert input_model.flow_rate == valid_input["flow_rate"]
 
 
@@ -78,6 +80,8 @@ def test_update_flow_input_model_valid():
     input_model = UpdateFlowSchema(**valid_input)
 
     assert isinstance(input_model, UpdateFlowSchema)
+    assert input_model.recipient == MOCK_RECIPIENT
+    assert input_model.token_address == MOCK_TOKEN_ADDRESS
     assert input_model.new_flow_rate == valid_input["new_flow_rate"]
 
 
@@ -103,6 +107,8 @@ def test_delete_flow_input_model_valid():
     input_model = DeleteFlowSchema(**valid_input)
 
     assert isinstance(input_model, DeleteFlowSchema)
+    assert input_model.recipient == MOCK_RECIPIENT
+    assert input_model.token_address == MOCK_TOKEN_ADDRESS
 
 
 def test_delete_flow_input_model_missing_params():

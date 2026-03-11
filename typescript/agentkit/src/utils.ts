@@ -54,9 +54,8 @@ export function applyGasMultiplier(gas: bigint, multiplier: number): bigint {
     throw new Error("Gas multiplier must be non-negative");
   }
   // Scale multiplier to 4 decimal places to stay in BigInt domain
-  const PRECISION = BigInt(10000);
-  const multiplierScaled = BigInt(Math.round(multiplier * Number(PRECISION)));
-  return (gas * multiplierScaled) / PRECISION;
+  const multiplierScaled = BigInt(Math.round(multiplier * 10000));
+  return (gas * multiplierScaled) / BigInt(10000);
 }
 
 /**
