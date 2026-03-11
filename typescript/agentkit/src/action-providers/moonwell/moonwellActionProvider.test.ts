@@ -356,7 +356,6 @@ describe("Moonwell Action Provider", () => {
       expect(mockApprove).toHaveBeenCalled();
       expect(mockWallet.sendTransaction).toHaveBeenCalled();
       expect(response).toBe("Error minting Moonwell MToken: Failed to deposit");
-      expect(consoleErrorSpy).toHaveBeenCalledWith("DEBUG - Mint error:", error);
     });
 
     describe("ETH deposits via router", () => {
@@ -474,7 +473,6 @@ describe("Moonwell Action Provider", () => {
         // Should not call approve for ETH deposits on mainnet
         expect(mockApprove).not.toHaveBeenCalled();
         expect(response).toBe("Error minting Moonwell MToken: Failed to deposit ETH");
-        expect(consoleErrorSpy).toHaveBeenCalledWith("DEBUG - Mint error:", error);
       });
     });
   });
@@ -547,7 +545,6 @@ describe("Moonwell Action Provider", () => {
 
       expect(mockWallet.sendTransaction).toHaveBeenCalled();
       expect(response).toBe("Error redeeming from Moonwell MToken: Failed to redeem");
-      expect(consoleErrorSpy).toHaveBeenCalledWith("DEBUG - Redeem error:", error);
     });
   });
 

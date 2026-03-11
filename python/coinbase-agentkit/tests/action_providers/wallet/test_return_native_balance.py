@@ -18,6 +18,7 @@ from .conftest import MOCK_BALANCE
 
 MOCK_TX_HASH = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
 MOCK_DESTINATION = "0x6fb9e80dDd0f5DC99D7cB38b07e8b298A57bF253"
+ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 # max_fee_per_gas returned by mock estimate_fees()
 MOCK_MAX_FEE_PER_GAS = 10_000_000_000  # 10 gwei
@@ -44,6 +45,12 @@ def test_return_native_balance_schema_valid():
     schema = ReturnNativeBalanceSchema(to=MOCK_DESTINATION)
     assert isinstance(schema, ReturnNativeBalanceSchema)
     assert schema.to == MOCK_DESTINATION
+
+
+def test_return_native_balance_schema_zero_address():
+    """Test that ReturnNativeBalanceSchema rejects the zero address."""
+    with pytest.raises(ValidationError, match="zero address"):
+        ReturnNativeBalanceSchema(to=ZERO_ADDRESS)
 
 
 def test_return_native_balance_schema_missing_to():
