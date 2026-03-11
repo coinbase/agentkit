@@ -49,7 +49,14 @@ const EVM_ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
  * Handles addresses with or without the 0x prefix.
  */
 function validateNotZeroAddress(to: string, verb: string): string | null {
-  if (to.toLowerCase() === EVM_ZERO_ADDRESS) {
+  // Normalize address: trim, lowercase, strip all leading "0x" prefixes, then add a single "0x".
+  let normalized = to.trim().toLowerCase();
+  while (normalized.startsWith("0x")) {
+    normalized = normalized.slice(2);
+  }
+  const canonical = `0x${normalized}`;
+
+  if (canonical === EVM_ZERO_ADDRESS) {
     return `Error during ${verb}: Transfer to the zero address is not allowed`;
   }
   return null;
