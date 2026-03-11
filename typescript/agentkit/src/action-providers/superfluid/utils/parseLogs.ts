@@ -68,8 +68,6 @@ export function extractCreatedSuperTokenAddressAbi(
 ): `0x${string}` {
   const factory = factoryAddress.toLowerCase();
   if (!factory) throw new Error("Missing factory address");
-  console.log("factory", factory);
-  console.log("receipt.logs", receipt.logs);
 
   for (const log of receipt.logs) {
     if (log.address.toLowerCase() !== factory) continue;

@@ -14,7 +14,7 @@ MOCK_TX_HASH = HexStr("0x742d35Cc6634C0532925a3b844Bc454e4438f44e")
 MOCK_ETH_AMOUNT = "0.0001"
 INVALID_ADDRESS = "not-an-address"
 INVALID_AMOUNT = "not-a-number"
-EVM_ZERO_ADDRESS = "0x" + "0" * 40
+ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 
 def test_native_transfer_schema_valid():
@@ -26,6 +26,15 @@ def test_native_transfer_schema_valid():
     assert isinstance(schema, NativeTransferSchema)
     assert schema.to == MOCK_ADDRESS
     assert schema.value == MOCK_ETH_AMOUNT
+
+
+def test_native_transfer_schema_zero_address():
+    """Test that NativeTransferSchema rejects the zero address."""
+    with pytest.raises(ValidationError, match="zero address"):
+        NativeTransferSchema(
+            to=ZERO_ADDRESS,
+            value=MOCK_ETH_AMOUNT,
+        )
 
 
 def test_native_transfer_schema_invalid_value():

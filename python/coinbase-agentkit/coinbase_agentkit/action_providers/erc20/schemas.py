@@ -6,6 +6,8 @@ from decimal import Decimal
 from pydantic import BaseModel, Field, field_validator
 from pydantic_core import PydanticCustomError
 
+from ...validators.eth import validate_not_zero_address
+
 
 class GetBalanceSchema(BaseModel):
     """Schema for getting the balance of an ERC20 token."""
@@ -28,6 +30,12 @@ class TransferSchema(BaseModel):
     )
     contract_address: str = Field(description="The contract address of the token to transfer")
     destination_address: str = Field(description="The destination to transfer the funds")
+
+    @field_validator("destination_address")
+    @classmethod
+    def validate_destination_address(cls, v: str) -> str:
+        """Validate destination address is a valid non-zero Ethereum address."""
+        return validate_not_zero_address(v)
 
     @field_validator("amount")
     @classmethod
@@ -89,6 +97,12 @@ class ApproveSchema(BaseModel):
     )
     contract_address: str = Field(description="The contract address of the token")
     spender_address: str = Field(description="The address to approve for spending tokens")
+
+    @field_validator("spender_address")
+    @classmethod
+    def validate_spender_address(cls, v: str) -> str:
+        """Validate spender address is a valid non-zero Ethereum address."""
+        return validate_not_zero_address(v)
 
     @field_validator("amount")
     @classmethod

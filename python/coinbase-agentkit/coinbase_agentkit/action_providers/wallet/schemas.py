@@ -2,7 +2,8 @@
 
 from pydantic import BaseModel, Field, field_validator
 
-from .validators import positive_decimal_validator, zero_address_validator
+from ...validators.eth import validate_not_zero_address
+from .validators import positive_decimal_validator
 
 
 class GetWalletDetailsSchema(BaseModel):
@@ -30,9 +31,9 @@ class NativeTransferSchema(BaseModel):
 
     @field_validator("to")
     @classmethod
-    def validate_to(cls, v: str) -> str:
-        """Validate the destination address is not the zero address."""
-        return zero_address_validator(v)
+    def validate_to_address(cls, v: str) -> str:
+        """Validate destination address is a valid non-zero Ethereum address."""
+        return validate_not_zero_address(v)
 
     @field_validator("value")
     @classmethod
@@ -51,6 +52,6 @@ class ReturnNativeBalanceSchema(BaseModel):
 
     @field_validator("to")
     @classmethod
-    def validate_to(cls, v: str) -> str:
-        """Validate the destination address is not the zero address."""
-        return zero_address_validator(v)
+    def validate_to_address(cls, v: str) -> str:
+        """Validate destination address is a valid non-zero Ethereum address."""
+        return validate_not_zero_address(v)

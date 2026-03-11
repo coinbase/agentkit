@@ -39,15 +39,23 @@ export async function approve(
 /**
  * Scales a gas estimate by a given multiplier.
  *
- * This function converts the gas estimate to a number, applies the multiplier,
- * rounds the result to the nearest integer, and returns it as a bigint.
+ * This function keeps arithmetic in the BigInt domain to avoid floating-point
+ * precision loss when gas values are very large. The multiplier is scaled to an
+ * integer factor (precision of 4 decimal places) before multiplication.
+ *
+ * Security audit fix: @kushmanmb – avoids Number(bigint) precision loss for large gas values.
  *
  * @param gas - The original gas estimate (bigint).
  * @param multiplier - The factor by which to scale the estimate.
  * @returns The adjusted gas estimate as a bigint.
  */
 export function applyGasMultiplier(gas: bigint, multiplier: number): bigint {
-  return BigInt(Math.round(Number(gas) * multiplier));
+  if (multiplier < 0) {
+    throw new Error("Gas multiplier must be non-negative");
+  }
+  // Scale multiplier to 4 decimal places to stay in BigInt domain
+  const multiplierScaled = BigInt(Math.round(multiplier * 10000));
+  return (gas * multiplierScaled) / BigInt(10000);
 }
 
 /**
