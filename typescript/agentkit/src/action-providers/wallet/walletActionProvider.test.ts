@@ -180,6 +180,22 @@ describe("Wallet Action Provider", () => {
       expect(result.success).toBe(false);
     });
 
+    it("should reject the zero address (with 0x prefix)", () => {
+      const result = NativeTransferSchema.safeParse({
+        to: "0x0000000000000000000000000000000000000000",
+        value: MOCK_AMOUNT,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject the zero address (without 0x prefix)", () => {
+      const result = NativeTransferSchema.safeParse({
+        to: "0000000000000000000000000000000000000000",
+        value: MOCK_AMOUNT,
+      });
+      expect(result.success).toBe(false);
+    });
+
     it("should successfully transfer ETH", async () => {
       mockWallet.getNetwork.mockReturnValue(MOCK_EVM_NETWORK);
       mockWallet.nativeTransfer.mockResolvedValue(MOCK_TRANSACTION_HASH);
@@ -259,6 +275,30 @@ describe("Wallet Action Provider", () => {
       const response = await actionProvider.nativeTransfer(mockWallet, args);
       expect(response).toBe(`Error during transfer: ${error}`);
     });
+
+    it("should reject transfer to zero address for EVM", async () => {
+      mockWallet.getNetwork.mockReturnValue(MOCK_EVM_NETWORK);
+      const args = {
+        to: "0x0000000000000000000000000000000000000000",
+        value: MOCK_AMOUNT,
+      };
+
+      const response = await actionProvider.nativeTransfer(mockWallet, args);
+      expect(response).toContain("zero address");
+      expect(mockWallet.nativeTransfer).not.toHaveBeenCalled();
+    });
+
+    it("should reject transfer to zero address without 0x prefix for EVM", async () => {
+      mockWallet.getNetwork.mockReturnValue(MOCK_EVM_NETWORK);
+      const args = {
+        to: "0000000000000000000000000000000000000000",
+        value: MOCK_AMOUNT,
+      };
+
+      const response = await actionProvider.nativeTransfer(mockWallet, args);
+      expect(response).toContain("zero address");
+      expect(mockWallet.nativeTransfer).not.toHaveBeenCalled();
+    });
   });
 
   describe("Return Native Balance", () => {
@@ -299,6 +339,20 @@ describe("Wallet Action Provider", () => {
 
     it("should fail parsing empty input", () => {
       const result = ReturnNativeBalanceSchema.safeParse({});
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject the zero address (with 0x prefix)", () => {
+      const result = ReturnNativeBalanceSchema.safeParse({
+        to: "0x0000000000000000000000000000000000000000",
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject the zero address (without 0x prefix)", () => {
+      const result = ReturnNativeBalanceSchema.safeParse({
+        to: "0000000000000000000000000000000000000000",
+      });
       expect(result.success).toBe(false);
     });
 
@@ -393,6 +447,24 @@ describe("Wallet Action Provider", () => {
         `0x${destinationWithout0x}`,
         expectedTransferAmount.toString(),
       );
+    });
+
+    it("should reject return to zero address for EVM", async () => {
+      const response = await actionProvider.returnNativeBalance(mockEvmWallet, {
+        to: "0x0000000000000000000000000000000000000000",
+      });
+
+      expect(response).toContain("zero address");
+      expect(mockEvmWallet.nativeTransfer).not.toHaveBeenCalled();
+    });
+
+    it("should reject return to zero address without 0x prefix for EVM", async () => {
+      const response = await actionProvider.returnNativeBalance(mockEvmWallet, {
+        to: "0000000000000000000000000000000000000000",
+      });
+
+      expect(response).toContain("zero address");
+      expect(mockEvmWallet.nativeTransfer).not.toHaveBeenCalled();
     });
 
     it("should handle ETH return balance errors", async () => {

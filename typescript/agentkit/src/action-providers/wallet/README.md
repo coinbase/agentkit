@@ -23,6 +23,12 @@ wallet/
 
 - `native_transfer`: Transfer native tokens (ETH, SOL)
 
+- `return_native_balance`: Return the entire native token balance to a destination address
+
+## Security
+
+- **Zero address protection**: All transfer actions (`native_transfer`, `return_native_balance`) reject the EVM zero address (`0x0000000000000000000000000000000000000000`) as a destination. This prevents accidental permanent token loss by sending to the burn address. The check applies to both the schema validation layer and the action execution layer (defense-in-depth) and handles addresses with or without the `0x` prefix.
+
 ## Adding New Actions
 
 To add new wallet actions:

@@ -5,6 +5,9 @@ from decimal import Decimal
 
 from pydantic_core import PydanticCustomError
 
+# The EVM zero address. Sending tokens here burns them permanently with no recovery.
+_EVM_ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
+
 
 def positive_decimal_validator(value: str) -> str:
     """Validate positive decimal number format."""
@@ -32,3 +35,4 @@ def positive_decimal_validator(value: str) -> str:
         ) from e
 
     return value
+

@@ -59,6 +59,18 @@ def test_return_native_balance_schema_missing_to():
         ReturnNativeBalanceSchema()
 
 
+def test_return_native_balance_schema_rejects_zero_address():
+    """Test that ReturnNativeBalanceSchema rejects the EVM zero address."""
+    with pytest.raises(ValidationError, match="zero address"):
+        ReturnNativeBalanceSchema(to=ZERO_ADDRESS)
+
+
+def test_return_native_balance_schema_rejects_zero_address_no_prefix():
+    """Test that ReturnNativeBalanceSchema rejects the zero address without 0x prefix."""
+    with pytest.raises(ValidationError, match="zero address"):
+        ReturnNativeBalanceSchema(to="0" * 40)
+
+
 def test_return_native_balance_success_evm_with_estimate_fees(wallet_action_provider):
     """Test successful EVM balance return using estimate_fees() for gas cost."""
     mock_provider = _make_evm_provider_with_fees()

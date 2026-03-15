@@ -17,7 +17,8 @@ tests/action_providers/wallet/
 ├── conftest.py                # Test configuration
 ├── test_get_balance.py        # Test get balance
 ├── test_get_details.py        # Test get details
-└── test_native_transfer.py    # Test native transfer
+├── test_native_transfer.py    # Test native transfer
+└── test_return_native_balance.py  # Test return native balance
 ```
 
 ## Actions
@@ -29,6 +30,12 @@ tests/action_providers/wallet/
   - Provides network details
 
 - `native_transfer`: Transfer native tokens (ETH, SOL)
+
+- `return_native_balance`: Return the entire native token balance to a destination address
+
+## Security
+
+- **Zero address protection**: All transfer actions (`native_transfer`, `return_native_balance`) reject the EVM zero address (`0x0000000000000000000000000000000000000000`) as a destination. This prevents accidental permanent token loss by sending to the burn address. The check is enforced at both the schema validation layer (`NativeTransferSchema`, `ReturnNativeBalanceSchema`) via `zero_address_validator`, and handles addresses with or without the `0x` prefix.
 
 ## Adding New Actions
 
