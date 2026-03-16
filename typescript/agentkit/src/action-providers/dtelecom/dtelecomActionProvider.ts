@@ -20,6 +20,24 @@ import {
 } from "./schemas";
 
 /**
+ * Extract a human-readable message from an unknown error.
+ */
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message || error.toString();
+  }
+  const str = String(error);
+  if (str === "[object Object]") {
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return "Unknown error";
+    }
+  }
+  return str;
+}
+
+/**
  * DtelecomActionProvider provides actions for dTelecom decentralized voice infrastructure.
  *
  * Supports buying credits (via x402/USDC), managing accounts, and creating
@@ -55,14 +73,18 @@ Inputs:
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof BuyCreditsSchema>,
   ): Promise<string> {
-    const gateway = this.createGateway(walletProvider);
-    const result = await gateway.buyCredits({ amountUsd: args.amountUsd });
-    return JSON.stringify({
-      success: true,
-      accountId: result.accountId,
-      creditedMicrocredits: result.creditedMicrocredits,
-      amountUsd: result.amountUsd,
-    });
+    try {
+      const gateway = this.createGateway(walletProvider);
+      const result = await gateway.buyCredits({ amountUsd: args.amountUsd });
+      return JSON.stringify({
+        success: true,
+        accountId: result.accountId,
+        creditedMicrocredits: result.creditedMicrocredits,
+        amountUsd: result.amountUsd,
+      });
+    } catch (error) {
+      return `Error buying dTelecom credits: ${getErrorMessage(error)}`;
+    }
   }
 
   /**
@@ -82,9 +104,13 @@ Returns wallet address, credit balance, available balance, max concurrent sessio
     walletProvider: EvmWalletProvider,
     _args: z.infer<typeof GetAccountSchema>,
   ): Promise<string> {
-    const gateway = this.createGateway(walletProvider);
-    const result = await gateway.getAccount();
-    return JSON.stringify({ success: true, ...result });
+    try {
+      const gateway = this.createGateway(walletProvider);
+      const result = await gateway.getAccount();
+      return JSON.stringify({ success: true, ...result });
+    } catch (error) {
+      return `Error getting dTelecom account: ${getErrorMessage(error)}`;
+    }
   }
 
   /**
@@ -108,12 +134,16 @@ Inputs:
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof GetTransactionsSchema>,
   ): Promise<string> {
-    const gateway = this.createGateway(walletProvider);
-    const result = await gateway.getTransactions({
-      limit: args.limit,
-      offset: args.offset,
-    });
-    return JSON.stringify({ success: true, ...result });
+    try {
+      const gateway = this.createGateway(walletProvider);
+      const result = await gateway.getTransactions({
+        limit: args.limit,
+        offset: args.offset,
+      });
+      return JSON.stringify({ success: true, ...result });
+    } catch (error) {
+      return `Error getting dTelecom transactions: ${getErrorMessage(error)}`;
+    }
   }
 
   /**
@@ -138,13 +168,17 @@ Inputs:
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof GetSessionsSchema>,
   ): Promise<string> {
-    const gateway = this.createGateway(walletProvider);
-    const result = await gateway.getSessions({
-      limit: args.limit,
-      offset: args.offset,
-      status: args.status,
-    });
-    return JSON.stringify({ success: true, ...result });
+    try {
+      const gateway = this.createGateway(walletProvider);
+      const result = await gateway.getSessions({
+        limit: args.limit,
+        offset: args.offset,
+        status: args.status,
+      });
+      return JSON.stringify({ success: true, ...result });
+    } catch (error) {
+      return `Error getting dTelecom sessions: ${getErrorMessage(error)}`;
+    }
   }
 
   /**
@@ -175,18 +209,22 @@ Inputs:
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof CreateAgentSessionSchema>,
   ): Promise<string> {
-    const gateway = this.createGateway(walletProvider);
-    const result = await gateway.createAgentSession({
-      roomName: args.roomName,
-      participantIdentity: args.participantIdentity,
-      durationMinutes: args.durationMinutes,
-      language: args.language,
-      ttsMaxCharacters: args.ttsMaxCharacters,
-      metadata: args.metadata,
-      clientIdentity: args.clientIdentity,
-      clientIp: args.clientIp,
-    });
-    return JSON.stringify({ success: true, ...result });
+    try {
+      const gateway = this.createGateway(walletProvider);
+      const result = await gateway.createAgentSession({
+        roomName: args.roomName,
+        participantIdentity: args.participantIdentity,
+        durationMinutes: args.durationMinutes,
+        language: args.language,
+        ttsMaxCharacters: args.ttsMaxCharacters,
+        metadata: args.metadata,
+        clientIdentity: args.clientIdentity,
+        clientIp: args.clientIp,
+      });
+      return JSON.stringify({ success: true, ...result });
+    } catch (error) {
+      return `Error creating dTelecom agent session: ${getErrorMessage(error)}`;
+    }
   }
 
   /**
@@ -211,13 +249,17 @@ Inputs:
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof ExtendAgentSessionSchema>,
   ): Promise<string> {
-    const gateway = this.createGateway(walletProvider);
-    const result = await gateway.extendAgentSession({
-      bundleId: args.bundleId,
-      additionalMinutes: args.additionalMinutes,
-      additionalTtsCharacters: args.additionalTtsCharacters,
-    });
-    return JSON.stringify({ success: true, ...result });
+    try {
+      const gateway = this.createGateway(walletProvider);
+      const result = await gateway.extendAgentSession({
+        bundleId: args.bundleId,
+        additionalMinutes: args.additionalMinutes,
+        additionalTtsCharacters: args.additionalTtsCharacters,
+      });
+      return JSON.stringify({ success: true, ...result });
+    } catch (error) {
+      return `Error extending dTelecom agent session: ${getErrorMessage(error)}`;
+    }
   }
 
   /**
@@ -244,15 +286,19 @@ Inputs:
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof CreateWebRTCTokenSchema>,
   ): Promise<string> {
-    const gateway = this.createGateway(walletProvider);
-    const result = await gateway.createWebRTCToken({
-      roomName: args.roomName,
-      participantIdentity: args.participantIdentity,
-      durationMinutes: args.durationMinutes,
-      metadata: args.metadata,
-      clientIp: args.clientIp,
-    });
-    return JSON.stringify({ success: true, ...result });
+    try {
+      const gateway = this.createGateway(walletProvider);
+      const result = await gateway.createWebRTCToken({
+        roomName: args.roomName,
+        participantIdentity: args.participantIdentity,
+        durationMinutes: args.durationMinutes,
+        metadata: args.metadata,
+        clientIp: args.clientIp,
+      });
+      return JSON.stringify({ success: true, ...result });
+    } catch (error) {
+      return `Error creating dTelecom WebRTC token: ${getErrorMessage(error)}`;
+    }
   }
 
   /**
@@ -275,12 +321,16 @@ Inputs:
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof ExtendWebRTCTokenSchema>,
   ): Promise<string> {
-    const gateway = this.createGateway(walletProvider);
-    const result = await gateway.extendWebRTCToken({
-      sessionId: args.sessionId,
-      additionalMinutes: args.additionalMinutes,
-    });
-    return JSON.stringify({ success: true, ...result });
+    try {
+      const gateway = this.createGateway(walletProvider);
+      const result = await gateway.extendWebRTCToken({
+        sessionId: args.sessionId,
+        additionalMinutes: args.additionalMinutes,
+      });
+      return JSON.stringify({ success: true, ...result });
+    } catch (error) {
+      return `Error extending dTelecom WebRTC token: ${getErrorMessage(error)}`;
+    }
   }
 
   /**
@@ -304,12 +354,16 @@ Inputs:
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof CreateSTTSessionSchema>,
   ): Promise<string> {
-    const gateway = this.createGateway(walletProvider);
-    const result = await gateway.createSTTSession({
-      durationMinutes: args.durationMinutes,
-      language: args.language,
-    });
-    return JSON.stringify({ success: true, ...result });
+    try {
+      const gateway = this.createGateway(walletProvider);
+      const result = await gateway.createSTTSession({
+        durationMinutes: args.durationMinutes,
+        language: args.language,
+      });
+      return JSON.stringify({ success: true, ...result });
+    } catch (error) {
+      return `Error creating dTelecom STT session: ${getErrorMessage(error)}`;
+    }
   }
 
   /**
@@ -332,12 +386,16 @@ Inputs:
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof ExtendSTTSessionSchema>,
   ): Promise<string> {
-    const gateway = this.createGateway(walletProvider);
-    const result = await gateway.extendSTTSession({
-      sessionId: args.sessionId,
-      additionalMinutes: args.additionalMinutes,
-    });
-    return JSON.stringify({ success: true, ...result });
+    try {
+      const gateway = this.createGateway(walletProvider);
+      const result = await gateway.extendSTTSession({
+        sessionId: args.sessionId,
+        additionalMinutes: args.additionalMinutes,
+      });
+      return JSON.stringify({ success: true, ...result });
+    } catch (error) {
+      return `Error extending dTelecom STT session: ${getErrorMessage(error)}`;
+    }
   }
 
   /**
@@ -361,12 +419,16 @@ Inputs:
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof CreateTTSSessionSchema>,
   ): Promise<string> {
-    const gateway = this.createGateway(walletProvider);
-    const result = await gateway.createTTSSession({
-      maxCharacters: args.maxCharacters,
-      language: args.language,
-    });
-    return JSON.stringify({ success: true, ...result });
+    try {
+      const gateway = this.createGateway(walletProvider);
+      const result = await gateway.createTTSSession({
+        maxCharacters: args.maxCharacters,
+        language: args.language,
+      });
+      return JSON.stringify({ success: true, ...result });
+    } catch (error) {
+      return `Error creating dTelecom TTS session: ${getErrorMessage(error)}`;
+    }
   }
 
   /**
@@ -389,12 +451,16 @@ Inputs:
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof ExtendTTSSessionSchema>,
   ): Promise<string> {
-    const gateway = this.createGateway(walletProvider);
-    const result = await gateway.extendTTSSession({
-      sessionId: args.sessionId,
-      additionalCharacters: args.additionalCharacters,
-    });
-    return JSON.stringify({ success: true, ...result });
+    try {
+      const gateway = this.createGateway(walletProvider);
+      const result = await gateway.extendTTSSession({
+        sessionId: args.sessionId,
+        additionalCharacters: args.additionalCharacters,
+      });
+      return JSON.stringify({ success: true, ...result });
+    } catch (error) {
+      return `Error extending dTelecom TTS session: ${getErrorMessage(error)}`;
+    }
   }
 
   /**

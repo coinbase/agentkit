@@ -8,10 +8,13 @@
   },
   "dependencies": {
     "@coinbase/agentkit": "workspace:*",
+    "@coinbase/agentkit-langchain": "workspace:*",
     "@dtelecom/agents-js": "^0.2.1",
-    "@dtelecom/server-sdk-js": "^3.3.0",
-    "@dtelecom/server-sdk-node": "^0.2.5",
-    "dotenv": "^16.4.5"
+    "@langchain/core": "^0.3.19",
+    "@langchain/langgraph": "^0.2.21",
+    "@langchain/openai": "^0.3.14",
+    "dotenv": "^16.4.5",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "tsx": "^4.7.1",

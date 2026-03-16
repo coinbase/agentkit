@@ -289,6 +289,59 @@ const agent = createReactAgent({
 </table>
 </details>
 <details>
+<summary><strong>dTelecom</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>buy_credits</code></td>
+    <td width="768">Buys dTelecom credits with USDC via x402 payment protocol.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_account</code></td>
+    <td width="768">Gets dTelecom account details including credit balance and session limits.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_transactions</code></td>
+    <td width="768">Lists credit transactions for the account.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_sessions</code></td>
+    <td width="768">Lists active and completed sessions with status and costs.</td>
+</tr>
+<tr>
+    <td width="200"><code>create_agent_session</code></td>
+    <td width="768">Creates a bundled voice agent session with WebRTC + STT + TTS.</td>
+</tr>
+<tr>
+    <td width="200"><code>extend_agent_session</code></td>
+    <td width="768">Extends an active bundled agent session.</td>
+</tr>
+<tr>
+    <td width="200"><code>create_webrtc_token</code></td>
+    <td width="768">Creates a standalone WebRTC room token for real-time audio/video.</td>
+</tr>
+<tr>
+    <td width="200"><code>extend_webrtc_token</code></td>
+    <td width="768">Extends an active WebRTC token duration.</td>
+</tr>
+<tr>
+    <td width="200"><code>create_stt_session</code></td>
+    <td width="768">Creates a standalone speech-to-text session.</td>
+</tr>
+<tr>
+    <td width="200"><code>extend_stt_session</code></td>
+    <td width="768">Extends an active STT session duration.</td>
+</tr>
+<tr>
+    <td width="200"><code>create_tts_session</code></td>
+    <td width="768">Creates a standalone text-to-speech session.</td>
+</tr>
+<tr>
+    <td width="200"><code>extend_tts_session</code></td>
+    <td width="768">Extends an active TTS session character limit.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>DefiLlama</strong></summary>
 <table width="100%">
 <tr>

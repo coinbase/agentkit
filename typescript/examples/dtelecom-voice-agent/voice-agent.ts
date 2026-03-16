@@ -2,9 +2,16 @@ import {
   AgentKit,
   CdpEvmWalletProvider,
   dtelecomActionProvider,
+  erc20ActionProvider,
+  walletActionProvider,
 } from "@coinbase/agentkit";
-import { VoiceAgent } from "@dtelecom/agents-js";
-import { DtelecomSTT, DtelecomTTS, OpenAILLM } from "@dtelecom/agents-js/providers";
+import { getLangChainTools } from "@coinbase/agentkit-langchain";
+import { HumanMessage } from "@langchain/core/messages";
+import { MemorySaver } from "@langchain/langgraph";
+import { createReactAgent } from "@langchain/langgraph/prebuilt";
+import { ChatOpenAI } from "@langchain/openai";
+import { VoiceAgent, LLMPlugin, LLMChunk, Message } from "@dtelecom/agents-js";
+import { DtelecomSTT, DtelecomTTS } from "@dtelecom/agents-js/providers";
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -12,7 +19,51 @@ import { dirname, resolve } from "node:path";
 import { exec } from "node:child_process";
 import * as dotenv from "dotenv";
 
-dotenv.config({ path: ".env-local" });
+dotenv.config();
+
+/**
+ * Custom LLM adapter that bridges dTelecom VoiceAgent with a LangChain ReAct agent.
+ *
+ * STT transcription flows in as messages, the ReAct agent reasons about which
+ * on-chain tools to call, and only the final text response is streamed back
+ * to TTS for speech synthesis.
+ */
+class AgentKitLLM implements LLMPlugin {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private agent: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private config: Record<string, any>;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  constructor(agent: any, config: Record<string, any>) {
+    this.agent = agent;
+    this.config = config;
+  }
+
+  async *chat(messages: Message[], signal?: AbortSignal): AsyncGenerator<LLMChunk> {
+    const lastUserMsg = messages.filter((m) => m.role === "user").pop();
+    if (!lastUserMsg) {
+      yield { type: "done" };
+      return;
+    }
+
+    const stream = await this.agent.stream(
+      { messages: [new HumanMessage(lastUserMsg.content)] },
+      { ...this.config, signal },
+    );
+
+    for await (const chunk of stream) {
+      if ("agent" in chunk) {
+        const content = chunk.agent.messages[0]?.content;
+        if (typeof content === "string" && content) {
+          yield { type: "token", token: content };
+        }
+      }
+    }
+
+    yield { type: "done" };
+  }
+}
 
 async function main() {
   // ── 1. CDP Wallet (same as all AgentKit examples) ───────────────────
@@ -26,18 +77,44 @@ async function main() {
 
   console.log(`Wallet address: ${walletProvider.getAddress()}`);
 
-  // ── 2. AgentKit with dTelecom provider ──────────────────────────────
+  // ── 2. AgentKit with on-chain + dTelecom providers ──────────────────
   const agentkit = await AgentKit.from({
     walletProvider,
-    actionProviders: [dtelecomActionProvider()],
+    actionProviders: [
+      dtelecomActionProvider(),
+      erc20ActionProvider(),
+      walletActionProvider(),
+    ],
   });
 
-  // ── 3. Ensure credits (programmatic action invocation) ──────────────
+  // ── 3. LangChain ReAct agent with on-chain tools ─────────────────────
+  const llm = new ChatOpenAI({
+    model: "gpt-4o-mini",
+    apiKey: process.env.OPENAI_API_KEY!,
+  });
+  const tools = await getLangChainTools(agentkit);
+  const memory = new MemorySaver();
+  const agentConfig = { configurable: { thread_id: "dtelecom-voice-agent" } };
+
+  const agent = createReactAgent({
+    llm,
+    tools,
+    checkpointSaver: memory,
+    messageModifier:
+      "You are a voice assistant that can interact onchain using Coinbase AgentKit. " +
+      "You can check balances, send tokens, and manage dTelecom voice sessions. " +
+      "Keep responses short and conversational since they will be spoken aloud. " +
+      "If you need funds, you can request them from the faucet on testnet.",
+  });
+
+  // ── 4. Ensure dTelecom credits (programmatic) ────────────────────────
   const actions = agentkit.getActions();
   const invoke = async (name: string, args: Record<string, unknown> = {}) => {
     const action = actions.find((a) => a.name === name);
     if (!action) throw new Error(`Action ${name} not found`);
-    return JSON.parse(await action.invoke(args));
+    const result = await action.invoke(args);
+    if (result.startsWith("Error")) throw new Error(result);
+    return JSON.parse(result);
   };
 
   try {
@@ -56,7 +133,7 @@ async function main() {
     await invoke("DtelecomActionProvider_buy_credits", { amountUsd: 0.1 });
   }
 
-  // ── 4. Create voice session via AgentKit action ─────────────────────
+  // ── 5. Create voice session via AgentKit action ─────────────────────
   console.log("Creating voice session...");
   const session = await invoke("DtelecomActionProvider_create_agent_session", {
     roomName: `voice-demo-${Date.now()}`,
@@ -69,23 +146,21 @@ async function main() {
 
   console.log(`Session created: bundle=${session.bundleId}`);
 
-  // ── 5. Start voice agent (server-side) ──────────────────────────────
+  // ── 6. Start voice agent with AgentKit LLM adapter ──────────────────
   const voiceAgent = new VoiceAgent({
     stt: new DtelecomSTT({
       serverUrl: session.stt.serverUrl,
       sessionKey: session.stt.token,
     }),
-    llm: new OpenAILLM({
-      apiKey: process.env.OPENAI_API_KEY!,
-      model: "gpt-4o-mini",
-    }),
+    llm: new AgentKitLLM(agent, agentConfig),
     tts: new DtelecomTTS({
       serverUrl: session.tts.serverUrl,
       sessionKey: session.tts.token,
       voices: { en: { voice: "af_heart", langCode: "a" } },
     }),
     instructions:
-      "You are a helpful voice assistant. Keep responses short and conversational.",
+      "You are a voice assistant that can interact onchain using Coinbase AgentKit. " +
+      "Keep responses short and conversational.",
   });
 
   await voiceAgent.start({
@@ -96,17 +171,19 @@ async function main() {
   });
 
   voiceAgent.say(
-    "Hello! I'm your AI voice assistant powered by Coinbase AgentKit and dTelecom. How can I help you today?",
+    "Hello! I'm your AI voice assistant powered by Coinbase AgentKit and dTelecom. " +
+      "You can ask me to check your wallet balance, send tokens, or manage voice sessions. " +
+      "How can I help you today?",
   );
 
-  // ── 6. Serve client page on localhost:3000 ──────────────────────────
+  // ── 7. Serve client page on localhost:3000 ──────────────────────────
   const __dirname = dirname(fileURLToPath(import.meta.url));
   const clientHtml = readFileSync(resolve(__dirname, "client.html"), "utf-8");
   const html = clientHtml
     .replace("__TOKEN__", session.webrtc.client.token)
     .replace("__WS_URL__", session.webrtc.client.wsUrl);
 
-  const server = createServer((req, res) => {
+  const server = createServer((_req, res) => {
     res.writeHead(200, { "Content-Type": "text/html" });
     res.end(html);
   }).listen(3000);

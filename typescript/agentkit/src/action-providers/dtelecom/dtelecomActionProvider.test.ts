@@ -82,12 +82,12 @@ describe("DtelecomActionProvider", () => {
       expect(mockBuyCredits).toHaveBeenCalledWith({ amountUsd: 1.0 });
     });
 
-    it("should propagate errors", async () => {
+    it("should return error message on failure", async () => {
       mockBuyCredits.mockRejectedValueOnce(new Error("Insufficient USDC"));
 
-      await expect(provider.buyCredits(mockWallet, { amountUsd: 1.0 })).rejects.toThrow(
-        "Insufficient USDC",
-      );
+      const result = await provider.buyCredits(mockWallet, { amountUsd: 1.0 });
+      expect(result).toContain("Error buying dTelecom credits");
+      expect(result).toContain("Insufficient USDC");
     });
   });
 
