@@ -31,6 +31,9 @@ dependencies = [
     "solders>=0.26.0"
 ]
 
+[project.optional-dependencies]
+# BlockRun uses built-in x402 support - no extra dependencies needed
+
 [tool.hatch.metadata]
 allow-direct-references = true
 
