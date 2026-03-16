@@ -44,5 +44,5 @@ Leave `api_key` unset to use x402 autonomous payments (USDC on Base L2).
 
 ## Links
 
-- GPU-Bridge: https://gpubridge.xyz
-- Catalog: https://api.gpubridge.xyz/catalog
+- GPU-Bridge: https://gpubridge.io
+- Catalog: https://api.gpubridge.io/catalog

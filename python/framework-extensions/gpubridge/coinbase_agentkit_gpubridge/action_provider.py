@@ -11,7 +11,7 @@ from coinbase_agentkit.action_providers.action_provider import Action, ActionPro
 from coinbase_agentkit.action_providers.action_decorator import create_action
 from coinbase_agentkit.wallet_providers import WalletProvider
 
-GPUBRIDGE_BASE = "https://api.gpubridge.xyz"
+GPUBRIDGE_BASE = "https://api.gpubridge.io"
 
 
 class LLMInput(BaseModel):
