@@ -11,6 +11,7 @@ import {
   splActionProvider,
   x402ActionProvider,
 } from "@coinbase/agentkit";
+import { lombardActionProvider } from "@lombard.finance/sdk-agentkit";
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
 import { MemorySaver } from "@langchain/langgraph";
@@ -127,6 +128,7 @@ async function initializeAgent() {
     const actionProviders = [
       walletActionProvider(),
       cdpApiActionProvider(),
+      lombardActionProvider(),
       ...(isEvmWalletProvider(walletProvider)
         ? [
             cdpEvmWalletActionProvider(),

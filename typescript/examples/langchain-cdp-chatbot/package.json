@@ -19,7 +19,11 @@
     "@langchain/core": "^0.3.19",
     "@langchain/langgraph": "^0.2.21",
     "@langchain/openai": "^0.3.14",
+    "@layerzerolabs/lz-v2-utilities": "^3.0.162",
+    "@lombard.finance/sdk-agentkit": "sdk-agentkit",
+    "bitcoinjs-lib": "^7.0.1",
     "dotenv": "^16.4.5",
+    "graphql": "^16.13.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
