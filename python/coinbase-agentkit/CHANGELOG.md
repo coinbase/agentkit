@@ -2,6 +2,13 @@
 
 <!-- towncrier release notes start -->
 
+## [0.7.5] - 2025-12-19
+
+### Fixed
+
+- Added new Aave action provider for interacting with Aave V3 protocol on Base networks. The provider supports supply, withdraw, borrow, repay, and portfolio management operations. ([#add-aave-action-provider](https://github.com/coinbase/agentkit/pull/add-aave-action-provider))
+
+
 ## [0.7.4] - 2025-10-03
 
 ### Fixed
