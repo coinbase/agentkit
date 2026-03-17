@@ -54,7 +54,7 @@
     "@vaultsfyi/sdk": "^2.1.9",
     "@x402/evm": "^2.4.0",
     "@x402/fetch": "^2.4.0",
-    "@x402/svm": "^2.4.0",
+    "@x402/svm": "^2.6.0",
     "@zerodev/ecdsa-validator": "^5.4.5",
     "@zerodev/intent": "^0.0.24",
     "@zerodev/sdk": "^5.4.28",
