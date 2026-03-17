@@ -21,6 +21,9 @@ import {
 
 /**
  * Extract a human-readable message from an unknown error.
+ *
+ * @param error - The error to extract a message from.
+ * @returns A human-readable error message string.
  */
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
