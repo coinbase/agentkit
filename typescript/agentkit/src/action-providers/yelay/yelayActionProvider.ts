@@ -227,9 +227,12 @@ It takes:
   async claim(wallet: EvmWalletProvider, args: z.infer<typeof YelayClaimSchema>): Promise<string> {
     try {
       const chainId = wallet.getNetwork().chainId! as ChainId;
-      const claimRequestResponse = await fetch(
-        `${YELAY_BACKEND_URL}/claim-proof?chainId=${chainId}&u=${wallet.getAddress()}&p=${RETAIL_POOL_ID}&v=${args.vaultAddress}`,
-      );
+      const claimProofUrl = new URL(`${YELAY_BACKEND_URL}/claim-proof`);
+      claimProofUrl.searchParams.set("chainId", String(chainId));
+      claimProofUrl.searchParams.set("u", wallet.getAddress());
+      claimProofUrl.searchParams.set("p", String(RETAIL_POOL_ID));
+      claimProofUrl.searchParams.set("v", args.vaultAddress);
+      const claimRequestResponse = await fetch(claimProofUrl.toString());
       const claimRequests: ClaimRequest[] = await claimRequestResponse.json();
       if (claimRequests.length === 0) {
         return "Error: No claim requests found";
@@ -302,9 +305,12 @@ It takes:
 
       const balanceInWholeUnits = formatUnits(balance, vault.decimals);
 
-      const balanceResponse = await fetch(
-        `${YELAY_BACKEND_URL}/claim-proof?chainId=${chainId}&u=${wallet.getAddress()}&p=${RETAIL_POOL_ID}&v=${args.vaultAddress}`,
-      );
+      const balanceProofUrl = new URL(`${YELAY_BACKEND_URL}/claim-proof`);
+      balanceProofUrl.searchParams.set("chainId", String(chainId));
+      balanceProofUrl.searchParams.set("u", wallet.getAddress());
+      balanceProofUrl.searchParams.set("p", String(RETAIL_POOL_ID));
+      balanceProofUrl.searchParams.set("v", args.vaultAddress);
+      const balanceResponse = await fetch(balanceProofUrl.toString());
       if (!balanceResponse.ok) {
         throw new Error("Claim proof failed");
       }

@@ -23,21 +23,24 @@ from coinbase_agentkit.network import Network
 
 MOCK_TX_HASH = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
 MOCK_RECEIPT = {"status": 1, "transactionHash": MOCK_TX_HASH}
-MOCK_ADDRESS = "0xmockWalletAddress"
+MOCK_ADDRESS = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
+MOCK_RECIPIENT = "0x5154eAE861cAc3aA757d6016babAF972341354cf"
+MOCK_TOKEN_ADDRESS = "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
+ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 
 def test_create_flowinput_model_valid():
     """Test that CreateFlowInput schema accepts valid parameters."""
     valid_input = {
-        "recipient": "0xRecipientAddress",
-        "token_address": "0xTokenAddress",
+        "recipient": MOCK_RECIPIENT,
+        "token_address": MOCK_TOKEN_ADDRESS,
         "flow_rate": "1000",
     }
     input_model = CreateFlowSchema(**valid_input)
 
     assert isinstance(input_model, CreateFlowSchema)
-    assert input_model.recipient == valid_input["recipient"]
-    assert input_model.token_address == valid_input["token_address"]
+    assert input_model.recipient == MOCK_RECIPIENT
+    assert input_model.token_address == MOCK_TOKEN_ADDRESS
     assert input_model.flow_rate == valid_input["flow_rate"]
 
 
@@ -47,18 +50,38 @@ def test_create_flow_input_model_missing_params():
         CreateFlowSchema()
 
 
+def test_create_flow_input_model_zero_address_recipient():
+    """Test that CreateFlowInput schema rejects zero address as recipient."""
+    with pytest.raises(ValidationError, match="zero address"):
+        CreateFlowSchema(
+            recipient=ZERO_ADDRESS,
+            token_address=MOCK_TOKEN_ADDRESS,
+            flow_rate="1000",
+        )
+
+
+def test_create_flow_input_model_zero_address_token():
+    """Test that CreateFlowInput schema rejects zero address as token address."""
+    with pytest.raises(ValidationError, match="zero address"):
+        CreateFlowSchema(
+            recipient=MOCK_RECIPIENT,
+            token_address=ZERO_ADDRESS,
+            flow_rate="1000",
+        )
+
+
 def test_update_flow_input_model_valid():
     """Test that UpdateFlowInput schema accepts valid parameters."""
     valid_input = {
-        "recipient": "0xRecipientAddress",
-        "token_address": "0xTokenAddress",
+        "recipient": MOCK_RECIPIENT,
+        "token_address": MOCK_TOKEN_ADDRESS,
         "new_flow_rate": "2000",
     }
     input_model = UpdateFlowSchema(**valid_input)
 
     assert isinstance(input_model, UpdateFlowSchema)
-    assert input_model.recipient == valid_input["recipient"]
-    assert input_model.token_address == valid_input["token_address"]
+    assert input_model.recipient == MOCK_RECIPIENT
+    assert input_model.token_address == MOCK_TOKEN_ADDRESS
     assert input_model.new_flow_rate == valid_input["new_flow_rate"]
 
 
@@ -68,20 +91,39 @@ def test_update_flow_input_model_missing_params():
         UpdateFlowSchema()
 
 
+def test_update_flow_input_model_zero_address_recipient():
+    """Test that UpdateFlowInput schema rejects zero address as recipient."""
+    with pytest.raises(ValidationError, match="zero address"):
+        UpdateFlowSchema(
+            recipient=ZERO_ADDRESS,
+            token_address=MOCK_TOKEN_ADDRESS,
+            new_flow_rate="2000",
+        )
+
+
 def test_delete_flow_input_model_valid():
     """Test that DeleteFlowInput schema accepts valid parameters."""
-    valid_input = {"recipient": "0xRecipientAddress", "token_address": "0xTokenAddress"}
+    valid_input = {"recipient": MOCK_RECIPIENT, "token_address": MOCK_TOKEN_ADDRESS}
     input_model = DeleteFlowSchema(**valid_input)
 
     assert isinstance(input_model, DeleteFlowSchema)
-    assert input_model.recipient == valid_input["recipient"]
-    assert input_model.token_address == valid_input["token_address"]
+    assert input_model.recipient == MOCK_RECIPIENT
+    assert input_model.token_address == MOCK_TOKEN_ADDRESS
 
 
 def test_delete_flow_input_model_missing_params():
     """Test that DeleteFlowInput schema raises error when params are missing."""
     with pytest.raises(ValidationError):
         DeleteFlowSchema()
+
+
+def test_delete_flow_input_model_zero_address_token():
+    """Test that DeleteFlowInput schema rejects zero address as token address."""
+    with pytest.raises(ValidationError, match="zero address"):
+        DeleteFlowSchema(
+            recipient=MOCK_RECIPIENT,
+            token_address=ZERO_ADDRESS,
+        )
 
 
 def test_create_flow_success():
@@ -100,8 +142,8 @@ def test_create_flow_success():
 
         provider = SuperfluidActionProvider()
         args = {
-            "recipient": "0xRecipientAddress",
-            "token_address": "0xTokenAddress",
+            "recipient": MOCK_RECIPIENT,
+            "token_address": MOCK_TOKEN_ADDRESS,
             "flow_rate": "1000",
         }
         response = provider.create_flow(mock_wallet, args)
@@ -115,7 +157,7 @@ def test_create_flow_success():
         )
 
         mock_contract.encode_abi.assert_called_once_with(
-            "createFlow", args=["0xTokenAddress", MOCK_ADDRESS, "0xRecipientAddress", 1000, "0x"]
+            "createFlow", args=[MOCK_TOKEN_ADDRESS, MOCK_ADDRESS, MOCK_RECIPIENT, 1000, "0x"]
         )
 
         mock_wallet.send_transaction.assert_called_once()
@@ -142,8 +184,8 @@ def test_update_flow_success():
 
         provider = SuperfluidActionProvider()
         args = {
-            "recipient": "0xRecipientAddress",
-            "token_address": "0xTokenAddress",
+            "recipient": MOCK_RECIPIENT,
+            "token_address": MOCK_TOKEN_ADDRESS,
             "new_flow_rate": "2000",
         }
         response = provider.update_flow(mock_wallet, args)
@@ -159,9 +201,9 @@ def test_update_flow_success():
         mock_contract.encode_abi.assert_called_once_with(
             "updateFlow",
             args=[
-                "0xTokenAddress",
+                MOCK_TOKEN_ADDRESS,
                 MOCK_ADDRESS,
-                "0xRecipientAddress",
+                MOCK_RECIPIENT,
                 2000,
                 "0x",
             ],
@@ -190,7 +232,7 @@ def test_delete_flow_success():
         mock_wallet.get_address.return_value = MOCK_ADDRESS
 
         provider = SuperfluidActionProvider()
-        args = {"recipient": "0xRecipientAddress", "token_address": "0xTokenAddress"}
+        args = {"recipient": MOCK_RECIPIENT, "token_address": MOCK_TOKEN_ADDRESS}
         response = provider.delete_flow(mock_wallet, args)
 
         expected_response = f"Flow deleted successfully. Transaction hash: {MOCK_TX_HASH}"
@@ -204,9 +246,9 @@ def test_delete_flow_success():
         mock_contract.encode_abi.assert_called_once_with(
             "deleteFlow",
             args=[
-                "0xTokenAddress",
+                MOCK_TOKEN_ADDRESS,
                 MOCK_ADDRESS,
-                "0xRecipientAddress",
+                MOCK_RECIPIENT,
                 "0x",
             ],
         )
@@ -234,8 +276,8 @@ def test_create_flow_error():
 
         provider = SuperfluidActionProvider()
         args = {
-            "recipient": "0xRecipientAddress",
-            "token_address": "0xTokenAddress",
+            "recipient": MOCK_RECIPIENT,
+            "token_address": MOCK_TOKEN_ADDRESS,
             "flow_rate": "1000",
         }
 
@@ -250,7 +292,7 @@ def test_create_flow_error():
         )
 
         mock_contract.encode_abi.assert_called_once_with(
-            "createFlow", args=["0xTokenAddress", MOCK_ADDRESS, "0xRecipientAddress", 1000, "0x"]
+            "createFlow", args=[MOCK_TOKEN_ADDRESS, MOCK_ADDRESS, MOCK_RECIPIENT, 1000, "0x"]
         )
 
         mock_wallet.send_transaction.assert_called_once()
@@ -274,8 +316,8 @@ def test_update_flow_error():
 
         provider = SuperfluidActionProvider()
         args = {
-            "recipient": "0xRecipientAddress",
-            "token_address": "0xTokenAddress",
+            "recipient": MOCK_RECIPIENT,
+            "token_address": MOCK_TOKEN_ADDRESS,
             "new_flow_rate": "2000",
         }
         response = provider.update_flow(mock_wallet, args)
@@ -291,9 +333,9 @@ def test_update_flow_error():
         mock_contract.encode_abi.assert_called_once_with(
             "updateFlow",
             args=[
-                "0xTokenAddress",
+                MOCK_TOKEN_ADDRESS,
                 MOCK_ADDRESS,
-                "0xRecipientAddress",
+                MOCK_RECIPIENT,
                 2000,
                 "0x",
             ],
@@ -319,7 +361,7 @@ def test_delete_flow_error():
         mock_wallet.send_transaction.side_effect = Exception("Transaction failed")
 
         provider = SuperfluidActionProvider()
-        args = {"recipient": "0xRecipientAddress", "token_address": "0xTokenAddress"}
+        args = {"recipient": MOCK_RECIPIENT, "token_address": MOCK_TOKEN_ADDRESS}
         response = provider.delete_flow(mock_wallet, args)
 
         expected_response = "Error deleting flow: Transaction failed"
@@ -333,9 +375,9 @@ def test_delete_flow_error():
         mock_contract.encode_abi.assert_called_once_with(
             "deleteFlow",
             args=[
-                "0xTokenAddress",
+                MOCK_TOKEN_ADDRESS,
                 MOCK_ADDRESS,
-                "0xRecipientAddress",
+                MOCK_RECIPIENT,
                 "0x",
             ],
         )

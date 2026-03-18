@@ -16,8 +16,8 @@
     "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\""
   },
   "dependencies": {
-    "@coinbase/agentkit": "workspace:*",
-    "@coinbase/agentkit-model-context-protocol": "workspace:*",
+    "@coinbase/agentkit": "*",
+    "@coinbase/agentkit-model-context-protocol": "*",
     "@modelcontextprotocol/sdk": "^1.6.1",
     "viem": "^2.24.1",
     "zod": "^3.22.4"
