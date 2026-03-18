@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from coinbase_agentkit.wallet_providers.cdp_solana_wallet_provider import CdpSolanaWalletProvider
+
 from .conftest import MOCK_SIGNATURE
 
 # =========================================================
