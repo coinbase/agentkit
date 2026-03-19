@@ -7,7 +7,7 @@ const MOCK_ATTEST_RESPONSE = {
   ok: true,
   data: {
     attestation: {
-      id: "ATST-A1B2C",
+      id: "ATST-A1B2C3D4E5F60789",
       pass: false,
       results: [
         { condition: 0, label: "USDC >= 1000", type: "token_balance", met: true, chainId: 1 },
@@ -208,7 +208,7 @@ describe("InsumerActionProvider", () => {
       expect((options as RequestInit).headers).toEqual(
         expect.objectContaining({ "X-API-Key": MOCK_API_KEY }),
       );
-      expect(response).toContain("ATST-A1B2C");
+      expect(response).toContain("ATST-A1B2C3D4E5F60789");
       expect(response).toContain("SOME CONDITIONS FAILED");
       expect(response).toContain("USDC >= 1000: PASS");
       expect(response).toContain("Bored Ape holder: FAIL");
