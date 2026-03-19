@@ -1,0 +1,1 @@
+Added new Sardis payment action provider for policy-controlled AI agent payments. The provider supports payment execution, balance checking, policy validation, policy management with natural language rules, and transaction history across Base, Polygon, Ethereum, Arbitrum, and Optimism networks.

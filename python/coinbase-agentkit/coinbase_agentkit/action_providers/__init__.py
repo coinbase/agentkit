@@ -27,6 +27,7 @@ from .morpho.morpho_action_provider import MorphoActionProvider, morpho_action_p
 from .nillion.nillion_action_provider import NillionActionProvider, nillion_action_provider
 from .onramp.onramp_action_provider import OnrampActionProvider, onramp_action_provider
 from .pyth.pyth_action_provider import PythActionProvider, pyth_action_provider
+from .sardis.sardis_action_provider import SardisActionProvider, sardis_action_provider
 from .ssh.ssh_action_provider import SshActionProvider, ssh_action_provider
 from .superfluid.superfluid_action_provider import (
     SuperfluidActionProvider,
@@ -69,6 +70,8 @@ __all__ = [
     "onramp_action_provider",
     "PythActionProvider",
     "pyth_action_provider",
+    "SardisActionProvider",
+    "sardis_action_provider",
     "SshActionProvider",
     "ssh_action_provider",
     "SuperfluidActionProvider",
