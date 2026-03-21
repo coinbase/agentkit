@@ -135,12 +135,16 @@ def mocked_wallet_provider(mock_cdp_client, mock_account, mock_web3, mock_wallet
         network_id=MOCK_NETWORK_ID,
     )
 
-    # Patch the async run to return the mock account directly
-    with patch("asyncio.run", return_value=mock_account):
+    # Patch _run_async only during init to return the mock account
+    original_run_async = CdpEvmWalletProvider._run_async
+    CdpEvmWalletProvider._run_async = lambda self, coro: mock_account
+    try:
         provider = CdpEvmWalletProvider(config)
+    finally:
+        CdpEvmWalletProvider._run_async = original_run_async
 
-        # Manually set account and wallet attributes
-        provider._account = mock_account
-        provider._wallet = mock_wallet
+    # Manually set account and wallet attributes
+    provider._account = mock_account
+    provider._wallet = mock_wallet
 
-        yield provider
+    yield provider
