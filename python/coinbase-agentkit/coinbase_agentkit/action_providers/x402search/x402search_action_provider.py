@@ -1,7 +1,9 @@
 """x402search action provider."""
 
 import json
+from collections import defaultdict
 from typing import Any
+from urllib.parse import urlparse
 
 from x402.http.clients.requests import x402_requests
 from x402.mechanisms.evm import EthAccountSigner
@@ -74,7 +76,7 @@ Examples:
 
             response = session.get(
                 X402SEARCH_URL,
-                params={"q": validated.query},
+                params={"q": validated.query, "limit": 50},
                 timeout=15,
             )
             response.raise_for_status()
@@ -91,7 +93,15 @@ Examples:
         if not isinstance(results, list):
             return json.dumps({"success": False, "error": "Unexpected response format."})
 
-        results = results[: validated.limit]
+        domain_counts: dict[str, int] = defaultdict(int)
+        deduped = []
+        for r in results:
+            url = r.get("resource_url", "")
+            domain = urlparse(url).netloc
+            if domain_counts[domain] < 2:
+                deduped.append(r)
+                domain_counts[domain] += 1
+        results = deduped[: validated.limit]
 
         if not results:
             return json.dumps({
@@ -106,11 +116,17 @@ Examples:
 
         formatted = []
         for r in results:
-            formatted.append({
-                "name": r.get("name") or r.get("api_name", ""),
-                "description": r.get("description") or r.get("accepts", ""),
-                "url": r.get("url") or r.get("base_url", ""),
-            })
+            accepts = r.get("accepts", [])
+            entry: dict[str, Any] = {
+                "url": r.get("resource_url", ""),
+                "rank": r.get("rank"),
+            }
+            if accepts:
+                entry["accepts"] = [
+                    {k: v for k, v in a.items() if k in ("network", "max_amount", "payTo")}
+                    for a in accepts
+                ]
+            formatted.append(entry)
 
         return json.dumps({
             "success": True,
