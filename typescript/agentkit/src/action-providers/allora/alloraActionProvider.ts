@@ -27,9 +27,9 @@ export class AlloraActionProvider extends ActionProvider {
    */
   constructor(config: AlloraAPIClientConfig = {}) {
     super("allora", []);
-    // This is a public, development only key and should be used for testing purposes only.
-    // It might be changed or revoked in the future. It is also subject to limits and usage policies.
-    const DEFAULT_API_KEY = "UP-4151d0cc489a44a7aa5cd7ef";
+    // Load API key from environment. Set ALLORA_API_KEY in your .env file.
+    // See https://docs.allora.network for API key registration.
+    const DEFAULT_API_KEY = process.env.ALLORA_API_KEY || "";
 
     config.apiKey = config.apiKey || DEFAULT_API_KEY;
     config.chainSlug = config.chainSlug || ChainSlug.TESTNET;
