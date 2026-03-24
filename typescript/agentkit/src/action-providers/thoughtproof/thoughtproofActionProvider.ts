@@ -7,7 +7,7 @@ import { THOUGHTPROOF_API_BASE_URL } from "./constants";
 /**
  * ThoughtProofActionProvider is an action provider for reasoning verification.
  * Runs adversarial multi-model critique (Claude + Grok + DeepSeek) on any claim
- * before the agent executes it. Returns ALLOW or HOLD with a signed attestation.
+ * before the agent executes it. Returns ALLOW, BLOCK, or UNCERTAIN with a signed attestation.
  *
  * Uses x402 micropayments on Base (USDC). No API key required.
  * Docs: https://thoughtproof.ai/skill.md
@@ -22,13 +22,13 @@ export class ThoughtProofActionProvider extends ActionProvider {
    * Call this before executing high-stakes or irreversible actions.
    *
    * @param args - The verification parameters (claim, stakeLevel, domain)
-   * @returns Verification result with verdict (ALLOW/HOLD), confidence, and objections
+   * @returns Verification result with verdict (ALLOW/BLOCK/UNCERTAIN), confidence, and objections
    */
   @CreateAction({
     name: "verify_reasoning",
     description:
       "Verify a claim or decision using adversarial multi-model reasoning before executing. " +
-      "Returns ALLOW or HOLD with confidence score and key objections. " +
+      "Returns ALLOW, BLOCK, or UNCERTAIN with confidence score and key objections. " +
       "Use before irreversible actions, large transactions, or high-stakes decisions.",
     schema: VerifyReasoningSchema,
   })
@@ -60,15 +60,15 @@ export class ThoughtProofActionProvider extends ActionProvider {
           `✅ ThoughtProof: ALLOW (confidence: ${confidence}%)\n` +
           (objections.length > 0 ? `Minor concerns: ${objections.join("; ")}` : "No objections raised.")
         );
-      } else {
+      } else if (verdict === "BLOCK") {
         return (
-          `🚫 ThoughtProof: HOLD — do not proceed.\n` +
+          `🚫 ThoughtProof: BLOCK — do not proceed.\n` +
           `Confidence: ${confidence}%\n` +
           `Objections:\n${objections.map((o: string) => `- ${o}`).join("\n")}`
         );
       }
     } catch (error) {
-      return `🚫 ThoughtProof: HOLD — verification service unavailable (${error}). Do not proceed until reasoning can be verified.`;
+      return `🚫 ThoughtProof: BLOCK — verification service unavailable (${error}). Do not proceed until reasoning can be verified.`;
     }
   }
 
