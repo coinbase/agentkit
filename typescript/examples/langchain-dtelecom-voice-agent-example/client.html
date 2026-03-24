@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Voice Agent — AgentKit + dTelecom</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0a0a0a; color: #e0e0e0;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh;
+    }
+    .container { text-align: center; max-width: 420px; padding: 2rem; }
+    h1 { font-size: 1.4rem; margin-bottom: 0.5rem; color: #fff; }
+    .subtitle { font-size: 0.85rem; color: #888; margin-bottom: 2rem; }
+    #status {
+      font-size: 0.9rem; padding: 0.5rem 1rem;
+      border-radius: 8px; margin-bottom: 1.5rem;
+      display: inline-block;
+    }
+    .connecting { background: #1a1a2e; color: #ffd700; }
+    .connected { background: #0d2b0d; color: #4caf50; }
+    .error { background: #2b0d0d; color: #f44336; }
+    #muteBtn {
+      background: #1a73e8; color: #fff; border: none;
+      padding: 14px 36px; border-radius: 12px;
+      font-size: 1rem; cursor: pointer;
+      transition: background 0.2s;
+    }
+    #muteBtn:hover { background: #1557b0; }
+    #muteBtn.muted { background: #d32f2f; }
+    #muteBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .powered {
+      margin-top: 2rem; font-size: 0.75rem; color: #555;
+    }
+    .powered a { color: #777; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>AI Voice Agent</h1>
+    <p class="subtitle">Powered by Coinbase AgentKit + dTelecom</p>
+    <div><span id="status" class="connecting">Connecting...</span></div>
+    <br />
+    <button id="muteBtn" disabled>Mute</button>
+    <p class="powered">
+      <a href="https://github.com/coinbase/agentkit" target="_blank">AgentKit</a> ·
+      <a href="https://dtelecom.org" target="_blank">dTelecom</a>
+    </p>
+  </div>
+
+  <audio id="agentAudio" autoplay></audio>
+
+  <script type="module">
+    // dTelecom WebRTC client SDK from CDN
+    import {
+      Room,
+      RoomEvent,
+      Track,
+    } from "https://esm.sh/@dtelecom/livekit-client@1.12.21";
+
+    const TOKEN = "__TOKEN__";
+    const WS_URL = "__WS_URL__";
+
+    const statusEl = document.getElementById("status");
+    const muteBtn = document.getElementById("muteBtn");
+    const audioEl = document.getElementById("agentAudio");
+
+    let localTrack = null;
+    let muted = false;
+
+    const room = new Room();
+
+    // Play remote audio from the agent
+    room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+      if (track.kind === Track.Kind.Audio) {
+        track.attach(audioEl);
+      }
+    });
+
+    room.on(RoomEvent.Connected, () => {
+      statusEl.textContent = "Connected";
+      statusEl.className = "connected";
+      muteBtn.disabled = false;
+    });
+
+    room.on(RoomEvent.Disconnected, () => {
+      statusEl.textContent = "Disconnected";
+      statusEl.className = "error";
+      muteBtn.disabled = true;
+    });
+
+    // Connect and publish microphone
+    try {
+      await room.connect(WS_URL, TOKEN);
+      await room.localParticipant.setMicrophoneEnabled(true);
+    } catch (err) {
+      statusEl.textContent = `Error: ${err.message}`;
+      statusEl.className = "error";
+    }
+
+    // Mute toggle
+    muteBtn.addEventListener("click", async () => {
+      muted = !muted;
+      await room.localParticipant.setMicrophoneEnabled(!muted);
+      muteBtn.textContent = muted ? "Unmute" : "Mute";
+      muteBtn.classList.toggle("muted", muted);
+    });
+  </script>
+</body>
+</html>

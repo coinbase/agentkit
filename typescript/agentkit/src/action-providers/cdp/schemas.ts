@@ -5,9 +5,8 @@ import { z } from "zod";
  */
 export const RequestFaucetFundsV2Schema = z
   .object({
-    assetId: z.string().optional().describe("The optional asset ID to request from faucet"),
+    assetId: z.string().nullable().describe("The optional asset ID to request from faucet"),
   })
-  .strip()
   .describe("Instructions for requesting faucet funds");
 
 /**
@@ -31,11 +30,10 @@ export const SwapSchema = z
       .int()
       .min(0)
       .max(10000)
-      .optional()
-      .default(100)
+      .nullable()
+      .transform(val => val ?? 100)
       .describe("The maximum acceptable slippage in basis points (0-10000, default: 100 = 1%)"),
   })
-  .strip()
   .describe("Instructions for swapping tokens");
 
 /**
@@ -48,10 +46,9 @@ export const ListSpendPermissionsSchema = z
       .describe("The smart account address that has granted spend permissions"),
     network: z
       .string()
-      .optional()
+      .nullable()
       .describe("The network to list permissions on (defaults to wallet's network)"),
   })
-  .strip()
   .describe("Instructions for listing spend permissions for a smart account");
 
 /**
@@ -65,8 +62,7 @@ export const UseSpendPermissionSchema = z
     value: z.string().describe("The amount to spend (in the token's units)"),
     network: z
       .string()
-      .optional()
+      .nullable()
       .describe("The network to perform the spend on (defaults to wallet's network)"),
   })
-  .strip()
   .describe("Instructions for using a spend permission");

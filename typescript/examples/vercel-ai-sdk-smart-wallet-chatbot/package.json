@@ -14,14 +14,14 @@
     "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\""
   },
   "dependencies": {
-    "@ai-sdk/openai": "^1.1.9",
+    "@ai-sdk/openai": "^3.0.0",
     "@coinbase/agentkit": "workspace:*",
     "@coinbase/agentkit-vercel-ai-sdk": "workspace:*",
-    "ai": "^4.1.16",
+    "ai": "^6.0.0",
     "dotenv": "^16.4.5",
     "tsx": "^4.7.1",
     "viem": "^2.24.1",
-    "zod": "^3.22.4"
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.0",

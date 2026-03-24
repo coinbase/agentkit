@@ -19,7 +19,7 @@ export const GetTokenPricesSchema = z
       .describe("Array of token addresses with chain prefix, e.g., ['ethereum:0x...']"),
     searchWidth: z
       .string()
-      .optional()
+      .nullable()
       .describe("Optional time range in minutes to search for prices, default api value is '4h'"),
   })
   .strict();

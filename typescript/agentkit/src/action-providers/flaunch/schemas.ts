@@ -16,32 +16,36 @@ export const FlaunchSchema = z
     symbol: z.string().min(1).describe("The symbol of the token to flaunch"),
     image: z.string().describe("Local image file path or URL to the token image"),
     description: z.string().describe("Description of the token"),
-    websiteUrl: z.string().optional().describe("URL to the token website"),
-    discordUrl: z.string().optional().describe("URL to the token Discord"),
-    twitterUrl: z.string().optional().describe("URL to the token Twitter"),
-    telegramUrl: z.string().optional().describe("URL to the token Telegram"),
+    websiteUrl: z.string().nullable().describe("URL to the token website"),
+    discordUrl: z.string().nullable().describe("URL to the token Discord"),
+    twitterUrl: z.string().nullable().describe("URL to the token Twitter"),
+    telegramUrl: z.string().nullable().describe("URL to the token Telegram"),
     fairLaunchPercent: z
       .number()
       .min(0)
       .max(100)
-      .default(60)
+      .nullable()
+      .transform(val => val ?? 60)
       .describe("The percentage of tokens for fair launch (defaults to 60%)"),
     fairLaunchDuration: z
       .number()
       .min(0)
-      .default(30)
+      .nullable()
+      .transform(val => val ?? 30)
       .describe("The duration of the fair launch in minutes (defaults to 30 minutes)"),
     initialMarketCapUSD: z
       .number()
       .min(100)
       .max(100000)
-      .default(10000)
+      .nullable()
+      .transform(val => val ?? 10000)
       .describe("The initial market cap in USD (defaults to 10000 USD)"),
     creatorFeeAllocationPercent: z
       .number()
       .min(0)
       .max(100)
-      .default(80)
+      .nullable()
+      .transform(val => val ?? 80)
       .describe(
         "The percentage of the fees allocated to the creator and optional additional receivers (defaults to 80%). Remainder goes to community via token buy backs",
       ),
@@ -49,7 +53,8 @@ export const FlaunchSchema = z
       .number()
       .min(0)
       .max(100)
-      .default(100)
+      .nullable()
+      .transform(val => val ?? 100)
       .describe(
         "The percentage of the fees allocated to the creator. Defaults to 100%, set to smaller value if fees are to be distributed to additional receivers",
       ),
@@ -69,18 +74,18 @@ export const FlaunchSchema = z
             ),
         }),
       )
-      .optional()
+      .nullable()
       .describe("The recipients for the fee split (optional)"),
     preminePercent: z
       .number()
       .min(0)
       .max(100)
-      .default(0)
+      .nullable()
+      .transform(val => val ?? 0)
       .describe(
         "The percentage of total supply to premine (defaults to 0%, max is equal to fairLaunchPercent)",
       ),
   })
-  .strip()
   .describe("Instructions for creating a new memecoin using the flaunch protocol.");
 
 export const BuyCoinWithETHInputSchema = z.object({
@@ -96,7 +101,8 @@ export const BuyCoinWithETHInputSchema = z.object({
     .number()
     .min(0)
     .max(100)
-    .default(5)
+    .nullable()
+    .transform(val => val ?? 5)
     .describe("The slippage percentage. Default to 5%"),
 });
 
@@ -113,7 +119,8 @@ export const BuyCoinWithCoinInputSchema = z.object({
     .number()
     .min(0)
     .max(100)
-    .default(5)
+    .nullable()
+    .transform(val => val ?? 5)
     .describe("The slippage percentage. Default to 5%"),
 });
 
@@ -130,6 +137,7 @@ export const SellCoinSchema = z.object({
     .number()
     .min(0)
     .max(100)
-    .default(5)
+    .nullable()
+    .transform(val => val ?? 5)
     .describe("The slippage percentage. Default to 5%"),
 });

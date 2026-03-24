@@ -39,7 +39,7 @@ Here's a snippet of code that shows how to use the `getVercelAITools` function t
 ```typescript
 import { getVercelAITools } from "@coinbase/agentkit-vercel-ai-sdk";
 import { AgentKit } from "@coinbase/agentkit";
-import { generateText } from "ai";
+import { generateText, stepCountIs } from "ai";
 import { openai } from "@ai-sdk/openai";
 
 // Get your Coinbase Developer Platform API key from the Portal: https://portal.cdp.coinbase.com/
@@ -54,13 +54,13 @@ const tools = await getVercelAITools(agentKit);
 // There are multiple methods to generate text with AI SDK.
 // See here for more information: https://sdk.vercel.ai/docs/ai-sdk-core/generating-text
 const { text } = await generateText({
-  model: openai("gpt-4o-mini"), // Make sure to have OPENAI_API_KEY set in your environment variables
+  model: openai.chat("gpt-4o-mini"), // Make sure to have OPENAI_API_KEY set in your environment variables
   system: "You are an onchain AI assistant with access to a wallet.",
   prompt: "Print wallet details",
   tools,
   // Allow multi-step tool usage
   // See: https://sdk.vercel.ai/docs/foundations/agents#multi-step-tool-usage
-  maxSteps: 10,
+  stopWhen: stepCountIs(10),
 });
 
 console.log(text);

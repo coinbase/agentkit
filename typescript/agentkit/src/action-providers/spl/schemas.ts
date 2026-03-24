@@ -19,7 +19,7 @@ export const GetBalanceSchema = z
     mintAddress: z.string().describe("The SPL token's mint address"),
     address: z
       .string()
-      .optional()
+      .nullable()
       .describe(
         "Optional address to check balance for. If not provided, uses the wallet's address",
       ),

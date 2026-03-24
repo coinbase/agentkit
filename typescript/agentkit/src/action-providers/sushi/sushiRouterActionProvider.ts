@@ -91,7 +91,7 @@ Important notes:
         chainId,
         tokenIn: args.fromAssetAddress,
         tokenOut: args.toAssetAddress,
-        maxSlippage: args.maxSlippage,
+        maxSlippage: args.maxSlippage ?? 0.005,
         recipient: walletProvider.getAddress() as Address,
       });
 
@@ -127,7 +127,7 @@ Important notes:
         chainId,
         tokenIn: args.fromAssetAddress,
         tokenOut: args.toAssetAddress,
-        maxSlippage: args.maxSlippage,
+        maxSlippage: args.maxSlippage ?? 0.005,
         recipient: walletProvider.getAddress() as Address,
       });
 

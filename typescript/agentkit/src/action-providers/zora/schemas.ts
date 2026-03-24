@@ -8,22 +8,23 @@ export const CreateCoinSchema = z
     image: z.string().describe("Local image file path or URI (ipfs:// or https://)"),
     category: z
       .string()
-      .default("social")
+      .nullable()
+      .transform(val => val ?? "social")
       .describe("The category of the coin, optional, defaults to 'social'"),
     payoutRecipient: z
       .string()
       .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
-      .optional()
+      .nullable()
       .describe("The address that will receive creator earnings, defaults to wallet address"),
     platformReferrer: z
       .string()
       .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
-      .optional()
+      .nullable()
       .describe("The address that will receive platform referrer fees, optional"),
     currency: z
       .enum(["ZORA", "ETH"])
-      .default("ZORA")
+      .nullable()
+      .transform(val => val ?? "ZORA")
       .describe("Currency to be used for the trading pair, optional, defaults to 'ZORA'."),
   })
-  .strip()
   .describe("Instructions for creating a new coin on Zora");

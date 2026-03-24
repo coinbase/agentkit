@@ -92,7 +92,9 @@ def test_get_network_different_networks():
         with (
             patch("coinbase_agentkit.wallet_providers.cdp_solana_wallet_provider.CdpClient"),
             patch("coinbase_agentkit.wallet_providers.cdp_solana_wallet_provider.SolanaClient"),
-            patch("asyncio.run", return_value=Mock(address=MOCK_ADDRESS)),
+            patch.object(
+                CdpSolanaWalletProvider, "_run_async", return_value=Mock(address=MOCK_ADDRESS)
+            ),
         ):
             config = CdpSolanaWalletProviderConfig(
                 api_key_id="test_key",

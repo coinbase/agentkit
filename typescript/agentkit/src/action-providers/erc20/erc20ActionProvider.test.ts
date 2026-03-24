@@ -58,6 +58,7 @@ describe("Get Balance Action", () => {
 
     const args = {
       tokenAddress: MOCK_CONTRACT_ADDRESS,
+      address: null,
     };
 
     const response = await actionProvider.getBalance(mockWallet, args);
@@ -71,6 +72,7 @@ describe("Get Balance Action", () => {
   it("should fail with an error", async () => {
     const args = {
       tokenAddress: MOCK_CONTRACT_ADDRESS,
+      address: null,
     };
 
     mockMulticall.mockRejectedValue(new Error("Failed to get balance"));

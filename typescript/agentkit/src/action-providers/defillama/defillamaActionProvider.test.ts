@@ -20,6 +20,7 @@ describe("DefiLlamaActionProvider", () => {
 
       const result = await provider.getTokenPrices({
         tokens: ["ethereum:0x1234"],
+        searchWidth: null,
       });
       expect(JSON.parse(result)).toEqual(mockResponse);
     });
@@ -28,6 +29,7 @@ describe("DefiLlamaActionProvider", () => {
       fetchMock.mockResolvedValue({ ok: false, status: 404 });
       const result = await provider.getTokenPrices({
         tokens: ["ethereum:0x1234"],
+        searchWidth: null,
       });
       expect(result).toContain("Error fetching token prices");
     });
@@ -38,6 +40,7 @@ describe("DefiLlamaActionProvider", () => {
 
       const result = await provider.getTokenPrices({
         tokens: ["ethereum:0x1234"],
+        searchWidth: null,
       });
       expect(result).toContain("Error fetching token prices");
       expect(result).toContain("Network error");

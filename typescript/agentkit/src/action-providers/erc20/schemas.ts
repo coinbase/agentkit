@@ -17,7 +17,6 @@ export const TransferSchema = z
       .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
       .describe("The destination to transfer the funds"),
   })
-  .strip()
   .describe("Instructions for transferring assets");
 
 /**
@@ -32,10 +31,9 @@ export const GetBalanceSchema = z
     address: z
       .string()
       .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
-      .optional()
+      .nullable()
       .describe("The address to check the balance for. If not provided, uses the wallet's address"),
   })
-  .strip()
   .describe("Instructions for getting wallet balance");
 
 /**
@@ -53,7 +51,6 @@ export const ApproveSchema = z
       .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
       .describe("The address to approve for spending tokens"),
   })
-  .strip()
   .describe("Instructions for approving token spending");
 
 /**
@@ -70,7 +67,6 @@ export const AllowanceSchema = z
       .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
       .describe("The address to check allowance for"),
   })
-  .strip()
   .describe("Instructions for checking token allowance");
 
 /**
@@ -85,5 +81,4 @@ export const GetTokenAddressSchema = z
       .toUpperCase()
       .describe("The token symbol (e.g., USDC, WETH, DEGEN)"),
   })
-  .strip()
   .describe("Instructions for getting a token's contract address by symbol");

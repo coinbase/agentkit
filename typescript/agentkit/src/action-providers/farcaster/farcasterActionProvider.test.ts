@@ -20,6 +20,7 @@ describe("Farcaster Action Provider Input Schemas", () => {
     it("should successfully parse valid cast text", () => {
       const validInput = {
         castText: "Hello, Farcaster!",
+        embeds: null,
       };
       const result = FarcasterPostCastSchema.safeParse(validInput);
 
@@ -145,6 +146,7 @@ describe("Farcaster Action Provider", () => {
 
       const args = {
         castText: "Hello, Farcaster!",
+        embeds: null,
       };
 
       const result = await actionProvider.postCast(args);
@@ -158,7 +160,7 @@ describe("Farcaster Action Provider", () => {
         body: JSON.stringify({
           signer_uuid: mockConfig.signerUuid,
           text: args.castText,
-          embeds: undefined,
+          embeds: null,
         }),
       });
       expect(mockFetch).toHaveBeenCalledTimes(1);
@@ -201,6 +203,7 @@ describe("Farcaster Action Provider", () => {
 
       const args = {
         castText: "Hello, Farcaster!",
+        embeds: null,
       };
 
       const result = await actionProvider.postCast(args);

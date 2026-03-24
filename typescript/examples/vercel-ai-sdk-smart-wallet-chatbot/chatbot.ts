@@ -8,7 +8,7 @@ import {
 } from "@coinbase/agentkit";
 import { getVercelAITools } from "@coinbase/agentkit-vercel-ai-sdk";
 import { openai } from "@ai-sdk/openai";
-import { generateId, Message, streamText, ToolSet } from "ai";
+import { streamText, ToolSet, stepCountIs } from "ai";
 import * as dotenv from "dotenv";
 import * as readline from "readline";
 import * as fs from "fs";
@@ -150,36 +150,45 @@ async function runChatMode(tools: ToolSet) {
   const question = (prompt: string): Promise<string> =>
     new Promise(resolve => rl.question(prompt, resolve));
 
-  const messages: Message[] = [];
-  let running = true;
+  const messages: Parameters<typeof streamText>[0]["messages"] = [];
 
   try {
-    while (running) {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
       const userInput = await question("\nPrompt: ");
+      console.log("-------------------");
 
       if (userInput.toLowerCase() === "exit") {
-        running = false;
-        continue;
+        break;
       }
 
-      messages.push({ id: generateId(), role: "user", content: userInput });
+      messages.push({ role: "user", content: userInput });
 
-      const stream = streamText({
-        model: openai("gpt-4o-mini"),
+      const result = streamText({
+        model: openai.chat("gpt-4o-mini"),
         messages,
         tools,
         system,
-        maxSteps: 10,
+        stopWhen: stepCountIs(10),
+        onStepFinish: async ({ toolResults }) => {
+          for (const tr of toolResults) {
+            console.log(`Tool ${tr.toolName}: ${tr.output}`);
+          }
+        },
       });
 
-      let assistantMessage = "";
-      for await (const chunk of stream.textStream) {
-        process.stdout.write(chunk);
-        assistantMessage += chunk;
+      let fullResponse = "";
+      for await (const delta of result.textStream) {
+        fullResponse += delta;
       }
-      console.log("\n-------------------");
 
-      messages.push({ id: generateId(), role: "assistant", content: assistantMessage });
+      if (fullResponse) {
+        console.log("\n Response: " + fullResponse);
+      }
+
+      messages.push({ role: "assistant", content: fullResponse });
+
+      console.log("-------------------");
     }
   } catch (error) {
     console.error("Error:", error);
@@ -197,7 +206,7 @@ async function runChatMode(tools: ToolSet) {
 async function runAutonomousMode(tools: ToolSet, interval = 10) {
   console.log("Starting autonomous mode...");
 
-  const messages: Message[] = [];
+  const messages: Parameters<typeof streamText>[0]["messages"] = [];
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
@@ -206,24 +215,33 @@ async function runAutonomousMode(tools: ToolSet, interval = 10) {
         "Be creative and do something interesting on the blockchain. " +
         "Choose an action or set of actions and execute it that highlights your abilities.";
 
-      messages.push({ id: generateId(), role: "user", content: thought });
+      messages.push({ role: "user", content: thought });
 
-      const stream = streamText({
-        model: openai("gpt-4o-mini"),
+      const result = streamText({
+        model: openai.chat("gpt-4o-mini"),
         messages,
         tools,
         system,
-        maxSteps: 10,
+        stopWhen: stepCountIs(10),
+        onStepFinish: async ({ toolResults }) => {
+          for (const tr of toolResults) {
+            console.log(`Tool ${tr.toolName}: ${tr.output}`);
+          }
+        },
       });
 
-      let assistantMessage = "";
-      for await (const chunk of stream.textStream) {
-        process.stdout.write(chunk);
-        assistantMessage += chunk;
+      let fullResponse = "";
+      for await (const delta of result.textStream) {
+        fullResponse += delta;
       }
-      console.log("\n-------------------");
 
-      messages.push({ id: generateId(), role: "assistant", content: assistantMessage });
+      if (fullResponse) {
+        console.log("\n Response: " + fullResponse);
+      }
+
+      messages.push({ role: "assistant", content: fullResponse });
+
+      console.log("-------------------");
 
       await new Promise(resolve => setTimeout(resolve, interval * 1000));
     } catch (error) {

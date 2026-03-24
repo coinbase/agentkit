@@ -10,9 +10,12 @@ import { AgentKit, Action } from "@coinbase/agentkit";
  * Get Langchain tools from an AgentKit instance
  *
  * @param agentKit - The AgentKit instance
- * @returns An array of Langchain tools
+ * @returns An array of Langchain tools compatible with langchain's createAgent
  */
-export async function getLangChainTools(agentKit: AgentKit): Promise<StructuredTool[]> {
+export async function getLangChainTools(
+  agentKit: AgentKit,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<(StructuredTool & Record<string, any>)[]> {
   const actions: Action[] = agentKit.getActions();
   return actions.map(action =>
     tool(
