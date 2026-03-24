@@ -24,11 +24,12 @@ export const SushiSwapSchema = z
       .number()
       .min(0)
       .max(1)
-      .optional()
-      .default(0.005) // 0.05%
-      .describe("The maximum slippage allowed for the swap, where 0 is 0% and 1 is 100%"),
+      .nullable()
+      .transform(val => val ?? 0.005)
+      .describe(
+        "The maximum slippage allowed for the swap, where 0 is 0% and 1 is 100% (default: 0.5%)",
+      ),
   })
-  .strip()
   .describe("Instructions for trading assets");
 
 /**
@@ -51,5 +52,4 @@ export const SushiQuoteSchema = z
       .transform(val => val as Address)
       .describe("The Ethereum address of the output asset"),
   })
-  .strip()
   .describe("Instructions for fetching a quote for a trade");

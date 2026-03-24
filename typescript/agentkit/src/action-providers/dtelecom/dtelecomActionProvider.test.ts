@@ -165,7 +165,11 @@ describe("DtelecomActionProvider", () => {
         offset: 0,
       });
 
-      const result = await provider.getSessions(mockWallet, { status: "active" });
+      const result = await provider.getSessions(mockWallet, {
+        status: "active",
+        limit: null,
+        offset: null,
+      });
       const parsed = JSON.parse(result);
 
       expect(parsed.success).toBe(true);
@@ -200,6 +204,9 @@ describe("DtelecomActionProvider", () => {
         durationMinutes: 10,
         language: "a",
         clientIdentity: "user",
+        ttsMaxCharacters: null,
+        metadata: null,
+        clientIp: null,
       });
       const parsed = JSON.parse(result);
 
@@ -228,6 +235,11 @@ describe("DtelecomActionProvider", () => {
         roomName: "minimal-room",
         participantIdentity: "agent",
         durationMinutes: 5,
+        language: null,
+        ttsMaxCharacters: null,
+        metadata: null,
+        clientIdentity: null,
+        clientIp: null,
       });
       const parsed = JSON.parse(result);
 
@@ -250,6 +262,7 @@ describe("DtelecomActionProvider", () => {
       const result = await provider.extendAgentSession(mockWallet, {
         bundleId: "bundle_123",
         additionalMinutes: 10,
+        additionalTtsCharacters: null,
       });
       const parsed = JSON.parse(result);
 
@@ -276,6 +289,8 @@ describe("DtelecomActionProvider", () => {
         roomName: "test-room",
         participantIdentity: "user",
         durationMinutes: 10,
+        metadata: null,
+        clientIp: null,
       });
       const parsed = JSON.parse(result);
 

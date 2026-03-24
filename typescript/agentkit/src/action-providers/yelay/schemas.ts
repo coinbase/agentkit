@@ -30,7 +30,6 @@ export const YelayRedeemSchema = z
       .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
       .describe("The vault address from which will redeem the shares"),
   })
-  .strip()
   .describe("Input schema for Yelay Vault redeem action");
 
 /**
@@ -43,7 +42,6 @@ export const YelayClaimSchema = z
       .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
       .describe("The vault address from which will claim yield"),
   })
-  .strip()
   .describe("Input schema for Yelay Vault claim action");
 
 /**
@@ -56,5 +54,4 @@ export const YelayBalanceSchema = z
       .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
       .describe("The vault address where deposit was made"),
   })
-  .strip()
   .describe("Input schema for Yelay Vault balance action");

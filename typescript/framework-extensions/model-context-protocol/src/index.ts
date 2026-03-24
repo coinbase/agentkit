@@ -2,7 +2,7 @@
  * Main exports for the AgentKit Model Context Protocol (MCP) Extension package
  */
 
-import { zodToJsonSchema } from "zod-to-json-schema";
+import { z } from "zod";
 import { CallToolResult, Tool } from "@modelcontextprotocol/sdk/types.js";
 import { AgentKit, Action } from "@coinbase/agentkit";
 
@@ -28,8 +28,7 @@ export async function getMcpTools(agentKit: AgentKit): Promise<AgentKitMcpTools>
       return {
         name: action.name,
         description: action.description,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        inputSchema: zodToJsonSchema(action.schema as any),
+        inputSchema: z.toJSONSchema(action.schema),
       } as Tool;
     }),
     toolHandler: async (name: string, args: unknown) => {

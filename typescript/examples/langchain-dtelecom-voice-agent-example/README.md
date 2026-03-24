@@ -22,7 +22,7 @@ pnpm install
 2. Copy `.env-local` to `.env` and fill in your credentials:
 
 ```bash
-cd examples/dtelecom-voice-agent
+cd examples/langchain-dtelecom-voice-agent-example
 cp .env-local .env
 ```
 

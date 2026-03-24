@@ -10,5 +10,4 @@ export const MessariResearchQuestionSchema = z
       .min(1, "Research question is required.")
       .describe("The research question about crypto markets, protocols, or tokens"),
   })
-  .strip()
   .describe("Input schema for submitting a research question to Messari AI");

@@ -8,7 +8,7 @@ import {
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
 import { MemorySaver } from "@langchain/langgraph";
-import { createReactAgent } from "@langchain/langgraph/prebuilt";
+import { createAgent } from "langchain";
 import { ChatOpenAI } from "@langchain/openai";
 import { VoiceAgent, LLMPlugin, LLMChunk, Message } from "@dtelecom/agents-js";
 import { DtelecomSTT, DtelecomTTS } from "@dtelecom/agents-js/providers";
@@ -53,8 +53,8 @@ class AgentKitLLM implements LLMPlugin {
     );
 
     for await (const chunk of stream) {
-      if ("agent" in chunk) {
-        const content = chunk.agent.messages[0]?.content;
+      if ("model_request" in chunk) {
+        const content = chunk.model_request.messages[0]?.content;
         if (typeof content === "string" && content) {
           yield { type: "token", token: content };
         }
@@ -96,11 +96,11 @@ async function main() {
   const memory = new MemorySaver();
   const agentConfig = { configurable: { thread_id: "dtelecom-voice-agent" } };
 
-  const agent = createReactAgent({
-    llm,
+  const agent = createAgent({
+    model: llm,
     tools,
-    checkpointSaver: memory,
-    messageModifier:
+    checkpointer: memory,
+    systemPrompt:
       "You are a voice assistant that can interact onchain using Coinbase AgentKit. " +
       "You can check balances, send tokens, and manage dTelecom voice sessions. " +
       "Keep responses short and conversational since they will be spoken aloud. " +

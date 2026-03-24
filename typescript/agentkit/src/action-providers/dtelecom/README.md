@@ -61,4 +61,4 @@ This provider supports EVM networks. Payments are processed on Base mainnet usin
 
 ## Example
 
-See the [dtelecom-voice-agent example](../../../examples/dtelecom-voice-agent/) for a complete voice agent using this provider with `@dtelecom/agents-js`.
+See the [langchain-dtelecom-voice-agent-example](../../../examples/langchain-dtelecom-voice-agent-example/) for a complete voice agent using this provider with `@dtelecom/agents-js`.

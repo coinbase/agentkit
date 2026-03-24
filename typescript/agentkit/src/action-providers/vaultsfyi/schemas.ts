@@ -16,29 +16,29 @@ const NetworkSchema = z.enum(SUPPORTED_NETWORKS);
 export const VaultsActionSchema = z.object({
   allowedAssets: z
     .array(z.string())
-    .optional()
+    .nullable()
     .describe("Optional: Symbols of the assets to filter vaults by"),
   allowedProtocols: z
     .array(z.string())
-    .optional()
+    .nullable()
     .describe("Optional: Protocols to filter vaults by. Leave undefined to include all protocols."),
   allowedNetworks: z
     .array(NetworkSchema)
-    .optional()
+    .nullable()
     .describe("Optional: Networks to filter vaults by. Leave undefined to include all networks."),
-  minTvl: z.coerce.number().optional().describe("Optional: Minimum TVL to filter vaults by"),
+  minTvl: z.coerce.number().nullable().describe("Optional: Minimum TVL to filter vaults by"),
   sort: z
     .object({
-      field: z.enum(["tvl", "apy1day", "apy7day", "apy30day"]).optional().describe("Sort field"),
-      direction: z.enum(["asc", "desc"]).optional().describe("Sort direction"),
+      field: z.enum(["tvl", "apy1day", "apy7day", "apy30day"]).nullable().describe("Sort field"),
+      direction: z.enum(["asc", "desc"]).nullable().describe("Sort direction"),
     })
-    .optional()
+    .nullable()
     .describe("Sort options"),
   perPage: z.coerce
     .number()
-    .optional()
+    .nullable()
     .describe("Optional: Number of results per page (default: 5)"),
-  page: z.coerce.number().optional().describe("Optional: Page number starting from 0 (default: 0)"),
+  page: z.coerce.number().nullable().describe("Optional: Page number starting from 0 (default: 0)"),
 });
 
 /**
@@ -56,8 +56,8 @@ export const VaultHistoricalDataActionSchema = z.object({
   toDate: z.string().datetime().describe("The date to fetch historical data to"),
   granularity: z.enum(["1hour", "1day", "1week"]).describe("The granularity of the data"),
   apyInterval: z.enum(["1day", "7day", "30day"]).describe("The interval of the apy data"),
-  page: z.coerce.number().optional().describe("The page number to fetch"),
-  perPage: z.coerce.number().optional().describe("The number of results per page"),
+  page: z.coerce.number().nullable().describe("The page number to fetch"),
+  perPage: z.coerce.number().nullable().describe("The number of results per page"),
 });
 
 /**
@@ -85,7 +85,7 @@ export const executeStepActionSchema = transactionContextActionSchema.extend({
   amount: z.coerce
     .bigint()
     .or(z.literal("all"))
-    .optional()
+    .nullable()
     .describe("The amount of assets to use as a number with decimals"),
 });
 
@@ -101,15 +101,15 @@ export const benchmarkActionSchema = z.object({
 export const historicalBenchmarkActionSchema = benchmarkActionSchema.extend({
   fromDate: z.string().datetime().describe("The date to fetch historical data from"),
   toDate: z.string().datetime().describe("The date to fetch historical data to"),
-  page: z.coerce.number().optional().describe("The page number to fetch"),
-  perPage: z.coerce.number().optional().describe("The number of results per page"),
+  page: z.coerce.number().nullable().describe("The page number to fetch"),
+  perPage: z.coerce.number().nullable().describe("The number of results per page"),
 });
 
 export const totalVaultReturnsActionSchema = z.object({
   vaultAddress: z.string().describe("The address of the vault to fetch total returns for"),
   userAddress: z
     .string()
-    .optional()
+    .nullable()
     .describe("The address of the user to fetch total returns for. (default: user's address)"),
   network: NetworkSchema.describe("The network of the vault"),
 });
@@ -118,7 +118,7 @@ export const userEventsActionSchema = z.object({
   vaultAddress: z.string().describe("The address of the vault to fetch user events for"),
   userAddress: z
     .string()
-    .optional()
+    .nullable()
     .describe("The address of the user to fetch user events for. (default: user's address)"),
   network: NetworkSchema.describe("The network of the vault"),
 });

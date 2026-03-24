@@ -96,12 +96,12 @@ class CdpSmartWalletProvider(EvmWalletProvider):
                             smart_account = await cdp.evm.create_smart_account(owner=owner)
                         return owner, smart_account
 
-                owner, smart_account = asyncio.run(initialize_accounts())
+                owner, smart_account = self._run_async(initialize_accounts())
                 self._address = smart_account.address
                 self._owner = owner
 
             finally:
-                asyncio.run(client.close())
+                self._run_async(client.close())
 
             self._gas_limit_multiplier = (
                 max(config.gas.gas_limit_multiplier, 1)
@@ -171,11 +171,32 @@ class CdpSmartWalletProvider(EvmWalletProvider):
 
         """
         try:
-            loop = asyncio.get_event_loop()
+            # Check if we're in an existing event loop
+            loop = asyncio.get_running_loop()
+            # If we reach this point, there's already a running event loop
+            # We need to run the coroutine in a new thread with a new event loop
+            import concurrent.futures
+
+            def run_in_thread():
+                new_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(new_loop)
+                try:
+                    return new_loop.run_until_complete(coroutine)
+                finally:
+                    new_loop.close()
+
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(run_in_thread)
+                return future.result()
+
         except RuntimeError:
+            # No running event loop, safe to create and use a new one
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-        return loop.run_until_complete(coroutine)
+            try:
+                return loop.run_until_complete(coroutine)
+            finally:
+                loop.close()
 
     async def _get_smart_account(self, cdp):
         """Get the smart account, handling server wallet owners differently.

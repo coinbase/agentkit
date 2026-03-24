@@ -78,7 +78,7 @@ The action will return the transaction hash, coin address, and deployment detail
         payoutRecipient: (args.payoutRecipient as Hex) || walletProvider.getAddress(),
         platformReferrer:
           (args.platformReferrer as Hex) || "0x0000000000000000000000000000000000000000",
-        currency: args.currency === "ZORA" ? DeployCurrency.ZORA : DeployCurrency.ETH,
+        currency: (args.currency ?? "ZORA") === "ZORA" ? DeployCurrency.ZORA : DeployCurrency.ETH,
       };
 
       const createCoinRequest = await createCoinCall(call);

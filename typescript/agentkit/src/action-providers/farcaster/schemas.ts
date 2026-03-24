@@ -5,7 +5,6 @@ import { z } from "zod";
  */
 export const FarcasterAccountDetailsSchema = z
   .object({})
-  .strip()
   .describe("Input schema for retrieving account details");
 
 /**
@@ -21,7 +20,6 @@ export const FarcasterPostCastSchema = z
         }),
       )
       .max(2, "Maximum of 2 embeds allowed")
-      .optional(),
+      .nullable(),
   })
-  .strip()
   .describe("Input schema for posting a text-based cast");

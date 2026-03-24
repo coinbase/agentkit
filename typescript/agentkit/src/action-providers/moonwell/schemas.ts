@@ -34,5 +34,4 @@ export const RedeemSchema = z
       .regex(/^\d+(\.\d+)?$/, "Must be a valid integer or decimal value")
       .describe("The quantity of assets to redeem, in whole units"),
   })
-  .strip()
   .describe("Input schema for Moonwell MToken redeem action");

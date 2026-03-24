@@ -109,8 +109,8 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
           allowedProtocols: args.allowedProtocols ? args.allowedProtocols : undefined,
           minTvl: args.minTvl ?? 100_000,
           onlyTransactional: true,
-          sortBy: args.sort?.field,
-          sortOrder: args.sort?.direction,
+          sortBy: args.sort?.field ?? undefined,
+          sortOrder: args.sort?.direction ?? undefined,
         },
       });
 
@@ -191,8 +191,8 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
           fromTimestamp: Math.floor(new Date(args.fromDate).getTime() / 1000),
           toTimestamp: Math.floor(new Date(args.toDate).getTime() / 1000),
           apyInterval: args.apyInterval,
-          page: args.page,
-          perPage: args.perPage,
+          page: args.page ?? undefined,
+          perPage: args.perPage ?? undefined,
         },
       });
       return JSON.stringify({
@@ -519,8 +519,8 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
           code: args.benchmarkCode,
           fromTimestamp: Math.floor(new Date(args.fromDate).getTime() / 1000),
           toTimestamp: Math.floor(new Date(args.toDate).getTime() / 1000),
-          page: args.page,
-          perPage: args.perPage,
+          page: args.page ?? undefined,
+          perPage: args.perPage ?? undefined,
         },
       });
       return JSON.stringify({

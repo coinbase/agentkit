@@ -115,8 +115,8 @@ describe("CDP API Action Provider", () => {
       expect(result.success).toBe(true);
     });
 
-    it("should allow missing assetId", () => {
-      const validInput = {};
+    it("should allow null assetId", () => {
+      const validInput = { assetId: null };
       const result = RequestFaucetFundsV2Schema.safeParse(validInput);
       expect(result.success).toBe(true);
     });
