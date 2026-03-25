@@ -1,6 +1,6 @@
 # Insumer Action Provider
 
-This directory contains the InsumerAPI action provider implementation, which provides actions for privacy-preserving on-chain wallet verification, trust profiling, and discount code validation across 32 chains (30 EVM + Solana + XRPL).
+This directory contains the InsumerAPI action provider implementation, which provides actions for privacy-preserving on-chain wallet verification, trust profiling, and discount code validation across 33 chains (30 EVM + Solana + XRPL + Bitcoin).
 
 ## Directory Structure
 
@@ -62,7 +62,7 @@ const provider = insumerActionProvider({ apiKey: "insr_live_..." });
 
 ## Supported Chains
 
-30 EVM chains: Ethereum, BNB Chain, Base, Avalanche, Polygon, Arbitrum, Optimism, Chiliz, Soneium, Plume, World Chain, Sonic, Gnosis, Mantle, Scroll, Linea, zkSync Era, Blast, Taiko, Ronin, Celo, Moonbeam, Moonriver, Viction, opBNB, Unichain, Ink, Sei, Berachain, ApeChain. Plus Solana and XRPL (32 total).
+30 EVM chains: Ethereum, BNB Chain, Base, Avalanche, Polygon, Arbitrum, Optimism, Chiliz, Soneium, Plume, World Chain, Sonic, Gnosis, Mantle, Scroll, Linea, zkSync Era, Blast, Taiko, Ronin, Celo, Moonbeam, Moonriver, Viction, opBNB, Unichain, Ink, Sei, Berachain, ApeChain. Plus Solana, XRPL, and Bitcoin (33 total).
 
 ## Pricing
 

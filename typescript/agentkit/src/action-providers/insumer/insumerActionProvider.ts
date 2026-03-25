@@ -23,7 +23,7 @@ import {
 /**
  * InsumerActionProvider is an action provider for InsumerAPI interactions.
  * It enables AI agents to verify on-chain wallet conditions, generate trust profiles,
- * and validate discount codes across 32 chains (30 EVM + Solana + XRPL).
+ * and validate discount codes across 33 chains (30 EVM + Solana + XRPL + Bitcoin).
  *
  * @augments ActionProvider
  */
@@ -50,7 +50,7 @@ export class InsumerActionProvider extends ActionProvider {
   /**
    * Verifies on-chain wallet conditions. Returns ECDSA-signed boolean attestations
    * for token balances, NFT ownership, EAS attestations, and Farcaster IDs
-   * across 32 chains (30 EVM + Solana + XRPL). Never exposes raw wallet balances.
+   * across 33 chains (30 EVM + Solana + XRPL + Bitcoin). Never exposes raw wallet balances.
    *
    * @param args - The verification parameters
    * @returns A formatted string with verification results
@@ -62,11 +62,12 @@ It takes the following inputs:
 - wallet: EVM wallet address (0x...)
 - conditions: Array of 1-10 conditions to check (token_balance, nft_ownership, eas_attestation, farcaster_id)
 - solanaWallet: Optional Solana wallet address for Solana conditions
+- bitcoinWallet: Optional Bitcoin address for Bitcoin conditions
 - proof: Optional "merkle" for EIP-1186 Merkle storage proofs
 
 Important notes:
 - Returns ECDSA-signed boolean results, never raw balances
-- Supports 32 chains (30 EVM + Solana + XRPL)
+- Supports 33 chains (30 EVM + Solana + XRPL + Bitcoin)
 - Each condition specifies its own chainId
 - Use compliance templates (e.g. coinbase_verified_account) for EAS attestations
 - Costs 1 credit per call (2 with proof="merkle")
@@ -81,6 +82,7 @@ Important notes:
         ...(args.proof ? { proof: args.proof } : {}),
         ...(args.solanaWallet ? { solanaWallet: args.solanaWallet } : {}),
         ...(args.xrplWallet ? { xrplWallet: args.xrplWallet } : {}),
+        ...(args.bitcoinWallet ? { bitcoinWallet: args.bitcoinWallet } : {}),
         ...(args.format ? { format: args.format } : {}),
       });
 
@@ -140,6 +142,7 @@ Important notes:
         wallet: args.wallet,
         ...(args.solanaWallet ? { solanaWallet: args.solanaWallet } : {}),
         ...(args.xrplWallet ? { xrplWallet: args.xrplWallet } : {}),
+        ...(args.bitcoinWallet ? { bitcoinWallet: args.bitcoinWallet } : {}),
         ...(args.proof ? { proof: args.proof } : {}),
       });
 
@@ -339,7 +342,7 @@ Important notes:
 
   /**
    * Checks if the InsumerAPI action provider supports the given network.
-   * InsumerAPI is multi-chain (30 EVM + Solana + XRPL = 32 chains), so this always returns true.
+   * InsumerAPI is multi-chain (30 EVM + Solana + XRPL + Bitcoin = 33 chains), so this always returns true.
    *
    * @param _ - The network to check
    * @returns Always returns true as InsumerAPI supports all networks

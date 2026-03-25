@@ -15,7 +15,7 @@ const ConditionSchema = z
     chainId: z
       .union([z.number(), z.string()])
       .optional()
-      .describe("EVM chain ID (integer) or 'solana'. Required for token_balance and nft_ownership"),
+      .describe("EVM chain ID (integer), 'solana', or 'bitcoin'. Required for token_balance and nft_ownership"),
     threshold: z
       .number()
       .optional()
@@ -68,6 +68,10 @@ export const VerifyWalletSchema = z
       .string()
       .optional()
       .describe("XRPL wallet address (r...). Required for XRPL conditions"),
+    bitcoinWallet: z
+      .string()
+      .optional()
+      .describe("Bitcoin address. Required for Bitcoin conditions (chainId: 'bitcoin')"),
     format: z
       .enum(["jwt"])
       .optional()
@@ -93,6 +97,10 @@ export const GetWalletTrustProfileSchema = z
       .string()
       .optional()
       .describe("Optional XRPL wallet address (r...) to include XRPL stablecoin checks"),
+    bitcoinWallet: z
+      .string()
+      .optional()
+      .describe("Optional Bitcoin address to include Bitcoin balance check"),
     proof: z
       .enum(["merkle"])
       .optional()
@@ -118,6 +126,10 @@ export const GetBatchWalletTrustProfilesSchema = z
               .string()
               .optional()
               .describe("Optional XRPL wallet address (r...) for this wallet"),
+            bitcoinWallet: z
+              .string()
+              .optional()
+              .describe("Optional Bitcoin address for this wallet"),
           })
           .strict(),
       )
