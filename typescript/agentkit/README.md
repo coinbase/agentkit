@@ -647,6 +647,23 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Uniswap V4</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_v4_quote</code></td>
+    <td width="768">Gets a price quote for a Uniswap V4 token swap without executing the trade.</td>
+</tr>
+<tr>
+    <td width="200"><code>swap_exact_input</code></td>
+    <td width="768">Executes a Uniswap V4 swap with an exact input amount, specifying the minimum output via slippage tolerance.</td>
+</tr>
+<tr>
+    <td width="200"><code>swap_exact_output</code></td>
+    <td width="768">Executes a Uniswap V4 swap specifying the desired output amount, with a maximum input determined by slippage tolerance.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Vaultsfyi</strong></summary>
 <table width="100%">
 <tr>
