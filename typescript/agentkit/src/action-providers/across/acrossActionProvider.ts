@@ -127,7 +127,7 @@ export class AcrossActionProvider extends ActionProvider<EvmWalletProvider> {
         throw new Error(`No input tokens available on chain ${originChain.id}`);
       }
       const tokenInfo = inputTokens.find(
-        token => token.symbol.toUpperCase() === (args.inputTokenSymbol ?? "ETH").toUpperCase(),
+        token => token.symbol.toUpperCase() === args.inputTokenSymbol.toUpperCase(),
       );
       if (!tokenInfo) {
         throw new Error(
@@ -141,7 +141,7 @@ export class AcrossActionProvider extends ActionProvider<EvmWalletProvider> {
       const inputAmount = parseUnits(args.amount, decimals);
 
       // Check balance
-      const isNative = (args.inputTokenSymbol ?? "ETH").toUpperCase() === "ETH";
+      const isNative = args.inputTokenSymbol.toUpperCase() === "ETH";
       if (isNative) {
         // Check native ETH balance
         const ethBalance = await walletProvider.getBalance();
@@ -212,7 +212,7 @@ export class AcrossActionProvider extends ActionProvider<EvmWalletProvider> {
         ((Number(formattedInfo.inputAmount) - Number(formattedInfo.outputAmount)) /
           Number(formattedInfo.inputAmount)) *
         100;
-      if (actualSlippagePercentage > (args.maxSplippage ?? 1.5)) {
+      if (actualSlippagePercentage > args.maxSplippage) {
         throw new Error(
           `Output amount has high slippage of ${actualSlippagePercentage.toFixed(2)}%, which exceeds the maximum allowed slippage of ${args.maxSplippage}%. ` +
             `Input: ${formattedInfo.inputAmount} ${args.inputTokenSymbol}, Output: ${formattedInfo.outputAmount} ${args.inputTokenSymbol}`,

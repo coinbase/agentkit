@@ -24,7 +24,7 @@ export const BridgeTokenSchema = z
       .number()
       .nullable()
       .transform(val => val ?? 1.5)
-      .describe("The maximum slippage percentage (e.g. 10 for 10%)"),
+      .describe("The maximum slippage percentage (e.g. 10 for 10%), defaults to 1.5%"),
   })
   .describe("Instructions for bridging tokens across chains using Across Protocol");
 

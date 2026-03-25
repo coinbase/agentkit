@@ -368,6 +368,47 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>ERC-8004</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>append_response</code></td>
+    <td width="768">Appends an off-chain response URI to a reputation feedback entry (ERC-8004 Reputation Registry).</td>
+</tr>
+<tr>
+    <td width="200"><code>get_agent_feedback</code></td>
+    <td width="768">Lists feedback for an agent with optional filters (reviewers, value range, tags).</td>
+</tr>
+<tr>
+    <td width="200"><code>get_agent_info</code></td>
+    <td width="768">Returns identity, endpoints, capabilities, reputation summary, and status for a registered agent.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_owned_agents</code></td>
+    <td width="768">Lists agents owned by a wallet address (defaults to the connected wallet).</td>
+</tr>
+<tr>
+    <td width="200"><code>give_feedback</code></td>
+    <td width="768">Submits on-chain feedback (and optional IPFS payload) for an agent; cannot be used on your own agent.</td>
+</tr>
+<tr>
+    <td width="200"><code>register_agent</code></td>
+    <td width="768">Registers a new agent on the ERC-8004 Identity Registry (mint NFT and set registration URI).</td>
+</tr>
+<tr>
+    <td width="200"><code>revoke_feedback</code></td>
+    <td width="768">Revokes feedback previously submitted by the connected wallet.</td>
+</tr>
+<tr>
+    <td width="200"><code>search_agents</code></td>
+    <td width="768">Discovers agents via semantic search, capability/status filters, reputation bounds, sort, and pagination.</td>
+</tr>
+<tr>
+    <td width="200"><code>update_agent_metadata</code></td>
+    <td width="768">Updates agent metadata, endpoints (MCP/A2A), trust models, taxonomies, and status flags.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>ERC20</strong></summary>
 <table width="100%">
 <tr>

@@ -15,6 +15,7 @@ export * from "./dtelecom";
 export * from "./enso";
 export * from "./erc20";
 export * from "./erc721";
+export * from "./erc8004";
 export * from "./farcaster";
 export * from "./jupiter";
 export * from "./messari";
