@@ -1608,6 +1608,229 @@ const walletData = await walletProvider.exportWallet();
 }
 ```
 
+## Handling Retries and Timeouts
+
+When building AI agents that interact with blockchain networks and APIs, it's important to handle transient failures gracefully. AgentKit provides built-in utilities for implementing retry logic and timeout handling.
+
+### Retry with Exponential Backoff
+
+AgentKit includes a `retryWithExponentialBackoff` utility function in `src/utils.ts`:
+
+```typescript
+import { retryWithExponentialBackoff } from '@coinbase/agentkit';
+
+// Basic usage with default settings (3 retries, 1000ms base delay)
+const result = await retryWithExponentialBackoff(async () => {
+  return await someApiCall();
+});
+
+// Custom configuration
+const result = await retryWithExponentialBackoff(
+  async () => await fetchBalance(address),
+  5,        // maxRetries: Maximum number of retry attempts
+  2000,     // baseDelay: Base delay in milliseconds
+  500       // initialDelay: Delay before first attempt in milliseconds
+);
+```
+
+The function implements exponential backoff with the formula: `delay = baseDelay × 2^attempt`
+
+### Example: Retrying Token Transfers
+
+```typescript
+import { AgentKit } from '@coinbase/agentkit';
+import { retryWithExponentialBackoff } from '@coinbase/agentkit';
+
+const agentkit = await AgentKit.from({
+  cdpApiKeyId: process.env.CDP_API_KEY_ID!,
+  cdpApiKeySecret: process.env.CDP_API_KEY_SECRET!,
+});
+
+// Transfer with retry logic
+async function transferWithRetry(to: string, amount: string) {
+  return await retryWithExponentialBackoff(
+    async () => {
+      const result = await agentkit.run({
+        action: 'transfer',
+        params: {
+          to,
+          amount,
+          assetId: 'eth'
+        }
+      });
+      return result;
+    },
+    3,     // Retry up to 3 times
+    2000   // 2 second base delay
+  );
+}
+
+try {
+  const result = await transferWithRetry(
+    '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+    '0.01'
+  );
+  console.log('Transfer successful:', result);
+} catch (error) {
+  console.error('Transfer failed after retries:', error);
+}
+```
+
+### Handling Timeouts
+
+For HTTP requests and API calls, implement timeouts using AbortController:
+
+```typescript
+async function fetchWithTimeout(url: string, timeoutMs: number = 30000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    return await response.json();
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+// Example: Fetch token price with retry and timeout
+async function fetchTokenPrice(symbol: string) {
+  return await retryWithExponentialBackoff(
+    async () => {
+      return await fetchWithTimeout(
+        `https://api.example.com/price/${symbol}`,
+        30000  // 30 second timeout
+      );
+    },
+    3,     // Retry up to 3 times
+    1000   // 1 second base delay
+  );
+}
+
+try {
+  const price = await fetchTokenPrice('eth');
+  console.log('ETH Price:', price);
+} catch (error) {
+  console.error('Failed to fetch price:', error);
+}
+```
+
+### Transaction Confirmation Polling
+
+When waiting for blockchain transaction confirmations, implement polling with a timeout:
+
+```typescript
+async function waitForTransaction(
+  agentkit: AgentKit,
+  txHash: string,
+  timeoutMs: number = 120000
+) {
+  const startTime = Date.now();
+  const pollInterval = 5000; // 5 seconds
+
+  while (Date.now() - startTime < timeoutMs) {
+    try {
+      const receipt = await agentkit.wallet.getTransactionReceipt(txHash);
+
+      if (receipt) {
+        console.log('Transaction confirmed:', receipt);
+        return receipt;
+      }
+
+      // Wait before checking again
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+    } catch (error) {
+      console.warn('Error checking transaction:', error);
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+    }
+  }
+
+  throw new Error(`Transaction ${txHash} timed out after ${timeoutMs}ms`);
+}
+```
+
+### Custom Retry Logic
+
+For more complex scenarios, implement custom retry logic with conditional retries:
+
+```typescript
+async function customRetry<T>(
+  fn: () => Promise<T>,
+  shouldRetry: (error: Error, attempt: number) => boolean,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<T> {
+  let lastError: Error;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+
+      // Check if we should retry this error
+      if (attempt === maxRetries || !shouldRetry(lastError, attempt)) {
+        throw lastError;
+      }
+
+      const delay = baseDelay * Math.pow(2, attempt);
+      console.log(`Retrying after ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+
+  throw lastError!;
+}
+
+// Usage: Only retry on specific errors
+await customRetry(
+  async () => await someApiCall(),
+  (error, attempt) => {
+    // Retry on rate limiting or server errors
+    if (error.message.includes('429') || error.message.includes('503')) {
+      return true;
+    }
+    // Don't retry on auth errors
+    if (error.message.includes('401') || error.message.includes('403')) {
+      return false;
+    }
+    // Retry on other errors for first 2 attempts
+    return attempt < 2;
+  },
+  5,
+  2000
+);
+```
+
+### Best Practices
+
+**When to use retries:**
+- ✅ Network connectivity issues
+- ✅ Rate limiting (HTTP 429)
+- ✅ Temporary service unavailability (HTTP 503)
+- ✅ RPC endpoint failures
+- ❌ Invalid parameters (HTTP 400)
+- ❌ Authentication failures (HTTP 401, 403)
+- ❌ Insufficient balance errors
+
+**Recommended timeout values:**
+- **Fast operations** (< 30s): Balance checks, address lookups
+- **Medium operations** (30-90s): Token transfers, NFT minting
+- **Long operations** (90-300s): Smart contract deployments, complex DeFi interactions
+
+**Error handling tips:**
+- Always log retry attempts for debugging
+- Set maximum retry limits to prevent infinite loops
+- Use exponential backoff to avoid overwhelming services
+- Implement circuit breakers for repeated failures
+- Provide fallback behavior when operations fail
+- Check error codes before retrying (don't retry 4xx errors)
+
 ## Contributing
 
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for more information.
