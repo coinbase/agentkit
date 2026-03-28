@@ -4,7 +4,7 @@
 
 import { z } from "zod";
 import { CallToolResult, Tool } from "@modelcontextprotocol/sdk/types.js";
-import { AgentKit, Action } from "@coinbase/agentkit";
+import { AgentKit, Action, resolveJsonSchemaRefs } from "@coinbase/agentkit";
 
 /**
  * The AgentKit MCP tools and tool handler
@@ -28,7 +28,9 @@ export async function getMcpTools(agentKit: AgentKit): Promise<AgentKitMcpTools>
       return {
         name: action.name,
         description: action.description,
-        inputSchema: z.toJSONSchema(action.schema),
+        inputSchema: resolveJsonSchemaRefs(
+          z.toJSONSchema(action.schema) as Record<string, unknown>,
+        ),
       } as Tool;
     }),
     toolHandler: async (name: string, args: unknown) => {
