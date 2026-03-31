@@ -91,6 +91,28 @@ export const getCollateralBalance = async (
 };
 
 /**
+ * Get base asset (e.g. USDC) supply balance via Comet.balanceOf().
+ * This is distinct from collateral — the base asset is what earns supply APY.
+ *
+ * @param wallet - The wallet provider instance
+ * @param cometAddress - The address of the Comet contract
+ * @returns The base asset supply balance as a bigint
+ */
+export const getBaseAssetBalance = async (
+  wallet: EvmWalletProvider,
+  cometAddress: Address,
+): Promise<bigint> => {
+  const balance = await wallet.readContract({
+    address: cometAddress,
+    abi: COMET_ABI,
+    functionName: "balanceOf",
+    args: [(await wallet.getAddress()) as `0x${string}`],
+  });
+
+  return balance;
+};
+
+/**
  * Get health ratio for an account
  *
  * @param wallet - The wallet provider instance
@@ -203,8 +225,37 @@ export const getPortfolioDetailsMarkdown = async (
   cometAddress: Address,
 ): Promise<string> => {
   let markdownOutput = "# Portfolio Details\n\n";
-  markdownOutput += "## Supply Details\n\n";
   let totalSupplyValue = new Decimal(0);
+
+  // Base asset supply (e.g. USDC) — tracked via Comet.balanceOf(), earns APY
+  markdownOutput += "## Base Asset Supply\n\n";
+  const baseAssetBalance = await getBaseAssetBalance(wallet, cometAddress);
+  const baseToken = await getBaseTokenAddress(wallet, cometAddress);
+  const baseDecimals = await getTokenDecimals(wallet, baseToken);
+  const baseSymbol = await getTokenSymbol(wallet, baseToken);
+  const basePriceFeed = await wallet.readContract({
+    address: cometAddress,
+    abi: COMET_ABI,
+    functionName: "baseTokenPriceFeed",
+    args: [],
+  });
+  const [basePriceRaw] = await getPriceFeedData(wallet, basePriceFeed);
+  const basePrice = new Decimal(basePriceRaw).div(new Decimal(10).pow(8));
+  const baseSupplyAmount = new Decimal(formatUnits(baseAssetBalance, baseDecimals));
+
+  if (baseAssetBalance > BigInt(0)) {
+    const baseValue = baseSupplyAmount.mul(basePrice);
+    markdownOutput += `### ${baseSymbol} (Base Asset — earns supply APY)\n`;
+    markdownOutput += `- **Supply Amount:** ${baseSupplyAmount.toFixed(baseDecimals)}\n`;
+    markdownOutput += `- **Price:** $${basePrice.toFixed(2)}\n`;
+    markdownOutput += `- **Asset Value:** $${baseValue.toFixed(2)}\n\n`;
+    totalSupplyValue = totalSupplyValue.add(baseValue);
+  } else {
+    markdownOutput += "No base asset supplied.\n\n";
+  }
+
+  // Collateral assets — tracked via collateralBalanceOf(), used to back borrows
+  markdownOutput += "## Collateral Details\n\n";
   const supplyDetails = await getSupplyDetails(wallet, cometAddress);
 
   if (supplyDetails.length > 0) {
@@ -224,7 +275,7 @@ export const getPortfolioDetailsMarkdown = async (
       totalSupplyValue = totalSupplyValue.add(assetValue);
     }
   } else {
-    markdownOutput += "No supplied assets found in your Compound position.\n\n";
+    markdownOutput += "No collateral assets supplied.\n\n";
   }
 
   markdownOutput += `### Total Supply Value: $${totalSupplyValue.toFixed(2)}\n\n`;
@@ -354,7 +405,7 @@ const getSupplyDetails = async (
     const assetAddress = assetInfo.asset;
     const collateralBalance = await getCollateralBalance(wallet, cometAddress, assetAddress);
 
-    if (collateralBalance > 0n) {
+    if (collateralBalance > BigInt(0)) {
       const tokenSymbol = await getTokenSymbol(wallet, assetAddress);
       const decimals = await getTokenDecimals(wallet, assetAddress);
       const [priceRaw] = await getPriceFeedData(wallet, assetInfo.priceFeed);
