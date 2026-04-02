@@ -19,6 +19,7 @@ export * from "./erc8004";
 export * from "./farcaster";
 export * from "./jupiter";
 export * from "./messari";
+export * from "./mnemopay";
 export * from "./pyth";
 export * from "./moonwell";
 export * from "./morpho";
