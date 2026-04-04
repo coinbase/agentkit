@@ -96,8 +96,8 @@ def test_morpho_deposit_invalid_amount():
         )
 
 
-def test_morpho_deposit_approval_failure():
-    """Test morpho deposit when approval fails."""
+def test_morpho_deposit_approval_error():
+    """Test morpho deposit with approval error."""
     mock_wallet = MagicMock()
     mock_wallet.read_contract.return_value = MOCK_DECIMALS
 
@@ -254,8 +254,8 @@ def test_morpho_withdraw_invalid_amount():
         )
 
 
-def test_morpho_withdraw_transaction_failure():
-    """Test morpho withdraw when transaction fails."""
+def test_morpho_withdraw_transaction_error():
+    """Test morpho withdraw with transaction error."""
     mock_wallet = MagicMock()
     mock_wallet.send_transaction.side_effect = Exception("Transaction failed")
     mock_wallet.read_contract.return_value = MOCK_DECIMALS
@@ -307,28 +307,27 @@ def test_morpho_withdraw_non_18_decimals():
 
 
 # Network Support Tests
-def test_morpho_supports_network_base_mainnet():
-    """Test that morpho provider supports base-mainnet."""
+def test_supports_network():
+    """Test network support checking."""
     provider = morpho_action_provider()
-    mock_network = MagicMock()
-    mock_network.network_id = "base-mainnet"
 
-    assert provider.supports_network(mock_network) is True
+    # Test supported network
+    supported_network = Network(protocol_family="evm", network_id="base-mainnet")
+    assert provider.supports_network(supported_network) is True
+
+    # Test unsupported network
+    unsupported_network = Network(protocol_family="evm", network_id="ethereum-mainnet")
+    assert provider.supports_network(unsupported_network) is False
+
+    # Test unsupported protocol family
+    wrong_family_network = Network(protocol_family="solana", network_id="base-mainnet")
+    assert provider.supports_network(wrong_family_network) is False
 
 
-def test_morpho_supports_network_base_sepolia():
-    """Test that morpho provider supports base-sepolia."""
+def test_morpho_invalid_network():
+    """Test morpho with invalid network."""
     provider = morpho_action_provider()
-    mock_network = MagicMock()
-    mock_network.network_id = "base-sepolia"
 
-    assert provider.supports_network(mock_network) is True
-
-
-def test_morpho_supports_network_unsupported():
-    """Test that morpho provider does not support other networks."""
-    provider = morpho_action_provider()
-    mock_network = MagicMock()
-    mock_network.network_id = "ethereum-mainnet"
-
-    assert provider.supports_network(mock_network) is False
+    # Create a valid Network object but with unsupported values
+    invalid_network = Network(protocol_family="invalid", network_id=None)
+    assert provider.supports_network(invalid_network) is False

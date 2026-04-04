@@ -171,9 +171,14 @@ Important notes:
             bool: Whether the network is supported.
 
         """
-        return network.network_id in SUPPORTED_NETWORKS
+        return network.protocol_family == "evm" and network.network_id in SUPPORTED_NETWORKS
 
 
 def morpho_action_provider() -> MorphoActionProvider:
-    """Create a new MorphoActionProvider instance."""
+    """Create a new Morpho action provider.
+
+    Returns:
+        MorphoActionProvider: A new Morpho action provider instance.
+
+    """
     return MorphoActionProvider()
