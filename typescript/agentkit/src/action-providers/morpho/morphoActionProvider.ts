@@ -110,21 +110,37 @@ Important notes:
 This tool allows withdrawing assets from a Morpho Vault. It takes:
 
 - vaultAddress: The address of the Morpho Vault to withdraw from
-- assets: The amount of assets to withdraw in atomic units (wei)
-- receiver: The address to receive the shares
+- assets: The amount of assets to withdraw in whole units
+  Examples for WETH:
+  - 1 WETH
+  - 0.1 WETH
+  - 0.01 WETH
+- receiver: The address to receive the assets
+- tokenAddress: The address of the underlying token to get decimals from
 `,
     schema: WithdrawSchema,
   })
   async withdraw(wallet: EvmWalletProvider, args: z.infer<typeof WithdrawSchema>): Promise<string> {
-    if (BigInt(args.assets) <= 0) {
+    const assets = new Decimal(args.assets);
+
+    if (assets.comparedTo(new Decimal(0.0)) != 1) {
       return "Error: Assets amount must be greater than 0";
     }
 
     try {
+      const decimals = await wallet.readContract({
+        address: args.tokenAddress as Hex,
+        abi,
+        functionName: "decimals",
+        args: [],
+      });
+
+      const atomicAssets = parseUnits(args.assets, decimals);
+
       const data = encodeFunctionData({
         abi: METAMORPHO_ABI,
         functionName: "withdraw",
-        args: [BigInt(args.assets), args.receiver, args.receiver],
+        args: [atomicAssets, args.receiver, args.receiver],
       });
 
       const txHash = await wallet.sendTransaction({
