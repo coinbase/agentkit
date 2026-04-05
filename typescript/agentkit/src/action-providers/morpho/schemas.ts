@@ -43,5 +43,9 @@ export const WithdrawSchema = z
       .string()
       .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
       .describe("The address to receive the assets"),
+    tokenAddress: z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
+      .describe("The address of the token to withdraw from the vault"),
   })
   .describe("Input schema for Morpho Vault withdraw action");
