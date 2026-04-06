@@ -169,8 +169,7 @@ Important notes:
         )}`;
       }
     } catch (error) {
-      console.error("DEBUG - Mint error:", error);
-      if (error instanceof Error) {
+            if (error instanceof Error) {
         return `Error minting Moonwell MToken: ${error.message}`;
       }
       return `Error minting Moonwell MToken: ${error}`;
@@ -265,8 +264,7 @@ Important notes:
         (_, value) => (typeof value === "bigint" ? value.toString() : value),
       )}`;
     } catch (error) {
-      console.error("DEBUG - Redeem error:", error);
-      if (error instanceof Error) {
+            if (error instanceof Error) {
         return `Error redeeming from Moonwell MToken: ${error.message}`;
       }
       return `Error redeeming from Moonwell MToken: ${error}`;
