@@ -301,7 +301,6 @@ Sorting & pagination:
     args: z.infer<typeof SearchAgentsSchema>,
   ): Promise<string> {
     try {
-      console.log("args", args);
       const sdk = getAgent0SDK(walletProvider);
       const network = walletProvider.getNetwork();
       const currentChainId = getChainIdFromNetwork(network);
@@ -346,11 +345,8 @@ Sorting & pagination:
       if (args.sort) {
         searchOptions.sort = [args.sort];
       }
-      console.log("searchOptions", searchOptions);
-      console.log("searchFilters", searchFilters);
 
       const allAgents = await sdk.searchAgents(searchFilters, searchOptions);
-      console.log("found agents number: ", allAgents.length);
 
       if (allAgents.length === 0) {
         return "No agents found matching the specified criteria.";
