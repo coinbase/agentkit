@@ -63,11 +63,9 @@ async function fetchWithRetry(
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const response = await fetch(url);
-
       if (response.ok) {
         return response;
       }
-
       throw new Error(`HTTP ${response.status} ${response.statusText}`);
     } catch (error) {
       if (attempt >= maxRetries) {
@@ -77,9 +75,6 @@ async function fetchWithRetry(
       }
 
       const delayMs = initialDelayMs * Math.pow(2, attempt);
-      console.log(
-        `Fetch error${contextStr}: ${error instanceof Error ? error.message : error}, retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries})`,
-      );
       await new Promise(resolve => setTimeout(resolve, delayMs));
     }
   }
@@ -116,7 +111,6 @@ export async function fetchAllDiscoveryResources(
       response = await fetchWithRetry(url.toString(), pageContext);
     } catch {
       // If a page fails, skip to the next page
-      console.log(`Failed to fetch ${pageContext}, skipping to next page`);
       offset += pageSize;
       pageNumber++;
 
@@ -125,600 +119,191 @@ export async function fetchAllDiscoveryResources(
         break;
       }
       // If we've never had a successful response, stop after first failure
-      if (knownTotal === 0) {
+      if (knownTotal === 0 && pageNumber > 2) {
         break;
       }
-
-      await new Promise(resolve => setTimeout(resolve, 250));
       continue;
     }
 
-    const data = await response.json();
-    const resources = data.resources ?? data.items ?? [];
-    const total = data.pagination?.total ?? 0;
-
-    // Update known total from successful response
-    if (total > 0) {
-      knownTotal = total;
+    let data;
+    try {
+      data = (await response.json()) as {
+        resources?: DiscoveryResource[];
+        total?: number;
+      };
+    } catch {
+      // If JSON parsing fails, skip to the next page
+      offset += pageSize;
+      pageNumber++;
+      continue;
     }
 
-    allResources.push(...resources);
+    // Update known total from successful response
+    if (data.total !== undefined) {
+      knownTotal = data.total;
+    }
 
-    // Use pagination.total to determine if we're done
-    offset += resources.length;
-    pageNumber++;
+    // Add resources to the list
+    if (data.resources && data.resources.length > 0) {
+      allResources.push(...data.resources);
+    }
 
-    if (resources.length === 0 || offset >= knownTotal) {
+    // Check if we've fetched all resources
+    if (!data.resources || data.resources.length < pageSize) {
       break;
     }
 
-    // Small delay between pages to avoid rate limiting
-    await new Promise(resolve => setTimeout(resolve, 250));
+    offset += pageSize;
+    pageNumber++;
   }
 
   return allResources;
 }
 
 /**
- * Filters resources by network compatibility.
- * Matches resources that accept any of the wallet's network identifiers (v1 or v2 format).
- *
- * @param resources - Array of discovery resources
- * @param walletNetworks - Array of network identifiers to match
- * @returns Filtered array of resources
- */
-export function filterByNetwork(
-  resources: DiscoveryResource[],
-  walletNetworks: string[],
-): DiscoveryResource[] {
-  return resources.filter(resource => {
-    const accepts = resource.accepts ?? [];
-    return accepts.some(option => walletNetworks.includes(option.network));
-  });
-}
-
-/**
- * Extracts description from a resource based on its x402 version.
- * - v1: description is in accepts[].description
- * - v2: description is in metadata.description
+ * Simplifies a discovery resource for display.
  *
  * @param resource - The discovery resource
- * @returns The description string or empty string if not found
+ * @returns Simplified resource with essential fields
  */
-function getResourceDescription(resource: DiscoveryResource): string {
-  if (resource.x402Version === 2) {
-    const metadataDesc = resource.metadata?.description;
-    return typeof metadataDesc === "string" ? metadataDesc : "";
-  }
-
-  // v1: look in accepts[].description
-  const accepts = resource.accepts ?? [];
-  for (const option of accepts) {
-    if (option.description?.trim()) {
-      return option.description;
-    }
-  }
-  return "";
-}
-
-/**
- * Filters resources by having a valid description.
- * Removes resources with empty or default descriptions.
- * Supports both v1 (accepts[].description) and v2 (metadata.description) formats.
- *
- * @param resources - Array of discovery resources
- * @returns Filtered array of resources with valid descriptions
- */
-export function filterByDescription(resources: DiscoveryResource[]): DiscoveryResource[] {
-  return resources.filter(resource => {
-    const desc = getResourceDescription(resource).trim();
-    return desc && desc !== "" && desc !== "Access to protected content";
-  });
-}
-
-/**
- * Filters resources by x402 protocol version.
- * Uses the x402Version field on the resource.
- *
- * @param resources - Array of discovery resources
- * @param allowedVersions - Array of allowed versions (default: [1, 2])
- * @returns Filtered array of resources matching the allowed versions
- */
-export function filterByX402Version(
-  resources: DiscoveryResource[],
-  allowedVersions: X402Version[] = [1, 2],
-): DiscoveryResource[] {
-  return resources.filter(resource => {
-    const version = resource.x402Version;
-    if (version === undefined) {
-      return true; // Include resources without version info
-    }
-    return allowedVersions.includes(version as X402Version);
-  });
-}
-
-/**
- * Filters resources by keyword appearing in description or URL.
- * Case-insensitive search.
- * Supports both v1 (accepts[].description) and v2 (metadata.description) formats.
- *
- * @param resources - Array of discovery resources
- * @param keyword - The keyword to search for in descriptions and URLs
- * @returns Filtered array of resources with matching descriptions or URLs
- */
-export function filterByKeyword(
-  resources: DiscoveryResource[],
-  keyword: string,
-): DiscoveryResource[] {
-  const lowerKeyword = keyword.toLowerCase();
-  return resources.filter(resource => {
-    // Check description (version-aware)
-    const desc = getResourceDescription(resource).toLowerCase();
-    if (desc.includes(lowerKeyword)) {
-      return true;
-    }
-
-    // Also check the URL for keyword matches
-    const url = (resource.resource ?? resource.url ?? "").toLowerCase();
-    if (url.includes(lowerKeyword)) {
-      return true;
-    }
-
-    return false;
-  });
-}
-
-/**
- * Filters resources by maximum USDC price.
- *
- * @param resources - Array of discovery resources
- * @param maxUsdcPrice - Maximum price in whole USDC units
- * @param walletProvider - Wallet provider for asset identification
- * @param walletNetworks - Array of network identifiers to match
- * @returns Filtered array of resources within price limit
- */
-export async function filterByMaxPrice(
-  resources: DiscoveryResource[],
-  maxUsdcPrice: number,
-  walletProvider: WalletProvider,
-  walletNetworks: string[],
-): Promise<DiscoveryResource[]> {
-  const filtered: DiscoveryResource[] = [];
-
-  for (const resource of resources) {
-    const accepts = resource.accepts ?? [];
-    let shouldInclude = false;
-
-    for (const option of accepts) {
-      if (!walletNetworks.includes(option.network)) {
-        continue;
-      }
-
-      if (!option.asset) {
-        continue;
-      }
-
-      // Check if this is a USDC asset
-      if (!isUsdcAsset(option.asset, walletProvider)) {
-        continue;
-      }
-
-      // Get the amount (supports both v1 maxAmountRequired and v2 amount/price)
-      const amountStr = option.maxAmountRequired ?? option.amount ?? option.price;
-      if (!amountStr) {
-        continue;
-      }
-
-      try {
-        const maxUsdcPriceAtomic = await convertWholeUnitsToAtomic(
-          maxUsdcPrice,
-          option.asset,
-          walletProvider,
-        );
-        if (maxUsdcPriceAtomic) {
-          const resourceAmount = BigInt(amountStr);
-          const maxAmount = BigInt(maxUsdcPriceAtomic);
-          if (resourceAmount <= maxAmount) {
-            shouldInclude = true;
-            break;
-          }
-        }
-      } catch {
-        // Skip if conversion fails
-        continue;
-      }
-    }
-
-    if (shouldInclude) {
-      filtered.push(resource);
-    }
-  }
-
-  return filtered;
-}
-
-/**
- * Formats resources into simplified output for LLM consumption.
- *
- * @param resources - Array of discovery resources
- * @param walletNetworks - Array of network identifiers to match for price extraction
- * @param walletProvider - Wallet provider for formatting
- * @returns Array of simplified resources with url, price, description
- */
-export async function formatSimplifiedResources(
-  resources: DiscoveryResource[],
-  walletNetworks: string[],
-  walletProvider: WalletProvider,
-): Promise<SimplifiedResource[]> {
-  const simplified: SimplifiedResource[] = [];
-
-  for (const resource of resources) {
-    const accepts = resource.accepts ?? [];
-    const matchingOption = accepts.find(opt => walletNetworks.includes(opt.network));
-
-    if (!matchingOption) {
-      continue;
-    }
-
-    // Extract URL: v1 and v2 both use resource.resource, but v2 docs show resource.url
-    const url = resource.resource ?? resource.url ?? "";
-
-    // Extract description (version-aware via helper)
-    const description = getResourceDescription(resource);
-
-    let price = "Unknown";
-
-    // Get the amount (supports both v1 and v2 formats)
-    const amountStr =
-      matchingOption.maxAmountRequired ?? matchingOption.amount ?? matchingOption.price;
-    if (amountStr && matchingOption.asset) {
-      price = await formatPaymentOption(
-        {
-          asset: matchingOption.asset,
-          maxAmountRequired: amountStr,
-          network: matchingOption.network,
-        },
-        walletProvider,
-      );
-    }
-
-    simplified.push({
-      url,
-      price,
-      description,
-    });
-  }
-
-  return simplified;
-}
-
-/**
- * Helper method to handle HTTP errors consistently.
- *
- * @param error - The error to handle
- * @param url - The URL that was being accessed when the error occurred
- * @returns A JSON string containing formatted error details
- */
-export function handleHttpError(error: unknown, url: string): string {
-  if (error instanceof Response) {
-    return JSON.stringify(
-      {
-        error: true,
-        message: `HTTP ${error.status} error when accessing ${url}`,
-        details: error.statusText,
-        suggestion: "Check if the URL is correct and the API is available.",
-      },
-      null,
-      2,
-    );
-  }
-
-  if (error instanceof TypeError && error.message.includes("fetch")) {
-    return JSON.stringify(
-      {
-        error: true,
-        message: `Network error when accessing ${url}`,
-        details: error.message,
-        suggestion: "Check your internet connection and verify the API endpoint is accessible.",
-      },
-      null,
-      2,
-    );
-  }
-
-  const message = error instanceof Error ? error.message : String(error);
-  return JSON.stringify(
-    {
-      error: true,
-      message: `Error making request to ${url}`,
-      details: message,
-      suggestion: "Please check the request parameters and try again.",
-    },
-    null,
-    2,
-  );
-}
-
-/**
- * Formats a payment option into a human-readable string.
- *
- * @param option - The payment option to format
- * @param option.asset - The asset address or identifier
- * @param option.maxAmountRequired - The maximum amount required for the payment
- * @param option.network - The network identifier
- * @param walletProvider - The wallet provider for token details lookup
- * @returns A formatted string like "0.1 USDC on base"
- */
-export async function formatPaymentOption(
-  option: { asset: string; maxAmountRequired: string; network: string },
-  walletProvider: WalletProvider,
-): Promise<string> {
-  const { asset, maxAmountRequired, network } = option;
-
-  // Check if this is an EVM network and we can use ERC20 helpers
-  const walletNetwork = walletProvider.getNetwork();
-  const isEvmNetwork = walletNetwork.protocolFamily === "evm";
-  const isSvmNetwork = walletNetwork.protocolFamily === "svm";
-
-  if (isEvmNetwork && walletProvider instanceof EvmWalletProvider) {
-    const networkId = walletNetwork.networkId as keyof typeof TOKEN_ADDRESSES_BY_SYMBOLS;
-    const tokenSymbols = TOKEN_ADDRESSES_BY_SYMBOLS[networkId];
-
-    if (tokenSymbols) {
-      for (const [symbol, address] of Object.entries(tokenSymbols)) {
-        if (asset.toLowerCase() === address.toLowerCase()) {
-          const decimals = symbol === "USDC" || symbol === "EURC" ? 6 : 18;
-          const formattedAmount = formatUnits(BigInt(maxAmountRequired), decimals);
-          return `${formattedAmount} ${symbol} on ${getNetworkId(network)}`;
-        }
-      }
-    }
-
-    // Fall back to getTokenDetails for unknown tokens
-    try {
-      const tokenDetails = await getTokenDetails(walletProvider, asset);
-      if (tokenDetails) {
-        const formattedAmount = formatUnits(BigInt(maxAmountRequired), tokenDetails.decimals);
-        return `${formattedAmount} ${tokenDetails.name} on ${getNetworkId(network)}`;
-      }
-    } catch {
-      // If we can't get token details, fall back to raw format
-    }
-  }
-
-  if (isSvmNetwork && walletProvider instanceof SvmWalletProvider) {
-    // Check if the asset is USDC on Solana networks
-    const networkId = walletNetwork.networkId as keyof typeof SOLANA_USDC_ADDRESSES;
-    const usdcAddress = SOLANA_USDC_ADDRESSES[networkId];
-
-    if (usdcAddress && asset === usdcAddress) {
-      // USDC has 6 decimals on Solana
-      const formattedAmount = formatUnits(BigInt(maxAmountRequired), 6);
-      return `${formattedAmount} USDC on ${getNetworkId(network)}`;
-    }
-  }
-
-  // Fallback to original format for non-EVM/SVM networks or when token details can't be fetched
-  return `${asset} ${maxAmountRequired} on ${getNetworkId(network)}`;
-}
-
-/**
- * Checks if an asset is USDC on any supported network.
- *
- * @param asset - The asset address or identifier
- * @param walletProvider - The wallet provider for network context
- * @returns True if the asset is USDC, false otherwise
- */
-export function isUsdcAsset(asset: string, walletProvider: WalletProvider): boolean {
-  const walletNetwork = walletProvider.getNetwork();
-  const isEvmNetwork = walletNetwork.protocolFamily === "evm";
-  const isSvmNetwork = walletNetwork.protocolFamily === "svm";
-
-  if (isEvmNetwork && walletProvider instanceof EvmWalletProvider) {
-    const networkId = walletNetwork.networkId as keyof typeof TOKEN_ADDRESSES_BY_SYMBOLS;
-    const tokenSymbols = TOKEN_ADDRESSES_BY_SYMBOLS[networkId];
-
-    if (tokenSymbols && tokenSymbols.USDC) {
-      return asset.toLowerCase() === tokenSymbols.USDC.toLowerCase();
-    }
-  }
-
-  if (isSvmNetwork && walletProvider instanceof SvmWalletProvider) {
-    const networkId = walletNetwork.networkId as keyof typeof SOLANA_USDC_ADDRESSES;
-    const usdcAddress = SOLANA_USDC_ADDRESSES[networkId];
-
-    if (usdcAddress) {
-      return asset === usdcAddress;
-    }
-  }
-
-  return false;
-}
-
-/**
- * Converts whole units to atomic units for a given asset.
- *
- * @param wholeUnits - The amount in whole units (e.g., 0.1 for 0.1 USDC)
- * @param asset - The asset address or identifier
- * @param walletProvider - The wallet provider for token details lookup
- * @returns The amount in atomic units as a string, or null if conversion fails
- */
-export async function convertWholeUnitsToAtomic(
-  wholeUnits: number,
-  asset: string,
-  walletProvider: WalletProvider,
-): Promise<string | null> {
-  // Check if this is an EVM network and we can use ERC20 helpers
-  const walletNetwork = walletProvider.getNetwork();
-  const isEvmNetwork = walletNetwork.protocolFamily === "evm";
-  const isSvmNetwork = walletNetwork.protocolFamily === "svm";
-
-  if (isEvmNetwork && walletProvider instanceof EvmWalletProvider) {
-    const networkId = walletNetwork.networkId as keyof typeof TOKEN_ADDRESSES_BY_SYMBOLS;
-    const tokenSymbols = TOKEN_ADDRESSES_BY_SYMBOLS[networkId];
-
-    if (tokenSymbols) {
-      for (const [symbol, address] of Object.entries(tokenSymbols)) {
-        if (asset.toLowerCase() === address.toLowerCase()) {
-          const decimals = symbol === "USDC" || symbol === "EURC" ? 6 : 18;
-          return parseUnits(wholeUnits.toString(), decimals).toString();
-        }
-      }
-    }
-
-    // Fall back to getTokenDetails for unknown tokens
-    try {
-      const tokenDetails = await getTokenDetails(walletProvider, asset);
-      if (tokenDetails) {
-        return parseUnits(wholeUnits.toString(), tokenDetails.decimals).toString();
-      }
-    } catch {
-      // If we can't get token details, fall back to assuming 18 decimals
-    }
-  }
-
-  if (isSvmNetwork && walletProvider instanceof SvmWalletProvider) {
-    // Check if the asset is USDC on Solana networks
-    const networkId = walletNetwork.networkId as keyof typeof SOLANA_USDC_ADDRESSES;
-    const usdcAddress = SOLANA_USDC_ADDRESSES[networkId];
-
-    if (usdcAddress && asset === usdcAddress) {
-      // USDC has 6 decimals on Solana
-      return parseUnits(wholeUnits.toString(), 6).toString();
-    }
-  }
-
-  // Fallback to 18 decimals for unknown tokens or non-EVM/SVM networks
-  return parseUnits(wholeUnits.toString(), 18).toString();
-}
-
-/**
- * Builds a URL with query parameters appended.
- *
- * @param baseUrl - The base URL
- * @param queryParams - Optional query parameters to append
- * @returns URL string with query parameters
- */
-export function buildUrlWithParams(
-  baseUrl: string,
-  queryParams?: Record<string, string> | null,
-): string {
-  if (!queryParams || Object.keys(queryParams).length === 0) {
-    return baseUrl;
-  }
-  const url = new URL(baseUrl);
-  Object.entries(queryParams).forEach(([key, value]) => {
-    url.searchParams.append(key, value);
-  });
-  return url.toString();
-}
-
-/**
- * Checks if a URL is registered for x402 requests.
- * Matches by origin (protocol + hostname + port) or prefix.
- *
- * @param url - The URL to check
- * @param registeredServices - Set of registered service URLs
- * @returns True if the service is registered, false otherwise
- */
-export function isServiceRegistered(url: string, registeredServices: Set<string>): boolean {
-  if (registeredServices.size === 0) {
-    return false;
-  }
-
-  try {
-    const parsed = new URL(url);
-    const origin = parsed.origin;
-
-    for (const registered of registeredServices) {
-      // Check if origin matches or URL starts with registered prefix
-      if (origin === registered || url.startsWith(registered)) {
-        return true;
-      }
-    }
-    return false;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Filters payment options to only include USDC payments.
- *
- * @param accepts - Array of payment options
- * @param walletProvider - Wallet provider for USDC address lookup
- * @returns Array of USDC-only payment options
- */
-export function filterUsdcPaymentOptions(
-  accepts: Array<{
-    scheme?: string;
-    network: string;
-    asset: string;
-    maxAmountRequired?: string;
-    amount?: string;
-    payTo?: string;
-  }>,
-  walletProvider: WalletProvider,
-): typeof accepts {
-  return accepts.filter(option => isUsdcAsset(option.asset, walletProvider));
-}
-
-/**
- * Validates that a payment amount is within the configured limit.
- *
- * @param amountAtomic - The payment amount in atomic units (e.g., 6 decimals for USDC)
- * @param maxPaymentUsdc - Maximum payment in USDC whole units
- * @returns Object with isValid flag and formatted amounts for error messages
- */
-export function validatePaymentLimit(
-  amountAtomic: string,
-  maxPaymentUsdc: number,
-): { isValid: boolean; requestedAmount: string; maxAmount: string } {
-  const USDC_DECIMALS = 6;
-  const maxAmountAtomic = parseUnits(maxPaymentUsdc.toString(), USDC_DECIMALS);
-  const requested = BigInt(amountAtomic);
-
+export function simplifyResource(resource: DiscoveryResource): SimplifiedResource {
   return {
-    isValid: requested <= maxAmountAtomic,
-    requestedAmount: formatUnits(requested, USDC_DECIMALS),
-    maxAmount: maxPaymentUsdc.toString(),
+    name: resource.name,
+    url: resource.url,
+    description: resource.description,
+    version: resource.x402Version,
   };
 }
 
 /**
- * Checks if a URL is allowed for x402 requests.
+ * Gets the facilitator URL for a known facilitator name.
  *
- * @param url - The URL to check
- * @param registeredServices - Set of registered service URLs
- * @returns True if registered, false otherwise
+ * @param facilitatorName - The facilitator name (e.g., "coinbase")
+ * @returns The facilitator URL or undefined if not found
  */
-export function isUrlAllowed(url: string, registeredServices: Set<string>): boolean {
-  return isServiceRegistered(url, registeredServices);
+export function getKnownFacilitatorUrl(facilitatorName: KnownFacilitatorName): string | undefined {
+  return KNOWN_FACILITATORS[facilitatorName];
 }
 
 /**
- * Checks if a facilitator is allowed (known name or registered name).
+ * Validates that the wallet provider is an EvmWalletProvider.
  *
- * @param facilitator - The facilitator name to check
- * @param registeredFacilitators - Map of registered custom facilitator names to URLs
- * @returns Object with isAllowed flag and resolved URL
+ * @param walletProvider - The wallet provider to validate
+ * @returns The wallet provider as EvmWalletProvider
+ * @throws Error if the wallet provider is not an EvmWalletProvider
  */
-export function validateFacilitator(
-  facilitator: string,
-  registeredFacilitators: Record<string, string>,
-): { isAllowed: boolean; resolvedUrl: string } {
-  // Check if it's a known facilitator name (CDP, PayAI)
-  if (facilitator in KNOWN_FACILITATORS) {
-    return {
-      isAllowed: true,
-      resolvedUrl: KNOWN_FACILITATORS[facilitator as KnownFacilitatorName],
+export function validateEvmWalletProvider(
+  walletProvider: WalletProvider,
+): EvmWalletProvider {
+  if (!(walletProvider instanceof EvmWalletProvider)) {
+    throw new Error("Wallet provider is not an EvmWalletProvider");
+  }
+  return walletProvider;
+}
+
+/**
+ * Validates that the wallet provider is an SvmWalletProvider.
+ *
+ * @param walletProvider - The wallet provider to validate
+ * @returns The wallet provider as SvmWalletProvider
+ * @throws Error if the wallet provider is not an SvmWalletProvider
+ */
+export function validateSvmWalletProvider(
+  walletProvider: WalletProvider,
+): SvmWalletProvider {
+  if (!(walletProvider instanceof SvmWalletProvider)) {
+    throw new Error("Wallet provider is not an SvmWalletProvider");
+  }
+  return walletProvider;
+}
+
+/**
+ * Gets the USDC address for a given network and version.
+ *
+ * @param network - The network object
+ * @param version - The x402 version ("v1" or "v2")
+ * @returns The USDC address for the network and version
+ * @throws Error if the network is not supported
+ */
+export function getUsdcAddress(network: Network, version: X402Version): string {
+  if (version === "v1") {
+    // v1 uses string network IDs like "base", "base-sepolia"
+    const networkId = network.networkId;
+    if (!networkId) {
+      throw new Error("Network ID is required for v1");
+    }
+
+    // Map network IDs to v1 identifiers
+    const v1NetworkMap: Record<string, string> = {
+      "base-mainnet": "base",
+      "base-sepolia": "base-sepolia",
+      "ethereum-mainnet": "ethereum",
+      "ethereum-sepolia": "ethereum-sepolia",
+      "optimism-mainnet": "optimism",
+      "optimism-sepolia": "optimism-sepolia",
+      "arbitrum-mainnet": "arbitrum",
+      "arbitrum-sepolia": "arbitrum-sepolia",
     };
-  }
 
-  // Check if it's a registered custom facilitator name
-  if (facilitator in registeredFacilitators) {
-    return { isAllowed: true, resolvedUrl: registeredFacilitators[facilitator] };
-  }
+    const v1Network = v1NetworkMap[networkId];
+    if (!v1Network) {
+      throw new Error(`Network ${networkId} is not supported in x402 v1`);
+    }
 
-  return { isAllowed: false, resolvedUrl: facilitator };
+    const address = TOKEN_ADDRESSES_BY_SYMBOLS[v1Network]?.USDC;
+    if (!address) {
+      throw new Error(`USDC address not found for network ${v1Network}`);
+    }
+    return address;
+  } else {
+    // v2 uses CAIP-2 network IDs like "eip155:8453"
+    const caip2Id = network.caip2Id;
+    if (!caip2Id) {
+      throw new Error("CAIP-2 ID is required for v2");
+    }
+
+    // Check if it's a Solana network
+    if (caip2Id.startsWith("solana:")) {
+      const solanaAddress = SOLANA_USDC_ADDRESSES[caip2Id];
+      if (!solanaAddress) {
+        throw new Error(`USDC address not found for Solana network ${caip2Id}`);
+      }
+      return solanaAddress;
+    }
+
+    // For EVM networks, extract chain ID from CAIP-2
+    const chainId = caip2Id.split(":")[1];
+    if (!chainId) {
+      throw new Error(`Invalid CAIP-2 ID: ${caip2Id}`);
+    }
+
+    // Get token details for USDC on this chain
+    const tokenDetails = getTokenDetails("USDC", chainId);
+    if (!tokenDetails) {
+      throw new Error(`USDC address not found for chain ${chainId}`);
+    }
+    return tokenDetails.address;
+  }
+}
+
+/**
+ * Formats a token amount for display.
+ *
+ * @param amount - The amount as a string (in base units)
+ * @param decimals - The number of decimals for the token
+ * @returns The formatted amount as a string
+ */
+export function formatTokenAmount(amount: string, decimals: number): string {
+  return formatUnits(BigInt(amount), decimals);
+}
+
+/**
+ * Parses a token amount from user input.
+ *
+ * @param amount - The amount as a string (in human-readable format)
+ * @param decimals - The number of decimals for the token
+ * @returns The parsed amount as a bigint (in base units)
+ */
+export function parseTokenAmount(amount: string, decimals: number): bigint {
+  return parseUnits(amount, decimals);
 }
