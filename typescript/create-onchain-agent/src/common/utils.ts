@@ -249,23 +249,28 @@ export async function handleNextSelection(
     // Start file with notes regarding .env var setup
     ...[
       "AI Provider Configuration",
-      "Supports OpenAI, OpenRouter, Groq, and any OpenAI-compatible API",
+      'Supported providers: "openai" | "anthropic" | "google" | "custom"',
       "Get OpenAI keys: https://platform.openai.com/api-keys",
-      "Get OpenRouter keys: https://openrouter.ai/keys",
+      "Get Anthropic keys: https://console.anthropic.com/settings/keys",
+      "Get Google AI keys: https://aistudio.google.com/apikey",
       ...agentkitRouteConfig.env.topComments,
     ]
       .map(comment => `# ${comment}`)
       .join("\n"),
     // Continue with # Required section
     "\n\n# Required\n",
-    ...["AI_API_KEY=", ...agentkitRouteConfig.env.required.map(line => `${line}=`)].join("\n"),
-    // Finish with # Optional section
-    "\n\n# Optional — AI Provider\n",
     ...[
-      "# Set AI_PROVIDER_URL to use a different provider (e.g., https://openrouter.ai/api/v1)",
-      "AI_PROVIDER_URL=",
-      "# Set AI_MODEL to use a different model (default: gpt-4o-mini)",
+      'AI_PROVIDER=openai  # "openai" | "anthropic" | "google" | "custom"',
+      "AI_API_KEY=",
+      ...agentkitRouteConfig.env.required.map(line => `${line}=`),
+    ].join("\n"),
+    // Optional — AI Provider
+    "\n\n# Optional — AI Model\n",
+    ...[
+      "# Set AI_MODEL to use a different model (defaults: gpt-4o-mini / claude-sonnet-4-20250514 / gemini-2.0-flash)",
       "AI_MODEL=",
+      '# Set AI_PROVIDER_URL when AI_PROVIDER="custom" (e.g., https://openrouter.ai/api/v1)',
+      "AI_PROVIDER_URL=",
     ].join("\n"),
     "\n\n# Optional — Network\n",
     ...[

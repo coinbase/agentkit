@@ -1,4 +1,6 @@
 import { createOpenAI } from "@ai-sdk/openai";
+import { createAnthropic } from "@ai-sdk/anthropic";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { getVercelAITools } from "@coinbase/agentkit-vercel-ai-sdk";
 import { generateText, stepCountIs } from "ai";
 import { prepareAgentkitAndWalletProvider } from "./prepare-agentkit";
@@ -11,19 +13,51 @@ import { prepareAgentkitAndWalletProvider } from "./prepare-agentkit";
  * Key Steps to Customize Your Agent:
  *
  * 1. Select your LLM:
- *    - Set AI_API_KEY, AI_PROVIDER_URL, and AI_MODEL in your .env to use any OpenAI-compatible provider
- *    - Configure model parameters like temperature and max tokens
+ *    - Set AI_PROVIDER to choose your provider: "openai" | "anthropic" | "google" | "custom"
+ *    - Set AI_API_KEY with your provider's API key
+ *    - Set AI_MODEL to override the default model for your provider
+ *    - Set AI_PROVIDER_URL for custom OpenAI-compatible APIs (e.g., OpenRouter, Ollama)
  *
  * 2. Instantiate your Agent:
  *    - Pass the LLM, tools, and memory into `createAgent()`
  *    - Configure agent-specific parameters
  */
 
+/**
+ * Creates a model instance based on the configured AI provider.
+ * Supports OpenAI, Anthropic, Google, and any OpenAI-compatible API (e.g., OpenRouter).
+ */
+function getModel() {
+  const provider = (process.env.AI_PROVIDER || "openai").toLowerCase();
+  const apiKey = process.env.AI_API_KEY;
+
+  switch (provider) {
+    case "anthropic":
+      return createAnthropic({ ...(apiKey && { apiKey }) })(
+        process.env.AI_MODEL || "claude-sonnet-4-20250514",
+      );
+    case "google":
+      return createGoogleGenerativeAI({ ...(apiKey && { apiKey }) })(
+        process.env.AI_MODEL || "gemini-2.0-flash",
+      );
+    case "custom":
+      return createOpenAI({
+        ...(apiKey && { apiKey }),
+        baseURL: process.env.AI_PROVIDER_URL,
+      }).chat(process.env.AI_MODEL || "gpt-4o-mini");
+    case "openai":
+    default:
+      return createOpenAI({ ...(apiKey && { apiKey }) }).chat(
+        process.env.AI_MODEL || "gpt-4o-mini",
+      );
+  }
+}
+
 // The agent
 type Agent = {
   tools: ReturnType<typeof getVercelAITools>;
   system: string;
-  model: ReturnType<ReturnType<typeof createOpenAI>>;
+  model: ReturnType<typeof getModel>;
   stopWhen?: Parameters<typeof generateText>[0]["stopWhen"];
 };
 let agent: Agent;
@@ -45,21 +79,17 @@ export async function createAgent(): Promise<Agent> {
     return agent;
   }
 
-  if (!process.env.AI_API_KEY && !process.env.OPENAI_API_KEY) {
-    throw new Error("I need an AI_API_KEY (or OPENAI_API_KEY) in your .env file to power my intelligence.");
+  if (!process.env.AI_API_KEY) {
+    throw new Error(
+      "Please set AI_API_KEY in your .env file. " +
+        "This should be the API key for the provider specified by AI_PROVIDER (default: openai).",
+    );
   }
 
   const { agentkit, walletProvider } = await prepareAgentkitAndWalletProvider();
 
   try {
-    // Initialize LLM — supports any OpenAI-compatible provider (OpenAI, OpenRouter, Groq, etc.)
-    // Configure via env vars: AI_API_KEY, AI_PROVIDER_URL, AI_MODEL
-    const apiKey = process.env.AI_API_KEY || process.env.OPENAI_API_KEY;
-    const provider = createOpenAI({
-      ...(apiKey && { apiKey }),
-      ...(process.env.AI_PROVIDER_URL && { baseURL: process.env.AI_PROVIDER_URL }),
-    });
-    const model = provider.chat(process.env.AI_MODEL || "gpt-4o-mini");
+    const model = getModel();
 
     // Initialize Agent
     const canUseFaucet = walletProvider.getNetwork().networkId == "base-sepolia";

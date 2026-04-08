@@ -9,11 +9,15 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^1.0.0",
+    "@ai-sdk/google": "^1.0.0",
     "@ai-sdk/openai": "^3.0.0",
     "@coinbase/agentkit": "latest",
     "@coinbase/agentkit-langchain": "latest",
     "@coinbase/agentkit-vercel-ai-sdk": "latest",
+    "@langchain/anthropic": "^0.3.0",
     "@langchain/core": "^1.1.0",
+    "@langchain/google-genai": "^0.2.0",
     "@langchain/langgraph": "^1.2.0",
     "@langchain/openai": "^1.2.0",
     "@solana/web3.js": "^1.98.0",
