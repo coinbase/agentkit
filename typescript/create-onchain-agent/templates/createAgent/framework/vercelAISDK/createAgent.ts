@@ -1,4 +1,4 @@
-import { openai } from "@ai-sdk/openai";
+import { createOpenAI } from "@ai-sdk/openai";
 import { getVercelAITools } from "@coinbase/agentkit-vercel-ai-sdk";
 import { generateText, stepCountIs } from "ai";
 import { prepareAgentkitAndWalletProvider } from "./prepareAgentkit";
@@ -11,7 +11,7 @@ import { prepareAgentkitAndWalletProvider } from "./prepareAgentkit";
  * Key Steps to Customize Your Agent:
  *
  * 1. Select your LLM:
- *    - Modify the `openai` instantiation to choose your preferred LLM
+ *    - Set AI_API_KEY, AI_PROVIDER_URL, and AI_MODEL in your .env to use any OpenAI-compatible provider
  *    - Configure model parameters like temperature and max tokens
  *
  * 2. Instantiate your Agent:
@@ -23,7 +23,7 @@ import { prepareAgentkitAndWalletProvider } from "./prepareAgentkit";
 type Agent = {
   tools: ReturnType<typeof getVercelAITools>;
   system: string;
-  model: ReturnType<typeof openai>;
+  model: ReturnType<ReturnType<typeof createOpenAI>>;
   stopWhen?: Parameters<typeof generateText>[0]["stopWhen"];
 };
 let agent: Agent;
@@ -46,8 +46,14 @@ export async function createAgent(): Promise<Agent> {
   }
 
   try {
-    // Initialize LLM: https://platform.openai.com/docs/models#gpt-4o
-    const model = openai.chat("gpt-4o-mini");
+    // Initialize LLM — supports any OpenAI-compatible provider (OpenAI, OpenRouter, Groq, etc.)
+    // Configure via env vars: AI_API_KEY, AI_PROVIDER_URL, AI_MODEL
+    const apiKey = process.env.AI_API_KEY || process.env.OPENAI_API_KEY;
+    const provider = createOpenAI({
+      ...(apiKey && { apiKey }),
+      ...(process.env.AI_PROVIDER_URL && { baseURL: process.env.AI_PROVIDER_URL }),
+    });
+    const model = provider.chat(process.env.AI_MODEL || "gpt-4o-mini");
 
     const { agentkit, walletProvider } = await prepareAgentkitAndWalletProvider();
 

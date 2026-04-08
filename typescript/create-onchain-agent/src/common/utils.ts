@@ -248,16 +248,26 @@ export async function handleNextSelection(
   const envLines = [
     // Start file with notes regarding .env var setup
     ...[
-      "Get keys from OpenAI Platform: https://platform.openai.com/api-keys",
+      "AI Provider Configuration",
+      "Supports OpenAI, OpenRouter, Groq, and any OpenAI-compatible API",
+      "Get OpenAI keys: https://platform.openai.com/api-keys",
+      "Get OpenRouter keys: https://openrouter.ai/keys",
       ...agentkitRouteConfig.env.topComments,
     ]
       .map(comment => `# ${comment}`)
       .join("\n"),
     // Continue with # Required section
     "\n\n# Required\n",
-    ...["OPENAI_API_KEY=", ...agentkitRouteConfig.env.required.map(line => `${line}=`)].join("\n"),
+    ...["AI_API_KEY=", ...agentkitRouteConfig.env.required.map(line => `${line}=`)].join("\n"),
     // Finish with # Optional section
-    "\n\n# Optional\n",
+    "\n\n# Optional — AI Provider\n",
+    ...[
+      "# Set AI_PROVIDER_URL to use a different provider (e.g., https://openrouter.ai/api/v1)",
+      "AI_PROVIDER_URL=",
+      "# Set AI_MODEL to use a different model (default: gpt-4o-mini)",
+      "AI_MODEL=",
+    ].join("\n"),
+    "\n\n# Optional — Network\n",
     ...[
       `NETWORK_ID=${network ?? ""}`,
       rpcUrl ? `RPC_URL=${rpcUrl}` : null,

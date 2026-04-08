@@ -12,7 +12,7 @@ import { prepareAgentkitAndWalletProvider } from "./prepareAgentkit";
  * Key Steps to Customize Your Agent:
  *
  * 1. Select your LLM:
- *    - Modify the `ChatOpenAI` instantiation to choose your preferred LLM
+ *    - Set AI_API_KEY, AI_PROVIDER_URL, and AI_MODEL in your .env to use any OpenAI-compatible provider
  *    - Configure model parameters like temperature and max tokens
  *
  * 2. Instantiate your Agent:
@@ -43,8 +43,15 @@ export async function createAgent(): Promise<ReturnType<typeof createLangChainAg
   try {
     const { agentkit, walletProvider } = await prepareAgentkitAndWalletProvider();
 
-    // Initialize LLM: https://platform.openai.com/docs/models#gpt-4o
-    const llm = new ChatOpenAI({ model: "gpt-4o-mini" });
+    // Initialize LLM — supports any OpenAI-compatible provider (OpenAI, OpenRouter, Groq, etc.)
+    // Configure via env vars: AI_API_KEY, AI_PROVIDER_URL, AI_MODEL
+    const llm = new ChatOpenAI({
+      model: process.env.AI_MODEL || "gpt-4o-mini",
+      apiKey: process.env.AI_API_KEY || process.env.OPENAI_API_KEY,
+      ...(process.env.AI_PROVIDER_URL && {
+        configuration: { baseURL: process.env.AI_PROVIDER_URL },
+      }),
+    });
 
     const tools = await getLangChainTools(agentkit);
     const memory = new MemorySaver();
