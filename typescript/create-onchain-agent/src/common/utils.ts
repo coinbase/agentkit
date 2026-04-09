@@ -248,11 +248,8 @@ export async function handleNextSelection(
   const envLines = [
     // Start file with notes regarding .env var setup
     ...[
-      "AI Provider Configuration",
-      'Supported providers: "openai" | "anthropic" | "google" | "custom"',
-      "Get OpenAI keys: https://platform.openai.com/api-keys",
-      "Get Anthropic keys: https://console.anthropic.com/settings/keys",
-      "Get Google AI keys: https://aistudio.google.com/apikey",
+      "AI Provider Configuration — works with any OpenAI-compatible API",
+      "Supports: OpenAI, Anthropic, Google Gemini, OpenRouter, Groq, Ollama, and more",
       ...agentkitRouteConfig.env.topComments,
     ]
       .map(comment => `# ${comment}`)
@@ -260,17 +257,22 @@ export async function handleNextSelection(
     // Continue with # Required section
     "\n\n# Required\n",
     ...[
-      'AI_PROVIDER=openai  # "openai" | "anthropic" | "google" | "custom"',
       "AI_API_KEY=",
       ...agentkitRouteConfig.env.required.map(line => `${line}=`),
     ].join("\n"),
     // Optional — AI Provider
-    "\n\n# Optional — AI Model\n",
+    "\n\n# Optional — AI Provider\n",
     ...[
-      "# Set AI_MODEL to use a different model (defaults: gpt-4o-mini / claude-sonnet-4-20250514 / gemini-2.0-flash)",
+      "# To use a different provider, set AI_BASE_URL to their OpenAI-compatible endpoint:",
+      "#   Anthropic:   https://api.anthropic.com/v1/",
+      "#   Google:      https://generativelanguage.googleapis.com/v1beta/openai/",
+      "#   OpenRouter:  https://openrouter.ai/api/v1",
+      "#   Groq:        https://api.groq.com/openai/v1",
+      "#   Ollama:      http://localhost:11434/v1",
+      "AI_BASE_URL=",
+      "",
+      "# Set AI_MODEL to use a different model (default: gpt-4o-mini)",
       "AI_MODEL=",
-      '# Set AI_PROVIDER_URL when AI_PROVIDER="custom" (e.g., https://openrouter.ai/api/v1)',
-      "AI_PROVIDER_URL=",
     ].join("\n"),
     "\n\n# Optional — Network\n",
     ...[

@@ -2,8 +2,6 @@ import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { MemorySaver } from "@langchain/langgraph";
 import { createAgent as createLangChainAgent } from "langchain";
 import { ChatOpenAI } from "@langchain/openai";
-import { ChatAnthropic } from "@langchain/anthropic";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { prepareAgentkitAndWalletProvider } from "./prepareAgentkit";
 
 /**
@@ -14,49 +12,15 @@ import { prepareAgentkitAndWalletProvider } from "./prepareAgentkit";
  * Key Steps to Customize Your Agent:
  *
  * 1. Select your LLM:
- *    - Set AI_PROVIDER to choose your provider: "openai" | "anthropic" | "google" | "custom"
  *    - Set AI_API_KEY with your provider's API key
- *    - Set AI_MODEL to override the default model for your provider
- *    - Set AI_PROVIDER_URL for custom OpenAI-compatible APIs (e.g., OpenRouter, Ollama)
+ *    - Set AI_MODEL to choose your model (default: gpt-4o-mini)
+ *    - Set AI_BASE_URL to use a different provider (e.g., Anthropic, Google, OpenRouter)
+ *    - All major providers support the OpenAI-compatible API format
  *
  * 2. Instantiate your Agent:
  *    - Pass the LLM, tools, and memory into `createAgent()`
  *    - Configure agent-specific parameters
  */
-
-/**
- * Creates an LLM instance based on the configured AI provider.
- * Supports OpenAI, Anthropic, Google, and any OpenAI-compatible API (e.g., OpenRouter).
- */
-function getLLM() {
-  const provider = (process.env.AI_PROVIDER || "openai").toLowerCase();
-  const apiKey = process.env.AI_API_KEY;
-
-  switch (provider) {
-    case "anthropic":
-      return new ChatAnthropic({
-        model: process.env.AI_MODEL || "claude-sonnet-4-20250514",
-        ...(apiKey && { apiKey }),
-      });
-    case "google":
-      return new ChatGoogleGenerativeAI({
-        model: process.env.AI_MODEL || "gemini-2.0-flash",
-        ...(apiKey && { apiKey }),
-      });
-    case "custom":
-      return new ChatOpenAI({
-        model: process.env.AI_MODEL || "gpt-4o-mini",
-        ...(apiKey && { apiKey }),
-        configuration: { baseURL: process.env.AI_PROVIDER_URL },
-      });
-    case "openai":
-    default:
-      return new ChatOpenAI({
-        model: process.env.AI_MODEL || "gpt-4o-mini",
-        ...(apiKey && { apiKey }),
-      });
-  }
-}
 
 // The agent
 let agent: ReturnType<typeof createLangChainAgent>;
@@ -81,7 +45,20 @@ export async function createAgent(): Promise<ReturnType<typeof createLangChainAg
   try {
     const { agentkit, walletProvider } = await prepareAgentkitAndWalletProvider();
 
-    const llm = getLLM();
+    // Initialize LLM — works with any OpenAI-compatible provider.
+    // Configure via env vars: AI_API_KEY, AI_BASE_URL, AI_MODEL
+    // Examples:
+    //   OpenAI:      AI_API_KEY=sk-... (no AI_BASE_URL needed)
+    //   Anthropic:   AI_API_KEY=sk-ant-...  AI_BASE_URL=https://api.anthropic.com/v1/
+    //   Google:      AI_API_KEY=AIza...     AI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+    //   OpenRouter:  AI_API_KEY=sk-or-...   AI_BASE_URL=https://openrouter.ai/api/v1
+    const llm = new ChatOpenAI({
+      model: process.env.AI_MODEL || "gpt-4o-mini",
+      apiKey: process.env.AI_API_KEY || process.env.OPENAI_API_KEY,
+      ...(process.env.AI_BASE_URL && {
+        configuration: { baseURL: process.env.AI_BASE_URL },
+      }),
+    });
 
     const tools = await getLangChainTools(agentkit);
     const memory = new MemorySaver();
