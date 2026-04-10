@@ -222,10 +222,16 @@ Example: check_nexus_status({ states: ["TX", "CA", "NY"] })
     args: z.infer<typeof CheckNexusStatusSchema>,
   ): Promise<string> {
     const qs = args.states.map(s => `states=${encodeURIComponent(s)}`).join("&");
-    const result = await this.apiRequest<Record<string, unknown>>("GET", `/api/v1/nexus?${qs}`);
+    const result = await this.apiRequest<Record<string, unknown> & { success?: boolean }>(
+      "GET",
+      `/api/v1/nexus?${qs}`,
+    );
 
     if (!result.ok) {
       return this.formatError("check_nexus_status", result);
+    }
+    if (result.data && result.data.success === false) {
+      return `Error (check_nexus_status): ${String((result.data as { error?: unknown }).error)}`;
     }
 
     return JSON.stringify(result.data, null, 2);
@@ -259,13 +265,16 @@ Example: export_1099_da({ year: 2026 })
     _walletProvider: EvmWalletProvider,
     args: z.infer<typeof Export1099DaSchema>,
   ): Promise<string> {
-    const result = await this.apiRequest<Record<string, unknown>>(
+    const result = await this.apiRequest<Record<string, unknown> & { success?: boolean }>(
       "GET",
       `/api/v1/export/1099-da?year=${args.year}`,
     );
 
     if (!result.ok) {
       return this.formatError("export_1099_da", result);
+    }
+    if (result.data && result.data.success === false) {
+      return `Error (export_1099_da): ${String((result.data as { error?: unknown }).error)}`;
     }
 
     return JSON.stringify(result.data, null, 2);

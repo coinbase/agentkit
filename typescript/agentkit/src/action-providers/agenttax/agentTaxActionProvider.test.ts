@@ -451,6 +451,24 @@ describe("nexus / 1099-da actions with apiKey", () => {
     expect(response).toContain("triggered");
   });
 
+  it("check_nexus_status surfaces { success: false } as an error", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      text: async () =>
+        JSON.stringify({
+          success: false,
+          error: "entity not found",
+        }),
+    });
+
+    const response = await provider.checkNexusStatus(makeMockWallet(), {
+      states: ["TX"],
+    });
+
+    expect(response).toContain("Error (check_nexus_status): entity not found");
+  });
+
   it("export_1099_da passes year and returns data", async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
@@ -471,6 +489,21 @@ describe("nexus / 1099-da actions with apiKey", () => {
       }),
     );
     expect(response).toContain('"total_proceeds": 12500');
+  });
+
+  it("export_1099_da surfaces { success: false } as an error", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      text: async () =>
+        JSON.stringify({
+          success: false,
+          error: "no transactions found for year",
+        }),
+    });
+
+    const response = await provider.export1099Da(makeMockWallet(), { year: 2020 });
+    expect(response).toContain("Error (export_1099_da): no transactions found for year");
   });
 });
 
