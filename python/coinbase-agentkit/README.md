@@ -32,7 +32,6 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
   - [EthAccountWalletProvider](#ethaccountwalletprovider)
     - [Configuring gas parameters](#configuring-ethaccountwalletprovider-gas-parameters)
     - [Configuring `EthAccountWalletProvider` rpc url](#configuring-ethaccountwalletprovider-rpc-url)
-  - [SmartWalletProvider](#smartwalletprovider)
   - [CdpSolanaWalletProvider](#cdpsolanawalletprovider)
     - [Configuring with API credentials](#configuring-with-api-credentials)
     - [Using environment variables](#using-environment-variables)
@@ -56,10 +55,10 @@ pip install coinbase-agentkit
 
 ### Create an AgentKit instance
 
-If no wallet or action providers are specified, the agent will use the `CdpWalletProvider` and `WalletActionProvider` action provider by default.
+If no wallet or action providers are specified, the agent will use the `CdpEvmWalletProvider` and `WalletActionProvider` action provider by default. Make sure `CDP_API_KEY_ID`, `CDP_API_KEY_SECRET`, and `CDP_WALLET_SECRET` are set in your environment if you rely on this default.
 
 ```python
-from coinbase_agentkit import AgentKit, AgentKitConfig
+from coinbase_agentkit import AgentKit
 
 agent_kit = AgentKit()
 ```
@@ -70,13 +69,14 @@ agent_kit = AgentKit()
 from coinbase_agentkit import (
     AgentKit,
     AgentKitConfig,
-    CdpWalletProvider,
-    CdpWalletProviderConfig
+    CdpEvmWalletProvider,
+    CdpEvmWalletProviderConfig,
 )
 
-wallet_provider = CdpWalletProvider(CdpWalletProviderConfig(
+wallet_provider = CdpEvmWalletProvider(CdpEvmWalletProviderConfig(
     api_key_id="CDP API KEY NAME",
     api_key_secret="CDP API KEY SECRET",
+    wallet_secret="CDP WALLET SECRET",
     network_id="base-mainnet"
 ))
 
@@ -98,10 +98,7 @@ from coinbase_agentkit import (
 agent_kit = AgentKit(AgentKitConfig(
     wallet_provider=wallet_provider,
     action_providers=[
-        cdp_api_action_provider(
-            api_key_id="CDP API KEY NAME",
-            api_key_secret="CDP API KEY SECRET"
-        ),
+        cdp_api_action_provider(),
         pyth_action_provider()
     ]
 ))
@@ -952,43 +949,6 @@ wallet_provider = EthAccountWalletProvider(
         rpc_url="https://sepolia.base.org",
     )
 )
-
-agent_kit = AgentKit(AgentKitConfig(
-    wallet_provider=wallet_provider
-))
-```
-
-### CDPSmartWalletProvider
-
-The `CDPSmartWalletProvider` is a wallet provider that uses [CDP Smart Wallets](https://docs.cdp.coinbase.com/wallet-api/docs/smart-wallets).
-
-```python
-import os
-from eth_account import Account
-
-from coinbase_agentkit import (
-    AgentKit,
-    AgentKitConfig,
-    SmartWalletProvider,
-    SmartWalletProviderConfig
-)
-
-# See here for creating a private key:
-# https://web3py.readthedocs.io/en/stable/web3.eth.account.html#creating-a-private-key
-private_key = os.environ.get("PRIVATE_KEY")
-assert private_key is not None, "You must set PRIVATE_KEY environment variable"
-assert private_key.startswith("0x"), "Private key must start with 0x hex prefix"
-
-signer = Account.from_key(private_key)
-
-network_id = os.getenv("NETWORK_ID", "base-sepolia")
-
-wallet_provider = SmartWalletProvider(SmartWalletProviderConfig(
-    network_id=network_id,
-    signer=signer,
-    smart_wallet_address=None, # If not provided, a new smart wallet will be created
-    paymaster_url=None, # Sponsor transactions: https://docs.cdp.coinbase.com/paymaster/docs/welcome
-))
 
 agent_kit = AgentKit(AgentKitConfig(
     wallet_provider=wallet_provider

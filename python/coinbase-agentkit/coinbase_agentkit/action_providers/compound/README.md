@@ -61,7 +61,10 @@ from coinbase_agentkit.action_providers.compound.compound_action_provider import
     CompoundActionProvider,
 )
 from coinbase_agentkit.action_providers.weth.weth_action_provider import WethActionProvider
-from coinbase_agentkit.wallet_providers import CdpWalletProvider
+from coinbase_agentkit.wallet_providers import (
+    CdpEvmWalletProvider,
+    CdpEvmWalletProviderConfig,
+)
 
 # Constants
 USDC_ASSET = "usdc"
@@ -71,7 +74,7 @@ WAIT_TIME = 15
 @pytest.fixture
 def wallet():
     """Create a real wallet instance for testing using the CDP wallet provider."""
-    return CdpWalletProvider()
+    return CdpEvmWalletProvider(CdpEvmWalletProviderConfig())
 
 @pytest.fixture
 def compound_provider():
