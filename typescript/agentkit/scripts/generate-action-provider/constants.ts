@@ -103,14 +103,14 @@ const EVM_WALLET_PROVIDERS = [
     description: "For EVM-compatible blockchain networks (Ethereum, Base, etc.)",
   },
   {
-    title: "CdpWalletProvider",
-    value: "CdpWalletProvider",
-    description: "Coinbase Developer Platform wallet provider with built-in key management",
+    title: "CdpEvmWalletProvider",
+    value: "CdpEvmWalletProvider",
+    description: "Coinbase Developer Platform API Server wallet provider for EVM networks",
   },
   {
-    title: "EthAccountWalletProvider",
-    value: "EthAccountWalletProvider",
-    description: "Local private key wallet provider for EVM networks",
+    title: "CdpSmartWalletProvider",
+    value: "CdpSmartWalletProvider",
+    description: "Coinbase Developer Platform smart wallet provider for EVM networks",
   },
   {
     title: "PrivyEvmWalletProvider",
@@ -118,14 +118,19 @@ const EVM_WALLET_PROVIDERS = [
     description: "Privy's server wallet API provider for EVM networks",
   },
   {
-    title: "PrivyEvmDelegatedWalletProvider",
-    value: "PrivyEvmDelegatedWalletProvider",
+    title: "PrivyEvmDelegatedEmbeddedWalletProvider",
+    value: "PrivyEvmDelegatedEmbeddedWalletProvider",
     description: "Privy's delegated embedded wallet provider for EVM networks",
   },
   {
     title: "ViemWalletProvider",
     value: "ViemWalletProvider",
     description: "Viem-based wallet provider for EVM networks",
+  },
+  {
+    title: "ZeroDevWalletProvider",
+    value: "ZeroDevWalletProvider",
+    description: "ZeroDev smart account wallet provider for EVM networks",
   },
 ] as const;
 
@@ -137,6 +142,11 @@ const SVM_WALLET_PROVIDERS = [
     title: "SvmWalletProvider",
     value: "SvmWalletProvider",
     description: "For Solana Virtual Machine networks",
+  },
+  {
+    title: "CdpSolanaWalletProvider",
+    value: "CdpSolanaWalletProvider",
+    description: "Coinbase Developer Platform wallet provider for Solana networks",
   },
   {
     title: "PrivySvmWalletProvider",
