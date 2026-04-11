@@ -19,7 +19,7 @@ x402/
 The X402ActionProvider accepts an optional configuration object when initialized:
 
 ```typescript
-import { x402ActionProvider, X402Config } from "@coinbase/cdp-agentkit";
+import { x402ActionProvider, X402Config } from "@coinbase/agentkit";
 
 const config: X402Config = {
   // Service URLs the agent can call (whitelist)
