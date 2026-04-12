@@ -1,0 +1,8 @@
+import { generateText } from 'ai';
+
+const { text } = await generateText({
+  model: "anthropic/claude-sonnet-4.6",
+  prompt: 'Explain the concept of quantum entanglement.',
+});
+
+console.log(text);
