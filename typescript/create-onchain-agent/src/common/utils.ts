@@ -248,16 +248,33 @@ export async function handleNextSelection(
   const envLines = [
     // Start file with notes regarding .env var setup
     ...[
-      "Get keys from OpenAI Platform: https://platform.openai.com/api-keys",
+      "AI Provider Configuration — works with any OpenAI-compatible API",
+      "Supports: OpenAI, Anthropic, Google Gemini, OpenRouter, Groq, Ollama, and more",
       ...agentkitRouteConfig.env.topComments,
     ]
       .map(comment => `# ${comment}`)
       .join("\n"),
     // Continue with # Required section
     "\n\n# Required\n",
-    ...["OPENAI_API_KEY=", ...agentkitRouteConfig.env.required.map(line => `${line}=`)].join("\n"),
-    // Finish with # Optional section
-    "\n\n# Optional\n",
+    ...[
+      "AI_API_KEY=",
+      ...agentkitRouteConfig.env.required.map(line => `${line}=`),
+    ].join("\n"),
+    // Optional — AI Provider
+    "\n\n# Optional — AI Provider\n",
+    ...[
+      "# To use a different provider, set AI_BASE_URL to their OpenAI-compatible endpoint:",
+      "#   Anthropic:   https://api.anthropic.com/v1/",
+      "#   Google:      https://generativelanguage.googleapis.com/v1beta/openai/",
+      "#   OpenRouter:  https://openrouter.ai/api/v1",
+      "#   Groq:        https://api.groq.com/openai/v1",
+      "#   Ollama:      http://localhost:11434/v1",
+      "AI_BASE_URL=",
+      "",
+      "# Set AI_MODEL to use a different model (default: gpt-4o-mini)",
+      "AI_MODEL=",
+    ].join("\n"),
+    "\n\n# Optional — Network\n",
     ...[
       `NETWORK_ID=${network ?? ""}`,
       rpcUrl ? `RPC_URL=${rpcUrl}` : null,
