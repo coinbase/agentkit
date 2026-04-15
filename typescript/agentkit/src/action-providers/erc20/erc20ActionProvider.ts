@@ -35,12 +35,17 @@ export class ERC20ActionProvider extends ActionProvider<EvmWalletProvider> {
   @CreateAction({
     name: "get_balance",
     description: `
-    This tool will get the balance of an ERC20 token for a given address. 
+    This tool will get the balance of an ERC20 token for a given address.
     It takes the following inputs:
     - tokenAddress: The contract address of the token to get the balance for
     - address: (Optional) The address to check the balance for. If not provided, uses the wallet's address
+
     Important notes:
     - Never assume token or address, they have to be provided as inputs. If only token symbol is provided, use the get_token_address tool to get the token address first
+
+    Returns: A string message with the token name, contract address, queried address, and formatted balance in human-readable units (e.g. "Balance of USDC (0x...) at address 0x... is 150.5").
+    Error cases:
+    - Invalid or non-ERC20 contract address: returns an error indicating token details could not be fetched
     `,
     schema: GetBalanceSchema,
   })
@@ -74,8 +79,18 @@ It takes the following inputs:
 - amount: The amount to transfer in whole units (e.g. 10.5 USDC)
 - tokenAddress: The contract address of the token to transfer
 - destinationAddress: The address to send the funds to
+
 Important notes:
 - Never assume token or destination addresses, they have to be provided as inputs. If only token symbol is provided, use the get_token_address tool to get the token address first
+- The wallet must have sufficient token balance AND enough native currency (e.g. ETH) to cover gas fees
+- If the token requires approval before transferring (e.g. via a DeFi protocol), use the approve tool first
+
+Returns: A string with the amount transferred, token name, contract address, destination address, and the transaction hash (e.g. "Transferred 10.5 of USDC (0x...) to 0x...\\nTransaction hash for the transfer: 0x...").
+Error cases:
+- Insufficient token balance: returns the requested amount vs available balance
+- Destination is the token contract itself: refused to prevent loss of funds
+- Destination is another ERC20 token contract: refused to prevent loss of funds
+- Invalid contract address: returns an error indicating token details could not be fetched
 `,
     schema: TransferSchema,
   })
@@ -153,10 +168,15 @@ It takes the following inputs:
 - spenderAddress: The spender address to approve
 
 Important notes:
-- This will overwrite any existing allowance
+- This will overwrite any existing allowance — it does NOT add to it
 - To revoke an allowance, set the amount to 0
 - Ensure you trust the spender address before approving
 - Never assume token addresses, they have to be provided as inputs. If only token symbol is provided, use the get_token_address tool to get the token address first
+- Approval is required before a DeFi protocol or another address can transfer tokens on your behalf (e.g. for swaps, deposits, or staking)
+
+Returns: A string with the approved amount, token name, contract address, spender address, and the transaction hash (e.g. "Approved 100 USDC (0x...) for spender 0x...\\nTransaction hash: 0x...").
+Error cases:
+- Invalid contract address: returns an error indicating token details could not be fetched
 `,
     schema: ApproveSchema,
   })
@@ -201,7 +221,7 @@ Important notes:
   @CreateAction({
     name: "get_allowance",
     description: `
-This tool will get the allowance amount for a spender of an ERC20 token.
+This tool will get the allowance amount for a spender of an ERC20 token. Use this to check how many tokens a spender is still permitted to transfer on your behalf.
 
 It takes the following inputs:
 - tokenAddress: The contract address of the token to check allowance for
@@ -209,6 +229,11 @@ It takes the following inputs:
 
 Important notes:
 - Never assume token addresses, they have to be provided as inputs. If only token symbol is provided, use the get_token_address tool to get the token address first
+- The allowance is checked from the wallet's address to the spender
+
+Returns: A string with the spender address, token name, contract address, and the formatted allowance in human-readable units (e.g. "Allowance for 0x... to spend USDC (0x...) is 100 tokens").
+Error cases:
+- Invalid contract address: returns an error indicating token details could not be fetched
 `,
     schema: AllowanceSchema,
   })
