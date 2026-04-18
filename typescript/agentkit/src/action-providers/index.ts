@@ -22,6 +22,7 @@ export * from "./messari";
 export * from "./pyth";
 export * from "./moonwell";
 export * from "./morpho";
+export * from "./ngz";
 export * from "./opensea";
 export * from "./spl";
 export * from "./superfluid";
