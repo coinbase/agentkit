@@ -33,6 +33,7 @@ from .superfluid.superfluid_action_provider import (
     superfluid_action_provider,
 )
 from .twitter.twitter_action_provider import TwitterActionProvider, twitter_action_provider
+from .vaultfire.vaultfire_action_provider import VaultfireActionProvider, vaultfire_action_provider
 from .wallet.wallet_action_provider import WalletActionProvider, wallet_action_provider
 from .weth.weth_action_provider import WethActionProvider, weth_action_provider
 from .wow.wow_action_provider import WowActionProvider, wow_action_provider
@@ -58,6 +59,7 @@ __all__ = [
     "SshActionProvider",
     "SuperfluidActionProvider",
     "TwitterActionProvider",
+    "VaultfireActionProvider",
     "WalletActionProvider",
     "WethActionProvider",
     "WowActionProvider",
@@ -79,6 +81,7 @@ __all__ = [
     "ssh_action_provider",
     "superfluid_action_provider",
     "twitter_action_provider",
+    "vaultfire_action_provider",
     "wallet_action_provider",
     "weth_action_provider",
     "wow_action_provider",
