@@ -169,7 +169,6 @@ Important notes:
         )}`;
       }
     } catch (error) {
-      console.error("DEBUG - Mint error:", error);
       if (error instanceof Error) {
         return `Error minting Moonwell MToken: ${error.message}`;
       }
@@ -265,7 +264,6 @@ Important notes:
         (_, value) => (typeof value === "bigint" ? value.toString() : value),
       )}`;
     } catch (error) {
-      console.error("DEBUG - Redeem error:", error);
       if (error instanceof Error) {
         return `Error redeeming from Moonwell MToken: ${error.message}`;
       }
@@ -280,7 +278,7 @@ Important notes:
    * @returns True if the Moonwell action provider supports the network, false otherwise.
    */
   supportsNetwork = (network: Network) =>
-    network.protocolFamily === "evm" && SUPPORTED_NETWORKS.includes(network.networkId!);
+    network.protocolFamily === "evm" && SUPPORTED_NETWORKS.includes(network.networkId ?? "");
 }
 
 export const moonwellActionProvider = () => new MoonwellActionProvider();
