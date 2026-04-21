@@ -9,7 +9,7 @@ authors = [
 requires-python = "~=3.10"
 readme = "README.md"
 dependencies = [
-    "python-dotenv>=1.0.1,<2",
+    "python-dotenv>=1.2.2,<2",
     "langchain-openai>=0.2.4,<0.3",
     "langgraph>=0.2.39,<0.3",
     "coinbase-agentkit",
