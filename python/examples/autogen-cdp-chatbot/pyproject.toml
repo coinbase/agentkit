@@ -8,7 +8,7 @@ readme = "README.md"
 dependencies = [
     "coinbase-agentkit",
     "coinbase-agentkit-autogen",
-    "python-dotenv>=1.0.1,<2",
+    "python-dotenv>=1.2.2,<2",
     "autogen-agentchat>=0.7.1,<0.8",
     "autogen-ext[openai]>=0.7.1,<0.8"
 ]
