@@ -140,8 +140,8 @@ Inputs:
     try {
       const gateway = this.createGateway(walletProvider);
       const result = await gateway.getTransactions({
-        limit: args.limit,
-        offset: args.offset,
+        limit: args.limit ?? undefined,
+        offset: args.offset ?? undefined,
       });
       return JSON.stringify({ success: true, ...result });
     } catch (error) {
@@ -174,9 +174,9 @@ Inputs:
     try {
       const gateway = this.createGateway(walletProvider);
       const result = await gateway.getSessions({
-        limit: args.limit,
-        offset: args.offset,
-        status: args.status,
+        limit: args.limit ?? undefined,
+        offset: args.offset ?? undefined,
+        status: args.status ?? undefined,
       });
       return JSON.stringify({ success: true, ...result });
     } catch (error) {
@@ -218,11 +218,11 @@ Inputs:
         roomName: args.roomName,
         participantIdentity: args.participantIdentity,
         durationMinutes: args.durationMinutes,
-        language: args.language,
-        ttsMaxCharacters: args.ttsMaxCharacters,
-        metadata: args.metadata,
-        clientIdentity: args.clientIdentity,
-        clientIp: args.clientIp,
+        language: args.language ?? undefined,
+        ttsMaxCharacters: args.ttsMaxCharacters ?? undefined,
+        metadata: args.metadata ?? undefined,
+        clientIdentity: args.clientIdentity ?? undefined,
+        clientIp: args.clientIp ?? undefined,
       });
       return JSON.stringify({ success: true, ...result });
     } catch (error) {
@@ -257,7 +257,7 @@ Inputs:
       const result = await gateway.extendAgentSession({
         bundleId: args.bundleId,
         additionalMinutes: args.additionalMinutes,
-        additionalTtsCharacters: args.additionalTtsCharacters,
+        additionalTtsCharacters: args.additionalTtsCharacters ?? undefined,
       });
       return JSON.stringify({ success: true, ...result });
     } catch (error) {
@@ -295,8 +295,8 @@ Inputs:
         roomName: args.roomName,
         participantIdentity: args.participantIdentity,
         durationMinutes: args.durationMinutes,
-        metadata: args.metadata,
-        clientIp: args.clientIp,
+        metadata: args.metadata ?? undefined,
+        clientIp: args.clientIp ?? undefined,
       });
       return JSON.stringify({ success: true, ...result });
     } catch (error) {
@@ -361,7 +361,7 @@ Inputs:
       const gateway = this.createGateway(walletProvider);
       const result = await gateway.createSTTSession({
         durationMinutes: args.durationMinutes,
-        language: args.language,
+        language: args.language ?? undefined,
       });
       return JSON.stringify({ success: true, ...result });
     } catch (error) {
@@ -426,7 +426,7 @@ Inputs:
       const gateway = this.createGateway(walletProvider);
       const result = await gateway.createTTSSession({
         maxCharacters: args.maxCharacters,
-        language: args.language,
+        language: args.language ?? undefined,
       });
       return JSON.stringify({ success: true, ...result });
     } catch (error) {

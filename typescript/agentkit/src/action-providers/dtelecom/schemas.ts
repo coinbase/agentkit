@@ -9,14 +9,12 @@ export const BuyCreditsSchema = z
       .positive()
       .describe("Amount in USD to spend on credits (e.g. 1.0 for $1.00)"),
   })
-  .strip()
   .describe("Buy dTelecom credits with USDC via x402 payment protocol");
 
 // --- Account ---
 
 export const GetAccountSchema = z
   .object({})
-  .strip()
   .describe("Get dTelecom account details including credit balance and limits");
 
 export const GetTransactionsSchema = z
@@ -25,20 +23,18 @@ export const GetTransactionsSchema = z
       .number()
       .int()
       .positive()
-      .optional()
+      .nullable()
       .describe("Maximum number of transactions to return"),
-    offset: z.number().int().nonnegative().optional().describe("Number of transactions to skip"),
+    offset: z.number().int().nonnegative().nullable().describe("Number of transactions to skip"),
   })
-  .strip()
   .describe("List credit transactions for the account");
 
 export const GetSessionsSchema = z
   .object({
-    limit: z.number().int().positive().optional().describe("Maximum number of sessions to return"),
-    offset: z.number().int().nonnegative().optional().describe("Number of sessions to skip"),
-    status: z.string().optional().describe("Filter by session status (e.g. 'active', 'completed')"),
+    limit: z.number().int().positive().nullable().describe("Maximum number of sessions to return"),
+    offset: z.number().int().nonnegative().nullable().describe("Number of sessions to skip"),
+    status: z.string().nullable().describe("Filter by session status (e.g. 'active', 'completed')"),
   })
-  .strip()
   .describe("List sessions for the account");
 
 // --- Bundled Agent Session ---
@@ -54,7 +50,7 @@ export const CreateAgentSessionSchema = z
       .describe("Session duration in minutes (e.g. 10 for a 10-minute session)"),
     language: z
       .string()
-      .optional()
+      .nullable()
       .describe(
         "Language code: a=English US, b=English UK, e=Spanish, f=French, h=Hindi, i=Italian, j=Japanese, p=Portuguese BR, z=Chinese Mandarin",
       ),
@@ -62,16 +58,15 @@ export const CreateAgentSessionSchema = z
       .number()
       .int()
       .positive()
-      .optional()
+      .nullable()
       .describe("Maximum TTS characters (default: 10000)"),
-    metadata: z.string().optional().describe("Optional metadata string for the session"),
+    metadata: z.string().nullable().describe("Optional metadata string for the session"),
     clientIdentity: z
       .string()
-      .optional()
+      .nullable()
       .describe("Identity for the browser client participant (creates a second token)"),
-    clientIp: z.string().optional().describe("Client IP address for geo-routing optimization"),
+    clientIp: z.string().nullable().describe("Client IP address for geo-routing optimization"),
   })
-  .strip()
   .describe(
     "Create a bundled voice agent session with WebRTC, STT, and TTS. Returns tokens for both agent (server) and client (browser) participants.",
   );
@@ -88,10 +83,9 @@ export const ExtendAgentSessionSchema = z
       .number()
       .int()
       .positive()
-      .optional()
+      .nullable()
       .describe("Additional TTS characters to add"),
   })
-  .strip()
   .describe("Extend an active bundled agent session duration and/or TTS character limit");
 
 // --- Standalone WebRTC ---
@@ -101,10 +95,9 @@ export const CreateWebRTCTokenSchema = z
     roomName: z.string().describe("Unique name for the WebRTC room"),
     participantIdentity: z.string().describe("Identity for the participant"),
     durationMinutes: z.number().int().positive().describe("Token validity duration in minutes"),
-    metadata: z.string().optional().describe("Optional metadata string"),
-    clientIp: z.string().optional().describe("Client IP address for geo-routing optimization"),
+    metadata: z.string().nullable().describe("Optional metadata string"),
+    clientIp: z.string().nullable().describe("Client IP address for geo-routing optimization"),
   })
-  .strip()
   .describe("Create a standalone WebRTC room token for real-time audio/video communication");
 
 export const ExtendWebRTCTokenSchema = z
@@ -116,7 +109,6 @@ export const ExtendWebRTCTokenSchema = z
       .positive()
       .describe("Additional minutes to extend the token"),
   })
-  .strip()
   .describe("Extend an active WebRTC token duration");
 
 // --- Standalone STT ---
@@ -126,12 +118,11 @@ export const CreateSTTSessionSchema = z
     durationMinutes: z.number().int().positive().describe("Session duration in minutes"),
     language: z
       .string()
-      .optional()
+      .nullable()
       .describe(
         "Language code: a=English US, b=English UK, e=Spanish, f=French, h=Hindi, i=Italian, j=Japanese, p=Portuguese BR, z=Chinese Mandarin",
       ),
   })
-  .strip()
   .describe("Create a standalone speech-to-text session");
 
 export const ExtendSTTSessionSchema = z
@@ -143,7 +134,6 @@ export const ExtendSTTSessionSchema = z
       .positive()
       .describe("Additional minutes to extend the session"),
   })
-  .strip()
   .describe("Extend an active STT session duration");
 
 // --- Standalone TTS ---
@@ -157,12 +147,11 @@ export const CreateTTSSessionSchema = z
       .describe("Maximum number of characters that can be synthesized"),
     language: z
       .string()
-      .optional()
+      .nullable()
       .describe(
         "Language code: a=English US, b=English UK, e=Spanish, f=French, h=Hindi, i=Italian, j=Japanese, p=Portuguese BR, z=Chinese Mandarin",
       ),
   })
-  .strip()
   .describe("Create a standalone text-to-speech session");
 
 export const ExtendTTSSessionSchema = z
@@ -174,5 +163,4 @@ export const ExtendTTSSessionSchema = z
       .positive()
       .describe("Additional characters to add to the session"),
   })
-  .strip()
   .describe("Extend an active TTS session character limit");

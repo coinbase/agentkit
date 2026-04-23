@@ -85,6 +85,8 @@ describe("Clanker action provider tests", () => {
         lockDuration_Days: 30,
         interface: "CDP AgentKit",
         id: "test-id",
+        description: null,
+        socialMediaUrls: null,
       };
       const parseResult = ClankTokenSchema.safeParse(validInput);
       expect(parseResult.success).toBe(true);
@@ -119,6 +121,8 @@ describe("Clanker action provider tests", () => {
         lockDuration_Days: 30,
         interface: "CDP AgentKit",
         id: "test-id",
+        description: null,
+        socialMediaUrls: null,
       };
       const result = await provider.clankToken(mockWalletProvider, args);
       expect(result).toContain(`Clanker token deployed at ${DEPLOYED_TOKEN_ADDRESS}`);

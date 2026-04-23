@@ -16,7 +16,7 @@ import {
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
 import { MemorySaver } from "@langchain/langgraph";
-import { createReactAgent } from "@langchain/langgraph/prebuilt";
+import { createAgent } from "langchain";
 import { ChatOpenAI } from "@langchain/openai";
 import * as dotenv from "dotenv";
 import * as readline from "readline";
@@ -146,11 +146,11 @@ async function initializeAgent() {
     const agentConfig = { configurable: { thread_id: "Privy AgentKit Chatbot Example!" } };
 
     // Create React Agent using the LLM and Privy AgentKit tools
-    const agent = createReactAgent({
-      llm,
+    const agent = createAgent({
+      model: llm,
       tools,
-      checkpointSaver: memory,
-      messageModifier: `
+      checkpointer: memory,
+      systemPrompt: `
         You are a helpful agent with a Privy server wallet that can interact onchain using the Coinbase Developer
         Platform AgentKit. You are empowered to interact onchain using your tools. If you ever need funds, you can
         request them from the faucet if you are on network ID 'base-sepolia'. If not, you can provide your wallet
@@ -195,13 +195,19 @@ async function runAutonomousMode(agent: any, config: any, interval = 10) {
       const stream = await agent.stream({ messages: [new HumanMessage(thought)] }, config);
 
       for await (const chunk of stream) {
-        if ("agent" in chunk) {
-          console.log(chunk.agent.messages[0].content);
-        } else if ("tools" in chunk) {
-          console.log(chunk.tools.messages[0].content);
+        if ("model_request" in chunk) {
+          const response = chunk.model_request.messages[0].content;
+          if (response !== "") {
+            console.log("\n Response: " + response);
+          }
         }
-        console.log("-------------------");
+        if ("tools" in chunk) {
+          for (const tool of chunk.tools.messages) {
+            console.log("Tool " + tool.name + ": " + tool.content);
+          }
+        }
       }
+      console.log("-------------------");
 
       await new Promise(resolve => setTimeout(resolve, interval * 1000));
     } catch (error) {
@@ -235,6 +241,7 @@ async function runChatMode(agent: any, config: any) {
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const userInput = await question("\nPrompt: ");
+      console.log("-------------------");
 
       if (userInput.toLowerCase() === "exit") {
         break;
@@ -243,13 +250,19 @@ async function runChatMode(agent: any, config: any) {
       const stream = await agent.stream({ messages: [new HumanMessage(userInput)] }, config);
 
       for await (const chunk of stream) {
-        if ("agent" in chunk) {
-          console.log(chunk.agent.messages[0].content);
-        } else if ("tools" in chunk) {
-          console.log(chunk.tools.messages[0].content);
+        if ("model_request" in chunk) {
+          const response = chunk.model_request.messages[0].content;
+          if (response !== "") {
+            console.log("\n Response: " + response);
+          }
         }
-        console.log("-------------------");
+        if ("tools" in chunk) {
+          for (const tool of chunk.tools.messages) {
+            console.log("Tool " + tool.name + ": " + tool.content);
+          }
+        }
       }
+      console.log("-------------------");
     }
   } catch (error) {
     if (error instanceof Error) {

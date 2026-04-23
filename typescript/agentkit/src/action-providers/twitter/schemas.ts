@@ -5,7 +5,6 @@ import { z } from "zod";
  */
 export const TwitterAccountDetailsSchema = z
   .object({})
-  .strip()
   .describe("Input schema for retrieving account details");
 
 /**
@@ -18,7 +17,6 @@ export const TwitterAccountMentionsSchema = z
       .min(1, "Account ID is required.")
       .describe("The Twitter (X) user id to return mentions for"),
   })
-  .strip()
   .describe("Input schema for retrieving account mentions");
 
 /**
@@ -30,10 +28,9 @@ export const TwitterPostTweetSchema = z
     mediaIds: z
       .array(z.string())
       .max(4, "Maximum of 4 media IDs allowed")
-      .optional()
+      .nullable()
       .describe("Optional array of 1-4 media IDs to attach to the tweet"),
   })
-  .strip()
   .describe("Input schema for posting a tweet");
 
 /**
@@ -48,10 +45,9 @@ export const TwitterPostTweetReplySchema = z
     mediaIds: z
       .array(z.string())
       .max(4, "Maximum of 4 media IDs allowed")
-      .optional()
+      .nullable()
       .describe("Optional array of 1-4 media IDs to attach to the tweet"),
   })
-  .strip()
   .describe("Input schema for posting a tweet reply");
 
 /**
@@ -64,5 +60,4 @@ export const TwitterUploadMediaSchema = z
       .min(1, "File path is required.")
       .describe("The path to the media file to upload"),
   })
-  .strip()
   .describe("Input schema for uploading media to Twitter");

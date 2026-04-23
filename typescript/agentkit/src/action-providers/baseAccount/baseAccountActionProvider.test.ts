@@ -110,6 +110,8 @@ describe("UseBaseAccountSpendPermissionSchema", () => {
     const validInput = {
       baseAccount: MOCK_BASE_ACCOUNT,
       amount: MOCK_AMOUNT_USD,
+      tokenAddress: null,
+      permissionIndex: null,
     };
 
     const result = UseBaseAccountSpendPermissionSchema.safeParse(validInput);
@@ -155,6 +157,7 @@ describe("RevokeBaseAccountSpendPermissionSchema", () => {
   it("should successfully parse valid input without permission index", () => {
     const validInput = {
       baseAccount: MOCK_BASE_ACCOUNT,
+      permissionIndex: null,
     };
 
     const result = RevokeBaseAccountSpendPermissionSchema.safeParse(validInput);
@@ -273,6 +276,8 @@ describe("BaseAccountActionProvider", () => {
       const args = {
         baseAccount: MOCK_BASE_ACCOUNT,
         amount: MOCK_AMOUNT_USD,
+        tokenAddress: null,
+        permissionIndex: null,
       };
 
       const response = await actionProvider.spendFromBaseAccountPermission(mockWallet, args);
@@ -299,6 +304,8 @@ describe("BaseAccountActionProvider", () => {
       const args = {
         baseAccount: MOCK_BASE_ACCOUNT,
         amount: 10.5, // 10.5 USDC
+        tokenAddress: null,
+        permissionIndex: null,
       };
 
       const response = await actionProvider.spendFromBaseAccountPermission(mockWallet, args);
@@ -330,6 +337,8 @@ describe("BaseAccountActionProvider", () => {
       const args = {
         baseAccount: MOCK_BASE_ACCOUNT,
         amount: 10.5, // Trying to spend 10.5 USDC but only 1 available
+        tokenAddress: null,
+        permissionIndex: null,
       };
 
       const response = await actionProvider.spendFromBaseAccountPermission(mockWallet, args);
@@ -348,6 +357,7 @@ describe("BaseAccountActionProvider", () => {
 
       const args = {
         baseAccount: MOCK_BASE_ACCOUNT,
+        permissionIndex: null,
       };
 
       const response = await actionProvider.revokeBaseAccountSpendPermission(mockWallet, args);

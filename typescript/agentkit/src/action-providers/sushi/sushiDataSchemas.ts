@@ -10,5 +10,4 @@ export const FindTokenSchema = z
       .min(2)
       .describe("Either the (partial or complete) symbol OR the address of the token to find"),
   })
-  .strip()
   .describe("Instructions for finding a token");

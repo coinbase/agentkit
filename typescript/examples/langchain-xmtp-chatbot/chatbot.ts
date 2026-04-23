@@ -15,7 +15,7 @@ import {
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { HumanMessage } from "@langchain/core/messages";
 import { MemorySaver } from "@langchain/langgraph";
-import { createReactAgent } from "@langchain/langgraph/prebuilt";
+import { createAgent } from "langchain";
 import { ChatOpenAI } from "@langchain/openai";
 import { Agent as XMTPAgent, type MessageContext, type AgentMiddleware } from "@xmtp/agent-sdk";
 import {
@@ -60,7 +60,7 @@ interface WalletData {
   address: `0x${string}`;
 }
 
-type Agent = ReturnType<typeof createReactAgent>;
+type Agent = ReturnType<typeof createAgent>;
 
 /**
  * Ensure local storage directory exists
@@ -169,11 +169,11 @@ async function initializeAgent(userId: string): Promise<{ agent: Agent; config: 
     const canUseFaucet = walletProvider.getNetwork().networkId == "base-sepolia";
     const faucetMessage = `If you ever need funds, you can request them from the faucet.`;
     const cantUseFaucetMessage = `If you need funds, you can request funds from the user. Advise the user to use the "/fund <amountInETH>" command to send ETH to your wallet.`;
-    const agent = createReactAgent({
-      llm,
-      tools,
-      checkpointSaver: memoryStore[userId],
-      messageModifier: `
+    const agent = createAgent({
+      model: llm,
+      tools: tools,
+      checkpointer: memoryStore[userId],
+      systemPrompt: `
         You are a helpful agent that can interact onchain using the Coinbase Developer Platform AgentKit. You are 
         empowered to interact onchain using your tools. 
         Before executing your first action, get the wallet details to see your address and what network you're on. 
@@ -212,8 +212,8 @@ async function processMessage(agent: Agent, config: AgentConfig, message: string
     const stream = await agent.stream({ messages: [new HumanMessage(message)] }, config);
 
     for await (const chunk of stream) {
-      if ("agent" in chunk) {
-        response += chunk.agent.messages[0].content + "\n";
+      if ("model" in chunk) {
+        response += chunk.model.messages[0].content + "\n";
       }
     }
 

@@ -35,7 +35,9 @@ def test_solana_network_configuration():
             patch(
                 "coinbase_agentkit.wallet_providers.cdp_solana_wallet_provider.SolanaClient"
             ) as mock_solana_client,
-            patch("asyncio.run", return_value=Mock(address=MOCK_ADDRESS)),
+            patch.object(
+                CdpSolanaWalletProvider, "_run_async", return_value=Mock(address=MOCK_ADDRESS)
+            ),
         ):
             config = CdpSolanaWalletProviderConfig(
                 api_key_id=MOCK_API_KEY_ID,
@@ -106,7 +108,7 @@ def test_solana_transfer_parameters(mocked_wallet_provider, mock_cdp_client):
     # Configure get_account to return our mock wallet
     mock_cdp_client.solana.get_account = AsyncMock(return_value=mock_wallet)
 
-    with patch("asyncio.run", return_value="test_signature"):
+    with patch.object(CdpSolanaWalletProvider, "_run_async", return_value="test_signature"):
         mocked_wallet_provider.native_transfer(to_address, amount)
 
     # Verify transfer was called with correct parameters
@@ -128,7 +130,9 @@ def test_network_id_defaults():
     with (
         patch("coinbase_agentkit.wallet_providers.cdp_solana_wallet_provider.CdpClient"),
         patch("coinbase_agentkit.wallet_providers.cdp_solana_wallet_provider.SolanaClient"),
-        patch("asyncio.run", return_value=Mock(address=MOCK_ADDRESS)),
+        patch.object(
+            CdpSolanaWalletProvider, "_run_async", return_value=Mock(address=MOCK_ADDRESS)
+        ),
         patch.dict(
             "os.environ",
             {
@@ -158,7 +162,7 @@ def test_async_context_manager_usage(mocked_wallet_provider, mock_cdp_client):
     mock_wallet.transfer = AsyncMock(return_value=Mock(signature="test_sig"))
     mock_cdp_client.solana.get_account = AsyncMock(return_value=mock_wallet)
 
-    with patch("asyncio.run", return_value="test_sig"):
+    with patch.object(CdpSolanaWalletProvider, "_run_async", return_value="test_sig"):
         mocked_wallet_provider.native_transfer("SomeAddress", Decimal("1.0"))
 
     # Note: In the actual implementation, close() is called in a finally block

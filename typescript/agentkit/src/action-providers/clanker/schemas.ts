@@ -31,22 +31,23 @@ export const ClankTokenSchema = z
       ),
     description: z
       .string()
-      .optional()
+      .nullable()
       .describe("Description of the token or token project (optional)"),
     socialMediaUrls: z
       .array(z.object({ platform: z.string(), url: z.string() }))
-      .optional()
+      .nullable()
       .describe("Socials for the token. These may be displayed on aggregators."),
     interface: z
       .string()
-      .default("CDP AgentKit")
+      .nullable()
+      .transform(val => val ?? "CDP AgentKit")
       .describe('System the token was deployed via. Defaults to "CDP AgentKit".'),
     id: z
       .string()
-      .default("")
+      .nullable()
+      .transform(val => val ?? "")
       .describe(
         "User id of the poster on the social platform the token was deployed from. Used for provenance and will be verified by aggregators.",
       ),
   })
-  .strip()
   .describe("Instructions for deploying a Clanker token");

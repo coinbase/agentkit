@@ -304,6 +304,7 @@ describe("SplActionProvider", () => {
 
     const balanceArgs = {
       mintAddress: MINT_ADDRESS,
+      address: null,
     };
 
     const balanceWithAddressArgs = {

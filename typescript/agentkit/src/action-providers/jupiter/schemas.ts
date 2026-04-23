@@ -12,7 +12,8 @@ export const SwapTokenSchema = z
       .number()
       .int()
       .positive()
-      .default(50)
+      .nullable()
+      .transform(val => val ?? 50)
       .describe("Slippage tolerance in basis points (e.g., 50 = 0.5%)"),
   })
   .describe("Swap tokens using Jupiter DEX aggregator");

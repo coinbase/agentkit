@@ -37,7 +37,10 @@ The tool will return the aggregated balance across all specified networks for ea
     schema: GetCABSchema,
   })
   async getCAB(walletProvider: ZeroDevWalletProvider, args: z.infer<typeof GetCABSchema>) {
-    return walletProvider.getCAB(args);
+    return walletProvider.getCAB({
+      ...args,
+      tokenTickers: args.tokenTickers ?? undefined,
+    });
   }
 
   /**
