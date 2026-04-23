@@ -26,6 +26,7 @@ from .hyperboliclabs.hyperbolic_action_provider import (
 from .morpho.morpho_action_provider import MorphoActionProvider, morpho_action_provider
 from .nillion.nillion_action_provider import NillionActionProvider, nillion_action_provider
 from .onramp.onramp_action_provider import OnrampActionProvider, onramp_action_provider
+from .pendle.pendle_action_provider import PendleActionProvider, pendle_action_provider
 from .pyth.pyth_action_provider import PythActionProvider, pyth_action_provider
 from .ssh.ssh_action_provider import SshActionProvider, ssh_action_provider
 from .superfluid.superfluid_action_provider import (
@@ -54,6 +55,7 @@ __all__ = [
     "MorphoActionProvider",
     "NillionActionProvider",
     "OnrampActionProvider",
+    "PendleActionProvider",
     "PythActionProvider",
     "SshActionProvider",
     "SuperfluidActionProvider",
@@ -75,6 +77,7 @@ __all__ = [
     "morpho_action_provider",
     "nillion_action_provider",
     "onramp_action_provider",
+    "pendle_action_provider",
     "pyth_action_provider",
     "ssh_action_provider",
     "superfluid_action_provider",
