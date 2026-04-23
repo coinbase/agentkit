@@ -28,8 +28,8 @@ pnpm start autonomous    # autonomous bettor mode
 
 Before the agent can trade you need:
 
-1. **USDC in the FlipCoin vault.** Deposit via `POST /api/agent/vault/deposit/intent` → sign → `/relay`. The agent-starter kit (https://github.com/flipcoin-fun/flipcoin-agent-starter) ships with a one-command helper.
-2. **ShareToken approval for sells only.** Call `ShareToken.setApprovalForAll(router, true)` once per chain from the trader wallet.
+1. **USDC in the FlipCoin vault.** Deposit via `POST /api/agent/vault/deposit` — first with `{ "action": "intent", "amount": "<raw-usdc-6-decimals>" }` to get EIP-712 typed data, sign it, then call the same endpoint again with `{ "action": "relay", "intentId": "<id>", "signature": "0x..." }`. The [agent-starter kit](https://github.com/flipcoin-fun/flipcoin-agent-starter) ships with a one-command helper.
+2. **ShareToken approval for sells only.** Call `ShareToken.setApprovalForAll(operator, true)` once per chain from the trader wallet. The exact `operator` address is returned in the intent response's `approvalRequired.operator` when approval is missing — the action provider surfaces it directly.
 
 ## Modes
 
