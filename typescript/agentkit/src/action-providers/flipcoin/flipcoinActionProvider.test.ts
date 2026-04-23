@@ -189,7 +189,7 @@ describe("FlipCoinActionProvider", () => {
           conditionId: MOCK_CONDITION_ID,
           side: "yes",
           action: "buy",
-          amountUsdc: "5",
+          amount: "5",
         }),
       );
 
@@ -198,6 +198,7 @@ describe("FlipCoinActionProvider", () => {
       expect(result.prices.noPercent).toBe(45);
       expect(result.lmsr.sharesOut).toBe("9000000");
       expect(result.priceImpactGuard.level).toBe("ok");
+      expect(result.simulated.amountType).toBe("usdc");
 
       const [url] = mockFetch.mock.calls[0] as [string];
       expect(url).toContain("amount=5000000");
@@ -205,7 +206,50 @@ describe("FlipCoinActionProvider", () => {
       expect(url).toContain("action=buy");
     });
 
-    it("defaults to $1 simulation when amountUsdc is omitted", async () => {
+    it("treats amount as shares when action=sell", async () => {
+      const mockFetch = createMockFetch([
+        {
+          body: {
+            quoteId: "q-sell",
+            conditionId: MOCK_CONDITION_ID,
+            side: "yes",
+            action: "sell",
+            amount: "3000000",
+            venue: "lmsr",
+            validUntil: "2026-04-23T12:00:12Z",
+            lmsr: {
+              available: true,
+              sharesOut: "0",
+              amountOut: "1500000",
+              fee: "5000",
+              priceYesBps: 5000,
+              priceNoBps: 5000,
+              newPriceYesBps: 4900,
+              priceImpactBps: 20,
+              avgPriceBps: 4990,
+            },
+            clob: { available: false, canFillFull: false, bestBidBps: null, bestAskBps: null },
+          },
+        },
+      ]);
+      const provider = new FlipCoinActionProvider({
+        fetchImpl: mockFetch as unknown as typeof fetch,
+      });
+      const result = JSON.parse(
+        await provider.getMarketOdds(createMockWallet(), {
+          conditionId: MOCK_CONDITION_ID,
+          side: "yes",
+          action: "sell",
+          amount: "3",
+        }),
+      );
+      expect(result.simulated.amountType).toBe("shares");
+      const [url] = mockFetch.mock.calls[0] as [string];
+      expect(url).toContain("action=sell");
+      expect(url).toContain("amount=3000000");
+    });
+
+    it("defaults to a 1-unit simulation when amount is omitted", async () => {
       const mockFetch = createMockFetch([
         {
           body: {
@@ -246,18 +290,10 @@ describe("FlipCoinActionProvider", () => {
       status: "awaiting_relay",
       venue: "lmsr",
       quote: {
-        quoteId: "q-1",
-        validUntil: "2026-04-23T12:00:12Z",
-        side: "yes",
-        action: "buy",
-        amount: "5000000",
         sharesOut: "9000000",
-        amountOut: "0",
         avgPriceBps: 5550,
         priceImpactBps: 100,
         fee: "15000",
-        minOut: "8910000",
-        maxFeeBps: 300,
       },
       typedData: {
         domain: {
@@ -335,6 +371,14 @@ describe("FlipCoinActionProvider", () => {
       expect(wallet.signTypedData).toHaveBeenCalledTimes(1);
       expect(wallet.signTypedData).toHaveBeenCalledWith(intentBody.typedData);
 
+      const intentCall = mockFetch.mock.calls[0] as [string, RequestInit];
+      const intentReq = JSON.parse(intentCall[1].body as string);
+      expect(intentReq.action).toBe("buy");
+      expect(intentReq.usdcAmount).toBe("5000000");
+      expect(intentReq.sharesAmount).toBeUndefined();
+      expect(intentReq.maxSlippageBps).toBe(100);
+      expect(intentReq.maxFeeBps).toBe(200);
+
       const relayCall = mockFetch.mock.calls[1] as [string, RequestInit];
       expect(relayCall[0]).toBe(`${FLIPCOIN_API_BASE_URL}/api/agent/trade/relay`);
       const relayBody = JSON.parse(relayCall[1].body as string);
@@ -344,16 +388,16 @@ describe("FlipCoinActionProvider", () => {
       );
     });
 
-    it("returns structured error when approval required", async () => {
+    it("returns structured error when approvalRequired is present on intent", async () => {
       const mockFetch = createMockFetch([
         {
           body: {
             ...intentBody,
             approvalRequired: {
               contract: "0xabc",
-              function: "setApprovalForAll",
+              function: "setApprovalForAll(address operator, bool approved)",
               operator: "0xrouter",
-              approved: false,
+              approved: true,
               hint: "Approve router",
             },
           },
@@ -365,14 +409,15 @@ describe("FlipCoinActionProvider", () => {
       });
       const wallet = createMockWallet();
       const result = JSON.parse(
-        await provider.buyPredictionShares(wallet, {
+        await provider.sellPredictionShares(wallet, {
           conditionId: MOCK_CONDITION_ID,
           side: "yes",
-          amountUsdc: "5",
+          shares: "5",
         }),
       );
       expect(result.success).toBe(false);
       expect(result.approvalRequired).toBeDefined();
+      expect(result.approvalRequired.operator).toBe("0xrouter");
       expect(wallet.signTypedData).not.toHaveBeenCalled();
     });
 
@@ -457,18 +502,10 @@ describe("FlipCoinActionProvider", () => {
             status: "awaiting_relay",
             venue: "lmsr",
             quote: {
-              quoteId: "q",
-              validUntil: "2026-04-23T12:00:12Z",
-              side: "yes",
-              action: "sell",
-              amount: "5000000",
               sharesOut: "0",
-              amountOut: "2500000",
               avgPriceBps: 5000,
               priceImpactBps: 10,
               fee: "5000",
-              minOut: "2475000",
-              maxFeeBps: 300,
             },
             typedData: {
               domain: {
@@ -515,6 +552,8 @@ describe("FlipCoinActionProvider", () => {
       const intentCall = mockFetch.mock.calls[0] as [string, RequestInit];
       const body = JSON.parse(intentCall[1].body as string);
       expect(body.action).toBe("sell");
+      expect(body.sharesAmount).toBe("5000000");
+      expect(body.usdcAmount).toBeUndefined();
     });
   });
 

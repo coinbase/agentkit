@@ -24,9 +24,11 @@ flipcoin/
   - Returns `sharesOut`, `priceImpactBps`, `avgPriceBps`, `quoteId` (valid ~12s).
 - `buy_prediction_shares` — buy YES or NO shares with USDC from the agent's vault.
   - Intent → `EvmWalletProvider.signTypedData()` (EIP-712 TradeIntent) → relay broadcast on-chain.
-  - Supports `maxSlippageBps` (default 200 = 2%).
+  - Supports `maxSlippageBps` (default 100 = 1%) and `maxFeeBps` (default 200 = 2%).
 - `sell_prediction_shares` — sell YES or NO shares back into the LMSR pool.
-  - Requires prior `ShareToken.setApprovalForAll(router, true)` from the trader wallet.
+  - Requires prior `ShareToken.setApprovalForAll(operator, true)` from the trader wallet.
+    The operator address is returned in the intent response's `approvalRequired.operator`
+    when missing — the provider surfaces it as a structured error.
 - `get_agent_portfolio` — list the agent's open/resolved positions with net side, entry price
   and unrealized P&L.
 
@@ -80,10 +82,12 @@ flow:
 ## Prerequisites
 
 - **EVM wallet**: the agent's wallet must be funded with a small amount of USDC on Base, and the
-  FlipCoin vault must be seeded via `POST /api/agent/vault/deposit/intent` before trading. The
-  wallet is the FlipCoin **trader**, so its address must match the API key's `owner_addr`.
-- **Selling** requires the trader wallet to have called `ShareToken.setApprovalForAll(router, true)`
-  once per chain. The provider surfaces a structured `approvalRequired` error if it's missing.
+  FlipCoin vault must be seeded via `POST /api/agent/vault/deposit` (two-phase intent → relay on
+  the same endpoint with `{ "action": "intent" | "relay", ... }`) before trading. The wallet is
+  the FlipCoin **trader**, so its address must match the API key's owner address.
+- **Selling** requires the trader wallet to have called `ShareToken.setApprovalForAll(operator, true)`
+  once per chain. The provider surfaces a structured `approvalRequired` error (with the exact
+  `operator` address) if it's missing.
 
 ## Network Support
 

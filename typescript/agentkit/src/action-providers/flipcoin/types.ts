@@ -76,18 +76,10 @@ export interface TradeIntentResponse {
   status: "awaiting_relay";
   venue: "lmsr";
   quote: {
-    quoteId: string;
-    validUntil: string;
-    side: "yes" | "no";
-    action: "buy" | "sell";
-    amount: string;
     sharesOut: string;
-    amountOut: string;
     avgPriceBps: number;
     priceImpactBps: number;
     fee: string;
-    minOut: string;
-    maxFeeBps: number;
   };
   typedData: TradeIntentTypedData;
   balanceCheck: {

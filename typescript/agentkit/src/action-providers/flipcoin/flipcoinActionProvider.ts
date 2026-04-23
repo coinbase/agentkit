@@ -148,8 +148,9 @@ points, 5000 = 50%), volume, trade count and resolution deadline. Filter by stat
     name: "get_market_odds",
     description: `
 Fetch current odds (YES/NO prices) and a firm quote for a FlipCoin prediction market. If you pass
-amountUsdc, the response includes sharesOut, priceImpact, and a quoteId valid for ~12 seconds
-(useful to preview a trade before committing). Prices in basis points: 5000 = 50%.
+an amount, the response includes sharesOut, priceImpact, and a quoteId valid for ~12 seconds
+(useful to preview a trade before committing). The amount is interpreted as USDC for action='buy'
+and as shares for action='sell'. Prices in basis points: 5000 = 50%.
 `,
     schema: GetMarketOddsSchema,
   })
@@ -161,9 +162,7 @@ amountUsdc, the response includes sharesOut, priceImpact, and a quoteId valid fo
       const side = args.side ?? "yes";
       const action = args.action ?? "buy";
       const amountRaw =
-        args.amountUsdc && args.amountUsdc.length > 0
-          ? parseUnits(args.amountUsdc, 6).toString()
-          : "1000000";
+        args.amount && args.amount.length > 0 ? parseUnits(args.amount, 6).toString() : "1000000";
 
       const params = new URLSearchParams({
         conditionId: args.conditionId,
@@ -182,7 +181,12 @@ amountUsdc, the response includes sharesOut, priceImpact, and a quoteId valid fo
         quoteId: quote.quoteId,
         validUntil: quote.validUntil,
         venue: quote.venue,
-        simulated: { side, action, amountUsdc: args.amountUsdc ?? "1" },
+        simulated: {
+          side,
+          action,
+          amount: args.amount ?? "1",
+          amountType: action === "sell" ? "shares" : "usdc",
+        },
         prices: {
           yesBps: quote.lmsr.priceYesBps,
           noBps: quote.lmsr.priceNoBps,
@@ -215,7 +219,7 @@ amountUsdc, the response includes sharesOut, priceImpact, and a quoteId valid fo
     description: `
 Buy YES or NO shares in a FlipCoin prediction market. Spends USDC from the agent's vault
 (must be pre-funded). The wallet signs an EIP-712 TradeIntent which FlipCoin's relayer broadcasts
-on-chain. Returns txHash and shares received. Pass maxSlippageBps (default 200 = 2%) to bound
+on-chain. Returns txHash and shares received. Pass maxSlippageBps (default 100 = 1%) to bound
 price impact. Use get_market_odds first to preview the trade.
 `,
     schema: BuySharesSchema,
@@ -228,7 +232,7 @@ price impact. Use get_market_odds first to preview the trade.
       conditionId: args.conditionId,
       side: args.side,
       action: "buy",
-      amount: parseUnits(args.amountUsdc, 6).toString(),
+      usdcAmount: parseUnits(args.amountUsdc, 6).toString(),
       humanAmount: args.amountUsdc,
       maxSlippageBps: args.maxSlippageBps ?? DEFAULT_MAX_SLIPPAGE_BPS,
     });
@@ -259,7 +263,7 @@ BackstopRouter — the response will include approvalRequired details if missing
       conditionId: args.conditionId,
       side: args.side,
       action: "sell",
-      amount: parseUnits(args.shares, 6).toString(),
+      sharesAmount: parseUnits(args.shares, 6).toString(),
       humanAmount: args.shares,
       maxSlippageBps: args.maxSlippageBps ?? DEFAULT_MAX_SLIPPAGE_BPS,
     });
@@ -324,7 +328,8 @@ Requires an API key with scope 'portfolio:read'.
    * @param params.conditionId - 0x-prefixed condition id of the target market.
    * @param params.side - Outcome side being traded ('yes' or 'no').
    * @param params.action - Trade direction ('buy' or 'sell').
-   * @param params.amount - On-wire amount (6 decimals, integer string).
+   * @param params.usdcAmount - Raw USDC amount (6 decimals) when action='buy'.
+   * @param params.sharesAmount - Raw shares amount (6 decimals) when action='sell'.
    * @param params.humanAmount - Human-readable amount for the success payload.
    * @param params.maxSlippageBps - Caller-supplied slippage tolerance in bps.
    * @returns JSON string describing the outcome (txHash on success, structured error otherwise).
@@ -335,7 +340,8 @@ Requires an API key with scope 'portfolio:read'.
       conditionId: string;
       side: "yes" | "no";
       action: "buy" | "sell";
-      amount: string;
+      usdcAmount?: string;
+      sharesAmount?: string;
       humanAmount: string;
       maxSlippageBps: number;
     },
@@ -343,18 +349,24 @@ Requires an API key with scope 'portfolio:read'.
     try {
       this.requireApiKey(`${params.action}_prediction_shares`);
 
+      const body: Record<string, unknown> = {
+        conditionId: params.conditionId,
+        side: params.side,
+        action: params.action,
+        maxSlippageBps: params.maxSlippageBps,
+        maxFeeBps: DEFAULT_MAX_FEE_BPS,
+        venue: "auto",
+      };
+      if (params.action === "buy") {
+        body.usdcAmount = params.usdcAmount;
+      } else {
+        body.sharesAmount = params.sharesAmount;
+      }
+
       const intent = await this.request<TradeIntentResponse>("/api/agent/trade/intent", {
         method: "POST",
         authenticated: true,
-        body: {
-          conditionId: params.conditionId,
-          side: params.side,
-          action: params.action,
-          amount: params.amount,
-          maxSlippageBps: params.maxSlippageBps,
-          maxFeeBps: DEFAULT_MAX_FEE_BPS,
-          venue: "auto",
-        },
+        body,
       });
 
       if (intent.priceImpactGuard.level === "blocked") {
@@ -366,12 +378,14 @@ Requires an API key with scope 'portfolio:read'.
         });
       }
 
-      if (intent.approvalRequired && !intent.approvalRequired.approved) {
+      // `approvalRequired` is returned ONLY when ShareToken approval is missing.
+      // The nested `approved: true` is the TARGET value for setApprovalForAll, not current state.
+      if (intent.approvalRequired) {
         return JSON.stringify({
           success: false,
-          error: "Approval required before trading",
+          error: "Approval required before selling shares",
           approvalRequired: intent.approvalRequired,
-          hint: "Call ShareToken.setApprovalForAll(operator, true) from the trader wallet, then retry.",
+          hint: "Call ShareToken.setApprovalForAll(approvalRequired.operator, true) from the trader wallet, then retry.",
         });
       }
 

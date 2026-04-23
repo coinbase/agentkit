@@ -15,11 +15,12 @@ export const SUPPORTED_CHAIN_IDS = {
 
 /**
  * Default max slippage for LMSR trades (basis points).
- * Aligned with FlipCoin's LMSR_SLIPPAGE_DEFAULT_BPS.
+ * Matches FlipCoin's documented default (100 = 1%).
  */
-export const DEFAULT_MAX_SLIPPAGE_BPS = 200;
+export const DEFAULT_MAX_SLIPPAGE_BPS = 100;
 
 /**
  * Default max fee for LMSR trades (basis points).
+ * Matches FlipCoin's documented default (200 = 2%).
  */
-export const DEFAULT_MAX_FEE_BPS = 300;
+export const DEFAULT_MAX_FEE_BPS = 200;

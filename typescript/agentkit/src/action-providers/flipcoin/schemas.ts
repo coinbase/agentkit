@@ -54,13 +54,13 @@ export const GetMarketOddsSchema = z
       .nullable()
       .optional()
       .describe("Whether to simulate a buy or sell. Defaults to 'buy'."),
-    amountUsdc: z
+    amount: z
       .string()
       .regex(/^\d+(\.\d+)?$/)
       .nullable()
       .optional()
       .describe(
-        "Optional human-readable USDC amount (e.g. '10' = $10) used for firm-quote simulation. Required when you want sharesOut / priceImpact.",
+        "Optional human-readable amount used for firm-quote simulation. Interpreted as USDC when action='buy' (e.g. '10' = $10) and as shares when action='sell' (e.g. '10' = 10 shares). Required when you want sharesOut / priceImpact.",
       ),
   })
   .describe("Parameters for fetching market odds / firm quote.");
@@ -86,7 +86,7 @@ export const BuySharesSchema = z
       .max(10000)
       .nullable()
       .optional()
-      .describe("Maximum slippage tolerance in basis points (10000 = 100%). Defaults to 200 (2%)."),
+      .describe("Maximum slippage tolerance in basis points (10000 = 100%). Defaults to 100 (1%)."),
   })
   .describe("Parameters for buying shares in a FlipCoin prediction market.");
 
@@ -111,7 +111,7 @@ export const SellSharesSchema = z
       .max(10000)
       .nullable()
       .optional()
-      .describe("Maximum slippage tolerance in basis points. Defaults to 200 (2%)."),
+      .describe("Maximum slippage tolerance in basis points. Defaults to 100 (1%)."),
   })
   .describe("Parameters for selling shares in a FlipCoin prediction market.");
 
