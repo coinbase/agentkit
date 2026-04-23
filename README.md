@@ -205,6 +205,7 @@ agentkit/
 - Python API References
   - [AgentKit](https://coinbase.github.io/agentkit/coinbase-agentkit/python/index.html)
   - [AgentKit Langchain Extension](https://coinbase.github.io/agentkit/coinbase-agentkit-langchain/python/index.html)
+  - [AgentKit CrewAI Extension](./python/framework-extensions/crewai/README.md)
   - [AgentKit OpenAI Agents SDK Extension](./python/framework-extensions/openai-agents-sdk/README.md)
   - [AgentKit Strands Agents Extension](./python/framework-extensions/strands-agents/README.md)
 - Node.js API References

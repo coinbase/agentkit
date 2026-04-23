@@ -1,0 +1,48 @@
+[project]
+name = "crew-ai-chatbot-python"
+version = "0.0.1"
+description = "CrewAI AgentKit Example Chatbot"
+authors = [{ name = "Coinbase Developer Platform", email = "cdp-support@coinbase.com" }]
+requires-python = "~=3.10"
+readme = "README.md"
+dependencies = [
+    "coinbase-agentkit",
+    "coinbase-agentkit-crewai",
+    "crewai>=1.14.0,<2",
+    "python-dotenv>=1.0.1,<2",
+]
+
+[dependency-groups]
+dev = ["ruff>=0.7.1,<0.8"]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+coinbase-agentkit = { path = "../../../python/coinbase-agentkit", editable = true }
+coinbase-agentkit-crewai = { path = "../../../python/framework-extensions/crewai", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.crew-ai-chatbot]
+private = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = ["./build/**", "./dist/**"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "D", "UP", "B", "C4", "SIM", "RUF"]
+ignore = ["D213", "D203", "D100", "D104", "D107", "E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+known-first-party = ["coinbase_agentkit", "coinbase_agentkit_crewai"]
