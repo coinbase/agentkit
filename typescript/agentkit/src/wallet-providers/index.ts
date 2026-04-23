@@ -12,3 +12,4 @@ export * from "./privyEvmWalletProvider";
 export * from "./privySvmWalletProvider";
 export * from "./privyEvmDelegatedEmbeddedWalletProvider";
 export * from "./zeroDevWalletProvider";
+export * from "./waapWalletProvider";
