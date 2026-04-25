@@ -1,6 +1,9 @@
 name: Run Unit Tests
 on: [pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   test-coinbase-agentkit-python:
     runs-on: ubuntu-latest
