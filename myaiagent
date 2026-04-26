@@ -1,0 +1,14 @@
+import { streamText } from 'ai'
+
+const result = streamText({
+  model: 'anthropic/claude-opus-4.6',
+  prompt: 'Why is the sky blue?',
+  providerOptions: {
+    anthropic: {
+      speed: 'fast',
+    },
+    gateway: {
+      only: ['anthropic'],
+    },
+  },
+})
