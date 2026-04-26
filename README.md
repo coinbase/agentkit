@@ -1,16 +1,4 @@
-<div align="center">
-  <p>
-    <a href="https://docs.cdp.coinbase.com/agentkit/docs/welcome">
-      <img src="./agentkit_banner.png"/>
-    </a>
-  </p>
-  <h1 style="font-size: 3em; margin-bottom: 20px;">
-    AgentKit
-  </h1>
-
-  <p style="font-size: 1.2em; max-width: 600px; margin: 0 auto 20px;">
-    Every agent deserves a wallet.
-  </p>
+My Coinbase agent kit
 
 [![](https://github.com/coinbase/agentkit/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/coinbase/agentkit/actions/workflows/github-code-scanning/codeql)
 [![pypi downloads](https://img.shields.io/pypi/dm/coinbase-agentkit?label=pypi:coinbase-agentkit&style=flat-square)](https://pypistats.org/packages/coinbase-agentkit)
