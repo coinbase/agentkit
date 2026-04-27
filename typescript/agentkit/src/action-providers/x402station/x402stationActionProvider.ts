@@ -7,6 +7,7 @@ import { x402Client, wrapFetchWithPayment } from "@x402/fetch";
 import { registerExactEvmScheme } from "@x402/evm/exact/client";
 import {
   CatalogDecoysSchema,
+  AlternativesSchema,
   ForensicsSchema,
   PreflightSchema,
   WatchStatusSchema,
@@ -358,6 +359,34 @@ export class X402stationActionProvider extends ActionProvider<EvmWalletProvider>
     _args: z.infer<typeof CatalogDecoysSchema>,
   ): Promise<string> {
     return this.callPaid(walletProvider, "/api/v1/catalog/decoys", {});
+  }
+
+  /**
+   * Routing fallback — siblings to a flagged endpoint.
+   *
+   * @param walletProvider - Agent's wallet (signs the $0.005 payment).
+   * @param args - { url?, taskClass?, limit? } — at least one of url/taskClass
+   *               required; limit is 1..10, default 5.
+   * @returns JSON-stringified `{ target, match_strategy, alternatives[],
+   *          candidate_count }`. Each alternative carries url, service,
+   *          provider, domain, category, price_usdc, uptime_1h_pct,
+   *          uptime_7d_pct, avg_latency_1h_ms, match_reason.
+   */
+  @CreateAction({
+    name: "alternatives",
+    description:
+      "Routing fallback. Given a URL flagged by preflight (or a taskClass hint), returns up to 5 healthy sibling endpoints in the same provider/domain/category/price-band. Filters out 7-day-dead and 1-hour-erroring candidates; ranks by uptime + latency. Costs $0.005 USDC. Use this immediately after preflight returns ok=false — it answers 'where do I go instead?'. Pass {url} when you have a specific URL the agent was about to pay; pass {taskClass} (e.g. 'llm-completions', 'Inference') when discovering by service category; or both for a richer match.",
+    schema: AlternativesSchema,
+  })
+  async alternatives(
+    walletProvider: EvmWalletProvider,
+    args: z.infer<typeof AlternativesSchema>,
+  ): Promise<string> {
+    const body: Record<string, unknown> = {};
+    if (args.url) body.url = args.url;
+    if (args.taskClass) body.taskClass = args.taskClass;
+    if (args.limit !== undefined) body.limit = args.limit;
+    return this.callPaid(walletProvider, "/api/v1/alternatives", body);
   }
 
   /**

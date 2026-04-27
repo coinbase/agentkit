@@ -60,6 +60,42 @@ export const ForensicsSchema = PreflightSchema;
 export const CatalogDecoysSchema = z.object({}).describe("No parameters required");
 
 /**
+ * Input for the `alternatives` action — given a flagged URL OR a taskClass
+ * hint, returns up to `limit` (default 5, max 10) healthy sibling endpoints
+ * in the same provider / domain / category / price-band. Filtered to those
+ * passing the same 1h + 7d health checks preflight uses; ranked by
+ * uptime_7d_pct DESC then avg_latency_1h_ms ASC. At least one of `url` or
+ * `taskClass` is required.
+ */
+export const AlternativesSchema = z
+  .object({
+    url: z
+      .string()
+      .url()
+      .optional()
+      .describe(
+        "URL flagged by preflight (or otherwise rejected). Looked up in the catalog to extract provider / domain / category / price band as match keys.",
+      ),
+    taskClass: z
+      .string()
+      .max(80)
+      .optional()
+      .describe(
+        "Service category hint (e.g. 'llm-completions', 'Inference'). Used as a fallback match key when `url` is unknown to the catalog, OR alone for category-only discovery.",
+      ),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(10)
+      .optional()
+      .describe("Max alternatives to return (1..10, default 5)."),
+  })
+  .refine((v) => v.url !== undefined || v.taskClass !== undefined, {
+    message: "alternatives requires at least one of `url` or `taskClass`",
+  });
+
+/**
  * Input for `watch_subscribe`. Pays $0.01 USDC, returns a watchId + a 64-char
  * hex secret. The secret is the HMAC seed for verifying delivery payloads
  * and is only returned once — store it.

@@ -266,6 +266,45 @@ describe("X402stationActionProvider", () => {
       expect(call[1].body).toBe("{}");
     });
 
+    it("alternatives posts to /api/v1/alternatives with url body", async () => {
+      const provider = new X402stationActionProvider();
+      const wallet = buildMockEvmWallet();
+      mockFetchWithPayment.mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: jest.fn().mockResolvedValue("{}"),
+        headers: { get: () => null },
+      });
+      await provider.alternatives(wallet, {
+        url: "https://api.venice.ai/api/v1/chat/completions",
+      });
+      const call = mockFetchWithPayment.mock.calls[0];
+      expect(call[0]).toBe("https://x402station.io/api/v1/alternatives");
+      expect(JSON.parse(call[1].body)).toEqual({
+        url: "https://api.venice.ai/api/v1/chat/completions",
+      });
+    });
+
+    it("alternatives accepts taskClass + limit, omits unset fields", async () => {
+      const provider = new X402stationActionProvider();
+      const wallet = buildMockEvmWallet();
+      mockFetchWithPayment.mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: jest.fn().mockResolvedValue("{}"),
+        headers: { get: () => null },
+      });
+      await provider.alternatives(wallet, { taskClass: "llm-completions", limit: 3 });
+      const body = JSON.parse(mockFetchWithPayment.mock.calls[0][1].body);
+      expect(body).toEqual({ taskClass: "llm-completions", limit: 3 });
+      expect(body).not.toHaveProperty("url");
+    });
+
+    // Server-side rejects empty body with HTTP 400; schema-level refine over
+    // a fully-optional object can pass parse (depending on zod version
+    // handling of the empty-object case), so we rely on the route check
+    // rather than the schema for that edge.
+
     it("watch_subscribe omits signals when not provided", async () => {
       const provider = new X402stationActionProvider();
       const wallet = buildMockEvmWallet();
