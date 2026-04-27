@@ -96,6 +96,26 @@ describe("X402stationActionProvider", () => {
       const provider = new X402stationActionProvider({ baseUrl: "http://[::1]:3002" });
       expect((provider as unknown as { baseUrl: string }).baseUrl).toBe("http://[::1]:3002");
     });
+
+    it("rejects localhost.attacker.com (CodeRabbit: prefix-match bypass)", () => {
+      // u.host.startsWith("localhost") would PASS this attacker domain.
+      // Implementation must use u.hostname exact-match.
+      expect(
+        () => new X402stationActionProvider({ baseUrl: "http://localhost.attacker.com" }),
+      ).toThrow(/baseUrl must be/i);
+    });
+
+    it("rejects 127.0.0.1.evil.example (CodeRabbit: prefix-match bypass)", () => {
+      expect(
+        () => new X402stationActionProvider({ baseUrl: "http://127.0.0.1.evil.example" }),
+      ).toThrow(/baseUrl must be/i);
+    });
+
+    it("rejects localhost-impersonation suffixes", () => {
+      expect(
+        () => new X402stationActionProvider({ baseUrl: "http://localhost-evil.example" }),
+      ).toThrow(/baseUrl must be/i);
+    });
   });
 
   describe("supportsNetwork", () => {

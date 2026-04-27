@@ -40,16 +40,17 @@ function resolveBaseUrl(raw: string | undefined): string {
   } catch {
     throw new Error(`x402station: baseUrl is not a valid URL: ${value}`);
   }
-  // u.host (NOT u.hostname) so a non-default port doesn't bypass the
-  // allowlist — `x402station.io:9999`.hostname === "x402station.io".
+  // Canonical: `u.host` (NOT `u.hostname`) so a non-default port can't
+  // bypass — `x402station.io:9999`.hostname is "x402station.io" but
+  // `.host` keeps the port.
   const isCanonical = u.host === "x402station.io" && u.protocol === "https:";
-  // IPv6 loopback `[::1]` is included so dual-stack dev machines that
-  // bind their oracle to `::1` work. Caught by Greptile review on the
-  // sibling Daydreams Lucid PR (2026-04-27).
+  // localDev: `u.hostname` exact-match (NOT `u.host.startsWith(...)`)
+  // so a host like `localhost.attacker.com` or `127.0.0.1.evil.example`
+  // can't pass the loopback check via prefix. WHATWG `URL.hostname`
+  // returns `[::1]` (with brackets per RFC 2732) for IPv6 literals.
+  // CodeRabbit (mastra-ai/mastra#15804, 2026-04-27).
   const isLocalDev =
-    (u.host.startsWith("localhost") ||
-      u.host.startsWith("127.0.0.1") ||
-      u.host.startsWith("[::1]")) &&
+    (u.hostname === "localhost" || u.hostname === "127.0.0.1" || u.hostname === "[::1]") &&
     (u.protocol === "http:" || u.protocol === "https:");
   if (!isCanonical && !isLocalDev) {
     throw new Error(
