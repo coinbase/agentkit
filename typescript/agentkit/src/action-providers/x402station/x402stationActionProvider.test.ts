@@ -266,6 +266,38 @@ describe("X402stationActionProvider", () => {
       expect(call[1].body).toBe("{}");
     });
 
+    it("whats_new posts to /api/v1/whats-new with empty body when no args", async () => {
+      const provider = new X402stationActionProvider();
+      const wallet = buildMockEvmWallet();
+      mockFetchWithPayment.mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: jest.fn().mockResolvedValue("{}"),
+        headers: { get: () => null },
+      });
+      await provider.whatsNew(wallet, {});
+      const call = mockFetchWithPayment.mock.calls[0];
+      expect(call[0]).toBe("https://x402station.io/api/v1/whats-new");
+      expect(call[1].body).toBe("{}");
+    });
+
+    it("whats_new threads since + limit through", async () => {
+      const provider = new X402stationActionProvider();
+      const wallet = buildMockEvmWallet();
+      mockFetchWithPayment.mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: jest.fn().mockResolvedValue("{}"),
+        headers: { get: () => null },
+      });
+      await provider.whatsNew(wallet, {
+        since: "2026-04-27T00:00:00Z",
+        limit: 50,
+      });
+      const body = JSON.parse(mockFetchWithPayment.mock.calls[0][1].body);
+      expect(body).toEqual({ since: "2026-04-27T00:00:00Z", limit: 50 });
+    });
+
     it("alternatives posts to /api/v1/alternatives with url body", async () => {
       const provider = new X402stationActionProvider();
       const wallet = buildMockEvmWallet();

@@ -60,6 +60,30 @@ export const ForensicsSchema = PreflightSchema;
 export const CatalogDecoysSchema = z.object({}).describe("No parameters required");
 
 /**
+ * Input for the `whats_new` action — catalog diff polling. `since` is an ISO
+ * 8601 timestamp (default = now() - 24h, cap 30 days back). `limit` caps each
+ * of added_endpoints[] and removed_endpoints[] (1..500, default 200).
+ */
+export const WhatsNewSchema = z.object({
+  since: z
+    .string()
+    .datetime()
+    .optional()
+    .describe(
+      "ISO 8601 timestamp. Default = now() - 24h. Cannot be older than 30 days or in the future.",
+    ),
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(500)
+    .optional()
+    .describe(
+      "Per-list cap (1..500, default 200). Applied independently to added_endpoints and removed_endpoints.",
+    ),
+});
+
+/**
  * Input for the `alternatives` action — given a flagged URL OR a taskClass
  * hint, returns up to `limit` (default 5, max 10) healthy sibling endpoints
  * in the same provider / domain / category / price-band. Filtered to those

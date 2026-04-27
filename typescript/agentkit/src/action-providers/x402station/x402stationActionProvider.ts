@@ -8,6 +8,7 @@ import { registerExactEvmScheme } from "@x402/evm/exact/client";
 import {
   CatalogDecoysSchema,
   AlternativesSchema,
+  WhatsNewSchema,
   ForensicsSchema,
   PreflightSchema,
   WatchStatusSchema,
@@ -359,6 +360,33 @@ export class X402stationActionProvider extends ActionProvider<EvmWalletProvider>
     _args: z.infer<typeof CatalogDecoysSchema>,
   ): Promise<string> {
     return this.callPaid(walletProvider, "/api/v1/catalog/decoys", {});
+  }
+
+  /**
+   * Catalog diff polling — what was added / removed since `since`.
+   *
+   * @param walletProvider - Agent's wallet (signs the $0.001 payment).
+   * @param args - { since?, limit? }. `since` defaults to now-24h on the
+   *               server side; `limit` caps each of added_endpoints[] and
+   *               removed_endpoints[] (1..500, default 200).
+   * @returns JSON-stringified `{ since, until, window_hours,
+   *          added_endpoints[], removed_endpoints[], summary,
+   *          truncated, limit }`.
+   */
+  @CreateAction({
+    name: "whats_new",
+    description:
+      "Catalog diff polling. Body { since?, limit? } (default since=now-24h, limit=200, max 500). Returns added_endpoints[] (first_seen_at >= since AND is_active=true), removed_endpoints[] (flipped to is_active=false since), service-level counts, polls_in_window, and current active totals. Costs $0.001 USDC. Designed for aggregator agents to poll hourly without breaking the bank — internal ingest cron runs every 5 min, so polling more often returns identical data.",
+    schema: WhatsNewSchema,
+  })
+  async whatsNew(
+    walletProvider: EvmWalletProvider,
+    args: z.infer<typeof WhatsNewSchema>,
+  ): Promise<string> {
+    const body: Record<string, unknown> = {};
+    if (args.since !== undefined) body.since = args.since;
+    if (args.limit !== undefined) body.limit = args.limit;
+    return this.callPaid(walletProvider, "/api/v1/whats-new", body);
   }
 
   /**
