@@ -60,6 +60,27 @@ export const ForensicsSchema = PreflightSchema;
 export const CatalogDecoysSchema = z.object({}).describe("No parameters required");
 
 /**
+ * Input for the `buy_credits` action — buy a 1000-call preflight bundle for
+ * $0.50 USDC. No parameters; price + bundle size are fixed in v1.
+ */
+export const BuyCreditsSchema = z
+  .object({})
+  .describe(
+    "Buy 1000 prepaid /api/v1/preflight calls for $0.50 USDC. No parameters in v1.",
+  );
+
+/**
+ * Input for the `credits_status` action — read a credit's balance + expiry.
+ * UUID-only access; the creditId is the bearer token returned by buy_credits.
+ */
+export const CreditsStatusSchema = z.object({
+  creditId: z
+    .string()
+    .uuid()
+    .describe("The creditId UUID returned by buy_credits."),
+});
+
+/**
  * Input for the `whats_new` action — catalog diff polling. `since` is an ISO
  * 8601 timestamp (default = now() - 24h, cap 30 days back). `limit` caps each
  * of added_endpoints[] and removed_endpoints[] (1..500, default 200).

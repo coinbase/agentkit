@@ -266,6 +266,42 @@ describe("X402stationActionProvider", () => {
       expect(call[1].body).toBe("{}");
     });
 
+    it("buy_credits posts to /api/v1/credits with empty body", async () => {
+      const provider = new X402stationActionProvider();
+      const wallet = buildMockEvmWallet();
+      mockFetchWithPayment.mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: jest.fn().mockResolvedValue(
+          JSON.stringify({ creditId: "0a44f6b8-3b7d-4f2a-9e3a-2c5fd1b0aa11", balance: 1000 }),
+        ),
+        headers: { get: () => null },
+      });
+      await provider.buyCredits(wallet, {});
+      const call = mockFetchWithPayment.mock.calls[0];
+      expect(call[0]).toBe("https://x402station.io/api/v1/credits");
+      expect(call[1].body).toBe("{}");
+    });
+
+    it("credits_status GETs /api/v1/credits/<id> without secret header", async () => {
+      const provider = new X402stationActionProvider();
+      const fetchSpy = jest.spyOn(global, "fetch").mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve('{"balance":999}'),
+      } as unknown as Response);
+      await provider.creditsStatus({ creditId: "0a44f6b8-3b7d-4f2a-9e3a-2c5fd1b0aa11" });
+      const [url, init] = fetchSpy.mock.calls[0]!;
+      expect(url).toBe(
+        "https://x402station.io/api/v1/credits/0a44f6b8-3b7d-4f2a-9e3a-2c5fd1b0aa11",
+      );
+      expect((init as RequestInit).method).toBe("GET");
+      // Empty `secret` arg → no x-x402station-secret header attached.
+      const headers = (init as RequestInit).headers as Record<string, string> | undefined;
+      expect(headers?.["x-x402station-secret"]).toBeUndefined();
+      fetchSpy.mockRestore();
+    });
+
     it("whats_new posts to /api/v1/whats-new with empty body when no args", async () => {
       const provider = new X402stationActionProvider();
       const wallet = buildMockEvmWallet();

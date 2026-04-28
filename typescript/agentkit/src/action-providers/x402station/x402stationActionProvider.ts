@@ -9,6 +9,8 @@ import {
   CatalogDecoysSchema,
   AlternativesSchema,
   WhatsNewSchema,
+  BuyCreditsSchema,
+  CreditsStatusSchema,
   ForensicsSchema,
   PreflightSchema,
   WatchStatusSchema,
@@ -249,10 +251,16 @@ export class X402stationActionProvider extends ActionProvider<EvmWalletProvider>
     secret: string,
   ): Promise<string> {
     let r: Response;
+    // Watch routes need x-x402station-secret. The credits-status route
+    // (id-gated, secret-less) doesn't — pass an empty `secret` and we
+    // skip the header so we don't ship "x-x402station-secret: "
+    // (could trip a future strict-validation check).
+    const headers: Record<string, string> = {};
+    if (secret) headers["x-x402station-secret"] = secret;
     try {
       r = await fetch(`${this.baseUrl}${path}`, {
         method,
-        headers: { "x-x402station-secret": secret },
+        headers,
         signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
       });
     } catch (err) {
@@ -387,6 +395,51 @@ export class X402stationActionProvider extends ActionProvider<EvmWalletProvider>
     if (args.since !== undefined) body.since = args.since;
     if (args.limit !== undefined) body.limit = args.limit;
     return this.callPaid(walletProvider, "/api/v1/whats-new", body);
+  }
+
+  /**
+   * Buy 1000 prepaid /api/v1/preflight calls.
+   *
+   * @param walletProvider - Agent's wallet (signs the $0.50 payment).
+   * @returns JSON-stringified `{ creditId, balance: 1000, initialBalance,
+   *          paidAmount, payerAddress, createdAt, expiresAt, usage }`.
+   *          STORE the creditId — bearer token, not retrievable later.
+   *          Pass via X-Credit-Id header on subsequent /api/v1/preflight
+   *          calls; on exhaustion/expiry the route falls through to
+   *          per-call x402 automatically.
+   */
+  @CreateAction({
+    name: "buy_credits",
+    description:
+      "Buy 1000 prepaid /api/v1/preflight calls for $0.50 USDC. Effective rate $0.0005/call (50% off the per-call $0.001 tier). Returns { creditId, balance, expiresAt }. STORE THE creditId — bearer token, not retrievable later. Pass via X-Credit-Id header on subsequent /api/v1/preflight calls; on exhaustion (balance=0) or expiry (90 days) the middleware falls through to per-call x402 automatically. Use this once you've decided to do high-volume preflight work.",
+    schema: BuyCreditsSchema,
+  })
+  async buyCredits(
+    walletProvider: EvmWalletProvider,
+    _args: z.infer<typeof BuyCreditsSchema>,
+  ): Promise<string> {
+    return this.callPaid(walletProvider, "/api/v1/credits", {});
+  }
+
+  /**
+   * Read a credit's balance + expiry. Free, id-gated.
+   *
+   * @param args - { creditId: uuid } returned by buy_credits.
+   * @returns JSON-stringified `{ creditId, balance, initialBalance, used,
+   *          paidAmount, createdAt, expiresAt, expired, paymentTx,
+   *          paymentNetwork }`. 404 covers both malformed UUID and
+   *          unknown credit (same body, anti-enumeration).
+   */
+  @CreateAction({
+    name: "credits_status",
+    description:
+      "Read a credit's current balance + expiry. Free, no payment required. UUID-only access — anyone holding the creditId can read state, same as decrement. Returns 404 for unknown / malformed UUIDs (same response so an attacker scraping random UUIDs can't tell them apart).",
+    schema: CreditsStatusSchema,
+  })
+  async creditsStatus(
+    args: z.infer<typeof CreditsStatusSchema>,
+  ): Promise<string> {
+    return this.callFree(`/api/v1/credits/${args.creditId}`, "GET", "");
   }
 
   /**
