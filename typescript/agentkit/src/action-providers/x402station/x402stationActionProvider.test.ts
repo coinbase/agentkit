@@ -1,5 +1,5 @@
 import { X402stationActionProvider } from "./x402stationActionProvider";
-import { WatchSubscribeSchema } from "./schemas";
+import { WatchSubscribeSchema, validateWebhookUrl } from "./schemas";
 import { EvmWalletProvider } from "../../wallet-providers";
 import { Network } from "../../network";
 import { x402Client, wrapFetchWithPayment } from "@x402/fetch";
@@ -522,6 +522,32 @@ describe("X402stationActionProvider", () => {
         "https://x402station.io/api/v1/watch/0a44f6b8-3b7d-4f2a-9e3a-2c5fd1b0aa11",
         expect.objectContaining({ method: "DELETE" }),
       );
+    });
+  });
+
+  // audit-2026-04-29 recon-7 HIGH-8 regression — webhookUrl SSRF guard.
+  // Pure (no DNS) host check rejects loopback / private / link-local /
+  // cloud-metadata / userinfo URLs client-side.
+  describe("validateWebhookUrl (SSRF guard)", () => {
+    it.each([
+      ["public HTTPS — ok", "https://my-agent.example.com/x402-alerts", true],
+      ["plain HTTP — reject", "http://example.com/x402-alerts", false],
+      ["localhost — reject", "https://localhost/hook", false],
+      ["127.0.0.1 — reject", "https://127.0.0.1/hook", false],
+      ["127.0.0.5 — reject (any 127/8)", "https://127.0.0.5:8443/hook", false],
+      ["cloud metadata 169.254.169.254 — reject", "https://169.254.169.254/hook", false],
+      ["link-local 169.254.5.5 — reject", "https://169.254.5.5/hook", false],
+      ["RFC1918 10.0.0.5 — reject", "https://10.0.0.5/hook", false],
+      ["RFC1918 192.168.1.1 — reject", "https://192.168.1.1/hook", false],
+      ["RFC1918 172.16.0.5 — reject", "https://172.16.0.5/hook", false],
+      ["CGNAT 100.64.0.1 — reject", "https://100.64.0.1/hook", false],
+      ["IPv6 loopback [::1] — reject", "https://[::1]/hook", false],
+      ["IPv6 ULA [fc00::1] — reject", "https://[fc00::1]/hook", false],
+      ["IPv6 link-local [fe80::1] — reject", "https://[fe80::1]/hook", false],
+      ["userinfo spoof — reject", "https://api.good.com@evil.com/hook", false],
+      ["user:pass — reject", "https://user:pass@example.com/hook", false],
+    ])("%s", (_label, url, expectOk) => {
+      expect(validateWebhookUrl(url as string).ok).toBe(expectOk);
     });
   });
 });

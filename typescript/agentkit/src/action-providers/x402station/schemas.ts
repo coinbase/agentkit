@@ -1,5 +1,89 @@
 import { z } from "zod";
 
+// Pure (no DNS) host check for `webhookUrl` on watch_subscribe. Fails
+// fast LOCAL when the operator passes a private/loopback/cloud-metadata
+// host, before the call reaches the x402station server (which has its
+// own SSRF guard at /api/v1/watch). Defense-in-depth, audit-2026-04-29
+// recon-7 HIGH-8.
+function isPrivateIPv4(ip: string): boolean {
+  const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(ip);
+  if (!m) return false;
+  const a = Number.parseInt(m[1]!, 10);
+  const b = Number.parseInt(m[2]!, 10);
+  const c = Number.parseInt(m[3]!, 10);
+  const d = Number.parseInt(m[4]!, 10);
+  if ([a, b, c, d].some((n) => Number.isNaN(n) || n < 0 || n > 255)) return true;
+  if (a === 0 || a === 10 || a === 127) return true;
+  if (a === 169 && b === 254) return true;
+  if (a === 172 && b >= 16 && b <= 31) return true;
+  if (a === 192 && b === 168) return true;
+  if (a === 192 && b === 0 && c === 0) return true;
+  if (a === 100 && b >= 64 && b <= 127) return true;
+  if (a >= 224) return true;
+  return false;
+}
+function isPrivateIPv6(host: string): boolean {
+  let h = host.toLowerCase();
+  if (h.startsWith("[") && h.endsWith("]")) h = h.slice(1, -1);
+  if (h === "::" || h === "::1") return true;
+  if (/^fe[89ab]/.test(h)) return true;
+  if (/^f[cd]/.test(h)) return true;
+  if (/^ff/.test(h)) return true;
+  if (h.startsWith("::ffff:")) return true;
+  if (h.startsWith("::") && h.length > 2 && /^::[0-9a-f]/.test(h)) return true;
+  if (h.startsWith("64:ff9b:")) return true;
+  if (h.startsWith("100:")) return true;
+  if (h.startsWith("2001:db8")) return true;
+  if (/^3fff/.test(h)) return true;
+  if (h.startsWith("2001:2:") || h.startsWith("2001:0002:")) return true;
+  if (h.startsWith("5f00:")) return true;
+  if (h.startsWith("2002:")) return true;
+  if (h.startsWith("2001::") || /^2001:0+:/.test(h)) return true;
+  return false;
+}
+const LOCALHOST_NAMES = new Set(["localhost", "localhost.localdomain"]);
+export function validateWebhookUrl(rawUrl: string): { ok: true } | { ok: false; reason: string } {
+  let u: URL;
+  try {
+    u = new URL(rawUrl);
+  } catch {
+    return { ok: false, reason: "invalid URL" };
+  }
+  if (u.protocol !== "https:") {
+    return {
+      ok: false,
+      reason: "webhookUrl must use HTTPS — HMAC-signed alert payloads must not travel in clear text",
+    };
+  }
+  if (u.username !== "" || u.password !== "") {
+    return {
+      ok: false,
+      reason: "webhookUrl must not contain userinfo (user:pass@host) — known phishing/spoofing vector",
+    };
+  }
+  const hostname = u.hostname.toLowerCase();
+  if (LOCALHOST_NAMES.has(hostname)) {
+    return { ok: false, reason: `webhookUrl hostname is loopback (${hostname})` };
+  }
+  if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname)) {
+    if (isPrivateIPv4(hostname)) {
+      return {
+        ok: false,
+        reason: `webhookUrl IPv4 ${hostname} is loopback / private / link-local / cloud-metadata`,
+      };
+    }
+  }
+  if (hostname.startsWith("[")) {
+    if (isPrivateIPv6(hostname)) {
+      return {
+        ok: false,
+        reason: `webhookUrl IPv6 ${hostname} is loopback / ULA / link-local / v4-mapped / NAT64`,
+      };
+    }
+  }
+  return { ok: true };
+}
+
 /**
  * Configuration options for X402stationActionProvider.
  */
@@ -153,12 +237,14 @@ export const WatchSubscribeSchema = z.object({
   webhookUrl: z
     .string()
     .url()
-    .refine((u) => u.startsWith("https://"), {
-      message:
-        "webhookUrl must use HTTPS — HMAC-signed alert payloads must not travel in clear text",
+    .superRefine((u, ctx) => {
+      const r = validateWebhookUrl(u);
+      if (!r.ok) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: r.reason });
+      }
     })
     .describe(
-      "Where x402station will POST alert payloads. Must be HTTPS (HMAC-signed payloads must travel encrypted) and reachable from the public internet.",
+      "Where x402station will POST alert payloads. Must be HTTPS, reachable from the public internet, and contain no userinfo. Loopback / private / link-local / cloud-metadata / IPv6 ULA / NAT64 / 6to4 hosts are rejected client-side.",
     ),
   signals: z
     .array(SignalEnum)
