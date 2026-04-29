@@ -547,7 +547,8 @@ describe("X402stationActionProvider", () => {
       ["userinfo spoof — reject", "https://api.good.com@evil.com/hook", false],
       ["user:pass — reject", "https://user:pass@example.com/hook", false],
     ])("%s", (_label, url, expectOk) => {
-      expect(validateWebhookUrl(url as string).ok).toBe(expectOk);
+      // null = ok, string = rejection reason
+      expect(validateWebhookUrl(url as string) === null).toBe(expectOk);
     });
   });
 });

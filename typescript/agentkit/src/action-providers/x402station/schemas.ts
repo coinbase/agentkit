@@ -42,46 +42,38 @@ function isPrivateIPv6(host: string): boolean {
   return false;
 }
 const LOCALHOST_NAMES = new Set(["localhost", "localhost.localdomain"]);
-export function validateWebhookUrl(rawUrl: string): { ok: true } | { ok: false; reason: string } {
+/**
+ * Returns the rejection reason as a string when `rawUrl` should be refused,
+ * or `null` when the URL is acceptable for use as a webhookUrl.
+ */
+export function validateWebhookUrl(rawUrl: string): string | null {
   let u: URL;
   try {
     u = new URL(rawUrl);
   } catch {
-    return { ok: false, reason: "invalid URL" };
+    return "invalid URL";
   }
   if (u.protocol !== "https:") {
-    return {
-      ok: false,
-      reason: "webhookUrl must use HTTPS — HMAC-signed alert payloads must not travel in clear text",
-    };
+    return "webhookUrl must use HTTPS — HMAC-signed alert payloads must not travel in clear text";
   }
   if (u.username !== "" || u.password !== "") {
-    return {
-      ok: false,
-      reason: "webhookUrl must not contain userinfo (user:pass@host) — known phishing/spoofing vector",
-    };
+    return "webhookUrl must not contain userinfo (user:pass@host) — known phishing/spoofing vector";
   }
   const hostname = u.hostname.toLowerCase();
   if (LOCALHOST_NAMES.has(hostname)) {
-    return { ok: false, reason: `webhookUrl hostname is loopback (${hostname})` };
+    return `webhookUrl hostname is loopback (${hostname})`;
   }
   if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname)) {
     if (isPrivateIPv4(hostname)) {
-      return {
-        ok: false,
-        reason: `webhookUrl IPv4 ${hostname} is loopback / private / link-local / cloud-metadata`,
-      };
+      return `webhookUrl IPv4 ${hostname} is loopback / private / link-local / cloud-metadata`;
     }
   }
   if (hostname.startsWith("[")) {
     if (isPrivateIPv6(hostname)) {
-      return {
-        ok: false,
-        reason: `webhookUrl IPv6 ${hostname} is loopback / ULA / link-local / v4-mapped / NAT64`,
-      };
+      return `webhookUrl IPv6 ${hostname} is loopback / ULA / link-local / v4-mapped / NAT64`;
     }
   }
-  return { ok: true };
+  return null;
 }
 
 /**
@@ -238,9 +230,9 @@ export const WatchSubscribeSchema = z.object({
     .string()
     .url()
     .superRefine((u, ctx) => {
-      const r = validateWebhookUrl(u);
-      if (!r.ok) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: r.reason });
+      const reason = validateWebhookUrl(u);
+      if (reason !== null) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: reason });
       }
     })
     .describe(
