@@ -67,9 +67,64 @@ export const EvaluatorSubmitJobSchema = z
     jobPayload: z
       .record(z.string(), z.unknown())
       .describe(
-        "The job payload to submit. Example: { model: 'gpt-4o', prompt: 'Evaluate this text…', text: 'Hello world' }",
+        "The job payload to submit. Example: { model: 'gpt-4o', prompt: 'Evaluate this text\u2026', text: 'Hello world' }",
       ),
   })
   .describe(
-    "Submits a job to the Hive MCP Evaluator service ($0.01 USDC). This is a concrete example action — copy the pattern for other Hive tools.",
+    "Submits a job to the Hive MCP Evaluator service ($0.01 USDC). This is a concrete example action \u2014 copy the pattern for other Hive tools.",
+  );
+
+/**
+ * Schema for hive_audit_readiness_score.
+ *
+ * Maps to the POST /v1/audit/readiness request body accepted by
+ * the hive-mcp-audit-readiness MCP service.
+ */
+export const AuditReadinessSchema = z
+  .object({
+    org_name: z
+      .string()
+      .describe("Legal or operating name of the organization being assessed."),
+    frameworks: z
+      .array(
+        z.enum([
+          "SOC2",
+          "ISO27001",
+          "HIPAA",
+          "PCIDSS",
+          "NIST_CSF",
+          "FedRAMP",
+          "CMMC",
+          "FISMA",
+        ]),
+      )
+      .min(1)
+      .describe(
+        "One or more compliance frameworks to score readiness against. Supported values: SOC2, ISO27001, HIPAA, PCIDSS, NIST_CSF, FedRAMP, CMMC, FISMA.",
+      ),
+    evidence_summary: z
+      .string()
+      .optional()
+      .describe(
+        "Optional free-text summary of existing controls, policies, or evidence already in place. The more detail provided, the higher the scoring precision.",
+      ),
+    tier: z
+      .enum(["STARTER", "STANDARD", "ENTERPRISE", "FEDERAL"])
+      .optional()
+      .describe(
+        "Requested service tier. Controls scoring depth and report detail. Defaults to STARTER.",
+      ),
+  })
+  .describe(
+    "Scores an organization's compliance readiness against one or more regulatory frameworks via the Hive MCP Audit Readiness service.",
+  );
+
+/**
+ * Schema for hive_audit_get_tier_pricing — returns the inlined four-tier pricing card.
+ * No parameters required.
+ */
+export const AuditGetTierPricingSchema = z
+  .object({})
+  .describe(
+    "Returns the HiveAudit Readiness four-tier pricing card (STARTER / STANDARD / ENTERPRISE / FEDERAL). No parameters required.",
   );

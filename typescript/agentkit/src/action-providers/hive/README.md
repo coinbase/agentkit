@@ -1,6 +1,6 @@
 # HiveActionProvider
 
-This directory contains the **HiveActionProvider** for Coinbase AgentKit, exposing [Hive Civilization's](https://github.com/srotzin) ~50 x402-wired revenue surfaces to any agent built on AgentKit.
+This directory contains the **HiveActionProvider** for Coinbase AgentKit, exposing [Hive Civilization's](https://github.com/srotzin) 51 x402-wired revenue surfaces to any agent built on AgentKit.
 
 All Hive services run on **Base mainnet** and accept **USDC micro-payments** via the [x402 protocol](https://github.com/coinbase/x402). No API keys, no OAuth, no subscriptions.
 
@@ -8,9 +8,9 @@ All Hive services run on **Base mainnet** and accept **USDC micro-payments** via
 
 ```
 hive/
-├── hiveActionProvider.ts   # ActionProvider class — four actions
+├── hiveActionProvider.ts   # ActionProvider class — six actions
 ├── schemas.ts              # Zod schemas and HiveConfig type
-├── constants.ts            # Treasury address, chain ID, USDC contract, etc.
+├── constants.ts            # Treasury address, chain ID, USDC contract, audit URL, tier pricing
 ├── index.ts                # Exports
 └── README.md               # This file
 ```
@@ -149,6 +149,75 @@ Concrete example action that submits a job to the **Hive MCP Evaluator** at `$0.
 
 Sample receipt: `rcpt_76fceca973da4ec0`
 
+---
+
+### `hive_audit_readiness_score`
+
+Scores an organization's compliance readiness against one or more regulatory frameworks. POSTs to `https://hivemorph.onrender.com/v1/audit/readiness`. No x402 payment required — this is a free scoring call.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `org_name` | `string` | Yes | Legal or operating name of the organization |
+| `frameworks` | `string[]` | Yes | One or more frameworks: `SOC2`, `ISO27001`, `HIPAA`, `PCIDSS`, `NIST_CSF`, `FedRAMP`, `CMMC`, `FISMA` |
+| `evidence_summary` | `string` | No | Free-text summary of existing controls or evidence |
+| `tier` | `string` | No | `STARTER` (default), `STANDARD`, `ENTERPRISE`, or `FEDERAL` |
+
+```typescript
+// Example:
+{
+  org_name: "Acme Corp",
+  frameworks: ["SOC2", "HIPAA"],
+  evidence_summary: "Annual employee security training, written ISMS, SOC 2 Type I report (2024).",
+  tier: "STANDARD"
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "service": "HiveAudit Readiness",
+  "url": "https://hivemorph.onrender.com/v1/audit/readiness",
+  "org_name": "Acme Corp",
+  "frameworks": ["SOC2", "HIPAA"],
+  "tier": "STANDARD",
+  "result": { /* readiness score, gap list, remediation roadmap */ }
+}
+```
+
+---
+
+### `hive_audit_get_tier_pricing`
+
+Returns the inlined HiveAudit Readiness four-tier pricing card. No parameters required. No network call.
+
+| Tier | Annual Price | Coverage |
+|------|-------------|----------|
+| `STARTER` | $500 | NIST CSF, SOC 2 Type I, HIPAA Security Rule basics |
+| `STANDARD` | $1,500 | ISO 27001, SOC 2 Type II, PCI DSS Level 4, full remediation roadmap |
+| `ENTERPRISE` | $2,500 | FedRAMP Moderate, CMMC Level 2, continuous monitoring, auditor-ready reports |
+| `FEDERAL` | $7,500 | FedRAMP High, CMMC Level 3, FISMA, DISA STIG, federal contractor coverage |
+
+```typescript
+// No parameters:
+{}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "service": "HiveAudit Readiness",
+  "url": "https://hivemorph.onrender.com/v1/audit/readiness",
+  "brand_gold": "#C08D23",
+  "tiers": [ /* STARTER, STANDARD, ENTERPRISE, FEDERAL cards */ ],
+  "note": "All tiers are billed annually in USD.",
+  "contact": "https://github.com/srotzin"
+}
+```
+
 ## Network Support
 
 HiveActionProvider supports **Base mainnet only** (`networkId: "base-mainnet"`, `chainId: 8453`).
@@ -175,7 +244,7 @@ This is identical to how the existing `make_http_request_with_x402` action works
 
 ## Public Catalog
 
-- **41 MCP shims** published at [github.com/srotzin](https://github.com/srotzin), all at v1.0.0.
+- **51 services** now available: 41 MCP shims published at [github.com/srotzin](https://github.com/srotzin) (all at v1.0.0) plus 10 additional platform services including HiveAudit Readiness.
 - Conformance suite: [github.com/srotzin/hive-x402-conformance](https://github.com/srotzin/hive-x402-conformance) (independent, not affiliated with Coinbase).
 
 ## Dependencies

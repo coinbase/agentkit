@@ -10,6 +10,8 @@ import {
   CallServiceSchema,
   GetTreasuryInfoSchema,
   EvaluatorSubmitJobSchema,
+  AuditReadinessSchema,
+  AuditGetTierPricingSchema,
   HiveConfig,
 } from "./schemas";
 import {
@@ -22,6 +24,8 @@ import {
   HIVE_NETWORK_ID,
   HIVE_DEFAULT_MAX_PAYMENT_USDC,
   HIVE_GITHUB,
+  HIVE_AUDIT_READINESS_URL,
+  HIVE_AUDIT_TIER_PRICING,
 } from "./constants";
 
 /** Internal resolved config — all fields required */
@@ -33,7 +37,7 @@ interface ResolvedHiveConfig {
  * HiveActionProvider exposes Hive Civilization's x402-wired services to any
  * agent built on Coinbase AgentKit.
  *
- * Hive runs ~50 revenue surfaces on Base mainnet. Each surface is a standard
+ * Hive runs 51 revenue surfaces on Base mainnet. Each surface is a standard
  * x402 endpoint: the agent pays USDC micro-amounts and receives a JSON
  * payload in return. No API keys, no OAuth, no subscriptions — just onchain
  * micro-payments via the x402 protocol.
@@ -338,6 +342,145 @@ Sample receipt: rcpt_76fceca973da4ec0`,
       toolArgs: args.jobPayload,
       method: "POST",
     });
+  }
+
+  /**
+   * Scores an organization's compliance readiness against one or more
+   * regulatory frameworks via the Hive MCP Audit Readiness service.
+   *
+   * Calls POST https://hivemorph.onrender.com/v1/audit/readiness with the
+   * provided input and returns a structured readiness score, gap list, and
+   * recommended remediation steps.
+   *
+   * This endpoint is not x402-gated (free read). No wallet required.
+   *
+   * @param _walletProvider - Wallet provider (unused; required by interface).
+   * @param args - Organization name, frameworks, optional evidence summary, and tier.
+   * @returns JSON string with the readiness score or error details.
+   */
+  @CreateAction({
+    name: "hive_audit_readiness_score",
+    description: `Scores an organization's compliance readiness against one or more regulatory frameworks.
+
+POSTs to the Hive MCP Audit Readiness service at https://hivemorph.onrender.com/v1/audit/readiness.
+No x402 payment required — this is a free scoring call.
+
+Supported frameworks: SOC2, ISO27001, HIPAA, PCIDSS, NIST_CSF, FedRAMP, CMMC, FISMA.
+
+Example:
+  org_name: "Acme Corp"
+  frameworks: ["SOC2", "HIPAA"]
+  evidence_summary: "We have a written information security policy and conduct annual employee training."
+  tier: "STANDARD"
+
+Returns a readiness score (0\u2013100), identified gaps, and a prioritized remediation roadmap.`,
+    schema: AuditReadinessSchema,
+  })
+  async auditReadinessScore(
+    _walletProvider: WalletProvider,
+    args: z.infer<typeof AuditReadinessSchema>,
+  ): Promise<string> {
+    try {
+      const payload: Record<string, unknown> = {
+        org_name: args.org_name,
+        frameworks: args.frameworks,
+      };
+      if (args.evidence_summary !== undefined) {
+        payload.evidence_summary = args.evidence_summary;
+      }
+      if (args.tier !== undefined) {
+        payload.tier = args.tier;
+      }
+
+      const response = await fetch(HIVE_AUDIT_READINESS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const contentType = response.headers.get("content-type") ?? "";
+      const data = contentType.includes("application/json")
+        ? await response.json()
+        : await response.text();
+
+      if (!response.ok) {
+        return JSON.stringify(
+          {
+            error: true,
+            message: `Audit Readiness service returned HTTP ${response.status}`,
+            url: HIVE_AUDIT_READINESS_URL,
+            data,
+          },
+          null,
+          2,
+        );
+      }
+
+      return JSON.stringify(
+        {
+          success: true,
+          service: "HiveAudit Readiness",
+          url: HIVE_AUDIT_READINESS_URL,
+          org_name: args.org_name,
+          frameworks: args.frameworks,
+          tier: args.tier ?? "STARTER",
+          result: data,
+        },
+        null,
+        2,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return JSON.stringify(
+        {
+          error: true,
+          message: "hive_audit_readiness_score failed",
+          details: message,
+          url: HIVE_AUDIT_READINESS_URL,
+        },
+        null,
+        2,
+      );
+    }
+  }
+
+  /**
+   * Returns the inlined HiveAudit Readiness four-tier pricing card.
+   *
+   * No network call required. Values are sourced from constants.ts.
+   *
+   * @param _walletProvider - Wallet provider (unused; required by interface).
+   * @param _args - No parameters.
+   * @returns JSON string with tier pricing details.
+   */
+  @CreateAction({
+    name: "hive_audit_get_tier_pricing",
+    description: `Returns the HiveAudit Readiness four-tier annual pricing card. No parameters required.
+
+Tiers:
+  STARTER    \u2014 $500/yr   \u2014 Foundational gap analysis (NIST CSF, SOC 2 Type I, HIPAA basics)
+  STANDARD   \u2014 $1,500/yr \u2014 Full scoring + remediation roadmap (ISO 27001, SOC 2 Type II, PCI DSS L4)
+  ENTERPRISE \u2014 $2,500/yr \u2014 Continuous monitoring + auditor-ready reports (FedRAMP Moderate, CMMC L2)
+  FEDERAL    \u2014 $7,500/yr \u2014 Maximum coverage for federal contractors (FedRAMP High, CMMC L3, FISMA, DISA STIG)`,
+    schema: AuditGetTierPricingSchema,
+  })
+  async auditGetTierPricing(
+    _walletProvider: WalletProvider,
+    _args: z.infer<typeof AuditGetTierPricingSchema>,
+  ): Promise<string> {
+    return JSON.stringify(
+      {
+        success: true,
+        service: "HiveAudit Readiness",
+        url: HIVE_AUDIT_READINESS_URL,
+        brand_gold: HIVE_BRAND_GOLD,
+        tiers: HIVE_AUDIT_TIER_PRICING,
+        note: "All tiers are billed annually in USD. Contact Hive to discuss custom enterprise arrangements.",
+        contact: HIVE_GITHUB,
+      },
+      null,
+      2,
+    );
   }
 
   /**
