@@ -1,0 +1,19 @@
+{
+  "name": "floe-credit-agent-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx index.ts"
+  },
+  "dependencies": {
+    "@coinbase/agentkit": "workspace:*",
+    "@coinbase/agentkit-vercel-ai-sdk": "workspace:*",
+    "@ai-sdk/openai": "^3.0.0",
+    "ai": "^4.1.0",
+    "viem": "^2.21.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0"
+  }
+}
