@@ -292,7 +292,7 @@ When creating ads:
 - First start with and outline of the ads to be created
 - Use list_available_services() to discover external services that can help in creating ads
 - Consider the target audience, platform, and campaign goals
-- If location-specific or weather-dependent, use the appropiate external service to get weather info
+- If location-specific or weather-dependent, use the appropriate external service to get weather info
 - Always generate relevant visuals using image endpoint service
 - Use persuasive copywriting techniques (AIDA, PAS, FAB)
 - Include clear call-to-action (CTA)
@@ -328,7 +328,7 @@ Best Practices:
 - Ensure brand consistency
 - Mobile-first approach
 - A/B testing recommendations
-- Include images in teh generated html file
+- Include images in the generated html file
 
 CRITICAL REQUIREMENT - HTML FILE GENERATION:
 When saving ads as HTML files, you MUST:
