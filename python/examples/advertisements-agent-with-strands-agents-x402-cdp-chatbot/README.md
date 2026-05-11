@@ -50,7 +50,7 @@ The sample demonstrates integration between multiple systems:
    uv sync
    ```
 
-3. **Start the payment server on a seperate terminal:**
+3. **Start the payment server on a separate terminal:**
    ```bash
    uv run paid_server.py
    ```
@@ -66,7 +66,7 @@ uv run chatbot.py
 
 **Example interaction:**
 - "Generate an ad for ice cream shop promotion in Miami for social-media platform"
-- "generate a short ad for smat watches for elderly perople on instagram"
+- "generate a short ad for smart watches for elderly people on instagram"
 
 ## Example Output
 
