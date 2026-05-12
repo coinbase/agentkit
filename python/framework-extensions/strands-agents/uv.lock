@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10, <4"
 resolution-markers = [
     "python_full_version >= '3.11'",
@@ -459,14 +459,13 @@ wheels = [
 
 [[package]]
 name = "cdp-sdk"
-version = "1.31.2"
+version = "1.45.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
     { name = "aiohttp-retry" },
     { name = "base58" },
     { name = "cryptography" },
-    { name = "nest-asyncio" },
     { name = "pydantic" },
     { name = "pyjwt" },
     { name = "python-dateutil" },
@@ -475,9 +474,9 @@ dependencies = [
     { name = "urllib3" },
     { name = "web3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/34/fe/f1daa8e52f320063576318032c67dda346081b4bbb6be00c8bb99f2b12b0/cdp_sdk-1.31.2.tar.gz", hash = "sha256:47d17aaf3da5183123a64d38d3c02c2350758186c48e334b425d8b0f105b7fd8", size = 317633, upload-time = "2025-09-05T20:51:43.956Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b0/f6/5f59af94b88520799f6d900df9edaf31907bd44e63309f379d616af67186/cdp_sdk-1.45.0.tar.gz", hash = "sha256:2cb3742ce40ca0b0572445914e5d656d6b05b00f8332de430d6b9e3ee1726067", size = 408683, upload-time = "2026-05-11T22:44:50.401Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4a/bb/b5a152845d29f04ce51eff1703b1518f2272ff45e139cae9eacd1cc73584/cdp_sdk-1.31.2-py3-none-any.whl", hash = "sha256:a58a67e4bc1e1edd561a57d09e2d5eed847d378ba328ea6c7802634d00800415", size = 792613, upload-time = "2025-09-05T20:51:41.019Z" },
+    { url = "https://files.pythonhosted.org/packages/d2/12/bb86d7ed976fa9c64931c73bcd68123c061cd01181913478af68df392f17/cdp_sdk-1.45.0-py3-none-any.whl", hash = "sha256:5db4a4615a158b33861b464980778d71dd80d631876b98693e027075c8b63170", size = 1065028, upload-time = "2026-05-11T22:44:48.154Z" },
 ]
 
 [[package]]
@@ -3820,11 +3819,11 @@ wheels = [
 
 [[package]]
 name = "urllib3"
-version = "2.3.0"
+version = "2.7.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/aa/63/e53da845320b757bf29ef6a9062f5c669fe997973f966045cb019c3f4b66/urllib3-2.3.0.tar.gz", hash = "sha256:f8c5449b3cf0861679ce7e0503c7b44b5ec981bec0d1d3795a07f1ba96f0204d", size = 307268, upload-time = "2024-12-22T07:47:30.032Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/53/0c/06f8b233b8fd13b9e5ee11424ef85419ba0d8ba0b3138bf360be2ff56953/urllib3-2.7.0.tar.gz", hash = "sha256:231e0ec3b63ceb14667c67be60f2f2c40a518cb38b03af60abc813da26505f4c", size = 433602, upload-time = "2026-05-07T16:13:18.596Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c8/19/4ec628951a74043532ca2cf5d97b7b14863931476d117c471e8e2b1eb39f/urllib3-2.3.0-py3-none-any.whl", hash = "sha256:1cee9ad369867bfdbbb48b7dd50374c0967a0bb7710050facf0dd6911440e3df", size = 128369, upload-time = "2024-12-22T07:47:28.074Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/3e/5db95bcf282c52709639744ca2a8b149baccf648e39c8cc87553df9eae0c/urllib3-2.7.0-py3-none-any.whl", hash = "sha256:9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897", size = 131087, upload-time = "2026-05-07T16:13:17.151Z" },
 ]
 
 [[package]]
