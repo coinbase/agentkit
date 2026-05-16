@@ -11,5 +11,4 @@ export const GetWalletPortfolioSchema = z
         "The wallet address to fetch portfolio for. Defaults is empty string, which will raise an error later if not provided.",
       ),
   })
-  .strip()
   .describe("Input schema for fetching wallet portfolio");

@@ -17,14 +17,14 @@ from .evm_wallet_provider import EvmWalletProvider
 from .wallet_provider import WalletProvider
 
 __all__ = [
-    "WalletProvider",
     "CdpEvmWalletProvider",
     "CdpEvmWalletProviderConfig",
     "CdpSmartWalletProvider",
     "CdpSmartWalletProviderConfig",
     "CdpSolanaWalletProvider",
     "CdpSolanaWalletProviderConfig",
-    "EvmWalletProvider",
     "EthAccountWalletProvider",
     "EthAccountWalletProviderConfig",
+    "EvmWalletProvider",
+    "WalletProvider",
 ]

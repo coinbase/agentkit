@@ -10,7 +10,6 @@ export const ListBaseAccountSpendPermissionsSchema = z
       .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
       .describe("The Base Account address to query if it has granted spend permissions"),
   })
-  .strip()
   .describe("Instructions for listing spend permissions for a Base Account");
 
 /**
@@ -25,14 +24,14 @@ export const UseBaseAccountSpendPermissionSchema = z
     amount: z
       .number()
       .positive()
-      .optional()
+      .nullable()
       .describe(
         "The amount to spend in whole units of the token (e.g. 4.6 for 4.6 tokens). If not provided, will withdraw the full remaining allowance",
       ),
     tokenAddress: z
       .string()
       .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
-      .optional()
+      .nullable()
       .describe(
         "The token contract address. If not provided, will use the first available permission token",
       ),
@@ -40,12 +39,11 @@ export const UseBaseAccountSpendPermissionSchema = z
       .number()
       .int()
       .positive()
-      .optional()
+      .nullable()
       .describe(
         "The index of the permission to use (1-based). If not provided, the first permission will be used",
       ),
   })
-  .strip()
   .describe("Instructions for using a Base Account spend permission");
 
 /**
@@ -61,10 +59,9 @@ export const RevokeBaseAccountSpendPermissionSchema = z
       .number()
       .int()
       .positive()
-      .optional()
+      .nullable()
       .describe(
         "The index of the permission to revoke (1-based). If not provided, the first permission will be revoked",
       ),
   })
-  .strip()
   .describe("Instructions for revoking a Base Account spend permission");

@@ -151,11 +151,11 @@ Note:
       const tokenUri = await generateTokenUri(args.name, args.symbol, {
         metadata: {
           image: args.image,
-          description: args.description,
-          websiteUrl: args.websiteUrl,
-          discordUrl: args.discordUrl,
-          twitterUrl: args.twitterUrl,
-          telegramUrl: args.telegramUrl,
+          description: args.description ?? undefined,
+          websiteUrl: args.websiteUrl ?? undefined,
+          discordUrl: args.discordUrl ?? undefined,
+          twitterUrl: args.twitterUrl ?? undefined,
+          telegramUrl: args.telegramUrl ?? undefined,
         },
       });
 
@@ -163,7 +163,12 @@ Note:
       const creatorFeeAllocationInBps = args.creatorFeeAllocationPercent * 100;
       let creatorShare = 10000000n;
       let recipientShares: { recipient: Address; share: bigint }[] = [];
-      if (args.creatorSplitPercent !== undefined && args.splitReceivers !== undefined) {
+      if (
+        args.creatorSplitPercent !== undefined &&
+        args.creatorSplitPercent !== null &&
+        args.splitReceivers !== undefined &&
+        args.splitReceivers !== null
+      ) {
         const VALID_SHARE_TOTAL = 10000000n; // 5 decimals as BigInt, 100 * 10^5
         creatorShare = (BigInt(args.creatorSplitPercent) * VALID_SHARE_TOTAL) / 100n;
 

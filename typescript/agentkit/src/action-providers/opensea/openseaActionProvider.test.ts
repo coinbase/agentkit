@@ -178,7 +178,7 @@ describe("OpenSea Action Provider", () => {
         networkId: "base-sepolia",
       });
 
-      const args = {}; // No accountAddress provided
+      const args = { accountAddress: null }; // No accountAddress provided
 
       const response = await actionProvider.getNftsByAccount(args);
 

@@ -19,6 +19,24 @@ from .schemas import (
 )
 
 
+def _http_error_detail(error: requests.exceptions.HTTPError) -> str:
+    """Return a bounded, non-sensitive HTTP error message."""
+    response = error.response
+    if response is None:
+        return str(error)
+
+    try:
+        body = response.json()
+    except ValueError:
+        body = {}
+
+    detail = body.get("detail") if isinstance(body, dict) else None
+    if isinstance(detail, str) and detail:
+        return detail[:300]
+
+    return f"HTTP {response.status_code}"
+
+
 class SardisActionProvider(ActionProvider):
     """Provides actions for policy-controlled AI agent payments via Sardis.
 
@@ -41,8 +59,7 @@ class SardisActionProvider(ActionProvider):
 
         if not self.api_key:
             raise ValueError(
-                "SARDIS_API_KEY is not configured. "
-                "Get one at https://sardis.sh/dashboard"
+                "SARDIS_API_KEY is not configured. " "Get one at https://sardis.sh/dashboard"
             )
         if not self.wallet_id:
             raise ValueError(
@@ -107,22 +124,19 @@ A failure response will return an error message:
         validated = SardisPaySchema(**args)
 
         try:
-            result = self._post(f"/wallets/{self.wallet_id}/pay/onchain", {
-                "to": validated.to,
-                "amount": validated.amount,
-                "token": validated.token,
-                "chain": "base",
-                "memo": validated.purpose or None,
-            })
+            result = self._post(
+                f"/wallets/{self.wallet_id}/pay/onchain",
+                {
+                    "to": validated.to,
+                    "amount": validated.amount,
+                    "token": validated.token,
+                    "chain": "base",
+                    "memo": validated.purpose or None,
+                },
+            )
             return f"Successfully executed payment:\n{dumps(result)}"
         except requests.exceptions.HTTPError as e:
-            error_body = ""
-            if e.response is not None:
-                try:
-                    error_body = e.response.json().get("detail", str(e))
-                except Exception:
-                    error_body = e.response.text
-            return f"Error executing payment: {error_body or e}"
+            return f"Error executing payment: {_http_error_detail(e)}"
         except requests.exceptions.RequestException as e:
             return f"Error executing payment: {e}"
 
@@ -160,13 +174,7 @@ A failure response will return an error message:
             )
             return f"Successfully retrieved wallet balance:\n{dumps(result)}"
         except requests.exceptions.HTTPError as e:
-            error_body = ""
-            if e.response is not None:
-                try:
-                    error_body = e.response.json().get("detail", str(e))
-                except Exception:
-                    error_body = e.response.text
-            return f"Error checking balance: {error_body or e}"
+            return f"Error checking balance: {_http_error_detail(e)}"
         except requests.exceptions.RequestException as e:
             return f"Error checking balance: {e}"
 
@@ -199,21 +207,18 @@ A failure response will return an error message:
         validated = SardisCheckPolicySchema(**args)
 
         try:
-            result = self._post("/policies/check", {
-                "agent_id": self.wallet_id,
-                "amount": validated.amount,
-                "currency": validated.token,
-                "merchant_id": validated.to,
-            })
+            result = self._post(
+                "/policies/check",
+                {
+                    "agent_id": self.wallet_id,
+                    "amount": validated.amount,
+                    "currency": validated.token,
+                    "merchant_id": validated.to,
+                },
+            )
             return f"Successfully checked payment policy:\n{dumps(result)}"
         except requests.exceptions.HTTPError as e:
-            error_body = ""
-            if e.response is not None:
-                try:
-                    error_body = e.response.json().get("detail", str(e))
-                except Exception:
-                    error_body = e.response.text
-            return f"Error checking policy: {error_body or e}"
+            return f"Error checking policy: {_http_error_detail(e)}"
         except requests.exceptions.RequestException as e:
             return f"Error checking policy: {e}"
 
@@ -255,13 +260,7 @@ A failure response will return an error message:
             result = self._post("/policies/apply", payload)
             return f"Successfully updated spending policy:\n{dumps(result)}"
         except requests.exceptions.HTTPError as e:
-            error_body = ""
-            if e.response is not None:
-                try:
-                    error_body = e.response.json().get("detail", str(e))
-                except Exception:
-                    error_body = e.response.text
-            return f"Error setting policy: {error_body or e}"
+            return f"Error setting policy: {_http_error_detail(e)}"
         except requests.exceptions.RequestException as e:
             return f"Error setting policy: {e}"
 
@@ -300,13 +299,7 @@ A failure response will return an error message:
             )
             return f"Successfully retrieved transaction history:\n{dumps(result)}"
         except requests.exceptions.HTTPError as e:
-            error_body = ""
-            if e.response is not None:
-                try:
-                    error_body = e.response.json().get("detail", str(e))
-                except Exception:
-                    error_body = e.response.text
-            return f"Error listing transactions: {error_body or e}"
+            return f"Error listing transactions: {_http_error_detail(e)}"
         except requests.exceptions.RequestException as e:
             return f"Error listing transactions: {e}"
 

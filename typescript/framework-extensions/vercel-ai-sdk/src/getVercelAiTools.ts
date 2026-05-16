@@ -17,7 +17,7 @@ export function getVercelAITools(agentKit: AgentKit): ToolSet {
   return actions.reduce((acc, action) => {
     acc[action.name] = tool({
       description: action.description,
-      parameters: action.schema,
+      inputSchema: action.schema,
       execute: async (args: z.output<typeof action.schema>) => {
         const result = await action.invoke(args);
         return result;

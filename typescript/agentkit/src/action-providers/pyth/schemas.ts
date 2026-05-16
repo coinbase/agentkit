@@ -8,11 +8,13 @@ export const PythFetchPriceFeedIDSchema = z
     tokenSymbol: z.string().describe("The asset ticker/symbol to fetch the price feed ID for"),
     quoteCurrency: z
       .string()
-      .default("USD")
+      .nullable()
+      .transform(val => val ?? "USD")
       .describe("The quote currency to filter by (defaults to USD)"),
     assetType: z
       .enum(["crypto", "equity", "fx", "metal"])
-      .default("crypto")
+      .nullable()
+      .transform(val => val ?? "crypto")
       .describe("The asset type to search for (crypto, equity, fx, metal)"),
   })
   .strict();

@@ -91,9 +91,7 @@ def test_pay_schema_required_fields():
 
 def test_pay_schema_all_fields():
     """Test SardisPaySchema with all fields."""
-    schema = SardisPaySchema(
-        to="0xabc", amount="100.00", token="USDT", purpose="API subscription"
-    )
+    schema = SardisPaySchema(to="0xabc", amount="100.00", token="USDT", purpose="API subscription")
     assert schema.token == "USDT"
     assert schema.purpose == "API subscription"
 
@@ -126,6 +124,36 @@ def test_list_transactions_schema_defaults():
     assert schema.limit == 10
 
 
+def test_pay_schema_rejects_invalid_amount():
+    """Test SardisPaySchema rejects invalid payment amounts."""
+    with pytest.raises(ValueError, match="amount must be greater than zero"):
+        SardisPaySchema(to="openai.com", amount="0")
+
+    with pytest.raises(ValueError, match="amount must be a decimal string"):
+        SardisPaySchema(to="openai.com", amount="not-a-number")
+
+
+def test_pay_schema_bounds_free_form_fields():
+    """Test SardisPaySchema bounds recipient and purpose fields."""
+    with pytest.raises(ValueError):
+        SardisPaySchema(to="", amount="1.00")
+
+    with pytest.raises(ValueError):
+        SardisPaySchema(to="merchant.example", amount="1.00", purpose="x" * 513)
+
+
+def test_check_policy_schema_rejects_invalid_amount():
+    """Test SardisCheckPolicySchema rejects invalid dry-run amounts."""
+    with pytest.raises(ValueError, match="amount must be greater than zero"):
+        SardisCheckPolicySchema(to="merchant.example", amount="-1")
+
+
+def test_list_transactions_schema_bounds_limit():
+    """Test SardisListTransactionsSchema rejects non-positive limits."""
+    with pytest.raises(ValueError):
+        SardisListTransactionsSchema(limit=0)
+
+
 # ---------------------------------------------------------------------------
 # Action execution tests
 # ---------------------------------------------------------------------------
@@ -147,10 +175,12 @@ class TestSardisPay:
         mock_response.raise_for_status.return_value = None
         mock_post.return_value = mock_response
 
-        result = mock_provider.sardis_pay({
-            "to": "openai.com",
-            "amount": "25.00",
-        })
+        result = mock_provider.sardis_pay(
+            {
+                "to": "openai.com",
+                "amount": "25.00",
+            }
+        )
 
         assert "Successfully executed payment" in result
         assert "0xabc123" in result
@@ -165,18 +195,42 @@ class TestSardisPay:
         mock_response.json.return_value = {
             "detail": "Policy violation - amount exceeds per-transaction limit"
         }
-        mock_response.raise_for_status.side_effect = __import__(
-            "requests"
-        ).exceptions.HTTPError(response=mock_response)
+        mock_response.raise_for_status.side_effect = __import__("requests").exceptions.HTTPError(
+            response=mock_response
+        )
         mock_post.return_value = mock_response
 
-        result = mock_provider.sardis_pay({
-            "to": "openai.com",
-            "amount": "99999.00",
-        })
+        result = mock_provider.sardis_pay(
+            {
+                "to": "openai.com",
+                "amount": "99999.00",
+            }
+        )
 
         assert "Error executing payment" in result
         assert "Policy violation" in result
+
+    @patch("coinbase_agentkit.action_providers.sardis.sardis_action_provider.requests.post")
+    def test_pay_error_does_not_return_raw_body(self, mock_post, mock_provider):
+        """Test raw HTTP response bodies are not returned to the caller."""
+        mock_response = Mock()
+        mock_response.status_code = 500
+        mock_response.json.side_effect = ValueError("not json")
+        mock_response.text = "internal secret token sk_live_should_not_leak"
+        mock_response.raise_for_status.side_effect = __import__("requests").exceptions.HTTPError(
+            response=mock_response
+        )
+        mock_post.return_value = mock_response
+
+        result = mock_provider.sardis_pay(
+            {
+                "to": "openai.com",
+                "amount": "25.00",
+            }
+        )
+
+        assert result == "Error executing payment: HTTP 500"
+        assert "sk_live_should_not_leak" not in result
 
 
 class TestSardisCheckBalance:
@@ -208,9 +262,9 @@ class TestSardisCheckBalance:
         mock_response = Mock()
         mock_response.status_code = 401
         mock_response.json.return_value = {"detail": "Unauthorized"}
-        mock_response.raise_for_status.side_effect = __import__(
-            "requests"
-        ).exceptions.HTTPError(response=mock_response)
+        mock_response.raise_for_status.side_effect = __import__("requests").exceptions.HTTPError(
+            response=mock_response
+        )
         mock_get.return_value = mock_response
 
         result = mock_provider.sardis_check_balance({})
@@ -234,10 +288,12 @@ class TestSardisCheckPolicy:
         mock_response.raise_for_status.return_value = None
         mock_post.return_value = mock_response
 
-        result = mock_provider.sardis_check_policy({
-            "to": "openai.com",
-            "amount": "25.00",
-        })
+        result = mock_provider.sardis_check_policy(
+            {
+                "to": "openai.com",
+                "amount": "25.00",
+            }
+        )
 
         assert "Successfully checked payment policy" in result
         assert "allowed" in result
@@ -255,10 +311,12 @@ class TestSardisCheckPolicy:
         mock_response.raise_for_status.return_value = None
         mock_post.return_value = mock_response
 
-        result = mock_provider.sardis_check_policy({
-            "to": "openai.com",
-            "amount": "99999.00",
-        })
+        result = mock_provider.sardis_check_policy(
+            {
+                "to": "openai.com",
+                "amount": "99999.00",
+            }
+        )
 
         assert "Successfully checked payment policy" in result
         assert "allowed" in result
@@ -282,9 +340,11 @@ class TestSardisSetPolicy:
         mock_response.raise_for_status.return_value = None
         mock_post.return_value = mock_response
 
-        result = mock_provider.sardis_set_policy({
-            "policy_text": "Max $50 per transaction, daily limit $500",
-        })
+        result = mock_provider.sardis_set_policy(
+            {
+                "policy_text": "Max $50 per transaction, daily limit $500",
+            }
+        )
 
         assert "Successfully updated spending policy" in result
         assert "50.0" in result

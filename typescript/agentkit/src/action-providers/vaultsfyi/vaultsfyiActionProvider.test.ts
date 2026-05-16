@@ -329,7 +329,15 @@ describe("VaultsfyiActionProvider", () => {
     it("should return a transformed vault", async () => {
       const mockedVault = mockVault(1);
       mockedFetch.mockResolvedValue(mockFetchResult(200, { data: [mockedVault.apiResult] }));
-      const args = {};
+      const args = {
+        allowedAssets: null,
+        allowedProtocols: null,
+        allowedNetworks: null,
+        minTvl: null,
+        sort: null,
+        perPage: null,
+        page: null,
+      };
       const result = await provider.vaults(mockWalletProvider, args);
       expect(JSON.parse(result)).toStrictEqual({
         data: [mockedVault.transformedResult],
@@ -340,7 +348,15 @@ describe("VaultsfyiActionProvider", () => {
       mockedFetch.mockResolvedValue(
         mockFetchResult(500, { error: "Internal Server Error", message: "some more info" }),
       );
-      const args = {};
+      const args = {
+        allowedAssets: null,
+        allowedProtocols: null,
+        allowedNetworks: null,
+        minTvl: null,
+        sort: null,
+        perPage: null,
+        page: null,
+      };
       expect(await provider.vaults(mockWalletProvider, args)).toBe(
         "Failed to fetch vaults: some more info",
       );
@@ -610,6 +626,8 @@ describe("VaultsfyiActionProvider", () => {
         toDate: "2024-01-02T00:00:00Z",
         granularity: "1hour" as const,
         apyInterval: "1day" as const,
+        page: null,
+        perPage: null,
       };
 
       const result = await provider.vaultHistoricalData(mockWalletProvider, args);
@@ -646,6 +664,8 @@ describe("VaultsfyiActionProvider", () => {
         toDate: "2024-01-02T00:00:00Z",
         granularity: "1hour" as const,
         apyInterval: "1day" as const,
+        page: null,
+        perPage: null,
       };
 
       expect(await provider.vaultHistoricalData(mockWalletProvider, args)).toBe(
@@ -840,6 +860,7 @@ describe("VaultsfyiActionProvider", () => {
       const args = {
         vaultAddress: "0x123456",
         network: "mainnet" as const,
+        userAddress: null,
       };
       const result = await provider.totalVaultReturns(mockWalletProvider, args);
       expect(JSON.parse(result)).toEqual({
@@ -856,6 +877,7 @@ describe("VaultsfyiActionProvider", () => {
       const args = {
         vaultAddress: "0x123456",
         network: "mainnet" as const,
+        userAddress: null,
       };
       expect(await provider.totalVaultReturns(mockWalletProvider, args)).toBe(
         "Failed to fetch total vault returns: some more info",
@@ -879,6 +901,7 @@ describe("VaultsfyiActionProvider", () => {
       const args = {
         vaultAddress: "0x123456",
         network: "mainnet" as const,
+        userAddress: null,
       };
       const result = await provider.userEvents(mockWalletProvider, args);
       expect(JSON.parse(result)).toEqual({
@@ -899,6 +922,7 @@ describe("VaultsfyiActionProvider", () => {
       const args = {
         vaultAddress: "0x123456",
         network: "mainnet" as const,
+        userAddress: null,
       };
       expect(await provider.userEvents(mockWalletProvider, args)).toBe(
         "Failed to fetch user events: some more info",

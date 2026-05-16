@@ -4,6 +4,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from coinbase_agentkit.wallet_providers.cdp_solana_wallet_provider import CdpSolanaWalletProvider
+
 from .conftest import MOCK_SIGNATURE
 
 # =========================================================
@@ -18,7 +20,7 @@ def test_sign_message(mocked_wallet_provider, mock_cdp_client):
     # Configure the mock to return signature
     mock_cdp_client.solana.sign_message = AsyncMock(return_value=MOCK_SIGNATURE)
 
-    with patch("asyncio.run", return_value=MOCK_SIGNATURE):
+    with patch.object(CdpSolanaWalletProvider, "_run_async", return_value=MOCK_SIGNATURE):
         signature = mocked_wallet_provider.sign_message(message)
 
     assert signature == MOCK_SIGNATURE
@@ -31,7 +33,7 @@ def test_sign_message_binary(mocked_wallet_provider, mock_cdp_client):
     # Configure the mock to return signature
     mock_cdp_client.solana.sign_message = AsyncMock(return_value=MOCK_SIGNATURE)
 
-    with patch("asyncio.run", return_value=MOCK_SIGNATURE):
+    with patch.object(CdpSolanaWalletProvider, "_run_async", return_value=MOCK_SIGNATURE):
         signature = mocked_wallet_provider.sign_message(binary_message)
 
     assert signature == MOCK_SIGNATURE
@@ -44,7 +46,7 @@ def test_sign_message_empty(mocked_wallet_provider, mock_cdp_client):
     # Configure the mock to return signature
     mock_cdp_client.solana.sign_message = AsyncMock(return_value=MOCK_SIGNATURE)
 
-    with patch("asyncio.run", return_value=MOCK_SIGNATURE):
+    with patch.object(CdpSolanaWalletProvider, "_run_async", return_value=MOCK_SIGNATURE):
         signature = mocked_wallet_provider.sign_message(message)
 
     assert signature == MOCK_SIGNATURE
@@ -57,7 +59,7 @@ def test_sign_message_long(mocked_wallet_provider, mock_cdp_client):
     # Configure the mock to return signature
     mock_cdp_client.solana.sign_message = AsyncMock(return_value=MOCK_SIGNATURE)
 
-    with patch("asyncio.run", return_value=MOCK_SIGNATURE):
+    with patch.object(CdpSolanaWalletProvider, "_run_async", return_value=MOCK_SIGNATURE):
         signature = mocked_wallet_provider.sign_message(message)
 
     assert signature == MOCK_SIGNATURE
@@ -75,7 +77,7 @@ def test_sign_message_failure(mocked_wallet_provider, mock_cdp_client):
     mock_cdp_client.solana.sign_message = raise_error
 
     with (
-        patch("asyncio.run", side_effect=Exception(error_msg)),
+        patch.object(CdpSolanaWalletProvider, "_run_async", side_effect=Exception(error_msg)),
         pytest.raises(Exception, match=error_msg),
     ):
         mocked_wallet_provider.sign_message(message)
@@ -93,7 +95,7 @@ def test_sign_message_with_network_error(mocked_wallet_provider, mock_cdp_client
     mock_cdp_client.solana.sign_message = raise_connection_error
 
     with (
-        patch("asyncio.run", side_effect=ConnectionError(error_msg)),
+        patch.object(CdpSolanaWalletProvider, "_run_async", side_effect=ConnectionError(error_msg)),
         pytest.raises(ConnectionError, match=error_msg),
     ):
         mocked_wallet_provider.sign_message(message)
@@ -111,7 +113,7 @@ def test_sign_message_timeout(mocked_wallet_provider, mock_cdp_client):
     mock_cdp_client.solana.sign_message = raise_timeout_error
 
     with (
-        patch("asyncio.run", side_effect=TimeoutError(error_msg)),
+        patch.object(CdpSolanaWalletProvider, "_run_async", side_effect=TimeoutError(error_msg)),
         pytest.raises(TimeoutError, match=error_msg),
     ):
         mocked_wallet_provider.sign_message(message)
@@ -124,7 +126,7 @@ def test_sign_message_with_unicode(mocked_wallet_provider, mock_cdp_client):
     # Configure the mock to return signature
     mock_cdp_client.solana.sign_message = AsyncMock(return_value=MOCK_SIGNATURE)
 
-    with patch("asyncio.run", return_value=MOCK_SIGNATURE):
+    with patch.object(CdpSolanaWalletProvider, "_run_async", return_value=MOCK_SIGNATURE):
         signature = mocked_wallet_provider.sign_message(message)
 
     assert signature == MOCK_SIGNATURE

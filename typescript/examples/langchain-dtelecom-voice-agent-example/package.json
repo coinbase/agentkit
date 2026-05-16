@@ -1,0 +1,24 @@
+{
+  "name": "@coinbase/langchain-dtelecom-voice-agent-example",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Voice AI agent using Coinbase AgentKit + dTelecom",
+  "scripts": {
+    "start": "tsx voice-agent.ts"
+  },
+  "dependencies": {
+    "@coinbase/agentkit": "workspace:*",
+    "@coinbase/agentkit-langchain": "workspace:*",
+    "@dtelecom/agents-js": "^0.2.1",
+    "@langchain/core": "^1.1.0",
+    "@langchain/langgraph": "^1.2.0",
+    "@langchain/openai": "^1.2.0",
+    "dotenv": "^16.4.5",
+    "langchain": "^1.1.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.1",
+    "typescript": "^5.7.2"
+  }
+}

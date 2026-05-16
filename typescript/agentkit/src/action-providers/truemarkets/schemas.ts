@@ -7,17 +7,20 @@ export const GetTruthMarketsSchema = z
   .object({
     limit: z
       .number()
-      .optional()
-      .describe("Maximum number of markets to return (default: 10)")
-      .default(10),
-    offset: z.number().optional().describe("Number of markets to skip (for pagination)").default(0),
+      .nullable()
+      .transform(val => val ?? 10)
+      .describe("Maximum number of markets to return (default: 10)"),
+    offset: z
+      .number()
+      .nullable()
+      .transform(val => val ?? 0)
+      .describe("Number of markets to skip (for pagination)"),
     sortOrder: z
       .enum(["asc", "desc"])
-      .optional()
-      .describe("Sort order for the markets (default: desc)")
-      .default("desc"),
+      .nullable()
+      .transform(val => val ?? "desc")
+      .describe("Sort order for the markets (default: desc)"),
   })
-  .strip()
   .describe("Instructions for getting prediction markets on Truemarkets");
 
 /**

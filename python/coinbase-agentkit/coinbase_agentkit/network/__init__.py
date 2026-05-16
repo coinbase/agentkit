@@ -18,18 +18,18 @@ from .network import (
 )
 
 __all__ = [
-    "Network",
     "CHAIN_ID_TO_NETWORK_ID",
-    "NETWORK_ID_TO_CHAIN_ID",
     "NETWORK_ID_TO_CHAIN",
-    "mainnet",
-    "sepolia",
-    "base_sepolia",
-    "arbitrum_sepolia",
-    "optimism_sepolia",
-    "base",
+    "NETWORK_ID_TO_CHAIN_ID",
+    "Network",
     "arbitrum",
+    "arbitrum_sepolia",
+    "base",
+    "base_sepolia",
+    "mainnet",
     "optimism",
-    "polygon_amoy",
+    "optimism_sepolia",
     "polygon",
+    "polygon_amoy",
+    "sepolia",
 ]

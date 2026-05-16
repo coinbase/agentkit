@@ -68,8 +68,8 @@ It takes the following inputs:
       symbol: args.tokenSymbol,
       image: args.image,
       metadata: {
-        socialMediaUrls: args.socialMediaUrls,
-        description: args.description,
+        socialMediaUrls: args.socialMediaUrls ?? undefined,
+        description: args.description ?? undefined,
       },
       context: {
         interface: args.interface,

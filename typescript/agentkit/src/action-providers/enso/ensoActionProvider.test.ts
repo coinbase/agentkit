@@ -55,6 +55,7 @@ describe("Enso Route Action", () => {
     tokenIn: USDC,
     tokenOut: WETH,
     amountIn: "100",
+    slippage: null,
   };
 
   beforeEach(async () => {

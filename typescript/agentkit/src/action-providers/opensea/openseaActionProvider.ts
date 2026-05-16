@@ -93,7 +93,9 @@ Important notes:
   })
   async listNft(args: z.infer<typeof ListNftSchema>): Promise<string> {
     try {
-      const expirationTime = Math.round(Date.now() / 1000 + args.expirationDays * 24 * 60 * 60);
+      const expirationTime = Math.round(
+        Date.now() / 1000 + (args.expirationDays ?? 90) * 24 * 60 * 60,
+      );
       await this.openseaSDK.createListing({
         asset: {
           tokenId: args.tokenId,

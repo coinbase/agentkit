@@ -17,7 +17,6 @@ export const WowBuyTokenInput = z
       .regex(/^\d+$/, "Must be a valid wei amount")
       .describe("Amount of ETH to spend (in wei)"),
   })
-  .strip()
   .describe("Instructions for buying WOW tokens");
 
 /**
@@ -30,12 +29,11 @@ export const WowCreateTokenInput = z
     tokenUri: z
       .string()
       .url()
-      .optional()
+      .nullable()
       .describe(
         "The URI of the token metadata to store on IPFS, e.g. ipfs://QmY1GqprFYvojCcUEKgqHeDj9uhZD9jmYGrQTfA9vAE78J",
       ),
   })
-  .strip()
   .describe("Instructions for creating a WOW token");
 
 /**
@@ -53,5 +51,4 @@ export const WowSellTokenInput = z
         "Amount of tokens to sell (in wei), meaning 1 is 1 wei or 0.000000000000000001 of the token",
       ),
   })
-  .strip()
   .describe("Instructions for selling WOW tokens");

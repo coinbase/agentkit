@@ -52,9 +52,9 @@ export class TrueMarketsActionProvider extends ActionProvider<EvmWalletProvider>
     args: z.infer<typeof GetTruthMarketsSchema>,
   ): Promise<string> {
     try {
-      const limit = args.limit;
-      const offset = args.offset;
-      const sortOrder = args.sortOrder;
+      const limit = args.limit ?? 10;
+      const offset = args.offset ?? 0;
+      const sortOrder = args.sortOrder ?? "desc";
 
       // Get total number of markets
       const numMarkets = await walletProvider.readContract({

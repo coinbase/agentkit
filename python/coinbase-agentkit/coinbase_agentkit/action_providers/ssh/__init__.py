@@ -8,8 +8,8 @@ from .connection_pool import SSHConnectionPool
 
 __all__ = [
     "SSHConnection",
-    "SSHConnectionPool",
-    "SSHConnectionParams",
     "SSHConnectionError",
+    "SSHConnectionParams",
+    "SSHConnectionPool",
     "SSHKeyError",
 ]

@@ -114,7 +114,7 @@ def mock_asyncio():
         # Create a side effect for asyncio.run that handles the initialization coroutine
         def run_side_effect(coro):
             # Special handling for the initialization_accounts coroutine
-            if coro.__name__ == "initialize_accounts":
+            if hasattr(coro, "__name__") and coro.__name__ == "initialize_accounts":
                 # Return a tuple of mock owner and smart account
                 mock_owner = Mock(spec=Account)
                 mock_owner.address = "0x123456789012345678901234567890123456789012"
@@ -127,7 +127,12 @@ def mock_asyncio():
             return None
 
         mock_asyncio.run = Mock(side_effect=run_side_effect)
+
+        # Also patch _run_async on the class so __init__ works with our mocks
+        original_run_async = CdpSmartWalletProvider._run_async
+        CdpSmartWalletProvider._run_async = lambda self, coro: run_side_effect(coro)
         yield mock_asyncio
+        CdpSmartWalletProvider._run_async = original_run_async
 
 
 @pytest.fixture

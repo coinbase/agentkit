@@ -1,9 +1,9 @@
 import { AgentRequest, AgentResponse } from "@/app/types/api";
 import { NextResponse } from "next/server";
 import { createAgent } from "./create-agent";
-import { Message, generateId, generateText } from "ai";
+import { ModelMessage, generateText } from "ai";
 
-const messages: Message[] = [];
+const messages: ModelMessage[] = [];
 
 /**
  * Handles incoming POST requests to interact with the AgentKit-powered AI agent.
@@ -33,14 +33,19 @@ export async function POST(
     const agent = await createAgent();
 
     // 3.Start streaming the agent's response
-    messages.push({ id: generateId(), role: "user", content: userMessage });
+    messages.push({ role: "user", content: userMessage });
     const { text } = await generateText({
       ...agent,
       messages,
+      onStepFinish: async ({ toolResults }) => {
+        for (const tr of toolResults) {
+          console.log(`Tool ${tr.toolName}: ${tr.output}`);
+        }
+      },
     });
 
     // 4. Add the agent's response to the messages
-    messages.push({ id: generateId(), role: "assistant", content: text });
+    messages.push({ role: "assistant", content: text });
 
     // 5️. Return the final response
     return NextResponse.json({ response: text });

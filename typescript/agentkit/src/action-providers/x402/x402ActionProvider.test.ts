@@ -203,6 +203,9 @@ describe("X402ActionProvider", () => {
       const result = await provider.makeHttpRequest(makeMockWalletProvider("base-sepolia"), {
         url: "https://unregistered-service.com/api",
         method: "GET",
+        headers: null,
+        queryParams: null,
+        body: null,
       });
 
       const parsedResult = JSON.parse(result);
@@ -224,6 +227,9 @@ describe("X402ActionProvider", () => {
       const result = await provider.makeHttpRequest(makeMockWalletProvider("base-sepolia"), {
         url: "https://api.example.com/free",
         method: "GET",
+        headers: null,
+        queryParams: null,
+        body: null,
       });
 
       const parsedResult = JSON.parse(result);
@@ -247,6 +253,9 @@ describe("X402ActionProvider", () => {
       const result = await provider.makeHttpRequest(makeMockWalletProvider("base-sepolia"), {
         url: "https://www.x402.org/protected",
         method: "GET",
+        headers: null,
+        queryParams: null,
+        body: null,
       });
 
       const parsedResult = JSON.parse(result);
@@ -262,6 +271,9 @@ describe("X402ActionProvider", () => {
       const result = await provider.makeHttpRequest(makeMockWalletProvider("base-sepolia"), {
         url: "https://api.example.com/endpoint",
         method: "GET",
+        headers: null,
+        queryParams: null,
+        body: null,
       });
 
       const parsedResult = JSON.parse(result);
@@ -278,6 +290,7 @@ describe("X402ActionProvider", () => {
         facilitator: "unknown-facilitator",
         maxUsdcPrice: 1.0,
         x402Versions: [1, 2],
+        keyword: null,
       });
 
       const parsed = JSON.parse(result);
@@ -322,6 +335,7 @@ describe("X402ActionProvider", () => {
         facilitator: "cdp",
         maxUsdcPrice: 1.0,
         x402Versions: [1, 2],
+        keyword: null,
       });
       const parsed = JSON.parse(result);
       expect(parsed.success).toBe(true);
@@ -381,6 +395,7 @@ describe("X402ActionProvider", () => {
         facilitator: "cdp",
         maxUsdcPrice: 0.1,
         x402Versions: [1, 2],
+        keyword: null,
       });
 
       const parsed = JSON.parse(result);
@@ -396,6 +411,7 @@ describe("X402ActionProvider", () => {
         facilitator: "cdp",
         maxUsdcPrice: 1.0,
         x402Versions: [1, 2],
+        keyword: null,
       });
       const parsed = JSON.parse(result);
       expect(parsed.error).toBe(true);
@@ -410,11 +426,17 @@ describe("X402ActionProvider", () => {
       const result = await provider.retryWithX402(makeMockWalletProvider("base-sepolia"), {
         url: "https://unregistered-service.com/protected",
         method: "GET",
+        headers: null,
+        queryParams: null,
+        body: null,
         selectedPaymentOption: {
           scheme: "exact",
           network: "base-sepolia",
           maxAmountRequired: "10000",
           asset: "0x456",
+          amount: null,
+          price: null,
+          payTo: null,
         },
       });
 
@@ -434,11 +456,17 @@ describe("X402ActionProvider", () => {
       const result = await provider.retryWithX402(makeMockWalletProvider("base-sepolia"), {
         url: "https://www.x402.org/protected",
         method: "GET",
+        headers: null,
+        queryParams: null,
+        body: null,
         selectedPaymentOption: {
           scheme: "exact",
           network: "base-sepolia",
           maxAmountRequired: "5000000",
           asset: "0x456",
+          amount: null,
+          price: null,
+          payTo: null,
         },
       });
 
@@ -470,11 +498,17 @@ describe("X402ActionProvider", () => {
       const result = await provider.retryWithX402(makeMockWalletProvider("base-sepolia"), {
         url: "https://www.x402.org/protected",
         method: "GET",
+        headers: null,
+        queryParams: null,
+        body: null,
         selectedPaymentOption: {
           scheme: "exact",
           network: "base-sepolia",
           maxAmountRequired: "10000",
           asset: "0x456",
+          amount: null,
+          price: null,
+          payTo: null,
         },
       });
 
@@ -493,11 +527,17 @@ describe("X402ActionProvider", () => {
       const result = await provider.retryWithX402(makeMockWalletProvider("base-sepolia"), {
         url: "https://www.x402.org/protected",
         method: "GET",
+        headers: null,
+        queryParams: null,
+        body: null,
         selectedPaymentOption: {
           scheme: "exact",
           network: "base-sepolia",
           maxAmountRequired: "10000",
           asset: "0x456",
+          amount: null,
+          price: null,
+          payTo: null,
         },
       });
 
@@ -515,6 +555,9 @@ describe("X402ActionProvider", () => {
         {
           url: "https://unregistered-service.com/protected",
           method: "GET",
+          headers: null,
+          queryParams: null,
+          body: null,
         },
       );
 
@@ -545,6 +588,9 @@ describe("X402ActionProvider", () => {
         {
           url: "https://www.x402.org/protected",
           method: "GET",
+          headers: null,
+          queryParams: null,
+          body: null,
         },
       );
 
@@ -570,6 +616,9 @@ describe("X402ActionProvider", () => {
         {
           url: "https://api.example.com/free",
           method: "GET",
+          headers: null,
+          queryParams: null,
+          body: null,
         },
       );
 
@@ -588,6 +637,9 @@ describe("X402ActionProvider", () => {
         {
           url: "https://api.example.com/endpoint",
           method: "GET",
+          headers: null,
+          queryParams: null,
+          body: null,
         },
       );
 

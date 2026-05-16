@@ -124,13 +124,14 @@ def test_init_with_private_key_owner(mock_cdp_client, mock_asyncio, mock_network
     ) as mock_account_class:
         mock_account_class.from_key.return_value = mock_owner
 
-        # Update mock_asyncio.run to return a tuple with the owner and smart_account for initialization
-        def run_side_effect(coro):
-            if coro.__name__ == "initialize_accounts":
+        # Update _run_async to return the right values for initialization
+        def run_async_side_effect(self, coro):
+            if hasattr(coro, "__name__") and coro.__name__ == "initialize_accounts":
                 return (mock_owner, mock_smart_account)
             return None
 
-        mock_asyncio.run.side_effect = run_side_effect
+        # Patch _run_async on the class for this test
+        CdpSmartWalletProvider._run_async = run_async_side_effect
 
         async def create_smart_account_mock(*args, **kwargs):
             return mock_smart_account
@@ -147,7 +148,7 @@ def test_init_with_private_key_owner(mock_cdp_client, mock_asyncio, mock_network
 
         provider = CdpSmartWalletProvider(config)
 
-        # Don't check if from_key was called, since we're mocking asyncio.run
+        # Don't check if from_key was called, since we're mocking _run_async
         # We only care that the provider was initialized correctly
         assert provider.get_address() == MOCK_ADDRESS
         assert provider._owner == mock_owner

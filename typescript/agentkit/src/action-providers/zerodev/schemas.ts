@@ -6,12 +6,12 @@ import { z } from "zod";
 export const GetCABSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("networkFilter"),
-    tokenTickers: z.array(z.string()).optional(),
+    tokenTickers: z.array(z.string()).nullable(),
     networks: z.array(z.number()).describe("The networks to get the balance for."),
   }),
   z.object({
     type: z.literal("networkType"),
-    tokenTickers: z.array(z.string()).optional(),
+    tokenTickers: z.array(z.string()).nullable(),
     networkType: z
       .enum(["mainnet", "testnet"])
       .describe("The type of network to get the balance for."),

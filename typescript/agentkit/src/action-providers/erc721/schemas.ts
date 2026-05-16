@@ -8,12 +8,11 @@ export const GetBalanceSchema = z
     contractAddress: z.string().describe("The NFT contract address to check balance for"),
     address: z
       .string()
-      .optional()
+      .nullable()
       .describe(
         "The address to check NFT balance for. If not provided, uses the wallet's default address",
       ),
   })
-  .strip()
   .describe("Instructions for getting NFT balance");
 
 /**
@@ -24,7 +23,6 @@ export const MintSchema = z
     contractAddress: z.string().describe("The contract address of the NFT to mint"),
     destination: z.string().describe("The onchain destination address that will receive the NFT"),
   })
-  .strip()
   .describe("Instructions for minting an NFT");
 
 /**
@@ -41,10 +39,9 @@ export const TransferSchema = z
       ),
     fromAddress: z
       .string()
-      .optional()
+      .nullable()
       .describe(
         "The address to transfer from. If not provided, defaults to the wallet's default address",
       ),
   })
-  .strip()
   .describe("Input schema for transferring an NFT");

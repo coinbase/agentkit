@@ -1,5 +1,6 @@
 import { openai } from "@ai-sdk/openai";
 import { getVercelAITools } from "@coinbase/agentkit-vercel-ai-sdk";
+import { generateText, stepCountIs } from "ai";
 import { prepareAgentkitAndWalletProvider } from "./prepareAgentkit";
 
 /**
@@ -14,7 +15,7 @@ import { prepareAgentkitAndWalletProvider } from "./prepareAgentkit";
  *    - Configure model parameters like temperature and max tokens
  *
  * 2. Instantiate your Agent:
- *    - Pass the LLM, tools, and memory into `createReactAgent()`
+ *    - Pass the LLM, tools, and memory into `createAgent()`
  *    - Configure agent-specific parameters
  */
 
@@ -23,7 +24,7 @@ type Agent = {
   tools: ReturnType<typeof getVercelAITools>;
   system: string;
   model: ReturnType<typeof openai>;
-  maxSteps?: number;
+  stopWhen?: Parameters<typeof generateText>[0]["stopWhen"];
 };
 let agent: Agent;
 
@@ -32,7 +33,7 @@ let agent: Agent;
  * If an agent instance already exists, it returns the existing one.
  *
  * @function getOrInitializeAgent
- * @returns {Promise<ReturnType<typeof createReactAgent>>} The initialized AI agent.
+ * @returns {Promise<Agent>} The initialized AI agent.
  *
  * @description Handles agent setup
  *
@@ -46,7 +47,7 @@ export async function createAgent(): Promise<Agent> {
 
   try {
     // Initialize LLM: https://platform.openai.com/docs/models#gpt-4o
-    const model = openai("gpt-4o-mini");
+    const model = openai.chat("gpt-4o-mini");
 
     const { agentkit, walletProvider } = await prepareAgentkitAndWalletProvider();
 
@@ -69,7 +70,7 @@ export async function createAgent(): Promise<Agent> {
       tools,
       system,
       model,
-      maxSteps: 10,
+      stopWhen: stepCountIs(10),
     };
 
     return agent;

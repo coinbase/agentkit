@@ -4,7 +4,7 @@ from .onramp_action_provider import OnrampActionProvider, onramp_action_provider
 from .schemas import GetOnrampBuyUrlSchema
 
 __all__ = [
+    "GetOnrampBuyUrlSchema",
     "OnrampActionProvider",
     "onramp_action_provider",
-    "GetOnrampBuyUrlSchema",
 ]

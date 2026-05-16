@@ -1,5 +1,27 @@
 # AgentKit Changelog
 
+## 0.11.0
+
+### Minor Changes
+
+- [#1021](https://github.com/coinbase/agentkit/pull/1021) [`1da829e`](https://github.com/coinbase/agentkit/commit/1da829e006f8b7e7811e43490e6fe423b4650736) Thanks [@phdargen](https://github.com/phdargen)! - Upgraded to zod v4, langchain v1 and vercel ai sdk v6
+
+- [#923](https://github.com/coinbase/agentkit/pull/923) [`e809805`](https://github.com/coinbase/agentkit/commit/e8098053561b895e6309a8789266e2704c5353c7) Thanks [@phdargen](https://github.com/phdargen)! - Deprecated legacy cdp-wallet
+
+### Patch Changes
+
+- [#966](https://github.com/coinbase/agentkit/pull/966) [`b211701`](https://github.com/coinbase/agentkit/commit/b21170143825cb1892daaa8e52c68e9c8c446ae1) Thanks [@phdargen](https://github.com/phdargen)! - Bumped x402 packages and fix missing readContract interface
+
+- [#982](https://github.com/coinbase/agentkit/pull/982) [`c3dbef6`](https://github.com/coinbase/agentkit/commit/c3dbef60d1613effc9d9805816bec15f5510fdca) Thanks [@fffilimonov](https://github.com/fffilimonov)! - Added dTelecom action provider for decentralized voice services (WebRTC, STT, TTS) with x402 micropayments, and a voice agent example.
+
+- [#898](https://github.com/coinbase/agentkit/pull/898) [`16fb4a1`](https://github.com/coinbase/agentkit/commit/16fb4a1c4674787ac8442efc88e0830573f3208d) Thanks [@phdargen](https://github.com/phdargen)! - Updated x402 actions to v2 and improved discovery and query/body parameter handling
+
+- [#882](https://github.com/coinbase/agentkit/pull/882) [`8eab8b8`](https://github.com/coinbase/agentkit/commit/8eab8b85a496249e8e080a78c4ecf9b92f6c8504) Thanks [@sanketsaagar](https://github.com/sanketsaagar)! - Updated polygon network apiUrl for both mainnet and amoy
+
+- [#930](https://github.com/coinbase/agentkit/pull/930) [`a3afda3`](https://github.com/coinbase/agentkit/commit/a3afda399aa981fb23ee65a38b40527e98cba5ab) Thanks [@phdargen](https://github.com/phdargen)! - Added erc8004 action providers
+
+- [#922](https://github.com/coinbase/agentkit/pull/922) [`e44e0e4`](https://github.com/coinbase/agentkit/commit/e44e0e458b5d8bbca941e6ac58386027f679f7a3) Thanks [@phdargen](https://github.com/phdargen)! - Added pre-registration of x402 services
+
 ## 0.10.4
 
 ### Patch Changes

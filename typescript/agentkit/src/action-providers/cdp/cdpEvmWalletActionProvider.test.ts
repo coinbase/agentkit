@@ -58,6 +58,7 @@ describe("CDP EVM Wallet Action Provider", () => {
   describe("listSpendPermissions", () => {
     const mockArgs = {
       smartAccountAddress: "0xabcd1234567890123456789012345678901234567890",
+      network: null,
     };
 
     beforeEach(() => {
@@ -110,7 +111,10 @@ describe("CDP EVM Wallet Action Provider", () => {
     });
 
     it("should validate input schema", () => {
-      const validInput = { smartAccountAddress: "0xabcd1234567890123456789012345678901234567890" };
+      const validInput = {
+        smartAccountAddress: "0xabcd1234567890123456789012345678901234567890",
+        network: null,
+      };
       const invalidInput = { wrongField: "0xabcd1234567890123456789012345678901234567890" };
 
       expect(() => ListSpendPermissionsSchema.parse(validInput)).not.toThrow();
@@ -122,6 +126,7 @@ describe("CDP EVM Wallet Action Provider", () => {
     const mockArgs = {
       smartAccountAddress: "0xabcd1234567890123456789012345678901234567890",
       value: "2500",
+      network: null,
     };
 
     beforeEach(() => {
@@ -285,6 +290,7 @@ describe("CDP EVM Wallet Action Provider", () => {
       const validInput = {
         smartAccountAddress: "0xabcd1234567890123456789012345678901234567890",
         value: "1000",
+        network: null,
       };
       const invalidInput = {
         smartAccountAddress: "not-an-address",
@@ -597,6 +603,7 @@ describe("CDP EVM Wallet Action Provider", () => {
         fromToken: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
         toToken: "0xA0b86991c6218b36c1d19D4a2e9EB0cE3606eB48",
         fromAmount: "0.1",
+        slippageBps: null,
       };
       const result = SwapSchema.safeParse(validInput);
       expect(result.success).toBe(true);

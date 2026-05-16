@@ -26,7 +26,7 @@ from .conftest import (
 def test_init_with_config(mock_cdp_client, mock_solana_client, mock_public_key):
     """Test initialization with config."""
     mock_account = Mock(address=MOCK_ADDRESS)
-    with patch("asyncio.run", return_value=mock_account):
+    with patch.object(CdpSolanaWalletProvider, "_run_async", return_value=mock_account):
         config = CdpSolanaWalletProviderConfig(
             api_key_id=MOCK_API_KEY_ID,
             api_key_secret=MOCK_API_KEY_SECRET,
@@ -44,7 +44,7 @@ def test_init_with_env_vars(mock_cdp_client, mock_solana_client, mock_public_key
     """Test initialization with environment variables."""
     mock_account = Mock(address=MOCK_ADDRESS)
     with (
-        patch("asyncio.run", return_value=mock_account),
+        patch.object(CdpSolanaWalletProvider, "_run_async", return_value=mock_account),
         patch.dict(
             os.environ,
             {
@@ -65,7 +65,7 @@ def test_init_with_default_network(mock_cdp_client, mock_solana_client, mock_pub
     """Test initialization with default network when no network ID is provided."""
     mock_account = Mock(address=MOCK_ADDRESS)
     with (
-        patch("asyncio.run", return_value=mock_account),
+        patch.object(CdpSolanaWalletProvider, "_run_async", return_value=mock_account),
         patch(
             "os.getenv",
             side_effect=lambda key, default=None: "solana-devnet" if key == "NETWORK_ID" else None,
@@ -99,8 +99,8 @@ def test_init_with_existing_address(mock_cdp_client, mock_solana_client, mock_pu
     # Configure the mocks
     mock_cdp_client.solana.get_account.return_value = mock_account
 
-    with patch("asyncio.run") as mock_run:
-        # Make asyncio.run call our async function and return the account
+    with patch.object(CdpSolanaWalletProvider, "_run_async") as mock_run:
+        # Make _run_async return the account directly
         mock_run.side_effect = lambda coro: mock_account
 
         config = CdpSolanaWalletProviderConfig(
@@ -114,14 +114,14 @@ def test_init_with_existing_address(mock_cdp_client, mock_solana_client, mock_pu
         provider = CdpSolanaWalletProvider(config)
 
         assert provider.get_address() == existing_address
-        # The asyncio.run was called once during initialization
+        # The _run_async was called once during initialization
         assert mock_run.called
 
 
 def test_init_with_mainnet(mock_cdp_client, mock_solana_client, mock_public_key):
     """Test initialization with mainnet configuration."""
     mock_account = Mock(address=MOCK_ADDRESS)
-    with patch("asyncio.run", return_value=mock_account):
+    with patch.object(CdpSolanaWalletProvider, "_run_async", return_value=mock_account):
         config = CdpSolanaWalletProviderConfig(
             api_key_id=MOCK_API_KEY_ID,
             api_key_secret=MOCK_API_KEY_SECRET,
@@ -138,7 +138,7 @@ def test_init_with_mainnet(mock_cdp_client, mock_solana_client, mock_public_key)
 def test_init_with_testnet(mock_cdp_client, mock_solana_client, mock_public_key):
     """Test initialization with testnet configuration."""
     mock_account = Mock(address=MOCK_ADDRESS)
-    with patch("asyncio.run", return_value=mock_account):
+    with patch.object(CdpSolanaWalletProvider, "_run_async", return_value=mock_account):
         config = CdpSolanaWalletProviderConfig(
             api_key_id=MOCK_API_KEY_ID,
             api_key_secret=MOCK_API_KEY_SECRET,
@@ -179,7 +179,9 @@ def test_init_with_cdp_import_error():
 
 def test_init_with_account_creation_error(mock_cdp_client, mock_solana_client, mock_public_key):
     """Test initialization when account creation fails."""
-    with patch("asyncio.run", side_effect=Exception("Failed to create account")):
+    with patch.object(
+        CdpSolanaWalletProvider, "_run_async", side_effect=Exception("Failed to create account")
+    ):
         config = CdpSolanaWalletProviderConfig(
             api_key_id=MOCK_API_KEY_ID,
             api_key_secret=MOCK_API_KEY_SECRET,

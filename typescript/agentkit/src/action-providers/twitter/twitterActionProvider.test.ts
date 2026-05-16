@@ -186,7 +186,7 @@ describe("TwitterActionProvider", () => {
     });
 
     it("should successfully post a tweet", async () => {
-      const response = await provider.postTweet({ tweet: MOCK_TWEET });
+      const response = await provider.postTweet({ tweet: MOCK_TWEET, mediaIds: null });
 
       expect(mockClient.tweet).toHaveBeenCalledWith(MOCK_TWEET, {});
       expect(response).toContain("Successfully posted to Twitter");
@@ -208,7 +208,7 @@ describe("TwitterActionProvider", () => {
       const error = new Error("An error has occurred");
       mockClient.tweet.mockRejectedValue(error);
 
-      const response = await provider.postTweet({ tweet: MOCK_TWEET });
+      const response = await provider.postTweet({ tweet: MOCK_TWEET, mediaIds: null });
 
       expect(mockClient.tweet).toHaveBeenCalledWith(MOCK_TWEET, {});
       expect(response).toContain("Error posting to Twitter");
@@ -233,6 +233,7 @@ describe("TwitterActionProvider", () => {
       const response = await provider.postTweetReply({
         tweetId: MOCK_TWEET_ID,
         tweetReply: MOCK_TWEET_REPLY,
+        mediaIds: null,
       });
 
       expect(mockClient.tweet).toHaveBeenCalledWith(MOCK_TWEET_REPLY, {
@@ -265,6 +266,7 @@ describe("TwitterActionProvider", () => {
       const response = await provider.postTweetReply({
         tweetId: MOCK_TWEET_ID,
         tweetReply: MOCK_TWEET_REPLY,
+        mediaIds: null,
       });
 
       expect(mockClient.tweet).toHaveBeenCalledWith(MOCK_TWEET_REPLY, {

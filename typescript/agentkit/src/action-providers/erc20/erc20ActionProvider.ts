@@ -49,7 +49,7 @@ export class ERC20ActionProvider extends ActionProvider<EvmWalletProvider> {
     args: z.infer<typeof GetBalanceSchema>,
   ): Promise<string> {
     const address = args.address || walletProvider.getAddress();
-    const tokenDetails = await getTokenDetails(walletProvider, args.tokenAddress, args.address);
+    const tokenDetails = await getTokenDetails(walletProvider, args.tokenAddress, address);
 
     if (!tokenDetails) {
       return `Error: Could not fetch token details for ${args.tokenAddress}`;

@@ -16,12 +16,13 @@
   "dependencies": {
     "@coinbase/agentkit": "workspace:*",
     "@coinbase/agentkit-langchain": "workspace:*",
-    "@langchain/core": "^0.3.19",
-    "@langchain/openai": "^0.3.14",
-    "@langchain/langgraph": "^0.2.21",
+    "@langchain/core": "^1.1.0",
+    "@langchain/langgraph": "^1.2.0",
+    "@langchain/openai": "^1.2.0",
     "dotenv": "^16.4.5",
-    "zod": "^3.23.8",
-    "reflect-metadata": "^0.2.2"
+    "langchain": "^1.1.0",
+    "reflect-metadata": "^0.2.2",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "^18.11.18",

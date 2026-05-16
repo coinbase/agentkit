@@ -44,5 +44,4 @@ export const WithdrawSchema = z
       .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
       .describe("The address to receive the shares"),
   })
-  .strip()
   .describe("Input schema for Morpho Vault withdraw action");

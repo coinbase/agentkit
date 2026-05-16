@@ -103,10 +103,10 @@ Important notes:
       url.searchParams.append("buyToken", args.buyToken);
       url.searchParams.append("sellAmount", sellAmount);
       url.searchParams.append("taker", walletProvider.getAddress());
-      url.searchParams.append("slippageBps", args.slippageBps.toString());
+      url.searchParams.append("slippageBps", (args.slippageBps ?? 100).toString());
       if (args.swapFeeRecipient) {
         url.searchParams.append("swapFeeRecipient", args.swapFeeRecipient);
-        url.searchParams.append("swapFeeBps", args.swapFeeBps.toString());
+        url.searchParams.append("swapFeeBps", (args.swapFeeBps ?? 100).toString());
         url.searchParams.append("swapFeeToken", args.sellToken);
       }
 
@@ -227,10 +227,10 @@ Important notes:
       priceUrl.searchParams.append("buyToken", args.buyToken);
       priceUrl.searchParams.append("sellAmount", sellAmount);
       priceUrl.searchParams.append("taker", walletAddress);
-      priceUrl.searchParams.append("slippageBps", args.slippageBps.toString());
+      priceUrl.searchParams.append("slippageBps", (args.slippageBps ?? 100).toString());
       if (args.swapFeeRecipient) {
         priceUrl.searchParams.append("swapFeeRecipient", args.swapFeeRecipient);
-        priceUrl.searchParams.append("swapFeeBps", args.swapFeeBps.toString());
+        priceUrl.searchParams.append("swapFeeBps", (args.swapFeeBps ?? 100).toString());
         priceUrl.searchParams.append("swapFeeToken", args.sellToken);
       }
 
@@ -299,10 +299,10 @@ Important notes:
       quoteUrl.searchParams.append("buyToken", args.buyToken);
       quoteUrl.searchParams.append("sellAmount", sellAmount);
       quoteUrl.searchParams.append("taker", walletAddress);
-      quoteUrl.searchParams.append("slippageBps", args.slippageBps.toString());
+      quoteUrl.searchParams.append("slippageBps", (args.slippageBps ?? 100).toString());
       if (args.swapFeeRecipient) {
         quoteUrl.searchParams.append("swapFeeRecipient", args.swapFeeRecipient);
-        quoteUrl.searchParams.append("swapFeeBps", args.swapFeeBps.toString());
+        quoteUrl.searchParams.append("swapFeeBps", (args.swapFeeBps ?? 100).toString());
         quoteUrl.searchParams.append("swapFeeToken", args.sellToken);
       }
 

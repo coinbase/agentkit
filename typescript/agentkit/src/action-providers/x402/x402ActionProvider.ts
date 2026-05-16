@@ -13,7 +13,6 @@ import {
 } from "./schemas";
 import { EvmWalletProvider, WalletProvider, SvmWalletProvider } from "../../wallet-providers";
 import { x402Client, wrapFetchWithPayment } from "@x402/fetch";
-import { toClientEvmSigner } from "@x402/evm";
 import { registerExactEvmScheme } from "@x402/evm/exact/client";
 import { registerExactSvmScheme } from "@x402/svm/exact/client";
 import {
@@ -218,7 +217,7 @@ If you receive a 402 Payment Required response, use retry_http_request_with_x402
       }
 
       const finalUrl = buildUrlWithParams(args.url, args.queryParams);
-      let method = args.method ?? "GET";
+      let method = args.method;
       let canHaveBody = ["POST", "PUT", "PATCH"].includes(method);
 
       let response = await fetch(finalUrl, {
@@ -467,7 +466,7 @@ DO NOT use this action directly without first trying make_http_request!`,
 
       // Build URL with query params and determine if body is allowed
       const finalUrl = buildUrlWithParams(args.url, args.queryParams);
-      const method = args.method ?? "GET";
+      const method = args.method;
       const canHaveBody = ["POST", "PUT", "PATCH"].includes(method);
 
       // Build headers, adding Content-Type for JSON body
@@ -614,7 +613,7 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
 
       // Build URL with query params and determine if body is allowed
       const finalUrl = buildUrlWithParams(args.url, args.queryParams);
-      const method = args.method ?? "GET";
+      const method = args.method;
       const canHaveBody = ["POST", "PUT", "PATCH"].includes(method);
 
       // Build headers, adding Content-Type for JSON body
@@ -846,7 +845,22 @@ These are the only services that can be called using make_http_request or make_h
     const client = new x402Client();
 
     if (walletProvider instanceof EvmWalletProvider) {
-      const signer = toClientEvmSigner(walletProvider.toSigner(), walletProvider.getPublicClient());
+      const account = walletProvider.toSigner();
+      const signer = {
+        ...account,
+        readContract: (args: {
+          address: `0x${string}`;
+          abi: readonly unknown[];
+          functionName: string;
+          args?: readonly unknown[];
+        }) =>
+          walletProvider.readContract({
+            address: args.address,
+            abi: args.abi as never,
+            functionName: args.functionName as never,
+            args: args.args as never,
+          }),
+      };
       registerExactEvmScheme(client, { signer });
     } else if (walletProvider instanceof SvmWalletProvider) {
       const signer = await walletProvider.toSigner();

@@ -1,6 +1,6 @@
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
 import { MemorySaver } from "@langchain/langgraph";
-import { createReactAgent } from "@langchain/langgraph/prebuilt";
+import { createAgent as createLangChainAgent } from "langchain";
 import { ChatOpenAI } from "@langchain/openai";
 import { prepareAgentkitAndWalletProvider } from "./prepare-agentkit";
 
@@ -16,25 +16,25 @@ import { prepareAgentkitAndWalletProvider } from "./prepare-agentkit";
  *    - Configure model parameters like temperature and max tokens
  *
  * 2. Instantiate your Agent:
- *    - Pass the LLM, tools, and memory into `createReactAgent()`
+ *    - Pass the LLM, tools, and memory into `createAgent()`
  *    - Configure agent-specific parameters
  */
 
 // The agent
-let agent: ReturnType<typeof createReactAgent>;
+let agent: ReturnType<typeof createLangChainAgent>;
 
 /**
  * Initializes and returns an instance of the AI agent.
  * If an agent instance already exists, it returns the existing one.
  *
  * @function getOrInitializeAgent
- * @returns {Promise<ReturnType<typeof createReactAgent>>} The initialized AI agent.
+ * @returns {Promise<ReturnType<typeof createLangChainAgent>>} The initialized AI agent.
  *
  * @description Handles agent setup
  *
  * @throws {Error} If the agent initialization fails.
  */
-export async function createAgent(): Promise<ReturnType<typeof createReactAgent>> {
+export async function createAgent(): Promise<ReturnType<typeof createLangChainAgent>> {
   // If agent has already been initialized, return it
   if (agent) {
     return agent;
@@ -57,11 +57,11 @@ export async function createAgent(): Promise<ReturnType<typeof createReactAgent>
     const canUseFaucet = walletProvider.getNetwork().networkId == "base-sepolia";
     const faucetMessage = `If you ever need funds, you can request them from the faucet.`;
     const cantUseFaucetMessage = `If you need funds, you can provide your wallet details and request funds from the user.`;
-    agent = createReactAgent({
-      llm,
+    agent = createLangChainAgent({
+      model: llm,
       tools,
-      checkpointSaver: memory,
-      messageModifier: `
+      checkpointer: memory,
+      systemPrompt: `
         You are a helpful agent that can interact onchain using the Coinbase Developer Platform AgentKit. You are 
         empowered to interact onchain using your tools. ${canUseFaucet ? faucetMessage : cantUseFaucetMessage}.
         Before executing your first action, get the wallet details to see what network 

@@ -37,8 +37,13 @@ export async function POST(
     // 4️. Process the streamed response chunks into a single message
     let agentResponse = "";
     for await (const chunk of stream) {
-      if ("agent" in chunk) {
-        agentResponse += chunk.agent.messages[0].content;
+      if ("model_request" in chunk) {
+        agentResponse += chunk.model_request.messages[0].content;
+      }
+      if ("tools" in chunk) {
+        for (const tool of chunk.tools.messages) {
+          console.log(`Tool ${tool.name}: ${tool.content}`);
+        }
       }
     }
 

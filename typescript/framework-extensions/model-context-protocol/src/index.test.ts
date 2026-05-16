@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { zodToJsonSchema } from "zod-to-json-schema";
 import { getMcpTools } from "./index";
 import { AgentKit } from "@coinbase/agentkit";
 
@@ -33,7 +32,7 @@ describe("getMcpTools", () => {
 
     expect(tool.name).toBe(mockAction.name);
     expect(tool.description).toBe(mockAction.description);
-    expect(tool.inputSchema).toStrictEqual(zodToJsonSchema(mockAction.schema));
+    expect(tool.inputSchema).toStrictEqual(z.toJSONSchema(mockAction.schema));
 
     const result = await toolHandler("testAction", { test: "data" });
     expect(result).toStrictEqual({ content: [{ text: '"Invoked with data"', type: "text" }] });

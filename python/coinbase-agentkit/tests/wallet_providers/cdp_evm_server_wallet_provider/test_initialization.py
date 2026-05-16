@@ -25,7 +25,7 @@ from .conftest import (
 
 def test_init_with_config(mock_cdp_client, mock_account):
     """Test initialization with config."""
-    with patch("asyncio.run") as mock_run:
+    with patch.object(CdpEvmWalletProvider, "_run_async") as mock_run:
         mock_run.return_value = mock_account
 
         config = CdpEvmWalletProviderConfig(
@@ -44,7 +44,7 @@ def test_init_with_config(mock_cdp_client, mock_account):
 def test_init_with_env_vars(mock_cdp_client, mock_account):
     """Test initialization with environment variables."""
     with (
-        patch("asyncio.run") as mock_run,
+        patch.object(CdpEvmWalletProvider, "_run_async") as mock_run,
         patch.dict(
             os.environ,
             {
@@ -66,7 +66,7 @@ def test_init_with_env_vars(mock_cdp_client, mock_account):
 def test_init_with_default_network(mock_cdp_client, mock_account):
     """Test initialization with default network when no network ID is provided."""
     with (
-        patch("asyncio.run") as mock_run,
+        patch.object(CdpEvmWalletProvider, "_run_async") as mock_run,
         patch(
             "os.getenv",
             side_effect=lambda key, default=None: "base-sepolia" if key == "NETWORK_ID" else None,
@@ -99,7 +99,9 @@ def test_init_with_missing_credentials():
 def test_init_with_invalid_network(mock_cdp_client):
     """Test initialization with invalid network."""
     # Use a known invalid network ID
-    with patch("asyncio.run", side_effect=ValueError("Invalid network ID")):
+    with patch.object(
+        CdpEvmWalletProvider, "_run_async", side_effect=ValueError("Invalid network ID")
+    ):
         config = CdpEvmWalletProviderConfig(
             api_key_id=MOCK_API_KEY_ID,
             api_key_secret=MOCK_API_KEY_SECRET,
@@ -113,7 +115,9 @@ def test_init_with_invalid_network(mock_cdp_client):
 
 def test_init_with_account_creation_error(mock_cdp_client):
     """Test initialization when account creation fails."""
-    with patch("asyncio.run", side_effect=Exception("Failed to create account")):
+    with patch.object(
+        CdpEvmWalletProvider, "_run_async", side_effect=Exception("Failed to create account")
+    ):
         config = CdpEvmWalletProviderConfig(
             api_key_id=MOCK_API_KEY_ID,
             api_key_secret=MOCK_API_KEY_SECRET,

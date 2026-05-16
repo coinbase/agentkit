@@ -17,7 +17,6 @@ export const SuperfluidCreateStreamSchema = z
       .string()
       .describe("The rate at which the ERC20 is streamed to the recipient, in wei per second."),
   })
-  .strip()
   .describe("Input schema for creating or updating a Superfluid stream");
 
 /**
@@ -34,7 +33,6 @@ export const SuperfluidDeleteStreamSchema = z
       .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
       .describe("The EVM address to stream the token to."),
   })
-  .strip()
   .describe("Input schema for creating a Superfluid stream");
 
 /**
@@ -47,7 +45,6 @@ export const SuperfluidCreatePoolSchema = z
       .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
       .describe("The ERC20 Super token for which to create a pool"),
   })
-  .strip()
   .describe("Input schema for creating a Superfluid pool");
 
 /**
@@ -65,7 +62,6 @@ export const SuperfluidUpdatePoolSchema = z
       .describe("The EVM address to stream the token to, from the pool."),
     units: z.number().describe("The new units of the recipient in the pool."),
   })
-  .strip()
   .describe("Input schema for updating a Superfluid pool");
 
 /**
@@ -85,7 +81,6 @@ export const SuperfluidWrapTokenSchema = z
       .number()
       .describe("The amount of tokens to wrap in whole units (e.g. 1.5 WETH, 10 USDC)"),
   })
-  .strip()
   .describe("Input schema for updating a Superfluid pool");
 
 /**
@@ -98,10 +93,9 @@ export const SuperfluidCreateSuperTokenSchema = z
       .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
       .describe("The underlying ERC20 token"),
   })
-  .strip()
   .describe("Input schema for creating a Super Token");
 
 /**
  * Empty input schema used for Query action
  */
-export const EmptySchema = z.object({}).strip().describe("Empty input schema");
+export const EmptySchema = z.object({}).describe("Empty input schema");

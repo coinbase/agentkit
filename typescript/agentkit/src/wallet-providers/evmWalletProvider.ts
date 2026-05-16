@@ -13,7 +13,15 @@ import {
   Address,
   PublicClient,
   LocalAccount,
+  numberToHex,
 } from "viem";
+
+/**
+ * Minimal EIP-1193 provider interface.
+ */
+export interface EIP1193Provider {
+  request(args: { method: string; params?: unknown[] | Record<string, unknown> }): Promise<unknown>;
+}
 
 /**
  * EvmWalletProvider is the abstract base class for all EVM wallet providers.
@@ -43,6 +51,49 @@ export abstract class EvmWalletProvider extends WalletProvider {
         return this.signTypedData(typedData);
       },
     });
+  }
+
+  /**
+   * Convert the wallet provider to a EIP-1193 provider.
+   *
+   * @returns The EIP-1193 provider.
+   */
+  toEip1193Provider(): EIP1193Provider {
+    return {
+      request: async (args: { method: string; params?: any }) => {
+        switch (args.method) {
+          case "eth_accounts":
+          case "eth_requestAccounts":
+            return [this.getAddress()];
+
+          case "eth_chainId":
+            return numberToHex(Number(this.getNetwork().chainId));
+
+          case "eth_sendTransaction": {
+            const txParams = (args.params as any[])?.[0] ?? {};
+            const hash = await this.sendTransaction(txParams);
+            // Wait for the transaction receipt so that a userOpHash is resolved to a real transaction hash for CDP smart wallets.
+            const receipt = await this.waitForTransactionReceipt(hash);
+            return receipt.transactionHash ?? hash;
+          }
+
+          case "personal_sign": {
+            const [message] = args.params as [string];
+            return this.signMessage(message);
+          }
+
+          case "eth_signTypedData_v4": {
+            const [, typedDataJson] = args.params as [string, string];
+            const typedData =
+              typeof typedDataJson === "string" ? JSON.parse(typedDataJson) : typedDataJson;
+            return this.signTypedData(typedData);
+          }
+
+          default:
+            return this.getPublicClient().request(args as any);
+        }
+      },
+    };
   }
 
   /**

@@ -14,5 +14,4 @@ export const NativeTransferSchema = z
     to: z.string().describe("The destination address to receive the funds"),
     value: z.string().describe("The amount to transfer in whole units e.g. 1 ETH or 0.00001 ETH"),
   })
-  .strip()
   .describe("Instructions for transferring native tokens");

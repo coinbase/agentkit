@@ -1,0 +1,54 @@
+<svg id="logo" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <foreignObject width="100%" height="100%">
+        <div xmlns="http://www.w3.org/1999/xhtml">
+            <style>
+                :root {
+                    --border-color: #404040;
+                    --hover-color: #2470FF;
+                    --dtelecom-bg: #33CC66;
+                }
+
+                @media (prefers-color-scheme: dark) {
+                    :root {
+                        --border-color: #404040;
+                        --hover-color: #2470FF;
+                        --dtelecom-bg: #33CC66;
+                    }
+                }
+
+                @media (prefers-color-scheme: light) {
+                    :root {
+                        --border-color: #e0e0e0;
+                        --hover-color: #2470FF;
+                        --dtelecom-bg: #33CC66;
+                    }
+                }
+
+                #container {
+                    box-sizing: border-box;
+                    border: 1px solid var(--border-color);
+                    border-radius: 8px;
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                #logo:hover {
+                    border-color: var(--hover-color);
+                }
+
+                div {
+                    width: 100%;
+                    height: 100%;
+                }
+            </style>
+            <div id="container">
+                <svg width="24" height="24" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="512" height="512" rx="80" fill="var(--dtelecom-bg)"/>
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M122.163 242.346H194.807C207.519 242.346 219.324 236.885 228.405 228.693C236.577 220.501 242.025 208.668 242.025 195.014V122.196V108.542H255.646H390.038H403.658V122.196V256V269.653H390.038H317.394C304.681 269.653 292.876 275.115 283.796 283.307C275.623 291.499 270.175 303.332 270.175 316.986V389.804V403.458H256.554H122.163H108.542V390.715V256.91V243.257V242.346H122.163ZM194.807 270.564H135.783V377.061H242.025V317.896C242.025 296.96 250.198 278.756 263.819 265.102C277.439 251.449 296.508 243.257 316.485 243.257H375.509V135.849H270.175V195.014C270.175 215.95 262.002 234.154 248.382 247.808C234.761 262.372 215.692 270.564 194.807 270.564Z" fill="white"/>
+                </svg>
+            </div>
+        </div>
+    </foreignObject>
+</svg>

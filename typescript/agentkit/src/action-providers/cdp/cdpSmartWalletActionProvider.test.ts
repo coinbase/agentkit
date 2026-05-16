@@ -63,6 +63,7 @@ describe("CDP Smart Wallet Action Provider", () => {
   describe("listSpendPermissions", () => {
     const mockArgs = {
       smartAccountAddress: "0xabcd1234567890123456789012345678901234567890",
+      network: null,
     };
 
     beforeEach(() => {
@@ -105,7 +106,10 @@ describe("CDP Smart Wallet Action Provider", () => {
     });
 
     it("should validate input schema", () => {
-      const validInput = { smartAccountAddress: "0xabcd1234567890123456789012345678901234567890" };
+      const validInput = {
+        smartAccountAddress: "0xabcd1234567890123456789012345678901234567890",
+        network: null,
+      };
       const invalidInput = { invalidField: "invalid" };
 
       expect(() => ListSpendPermissionsSchema.parse(validInput)).not.toThrow();
@@ -117,6 +121,7 @@ describe("CDP Smart Wallet Action Provider", () => {
     const mockArgs = {
       smartAccountAddress: "0xabcd1234567890123456789012345678901234567890",
       value: "1000",
+      network: null,
     };
 
     beforeEach(() => {
@@ -243,6 +248,7 @@ describe("CDP Smart Wallet Action Provider", () => {
       const validInput = {
         smartAccountAddress: "0xabcd1234567890123456789012345678901234567890",
         value: "1000",
+        network: null,
       };
       const invalidInput = {
         wrongField: "0xabcd1234567890123456789012345678901234567890",

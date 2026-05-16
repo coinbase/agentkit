@@ -11,11 +11,10 @@ export const ListNftSchema = z
     expirationDays: z
       .number()
       .positive()
-      .optional()
-      .default(90)
+      .nullable()
+      .transform(val => val ?? 90)
       .describe("Number of days the listing should be active for (default: 90)"),
   })
-  .strip()
   .describe("Input schema for listing an NFT on OpenSea");
 
 /**
@@ -25,10 +24,9 @@ export const GetNftsByAccountSchema = z
   .object({
     accountAddress: z
       .string()
-      .optional()
+      .nullable()
       .describe(
         "The wallet address to fetch NFTs for (defaults to connected wallet if not provided)",
       ),
   })
-  .strip()
   .describe("Input schema for fetching NFTs by account");
