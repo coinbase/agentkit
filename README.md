@@ -154,6 +154,7 @@ agentkit/
 │       ├── langchain-cdp-chatbot/
 │       ├── langchain-cdp-smart-wallet-chatbot/
 │       ├── langchain-farcaster-chatbot/
+│       ├── langchain-krewe-inference-chatbot/
 │       ├── langchain-legacy-cdp-chatbot/
 │       ├── langchain-privy-chatbot/
 │       ├── langchain-solana-chatbot/
