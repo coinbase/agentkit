@@ -183,6 +183,7 @@ agentkit/
 │       ├── langchain-cdp-smart-wallet-chatbot/
 │       ├── langchain-cdp-solana-chatbot/
 │       ├── langchain-eth-account-chatbot/
+│       ├── langchain-krewe-inference-chatbot/
 │       ├── langchain-nillion-secretvault-chatbot/
 │       ├── langchain-twitter-chatbot/
 │       ├── openai-agents-sdk-cdp-chatbot/
