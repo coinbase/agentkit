@@ -35,8 +35,13 @@ class ERC20ActionProvider(ActionProvider[EvmWalletProvider]):
         - contract_address: The contract address of the token to get the balance for
         - address: (Optional) The address to check the balance for. If not provided, uses the wallet's address
 
+        Returns:
+        - On success: "Balance of <name> (<contract_address>) at address <address> is <amount>"
+        - On error: An error message if the token contract cannot be read (e.g. invalid address or non-ERC20 contract)
+
         Important notes:
         - Never assume token or address, they have to be provided as inputs. If only token symbol is provided, use the get_erc20_token_address tool to get the token address first
+        - Only works on EVM-compatible networks; will fail on non-EVM chains
         """,
         schema=GetBalanceSchema,
     )
@@ -78,10 +83,14 @@ class ERC20ActionProvider(ActionProvider[EvmWalletProvider]):
         - contract_address: The contract address of the token to transfer
         - destination_address: The address to send the tokens to
 
+        Returns:
+        - On success: Confirmation with the transferred amount, token name, destination address, and transaction hash
+        - On error: An error message explaining the failure (e.g. insufficient token balance, invalid address, or unsafe destination)
+
         Important notes:
         - Never assume token or destination addresses, they have to be provided as inputs. If only token symbol is provided, use the get_erc20_token_address tool to get the token address first
-        - Ensure sufficient balance of the input asset before transferring
-        - When sending native assets (e.g. 'eth' on base-mainnet), ensure there is sufficient balance for the transfer itself AND the gas cost of this transfer
+        - ERC20 transfers require native token (e.g. ETH on Base/Ethereum) to pay for gas — always ensure the wallet holds sufficient native token balance even when the asset being transferred is not native
+        - Refuses to transfer to the token's own contract address or to another ERC20 contract to prevent permanent loss of funds
         """,
         schema=TransferSchema,
     )
@@ -160,15 +169,24 @@ class ERC20ActionProvider(ActionProvider[EvmWalletProvider]):
         description="""
         This tool will approve a spender to transfer ERC20 tokens from the wallet.
 
+        Use this BEFORE interacting with a DeFi protocol or contract that needs to move tokens on your behalf
+        (e.g. a DEX swap, lending deposit, or bridge). The typical flow is: approve → call the protocol.
+        If no allowance exists, the protocol's transferFrom call will revert and the interaction will fail.
+        Use get_allowance first to check whether approval is already in place before calling this.
+
         It takes the following inputs:
         - amount: The amount to approve in whole units (e.g. 100 for 100 USDC)
         - contract_address: The contract address of the token to approve
-        - spender_address: The spender address to approve
+        - spender_address: The spender address to approve (typically a protocol contract, not a user wallet)
+
+        Returns:
+        - On success: Confirmation with the approved amount, token name, spender address, and transaction hash
+        - On error: An error message if the token address is invalid or the transaction fails
 
         Important notes:
-        - This will overwrite any existing allowance
-        - To revoke an allowance, set the amount to 0
-        - Ensure you trust the spender address before approving
+        - This overwrites any existing allowance for the spender — set amount to 0 to revoke
+        - Approving requires native token (e.g. ETH) for gas
+        - A malicious spender can drain up to the approved amount — only approve addresses you trust
         - Never assume token addresses, they have to be provided as inputs. If only token symbol is provided, use the get_erc20_token_address tool to get the token address first
         """,
         schema=ApproveSchema,
@@ -225,13 +243,22 @@ class ERC20ActionProvider(ActionProvider[EvmWalletProvider]):
     @create_action(
         name="get_allowance",
         description="""
-        This tool will get the allowance amount for a spender of an ERC20 token.
+        This tool will get the current allowance that a spender is authorized to use from the wallet's ERC20 token balance.
+
+        Call this before approve to check whether a protocol already has sufficient allowance — if it does,
+        you can skip the approve step. An allowance of 0 means the spender cannot move any tokens; you must
+        call approve before the protocol can execute transferFrom on your behalf.
 
         It takes the following inputs:
         - contract_address: The contract address of the token to check allowance for
-        - spender_address: The address to check allowance for
+        - spender_address: The spender address to check allowance for (usually a protocol contract)
+
+        Returns:
+        - On success: "Allowance for <spender> to spend <token> (<contract_address>) is <amount> tokens"
+        - On error: An error message if the token address is invalid or the contract cannot be read
 
         Important notes:
+        - Always checks allowance from the wallet's own address as the owner
         - Never assume token addresses, they have to be provided as inputs. If only token symbol is provided, use the get_erc20_token_address tool to get the token address first
         """,
         schema=AllowanceSchema,
