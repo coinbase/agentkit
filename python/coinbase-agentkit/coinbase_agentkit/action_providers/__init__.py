@@ -24,6 +24,7 @@ from .hyperboliclabs.hyperbolic_action_provider import (
     hyperbolic_action_provider,
 )
 from .morpho.morpho_action_provider import MorphoActionProvider, morpho_action_provider
+from .nexus.nexus_action_provider import NexusActionProvider, nexus_action_provider
 from .nillion.nillion_action_provider import NillionActionProvider, nillion_action_provider
 from .onramp.onramp_action_provider import OnrampActionProvider, onramp_action_provider
 from .pyth.pyth_action_provider import PythActionProvider, pyth_action_provider
@@ -52,6 +53,7 @@ __all__ = [
     "Erc721ActionProvider",
     "HyperbolicActionProvider",
     "MorphoActionProvider",
+    "NexusActionProvider",
     "NillionActionProvider",
     "OnrampActionProvider",
     "PythActionProvider",
@@ -73,6 +75,7 @@ __all__ = [
     "erc721_action_provider",
     "hyperbolic_action_provider",
     "morpho_action_provider",
+    "nexus_action_provider",
     "nillion_action_provider",
     "onramp_action_provider",
     "pyth_action_provider",
