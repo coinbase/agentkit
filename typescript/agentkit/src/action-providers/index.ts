@@ -28,6 +28,7 @@ export * from "./superfluid";
 export * from "./sushi";
 export * from "./truemarkets";
 export * from "./twitter";
+export * from "./vdm-nexus";
 export * from "./wallet";
 export * from "./weth";
 export * from "./wow";
