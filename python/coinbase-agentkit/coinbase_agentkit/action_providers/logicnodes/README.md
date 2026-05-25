@@ -1,3 +1,5 @@
+<img src="https://logicnodes.io/logo-black.jpg" alt="LogicNodes" width="80" />
+
 # LogicNodes Action Provider
 
 Gives any AgentKit agent access to [LogicNodes AOS](https://logicnodes.io) — 624 deterministic compute workers with cryptographic proof-of-logic.
