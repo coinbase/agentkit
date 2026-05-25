@@ -25,6 +25,7 @@ from .hyperboliclabs.hyperbolic_action_provider import (
 )
 from .morpho.morpho_action_provider import MorphoActionProvider, morpho_action_provider
 from .nillion.nillion_action_provider import NillionActionProvider, nillion_action_provider
+from .logicnodes.logicnodes_action_provider import (LogicNodesActionProvider, LogicNodesConfig, logicnodes_action_provider)
 from .onramp.onramp_action_provider import OnrampActionProvider, onramp_action_provider
 from .pyth.pyth_action_provider import PythActionProvider, pyth_action_provider
 from .ssh.ssh_action_provider import SshActionProvider, ssh_action_provider
@@ -74,6 +75,9 @@ __all__ = [
     "hyperbolic_action_provider",
     "morpho_action_provider",
     "nillion_action_provider",
+    "LogicNodesActionProvider",
+    "LogicNodesConfig",
+    "logicnodes_action_provider",
     "onramp_action_provider",
     "pyth_action_provider",
     "ssh_action_provider",
