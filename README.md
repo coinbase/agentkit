@@ -156,7 +156,7 @@ agentkit/
 │       ├── langchain-farcaster-chatbot/
 │       ├── langchain-legacy-cdp-chatbot/
 │       ├── langchain-privy-chatbot/
-│       ├── langchain-solana-chatbot/
+│       ├── langchain-solana-chatbot/ot/
 │       ├── langchain-twitter-chatbot/
 │       ├── langchain-xmtp-chatbot/
 │       ├── langchain-zerodev-chatbot/
