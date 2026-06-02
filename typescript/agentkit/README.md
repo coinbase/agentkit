@@ -494,6 +494,27 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>MEV Intelligence</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_liquidation_waves</code></td>
+    <td width="768">Fetches near-liquidation borrower positions ranked by health factor across Aave V3, Spark, and Morpho Blue. No API key required for preview tier.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_searcher_leaderboard</code></td>
+    <td width="768">Returns top MEV searchers ranked by landed liquidation fires and land rate.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_builder_recommendation</code></td>
+    <td width="768">Returns optimal block builder for bundle routing given current relay dynamics.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_mev_feed</code></td>
+    <td width="768">Fetches an enriched stream of actionable MEV events. Paid tier uses x402 micropayments (USDC on Base).</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Moonwell</strong></summary>
 <table width="100%">
 <tr>
