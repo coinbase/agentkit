@@ -1,0 +1,27 @@
+{
+  "name": "@coinbase/agentkit-langchain-mainstreet-trust-gate-example",
+  "description": "AgentKit example — gate x402 payments by MainStreet reputation score before sending USDC",
+  "version": "1.0.0",
+  "private": true,
+  "author": "Coinbase Inc.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "NODE_OPTIONS='--no-warnings' tsx ./chatbot.ts",
+    "dev": "nodemon ./chatbot.ts"
+  },
+  "dependencies": {
+    "@coinbase/agentkit": "workspace:*",
+    "@coinbase/agentkit-langchain": "workspace:*",
+    "@langchain/core": "^1.1.0",
+    "@langchain/langgraph": "^1.2.0",
+    "@langchain/openai": "^1.2.0",
+    "dotenv": "^16.4.5",
+    "langchain": "^1.1.0",
+    "viem": "^2.0.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0",
+    "tsx": "^4.7.1"
+  }
+}
