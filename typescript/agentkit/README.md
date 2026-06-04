@@ -81,9 +81,10 @@ npm install @coinbase/agentkit
 
 ## Usage
 
-### Create an AgentKit instance. If no wallet or action providers are specified, the agent will use the `CdpWalletProvider` and `WalletProvider` action provider.
+### Create an AgentKit instance. If no wallet or action providers are specified, the agent will use the `CdpSmartWalletProvider` and `WalletActionProvider` action provider.
 
 ```typescript
+// When using the AgentKit.from() shortcut:
 const agentKit = await AgentKit.from({
   cdpApiKeyId: "CDP API KEY NAME",
   cdpApiKeySecret: "CDP API KEY SECRET",
@@ -92,7 +93,7 @@ const agentKit = await AgentKit.from({
 
 ### Create an AgentKit instance
 
-If no wallet or action provider are specified, the agent will use the `CdpWalletProvider` and `WalletActionProvider` action provider by default.
+If no wallet or action provider are specified, the agent will use the `CdpSmartWalletProvider` and `WalletActionProvider` action provider by default.
 
 ```typescript
 const agentKit = await AgentKit.from({
@@ -106,9 +107,10 @@ const agentKit = await AgentKit.from({
 ```typescript
 import { CdpWalletProvider } from "@coinbase/agentkit";
 
+// When constructing a wallet provider manually:
 const walletProvider = await CdpWalletProvider.configureWithWallet({
   apiKeyId: "CDP API KEY NAME",
-  apiKeyPrivate: "CDP API KEY SECRET",
+  apiKeySecret: "CDP API KEY SECRET",
   networkId: "base-mainnet",
 });
 
@@ -127,7 +129,7 @@ const agentKit = await AgentKit.from({
   actionProviders: [
     cdpApiActionProvider({
       apiKeyId: "CDP API KEY NAME",
-      apiKeyPrivate: "CDP API KEY SECRET",
+      apiKeySecret: "CDP API KEY SECRET",
     }),
     pythActionProvider(),
   ],
@@ -1355,7 +1357,7 @@ import { ZeroDevWalletProvider, CdpWalletProvider } from "@coinbase/agentkit";
 // First create a CDP wallet provider as the signer
 const cdpWalletProvider = await CdpWalletProvider.configureWithWallet({
   apiKeyId: "CDP API KEY NAME",
-  apiKeyPrivate: "CDP API KEY SECRET",
+  apiKeySecret: "CDP API KEY SECRET",
   networkId: "base-mainnet",
 });
 
