@@ -88,5 +88,5 @@ poetry run python chatbot.py
 ## Documentation & Support
 
 - **Docs:** [https://docs.cdp.coinbase.com/agentkit/docs/welcome](https://docs.cdp.coinbase.com/agentkit/docs/welcome)
-- **GitHub Repo:** [http://github.com/coinbase/agentkit](http://github.com/coinbase/agentkit)
+- **GitHub Repo:** [https://github.com/coinbase/agentkit](https://github.com/coinbase/agentkit)
 - **Community & Support:** [https://discord.gg/CDP](https://discord.gg/CDP)
