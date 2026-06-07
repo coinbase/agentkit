@@ -32,8 +32,8 @@ class ERC20ActionProvider(ActionProvider[EvmWalletProvider]):
         description="""
         This tool will get the balance of an ERC20 token for a given address.
         It takes the following inputs:
-        - contract_address: The contract address of the token to get the balance for
-        - address: (Optional) The address to check the balance for. If not provided, uses the wallet's address
+        - contract_address (str, 0x hex address): The contract address of the ERC20 token to get the balance for
+        - address (str, 0x hex address, optional): The address to check the balance for. If not provided, uses the wallet's address
 
         Returns:
         - On success: "Balance of <name> (<contract_address>) at address <address> is <amount>"
@@ -79,9 +79,9 @@ class ERC20ActionProvider(ActionProvider[EvmWalletProvider]):
         This tool will transfer an ERC20 token from the wallet to another onchain address.
 
         It takes the following inputs:
-        - amount: The amount to transfer in whole units (e.g. 10.5 USDC)
-        - contract_address: The contract address of the token to transfer
-        - destination_address: The address to send the tokens to
+        - amount (str, decimal number): The amount to transfer in whole units (e.g. 10.5 USDC)
+        - contract_address (str, 0x hex address): The contract address of the token to transfer
+        - destination_address (str, 0x hex address): The address to send the tokens to
 
         Returns:
         - On success: Confirmation with the transferred amount, token name, destination address, and transaction hash
@@ -175,9 +175,9 @@ class ERC20ActionProvider(ActionProvider[EvmWalletProvider]):
         Use get_allowance first to check whether approval is already in place before calling this.
 
         It takes the following inputs:
-        - amount: The amount to approve in whole units (e.g. 100 for 100 USDC)
-        - contract_address: The contract address of the token to approve
-        - spender_address: The spender address to approve (typically a protocol contract, not a user wallet)
+        - amount (str, decimal number): The amount to approve in whole units (e.g. 100 for 100 USDC); use "0" to revoke
+        - contract_address (str, 0x hex address): The contract address of the token to approve
+        - spender_address (str, 0x hex address): The spender address to approve (typically a protocol contract, not a user wallet)
 
         Returns:
         - On success: Confirmation with the approved amount, token name, spender address, and transaction hash
@@ -250,8 +250,8 @@ class ERC20ActionProvider(ActionProvider[EvmWalletProvider]):
         call approve before the protocol can execute transferFrom on your behalf.
 
         It takes the following inputs:
-        - contract_address: The contract address of the token to check allowance for
-        - spender_address: The spender address to check allowance for (usually a protocol contract)
+        - contract_address (str, 0x hex address): The contract address of the token to check allowance for
+        - spender_address (str, 0x hex address): The spender address to check allowance for (usually a protocol contract)
 
         Returns:
         - On success: "Allowance for <spender> to spend <token> (<contract_address>) is <amount> tokens"

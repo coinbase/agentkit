@@ -37,8 +37,8 @@ export class ERC20ActionProvider extends ActionProvider<EvmWalletProvider> {
     description: `
     This tool will get the balance of an ERC20 token for a given address.
     It takes the following inputs:
-    - tokenAddress: The contract address of the token to get the balance for
-    - address: (Optional) The address to check the balance for. If not provided, uses the wallet's address
+    - tokenAddress (string, 0x hex address): The contract address of the ERC20 token to get the balance for
+    - address (string, 0x hex address, optional): The address to check the balance for. If not provided, uses the wallet's address
 
     Returns:
     - On success: "Balance of <name> (<tokenAddress>) at address <address> is <amount>"
@@ -77,9 +77,9 @@ export class ERC20ActionProvider extends ActionProvider<EvmWalletProvider> {
     This tool will transfer (send) an ERC20 token from the wallet to another onchain address.
 
 It takes the following inputs:
-- amount: The amount to transfer in whole units (e.g. 10.5 USDC)
-- tokenAddress: The contract address of the token to transfer
-- destinationAddress: The address to send the funds to
+- amount (string, decimal number): The amount to transfer in whole units (e.g. 10.5 USDC)
+- tokenAddress (string, 0x hex address): The contract address of the token to transfer
+- destinationAddress (string, 0x hex address): The address to send the funds to
 
 Returns:
 - On success: Confirmation with the transferred amount, token name, destination address, and transaction hash
@@ -166,9 +166,9 @@ If no allowance exists, the protocol's transferFrom call will revert and the int
 Use get_allowance first to check whether approval is already in place before calling this.
 
 It takes the following inputs:
-- amount: The amount to approve in whole units (e.g. 100 for 100 USDC)
-- tokenAddress: The contract address of the token to approve
-- spenderAddress: The spender address to approve (typically a protocol contract, not a user wallet)
+- amount (string, decimal number): The amount to approve in whole units (e.g. 100 for 100 USDC); use "0" to revoke
+- tokenAddress (string, 0x hex address): The contract address of the token to approve
+- spenderAddress (string, 0x hex address): The spender address to approve (typically a protocol contract, not a user wallet)
 
 Returns:
 - On success: Confirmation with the approved amount, token name, spender address, and transaction hash
@@ -230,8 +230,8 @@ you can skip the approve step. An allowance of 0 means the spender cannot move a
 call approve before the protocol can execute transferFrom on your behalf.
 
 It takes the following inputs:
-- tokenAddress: The contract address of the token to check allowance for
-- spenderAddress: The spender address to check allowance for (usually a protocol contract)
+- tokenAddress (string, 0x hex address): The contract address of the token to check allowance for
+- spenderAddress (string, 0x hex address): The spender address to check allowance for (usually a protocol contract)
 
 Returns:
 - On success: "Allowance for <spender> to spend <token> (<tokenAddress>) is <amount> tokens"
