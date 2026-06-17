@@ -178,6 +178,19 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>AgentRadar</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>verify_agent</code></td>
+    <td width="768">Checks an AI agent or wallet's on-chain trust score (composite of ERC-8004 reputation, scam database, and static analysis) before interacting or paying. Returns a score (0-100), verdict, and per-signal breakdown.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_trust_badge</code></td>
+    <td width="768">Returns an embeddable AgentRadar trust-badge image URL (SVG) for an EVM address.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Base Account</strong></summary>
 <table width="100%">
 <tr>
