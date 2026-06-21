@@ -1,0 +1,20 @@
+{
+  "name": "model-context-protocol-farcaster-voting-server",
+  "version": "1.0.0",
+  "description": "An MCP server example that enables AI agents to vote on Farcaster Mini App (BaseBookvsMovie) using Base blockchain",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "build": "tsc"
+  },
+  "keywords": ["mcp", "farcaster", "base", "blockchain", "voting"],
+  "author": "consumeobeydie",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "ethers": "^6.13.4",
+    "express": "^4.18.0",
+    "zod": "^3.22.0"
+  }
+}
