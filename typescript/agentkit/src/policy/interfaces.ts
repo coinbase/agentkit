@@ -6,7 +6,7 @@ export interface ActionContext {
   recipient_count?: number;
   recipient_allocation_hash?: string;
   per_recipient_max?: string;
-  transfer_mechanism?: 'direct' | 'eip3009' | 'permit' | 'x402';
+  transfer_mechanism?: "direct" | "eip3009" | "permit" | "x402";
   creates_recurring_obligation?: boolean;
   creates_commitment?: boolean;
 }
@@ -23,7 +23,14 @@ export interface PolicyDecision {
   signature?: string;
 }
 
-export type PolicyOutcome = 'executed' | 'failed' | 'denied' | 'expired' | 'context_drift' | 'unauditable_outcome';
+export type PolicyOutcome =
+  | "executed"
+  | "relay_confirmed"
+  | "failed"
+  | "denied"
+  | "expired"
+  | "context_drift"
+  | "unauditable_outcome";
 
 export interface PolicyReceipt {
   decision: PolicyDecision;
