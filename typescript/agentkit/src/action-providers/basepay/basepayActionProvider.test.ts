@@ -260,4 +260,364 @@ import { basePayActionProvider } from "./basepayActionProvider";
       });
     });
   });
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // Policy hook: two-layer execution-boundary matrix (Fix 7)
+  // ══════════════════════════════════════════════════════════════════════════════
+  //
+  // Layer 1 — Authority gate: assertions that fire BEFORE the first irreversible
+  //   operation. Tests assert the operation was NOT called on policy failure.
+  //
+  // Layer 2 — Settlement outcome: assertions that fire AFTER the chain/relay
+  //   result. Tests assert the correct outcome tag ([executed], [failed],
+  //   [relay_confirmed]) appears in the return string.
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  import { actionContextHash, recipientAllocationHash } from "../../policy/utils";
+  import type { PolicyDecision } from "../../policy/interfaces";
+
+  jest.mock("../../policy/utils", () => ({
+    actionContextHash: jest.fn(),
+    recipientAllocationHash: jest.fn(),
+  }));
+
+  const MOCK_HASH = "a".repeat(64);
+
+  function decision(overrides?: Partial<PolicyDecision>): PolicyDecision {
+    return {
+      allowed: true,
+      policy_version: "1",
+      action_context_hash: MOCK_HASH,
+      decision_ref: "ref-" + Math.random().toString(36).slice(2, 10),
+      issued_at_ms: Date.now(),
+      expires_at_ms: Date.now() + 60_000,
+      ...overrides,
+    };
+  }
+
+  describe("Policy hook — Layer 1: authority gate", () => {
+    let mockWallet: jest.Mocked<EvmWalletProvider>;
+    let mockEvaluate: jest.Mock;
+
+    beforeEach(() => {
+      (actionContextHash as jest.Mock).mockResolvedValue(MOCK_HASH);
+      (recipientAllocationHash as jest.Mock).mockResolvedValue(MOCK_HASH);
+
+      mockEvaluate = jest.fn().mockResolvedValue(decision());
+      mockWallet = {
+        getAddress: jest.fn().mockReturnValue(MOCK_ADDRESS),
+        getNetwork: jest.fn().mockReturnValue({ chainId: "8453" }),
+        sendTransaction: jest.fn().mockResolvedValue(MOCK_TX_HASH),
+        waitForTransactionReceipt: jest.fn().mockResolvedValue({ status: "success", logs: [] }),
+        readContract: jest.fn().mockResolvedValue(0n),
+        signTypedData: jest.fn().mockResolvedValue(MOCK_SIG),
+      } as unknown as jest.Mocked<EvmWalletProvider>;
+
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ txHash: MOCK_TX_HASH }),
+      } as unknown as Response);
+    });
+
+    function providerWith() {
+      return basePayActionProvider({ policyProvider: { evaluate: mockEvaluate } });
+    }
+
+    // ── sendUsdc: first authority step = sendTransaction ──────────────────────
+
+    describe("sendUsdc — first authority step: sendTransaction", () => {
+      it("policy_denied blocks before sendTransaction", async () => {
+        mockEvaluate.mockResolvedValue(decision({ allowed: false, reason_codes: ["spend_limit"] }));
+        const result = await providerWith().sendUsdc(mockWallet, { to: MOCK_RECIPIENT, amount: "10" });
+        expect(result).toContain("policy_denied");
+        expect(mockWallet.sendTransaction).not.toHaveBeenCalled();
+      });
+
+      it("unbound_execution (missing decision_ref) blocks before sendTransaction", async () => {
+        mockEvaluate.mockResolvedValue(decision({ decision_ref: "" }));
+        const result = await providerWith().sendUsdc(mockWallet, { to: MOCK_RECIPIENT, amount: "10" });
+        expect(result).toContain("unbound_execution");
+        expect(mockWallet.sendTransaction).not.toHaveBeenCalled();
+      });
+
+      it("policy_unverifiable (expired TTL) blocks before sendTransaction", async () => {
+        mockEvaluate.mockResolvedValue(decision({ expires_at_ms: Date.now() - 1000 }));
+        const result = await providerWith().sendUsdc(mockWallet, { to: MOCK_RECIPIENT, amount: "10" });
+        expect(result).toContain("policy_unverifiable");
+        expect(mockWallet.sendTransaction).not.toHaveBeenCalled();
+      });
+
+      it("context_drift (hash mismatch) blocks before sendTransaction", async () => {
+        mockEvaluate.mockResolvedValue(decision({ action_context_hash: "wrong-hash" }));
+        const result = await providerWith().sendUsdc(mockWallet, { to: MOCK_RECIPIENT, amount: "10" });
+        expect(result).toContain("context_drift");
+        expect(mockWallet.sendTransaction).not.toHaveBeenCalled();
+      });
+
+      it("duplicate decision_ref blocks second call before sendTransaction", async () => {
+        const ref = "fixed-ref-abc";
+        mockEvaluate.mockResolvedValue(decision({ decision_ref: ref }));
+        const p = providerWith();
+        // First call: succeeds
+        await p.sendUsdc(mockWallet, { to: MOCK_RECIPIENT, amount: "1" });
+        // Second call with same ref: consumed — must not reach sendTransaction again
+        const sendCallsBefore = (mockWallet.sendTransaction as jest.Mock).mock.calls.length;
+        const result = await p.sendUsdc(mockWallet, { to: MOCK_RECIPIENT, amount: "1" });
+        expect(result).toContain("unbound_execution");
+        expect((mockWallet.sendTransaction as jest.Mock).mock.calls.length).toBe(sendCallsBefore);
+      });
+    });
+
+    // ── sendUsdcGasless: first authority step = signTypedData ─────────────────
+
+    describe("sendUsdcGasless — first authority step: signTypedData", () => {
+      it("policy_denied blocks before signTypedData", async () => {
+        mockEvaluate.mockResolvedValue(decision({ allowed: false }));
+        const result = await providerWith().sendUsdcGasless(mockWallet, { to: MOCK_RECIPIENT, amount: "5" });
+        expect(result).toContain("policy_denied");
+        expect(mockWallet.signTypedData).not.toHaveBeenCalled();
+      });
+
+      it("duplicate decision_ref blocks second call before signTypedData", async () => {
+        const ref = "gasless-fixed-ref";
+        mockEvaluate.mockResolvedValue(decision({ decision_ref: ref }));
+        const p = providerWith();
+        await p.sendUsdcGasless(mockWallet, { to: MOCK_RECIPIENT, amount: "5" });
+        const signCallsBefore = (mockWallet.signTypedData as jest.Mock).mock.calls.length;
+        const result = await p.sendUsdcGasless(mockWallet, { to: MOCK_RECIPIENT, amount: "5" });
+        expect(result).toContain("unbound_execution");
+        expect((mockWallet.signTypedData as jest.Mock).mock.calls.length).toBe(signCallsBefore);
+      });
+    });
+
+    // ── batchPayUsdc: first authority step = ensureAllowance ─────────────────
+
+    describe("batchPayUsdc — first authority step: ensureAllowance", () => {
+      const recipients = [{ address: MOCK_RECIPIENT, amount: "5" }];
+
+      it("policy_denied blocks before ensureAllowance (readContract not called)", async () => {
+        mockEvaluate.mockResolvedValue(decision({ allowed: false }));
+        const result = await providerWith().batchPayUsdc(mockWallet, { recipients, memo: "" });
+        expect(result).toContain("policy_denied");
+        expect(mockWallet.readContract).not.toHaveBeenCalled();
+      });
+
+      it("duplicate decision_ref blocks second call before ensureAllowance", async () => {
+        const ref = "batch-fixed-ref";
+        mockEvaluate.mockResolvedValue(decision({ decision_ref: ref }));
+        const p = providerWith();
+        await p.batchPayUsdc(mockWallet, { recipients, memo: "" });
+        const readCallsBefore = (mockWallet.readContract as jest.Mock).mock.calls.length;
+        const result = await p.batchPayUsdc(mockWallet, { recipients, memo: "" });
+        expect(result).toContain("unbound_execution");
+        expect((mockWallet.readContract as jest.Mock).mock.calls.length).toBe(readCallsBefore);
+      });
+
+      it("context_drift: changed recipient_allocation_hash at execution boundary blocks before ensureAllowance", async () => {
+        // First call to recipientAllocationHash (ctx build) returns MOCK_HASH — matches decision.
+        // Second call (execution-time re-derivation) returns a different hash — triggers context_drift.
+        let callCount = 0;
+        (recipientAllocationHash as jest.Mock).mockImplementation(async () => {
+          callCount++;
+          return callCount === 1 ? MOCK_HASH : "execution-hash-differs-" + "b".repeat(44);
+        });
+        const result = await providerWith().batchPayUsdc(mockWallet, { recipients, memo: "" });
+        expect(result).toContain("context_drift");
+        expect(mockWallet.readContract).not.toHaveBeenCalled();
+      });
+    });
+
+    // ── createEscrow: first authority step = ensureAllowance ─────────────────
+
+    describe("createEscrow — first authority step: ensureAllowance", () => {
+      const escrowArgs = { payee: MOCK_RECIPIENT, amount: "100", unlockAfterSeconds: 86400, memo: "" };
+
+      it("policy_denied blocks before ensureAllowance", async () => {
+        mockEvaluate.mockResolvedValue(decision({ allowed: false }));
+        const result = await providerWith().createEscrow(mockWallet, escrowArgs);
+        expect(result).toContain("policy_denied");
+        expect(mockWallet.readContract).not.toHaveBeenCalled();
+      });
+
+      it("duplicate decision_ref blocks second call before ensureAllowance", async () => {
+        const ref = "escrow-fixed-ref";
+        mockEvaluate.mockResolvedValue(decision({ decision_ref: ref }));
+        const p = providerWith();
+        await p.createEscrow(mockWallet, escrowArgs);
+        const readCallsBefore = (mockWallet.readContract as jest.Mock).mock.calls.length;
+        const result = await p.createEscrow(mockWallet, escrowArgs);
+        expect(result).toContain("unbound_execution");
+        expect((mockWallet.readContract as jest.Mock).mock.calls.length).toBe(readCallsBefore);
+      });
+    });
+
+    // ── subscribe (creation): first authority step = ensureAllowance ──────────
+
+    describe("subscribe (creation) — first authority step: ensureAllowance", () => {
+      const subArgs = { payee: MOCK_RECIPIENT, amount: "9.99", intervalSeconds: 2592000, memo: "" };
+
+      it("policy_denied blocks before ensureAllowance", async () => {
+        mockEvaluate.mockResolvedValue(decision({ allowed: false }));
+        const result = await providerWith().subscribe(mockWallet, subArgs);
+        expect(result).toContain("policy_denied");
+        expect(mockWallet.readContract).not.toHaveBeenCalled();
+      });
+
+      it("duplicate decision_ref blocks second creation before ensureAllowance", async () => {
+        const ref = "sub-fixed-ref";
+        mockEvaluate.mockResolvedValue(decision({ decision_ref: ref }));
+        const p = providerWith();
+        await p.subscribe(mockWallet, subArgs);
+        const readCallsBefore = (mockWallet.readContract as jest.Mock).mock.calls.length;
+        const result = await p.subscribe(mockWallet, subArgs);
+        expect(result).toContain("unbound_execution");
+        expect((mockWallet.readContract as jest.Mock).mock.calls.length).toBe(readCallsBefore);
+      });
+
+      it("subscribe without policyProvider succeeds — charge() is a separate authority plane", async () => {
+        // No policyProvider injected: subscribe proceeds without any policy evaluation.
+        // This asserts that charge() calls (which happen via on-chain interaction, not
+        // through this provider) are not governed by the creation decision_ref.
+        const p = basePayActionProvider(); // no policyProvider
+        const result = await p.subscribe(mockWallet, subArgs);
+        expect(mockEvaluate).not.toHaveBeenCalled();
+        expect(result).toContain("[executed]");
+      });
+    });
+  });
+
+  // ── Layer 2: Settlement outcome assertions ────────────────────────────────────
+
+  describe("Policy hook — Layer 2: settlement outcomes", () => {
+    let mockWallet: jest.Mocked<EvmWalletProvider>;
+
+    beforeEach(() => {
+      (actionContextHash as jest.Mock).mockResolvedValue(MOCK_HASH);
+      (recipientAllocationHash as jest.Mock).mockResolvedValue(MOCK_HASH);
+
+      mockWallet = {
+        getAddress: jest.fn().mockReturnValue(MOCK_ADDRESS),
+        getNetwork: jest.fn().mockReturnValue({ chainId: "8453" }),
+        sendTransaction: jest.fn().mockResolvedValue(MOCK_TX_HASH),
+        waitForTransactionReceipt: jest.fn().mockResolvedValue({ status: "success", logs: [] }),
+        readContract: jest.fn().mockResolvedValue(BigInt(999_999_999)),
+        signTypedData: jest.fn().mockResolvedValue(MOCK_SIG),
+      } as unknown as jest.Mocked<EvmWalletProvider>;
+
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ txHash: MOCK_TX_HASH }),
+      } as unknown as Response);
+    });
+
+    const noPolicy = () => basePayActionProvider();
+
+    it("sendUsdc: on-chain revert → [failed], not [executed]", async () => {
+      mockWallet.waitForTransactionReceipt = jest.fn().mockResolvedValue({ status: "reverted", logs: [] });
+      const result = await noPolicy().sendUsdc(mockWallet, { to: MOCK_RECIPIENT, amount: "10" });
+      expect(result).toContain("[failed]");
+      expect(result).not.toContain("[executed]");
+    });
+
+    it("sendUsdc: on-chain success → [executed], not [failed]", async () => {
+      const result = await noPolicy().sendUsdc(mockWallet, { to: MOCK_RECIPIENT, amount: "10" });
+      expect(result).toContain("[executed]");
+      expect(result).not.toContain("[failed]");
+    });
+
+    it("sendUsdcGasless: relay HTTP 200 → [relay_confirmed], not [executed]", async () => {
+      const result = await noPolicy().sendUsdcGasless(mockWallet, { to: MOCK_RECIPIENT, amount: "5" });
+      expect(result).toContain("[relay_confirmed]");
+      expect(result).not.toContain("[executed]");
+    });
+
+    it("batchPayUsdc: on-chain revert → [failed], not [executed]", async () => {
+      mockWallet.waitForTransactionReceipt = jest.fn().mockResolvedValue({ status: "reverted", logs: [] });
+      const result = await noPolicy().batchPayUsdc(mockWallet, {
+        recipients: [{ address: MOCK_RECIPIENT, amount: "5" }],
+        memo: "",
+      });
+      expect(result).toContain("[failed]");
+      expect(result).not.toContain("[executed]");
+    });
+
+    it("batchPayUsdc: on-chain success → [executed]", async () => {
+      const result = await noPolicy().batchPayUsdc(mockWallet, {
+        recipients: [{ address: MOCK_RECIPIENT, amount: "5" }],
+        memo: "",
+      });
+      expect(result).toContain("[executed]");
+    });
+
+    it("createEscrow: on-chain revert → [failed], not [executed]", async () => {
+      mockWallet.waitForTransactionReceipt = jest.fn().mockResolvedValue({ status: "reverted", logs: [] });
+      const result = await noPolicy().createEscrow(mockWallet, {
+        payee: MOCK_RECIPIENT, amount: "100", unlockAfterSeconds: 86400, memo: "",
+      });
+      expect(result).toContain("[failed]");
+      expect(result).not.toContain("[executed]");
+    });
+
+    it("createEscrow: on-chain success → [executed]", async () => {
+      const result = await noPolicy().createEscrow(mockWallet, {
+        payee: MOCK_RECIPIENT, amount: "100", unlockAfterSeconds: 86400, memo: "",
+      });
+      expect(result).toContain("[executed]");
+    });
+
+    it("subscribe: on-chain revert → [failed], not [executed]", async () => {
+      mockWallet.waitForTransactionReceipt = jest.fn().mockResolvedValue({ status: "reverted", logs: [] });
+      const result = await noPolicy().subscribe(mockWallet, {
+        payee: MOCK_RECIPIENT, amount: "9.99", intervalSeconds: 2592000, memo: "",
+      });
+      expect(result).toContain("[failed]");
+      expect(result).not.toContain("[executed]");
+    });
+
+    it("subscribe: on-chain success → [executed]", async () => {
+      const result = await noPolicy().subscribe(mockWallet, {
+        payee: MOCK_RECIPIENT, amount: "9.99", intervalSeconds: 2592000, memo: "",
+      });
+      expect(result).toContain("[executed]");
+    });
+
+    describe("policy outcomes are distinct from chain/relay errors", () => {
+      let mockEvaluate: jest.Mock;
+      let p: ReturnType<typeof basePayActionProvider>;
+
+      beforeEach(() => {
+        (actionContextHash as jest.Mock).mockResolvedValue(MOCK_HASH);
+        mockEvaluate = jest.fn();
+        p = basePayActionProvider({ policyProvider: { evaluate: mockEvaluate } });
+      });
+
+      it("policy_denied is in the result string — not a sendTransaction error", async () => {
+        mockEvaluate.mockResolvedValue(decision({ allowed: false }));
+        const result = await p.sendUsdc(mockWallet, { to: MOCK_RECIPIENT, amount: "1" });
+        expect(result).toContain("policy_denied");
+        expect(mockWallet.sendTransaction).not.toHaveBeenCalled();
+      });
+
+      it("unbound_execution is in the result string — not a wallet error", async () => {
+        mockEvaluate.mockResolvedValue(decision({ decision_ref: "" }));
+        const result = await p.sendUsdc(mockWallet, { to: MOCK_RECIPIENT, amount: "1" });
+        expect(result).toContain("unbound_execution");
+        expect(mockWallet.sendTransaction).not.toHaveBeenCalled();
+      });
+
+      it("policy_unverifiable is in the result string — not a chain error", async () => {
+        mockEvaluate.mockResolvedValue(decision({ expires_at_ms: Date.now() - 1 }));
+        const result = await p.sendUsdc(mockWallet, { to: MOCK_RECIPIENT, amount: "1" });
+        expect(result).toContain("policy_unverifiable");
+        expect(mockWallet.sendTransaction).not.toHaveBeenCalled();
+      });
+
+      it("context_drift is in the result string — not a wallet/relay/chain error", async () => {
+        mockEvaluate.mockResolvedValue(decision({ action_context_hash: "mismatch" }));
+        const result = await p.sendUsdc(mockWallet, { to: MOCK_RECIPIENT, amount: "1" });
+        expect(result).toContain("context_drift");
+        expect(mockWallet.sendTransaction).not.toHaveBeenCalled();
+      });
+    });
+  });
   
