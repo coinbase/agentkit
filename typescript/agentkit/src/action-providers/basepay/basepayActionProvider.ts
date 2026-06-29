@@ -11,19 +11,19 @@ import { z } from "zod";
   } from "./schemas";
   import { encodeFunctionData, parseUnits, formatUnits, type Hex } from "viem";
   import { EvmWalletProvider } from "../../wallet-providers";
+  import { PolicyProvider, ActionContext } from "../../policy/interfaces";
+  import { actionContextHash, recipientAllocationHash } from "../../policy/utils";
 
   const BASE_CHAIN_ID = "8453";
   const BASESCAN = "https://basescan.org/tx";
   const DEFAULT_RELAY_URL = "https://base-pay.replit.app";
 
-  // ── Contract addresses (Base Mainnet) ─────────────────────────────────────────
   const USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
   const USDC_DECIMALS = 6;
   const BATCH_PAY = "0xe40d2292c050566d16cecda74627b70778806c68" as const;
   const ESCROW_V2 = "0x1eb2b1e8dda64fc4ccb0537574f2a2ca9f307499" as const;
   const SUBSCRIPTION_MANAGER = "0x101918a252b3852ac4b50b7bbf2525d3084d5421" as const;
 
-  // ── Minimal ABIs ──────────────────────────────────────────────────────────────
   const ERC20_ABI = [
     { name: "transfer", type: "function", stateMutability: "nonpayable",
       inputs: [{ name: "to", type: "address" }, { name: "amount", type: "uint256" }],
@@ -62,7 +62,6 @@ import { z } from "zod";
       ], outputs: [{ name: "id", type: "uint256" }] },
   ] as const;
 
-  // ── Helpers ───────────────────────────────────────────────────────────────────
   function toAtomic(human: string): bigint {
     return parseUnits(human, USDC_DECIMALS);
   }
@@ -99,6 +98,7 @@ import { z } from "zod";
 
   export interface BasePayConfig {
     relayUrl?: string;
+    policyProvider?: PolicyProvider;
   }
 
   /**
@@ -110,10 +110,43 @@ import { z } from "zod";
    */
   export class BasePayActionProvider extends ActionProvider<EvmWalletProvider> {
     private readonly relayUrl: string;
+    private readonly policyProvider?: PolicyProvider;
+    private readonly pending = new Set<string>();
+    private readonly consumed = new Set<string>();
 
     constructor(config?: BasePayConfig) {
       super("basepay", []);
       this.relayUrl = config?.relayUrl ?? DEFAULT_RELAY_URL;
+      this.policyProvider = config?.policyProvider;
+    }
+
+    /**
+     * checkPolicy evaluates the action context against the policy provider.
+     *
+     * Fix 1: pending.add(ref) is done here, synchronously, before returning —
+     * so concurrent calls with the same decision_ref are blocked before any
+     * async work in the caller, closing the race window in the two-set pattern.
+     */
+    private async checkPolicy(ctx: ActionContext): Promise<string> {
+      if (!this.policyProvider) return "";
+
+      const decision = await this.policyProvider.evaluate(ctx);
+      if (!decision.allowed) throw new Error(`policy_denied: ${decision.reason_codes?.join(", ") || "no reason"}`);
+      if (!decision.decision_ref) throw new Error("unbound_execution");
+      if (Date.now() > decision.expires_at_ms) throw new Error("policy_unverifiable");
+
+      const expectedHash = await actionContextHash(ctx);
+      if (decision.action_context_hash !== expectedHash) throw new Error("context_drift");
+
+      if (this.pending.has(decision.decision_ref) || this.consumed.has(decision.decision_ref)) {
+        throw new Error("unbound_execution");
+      }
+
+      // Fix 1: add to pending inside checkPolicy before returning.
+      // This ensures the concurrent-duplicate guard fires before any caller
+      // async work, not after checkPolicy returns.
+      this.pending.add(decision.decision_ref);
+      return decision.decision_ref;
     }
 
     @CreateAction({
@@ -134,7 +167,19 @@ import { z } from "zod";
       walletProvider: EvmWalletProvider,
       args: z.infer<typeof SendUsdcSchema>,
     ): Promise<string> {
+      const ctx: ActionContext = {
+        action: "basepay_send_usdc",
+        to: args.to,
+        amount_usdc: args.amount,
+        transfer_mechanism: "direct",
+      };
+
+      let ref = "";
       try {
+        ref = await this.checkPolicy(ctx);
+        // Fix 1 (caller): pending.add is now inside checkPolicy; only consumed.add here.
+        if (ref) this.consumed.add(ref);
+
         const hash = await walletProvider.sendTransaction({
           to: USDC,
           data: encodeFunctionData({
@@ -143,10 +188,16 @@ import { z } from "zod";
             args: [args.to as Hex, toAtomic(args.amount)],
           }),
         });
-        await walletProvider.waitForTransactionReceipt(hash);
-        return `Sent ${args.amount} USDC to ${args.to}\nTransaction: ${txLink(hash)}`;
+        // Fix 5: classify on-chain revert as [failed], not [executed].
+        const receipt = await walletProvider.waitForTransactionReceipt(hash);
+        if ((receipt as { status?: string }).status === "reverted") {
+          return `Error: transaction reverted on-chain. [failed]\nTransaction: ${txLink(hash)}`;
+        }
+        return `Sent ${args.amount} USDC to ${args.to} [executed]\nTransaction: ${txLink(hash)}`;
       } catch (e: unknown) {
         return `Error sending USDC: ${e instanceof Error ? e.message : String(e)}`;
+      } finally {
+        if (ref) this.pending.delete(ref);
       }
     }
 
@@ -173,72 +224,93 @@ import { z } from "zod";
       walletProvider: EvmWalletProvider,
       args: z.infer<typeof SendUsdcGaslessSchema>,
     ): Promise<string> {
-      const wp = walletProvider as EvmWalletProvider & {
-        signTypedData?: (p: Record<string, unknown>) => Promise<Hex>;
+      const ctx: ActionContext = {
+        action: "basepay_send_usdc_gasless",
+        to: args.to,
+        amount_usdc: args.amount,
+        transfer_mechanism: "eip3009",
       };
-      if (typeof wp.signTypedData !== "function") {
-        return (
-          "Error: wallet provider does not support signTypedData. " +
-          "Use ViemWalletProvider or CdpEvmWalletProvider for gasless transfers."
-        );
-      }
 
-      const from = walletProvider.getAddress();
-      const value = toAtomic(args.amount);
-      const validAfter = "0";
-      const validBefore = String(Math.floor(Date.now() / 1000) + 3600);
-      const randomBytes = new Uint8Array(32);
-      crypto.getRandomValues(randomBytes);
-      const nonce = ("0x" +
-        Array.from(randomBytes)
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join("")) as Hex;
-
-      let signature: Hex;
+      let ref = "";
       try {
-        signature = await wp.signTypedData({
-          domain: { name: "USD Coin", version: "2", chainId: 8453, verifyingContract: USDC },
-          types: {
-            TransferWithAuthorization: [
-              { name: "from", type: "address" },
-              { name: "to", type: "address" },
-              { name: "value", type: "uint256" },
-              { name: "validAfter", type: "uint256" },
-              { name: "validBefore", type: "uint256" },
-              { name: "nonce", type: "bytes32" },
-            ],
-          },
-          primaryType: "TransferWithAuthorization",
-          message: {
-            from,
-            to: args.to,
-            value,
-            validAfter: BigInt(validAfter),
-            validBefore: BigInt(validBefore),
-            nonce,
-          },
-        });
-      } catch (e: unknown) {
-        return `Error signing EIP-3009 authorization: ${e instanceof Error ? e.message : String(e)}`;
-      }
+        ref = await this.checkPolicy(ctx);
+        // Fix 1 (caller): pending.add is inside checkPolicy.
+        // Fix 2: consumed.add is here, before signTypedData — signing is the first
+        // irreversible authority step (a signed EIP-3009 auth is spend-capable even
+        // if the relay is never called). The post-relay consumed.add has been removed.
+        if (ref) this.consumed.add(ref);
 
-      const sigHex = signature.slice(2);
-      const r = ("0x" + sigHex.slice(0, 64)) as Hex;
-      const s = ("0x" + sigHex.slice(64, 128)) as Hex;
-      const vByte = parseInt(sigHex.slice(128, 130), 16);
-      const v = vByte < 27 ? vByte + 27 : vByte;
+        const wp = walletProvider as EvmWalletProvider & {
+          signTypedData?: (p: Record<string, unknown>) => Promise<Hex>;
+        };
+        if (typeof wp.signTypedData !== "function") {
+          return (
+            "Error: wallet provider does not support signTypedData. " +
+            "Use ViemWalletProvider or CdpEvmWalletProvider for gasless transfers."
+          );
+        }
 
-      try {
-        const resp = await fetch(`${this.relayUrl}/api/gasless/relay`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ from, to: args.to, value: value.toString(), validAfter, validBefore, nonce, v, r, s }),
-        });
-        const data = (await resp.json()) as { txHash?: string; error?: string };
-        if (!resp.ok || data.error) return `Relay error: ${data.error ?? resp.statusText}`;
-        return `Gaslessly sent ${args.amount} USDC to ${args.to} (relay paid gas)\nTransaction: ${txLink(data.txHash as Hex)}`;
-      } catch (e: unknown) {
-        return `Error calling BasePay relay: ${e instanceof Error ? e.message : String(e)}`;
+        const from = walletProvider.getAddress();
+        const value = toAtomic(args.amount);
+        const validAfter = "0";
+        const validBefore = String(Math.floor(Date.now() / 1000) + 3600);
+        const randomBytes = new Uint8Array(32);
+        crypto.getRandomValues(randomBytes);
+        const nonce = ("0x" +
+          Array.from(randomBytes)
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("")) as Hex;
+
+        let signature: Hex;
+        try {
+          signature = await wp.signTypedData({
+            domain: { name: "USD Coin", version: "2", chainId: 8453, verifyingContract: USDC },
+            types: {
+              TransferWithAuthorization: [
+                { name: "from", type: "address" },
+                { name: "to", type: "address" },
+                { name: "value", type: "uint256" },
+                { name: "validAfter", type: "uint256" },
+                { name: "validBefore", type: "uint256" },
+                { name: "nonce", type: "bytes32" },
+              ],
+            },
+            primaryType: "TransferWithAuthorization",
+            message: {
+              from,
+              to: args.to,
+              value,
+              validAfter: BigInt(validAfter),
+              validBefore: BigInt(validBefore),
+              nonce,
+            },
+          });
+        } catch (e: unknown) {
+          return `Error signing EIP-3009 authorization: ${e instanceof Error ? e.message : String(e)}`;
+        }
+
+        const sigHex = signature.slice(2);
+        const r = ("0x" + sigHex.slice(0, 64)) as Hex;
+        const s = ("0x" + sigHex.slice(64, 128)) as Hex;
+        const vByte = parseInt(sigHex.slice(128, 130), 16);
+        const v = vByte < 27 ? vByte + 27 : vByte;
+
+        try {
+          const resp = await fetch(`${this.relayUrl}/api/gasless/relay`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ from, to: args.to, value: value.toString(), validAfter, validBefore, nonce, v, r, s }),
+          });
+          const data = (await resp.json()) as { txHash?: string; error?: string };
+          if (!resp.ok || data.error) return `Relay error: ${data.error ?? resp.statusText}`;
+          // Fix 6: relay accepted the authorization and returned a tx hash, but chain
+          // confirmation is not awaited. Outcome is relay_confirmed, not executed.
+          return `Gaslessly sent ${args.amount} USDC to ${args.to} (relay paid gas) [relay_confirmed]\nTransaction: ${txLink(data.txHash as Hex)}`;
+        } catch (e: unknown) {
+          return `Error calling BasePay relay: ${e instanceof Error ? e.message : String(e)}`;
+        }
+      } finally {
+        if (ref) this.pending.delete(ref);
       }
     }
 
@@ -261,7 +333,35 @@ import { z } from "zod";
     ): Promise<string> {
       const amounts = args.recipients.map((r) => toAtomic(r.amount));
       const total = amounts.reduce((a, b) => a + b, 0n);
+
+      const ctx: ActionContext = {
+        action: "basepay_batch_pay_usdc",
+        recipient_allocation_hash: await recipientAllocationHash(
+          args.recipients.map((r) => ({ address: r.address, amount: toAtomic(r.amount) })),
+        ),
+        recipient_count: args.recipients.length,
+        aggregate_usdc: formatUnits(total, USDC_DECIMALS),
+        transfer_mechanism: "direct",
+      };
+
+      let ref = "";
       try {
+        ref = await this.checkPolicy(ctx);
+        // Fix 1 (caller): pending.add is inside checkPolicy.
+        if (ref) this.consumed.add(ref);
+
+        // Fix 3: re-derive recipient_allocation_hash at the execution boundary,
+        // before any allowance change, to close the TOCTOU window between
+        // policy evaluation and execution.
+        if (ctx.recipient_allocation_hash !== undefined) {
+          const execHash = await recipientAllocationHash(
+            args.recipients.map((r) => ({ address: r.address, amount: toAtomic(r.amount) })),
+          );
+          if (execHash !== ctx.recipient_allocation_hash) {
+            throw new Error("context_drift");
+          }
+        }
+
         const approveTx = await ensureAllowance(walletProvider, BATCH_PAY, total);
         const hash = await walletProvider.sendTransaction({
           to: BATCH_PAY,
@@ -271,29 +371,35 @@ import { z } from "zod";
             args: [USDC, args.recipients.map((r) => r.address as Hex), amounts, args.memo],
           }),
         });
-        await walletProvider.waitForTransactionReceipt(hash);
+        // Fix 5: classify on-chain revert as [failed].
+        const receipt = await walletProvider.waitForTransactionReceipt(hash);
+        if ((receipt as { status?: string }).status === "reverted") {
+          return `Error: batch payment reverted on-chain. [failed]\nTransaction: ${txLink(hash)}`;
+        }
         return [
-          `Batch payment: ${args.recipients.length} recipients, ${formatUnits(total, USDC_DECIMALS)} USDC`,
+          `Batch payment: ${args.recipients.length} recipients, ${formatUnits(total, USDC_DECIMALS)} USDC [executed]`,
           ...(approveTx ? [`Approve: ${txLink(approveTx)}`] : []),
           `Batch tx: ${txLink(hash)}`,
         ].join("\n");
       } catch (e: unknown) {
         return `Error in batch payment: ${e instanceof Error ? e.message : String(e)}`;
+      } finally {
+        if (ref) this.pending.delete(ref);
       }
     }
 
     @CreateAction({
       name: "basepay_create_escrow",
       description: `
-  Lock USDC in a time-locked escrow. Payee can claim after the unlock period; payer can reclaim after.
+  Lock USDC in a time-locked escrow. The payee can claim after the unlock period; the payer can refund before it.
 
   Inputs:
-  - payee: beneficiary address (0x…)
+  - payee: address that can claim USDC after unlock (0x…)
   - amount: USDC to lock (e.g. "100")
-  - unlockAfterSeconds: lock duration in seconds (e.g. 86400 = 1 day, 604800 = 1 week)
+  - unlockAfterSeconds: seconds until the payee can claim (min 60). Example: 86400 = 1 day.
   - memo: optional on-chain label (max 64 chars)
 
-  Returns: escrow ID (needed for release/refund), Basescan link.
+  Returns: escrow ID, unlock time, and Basescan links.
   `.trim(),
       schema: CreateEscrowSchema,
     })
@@ -302,7 +408,21 @@ import { z } from "zod";
       args: z.infer<typeof CreateEscrowSchema>,
     ): Promise<string> {
       const amount = toAtomic(args.amount);
+
+      const ctx: ActionContext = {
+        action: "basepay_create_escrow",
+        to: args.payee,
+        amount_usdc: args.amount,
+        transfer_mechanism: "direct",
+        creates_commitment: true,
+      };
+
+      let ref = "";
       try {
+        ref = await this.checkPolicy(ctx);
+        // Fix 1 (caller): pending.add is inside checkPolicy.
+        if (ref) this.consumed.add(ref);
+
         const approveTx = await ensureAllowance(walletProvider, ESCROW_V2, amount);
         const hash = await walletProvider.sendTransaction({
           to: ESCROW_V2,
@@ -312,10 +432,15 @@ import { z } from "zod";
             args: [USDC, args.payee as Hex, amount, BigInt(args.unlockAfterSeconds), args.memo],
           }),
         });
+        // Fix 5: classify on-chain revert as [failed].
         const receipt = await walletProvider.waitForTransactionReceipt(hash);
-        const escrowId = (receipt as { logs?: { topics?: string[] }[] })?.logs?.[0]?.topics?.[1] ?? "see tx";
+        if ((receipt as { status?: string }).status === "reverted") {
+          return `Error: escrow creation reverted on-chain. [failed]\nTransaction: ${txLink(hash)}`;
+        }
+        const escrowId =
+          (receipt as { logs?: { topics?: string[] }[] })?.logs?.[0]?.topics?.[1] ?? "see tx";
         return [
-          `Escrow created: ${args.amount} USDC for ${args.payee}`,
+          `Escrow created: ${args.amount} USDC for ${args.payee} [executed]`,
           `Unlock in: ${(args.unlockAfterSeconds / 86400).toFixed(1)} days`,
           `Escrow ID: ${escrowId}`,
           ...(approveTx ? [`Approve: ${txLink(approveTx)}`] : []),
@@ -323,6 +448,8 @@ import { z } from "zod";
         ].join("\n");
       } catch (e: unknown) {
         return `Error creating escrow: ${e instanceof Error ? e.message : String(e)}`;
+      } finally {
+        if (ref) this.pending.delete(ref);
       }
     }
 
@@ -347,7 +474,23 @@ import { z } from "zod";
       args: z.infer<typeof SubscribeSchema>,
     ): Promise<string> {
       const amount = toAtomic(args.amount);
+
+      const ctx: ActionContext = {
+        action: "basepay_subscribe",
+        to: args.payee,
+        amount_usdc: args.amount,
+        transfer_mechanism: "direct",
+        creates_recurring_obligation: true,
+      };
+
+      let ref = "";
       try {
+        ref = await this.checkPolicy(ctx);
+        // Fix 1 (caller): pending.add is inside checkPolicy.
+        // decision_ref scopes to subscription creation only; subsequent charge()
+        // calls are a separate authority plane and do not inherit this ref.
+        if (ref) this.consumed.add(ref);
+
         const approveTx = await ensureAllowance(walletProvider, SUBSCRIPTION_MANAGER, amount * 24n);
         const hash = await walletProvider.sendTransaction({
           to: SUBSCRIPTION_MANAGER,
@@ -357,18 +500,27 @@ import { z } from "zod";
             args: [USDC, args.payee as Hex, amount, BigInt(args.intervalSeconds), args.memo],
           }),
         });
-        await walletProvider.waitForTransactionReceipt(hash);
-        const period = args.intervalSeconds === 604800 ? "weekly"
-          : args.intervalSeconds === 2592000 ? "monthly"
-          : `every ${args.intervalSeconds}s`;
+        // Fix 5: classify on-chain revert as [failed].
+        const receipt = await walletProvider.waitForTransactionReceipt(hash);
+        if ((receipt as { status?: string }).status === "reverted") {
+          return `Error: subscription creation reverted on-chain. [failed]\nTransaction: ${txLink(hash)}`;
+        }
+        const period =
+          args.intervalSeconds === 604800
+            ? "weekly"
+            : args.intervalSeconds === 2592000
+              ? "monthly"
+              : `every ${args.intervalSeconds}s`;
         return [
-          `Subscription: ${args.amount} USDC ${period} to ${args.payee}`,
+          `Subscription created: ${args.amount} USDC ${period} to ${args.payee} [executed]`,
           `Anyone can call charge() once per interval`,
           ...(approveTx ? [`Approve: ${txLink(approveTx)}`] : []),
           `Subscribe tx: ${txLink(hash)}`,
         ].join("\n");
       } catch (e: unknown) {
         return `Error creating subscription: ${e instanceof Error ? e.message : String(e)}`;
+      } finally {
+        if (ref) this.pending.delete(ref);
       }
     }
 
