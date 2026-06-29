@@ -23,6 +23,17 @@ export interface PolicyDecision {
   signature?: string;
 }
 
+export type PolicyOutcome = 'executed' | 'failed' | 'denied' | 'expired' | 'context_drift' | 'unauditable_outcome';
+
+export interface PolicyReceipt {
+  decision: PolicyDecision;
+  outcome: PolicyOutcome;
+  tx_hash?: string;
+  error?: string;
+  issued_at_ms: number;
+}
+
 export interface PolicyProvider {
   evaluate(ctx: ActionContext): Promise<PolicyDecision>;
+  record?(receipt: PolicyReceipt): Promise<void>;
 }
