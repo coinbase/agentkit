@@ -647,7 +647,7 @@ describe("Policy hook — Layer 2: settlement outcomes", () => {
     );
   });
 
-  it("sendUsdcGasless relay acceptance records unauditable_outcome", async () => {
+  it("sendUsdcGasless relay acceptance records relay_confirmed", async () => {
     const result = await withRecordingPolicy().sendUsdcGasless(mockWallet, {
       to: MOCK_RECIPIENT,
       amount: "5",
@@ -655,7 +655,7 @@ describe("Policy hook — Layer 2: settlement outcomes", () => {
     expect(result).toContain("[relay_confirmed]");
     expect(mockRecord).toHaveBeenCalledWith(
       expect.objectContaining({
-        outcome: "unauditable_outcome",
+        outcome: "relay_confirmed",
         tx_hash: MOCK_TX_HASH,
       }),
     );

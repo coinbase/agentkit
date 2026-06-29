@@ -428,7 +428,7 @@ export class BasePayActionProvider extends ActionProvider<EvmWalletProvider> {
           });
           return `Relay error: ${data.error ?? resp.statusText}`;
         }
-        await this.recordPolicyOutcome(decision, "unauditable_outcome", {
+        await this.recordPolicyOutcome(decision, "relay_confirmed", {
           tx_hash: data.txHash as Hex,
         });
         // Fix 6: relay accepted the authorization and returned a tx hash, but chain
