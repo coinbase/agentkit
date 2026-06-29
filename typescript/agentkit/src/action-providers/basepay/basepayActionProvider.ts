@@ -11,6 +11,8 @@ import { z } from "zod";
   } from "./schemas";
   import { encodeFunctionData, parseUnits, formatUnits, type Hex } from "viem";
   import { EvmWalletProvider } from "../../wallet-providers";
+  import { PolicyProvider, ActionContext } from "../../policy/interfaces";
+  import { actionContextHash, recipientAllocationHash } from "../../policy/utils";
 
   const BASE_CHAIN_ID = "8453";
   const BASESCAN = "https://basescan.org/tx";
@@ -99,6 +101,7 @@ import { z } from "zod";
 
   export interface BasePayConfig {
     relayUrl?: string;
+    policyProvider?: PolicyProvider;
   }
 
   /**
@@ -110,10 +113,32 @@ import { z } from "zod";
    */
   export class BasePayActionProvider extends ActionProvider<EvmWalletProvider> {
     private readonly relayUrl: string;
+    private readonly policyProvider?: PolicyProvider;
+    private readonly pending = new Set<string>();
+    private readonly consumed = new Set<string>();
 
     constructor(config?: BasePayConfig) {
       super("basepay", []);
       this.relayUrl = config?.relayUrl ?? DEFAULT_RELAY_URL;
+      this.policyProvider = config?.policyProvider;
+    }
+
+    private async checkPolicy(ctx: ActionContext): Promise<string> {
+      if (!this.policyProvider) return "";
+
+      const decision = await this.policyProvider.evaluate(ctx);
+      if (!decision.allowed) throw new Error(`policy_denied: ${decision.reason_codes?.join(", ") || "no reason"}`);
+      if (!decision.decision_ref) throw new Error("unbound_execution");
+      if (Date.now() > decision.expires_at_ms) throw new Error("policy_unverifiable");
+
+      const expectedHash = await actionContextHash(ctx);
+      if (decision.action_context_hash !== expectedHash) throw new Error("context_drift");
+
+      if (this.pending.has(decision.decision_ref) || this.consumed.has(decision.decision_ref)) {
+        throw new Error("unbound_execution");
+      }
+
+      return decision.decision_ref;
     }
 
     @CreateAction({
@@ -134,7 +159,21 @@ import { z } from "zod";
       walletProvider: EvmWalletProvider,
       args: z.infer<typeof SendUsdcSchema>,
     ): Promise<string> {
+      const ctx: ActionContext = {
+        action: "basepay_send_usdc",
+        to: args.to,
+        amount_usdc: args.amount,
+        transfer_mechanism: "direct",
+      };
+
+      let ref = "";
       try {
+        ref = await this.checkPolicy(ctx);
+        if (ref) {
+          this.pending.add(ref);
+          this.consumed.add(ref);
+        }
+
         const hash = await walletProvider.sendTransaction({
           to: USDC,
           data: encodeFunctionData({
@@ -147,6 +186,8 @@ import { z } from "zod";
         return `Sent ${args.amount} USDC to ${args.to}\nTransaction: ${txLink(hash)}`;
       } catch (e: unknown) {
         return `Error sending USDC: ${e instanceof Error ? e.message : String(e)}`;
+      } finally {
+        if (ref) this.pending.delete(ref);
       }
     }
 
@@ -173,6 +214,21 @@ import { z } from "zod";
       walletProvider: EvmWalletProvider,
       args: z.infer<typeof SendUsdcGaslessSchema>,
     ): Promise<string> {
+      const ctx: ActionContext = {
+        action: "basepay_send_usdc_gasless",
+        to: args.to,
+        amount_usdc: args.amount,
+        transfer_mechanism: "eip3009",
+      };
+
+      let ref = "";
+      try {
+        ref = await this.checkPolicy(ctx);
+        if (ref) {
+          this.pending.add(ref);
+          this.consumed.add(ref);
+        }
+
       const wp = walletProvider as EvmWalletProvider & {
         signTypedData?: (p: Record<string, unknown>) => Promise<Hex>;
       };
@@ -236,9 +292,13 @@ import { z } from "zod";
         });
         const data = (await resp.json()) as { txHash?: string; error?: string };
         if (!resp.ok || data.error) return `Relay error: ${data.error ?? resp.statusText}`;
+        if (ref) this.consumed.add(ref);
         return `Gaslessly sent ${args.amount} USDC to ${args.to} (relay paid gas)\nTransaction: ${txLink(data.txHash as Hex)}`;
       } catch (e: unknown) {
         return `Error calling BasePay relay: ${e instanceof Error ? e.message : String(e)}`;
+      }
+      } finally {
+        if (ref) this.pending.delete(ref);
       }
     }
 
@@ -261,7 +321,25 @@ import { z } from "zod";
     ): Promise<string> {
       const amounts = args.recipients.map((r) => toAtomic(r.amount));
       const total = amounts.reduce((a, b) => a + b, 0n);
+
+      const ctx: ActionContext = {
+        action: "basepay_batch_pay_usdc",
+        recipient_allocation_hash: await recipientAllocationHash(
+          args.recipients.map((r) => ({ address: r.address, amount: toAtomic(r.amount) })),
+        ),
+        recipient_count: args.recipients.length,
+        aggregate_usdc: formatUnits(total, USDC_DECIMALS),
+        transfer_mechanism: "direct",
+      };
+
+      let ref = "";
       try {
+        ref = await this.checkPolicy(ctx);
+        if (ref) {
+          this.pending.add(ref);
+          this.consumed.add(ref);
+        }
+
         const approveTx = await ensureAllowance(walletProvider, BATCH_PAY, total);
         const hash = await walletProvider.sendTransaction({
           to: BATCH_PAY,
@@ -279,6 +357,8 @@ import { z } from "zod";
         ].join("\n");
       } catch (e: unknown) {
         return `Error in batch payment: ${e instanceof Error ? e.message : String(e)}`;
+      } finally {
+        if (ref) this.pending.delete(ref);
       }
     }
 
@@ -302,7 +382,23 @@ import { z } from "zod";
       args: z.infer<typeof CreateEscrowSchema>,
     ): Promise<string> {
       const amount = toAtomic(args.amount);
+
+      const ctx: ActionContext = {
+        action: "basepay_create_escrow",
+        to: args.payee,
+        amount_usdc: args.amount,
+        transfer_mechanism: "direct",
+        creates_commitment: true,
+      };
+
+      let ref = "";
       try {
+        ref = await this.checkPolicy(ctx);
+        if (ref) {
+          this.pending.add(ref);
+          this.consumed.add(ref);
+        }
+
         const approveTx = await ensureAllowance(walletProvider, ESCROW_V2, amount);
         const hash = await walletProvider.sendTransaction({
           to: ESCROW_V2,
@@ -313,7 +409,8 @@ import { z } from "zod";
           }),
         });
         const receipt = await walletProvider.waitForTransactionReceipt(hash);
-        const escrowId = (receipt as { logs?: { topics?: string[] }[] })?.logs?.[0]?.topics?.[1] ?? "see tx";
+        const escrowId =
+          (receipt as { logs?: { topics?: string[] }[] })?.logs?.[0]?.topics?.[1] ?? "see tx";
         return [
           `Escrow created: ${args.amount} USDC for ${args.payee}`,
           `Unlock in: ${(args.unlockAfterSeconds / 86400).toFixed(1)} days`,
@@ -323,6 +420,8 @@ import { z } from "zod";
         ].join("\n");
       } catch (e: unknown) {
         return `Error creating escrow: ${e instanceof Error ? e.message : String(e)}`;
+      } finally {
+        if (ref) this.pending.delete(ref);
       }
     }
 
@@ -347,7 +446,23 @@ import { z } from "zod";
       args: z.infer<typeof SubscribeSchema>,
     ): Promise<string> {
       const amount = toAtomic(args.amount);
+
+      const ctx: ActionContext = {
+        action: "basepay_subscribe",
+        to: args.payee,
+        amount_usdc: args.amount,
+        transfer_mechanism: "direct",
+        creates_recurring_obligation: true,
+      };
+
+      let ref = "";
       try {
+        ref = await this.checkPolicy(ctx);
+        if (ref) {
+          this.pending.add(ref);
+          this.consumed.add(ref);
+        }
+
         const approveTx = await ensureAllowance(walletProvider, SUBSCRIPTION_MANAGER, amount * 24n);
         const hash = await walletProvider.sendTransaction({
           to: SUBSCRIPTION_MANAGER,
@@ -358,9 +473,12 @@ import { z } from "zod";
           }),
         });
         await walletProvider.waitForTransactionReceipt(hash);
-        const period = args.intervalSeconds === 604800 ? "weekly"
-          : args.intervalSeconds === 2592000 ? "monthly"
-          : `every ${args.intervalSeconds}s`;
+        const period =
+          args.intervalSeconds === 604800
+            ? "weekly"
+            : args.intervalSeconds === 2592000
+              ? "monthly"
+              : `every ${args.intervalSeconds}s`;
         return [
           `Subscription: ${args.amount} USDC ${period} to ${args.payee}`,
           `Anyone can call charge() once per interval`,
@@ -369,6 +487,8 @@ import { z } from "zod";
         ].join("\n");
       } catch (e: unknown) {
         return `Error creating subscription: ${e instanceof Error ? e.message : String(e)}`;
+      } finally {
+        if (ref) this.pending.delete(ref);
       }
     }
 
