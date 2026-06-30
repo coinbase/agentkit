@@ -231,7 +231,7 @@ export class BasePayActionProvider extends ActionProvider<EvmWalletProvider> {
     }
 
     if (this.pending.has(decision.decision_ref) || this.consumed.has(decision.decision_ref)) {
-      await this.recordPolicyOutcome(decision, "unauditable_outcome", {
+      await this.recordPolicyOutcome(decision, "denied", {
         error: "unbound_execution",
       });
       throw new Error("unbound_execution");
