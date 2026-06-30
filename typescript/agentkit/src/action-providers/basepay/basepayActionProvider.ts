@@ -199,6 +199,7 @@ export class BasePayActionProvider extends ActionProvider<EvmWalletProvider> {
     if (message.includes("policy_denied")) return "denied";
     if (message.includes("policy_unverifiable")) return "expired";
     if (message.includes("context_drift")) return "context_drift";
+    if (message.includes("unbound_execution: duplicate")) return "denied";
     if (message.includes("unbound_execution")) return "unauditable_outcome";
     return "failed";
   }
@@ -215,9 +216,9 @@ export class BasePayActionProvider extends ActionProvider<EvmWalletProvider> {
     }
     if (!decision.decision_ref) {
       await this.recordPolicyOutcome(decision, "unauditable_outcome", {
-        error: "unbound_execution",
+        error: "unbound_execution: missing decision_ref",
       });
-      throw new Error("unbound_execution");
+      throw new Error("unbound_execution: missing decision_ref");
     }
     if (Date.now() > decision.expires_at_ms) {
       await this.recordPolicyOutcome(decision, "expired", { error: "policy_unverifiable" });
@@ -232,9 +233,9 @@ export class BasePayActionProvider extends ActionProvider<EvmWalletProvider> {
 
     if (this.pending.has(decision.decision_ref) || this.consumed.has(decision.decision_ref)) {
       await this.recordPolicyOutcome(decision, "denied", {
-        error: "unbound_execution",
+        error: "unbound_execution: duplicate decision_ref",
       });
-      throw new Error("unbound_execution");
+      throw new Error("unbound_execution: duplicate decision_ref");
     }
 
     // Fix 1: add to pending inside checkPolicy before returning.
