@@ -390,7 +390,7 @@ describe("Policy hook — Layer 1: authority gate", () => {
         to: MOCK_RECIPIENT,
         amount: "10",
       });
-      expect(result).toContain("unbound_execution");
+      expect(result).toContain("unbound_execution: missing decision_ref");
       expect(mockWallet.sendTransaction).not.toHaveBeenCalled();
     });
 
@@ -423,7 +423,7 @@ describe("Policy hook — Layer 1: authority gate", () => {
       // Second call with same ref: consumed — must not reach sendTransaction again
       const sendCallsBefore = (mockWallet.sendTransaction as jest.Mock).mock.calls.length;
       const result = await p.sendUsdc(mockWallet, { to: MOCK_RECIPIENT, amount: "1" });
-      expect(result).toContain("unbound_execution");
+      expect(result).toContain("unbound_execution: duplicate decision_ref");
       expect((mockWallet.sendTransaction as jest.Mock).mock.calls.length).toBe(sendCallsBefore);
     });
   });
@@ -448,7 +448,7 @@ describe("Policy hook — Layer 1: authority gate", () => {
       await p.sendUsdcGasless(mockWallet, { to: MOCK_RECIPIENT, amount: "5" });
       const signCallsBefore = (mockWallet.signTypedData as jest.Mock).mock.calls.length;
       const result = await p.sendUsdcGasless(mockWallet, { to: MOCK_RECIPIENT, amount: "5" });
-      expect(result).toContain("unbound_execution");
+      expect(result).toContain("unbound_execution: duplicate decision_ref");
       expect((mockWallet.signTypedData as jest.Mock).mock.calls.length).toBe(signCallsBefore);
     });
   });
@@ -472,7 +472,7 @@ describe("Policy hook — Layer 1: authority gate", () => {
       await p.batchPayUsdc(mockWallet, { recipients, memo: "" });
       const readCallsBefore = (mockWallet.readContract as jest.Mock).mock.calls.length;
       const result = await p.batchPayUsdc(mockWallet, { recipients, memo: "" });
-      expect(result).toContain("unbound_execution");
+      expect(result).toContain("unbound_execution: duplicate decision_ref");
       expect((mockWallet.readContract as jest.Mock).mock.calls.length).toBe(readCallsBefore);
     });
 
@@ -520,7 +520,7 @@ describe("Policy hook — Layer 1: authority gate", () => {
       await p.createEscrow(mockWallet, escrowArgs);
       const readCallsBefore = (mockWallet.readContract as jest.Mock).mock.calls.length;
       const result = await p.createEscrow(mockWallet, escrowArgs);
-      expect(result).toContain("unbound_execution");
+      expect(result).toContain("unbound_execution: duplicate decision_ref");
       expect((mockWallet.readContract as jest.Mock).mock.calls.length).toBe(readCallsBefore);
     });
   });
@@ -544,7 +544,7 @@ describe("Policy hook — Layer 1: authority gate", () => {
       await p.subscribe(mockWallet, subArgs);
       const readCallsBefore = (mockWallet.readContract as jest.Mock).mock.calls.length;
       const result = await p.subscribe(mockWallet, subArgs);
-      expect(result).toContain("unbound_execution");
+      expect(result).toContain("unbound_execution: duplicate decision_ref");
       expect((mockWallet.readContract as jest.Mock).mock.calls.length).toBe(readCallsBefore);
     });
 
@@ -749,7 +749,7 @@ describe("Policy hook — Layer 2: settlement outcomes", () => {
     it("unbound_execution is in the result string — not a wallet error", async () => {
       mockEvaluate.mockResolvedValue(decision({ decision_ref: "" }));
       const result = await p.sendUsdc(mockWallet, { to: MOCK_RECIPIENT, amount: "1" });
-      expect(result).toContain("unbound_execution");
+      expect(result).toContain("unbound_execution: missing decision_ref");
       expect(mockWallet.sendTransaction).not.toHaveBeenCalled();
     });
 
