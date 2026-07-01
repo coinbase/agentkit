@@ -485,6 +485,19 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>invinoveritas</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>review</code></td>
+    <td width="768">Gets an independent, capital/risk-aware verdict on a proposed action (trade, on-chain transaction, sanctions screening, code diff, etc.) before it executes. Advisory, never blocks; optionally returns a portable signed proof any third party can recompute.</td>
+</tr>
+<tr>
+    <td width="200"><code>verify_proof</code></td>
+    <td width="768">Verifies a signed invinoveritas proof another agent handed you — free, no auth, recomputed against a published key rather than trusted.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Messari</strong></summary>
 <table width="100%">
 <tr>
