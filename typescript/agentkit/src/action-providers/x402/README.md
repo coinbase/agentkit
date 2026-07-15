@@ -308,6 +308,8 @@ The x402 provider supports the following networks:
 |---------------------|---------------|----------------------|
 | `base-mainnet` | `base` | `eip155:8453` |
 | `base-sepolia` | `base-sepolia` | `eip155:84532` |
+| `near-mainnet` | — | `near:mainnet` |
+| `near-testnet` | — | `near:testnet` |
 | `solana-mainnet` | `solana` | `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp` |
 | `solana-devnet` | `solana-devnet` | `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` |
 
