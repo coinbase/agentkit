@@ -52,7 +52,7 @@ export const ListX402ServicesSchema = z
       .nullable()
       .transform(val => val ?? DEFAULT_FACILITATOR)
       .describe(
-        "Facilitator to query: 'cdp' (Coinbase CDP), 'payai' (PayAI) or a registered custom facilitator name.",
+        "Facilitator to query: 'cdp' (Coinbase CDP), 'payai' (PayAI), 'solvador' (Solvador), or a registered custom facilitator name.",
       ),
     maxUsdcPrice: z
       .number()
