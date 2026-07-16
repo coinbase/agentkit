@@ -24,6 +24,7 @@ nodeflare/
 - `get_token_metadata`: Read ERC-20 token metadata (name, symbol, decimals, total supply)
 - `get_gas_price`: Get the current gas price on a chain, in gwei
 - `get_transaction`: Look up a transaction by hash (from, to, value, block)
+- `get_multichain_balances`: Native + ERC-20 balances for one address across many of the 23 chains in one call (incl. young chains)
 
 Every action's `chain` argument accepts a slug (`base`), a name (`ethereum`, `bsc`), or a numeric chain ID (`8453`).
 
