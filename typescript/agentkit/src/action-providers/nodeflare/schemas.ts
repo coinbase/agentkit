@@ -72,3 +72,20 @@ export const GetTransactionSchema = z
     txHash: z.string().describe("The 0x transaction hash to look up"),
   })
   .describe("Input schema for looking up a transaction by hash");
+
+/**
+ * Input schema for reading native + ERC-20 balances across many chains.
+ */
+export const GetMultichainBalancesSchema = z
+  .object({
+    address: z.string().describe("The 0x address to look up balances for"),
+    chains: z
+      .array(z.string())
+      .optional()
+      .describe("Chains to include (slug, name, or chain ID); defaults to all 23"),
+    tokens: z
+      .record(z.string(), z.array(z.string()))
+      .optional()
+      .describe("ERC-20 contract addresses per chain, e.g. { base: [\"0x833589...\"] }"),
+  })
+  .describe("Input schema for reading native + ERC-20 balances across many EVM chains");
