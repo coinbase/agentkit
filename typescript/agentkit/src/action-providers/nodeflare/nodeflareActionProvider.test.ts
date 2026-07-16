@@ -83,4 +83,13 @@ describe("NodeflareActionProvider", () => {
       expect(response).toContain("Public rate limit exceeded");
     });
   });
+
+  describe("getMultichainBalances", () => {
+    it("aggregates balances across chains via the data API", async () => {
+      mockFetch({ address: "0xabc", chains: [{ chain: "base", chainId: 8453, native: { currency: "ETH", balance: "1.5", wei: "1500000000000000000" }, tokens: [] }] });
+      const response = await provider.getMultichainBalances({ address: "0xabc", chains: ["base"] });
+      expect(response).toContain("Multi-chain balances for 0xabc");
+      expect(response).toContain("\"chain\": \"base\"");
+    });
+  });
 });
