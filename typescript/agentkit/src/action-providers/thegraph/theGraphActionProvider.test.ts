@@ -34,8 +34,8 @@ describe("TheGraphActionProvider", () => {
 
   describe("toFulltext", () => {
     it("builds a prefix tsquery from free text", () => {
-      expect(toFulltext("uniswap v3")).toBe("uniswap:* & v3:*");
-      expect(toFulltext("Aave, Lending!")).toBe("aave:* & lending:*");
+      expect(toFulltext("uniswap v3")).toBe("uniswap:* | v3:*");
+      expect(toFulltext("Aave, Lending!")).toBe("aave:* | lending:*");
     });
   });
 
