@@ -10,6 +10,7 @@ import {
   GetTokenMetadataSchema,
   GetGasPriceSchema,
   GetTransactionSchema,
+  GetMultichainBalancesSchema,
 } from "./schemas";
 
 /**
@@ -172,6 +173,30 @@ const erc20Call = (token: string, fn: "balanceOf" | "decimals" | "symbol" | "nam
 
 const unknownChain = (input: string) =>
   `Error: unknown chain '${input}'. NodeFlare serves: ${Object.keys(CHAINS).join(", ")}. Pass a slug, name, or chain ID.`;
+
+/**
+ * Fetch native + ERC-20 balances for one address across many chains from
+ * NodeFlare's multi-chain balances data API (a single request).
+ *
+ * @param body - The address and optional chains/tokens selection.
+ * @returns The aggregated balances JSON.
+ */
+async function nodeflareBalances(body: {
+  address: string;
+  chains?: string[];
+  tokens?: Record<string, string[]>;
+}): Promise<unknown> {
+  const res = await fetch(`${GATEWAY}/data/balances`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const json = (await res.json()) as { error?: unknown; message?: string };
+  if (!res.ok) {
+    throw new Error(json.message ?? (typeof json.error === "string" ? json.error : "balances request failed"));
+  }
+  return json;
+}
 
 /**
  * NodeflareActionProvider gives an agent read access to on-chain data across the
@@ -390,6 +415,31 @@ export class NodeflareActionProvider extends ActionProvider {
       return `Transaction ${args.txHash} on ${CHAINS[slug].label}: from ${tx.from} to ${tx.to}, value ${value} ${CHAINS[slug].currency}, block ${block}`;
     } catch (error) {
       return `Error fetching transaction on ${CHAINS[slug].label}: ${error}`;
+    }
+  }
+
+  /**
+   * Reads native + ERC-20 balances for one address across many chains in one call.
+   *
+   * @param args - The address and optional chains/tokens selection.
+   * @returns The aggregated balances, or an error message.
+   */
+  @CreateAction({
+    name: "get_multichain_balances",
+    description:
+      "Reads native + ERC-20 token balances for one address across many of the 23 EVM chains in a single call, including young chains (Robinhood, Plasma, Ink) that Alchemy/Moralis omit. Provide ERC-20 addresses per chain via `tokens` to include token balances.",
+    schema: GetMultichainBalancesSchema,
+  })
+  async getMultichainBalances(args: z.infer<typeof GetMultichainBalancesSchema>): Promise<string> {
+    try {
+      const result = await nodeflareBalances({
+        address: args.address,
+        ...(args.chains ? { chains: args.chains } : {}),
+        ...(args.tokens ? { tokens: args.tokens } : {}),
+      });
+      return `Multi-chain balances for ${args.address}:\n${JSON.stringify(result, null, 2)}`;
+    } catch (error) {
+      return `Error fetching multi-chain balances: ${error}`;
     }
   }
 
