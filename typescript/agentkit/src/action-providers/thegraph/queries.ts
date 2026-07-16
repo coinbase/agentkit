@@ -36,7 +36,7 @@ export const INTROSPECT_QUERY = `query AgentkitGraphIntrospect { __type(name: "Q
 
 /**
  * Turns a free-text query into a Postgres tsquery with prefix matching:
- * "uniswap v3" -> "uniswap:* & v3:*".
+ * "uniswap v3" -> "uniswap:* | v3:*".
  *
  * @param q - The free-text search string
  * @returns A tsquery string
@@ -49,7 +49,7 @@ export function toFulltext(q: string): string {
     .split(/\s+/)
     .filter(Boolean);
   if (!tokens.length) return q.trim();
-  return tokens.map(t => `${t}:*`).join(" & ");
+  return tokens.map(t => `${t}:*`).join(" | ");
 }
 
 /**
