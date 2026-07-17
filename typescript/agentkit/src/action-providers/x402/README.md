@@ -341,3 +341,72 @@ Configuration object values take precedence over environment variables.
 ### Additional Resources
 
 For more information on the **x402 protocol**, visit the [x402 documentation](https://docs.cdp.coinbase.com/x402/overview).
+
+## Example: Using GenTech x402 Services
+
+[GenTech Labs](https://gentechlabs.net) provides 16+ x402-protected API endpoints for AI agents, covering gaming, DeFi, NFTs, security, and wallet analytics.
+
+### Preregister GenTech Services
+
+```typescript
+import { x402ActionProvider } from "@coinbase/cdp-agentkit";
+
+const provider = x402ActionProvider({
+  registeredServices: [
+    "https://api.gentechlabs.net"
+  ],
+  maxPaymentUsdc: 0.1
+});
+```
+
+### Discover Available Services
+
+Use the `gentech` facilitator to browse all available endpoints:
+
+```typescript
+// discover_x402_services
+{
+  facilitator: "gentech",
+  maxUsdcPrice: 0.025,
+  keyword: "games"  // Filter by category
+}
+```
+
+### Example: Search Games
+
+```typescript
+// Step 1: Make request (gets 402 with payment instructions)
+// make_http_request
+{
+  url: "https://api.gentechlabs.net/v1/games/search",
+  method: "GET",
+  queryParams: { q: "Elden Ring" }
+}
+
+// Step 2: Retry with payment
+// retry_http_request_with_x402
+{
+  url: "https://api.gentechlabs.net/v1/games/search",
+  method: "GET",
+  queryParams: { q: "Elden Ring" },
+  selectedPaymentOption: {
+    scheme: "exact",
+    network: "base-sepolia",
+    amount: "5000",
+    asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+  }
+}
+```
+
+### Pricing
+
+| Category | Endpoint | Price |
+|----------|----------|-------|
+| Gaming | Search, cheapest, news, release dates | $0.001–0.005 |
+| Movies | Search, details | $0.001–0.005 |
+| DeFi | Airdrop checker | $0.01 |
+| Wallet | Analyze wallet | $0.025 |
+| Security | Token/Mint score | $0.01 |
+| Intel | Intel search | $0.005 |
+
+Full pricing: [api.gentechlabs.net/pricing](https://api.gentechlabs.net/pricing)
