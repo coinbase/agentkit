@@ -485,6 +485,23 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>GBLIN</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>buy_gblin</code></td>
+    <td width="768">Buys GBLIN, a collateral-backed treasury index on Base, with ETH. Derives a slippage-bounded minimum output from the on-chain quote.</td>
+</tr>
+<tr>
+    <td width="200"><code>sell_gblin_for_eth</code></td>
+    <td width="768">Redeems GBLIN back to ETH. Derives a slippage-bounded minimum output from the on-chain quote.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_gblin_state</code></td>
+    <td width="768">Reads the live per-GBLIN ETH redemption value and total supply.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Messari</strong></summary>
 <table width="100%">
 <tr>
