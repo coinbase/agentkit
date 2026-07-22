@@ -51,15 +51,15 @@ The agent signs the batch transaction and pays gas itself on Base. All batches a
 
 ## Gateway pre-flight actions (free, no payment)
 
-- `spraay_validate_batch`: `POST https://gateway.spraay.app/free/validate-batch` — validates a batch (BPA 1.0 body, `recipients` array of `{recipient, amount}`) and returns `valid`/`errors`/`warnings`/`summary`.
-- `spraay_estimate_batch`: `GET https://gateway.spraay.app/free/estimate-batch?recipients=<count>&chain=<chain>&token=<token>` — cost estimate for a batch of a given size.
+- `spraay_validate_batch`: `POST https://gateway.spraay.app/free/validate-batch` — validates a batch (BPA 1.0 body; the gateway expects a `recipients` array of `{to, amount}` entries, which the provider maps from its uniform `{recipient, amount}` input) and returns `valid`/`errors`/`warnings`/`summary`.
+- `spraay_estimate_batch`: `GET https://gateway.spraay.app/free/estimate-batch?recipients=<count>&chain=<chain>&amount=<total>` — rough gas and protocol-fee estimate for a batch of a given size (the optional total `amount` enables the fee figures).
 
 These make agents safer: validate and cost a batch before signing anything.
 
 ## Gateway execution and escrow (x402-metered, paid)
 
-- `spraay_execute_batch_gateway`: `POST https://gateway.spraay.app/api/v1/batch/execute` — the gateway executes the batch; the agent pays a metered USDC fee via the [x402 protocol](https://x402.org) (pricing returned via 402 challenge; `POST /api/v1/batch/estimate` quotes the same way). Multi-chain capable, no gas management for the agent.
-- `spraay_create_escrow`: `POST https://gateway.spraay.app/api/v1/escrow/create` — locks funds for a beneficiary with optional deadline and terms. Creation only; see the gateway docs for release/refund flows.
+- `spraay_execute_batch_gateway`: `POST https://gateway.spraay.app/api/v1/batch/execute` — the gateway executes the batch (body: `token`, `recipients` as `{address, amount}` entries mapped from the provider's uniform input, and the wallet's address as `sender`); the agent pays a metered USDC fee via the [x402 protocol](https://x402.org) (pricing returned via 402 challenge; `POST /api/v1/batch/estimate` quotes the same way). Multi-chain capable, no gas management for the agent.
+- `spraay_create_escrow`: `POST https://gateway.spraay.app/api/v1/escrow/create` — locks funds from a depositor (defaults to the connected wallet) for a beneficiary, with optional arbiter, release conditions, and expiry in hours. Creation only; the gateway's `POST /api/v1/escrow/fund`, `/release`, and `/cancel` endpoints handle the rest of the lifecycle.
 
 Payments are settled either by signing with the wallet provider (`@x402/fetch`) or with a pre-funded `x402PaymentHeader` from config, and are capped by `maxGatewayPaymentUsdc`. Payment is never faked or stubbed.
 

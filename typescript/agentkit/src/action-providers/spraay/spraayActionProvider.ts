@@ -448,7 +448,7 @@ Checks recipients and amounts and returns valid/errors/warnings/summary. Use thi
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(this.buildBpaBody(args.chain, args.token, args.recipients)),
+          body: JSON.stringify(this.buildValidateBody(args.chain, args.token, args.recipients)),
         },
       );
 
@@ -499,8 +499,8 @@ Checks recipients and amounts and returns valid/errors/warnings/summary. Use thi
   @CreateAction({
     name: "spraay_estimate_batch",
     description: `
-Estimate the cost of a batch payment via the free Spraay gateway endpoint (GET ${SPRAAY_GATEWAY_BASE_URL}${SPRAAY_FREE_ESTIMATE_BATCH_PATH}?recipients=<count>&chain=<chain>&token=<token>). No payment and no transaction signing required.
-Use this to preview gas and fee costs for a batch of a given size before executing on-chain or via the gateway.
+Estimate the cost of a batch payment via the free Spraay gateway endpoint (GET ${SPRAAY_GATEWAY_BASE_URL}${SPRAAY_FREE_ESTIMATE_BATCH_PATH}?recipients=<count>&chain=<chain>&amount=<total>). No payment and no transaction signing required.
+Returns rough per-chain gas and protocol-fee estimates (protocol fee requires the optional total amount). Use this to preview costs for a batch of a given size before executing on-chain or via the gateway; for a live quote use the paid POST ${SPRAAY_GATEWAY_BASE_URL}${SPRAAY_GATEWAY_BATCH_ESTIMATE_PATH}.
     `.trim(),
     schema: SpraayEstimateBatchSchema,
   })
@@ -512,7 +512,9 @@ Use this to preview gas and fee costs for a batch of a given size before executi
       const url = new URL(`${this.config.gatewayBaseUrl}${SPRAAY_FREE_ESTIMATE_BATCH_PATH}`);
       url.searchParams.set("recipients", String(args.recipients));
       url.searchParams.set("chain", args.chain);
-      url.searchParams.set("token", args.token);
+      if (args.amount) {
+        url.searchParams.set("amount", args.amount);
+      }
 
       const response = await fetch(url.toString());
       const data = await this.parseResponseData(response);
@@ -575,7 +577,7 @@ Payments respect the provider's maxGatewayPaymentUsdc limit. Use spraay_validate
     return this.requestWithX402(
       walletProvider,
       SPRAAY_GATEWAY_BATCH_EXECUTE_PATH,
-      this.buildBpaBody(args.chain, args.token, args.recipients),
+      this.buildExecuteBody(args.token, args.recipients, walletProvider.getAddress()),
     );
   }
 
@@ -583,14 +585,15 @@ Payments respect the provider's maxGatewayPaymentUsdc limit. Use spraay_validate
    * Create an escrow through the x402-metered Spraay gateway.
    *
    * @param walletProvider - The wallet provider used to sign the x402 payment.
-   * @param args - The escrow parameters (token, amount, beneficiary, chain, deadline, description).
+   * @param args - The escrow parameters (token, amount, beneficiary, depositor, arbiter, description, conditions, expiresIn).
    * @returns A JSON string with the gateway escrow creation result and payment details.
    */
   @CreateAction({
     name: "spraay_create_escrow",
     description: `
 Create an escrow through the x402-metered Spraay gateway (POST ${SPRAAY_GATEWAY_BASE_URL}${SPRAAY_GATEWAY_ESCROW_CREATE_PATH}). This is a PAID endpoint: pricing is returned via an x402 402 Payment Required challenge and settled in USDC.
-Escrow complements Spraay batch payments: lock funds for a beneficiary with optional deadline and terms, then release or refund later. This action covers creation only — see the Spraay gateway documentation (${SPRAAY_GATEWAY_BASE_URL}) for release and refund flows.
+Escrow complements Spraay batch payments: lock funds for a beneficiary (with an optional arbiter, release conditions, and expiry in hours), then release or refund later. The depositor defaults to the connected wallet and must differ from the beneficiary.
+This action covers creation only — the gateway's POST /api/v1/escrow/fund, /release, and /cancel endpoints handle the rest of the lifecycle (see ${SPRAAY_GATEWAY_BASE_URL}).
 Payments respect the provider's maxGatewayPaymentUsdc limit.
     `.trim(),
     schema: SpraayCreateEscrowSchema,
@@ -599,14 +602,31 @@ Payments respect the provider's maxGatewayPaymentUsdc limit.
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof SpraayCreateEscrowSchema>,
   ): Promise<string> {
+    const depositor = args.depositor ?? walletProvider.getAddress();
+
+    // The gateway rejects depositor === beneficiary, but only after the x402
+    // payment has settled — catch it locally before paying anything.
+    if (depositor.toLowerCase() === args.beneficiary.toLowerCase()) {
+      return JSON.stringify(
+        {
+          error: true,
+          message: "Depositor and beneficiary cannot be the same address",
+          details: "No payment was made.",
+        },
+        null,
+        2,
+      );
+    }
+
     return this.requestWithX402(walletProvider, SPRAAY_GATEWAY_ESCROW_CREATE_PATH, {
-      bpa_version: SPRAAY_BPA_VERSION,
-      chain: args.chain,
+      depositor,
+      beneficiary: args.beneficiary,
       token: args.token,
       amount: args.amount,
-      beneficiary: args.beneficiary,
-      ...(args.deadline ? { deadline: args.deadline } : {}),
+      ...(args.arbiter ? { arbiter: args.arbiter } : {}),
       ...(args.description ? { description: args.description } : {}),
+      ...(args.conditions?.length ? { conditions: args.conditions } : {}),
+      ...(args.expiresIn ? { expiresIn: args.expiresIn } : {}),
     });
   }
 
@@ -620,23 +640,47 @@ Payments respect the provider's maxGatewayPaymentUsdc limit.
     network.protocolFamily === "evm" && network.networkId === "base-mainnet";
 
   /**
-   * Builds a Batch Payment Aggregate (BPA 1.0) request body.
-   * Note the array key is "recipients" (not "payments").
+   * Builds the request body for the free BPA 1.0 validation endpoint.
+   * The gateway's validator expects entries keyed as {to, amount} inside a
+   * "recipients" array (not "payments"), plus chain and token (symbol or
+   * contract address).
    *
    * @param chain - Target chain identifier.
-   * @param token - Token symbol.
+   * @param token - Token symbol or contract address.
    * @param recipients - Batch entries as (recipient, amount) pairs.
-   * @returns The BPA request body.
+   * @returns The validation request body.
    */
-  private buildBpaBody(chain: string, token: string, recipients: BatchEntry[]) {
+  private buildValidateBody(chain: string, token: string, recipients: BatchEntry[]) {
     return {
       bpa_version: SPRAAY_BPA_VERSION,
       chain,
       token,
       recipients: recipients.map(entry => ({
-        recipient: entry.recipient,
+        to: entry.recipient,
         amount: entry.amount,
       })),
+    };
+  }
+
+  /**
+   * Builds the request body for the paid batch execution endpoint.
+   * The gateway's execute handler expects entries keyed as {address, amount}
+   * (human-decimal amounts) plus token (symbol or contract address, default
+   * USDC) and an optional sender used for approval encoding.
+   *
+   * @param token - Token symbol or contract address.
+   * @param recipients - Batch entries as (recipient, amount) pairs.
+   * @param sender - The sending wallet address.
+   * @returns The execution request body.
+   */
+  private buildExecuteBody(token: string, recipients: BatchEntry[], sender: string) {
+    return {
+      token,
+      recipients: recipients.map(entry => ({
+        address: entry.recipient,
+        amount: entry.amount,
+      })),
+      sender,
     };
   }
 
@@ -656,7 +700,7 @@ Payments respect the provider's maxGatewayPaymentUsdc limit.
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(this.buildBpaBody("base", token, entries)),
+          body: JSON.stringify(this.buildValidateBody("base", token, entries)),
         },
       );
 
@@ -1018,12 +1062,14 @@ Payments respect the provider's maxGatewayPaymentUsdc limit.
       // with the wallet provider via the x402 client.
       let paidResponse: Response;
       if (this.config.x402PaymentHeader) {
+        // The gateway's x402 v2 middleware reads Payment-Signature, with
+        // X-PAYMENT kept as the v1 fallback.
         paidResponse = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Payment-Signature": this.config.x402PaymentHeader,
             "X-PAYMENT": this.config.x402PaymentHeader,
-            PAYMENT: this.config.x402PaymentHeader,
           },
           body: JSON.stringify(body),
         });

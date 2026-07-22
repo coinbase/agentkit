@@ -36,6 +36,7 @@ from .conftest import (
     MOCK_RECIPIENT_A,
     MOCK_RECIPIENT_B,
     MOCK_TOKEN_ADDRESS,
+    MOCK_WALLET_ADDRESS,
     make_read_contract,
 )
 
@@ -128,21 +129,36 @@ def test_validate_batch_schema_rejects_duplicates_and_defaults_chain():
 
 
 def test_estimate_batch_schema_bounds():
-    """Bound the estimate recipient count."""
+    """Bound the estimate recipient count and validate the optional amount."""
     for bad in [0, 201]:
         with pytest.raises(ValidationError):
-            SpraayEstimateBatchInput(recipients=bad, token="USDC")
-    assert SpraayEstimateBatchInput(recipients=50, token="USDC").recipients == 50
+            SpraayEstimateBatchInput(recipients=bad)
+    assert SpraayEstimateBatchInput(recipients=50).recipients == 50
+    assert SpraayEstimateBatchInput(recipients=50, amount="1000.00").amount == "1000.00"
+    with pytest.raises(ValidationError):
+        SpraayEstimateBatchInput(recipients=50, amount="-1")
 
 
 def test_create_escrow_schema():
     """Validate escrow input."""
-    schema = SpraayCreateEscrowInput(token="USDC", amount="250.00", beneficiary=MOCK_RECIPIENT_A)
-    assert schema.chain == "base"
+    schema = SpraayCreateEscrowInput(
+        token="USDC",
+        amount="250.00",
+        beneficiary=MOCK_RECIPIENT_A,
+        depositor=MOCK_RECIPIENT_B,
+        arbiter=MOCK_TOKEN_ADDRESS,
+        conditions=["Design approved"],
+        expires_in=72,
+    )
+    assert schema.expires_in == 72
     with pytest.raises(ValidationError):
         SpraayCreateEscrowInput(token="USDC", amount="0", beneficiary=MOCK_RECIPIENT_A)
     with pytest.raises(ValidationError):
         SpraayCreateEscrowInput(token="USDC", amount="1", beneficiary="0xbad")
+    with pytest.raises(ValidationError):
+        SpraayCreateEscrowInput(
+            token="USDC", amount="1", beneficiary=MOCK_RECIPIENT_A, expires_in=-5
+        )
 
 
 # =========================================================
@@ -495,7 +511,7 @@ def test_validate_batch_posts_bpa_body(mock_wallet):
         "bpa_version": SPRAAY_BPA_VERSION,
         "chain": "base",
         "token": "USDC",
-        "recipients": [{"recipient": MOCK_RECIPIENT_A, "amount": "1.00"}],
+        "recipients": [{"to": MOCK_RECIPIENT_A, "amount": "1.00"}],
     }
     assert "payments" not in body
 
@@ -526,19 +542,31 @@ def test_estimate_batch_uses_query_params(mock_wallet):
     provider = spraay_action_provider()
     with patch(
         f"{PROVIDER_MODULE}.requests.get",
-        return_value=make_response(200, {"estimatedCostUsd": "0.42"}),
+        return_value=make_response(200, {"estimate": {"estimatedGasUSD": 0.15}}),
     ) as mock_get:
         result = provider.spraay_estimate_batch(
-            mock_wallet, {"recipients": 150, "token": "USDC", "chain": "base"}
+            mock_wallet, {"recipients": 150, "chain": "base", "amount": "1000.00"}
         )
 
     call = mock_get.call_args
     assert call[0][0] == f"{SPRAAY_GATEWAY_BASE_URL}{SPRAAY_FREE_ESTIMATE_BATCH_PATH}"
-    assert call[1]["params"] == {"recipients": 150, "chain": "base", "token": "USDC"}
+    assert call[1]["params"] == {"recipients": 150, "chain": "base", "amount": "1000.00"}
 
     parsed = json.loads(result)
     assert parsed["success"] is True
-    assert parsed["estimate"]["estimatedCostUsd"] == "0.42"
+    assert parsed["estimate"]["estimate"]["estimatedGasUSD"] == 0.15
+
+
+def test_estimate_batch_omits_amount_when_absent(mock_wallet):
+    """Omit the amount query parameter when not provided."""
+    provider = spraay_action_provider()
+    with patch(
+        f"{PROVIDER_MODULE}.requests.get",
+        return_value=make_response(200, {"estimate": {"estimatedGasUSD": 0.15}}),
+    ) as mock_get:
+        provider.spraay_estimate_batch(mock_wallet, {"recipients": 10, "chain": "base"})
+
+    assert mock_get.call_args[1]["params"] == {"recipients": 10, "chain": "base"}
 
 
 # =========================================================
@@ -567,6 +595,12 @@ def test_execute_batch_gateway_no_payment_needed(mock_wallet):
     assert (
         mock_post.call_args[0][0] == f"{SPRAAY_GATEWAY_BASE_URL}{SPRAAY_GATEWAY_BATCH_EXECUTE_PATH}"
     )
+    # The gateway's execute handler expects {address, amount} entries plus sender
+    assert mock_post.call_args[1]["json"] == {
+        "token": "USDC",
+        "recipients": [{"address": MOCK_RECIPIENT_A, "amount": "1.00"}],
+        "sender": MOCK_WALLET_ADDRESS,
+    }
     parsed = json.loads(result)
     assert parsed["success"] is True
     assert parsed["data"]["batchId"] == "b-1"
@@ -637,7 +671,10 @@ def test_execute_batch_gateway_prefunded_header(mock_wallet):
     mock_x402.assert_not_called()
     assert mock_post.call_count == 2
     retry_headers = mock_post.call_args_list[1][1]["headers"]
+    # v2 header with v1 fallback — the gateway middleware reads both
+    assert retry_headers["Payment-Signature"] == "prefunded-header"
     assert retry_headers["X-PAYMENT"] == "prefunded-header"
+    assert "PAYMENT" not in retry_headers
     parsed = json.loads(result)
     assert parsed["success"] is True
 
@@ -677,7 +714,7 @@ def test_create_escrow_happy_path(mock_wallet):
     """Create an escrow through the paid gateway endpoint."""
     provider = spraay_action_provider()
     session = Mock()
-    session.post.return_value = make_response(200, {"escrowId": "e-1", "status": "created"})
+    session.post.return_value = make_response(200, {"escrow": {"id": "ESC-1"}, "status": "created"})
 
     with (
         patch(
@@ -694,24 +731,52 @@ def test_create_escrow_happy_path(mock_wallet):
                 "token": "USDC",
                 "amount": "250.00",
                 "beneficiary": MOCK_RECIPIENT_A,
-                "deadline": "2026-08-01T00:00:00Z",
+                "arbiter": MOCK_TOKEN_ADDRESS,
                 "description": "Milestone 1",
+                "conditions": ["Design approved", "Dev complete"],
+                "expires_in": 72,
             },
         )
 
     assert (
         mock_post.call_args[0][0] == f"{SPRAAY_GATEWAY_BASE_URL}{SPRAAY_GATEWAY_ESCROW_CREATE_PATH}"
     )
-    body = mock_post.call_args[1]["json"]
-    assert body["bpa_version"] == SPRAAY_BPA_VERSION
-    assert body["amount"] == "250.00"
-    assert body["beneficiary"] == MOCK_RECIPIENT_A
-    assert body["deadline"] == "2026-08-01T00:00:00Z"
-    assert body["description"] == "Milestone 1"
+    # The gateway requires depositor/beneficiary/token/amount; depositor
+    # defaults to the connected wallet address
+    assert mock_post.call_args[1]["json"] == {
+        "depositor": MOCK_WALLET_ADDRESS,
+        "beneficiary": MOCK_RECIPIENT_A,
+        "token": "USDC",
+        "amount": "250.00",
+        "arbiter": MOCK_TOKEN_ADDRESS,
+        "description": "Milestone 1",
+        "conditions": ["Design approved", "Dev complete"],
+        "expiresIn": 72,
+    }
 
     parsed = json.loads(result)
     assert parsed["success"] is True
-    assert parsed["data"]["escrowId"] == "e-1"
+    assert parsed["data"]["escrow"]["id"] == "ESC-1"
+
+
+def test_create_escrow_rejects_same_depositor_and_beneficiary(mock_wallet):
+    """Reject depositor == beneficiary before paying anything."""
+    provider = spraay_action_provider()
+    with (
+        patch(f"{PROVIDER_MODULE}.requests.post") as mock_post,
+        patch(f"{PROVIDER_MODULE}.x402_requests") as mock_x402,
+    ):
+        result = provider.spraay_create_escrow(
+            mock_wallet,
+            {"token": "USDC", "amount": "250.00", "beneficiary": MOCK_WALLET_ADDRESS},
+        )
+
+    mock_post.assert_not_called()
+    mock_x402.assert_not_called()
+    parsed = json.loads(result)
+    assert parsed["error"] is True
+    assert "cannot be the same" in parsed["message"]
+    assert "No payment was made" in parsed["details"]
 
 
 def test_create_escrow_respects_payment_limit(mock_wallet):

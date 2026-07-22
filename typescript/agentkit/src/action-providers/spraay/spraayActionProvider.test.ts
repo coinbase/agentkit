@@ -233,14 +233,14 @@ describe("SpraayActionProvider", () => {
     });
 
     it("should bound the estimate recipient count", () => {
-      expect(SpraayEstimateBatchSchema.safeParse({ recipients: 0, token: "USDC" }).success).toBe(
+      expect(SpraayEstimateBatchSchema.safeParse({ recipients: 0 }).success).toBe(false);
+      expect(SpraayEstimateBatchSchema.safeParse({ recipients: 201 }).success).toBe(false);
+      expect(SpraayEstimateBatchSchema.safeParse({ recipients: 50 }).success).toBe(true);
+      expect(
+        SpraayEstimateBatchSchema.safeParse({ recipients: 50, amount: "1000.00" }).success,
+      ).toBe(true);
+      expect(SpraayEstimateBatchSchema.safeParse({ recipients: 50, amount: "-1" }).success).toBe(
         false,
-      );
-      expect(SpraayEstimateBatchSchema.safeParse({ recipients: 201, token: "USDC" }).success).toBe(
-        false,
-      );
-      expect(SpraayEstimateBatchSchema.safeParse({ recipients: 50, token: "USDC" }).success).toBe(
-        true,
       );
     });
 
@@ -255,8 +255,27 @@ describe("SpraayActionProvider", () => {
       expect(
         SpraayCreateEscrowSchema.safeParse({
           token: "USDC",
+          amount: "250.00",
+          beneficiary: RECIPIENT_A,
+          depositor: RECIPIENT_B,
+          arbiter: TOKEN_ADDRESS,
+          conditions: ["Design approved"],
+          expiresIn: 72,
+        }).success,
+      ).toBe(true);
+      expect(
+        SpraayCreateEscrowSchema.safeParse({
+          token: "USDC",
           amount: "0",
           beneficiary: RECIPIENT_A,
+        }).success,
+      ).toBe(false);
+      expect(
+        SpraayCreateEscrowSchema.safeParse({
+          token: "USDC",
+          amount: "250.00",
+          beneficiary: RECIPIENT_A,
+          expiresIn: -5,
         }).success,
       ).toBe(false);
     });
@@ -556,7 +575,7 @@ describe("SpraayActionProvider", () => {
         bpa_version: SPRAAY_BPA_VERSION,
         chain: "base",
         token: "USDC",
-        recipients: [{ recipient: RECIPIENT_A, amount: "1.00" }],
+        recipients: [{ to: RECIPIENT_A, amount: "1.00" }],
       });
       expect(body.payments).toBeUndefined();
 
@@ -583,24 +602,39 @@ describe("SpraayActionProvider", () => {
   describe("estimateBatch", () => {
     it("should call the free estimate endpoint with query parameters", async () => {
       mockFetch.mockResolvedValue(
-        createMockResponse({ status: 200, data: { estimatedCostUsd: "0.42" } }),
+        createMockResponse({
+          status: 200,
+          data: { estimate: { estimatedGasUSD: 0.15, protocolFeeUSD: 3 } },
+        }),
       );
 
       const result = await provider.estimateBatch(mockWalletProvider, {
         recipients: 150,
-        token: "USDC",
         chain: "base",
+        amount: "1000.00",
       });
 
       const calledUrl = mockFetch.mock.calls[0][0];
       expect(calledUrl).toContain(SPRAAY_FREE_ESTIMATE_BATCH_PATH);
       expect(calledUrl).toContain("recipients=150");
       expect(calledUrl).toContain("chain=base");
-      expect(calledUrl).toContain("token=USDC");
+      expect(calledUrl).toContain("amount=1000.00");
+      expect(calledUrl).not.toContain("token=");
 
       const parsed = JSON.parse(result);
       expect(parsed.success).toBe(true);
-      expect(parsed.estimate.estimatedCostUsd).toBe("0.42");
+      expect(parsed.estimate.estimate.protocolFeeUSD).toBe(3);
+    });
+
+    it("should omit the amount query parameter when not provided", async () => {
+      mockFetch.mockResolvedValue(
+        createMockResponse({ status: 200, data: { estimate: { estimatedGasUSD: 0.15 } } }),
+      );
+
+      await provider.estimateBatch(mockWalletProvider, { recipients: 10, chain: "base" });
+
+      const calledUrl = mockFetch.mock.calls[0][0];
+      expect(calledUrl).not.toContain("amount=");
     });
   });
 
@@ -620,6 +654,13 @@ describe("SpraayActionProvider", () => {
 
       expect(mockFetch).toHaveBeenCalledTimes(1);
       expect(mockFetchWithPayment).not.toHaveBeenCalled();
+      // The gateway's execute handler expects {address, amount} entries plus sender
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body).toEqual({
+        token: "USDC",
+        recipients: [{ address: RECIPIENT_A, amount: "1.00" }],
+        sender: WALLET_ADDRESS,
+      });
       const parsed = JSON.parse(result);
       expect(parsed.success).toBe(true);
       expect(parsed.data.batchId).toBe("b-1");
@@ -689,7 +730,10 @@ describe("SpraayActionProvider", () => {
       expect(mockFetchWithPayment).not.toHaveBeenCalled();
       expect(mockFetch).toHaveBeenCalledTimes(2);
       const retryHeaders = mockFetch.mock.calls[1][1].headers;
+      // v2 header with v1 fallback — the gateway middleware reads both
+      expect(retryHeaders["Payment-Signature"]).toBe("prefunded-header");
       expect(retryHeaders["X-PAYMENT"]).toBe("prefunded-header");
+      expect(retryHeaders["PAYMENT"]).toBeUndefined();
       const parsed = JSON.parse(result);
       expect(parsed.success).toBe(true);
     });
@@ -733,35 +777,55 @@ describe("SpraayActionProvider", () => {
         }),
       );
       mockFetchWithPayment.mockResolvedValue(
-        createMockResponse({ status: 200, data: { escrowId: "e-1", status: "created" } }),
+        createMockResponse({ status: 200, data: { escrow: { id: "ESC-1" }, status: "created" } }),
       );
 
       const result = await provider.createEscrow(mockWalletProvider, {
         token: "USDC",
         amount: "250.00",
         beneficiary: RECIPIENT_A,
-        chain: "base",
-        deadline: "2026-08-01T00:00:00Z",
+        arbiter: TOKEN_ADDRESS,
         description: "Milestone 1",
+        conditions: ["Design approved", "Dev complete"],
+        expiresIn: 72,
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
         `${SPRAAY_GATEWAY_BASE_URL}${SPRAAY_GATEWAY_ESCROW_CREATE_PATH}`,
         expect.objectContaining({ method: "POST" }),
       );
+      // The gateway requires depositor/beneficiary/token/amount; depositor
+      // defaults to the connected wallet address
       const body = JSON.parse(mockFetch.mock.calls[0][1].body);
-      expect(body).toMatchObject({
-        bpa_version: SPRAAY_BPA_VERSION,
+      expect(body).toEqual({
+        depositor: WALLET_ADDRESS,
+        beneficiary: RECIPIENT_A,
         token: "USDC",
         amount: "250.00",
-        beneficiary: RECIPIENT_A,
-        deadline: "2026-08-01T00:00:00Z",
+        arbiter: TOKEN_ADDRESS,
         description: "Milestone 1",
+        conditions: ["Design approved", "Dev complete"],
+        expiresIn: 72,
       });
 
       const parsed = JSON.parse(result);
       expect(parsed.success).toBe(true);
-      expect(parsed.data.escrowId).toBe("e-1");
+      expect(parsed.data.escrow.id).toBe("ESC-1");
+    });
+
+    it("should reject depositor === beneficiary before paying anything", async () => {
+      const result = await provider.createEscrow(mockWalletProvider, {
+        token: "USDC",
+        amount: "250.00",
+        beneficiary: WALLET_ADDRESS,
+      });
+
+      expect(mockFetch).not.toHaveBeenCalled();
+      expect(mockFetchWithPayment).not.toHaveBeenCalled();
+      const parsed = JSON.parse(result);
+      expect(parsed.error).toBe(true);
+      expect(parsed.message).toContain("cannot be the same");
+      expect(parsed.details).toContain("No payment was made");
     });
 
     it("should respect the payment limit for escrow creation", async () => {
@@ -776,7 +840,6 @@ describe("SpraayActionProvider", () => {
         token: "USDC",
         amount: "250.00",
         beneficiary: RECIPIENT_A,
-        chain: "base",
       });
 
       expect(mockFetchWithPayment).not.toHaveBeenCalled();

@@ -182,8 +182,12 @@ export const SpraayEstimateBatchSchema = z
       .positive()
       .max(SPRAAY_MAX_RECIPIENTS, `Maximum ${SPRAAY_MAX_RECIPIENTS} recipients per batch`)
       .describe("Number of recipients in the batch (positive integer count)"),
-    token: bpaToken,
     chain: bpaChain,
+    amount: positiveDecimalString
+      .optional()
+      .describe(
+        "Optional total batch amount in whole units; when provided, the estimate includes the protocol fee in USD",
+      ),
   })
   .strip()
   .describe(
@@ -207,21 +211,41 @@ export const SpraayExecuteBatchGatewaySchema = z
  */
 export const SpraayCreateEscrowSchema = z
   .object({
-    token: bpaToken,
+    token: z
+      .string()
+      .min(1)
+      .describe(
+        "Escrow token: a symbol (USDC, USDT, DAI, EURC, WETH) or an ERC-20 contract address on Base",
+      ),
     amount: positiveDecimalString.describe("Escrow amount, in whole token units (e.g. '250.00')"),
     beneficiary: evmAddress.describe(
       "Wallet address that can receive the escrowed funds on release",
     ),
-    chain: bpaChain,
-    deadline: z
-      .string()
+    depositor: evmAddress
       .optional()
-      .describe("Optional ISO-8601 timestamp after which the escrow can be refunded"),
+      .describe(
+        "Wallet address funding the escrow; defaults to the connected wallet address. Must differ from the beneficiary.",
+      ),
+    arbiter: evmAddress
+      .optional()
+      .describe("Optional third-party address allowed to release or cancel the escrow"),
     description: z
       .string()
       .max(500)
       .optional()
       .describe("Optional human-readable description of the escrow terms"),
+    conditions: z
+      .array(z.string().max(200))
+      .max(20)
+      .optional()
+      .describe("Optional list of release conditions (e.g. ['Design approved', 'Dev complete'])"),
+    expiresIn: z
+      .number()
+      .positive()
+      .optional()
+      .describe(
+        "Optional expiry in hours after which the escrow can no longer be funded or released (gateway default: 168)",
+      ),
   })
   .strip()
   .describe("Input schema for creating an escrow via the x402-metered Spraay gateway");

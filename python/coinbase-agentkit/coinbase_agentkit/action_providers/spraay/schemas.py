@@ -244,8 +244,22 @@ class SpraayEstimateBatchInput(BaseModel):
         gt=0,
         le=SPRAAY_MAX_RECIPIENTS,
     )
-    token: str = Field(..., description="Token symbol for the batch (e.g. 'USDC' or 'ETH')")
     chain: str = Field(default="base", description="Target chain identifier (default 'base')")
+    amount: str | None = Field(
+        default=None,
+        description=(
+            "Optional total batch amount in whole units; when provided, the estimate "
+            "includes the protocol fee in USD"
+        ),
+    )
+
+    @field_validator("amount")
+    @classmethod
+    def validate_amount(cls, v: str | None) -> str | None:
+        """Validate the optional total amount."""
+        if v is None:
+            return v
+        return _validate_amount(v)
 
 
 class SpraayExecuteBatchGatewayInput(SpraayValidateBatchInput):
@@ -255,26 +269,55 @@ class SpraayExecuteBatchGatewayInput(SpraayValidateBatchInput):
 class SpraayCreateEscrowInput(BaseModel):
     """Input schema for creating an escrow via the x402-metered Spraay gateway."""
 
-    token: str = Field(..., description="Token symbol for the escrow (e.g. 'USDC')")
+    token: str = Field(
+        ...,
+        description=(
+            "Escrow token: a symbol (USDC, USDT, DAI, EURC, WETH) or an ERC-20 contract "
+            "address on Base"
+        ),
+    )
     amount: str = Field(..., description="Escrow amount, in whole token units (e.g. '250.00')")
     beneficiary: str = Field(
         ..., description="Wallet address that can receive the escrowed funds on release"
     )
-    chain: str = Field(default="base", description="Target chain identifier (default 'base')")
-    deadline: str | None = Field(
+    depositor: str | None = Field(
         default=None,
-        description="Optional ISO-8601 timestamp after which the escrow can be refunded",
+        description=(
+            "Wallet address funding the escrow; defaults to the connected wallet address. "
+            "Must differ from the beneficiary."
+        ),
+    )
+    arbiter: str | None = Field(
+        default=None,
+        description="Optional third-party address allowed to release or cancel the escrow",
     )
     description: str | None = Field(
         default=None,
         max_length=500,
         description="Optional human-readable description of the escrow terms",
     )
+    conditions: list[str] | None = Field(
+        default=None,
+        max_length=20,
+        description=(
+            "Optional list of release conditions (e.g. ['Design approved', 'Dev complete'])"
+        ),
+    )
+    expires_in: float | None = Field(
+        default=None,
+        gt=0,
+        description=(
+            "Optional expiry in hours after which the escrow can no longer be funded or "
+            "released (gateway default: 168)"
+        ),
+    )
 
-    @field_validator("beneficiary")
+    @field_validator("beneficiary", "depositor", "arbiter")
     @classmethod
-    def validate_beneficiary(cls, v: str) -> str:
-        """Validate the beneficiary address format."""
+    def validate_addresses(cls, v: str | None) -> str | None:
+        """Validate address format for beneficiary, depositor, and arbiter."""
+        if v is None:
+            return v
         if not EVM_ADDRESS_PATTERN.match(v):
             raise ValueError(f"Invalid Ethereum address: {v}")
         return v

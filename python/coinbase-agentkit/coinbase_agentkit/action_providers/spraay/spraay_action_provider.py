@@ -519,7 +519,7 @@ class SpraayActionProvider(ActionProvider[EvmWalletProvider]):
             validated = SpraayValidateBatchInput(**args)
             response = requests.post(
                 f"{self._config.gateway_base_url}{SPRAAY_FREE_VALIDATE_BATCH_PATH}",
-                json=self._build_bpa_body(
+                json=self._build_validate_body(
                     validated.chain,
                     validated.token,
                     [entry.model_dump() for entry in validated.recipients],
@@ -568,9 +568,11 @@ class SpraayActionProvider(ActionProvider[EvmWalletProvider]):
         description=(
             "Estimate the cost of a batch payment via the free Spraay gateway endpoint "
             f"(GET {SPRAAY_GATEWAY_BASE_URL}{SPRAAY_FREE_ESTIMATE_BATCH_PATH}"
-            "?recipients=<count>&chain=<chain>&token=<token>). No payment and no transaction "
-            "signing required. Use this to preview gas and fee costs for a batch of a given "
-            "size before executing on-chain or via the gateway."
+            "?recipients=<count>&chain=<chain>&amount=<total>). No payment and no transaction "
+            "signing required. Returns rough per-chain gas and protocol-fee estimates (protocol "
+            "fee requires the optional total amount). Use this to preview costs for a batch of "
+            "a given size before executing on-chain or via the gateway; for a live quote use "
+            f"the paid POST {SPRAAY_GATEWAY_BASE_URL}{SPRAAY_GATEWAY_BATCH_ESTIMATE_PATH}."
         ),
         schema=SpraayEstimateBatchInput,
     )
@@ -581,7 +583,7 @@ class SpraayActionProvider(ActionProvider[EvmWalletProvider]):
 
         Args:
             wallet_provider: The wallet provider (unused; estimation is off-chain and free).
-            args: The estimate parameters (recipients count, token, chain).
+            args: The estimate parameters (recipients count, chain, optional amount).
 
         Returns:
             str: JSON string with the gateway cost estimate.
@@ -589,13 +591,15 @@ class SpraayActionProvider(ActionProvider[EvmWalletProvider]):
         """
         try:
             validated = SpraayEstimateBatchInput(**args)
+            params: dict[str, Any] = {
+                "recipients": validated.recipients,
+                "chain": validated.chain,
+            }
+            if validated.amount:
+                params["amount"] = validated.amount
             response = requests.get(
                 f"{self._config.gateway_base_url}{SPRAAY_FREE_ESTIMATE_BATCH_PATH}",
-                params={
-                    "recipients": validated.recipients,
-                    "chain": validated.chain,
-                    "token": validated.token,
-                },
+                params=params,
                 timeout=30,
             )
             data = self._parse_response_data(response)
@@ -677,10 +681,10 @@ class SpraayActionProvider(ActionProvider[EvmWalletProvider]):
         return self._request_with_x402(
             wallet_provider,
             SPRAAY_GATEWAY_BATCH_EXECUTE_PATH,
-            self._build_bpa_body(
-                validated.chain,
+            self._build_execute_body(
                 validated.token,
                 [entry.model_dump() for entry in validated.recipients],
+                wallet_provider.get_address(),
             ),
         )
 
@@ -691,9 +695,11 @@ class SpraayActionProvider(ActionProvider[EvmWalletProvider]):
             f"(POST {SPRAAY_GATEWAY_BASE_URL}{SPRAAY_GATEWAY_ESCROW_CREATE_PATH}). This is a "
             "PAID endpoint: pricing is returned via an x402 402 Payment Required challenge and "
             "settled in USDC. Escrow complements Spraay batch payments: lock funds for a "
-            "beneficiary with optional deadline and terms, then release or refund later. This "
-            "action covers creation only — see the Spraay gateway documentation "
-            f"({SPRAAY_GATEWAY_BASE_URL}) for release and refund flows. Payments respect the "
+            "beneficiary (with an optional arbiter, release conditions, and expiry in hours), "
+            "then release or refund later. The depositor defaults to the connected wallet and "
+            "must differ from the beneficiary. This action covers creation only — the "
+            "gateway's POST /api/v1/escrow/fund, /release, and /cancel endpoints handle the "
+            f"rest of the lifecycle (see {SPRAAY_GATEWAY_BASE_URL}). Payments respect the "
             "provider's max_gateway_payment_usdc limit."
         ),
         schema=SpraayCreateEscrowInput,
@@ -703,7 +709,8 @@ class SpraayActionProvider(ActionProvider[EvmWalletProvider]):
 
         Args:
             wallet_provider: The wallet provider used to sign the x402 payment.
-            args: The escrow parameters (token, amount, beneficiary, chain, deadline, description).
+            args: The escrow parameters (token, amount, beneficiary, depositor, arbiter,
+                description, conditions, expires_in).
 
         Returns:
             str: JSON string with the gateway escrow creation result and payment details.
@@ -716,36 +723,55 @@ class SpraayActionProvider(ActionProvider[EvmWalletProvider]):
                 {"error": True, "message": "Invalid escrow input", "details": str(e)}, indent=2
             )
 
+        depositor = validated.depositor or wallet_provider.get_address()
+
+        # The gateway rejects depositor == beneficiary, but only after the x402
+        # payment has settled — catch it locally before paying anything.
+        if depositor.lower() == validated.beneficiary.lower():
+            return json.dumps(
+                {
+                    "error": True,
+                    "message": "Depositor and beneficiary cannot be the same address",
+                    "details": "No payment was made.",
+                },
+                indent=2,
+            )
+
         body: dict[str, Any] = {
-            "bpa_version": SPRAAY_BPA_VERSION,
-            "chain": validated.chain,
+            "depositor": depositor,
+            "beneficiary": validated.beneficiary,
             "token": validated.token,
             "amount": validated.amount,
-            "beneficiary": validated.beneficiary,
         }
-        if validated.deadline:
-            body["deadline"] = validated.deadline
+        if validated.arbiter:
+            body["arbiter"] = validated.arbiter
         if validated.description:
             body["description"] = validated.description
+        if validated.conditions:
+            body["conditions"] = validated.conditions
+        if validated.expires_in:
+            body["expiresIn"] = validated.expires_in
 
         return self._request_with_x402(wallet_provider, SPRAAY_GATEWAY_ESCROW_CREATE_PATH, body)
 
     # ── Private helpers ────────────────────────────────────────────────────
 
-    def _build_bpa_body(
+    def _build_validate_body(
         self, chain: str, token: str, recipients: list[dict[str, str]]
     ) -> dict[str, Any]:
-        """Build a Batch Payment Aggregate (BPA 1.0) request body.
+        """Build the request body for the free BPA 1.0 validation endpoint.
 
-        Note the array key is "recipients" (not "payments").
+        The gateway's validator expects entries keyed as {to, amount} inside a
+        "recipients" array (not "payments"), plus chain and token (symbol or
+        contract address).
 
         Args:
             chain: Target chain identifier.
-            token: Token symbol.
+            token: Token symbol or contract address.
             recipients: Batch entries as (recipient, amount) dicts.
 
         Returns:
-            dict[str, Any]: The BPA request body.
+            dict[str, Any]: The validation request body.
 
         """
         return {
@@ -753,8 +779,34 @@ class SpraayActionProvider(ActionProvider[EvmWalletProvider]):
             "chain": chain,
             "token": token,
             "recipients": [
-                {"recipient": entry["recipient"], "amount": entry["amount"]} for entry in recipients
+                {"to": entry["recipient"], "amount": entry["amount"]} for entry in recipients
             ],
+        }
+
+    def _build_execute_body(
+        self, token: str, recipients: list[dict[str, str]], sender: str
+    ) -> dict[str, Any]:
+        """Build the request body for the paid batch execution endpoint.
+
+        The gateway's execute handler expects entries keyed as {address, amount}
+        (human-decimal amounts) plus token (symbol or contract address, default
+        USDC) and an optional sender used for approval encoding.
+
+        Args:
+            token: Token symbol or contract address.
+            recipients: Batch entries as (recipient, amount) dicts.
+            sender: The sending wallet address.
+
+        Returns:
+            dict[str, Any]: The execution request body.
+
+        """
+        return {
+            "token": token,
+            "recipients": [
+                {"address": entry["recipient"], "amount": entry["amount"]} for entry in recipients
+            ],
+            "sender": sender,
         }
 
     def _run_preflight(self, token: str, entries: list[dict[str, str]]) -> tuple[bool, str]:
@@ -774,7 +826,7 @@ class SpraayActionProvider(ActionProvider[EvmWalletProvider]):
         try:
             response = requests.post(
                 f"{self._config.gateway_base_url}{SPRAAY_FREE_VALIDATE_BATCH_PATH}",
-                json=self._build_bpa_body("base", token, entries),
+                json=self._build_validate_body("base", token, entries),
                 timeout=30,
             )
             if not response.ok:
@@ -1094,14 +1146,16 @@ class SpraayActionProvider(ActionProvider[EvmWalletProvider]):
                     )
 
             # Settle the payment: pre-funded header if configured, otherwise
-            # sign with the wallet provider via the x402 client.
+            # sign with the wallet provider via the x402 client. The gateway's
+            # x402 v2 middleware reads Payment-Signature, with X-PAYMENT kept
+            # as the v1 fallback.
             if self._config.x402_payment_header:
                 paid_response = requests.post(
                     url,
                     json=body,
                     headers={
+                        "Payment-Signature": self._config.x402_payment_header,
                         "X-PAYMENT": self._config.x402_payment_header,
-                        "PAYMENT": self._config.x402_payment_header,
                     },
                     timeout=30,
                 )
