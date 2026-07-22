@@ -27,6 +27,8 @@ from .morpho.morpho_action_provider import MorphoActionProvider, morpho_action_p
 from .nillion.nillion_action_provider import NillionActionProvider, nillion_action_provider
 from .onramp.onramp_action_provider import OnrampActionProvider, onramp_action_provider
 from .pyth.pyth_action_provider import PythActionProvider, pyth_action_provider
+from .spraay.schemas import SpraayConfig
+from .spraay.spraay_action_provider import SpraayActionProvider, spraay_action_provider
 from .ssh.ssh_action_provider import SshActionProvider, ssh_action_provider
 from .superfluid.superfluid_action_provider import (
     SuperfluidActionProvider,
@@ -55,6 +57,8 @@ __all__ = [
     "NillionActionProvider",
     "OnrampActionProvider",
     "PythActionProvider",
+    "SpraayActionProvider",
+    "SpraayConfig",
     "SshActionProvider",
     "SuperfluidActionProvider",
     "TwitterActionProvider",
@@ -76,6 +80,7 @@ __all__ = [
     "nillion_action_provider",
     "onramp_action_provider",
     "pyth_action_provider",
+    "spraay_action_provider",
     "ssh_action_provider",
     "superfluid_action_provider",
     "twitter_action_provider",
@@ -85,5 +90,3 @@ __all__ = [
     "x402ActionProvider",
     "x402_action_provider",
 ]
-
-from .spraay import SpraayActionProvider, spraay_action_provider
