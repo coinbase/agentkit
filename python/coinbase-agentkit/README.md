@@ -488,6 +488,44 @@ This section provides a detailed list of all available action providers and thei
 </details>
 
 <details>
+<summary><strong>Spraay</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>spraay_eth</code></td>
+    <td width="768">Sends equal amounts of ETH to up to 200 recipients in a single atomic transaction via the Spraay batch contract on Base.</td>
+</tr>
+<tr>
+    <td width="200"><code>spraay_token</code></td>
+    <td width="768">Sends equal amounts of an ERC-20 token to up to 200 recipients atomically, with EIP-2612 permit-optimized approvals (approve fallback).</td>
+</tr>
+<tr>
+    <td width="200"><code>spraay_eth_variable</code></td>
+    <td width="768">Sends different ETH amounts to each recipient in a single atomic batch transaction.</td>
+</tr>
+<tr>
+    <td width="200"><code>spraay_token_variable</code></td>
+    <td width="768">Sends different ERC-20 amounts to each recipient in a single atomic batch transaction.</td>
+</tr>
+<tr>
+    <td width="200"><code>spraay_validate_batch</code></td>
+    <td width="768">Validates a batch against the free Spraay gateway pre-flight endpoint before signing anything.</td>
+</tr>
+<tr>
+    <td width="200"><code>spraay_estimate_batch</code></td>
+    <td width="768">Estimates batch execution cost via the free Spraay gateway endpoint.</td>
+</tr>
+<tr>
+    <td width="200"><code>spraay_execute_batch_gateway</code></td>
+    <td width="768">Executes a batch through the x402-metered Spraay gateway (POST /api/v1/batch/execute; pricing via 402 challenge).</td>
+</tr>
+<tr>
+    <td width="200"><code>spraay_create_escrow</code></td>
+    <td width="768">Creates an escrow through the x402-metered Spraay gateway (POST /api/v1/escrow/create; pricing via 402 challenge).</td>
+</tr>
+</table>
+</details>
+
+<details>
 <summary><strong>SSH</strong></summary>
 <table width="100%">
 <tr>
