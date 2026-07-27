@@ -21,9 +21,11 @@ tests/action_providers/osf/
 
 ## Actions
 
-- `lookup_entity`: Resolve and verify a company or person against authoritative public registries (CMS NPI, GLEIF LEI, FDIC, SEC EDGAR). For KYC, KYB, counterparty due-diligence, and onboarding. ($0.01 per call)
-- `screen_entity`: Screen a name against the OFAC SDN, EU consolidated, and UK OFSI sanctions lists. Returns hit / no-hit, the matched list, and an audit receipt. For AML, KYC, and watchlist checks. ($0.05 per call)
-- `check_cve_exploited`: Check whether a CVE is actively exploited (CISA KEV), with its EPSS exploit-probability and CVSS severity. For vulnerability management and patch prioritization. ($0.02 per call)
+- `lookup_entity`: Resolve and verify a company or person against authoritative public registries (CMS NPI, GLEIF LEI, FDIC, SEC EDGAR). For KYC, KYB, counterparty due-diligence, and onboarding. ($0.05 per call)
+- `screen_entity`: Screen a name against eleven sanctions and exclusion lists from ten authorities, including OFAC SDN, OFAC Consolidated, the EU consolidated list, UK OFSI, the UN Security Council list, the Trade.gov Consolidated Screening List, World Bank debarments, HHS OIG LEIE and SAM.gov exclusions. Returns hit / no-hit, the matched list, and an audit receipt. For AML, KYC, and watchlist checks. ($0.05 per call)
+- `check_cve_exploited`: Check whether a CVE is actively exploited (CISA KEV), with its EPSS exploit-probability and CVSS severity. For vulnerability management and patch prioritization. ($0.05 per call)
+
+Prices are quoted live in the HTTP 402 response from each endpoint; the values above were verified against the live server on 2026-07-27.
 
 Each action returns a JSON string containing the result, the HTTP status, and — on a successful paid call — the on-chain payment proof (transaction, network, payer).
 

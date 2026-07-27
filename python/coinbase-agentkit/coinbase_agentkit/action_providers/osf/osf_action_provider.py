@@ -32,9 +32,9 @@ DEFAULT_BASE_URL = "https://api.osf-master-server.com/x402"
 # ceiling sits above OSF's list price so a small price change does not break
 # calls, while the max_amount policy refuses to pay more than the ceiling for any
 # single call.
-_MAX_ENTITY_ATOMIC = 50_000  # $0.05 (list price $0.01)
+_MAX_ENTITY_ATOMIC = 150_000  # $0.15 (list price $0.05)
 _MAX_SCREEN_ATOMIC = 150_000  # $0.15 (list price $0.05)
-_MAX_CVE_ATOMIC = 100_000  # $0.10 (list price $0.02)
+_MAX_CVE_ATOMIC = 150_000  # $0.15 (list price $0.05)
 
 _TIMEOUT_SECONDS = 30
 
