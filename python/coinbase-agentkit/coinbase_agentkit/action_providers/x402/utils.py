@@ -663,11 +663,14 @@ def build_url_with_params(
 def is_service_registered(url: str, registered_services: set[str]) -> bool:
     """Check if a URL is registered for x402 requests.
 
-    Matches by origin (protocol + hostname + port) or prefix.
+    Matches by origin (protocol + hostname + port) or by same-origin path prefix.
+
+    Does **not** use raw ``url.startswith(registered)`` — that allows hostname-suffix
+    and other prefix bypasses (e.g. ``https://good.com.evil.com`` vs ``https://good.com``).
 
     Args:
         url: The URL to check
-        registered_services: Set of registered service URLs
+        registered_services: Set of registered service URLs or origins
 
     Returns:
         True if the service is registered, False otherwise
@@ -678,12 +681,34 @@ def is_service_registered(url: str, registered_services: set[str]) -> bool:
 
     try:
         parsed = urlparse(url)
+        if not parsed.scheme or not parsed.netloc:
+            return False
         origin = f"{parsed.scheme}://{parsed.netloc}"
 
         for registered in registered_services:
-            # Check if origin matches or URL starts with registered prefix
-            if origin == registered or url.startswith(registered):
+            # Bare origin registration: "https://api.example.com"
+            if origin == registered:
                 return True
+
+            reg = urlparse(registered)
+            if not reg.scheme or not reg.netloc:
+                continue
+
+            reg_origin = f"{reg.scheme}://{reg.netloc}"
+            if origin != reg_origin:
+                continue
+
+            # Origin-only URL form ("https://api.example.com/") → any path on that origin
+            reg_path = reg.path or "/"
+            if reg_path == "/" and not reg.query and not reg.fragment:
+                return True
+
+            # Same-origin path match or segment-boundary prefix
+            req_path = parsed.path or "/"
+            reg_prefix = reg_path if reg_path.endswith("/") else f"{reg_path}/"
+            if req_path == reg_path or req_path.startswith(reg_prefix):
+                return True
+
         return False
     except Exception:
         return False
