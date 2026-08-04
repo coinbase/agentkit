@@ -8,14 +8,13 @@ import {
   erc20Abi,
   formatUnits,
   parseUnits,
-  maxUint256,
   encodeFunctionData,
   size,
   concat,
   Hex,
   numberToHex,
 } from "viem";
-import { getTokenDetails, PERMIT2_ADDRESS } from "./utils";
+import { assertPermit2Eip712MatchesSwap, getTokenDetails, PERMIT2_ADDRESS } from "./utils";
 /**
  * Configuration for the ZeroXActionProvider.
  */
@@ -185,8 +184,8 @@ It takes the following inputs:
 Important notes:
 - The contract address for native ETH is "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
 - This will execute an actual swap transaction that sends tokens from your wallet
-- If needed, it will automatically approve the permit2 contract to spend the sell token
-- The approval transaction is only needed once per token
+- If needed, it will automatically approve the permit2 contract for this sell amount (not unlimited)
+- Permit2 EIP-712 from the quote is checked against local sell token/amount/chain before signing
 - Ensure you have sufficient balance of the sell token before executing
 - The trade size might influence the excecution price depending on available liquidity 
 - First fetch a price quote and only execute swap if you are happy with the indicated price
@@ -269,8 +268,9 @@ Important notes:
         });
       }
 
-      // Check if permit2 approval is needed for ERC20 tokens
-      // Only needed once per token per address
+      // Check if permit2 approval is needed for ERC20 tokens.
+      // Approve only the sell amount for this swap — never maxUint256 — so a
+      // compromised quote/API path cannot inherit an unlimited Permit2 allowance.
       let approvalTxHash: Hex | null = null;
       if (priceData.issues?.allowance) {
         try {
@@ -279,7 +279,7 @@ Important notes:
             data: encodeFunctionData({
               abi: erc20Abi,
               functionName: "approve",
-              args: [PERMIT2_ADDRESS, maxUint256],
+              args: [PERMIT2_ADDRESS, BigInt(sellAmount)],
             }),
           });
 
@@ -325,10 +325,17 @@ Important notes:
 
       const quoteData = await quoteResponse.json();
 
-      // Sign Permit2.eip712 returned from quote
+      // Sign Permit2.eip712 returned from quote — only after binding checks
       let signature: Hex | undefined;
       if (quoteData.permit2?.eip712) {
         try {
+          assertPermit2Eip712MatchesSwap({
+            eip712: quoteData.permit2.eip712,
+            chainId,
+            sellToken: args.sellToken,
+            sellAmountBaseUnits: sellAmount,
+          });
+
           const typedData = {
             domain: quoteData.permit2.eip712.domain,
             types: quoteData.permit2.eip712.types,

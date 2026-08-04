@@ -1,8 +1,101 @@
-import { Hex, erc20Abi } from "viem";
+import { Hex, erc20Abi, getAddress, isAddress } from "viem";
 import { EvmWalletProvider } from "../../wallet-providers";
 
 // Permit2 contract address is the same across all networks
 export const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
+
+type Permit2Eip712 = {
+  domain?: {
+    verifyingContract?: string;
+    chainId?: number | string;
+    name?: string;
+  };
+  message?: Record<string, unknown>;
+  primaryType?: string;
+};
+
+/**
+ * Extracts ERC-20 token + amount from a Permit2-style EIP-712 message.
+ * Supports both flat and `permitted: { token, amount }` shapes used by 0x.
+ */
+function extractPermit2TokenAmount(
+  message: Record<string, unknown> | undefined,
+): { token?: string; amount?: bigint } {
+  if (!message) return {};
+
+  const permitted = message.permitted;
+  if (permitted && typeof permitted === "object") {
+    const p = permitted as Record<string, unknown>;
+    const token = typeof p.token === "string" ? p.token : undefined;
+    const amountRaw = p.amount;
+    const amount =
+      typeof amountRaw === "bigint"
+        ? amountRaw
+        : typeof amountRaw === "string" || typeof amountRaw === "number"
+          ? BigInt(amountRaw)
+          : undefined;
+    return { token, amount };
+  }
+
+  const token = typeof message.token === "string" ? message.token : undefined;
+  const amountRaw = message.amount;
+  const amount =
+    typeof amountRaw === "bigint"
+      ? amountRaw
+      : typeof amountRaw === "string" || typeof amountRaw === "number"
+        ? BigInt(amountRaw)
+        : undefined;
+  return { token, amount };
+}
+
+/**
+ * Validates that a quote's Permit2 EIP-712 payload matches local swap intent.
+ * Rejects blind signing of attacker-controlled typed data from a compromised API path.
+ */
+export function assertPermit2Eip712MatchesSwap(params: {
+  eip712: Permit2Eip712;
+  chainId: string | number;
+  sellToken: string;
+  sellAmountBaseUnits: string;
+}): void {
+  const { eip712, chainId, sellToken, sellAmountBaseUnits } = params;
+  const verifying = eip712.domain?.verifyingContract;
+  if (!verifying || !isAddress(verifying)) {
+    throw new Error("Invalid Permit2 EIP-712 domain.verifyingContract");
+  }
+  if (getAddress(verifying) !== getAddress(PERMIT2_ADDRESS)) {
+    throw new Error(
+      `Permit2 EIP-712 verifyingContract mismatch: got ${verifying}, expected ${PERMIT2_ADDRESS}`,
+    );
+  }
+
+  const domainChainId = eip712.domain?.chainId;
+  if (domainChainId !== undefined && String(domainChainId) !== String(chainId)) {
+    throw new Error(
+      `Permit2 EIP-712 chainId mismatch: got ${domainChainId}, expected ${chainId}`,
+    );
+  }
+
+  const { token, amount } = extractPermit2TokenAmount(eip712.message);
+  if (!token || !isAddress(token)) {
+    throw new Error("Permit2 EIP-712 message missing token");
+  }
+  if (getAddress(token) !== getAddress(sellToken)) {
+    throw new Error(
+      `Permit2 EIP-712 token mismatch: got ${token}, expected ${sellToken}`,
+    );
+  }
+  if (amount === undefined) {
+    throw new Error("Permit2 EIP-712 message missing amount");
+  }
+  const expected = BigInt(sellAmountBaseUnits);
+  // Allow equal or greater (some quotes pad), but never a smaller authorized sell.
+  if (amount < expected) {
+    throw new Error(
+      `Permit2 EIP-712 amount too low: got ${amount.toString()}, expected at least ${expected.toString()}`,
+    );
+  }
+}
 
 /**
  * Checks if a token is native ETH.
