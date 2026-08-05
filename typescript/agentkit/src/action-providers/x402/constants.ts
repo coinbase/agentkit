@@ -67,6 +67,8 @@ export interface DiscoveryResource {
   url?: string;
   resource?: string;
   type?: string;
+  /** v2: the CDP discovery API returns the resource description at the top level */
+  description?: string;
   metadata?: {
     [key: string]: unknown;
     description?: string;

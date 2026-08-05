@@ -180,13 +180,17 @@ export function filterByNetwork(
 /**
  * Extracts description from a resource based on its x402 version.
  * - v1: description is in accepts[].description
- * - v2: description is in metadata.description
+ * - v2: description is at the top level, with metadata.description as a fallback
  *
  * @param resource - The discovery resource
  * @returns The description string or empty string if not found
  */
 function getResourceDescription(resource: DiscoveryResource): string {
   if (resource.x402Version === 2) {
+    const topLevelDesc = resource.description;
+    if (typeof topLevelDesc === "string" && topLevelDesc.trim()) {
+      return topLevelDesc;
+    }
     const metadataDesc = resource.metadata?.description;
     return typeof metadataDesc === "string" ? metadataDesc : "";
   }
