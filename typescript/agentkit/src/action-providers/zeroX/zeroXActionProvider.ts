@@ -334,6 +334,10 @@ Important notes:
             chainId,
             sellToken: args.sellToken,
             sellAmountBaseUnits: sellAmount,
+            expectedSpender:
+              typeof quoteData.transaction?.to === "string"
+                ? quoteData.transaction.to
+                : undefined,
           });
 
           const typedData = {

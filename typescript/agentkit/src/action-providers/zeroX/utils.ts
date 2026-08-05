@@ -57,8 +57,22 @@ export function assertPermit2Eip712MatchesSwap(params: {
   chainId: string | number;
   sellToken: string;
   sellAmountBaseUnits: string;
+  /**
+   * When set (typically quote.transaction.to), require message.spender to match.
+   * 0x Permit2 witness transfers use the settlement/allowance-holder as spender.
+   */
+  expectedSpender?: string;
+  /** Unix seconds; defaults to Date.now()/1000. Deadline must be strictly in the future. */
+  nowSeconds?: number;
 }): void {
-  const { eip712, chainId, sellToken, sellAmountBaseUnits } = params;
+  const {
+    eip712,
+    chainId,
+    sellToken,
+    sellAmountBaseUnits,
+    expectedSpender,
+    nowSeconds,
+  } = params;
   const verifying = eip712.domain?.verifyingContract;
   if (!verifying || !isAddress(verifying)) {
     throw new Error("Invalid Permit2 EIP-712 domain.verifyingContract");
@@ -69,8 +83,16 @@ export function assertPermit2Eip712MatchesSwap(params: {
     );
   }
 
+  const domainName = eip712.domain?.name;
+  if (domainName !== undefined && domainName !== "Permit2") {
+    throw new Error(`Permit2 EIP-712 domain.name mismatch: got ${domainName}, expected Permit2`);
+  }
+
   const domainChainId = eip712.domain?.chainId;
-  if (domainChainId !== undefined && String(domainChainId) !== String(chainId)) {
+  if (domainChainId === undefined || domainChainId === null || domainChainId === "") {
+    throw new Error("Permit2 EIP-712 domain.chainId missing");
+  }
+  if (String(domainChainId) !== String(chainId)) {
     throw new Error(
       `Permit2 EIP-712 chainId mismatch: got ${domainChainId}, expected ${chainId}`,
     );
@@ -89,11 +111,51 @@ export function assertPermit2Eip712MatchesSwap(params: {
     throw new Error("Permit2 EIP-712 message missing amount");
   }
   const expected = BigInt(sellAmountBaseUnits);
-  // Allow equal or greater (some quotes pad), but never a smaller authorized sell.
-  if (amount < expected) {
+  // Exact match: padded-high amounts would authorize more than the local sell intent
+  // (and more than the exact ERC-20 approve above).
+  if (amount !== expected) {
     throw new Error(
-      `Permit2 EIP-712 amount too low: got ${amount.toString()}, expected at least ${expected.toString()}`,
+      `Permit2 EIP-712 amount mismatch: got ${amount.toString()}, expected ${expected.toString()}`,
     );
+  }
+
+  const message = eip712.message ?? {};
+  const spender = typeof message.spender === "string" ? message.spender : undefined;
+  if (expectedSpender !== undefined) {
+    if (!spender || !isAddress(spender)) {
+      throw new Error("Permit2 EIP-712 message missing spender");
+    }
+    if (getAddress(spender) !== getAddress(expectedSpender)) {
+      throw new Error(
+        `Permit2 EIP-712 spender mismatch: got ${spender}, expected ${expectedSpender}`,
+      );
+    }
+  } else if (spender !== undefined) {
+    if (!isAddress(spender)) {
+      throw new Error("Permit2 EIP-712 message has invalid spender");
+    }
+  }
+
+  const deadlineRaw = message.deadline;
+  if (deadlineRaw !== undefined && deadlineRaw !== null) {
+    let deadline: bigint;
+    try {
+      if (typeof deadlineRaw === "bigint") {
+        deadline = deadlineRaw;
+      } else if (typeof deadlineRaw === "string" || typeof deadlineRaw === "number") {
+        deadline = BigInt(deadlineRaw);
+      } else {
+        throw new Error("Permit2 EIP-712 message has invalid deadline");
+      }
+    } catch {
+      throw new Error("Permit2 EIP-712 message has invalid deadline");
+    }
+    const now = BigInt(nowSeconds ?? Math.floor(Date.now() / 1000));
+    if (deadline <= now) {
+      throw new Error(
+        `Permit2 EIP-712 deadline expired: got ${deadline.toString()}, now ${now.toString()}`,
+      );
+    }
   }
 }
 
