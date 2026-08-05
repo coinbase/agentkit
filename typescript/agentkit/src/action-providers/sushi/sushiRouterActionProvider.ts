@@ -149,7 +149,7 @@ Important notes:
       }
 
       // Find the Route event log, which includes the actual amountOut
-      const [routeLog] = swapReceipt.logs
+      const [routeLog] = (swapReceipt.logs ?? [])
         .filter(
           log =>
             encodeEventTopics({
@@ -164,6 +164,18 @@ Important notes:
             topics: log.topics,
           }),
         );
+
+      if (!routeLog) {
+        // The swap succeeded on-chain, but the receipt has no Route event to
+        // decode amounts from (e.g. fills not routed through RouteProcessor9).
+        // Report this as an executed swap — returning a generic error here
+        // leads agents to retry and execute a second, unintended swap.
+        return `Swap executed on ${chain.shortName}, but the Route event was not found in the transaction receipt, so the exact output amount could not be decoded.
+ - Quoted AmountOut: ${formatUnits(BigInt(secondSwap.swap.assumedAmountOut), secondSwap.swap.tokenTo.decimals)} ${secondSwap.swap.tokenTo.symbol} (${args.toAssetAddress})
+ - Transaction hash: ${swapHash}
+ - Transaction link: ${chain.getTransactionUrl(swapHash)}
+Do not retry this swap automatically; check the transaction first.`;
+      }
 
       return `Swapped ${formatUnits(routeLog.args.amountIn, secondSwap.swap.tokenFrom.decimals)} of ${secondSwap.swap.tokenFrom.symbol} (${args.fromAssetAddress}) for ${formatUnits(routeLog.args.amountOut, secondSwap.swap.tokenTo.decimals)} of ${secondSwap.swap.tokenTo.symbol} (${args.toAssetAddress}) on ${chain.shortName}
  - Transaction hash: ${swapHash}

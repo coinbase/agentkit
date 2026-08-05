@@ -463,6 +463,50 @@ describe("Sushi Action Provider", () => {
       expect(result).toContain(`Swapped`);
     });
 
+    it("should report an executed swap when the Route event is missing from the receipt", async () => {
+      const args: Parameters<(typeof actionProvider)["swap"]>[1] = {
+        amount: formatUnits(amountIn, tokenIn.decimals),
+        fromAssetAddress: tokenIn.address,
+        toAssetAddress: tokenOut.address,
+        maxSlippage: 0.005,
+      };
+
+      /*
+       * 1. Mock the readContract which checks the decimals of the fromAssetAddress token (18, default)
+       * 2. Mock the readContract which checks for the balance of the fromAssetAddress token (1000000, enough balance)
+       * 3. Mock the readContract which checks for the approval (1000000, approved)
+       */
+      mockWallet.readContract
+        .mockResolvedValueOnce(tokenIn.decimals)
+        .mockResolvedValueOnce(amountIn)
+        .mockResolvedValueOnce(amountIn);
+
+      mockWallet.sendTransaction.mockResolvedValue(txHash);
+
+      // Swap tx succeeds on-chain but the receipt contains no Route event log
+      mockWallet.waitForTransactionReceipt.mockResolvedValueOnce({
+        status: "success",
+        logs: [],
+      });
+
+      mockedGetSwap.mockReturnValue(
+        getSuccessfullSwapResponse({
+          tokenIn,
+          amountIn,
+          tokenOut,
+          amountOut,
+        }),
+      );
+
+      const result = await actionProvider.swap(mockWallet, args);
+
+      expect(mockWallet.sendTransaction).toHaveBeenCalledTimes(1); // Swap only
+      expect(result).toContain("Swap executed");
+      expect(result).not.toContain("Error");
+      expect(result).toContain(`Transaction hash: ${txHash}`);
+      expect(result).toContain("Do not retry this swap automatically");
+    });
+
     it("should fail if there's no route", async () => {
       const args: Parameters<(typeof actionProvider)["swap"]>[1] = {
         amount: formatUnits(amountIn, tokenIn.decimals),
