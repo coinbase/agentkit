@@ -195,7 +195,7 @@ class OptumeActionProvider:
                 "x402_challenge": {
                     "price_usdc": e.headers.get("X-402-Price-USDC"),
                     "pay_to": e.headers.get("X-402-Pay-To"),
-                    "network": e.headers.get("X-402-Network", "base"),
+                    "network": e.headers.get("X-402-Network", "eip155:8453"),
                 },
                 "response": error_json,
             }

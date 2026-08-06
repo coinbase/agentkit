@@ -173,7 +173,7 @@ export class OptumeActionProvider {
           x402Challenge: {
             priceUsdc: response.headers.get("x-402-price-usdc"),
             payTo: response.headers.get("x-402-pay-to"),
-            network: response.headers.get("x-402-network") || "base",
+            network: response.headers.get("x-402-network") || "eip155:8453",
           },
           response: body,
         };
