@@ -239,7 +239,7 @@ class OptumeActionProvider(ActionProvider):
         )
         payload = validated.model_dump() if hasattr(validated, "model_dump") else args
         res = self._execute_x402_request(
-            "/api/v1/veritas/run-full", payload, x402_proof
+            "/api/v1/veritas/legal-translation", payload, x402_proof
         )
         return json.dumps(res) if HAS_AGENTKIT else res
 

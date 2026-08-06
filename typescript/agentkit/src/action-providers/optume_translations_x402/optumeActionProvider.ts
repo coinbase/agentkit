@@ -125,7 +125,7 @@ export class OptumeActionProvider extends ActionProvider {
             source_language: parsed.sourceLanguage || "en",
             target_language: parsed.targetLanguage || "fr",
           };
-          return JSON.stringify(await this.executeX402Request("/api/v1/veritas/run-full", body, proof));
+          return JSON.stringify(await this.executeX402Request("/api/v1/veritas/legal-translation", body, proof));
         },
       },
     ];
