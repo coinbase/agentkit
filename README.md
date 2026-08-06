@@ -273,6 +273,7 @@ AgentKit is proud to have support for the following protocols, frameworks, walle
 - [Action Providers (Python)](https://github.com/coinbase/agentkit/blob/main/python/coinbase-agentkit/coinbase_agentkit/action_providers)
 - [Wallet Providers (TypeScript)](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers)
 - [Wallet Providers (Python)](https://github.com/coinbase/agentkit/blob/main/python/coinbase-agentkit/coinbase_agentkit/wallet_providers)
+- [@zeromodern/agentkit-provider-0mod](https://github.com/zeromodern/agentkit-provider-0mod): 0mod HTTP 402 API Gateway (Pay-per-call edge micro-utilities for autonomous bots on Base USDC. Includes web scraping proxies, LLM token window compressors, PII data scrubbers, domain WHOIS lookups, DEX liquidity search, social sentiment scoring, and Vision OCR).
 
 ### Wallets
 
