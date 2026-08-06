@@ -485,8 +485,14 @@ class OptumeActionProvider(ActionProvider):
                 "func": self.assemble_translated_document,
             },
             {
+                "name": "veritas_legal_translation",
+                "description": "Turnkey legal-grade document translation engine combining all 7 Veritas pipeline nodes ($0.0005/word, min $0.05 USDC on Base L2).",
+                "schema": RunFullPipelineInput,
+                "func": self.veritas_legal_translation,
+            },
+            {
                 "name": "run_full_veritas_pipeline",
-                "description": "Complete end-to-end legal translation pipeline across all 7 Veritas nodes ($0.500 USDC on Base L2).",
+                "description": "Complete end-to-end legal translation pipeline across all 7 Veritas nodes ($0.0005/word, min $0.05 USDC on Base L2).",
                 "schema": RunFullPipelineInput,
                 "func": self.run_full_veritas_pipeline,
             },
