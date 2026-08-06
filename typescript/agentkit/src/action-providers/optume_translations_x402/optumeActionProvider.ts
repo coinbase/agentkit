@@ -71,18 +71,15 @@ export class OptumeActionProvider extends ActionProvider {
       const origParsed = new URL(currentUrl);
       const newParsed = new URL(location, currentUrl);
 
-      if (
-        origParsed.host.toLowerCase() !== newParsed.host.toLowerCase() ||
-        origParsed.protocol.toLowerCase() !== newParsed.protocol.toLowerCase()
-      ) {
-        return {
-          error: `Redirect rejected: cross-origin redirect to ${newParsed.host} is forbidden.`,
-        };
-      }
-
       if (origParsed.protocol === "https:" && newParsed.protocol !== "https:") {
         return {
           error: "Redirect rejected: protocol downgrade from HTTPS to HTTP is forbidden.",
+        };
+      }
+
+      if (origParsed.host.toLowerCase() !== newParsed.host.toLowerCase()) {
+        return {
+          error: `Redirect rejected: cross-origin redirect to ${newParsed.host} is forbidden.`,
         };
       }
 

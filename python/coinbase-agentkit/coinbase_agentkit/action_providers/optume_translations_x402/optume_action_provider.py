@@ -88,25 +88,22 @@ class SafeRedirectHandler(urllib.request.HTTPRedirectHandler):
         orig_parsed = urllib.parse.urlparse(req.full_url)
         new_parsed = urllib.parse.urlparse(newurl)
 
-        # Reject cross-origin redirects
-        if (
-            orig_parsed.netloc.lower() != new_parsed.netloc.lower()
-            or orig_parsed.scheme.lower() != new_parsed.scheme.lower()
-        ):
-            raise urllib.error.HTTPError(
-                newurl,
-                code,
-                f"Redirect rejected: cross-origin redirect to {new_parsed.netloc} is forbidden.",
-                headers,
-                fp,
-            )
-
         # Reject protocol downgrade from HTTPS to HTTP
         if orig_parsed.scheme == "https" and new_parsed.scheme != "https":
             raise urllib.error.HTTPError(
                 newurl,
                 code,
                 "Redirect rejected: protocol downgrade from HTTPS to HTTP is forbidden.",
+                headers,
+                fp,
+            )
+
+        # Reject cross-origin redirects
+        if orig_parsed.netloc.lower() != new_parsed.netloc.lower():
+            raise urllib.error.HTTPError(
+                newurl,
+                code,
+                f"Redirect rejected: cross-origin redirect to {new_parsed.netloc} is forbidden.",
                 headers,
                 fp,
             )
