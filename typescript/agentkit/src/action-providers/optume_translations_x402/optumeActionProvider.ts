@@ -1,136 +1,57 @@
-/**
- * Optume Translations x402 Action Provider for Coinbase AgentKit (TypeScript).
- *
- * Enables autonomous AI agents using Coinbase AgentKit to natively parse documents,
- * extract spatial AST structures, generate legal glossaries, perform legal QA audits,
- * and execute multi-language legal translations over x402 micropayments ($0.01 - $0.50 USDC)
- * settled on Base Layer-2.
- */
-
+import { ActionProvider } from "@coinbase/agentkit";
 import { z } from "zod";
 
 export const ParseDocumentSchema = z.object({
   documentUrl: z
     .string()
     .url()
-    .describe("Public URL or accessible link of the document (PDF, DOCX, XLSX, PPTX, image) to parse."),
+    .describe("Public URL or file link of document (PDF, DOCX, XLSX, PPTX, Image) to parse."),
 });
 
-export const ExtractVeritasChunksSchema = z.object({
+export const RunFullPipelineSchema = z.object({
+  rawText: z
+    .string()
+    .optional()
+    .describe("Raw legal contract text to translate."),
   documentUrl: z
     .string()
     .url()
-    .describe("Public URL of document to extract spatial AST layout, table grids, and clause hierarchies."),
-});
-
-export const AnalyzeLegalDocumentSchema = z
-  .object({
-    rawText: z.string().optional().describe("Raw legal contract text to ingest and analyze."),
-    documentUrl: z
-      .string()
-      .url()
-      .optional()
-      .describe("Public URL of legal contract to analyze."),
-    targetLanguage: z.string().default("fr").describe("ISO target language code."),
-  })
-  .refine((data) => Boolean(data.rawText || data.documentUrl), {
-    message: "At least one of rawText or documentUrl must be provided.",
-  });
-
-export const CompileContextSchema = z.object({
-  documentId: z.string().describe("Unique Document ID from pre-translation analysis."),
+    .optional()
+    .describe("Public URL of legal document to execute complete 7-node Veritas pipeline."),
+  sourceLanguage: z
+    .string()
+    .default("en")
+    .describe("ISO source language code (default 'en')."),
   targetLanguage: z
     .string()
     .default("fr")
-    .describe("ISO language code for target translation (e.g., 'fr', 'es', 'de', 'ar', 'zh')."),
+    .describe("ISO target language code (e.g. 'fr', 'es', 'de', 'ar', 'zh')."),
 });
 
-export const TranslateClausesSchema = z.object({
-  documentId: z.string().describe("Unique Document ID with compiled context directives."),
-  targetLanguage: z.string().default("fr").describe("ISO target language code."),
-  concurrencyLimit: z
-    .number()
-    .int()
-    .positive()
-    .max(50)
-    .default(10)
-    .describe("Parallel translation concurrency limit."),
-});
-
-export const EvaluateQASchema = z.object({
-  documentId: z
-    .string()
-    .describe("Unique Document ID of translated legal contract to run QA risk and terminology audit."),
-});
-
-export const AssembleDocumentSchema = z.object({
-  documentId: z
-    .string()
-    .describe("Unique Document ID to assemble into final spatial-layout-preserved document."),
-});
-
-export const RunFullPipelineSchema = z
-  .object({
-    rawText: z.string().optional().describe("Raw text of contract to translate."),
-    documentUrl: z
-      .string()
-      .url()
-      .optional()
-      .describe("Public URL of document to execute complete end-to-end 7-node Veritas legal translation pipeline."),
-    sourceLanguage: z.string().default("en").describe("ISO source language code (e.g. 'en')."),
-    targetLanguage: z.string().default("fr").describe("ISO target language code (e.g. 'fr', 'es', 'de', 'ar', 'zh')."),
-  })
-  .refine((data) => Boolean(data.rawText || data.documentUrl), {
-    message: "At least one of rawText or documentUrl must be provided.",
-  });
-
-export interface ActionProvider {
-  name: string;
-  supportsNetwork(network: Record<string, unknown> | string): boolean;
-  getActions(): Array<{
-    name: string;
-    description: string;
-    schema: z.ZodTypeAny;
-    invoke: (args: Record<string, unknown>, proof?: string) => Promise<string>;
-  }>;
-}
-
-export class OptumeActionProvider implements ActionProvider {
-  public name = "optume";
-  public baseUrl: string;
+export class OptumeActionProvider extends ActionProvider {
+  private baseUrl: string;
 
   constructor(baseUrl: string = "https://api.optranslations.com") {
-    const trimmed = baseUrl.replace(/\/$/, "");
-    try {
-      const parsed = new URL(trimmed);
-      if (
-        parsed.protocol !== "https:" &&
-        !(
-          parsed.protocol === "http:" &&
-          (parsed.hostname === "localhost" ||
-            parsed.hostname === "127.0.0.1" ||
-            parsed.hostname === "testserver")
-        )
-      ) {
-        throw new Error("Invalid baseUrl protocol. Must use HTTPS for remote endpoints.");
-      }
-      this.baseUrl = trimmed;
-    } catch (err) {
-      throw err;
+    super("optume", []);
+
+    const parsed = new URL(baseUrl);
+    if (!["https:", "http:"].includes(parsed.protocol)) {
+      throw new Error(`Invalid baseUrl protocol '${parsed.protocol}'. Must be HTTPS.`);
     }
+    if (
+      parsed.protocol === "http:" &&
+      !["localhost", "127.0.0.1", "testserver"].includes(parsed.hostname)
+    ) {
+      throw new Error("Insecure HTTP baseUrl allowed only for local testing.");
+    }
+
+    this.baseUrl = baseUrl.replace(/\/+$/, "");
   }
 
-  /**
-   * Check whether target EVM network is supported (Base Mainnet / Sepolia).
-   */
-  public supportsNetwork(network: Record<string, unknown> | string): boolean {
-    let netStr = "";
-    if (typeof network === "string") {
-      netStr = network.toLowerCase().trim();
-    } else if (network && typeof network === "object") {
-      const rec = network as Record<string, unknown>;
-      netStr = String(rec.networkId || rec.chainId || JSON.stringify(network)).toLowerCase().trim();
-    }
+  public supportsNetwork(network: { networkId?: string; chainId?: string } | string): boolean {
+    let netStr = typeof network === "string" ? network : network.networkId || network.chainId || "";
+    netStr = netStr.toLowerCase().trim();
+
     const supportedBases = new Set([
       "base",
       "8453",
@@ -140,46 +61,57 @@ export class OptumeActionProvider implements ActionProvider {
       "base-mainnet",
       "base-sepolia",
     ]);
-    return supportedBases.has(netStr);
-  }
 
-  private buildChallengeResponse(response: Response, body: unknown): Record<string, unknown> {
-    return {
-      statusCode: response.status,
-      x402Challenge: {
-        priceUsdc: response.headers.get("x-402-price-usdc"),
-        payTo: response.headers.get("x-402-pay-to"),
-        network: response.headers.get("x-402-network") || "eip155:8453",
-      },
-      response: body,
-    };
+    return supportedBases.has(netStr);
   }
 
   private validateRedirect(
     response: Response,
     currentUrl: string
   ): { redirectUrl?: string; error?: string } {
-    if (response.status < 300 || response.status >= 400) {
-      return {};
-    }
-    const location = response.headers.get("location");
-    if (!location) {
-      return {};
-    }
-    const currentParsed = new URL(currentUrl);
-    const targetParsed = new URL(location, currentUrl);
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get("Location");
+      if (!location) {
+        return { error: `Redirect response missing Location header (HTTP ${response.status}).` };
+      }
 
-    if (targetParsed.hostname !== currentParsed.hostname) {
-      return { error: `Redirect rejected: Cross-origin redirect to ${targetParsed.hostname} is forbidden.` };
+      const origParsed = new URL(currentUrl);
+      const newParsed = new URL(location, currentUrl);
+
+      if (
+        origParsed.host.toLowerCase() !== newParsed.host.toLowerCase() ||
+        origParsed.protocol.toLowerCase() !== newParsed.protocol.toLowerCase()
+      ) {
+        return {
+          error: `Redirect rejected: cross-origin redirect to ${newParsed.host} is forbidden.`,
+        };
+      }
+
+      if (origParsed.protocol === "https:" && newParsed.protocol !== "https:") {
+        return {
+          error: "Redirect rejected: protocol downgrade from HTTPS to HTTP is forbidden.",
+        };
+      }
+
+      return { redirectUrl: newParsed.toString() };
     }
-    if (currentParsed.protocol === "https:" && targetParsed.protocol !== "https:") {
-      return { error: "Redirect rejected: Protocol downgrade from HTTPS to HTTP is forbidden." };
-    }
-    return { redirectUrl: targetParsed.toString() };
+    return {};
+  }
+
+  private buildChallengeResponse(response: Response, body: unknown): Record<string, unknown> {
+    return {
+      statusCode: response.status,
+      x402Challenge: {
+        priceUsdc: response.headers.get("X-402-Price-USDC") || null,
+        payTo: response.headers.get("X-402-Pay-To") || null,
+        network: response.headers.get("X-402-Network") || "eip155:8453",
+      },
+      response: body,
+    };
   }
 
   /**
-   * Return catalog of x402 actions exposed to Coinbase AgentKit.
+   * Return catalog of active x402 actions exposed to Coinbase AgentKit.
    */
   public getActions() {
     return [
@@ -191,82 +123,6 @@ export class OptumeActionProvider implements ActionProvider {
         invoke: async (args: Record<string, unknown>, proof?: string) => {
           const parsed = ParseDocumentSchema.parse(args);
           return JSON.stringify(await this.executeFileUploadRequest("/api/v1/parser/analyze", parsed.documentUrl, proof));
-        },
-      },
-      {
-        name: "extract_veritas_chunks",
-        description:
-          "Extracts spatial AST layout, table grids, and clause structural hierarchies ($0.025 USDC on Base L2).",
-        schema: ExtractVeritasChunksSchema,
-        invoke: async (args: Record<string, unknown>, proof?: string) => {
-          const parsed = ExtractVeritasChunksSchema.parse(args);
-          return JSON.stringify(await this.executeFileUploadRequest("/api/v1/parser/veritas-chunks", parsed.documentUrl, proof));
-        },
-      },
-      {
-        name: "analyze_legal_document",
-        description:
-          "Ingestion, defined legal terms extraction, and structured legal glossary generation ($0.050 USDC on Base L2).",
-        schema: AnalyzeLegalDocumentSchema,
-        invoke: async (args: Record<string, unknown>, proof?: string) => {
-          const parsed = AnalyzeLegalDocumentSchema.parse(args);
-          let rawText = parsed.rawText || "";
-          if (!rawText && parsed.documentUrl) {
-            const resp = await fetch(parsed.documentUrl);
-            if (!resp.ok) {
-              return JSON.stringify({ error: `Failed to download document from URL: ${resp.statusText}` });
-            }
-            rawText = await resp.text();
-          }
-          const body = {
-            raw_text: rawText,
-            target_language: parsed.targetLanguage || "fr",
-          };
-          return JSON.stringify(await this.executeX402Request("/api/v1/veritas/analyze", body, proof));
-        },
-      },
-      {
-        name: "compile_translation_context",
-        description:
-          "Filters sub-glossaries and compiles translation directives per clause chunk ($0.020 USDC on Base L2).",
-        schema: CompileContextSchema,
-        invoke: async (args: Record<string, unknown>, proof?: string) => {
-          const parsed = CompileContextSchema.parse(args);
-          const path = `/api/v1/veritas/compile-context?document_id=${encodeURIComponent(parsed.documentId)}`;
-          return JSON.stringify(await this.executeX402Request(path, {}, proof));
-        },
-      },
-      {
-        name: "translate_legal_clauses",
-        description:
-          "Parallel clause translation engine preserving formatting across 50+ languages ($0.150 USDC on Base L2).",
-        schema: TranslateClausesSchema,
-        invoke: async (args: Record<string, unknown>, proof?: string) => {
-          const parsed = TranslateClausesSchema.parse(args);
-          const path = `/api/v1/veritas/translate?document_id=${encodeURIComponent(parsed.documentId)}&concurrency_limit=${parsed.concurrencyLimit || 10}`;
-          return JSON.stringify(await this.executeX402Request(path, {}, proof));
-        },
-      },
-      {
-        name: "audit_legal_qa",
-        description:
-          "Multi-dimensional audit of legal terminology, numerical accuracy, and omissions ($0.050 USDC on Base L2).",
-        schema: EvaluateQASchema,
-        invoke: async (args: Record<string, unknown>, proof?: string) => {
-          const parsed = EvaluateQASchema.parse(args);
-          const path = `/api/v1/veritas/evaluate-qa?document_id=${encodeURIComponent(parsed.documentId)}`;
-          return JSON.stringify(await this.executeX402Request(path, {}, proof));
-        },
-      },
-      {
-        name: "assemble_translated_document",
-        description:
-          "Re-assembles translated text into layout-preserving original document structures ($0.050 USDC on Base L2).",
-        schema: AssembleDocumentSchema,
-        invoke: async (args: Record<string, unknown>, proof?: string) => {
-          const parsed = AssembleDocumentSchema.parse(args);
-          const path = `/api/v1/veritas/assemble-document?document_id=${encodeURIComponent(parsed.documentId)}`;
-          return JSON.stringify(await this.executeX402Request(path, {}, proof));
         },
       },
       {
