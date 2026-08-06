@@ -1,13 +1,6 @@
 import { ActionProvider } from "@coinbase/agentkit";
 import { z } from "zod";
 
-export const ParseDocumentSchema = z.object({
-  documentUrl: z
-    .string()
-    .url()
-    .describe("Public URL or file link of document (PDF, DOCX, XLSX, PPTX, Image) to parse."),
-});
-
 export const RunFullPipelineSchema = z.object({
   rawText: z
     .string()
@@ -116,16 +109,6 @@ export class OptumeActionProvider extends ActionProvider {
   public getActions() {
     return [
       {
-        name: "parse_document",
-        description:
-          "High-speed spatial document parsing for PDF, DOCX, XLSX, PPTX, and OCR Images ($0.010 USDC on Base L2).",
-        schema: ParseDocumentSchema,
-        invoke: async (args: Record<string, unknown>, proof?: string) => {
-          const parsed = ParseDocumentSchema.parse(args);
-          return JSON.stringify(await this.executeFileUploadRequest("/api/v1/parser/analyze", parsed.documentUrl, proof));
-        },
-      },
-      {
         name: "veritas_legal_translation",
         description:
           "Turnkey legal-grade document translation engine combining all 7 Veritas pipeline nodes ($0.0005/word, min $0.05 USDC on Base L2).",
@@ -148,91 +131,7 @@ export class OptumeActionProvider extends ActionProvider {
           return JSON.stringify(await this.executeX402Request("/api/v1/veritas/run-full", body, proof));
         },
       },
-      {
-        name: "run_full_veritas_pipeline",
-        description:
-          "Complete end-to-end legal translation pipeline across all 7 Veritas nodes ($0.0005/word, min $0.05 USDC on Base L2).",
-        schema: RunFullPipelineSchema,
-        invoke: async (args: Record<string, unknown>, proof?: string) => {
-          const parsed = RunFullPipelineSchema.parse(args);
-          let rawText = parsed.rawText || "";
-          if (!rawText && parsed.documentUrl) {
-            const resp = await fetch(parsed.documentUrl);
-            if (!resp.ok) {
-              return JSON.stringify({ error: `Failed to download document from URL: ${resp.statusText}` });
-            }
-            rawText = await resp.text();
-          }
-          const body = {
-            raw_text: rawText,
-            source_language: parsed.sourceLanguage || "en",
-            target_language: parsed.targetLanguage || "fr",
-          };
-          return JSON.stringify(await this.executeX402Request("/api/v1/veritas/run-full", body, proof));
-        },
-      },
     ];
-  }
-
-  public async executeFileUploadRequest(
-    endpointPath: string,
-    documentUrl: string,
-    x402PaymentProof?: string
-  ): Promise<unknown> {
-    const docResp = await fetch(documentUrl);
-    if (!docResp.ok) {
-      return { error: `Failed to download document from URL: ${docResp.statusText}` };
-    }
-    const blob = await docResp.blob();
-
-    let fileName = "document.pdf";
-    try {
-      fileName = new URL(documentUrl).pathname.split("/").pop() || "document.pdf";
-    } catch {
-      fileName = documentUrl.split("/").pop() || "document.pdf";
-    }
-
-    const formData = new FormData();
-    formData.append("file", blob, fileName);
-
-    let targetUrl = `${this.baseUrl}${endpointPath}`;
-    const headers: Record<string, string> = {};
-    if (x402PaymentProof) {
-      headers["X-402-Payment-Proof"] = x402PaymentProof;
-    }
-
-    try {
-      let redirectsFollowed = 0;
-      const maxRedirects = 5;
-
-      while (redirectsFollowed <= maxRedirects) {
-        const response = await fetch(targetUrl, {
-          method: "POST",
-          headers,
-          body: formData,
-          redirect: "manual",
-        });
-
-        const redirectCheck = this.validateRedirect(response, targetUrl);
-        if (redirectCheck.error) {
-          return { error: redirectCheck.error };
-        }
-        if (redirectCheck.redirectUrl) {
-          targetUrl = redirectCheck.redirectUrl;
-          redirectsFollowed += 1;
-          continue;
-        }
-
-        const body = await response.json();
-        if (!response.ok) {
-          return this.buildChallengeResponse(response, body);
-        }
-        return body;
-      }
-      return { error: "Too many redirects followed." };
-    } catch (error) {
-      return { error: String(error) };
-    }
   }
 
   public async executeX402Request(

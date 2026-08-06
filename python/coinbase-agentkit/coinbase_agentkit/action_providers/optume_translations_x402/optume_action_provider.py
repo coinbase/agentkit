@@ -1,9 +1,8 @@
 """
 Optume Translations x402 Action Provider for Coinbase AgentKit (Python).
 
-Enables autonomous AI agents using Coinbase AgentKit to natively parse documents
-and execute turnkey legal-grade translations over x402 micropayments
-settled on Base Layer-2.
+Enables autonomous AI agents using Coinbase AgentKit to natively execute turnkey
+legal-grade translations over x402 micropayments settled on Base Layer-2.
 """
 
 import json
@@ -46,13 +45,6 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # Pydantic Input Schemas for AgentKit Actions
 # ---------------------------------------------------------------------------
-
-
-class ParseDocumentInput(BaseModel):
-    document_url: str = Field(
-        ...,
-        description="Public URL or accessible link of the document (PDF, DOCX, XLSX, PPTX, image) to parse.",
-    )
 
 
 class RunFullPipelineInput(BaseModel):
@@ -236,21 +228,6 @@ class OptumeActionProvider(ActionProvider):
     # ---------------------------------------------------------------------------
 
     @create_action(
-        name="parse_document",
-        description="High-speed spatial parsing for PDF, DOCX, XLSX, PPTX, and OCR Images ($0.010 USDC on Base L2).",
-        schema=ParseDocumentInput,
-    )
-    def parse_document(
-        self, args: dict[str, Any], x402_proof: str | None = None
-    ) -> str | dict[str, Any]:
-        validated = (
-            ParseDocumentInput.model_validate(args) if isinstance(args, dict) else args
-        )
-        payload = validated.model_dump() if hasattr(validated, "model_dump") else args
-        res = self._execute_x402_request("/api/v1/parser/analyze", payload, x402_proof)
-        return json.dumps(res) if HAS_AGENTKIT else res
-
-    @create_action(
         name="veritas_legal_translation",
         description="Turnkey legal-grade document translation engine combining all 7 Veritas pipeline nodes ($0.0005/word, min $0.05 USDC on Base L2).",
         schema=RunFullPipelineInput,
@@ -269,16 +246,6 @@ class OptumeActionProvider(ActionProvider):
         )
         return json.dumps(res) if HAS_AGENTKIT else res
 
-    @create_action(
-        name="run_full_veritas_pipeline",
-        description="Complete end-to-end legal translation pipeline across all 7 Veritas nodes ($0.0005/word, min $0.05 USDC on Base L2).",
-        schema=RunFullPipelineInput,
-    )
-    def run_full_veritas_pipeline(
-        self, args: dict[str, Any], x402_proof: str | None = None
-    ) -> str | dict[str, Any]:
-        return self.veritas_legal_translation(args, x402_proof)
-
     def get_actions(self, wallet_provider: Any = None) -> list[Any]:
         """
         Return the list of actions exposed to Coinbase AgentKit.
@@ -290,22 +257,10 @@ class OptumeActionProvider(ActionProvider):
 
         return [
             {
-                "name": "parse_document",
-                "description": "High-speed spatial parsing for PDF, DOCX, XLSX, PPTX, and OCR Images ($0.010 USDC on Base L2).",
-                "schema": ParseDocumentInput,
-                "func": self.parse_document,
-            },
-            {
                 "name": "veritas_legal_translation",
                 "description": "Turnkey legal-grade document translation engine combining all 7 Veritas pipeline nodes ($0.0005/word, min $0.05 USDC on Base L2).",
                 "schema": RunFullPipelineInput,
                 "func": self.veritas_legal_translation,
-            },
-            {
-                "name": "run_full_veritas_pipeline",
-                "description": "Complete end-to-end legal translation pipeline across all 7 Veritas nodes ($0.0005/word, min $0.05 USDC on Base L2).",
-                "schema": RunFullPipelineInput,
-                "func": self.run_full_veritas_pipeline,
             },
         ]
 
