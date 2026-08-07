@@ -13,7 +13,7 @@ through the Coinbase CDP facilitator on Base mainnet.
 | Action | What it answers | Price |
 |---|---|---|
 | `scout_new_base_tokens` | What launched on Base today, and is any of it safe to touch? New pools with a safety verdict attached | $0.008 |
-| `check_base_token_safety` | Is this token a honeypot? Simulated buy & sell, taxes, owner powers, holder concentration | $0.002 |
+| `check_base_token_safety` | Is this token a honeypot? Simulated buy & sell, taxes, owner powers, holder concentration, deployer history | $0.003 |
 | `get_base_wallet_portfolio` | What does this address hold, in USD? ETH + ERC-20s, largest first, spam floor | $0.003 |
 | `get_base_token_price` | What is this token worth right now? Priced from onchain DEX liquidity | $0.001 |
 | `resolve_basename` | Who is `jesse.base.eth`? Name → address + records, or address → primary name | $0.001 |

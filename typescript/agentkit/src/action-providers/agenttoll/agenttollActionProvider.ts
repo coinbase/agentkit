@@ -83,7 +83,7 @@ Costs $0.008 in USDC via x402, paid automatically from the wallet. Not investmen
     name: "check_base_token_safety",
     description: `Run automated safety checks on a Base token before touching it: a simulated buy AND sell to catch honeypots, buy/sell taxes, contract verification, what the owner can still do (mint, pause, blacklist), holder concentration, and whether anyone can still pull the liquidity.
 The verdict is clear, caution, high-risk or insufficient-data - a token too new to check is never reported as clear.
-Costs $0.002 in USDC via x402, paid automatically from the wallet. Not investment advice.`,
+Costs $0.003 in USDC via x402, paid automatically from the wallet. Not investment advice.`,
     schema: TokenSafetySchema,
   })
   async checkTokenSafety(
