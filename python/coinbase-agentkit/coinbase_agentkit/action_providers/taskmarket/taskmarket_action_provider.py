@@ -52,7 +52,7 @@ class TaskMarketActionProvider(ActionProvider[WalletProvider]):
         validated_args = BrowseTaskMarketTasksSchema(**args)
         try:
             response = requests.get(
-                f"{self.api_url}/tasks",
+                f"{self.api_url}/api/tasks",
                 params={"limit": validated_args.limit},
                 timeout=20,
             )
