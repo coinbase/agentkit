@@ -241,16 +241,25 @@ If you receive a 402 Payment Required response, use retry_http_request_with_x402
                 timeout=30,
             )
 
-            # Retry with other http method for 404 status code
+            # Never silently retry with a different HTTP method: flipping GET to
+            # POST turns an intended read into a possible write on services that
+            # map both methods to the same path. Surface the 404 with a hint and
+            # let the agent choose explicitly. (Parity with TypeScript #1405.)
             if response.status_code == 404:
-                method = "POST" if method == "GET" else "GET"
-                can_have_body = method in ["POST", "PUT", "PATCH"]
-                response = requests.request(
-                    url=final_url,
-                    method=method,
-                    headers=args.get("headers"),
-                    json=args.get("body") if can_have_body else None,
-                    timeout=30,
+                data = self._parse_response_data(response)
+                return json.dumps(
+                    {
+                        "success": False,
+                        "url": final_url,
+                        "method": method,
+                        "status": 404,
+                        "data": data,
+                        "hint": (
+                            f"The service returned 404 for {method}. If it expects a "
+                            "different method, call this action again with that method explicitly."
+                        ),
+                    },
+                    indent=2,
                 )
 
             if response.status_code != 402:

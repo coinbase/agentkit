@@ -121,6 +121,34 @@ def test_make_http_request_success(mock_wallet, mock_requests):
     assert response["data"] == {"data": "success"}
 
 
+def test_make_http_request_404_does_not_flip_method(mock_wallet, mock_requests):
+    """404 must not silently retry with the opposite HTTP method (TS #1405 parity)."""
+    from coinbase_agentkit.action_providers.x402.schemas import X402Config
+
+    not_found = Mock(spec=requests.Response)
+    not_found.status_code = 404
+    not_found.headers = {"content-type": "text/plain"}
+    not_found.text = "missing"
+    # Fixture installs a side_effect; replace it so GET is not forced to 200.
+    mock_requests.side_effect = None
+    mock_requests.return_value = not_found
+
+    config = X402Config(registered_services=[MOCK_URL])
+    provider = x402_action_provider(config)
+
+    response = json.loads(
+        provider.make_http_request(mock_wallet, {"url": MOCK_URL, "method": "GET"})
+    )
+
+    assert response["success"] is False
+    assert response["status"] == 404
+    assert response["method"] == "GET"
+    assert "hint" in response
+    # Single request: no silent GET->POST flip
+    assert mock_requests.call_count == 1
+    assert mock_requests.call_args.kwargs["method"] == "GET"
+
+
 def test_make_http_request_402(mock_wallet, mock_requests):
     """Test HTTP request that returns 402 Payment Required."""
     from coinbase_agentkit.action_providers.x402.schemas import X402Config
