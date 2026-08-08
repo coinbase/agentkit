@@ -100,6 +100,58 @@ def test_browse_taskmarket_tasks_filters_low_competition():
     )
 
 
+def test_browse_taskmarket_tasks_accepts_nested_data_payload():
+    """Browsing should support TaskMarket API payloads that wrap tasks under data.tasks."""
+    response = Mock()
+    response.ok = True
+    response.json.return_value = {
+        "data": {
+            "tasks": [
+                {
+                    "id": "0xabc",
+                    "description": "Create an agent integration report",
+                    "mode": "bounty",
+                    "status": "open",
+                    "net_reward": "2500000",
+                    "submission_count": 3,
+                    "award_count": 1,
+                    "tags": ["agent"],
+                    "submissionWindowOpen": True,
+                }
+            ]
+        }
+    }
+
+    with patch("requests.get", return_value=response):
+        result = taskmarket_action_provider("https://api.taskmarket.dev").browse_taskmarket_tasks(
+            {"limit": 5, "tag": "agent", "max_submissions": 5}
+        )
+
+    parsed = json.loads(result)
+    assert parsed["success"] is True
+    assert parsed["returned"] == 1
+    assert parsed["tasks"][0]["id"] == "0xabc"
+    assert parsed["tasks"][0]["netReward"] == "2500000"
+    assert parsed["tasks"][0]["submissionCount"] == 3
+    assert parsed["tasks"][0]["awardCount"] == 1
+
+
+def test_browse_taskmarket_tasks_returns_safe_error_on_http_failure():
+    """HTTP failures should be returned as structured JSON without spending funds."""
+    response = Mock()
+    response.ok = False
+    response.status_code = 503
+
+    with patch("requests.get", return_value=response):
+        result = taskmarket_action_provider("https://api.taskmarket.dev").browse_taskmarket_tasks(
+            {"limit": 5}
+        )
+
+    parsed = json.loads(result)
+    assert parsed["success"] is False
+    assert "503" in parsed["error"]
+
+
 def test_taskmarket_provider_supports_any_network():
     """Read-only discovery and drafting do not depend on wallet network."""
     provider = taskmarket_action_provider()
