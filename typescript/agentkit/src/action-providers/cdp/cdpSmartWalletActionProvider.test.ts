@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { CdpClient, SpendPermissionNetwork } from "@coinbase/cdp-sdk";
+import { decodeFunctionData, erc20Abi, maxUint256 } from "viem";
 import { CdpSmartWalletProvider } from "../../wallet-providers/cdpSmartWalletProvider";
 import { CdpSmartWalletActionProvider } from "./cdpSmartWalletActionProvider";
 import { ListSpendPermissionsSchema, UseSpendPermissionSchema } from "./schemas";
@@ -56,6 +57,7 @@ describe("CDP Smart Wallet Action Provider", () => {
     mockRetryWithExponentialBackoff.mockImplementation(async (fn: any) => {
       return await fn();
     });
+    (swapUtils as any).PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
 
     actionProvider = new CdpSmartWalletActionProvider();
   });
@@ -529,6 +531,15 @@ describe("CDP Smart Wallet Action Provider", () => {
       const parsedResult = JSON.parse(result);
 
       expect(mockWalletProvider.sendTransaction).toHaveBeenCalled();
+      const approvalCall = mockWalletProvider.sendTransaction.mock.calls[0][0];
+      expect(approvalCall.to).toBe(mockArgs.fromToken);
+      const decodedApproval = decodeFunctionData({
+        abi: erc20Abi,
+        data: approvalCall.data,
+      });
+      expect(decodedApproval.functionName).toBe("approve");
+      expect(decodedApproval.args?.[1]).toBe(100000000000000000n); // 0.1 ETH exact
+      expect(decodedApproval.args?.[1]).not.toBe(maxUint256);
       expect(parsedResult.success).toBe(true);
       expect(parsedResult.approvalTxHash).toBe("0xapproval123");
       expect(parsedResult.transactionHash).toBe("0xswap789");
