@@ -7,8 +7,7 @@ import {
   SellCoinSchema,
 } from "./schemas";
 import { EvmWalletProvider } from "../../wallet-providers";
-import { Hex } from "viem";
-import { formatEther } from "viem";
+import { Hex, formatEther, maxUint160, parseEther } from "viem";
 import * as swapUtils from "./swap_utils";
 
 // Mock the actual contract calls with Jest
@@ -431,6 +430,62 @@ describe("FlaunchActionProvider", () => {
       const result = await provider.sellCoin(mockWalletProvider, args);
       expect(result).toContain("Sold");
       expect(mockWalletProvider.signTypedData).toHaveBeenCalled();
+    });
+
+    it("should permit only amountIn with a short deadline (not maxUint160 / multi-year)", async () => {
+      const nowMs = 1_700_000_000_000;
+      const dateNowSpy = jest.spyOn(Date, "now").mockReturnValue(nowMs);
+
+      const args = {
+        coinAddress: "0x1234567890123456789012345678901234567890",
+        amountIn: "1000",
+        slippagePercent: 3,
+      };
+
+      try {
+        await provider.sellCoin(mockWalletProvider, args);
+
+        expect(mockWalletProvider.signTypedData).toHaveBeenCalled();
+        const typedData = mockWalletProvider.signTypedData.mock.calls[0][0] as {
+          message: {
+            details: { amount: bigint; expiration: number };
+            sigDeadline: bigint;
+          };
+        };
+
+        const expectedAmount = parseEther(args.amountIn);
+        const expectedDeadline = BigInt(Math.floor(nowMs / 1000) + 30 * 60);
+
+        expect(typedData.message.details.amount).toBe(expectedAmount);
+        expect(typedData.message.details.amount).not.toBe(maxUint160);
+        expect(typedData.message.details.expiration).toBe(Number(expectedDeadline));
+        expect(typedData.message.sigDeadline).toBe(expectedDeadline);
+        // Guard against regressing to the prior ~10-year window.
+        expect(Number(typedData.message.sigDeadline) - Math.floor(nowMs / 1000)).toBeLessThan(
+          60 * 60,
+        );
+      } finally {
+        dateNowSpy.mockRestore();
+      }
+    });
+
+    it("should skip permit2 signing when allowance already covers amountIn", async () => {
+      const covered = parseEther("1000");
+      mockWalletProvider.readContract.mockImplementation(({ functionName }) => {
+        if (functionName === "symbol") return "TEST";
+        if (functionName === "allowance") return [covered, BigInt(0)];
+        return undefined;
+      });
+
+      const args = {
+        coinAddress: "0x1234567890123456789012345678901234567890",
+        amountIn: "1000",
+        slippagePercent: 3,
+      };
+
+      const result = await provider.sellCoin(mockWalletProvider, args);
+      expect(result).toContain("Sold");
+      expect(mockWalletProvider.signTypedData).not.toHaveBeenCalled();
     });
 
     it("should handle errors in sellCoin", async () => {

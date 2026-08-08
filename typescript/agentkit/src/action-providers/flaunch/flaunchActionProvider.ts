@@ -9,7 +9,6 @@ import {
   zeroAddress,
   Address,
   formatEther,
-  maxUint160,
   Hex,
   zeroHash,
   parseUnits,
@@ -405,10 +404,11 @@ It takes:
       let signature: Hex | undefined;
       let permitSingle: PermitSingle | undefined;
 
-      // approve
+      // Permit2 AllowanceTransfer: approve only this sell's amountIn for a short
+      // window. Never maxUint160 / multi-year deadlines (leftover spender rights).
       if (allowance < amountIn) {
-        // 10 years in seconds
-        const defaultDeadline = BigInt(Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 365 * 10);
+        const PERMIT2_DEADLINE_SECONDS = 30 * 60; // 30 minutes
+        const permitDeadline = BigInt(Math.floor(Date.now() / 1000) + PERMIT2_DEADLINE_SECONDS);
 
         const domain = {
           name: "Permit2",
@@ -419,12 +419,12 @@ It takes:
         const message = {
           details: {
             token: args.coinAddress as Address,
-            amount: maxUint160,
-            expiration: Number(defaultDeadline),
+            amount: amountIn,
+            expiration: Number(permitDeadline),
             nonce,
           },
           spender: UniversalRouterAddress[chainId],
-          sigDeadline: defaultDeadline,
+          sigDeadline: permitDeadline,
         } as PermitSingle;
 
         const typedData = {
