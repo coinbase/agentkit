@@ -53,7 +53,7 @@ class TaskMarketActionProvider(ActionProvider[WalletProvider]):
         try:
             response = requests.get(
                 f"{self.api_url}/api/tasks",
-                params={"limit": validated_args.limit},
+                params={"status": "open", "limit": validated_args.limit},
                 timeout=20,
             )
             if not response.ok:

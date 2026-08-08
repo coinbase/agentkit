@@ -96,7 +96,9 @@ def test_browse_taskmarket_tasks_filters_low_competition():
     assert parsed["returned"] == 1
     assert parsed["tasks"][0]["id"] == "0x1"
     mock_get.assert_called_once_with(
-        "https://api.taskmarket.dev/api/tasks", params={"limit": 10}, timeout=20
+        "https://api.taskmarket.dev/api/tasks",
+        params={"status": "open", "limit": 10},
+        timeout=20,
     )
 
 
