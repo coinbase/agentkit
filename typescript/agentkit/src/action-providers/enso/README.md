@@ -25,7 +25,7 @@ enso/
 - `tokenIn`: Address of the token to swap from (for ETH, use `0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee`)
 - `tokenOut`: Address of the token to swap to (for ETH, use `0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee`)
 - `amountIn`: Amount of tokenIn to swap in whole units (e.g., "100 USDC")
-- `slippage`: Optional slippage tolerance in basis points (1/10000). Default is 50 (0.5%)
+- `slippage`: Optional slippage tolerance in basis points (0-10000). Default is 50 (0.5%). Values above 10000 are rejected.
 
 ## Network Support
 

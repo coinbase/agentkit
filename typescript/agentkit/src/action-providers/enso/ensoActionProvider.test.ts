@@ -46,6 +46,68 @@ describe("Enso Route Schema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("should accept null slippage (API/default path)", () => {
+    const result = EnsoRouteSchema.safeParse({
+      tokenIn: USDC,
+      tokenOut: WETH,
+      amountIn: "100",
+      slippage: null,
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.slippage).toBeNull();
+    }
+  });
+
+  it("should accept boundary slippage 0 and 10000", () => {
+    for (const slippage of [0, 10000]) {
+      const result = EnsoRouteSchema.safeParse({
+        tokenIn: USDC,
+        tokenOut: WETH,
+        amountIn: "100",
+        slippage,
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.slippage).toBe(slippage);
+      }
+    }
+  });
+
+  it("should reject slippage above 10000 bps", () => {
+    const result = EnsoRouteSchema.safeParse({
+      tokenIn: USDC,
+      tokenOut: WETH,
+      amountIn: "100",
+      slippage: 10001,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject negative slippage", () => {
+    const result = EnsoRouteSchema.safeParse({
+      tokenIn: USDC,
+      tokenOut: WETH,
+      amountIn: "100",
+      slippage: -1,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject non-integer slippage", () => {
+    const result = EnsoRouteSchema.safeParse({
+      tokenIn: USDC,
+      tokenOut: WETH,
+      amountIn: "100",
+      slippage: 50.5,
+    });
+
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("Enso Route Action", () => {

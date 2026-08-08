@@ -22,6 +22,14 @@ export const EnsoRouteSchema = z
         "Address of the token to swap to, For ETH, use 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
       ),
     amountIn: z.string().describe("Amount of tokenIn to swap in whole units (e.g. 100 USDC)"),
-    slippage: z.number().nullable().describe("Slippage in basis points (1/10000). Default - 50"),
+    slippage: z
+      .number()
+      .int()
+      .min(0)
+      .max(10000)
+      .nullable()
+      .describe(
+        "Slippage in basis points (0-10000, 1/10000 units). Default 50 (0.5%). Caps match Jupiter/0x.",
+      ),
   })
   .describe("Instructions for routing through Enso API");
