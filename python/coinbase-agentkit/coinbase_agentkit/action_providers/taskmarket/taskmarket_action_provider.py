@@ -82,7 +82,10 @@ class TaskMarketActionProvider(ActionProvider[WalletProvider]):
                         "title": task.get("title") or (task.get("description") or "")[:120],
                         "mode": task.get("mode"),
                         "status": task.get("status"),
-                        "netReward": task.get("netReward") or task.get("net_reward"),
+                        "netReward": task.get("netReward")
+                        or task.get("net_reward")
+                        or task.get("netRewardBaseUnits")
+                        or task.get("rewardBaseUnits"),
                         "submissionCount": submission_count,
                         "awardCount": task.get("awardCount") or task.get("award_count") or 0,
                         "tags": tags,

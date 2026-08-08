@@ -114,7 +114,7 @@ def test_browse_taskmarket_tasks_accepts_nested_data_payload():
                     "description": "Create an agent integration report",
                     "mode": "bounty",
                     "status": "open",
-                    "net_reward": "2500000",
+                    "netRewardBaseUnits": "2500000",
                     "submission_count": 3,
                     "award_count": 1,
                     "tags": ["agent"],
