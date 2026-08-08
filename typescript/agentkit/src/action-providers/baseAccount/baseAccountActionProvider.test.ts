@@ -189,7 +189,7 @@ describe("BaseAccountActionProvider", () => {
         networkId: "base-mainnet",
       }),
       sendTransaction: jest.fn().mockResolvedValue("0xmockTransactionHash"),
-      waitForTransactionReceipt: jest.fn(),
+      waitForTransactionReceipt: jest.fn().mockResolvedValue({ status: "success" }),
     } as unknown as jest.Mocked<EvmWalletProvider>;
 
     // Reset mocks before each test
@@ -322,6 +322,36 @@ describe("BaseAccountActionProvider", () => {
         data: "0xspendCallData",
         value: BigInt("0x0"),
       });
+      expect(mockWallet.waitForTransactionReceipt).toHaveBeenCalledWith("0xmockTransactionHash");
+    });
+
+    it("should not report success when spend receipt reverts", async () => {
+      mockFetchPermissions.mockResolvedValue([mockPermission]);
+      mockGetPermissionStatus.mockResolvedValue(mockPermissionStatus);
+      mockGetTokenDetails.mockResolvedValue(mockTokenDetails);
+      mockPrepareSpendCallData.mockResolvedValue([
+        {
+          to: "0xSpendContract",
+          data: "0xspendCallData",
+          value: "0x0",
+        },
+      ]);
+      mockWallet.waitForTransactionReceipt.mockResolvedValue({ status: "reverted" });
+
+      const args = {
+        baseAccount: MOCK_BASE_ACCOUNT,
+        amount: 10.5,
+        tokenAddress: null,
+        permissionIndex: null,
+      };
+
+      const response = await actionProvider.spendFromBaseAccountPermission(mockWallet, args);
+      const parsedResponse = JSON.parse(response);
+
+      expect(parsedResponse.success).toBe(false);
+      expect(parsedResponse.error).toContain("failed or was reverted");
+      expect(parsedResponse.transactionHash).toBe("0xmockTransactionHash");
+      expect(mockWallet.waitForTransactionReceipt).toHaveBeenCalledWith("0xmockTransactionHash");
     });
 
     it("should handle insufficient allowance", async () => {
@@ -395,6 +425,30 @@ describe("BaseAccountActionProvider", () => {
         data: "0xrevokeCallData",
         value: BigInt("0x0"),
       });
+      expect(mockWallet.waitForTransactionReceipt).toHaveBeenCalledWith("0xmockTransactionHash");
+    });
+
+    it("should not report success when revoke receipt reverts", async () => {
+      mockFetchPermissions.mockResolvedValue([mockPermission]);
+      mockPrepareRevokeCallData.mockResolvedValue({
+        to: "0xRevokeContract",
+        data: "0xrevokeCallData",
+        value: "0x0",
+      });
+      mockWallet.waitForTransactionReceipt.mockResolvedValue({ status: "reverted" });
+
+      const args = {
+        baseAccount: MOCK_BASE_ACCOUNT,
+        permissionIndex: 1,
+      };
+
+      const response = await actionProvider.revokeBaseAccountSpendPermission(mockWallet, args);
+      const parsedResponse = JSON.parse(response);
+
+      expect(parsedResponse.success).toBe(false);
+      expect(parsedResponse.error).toContain("failed or was reverted");
+      expect(parsedResponse.transactionHash).toBe("0xmockTransactionHash");
+      expect(mockWallet.waitForTransactionReceipt).toHaveBeenCalledWith("0xmockTransactionHash");
     });
 
     it("should handle out of range permission index", async () => {

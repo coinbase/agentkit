@@ -312,6 +312,23 @@ Important notes:
         value: BigInt(callData.value || "0x0"),
       });
 
+      // Wait for confirmation before reporting success. Returning success on
+      // broadcast alone lets agents/frameworks retry on later revert, which can
+      // double-spend against remaining allowance (same class as sushi #1401).
+      const receipt = await walletProvider.waitForTransactionReceipt(txHash);
+      if (receipt.status !== "complete" && receipt.status !== "success") {
+        return JSON.stringify({
+          success: false,
+          transactionHash: txHash,
+          error: "Spend transaction failed or was reverted",
+          baseAccount: baseAccount,
+          spender: spenderAddress,
+          tokenAddress: permissionTokenAddress,
+          tokenName: tokenDetails.name,
+          permissionIndex: permissionIndex,
+        });
+      }
+
       const amountSpentFormatted = formatUnits(amountInAtomicUnits, tokenDetails.decimals);
 
       return JSON.stringify({
@@ -416,6 +433,18 @@ Important notes:
         data: revokeCall.data,
         value: BigInt(revokeCall.value || "0x0"),
       });
+
+      const receipt = await walletProvider.waitForTransactionReceipt(txHash);
+      if (receipt.status !== "complete" && receipt.status !== "success") {
+        return JSON.stringify({
+          success: false,
+          transactionHash: txHash,
+          error: "Revoke transaction failed or was reverted",
+          revokedPermissionIndex: permissionIndex,
+          baseAccount: baseAccount,
+          spender: spenderAddress,
+        });
+      }
 
       return JSON.stringify({
         success: true,
