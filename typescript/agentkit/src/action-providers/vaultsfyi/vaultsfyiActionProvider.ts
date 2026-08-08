@@ -282,6 +282,13 @@ export class VaultsfyiActionProvider extends ActionProvider<EvmWalletProvider> {
     wallet: EvmWalletProvider,
     args: z.infer<typeof executeStepActionSchema>,
   ): Promise<string> {
+    const chainId = wallet.getNetwork().chainId;
+    if (!chainId) return "Invalid network";
+    const networkName = getNetworkNameFromChainId(chainId);
+    if (!networkName) return "Invalid network";
+    if (args.network !== networkName) {
+      return `Error: You're trying to execute a step on a different network. Agent network is ${networkName}.`;
+    }
     try {
       const sdk = getVaultsSdk(this.apiKey);
       const amount = args.amount === "all" ? 0 : args.amount;

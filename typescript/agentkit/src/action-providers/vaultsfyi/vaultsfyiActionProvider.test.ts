@@ -291,6 +291,7 @@ describe("VaultsfyiActionProvider", () => {
       getNetwork: jest.fn().mockReturnValue({
         protocolFamily: "evm",
         networkId: "test-network",
+        chainId: "1",
       }),
       nativeTransfer: jest.fn(),
       readContract: jest.fn(() => Promise.resolve(18)), // token decimals
@@ -460,6 +461,40 @@ describe("VaultsfyiActionProvider", () => {
       expect(await provider.executeStep(mockWalletProvider, args)).toBe(
         "Failed to execute step: some more info",
       );
+    });
+
+    it("should reject when args.network does not match the wallet chain", async () => {
+      const args = {
+        vaultAddress: "0x123",
+        assetAddress: "0x456",
+        network: "base",
+        amount: 1n,
+        action: "deposit",
+      } as const;
+      mockedFetch.mockClear();
+      expect(await provider.executeStep(mockWalletProvider, args)).toBe(
+        "Error: You're trying to execute a step on a different network. Agent network is mainnet.",
+      );
+      expect(mockedFetch).not.toHaveBeenCalled();
+      expect(mockWalletProvider.sendTransaction).not.toHaveBeenCalled();
+    });
+
+    it("should reject when the wallet network is missing a chainId", async () => {
+      mockWalletProvider.getNetwork.mockReturnValue({
+        protocolFamily: "evm",
+        networkId: "test-network",
+      });
+      const args = {
+        vaultAddress: "0x123",
+        assetAddress: "0x456",
+        network: "mainnet",
+        amount: 1n,
+        action: "deposit",
+      } as const;
+      mockedFetch.mockClear();
+      expect(await provider.executeStep(mockWalletProvider, args)).toBe("Invalid network");
+      expect(mockedFetch).not.toHaveBeenCalled();
+      expect(mockWalletProvider.sendTransaction).not.toHaveBeenCalled();
     });
   });
 
