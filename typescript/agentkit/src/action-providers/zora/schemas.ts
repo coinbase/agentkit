@@ -5,7 +5,11 @@ export const CreateCoinSchema = z
     name: z.string().describe("The name of the coin to create"),
     symbol: z.string().describe("The symbol of the coin to create"),
     description: z.string().describe("The description of the coin"),
-    image: z.string().describe("Local image file path or URI (ipfs:// or https://)"),
+    image: z
+      .string()
+      .describe(
+        "HTTPS or ipfs:// URI of the coin image, or a local image path under the working directory",
+      ),
     category: z
       .string()
       .nullable()

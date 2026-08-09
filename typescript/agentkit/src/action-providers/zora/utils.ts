@@ -48,6 +48,24 @@ interface TokenUriParams {
 }
 
 /**
+ * Resolve a local image path and require it to stay under process.cwd()
+ * (realpath), so agent-supplied paths cannot read arbitrary files for Pinata.
+ * Twin of flaunch resolveSafeLocalImagePath (#1424).
+ */
+export function resolveSafeLocalImagePath(imageFileName: string): string {
+  const root = fs.realpathSync(process.cwd());
+  const resolved = path.resolve(root, imageFileName);
+  if (resolved !== root && !resolved.startsWith(root + path.sep)) {
+    throw new Error("Local image path must be within the working directory");
+  }
+  const real = fs.realpathSync(resolved);
+  if (real !== root && !real.startsWith(root + path.sep)) {
+    throw new Error("Local image path escapes the working directory");
+  }
+  return real;
+}
+
+/**
  * Reads a local file and converts it to base64
  *
  * @param imageFileName - Path to the local file
@@ -56,15 +74,16 @@ interface TokenUriParams {
 async function readFileAsBase64(
   imageFileName: string,
 ): Promise<{ base64: string; mimeType: string }> {
+  const safePath = resolveSafeLocalImagePath(imageFileName);
   return new Promise((resolve, reject) => {
-    fs.readFile(imageFileName, (err, data) => {
+    fs.readFile(safePath, (err, data) => {
       if (err) {
         reject(new Error(`Failed to read file: ${err.message}`));
         return;
       }
 
       // Determine mime type based on file extension
-      const extension = path.extname(imageFileName).toLowerCase();
+      const extension = path.extname(safePath).toLowerCase();
       let mimeType = "application/octet-stream"; // default
 
       if (extension === ".png") mimeType = "image/png";
@@ -222,8 +241,11 @@ export async function generateZoraTokenUri(params: TokenUriParams): Promise<{
     // Check if image is already a URI (ipfs:// or https://)
     if (params.image.startsWith("ipfs://") || params.image.startsWith("https://")) {
       imageUri = params.image;
+    } else if (params.image.includes("://")) {
+      // http:// and other schemes must not fall through to fs.readFile
+      throw new Error("Remote Zora images must use https:// or ipfs://");
     } else {
-      // Handle local file
+      // Local file: path must resolve under process.cwd()
       const { base64, mimeType } = await readFileAsBase64(params.image);
       const fileName = path.basename(params.image);
 
