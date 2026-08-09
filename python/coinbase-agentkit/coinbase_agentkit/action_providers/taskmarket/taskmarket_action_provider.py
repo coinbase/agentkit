@@ -79,6 +79,7 @@ class TaskMarketActionProvider(ActionProvider[WalletProvider]):
                 tasks.append(
                     {
                         "id": task.get("id"),
+                        "url": f"https://taskmarket.dev/task/{task.get('id')}",
                         "title": task.get("title") or (task.get("description") or "")[:120],
                         "mode": task.get("mode"),
                         "status": task.get("status"),

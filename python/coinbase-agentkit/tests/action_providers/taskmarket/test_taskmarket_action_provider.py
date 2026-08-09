@@ -95,6 +95,7 @@ def test_browse_taskmarket_tasks_filters_low_competition():
     assert parsed["safety"] == "read_only_no_spend"
     assert parsed["returned"] == 1
     assert parsed["tasks"][0]["id"] == "0x1"
+    assert parsed["tasks"][0]["url"] == "https://taskmarket.dev/task/0x1"
     mock_get.assert_called_once_with(
         "https://api.taskmarket.dev/api/tasks",
         params={"status": "open", "limit": 10},
@@ -133,6 +134,7 @@ def test_browse_taskmarket_tasks_accepts_nested_data_payload():
     assert parsed["success"] is True
     assert parsed["returned"] == 1
     assert parsed["tasks"][0]["id"] == "0xabc"
+    assert parsed["tasks"][0]["url"] == "https://taskmarket.dev/task/0xabc"
     assert parsed["tasks"][0]["netReward"] == "2500000"
     assert parsed["tasks"][0]["submissionCount"] == 3
     assert parsed["tasks"][0]["awardCount"] == 1

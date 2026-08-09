@@ -56,6 +56,7 @@ Example response shape:
   "tasks": [
     {
       "id": "0x...",
+      "url": "https://taskmarket.dev/task/0x...",
       "title": "Create a reproducible benchmark...",
       "mode": "bounty",
       "status": "open",
