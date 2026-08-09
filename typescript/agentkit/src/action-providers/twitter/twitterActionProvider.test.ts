@@ -1,6 +1,9 @@
 import { TwitterApi, TwitterApiv2, TwitterApiv1 } from "twitter-api-v2";
 import { TwitterActionProvider } from "./twitterActionProvider";
 import { TweetUserMentionTimelineV2Paginator } from "twitter-api-v2";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 
 const MOCK_CONFIG = {
   apiKey: "test-api-key",
@@ -16,7 +19,6 @@ const MOCK_TWEET = "Hello, world!";
 const MOCK_TWEET_ID = "0123456789012345678";
 const MOCK_TWEET_REPLY = "Hello again!";
 const MOCK_MEDIA_ID = "987654321";
-const MOCK_FILE_PATH = "/path/to/image.jpg";
 
 describe("TwitterActionProvider", () => {
   let mockClient: jest.Mocked<TwitterApiv2>;
@@ -278,14 +280,27 @@ describe("TwitterActionProvider", () => {
   });
 
   describe("Upload Media Action", () => {
+    let tmpDir: string;
+    let prevCwd: string;
+    const fileName = "image.jpg";
+
     beforeEach(() => {
       mockUploadMedia.mockResolvedValue(MOCK_MEDIA_ID);
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "twitter-upload-"));
+      prevCwd = process.cwd();
+      process.chdir(tmpDir);
+      fs.writeFileSync(path.join(tmpDir, fileName), "x");
+    });
+
+    afterEach(() => {
+      process.chdir(prevCwd);
+      fs.rmSync(tmpDir, { recursive: true, force: true });
     });
 
     it("should successfully upload media", async () => {
-      const response = await provider.uploadMedia({ filePath: MOCK_FILE_PATH });
+      const response = await provider.uploadMedia({ filePath: fileName });
 
-      expect(mockUploadMedia).toHaveBeenCalledWith(MOCK_FILE_PATH);
+      expect(mockUploadMedia).toHaveBeenCalledWith(fs.realpathSync(path.join(tmpDir, fileName)));
       expect(response).toContain("Successfully uploaded media to Twitter");
       expect(response).toContain(MOCK_MEDIA_ID);
     });
@@ -294,11 +309,19 @@ describe("TwitterActionProvider", () => {
       const error = new Error("Invalid file format");
       mockUploadMedia.mockRejectedValue(error);
 
-      const response = await provider.uploadMedia({ filePath: MOCK_FILE_PATH });
+      const response = await provider.uploadMedia({ filePath: fileName });
 
-      expect(mockUploadMedia).toHaveBeenCalledWith(MOCK_FILE_PATH);
+      expect(mockUploadMedia).toHaveBeenCalledWith(fs.realpathSync(path.join(tmpDir, fileName)));
       expect(response).toContain("Error uploading media to Twitter");
       expect(response).toContain(error.message);
+    });
+
+    it("should reject paths outside the working directory", async () => {
+      const response = await provider.uploadMedia({ filePath: "/etc/passwd" });
+
+      expect(mockUploadMedia).not.toHaveBeenCalled();
+      expect(response).toContain("Error uploading media to Twitter");
+      expect(response).toMatch(/working directory/i);
     });
   });
 

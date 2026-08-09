@@ -10,6 +10,7 @@ import {
   TwitterPostTweetReplySchema,
   TwitterUploadMediaSchema,
 } from "./schemas";
+import { resolveSafeLocalMediaPath } from "./utils";
 
 /**
  * Configuration options for the TwitterActionProvider.
@@ -234,7 +235,8 @@ A failure response will return a message with the Twitter API request error:
   })
   async uploadMedia(args: z.infer<typeof TwitterUploadMediaSchema>): Promise<string> {
     try {
-      const mediaId = await this.getClient().v1.uploadMedia(args.filePath);
+      const safePath = resolveSafeLocalMediaPath(args.filePath);
+      const mediaId = await this.getClient().v1.uploadMedia(safePath);
       return `Successfully uploaded media to Twitter: ${mediaId}`;
     } catch (error) {
       return `Error uploading media to Twitter: ${error}`;
