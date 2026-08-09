@@ -412,10 +412,10 @@ Important notes:
             return f"Error: SFTP operation: {e!s}"
         except OSError as e:
             return f"Error: I/O operation: {e!s}"
-        except ValueError as e:
-            return f"Error: {e!s}"
         except ValidationError as e:
             return f"Error: Invalid input parameters: {e!s}"
+        except ValueError as e:
+            return f"Error: {e!s}"
         except Exception as e:
             return f"Error: File upload: {e!s}"
 
@@ -490,10 +490,10 @@ Important notes:
             return f"Error: SFTP operation: {e!s}"
         except OSError as e:
             return f"Error: I/O operation: {e!s}"
-        except ValueError as e:
-            return f"Error: {e!s}"
         except ValidationError as e:
             return f"Error: Invalid input parameters: {e!s}"
+        except ValueError as e:
+            return f"Error: {e!s}"
         except Exception as e:
             return f"Error: File download: {e!s}"
 
@@ -541,7 +541,11 @@ Important notes:
             host = validated_args.host
             key = validated_args.key
             key_type = validated_args.key_type
-            known_hosts_file = os.path.expanduser(validated_args.known_hosts_file)
+            ssh_dir = os.path.join(os.path.expanduser("~"), ".ssh")
+            known_hosts_file = resolve_safe_local_path(
+                validated_args.known_hosts_file,
+                allowed_roots=[ssh_dir],
+            )
 
             host_entry = host
             entry = f"{host_entry} {key_type} {key}\n"
@@ -574,6 +578,8 @@ Important notes:
 
         except ValidationError as e:
             return f"Error: Invalid input parameters: {e!s}"
+        except ValueError as e:
+            return f"Error: {e!s}"
         except FileNotFoundError as e:
             return f"Error: Unable to access known_hosts file: {e!s}"
         except PermissionError as e:

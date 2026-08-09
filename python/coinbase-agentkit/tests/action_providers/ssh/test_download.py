@@ -35,7 +35,7 @@ def test_ssh_download_success(ssh_provider, tmp_path, monkeypatch):
 
 
 def test_ssh_download_rejects_path_outside_cwd(ssh_provider, tmp_path, monkeypatch):
-    """Test file download rejects paths outside the working directory."""
+    """Test file download rejects paths outside the allowed directory."""
     monkeypatch.chdir(tmp_path)
     mock_pool = ssh_provider.connection_pool
     mock_connection = mock.Mock()
@@ -51,7 +51,7 @@ def test_ssh_download_rejects_path_outside_cwd(ssh_provider, tmp_path, monkeypat
         }
     )
 
-    assert "working directory" in result
+    assert "allowed directory" in result
     mock_connection.download_file.assert_not_called()
 
 

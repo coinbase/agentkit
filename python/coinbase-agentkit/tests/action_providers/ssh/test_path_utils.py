@@ -1,7 +1,6 @@
 """Tests for SSH local path confinement."""
 
 import os
-from pathlib import Path
 
 import pytest
 
@@ -20,8 +19,24 @@ def test_resolve_safe_local_path_allows_under_cwd(tmp_path, monkeypatch):
 def test_resolve_safe_local_path_rejects_escapes(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
 
-    with pytest.raises(ValueError, match="working directory"):
+    with pytest.raises(ValueError, match="allowed directory"):
         resolve_safe_local_path("../outside.txt")
 
-    with pytest.raises(ValueError, match="working directory"):
+    with pytest.raises(ValueError, match="allowed directory"):
         resolve_safe_local_path("/etc/passwd")
+
+
+def test_resolve_safe_local_path_allows_extra_root(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    ssh_dir = tmp_path / "fake-ssh"
+    ssh_dir.mkdir()
+    hosts = ssh_dir / "known_hosts"
+    hosts.write_text("", encoding="utf-8")
+
+    assert resolve_safe_local_path(
+        str(hosts),
+        allowed_roots=[str(ssh_dir)],
+    ) == str(hosts.resolve())
+
+    with pytest.raises(ValueError, match="allowed directory"):
+        resolve_safe_local_path("/etc/passwd", allowed_roots=[str(ssh_dir)])
