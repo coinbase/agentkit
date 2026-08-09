@@ -34,8 +34,9 @@ export const getAmountWithSlippage = (
   slippage: string,
   swapType: "EXACT_IN" | "EXACT_OUT",
 ) => {
-  if (amount == null) {
-    return 0n;
+  // Missing/zero quotes used to become amountOutMinimum=0 (fail-open sandwich).
+  if (amount == null || amount === 0n) {
+    throw new Error("Quote amount is missing or zero");
   }
 
   const absAmount = amount < 0n ? -amount : amount;
@@ -76,8 +77,10 @@ export const ethToMemecoin = (params: {
 
   // Configure path and parameters based on swapType
   if (params.swapType === "EXACT_IN") {
-    if (params.amountIn == null || params.amountOutMin == null) {
-      throw new Error("amountIn and amountOutMin are required for EXACT_IN swap");
+    if (params.amountIn == null || params.amountOutMin == null || params.amountOutMin === 0n) {
+      throw new Error(
+        "amountIn and a non-zero amountOutMin are required for EXACT_IN swap",
+      );
     }
 
     // Path for 'EXACT_IN' swap
@@ -111,8 +114,10 @@ export const ethToMemecoin = (params: {
       },
     ]);
   } else {
-    if (params.amountOut == null || params.amountInMax == null) {
-      throw new Error("amountOut and amountInMax are required for EXACT_OUT swap");
+    if (params.amountOut == null || params.amountInMax == null || params.amountInMax === 0n) {
+      throw new Error(
+        "amountOut and a non-zero amountInMax are required for EXACT_OUT swap",
+      );
     }
 
     // Path for 'EXACT_OUT' swap
@@ -232,6 +237,10 @@ export const memecoinToEthWithPermit2 = (params: {
   signature: Hex | undefined;
   referrer: Address | null;
 }) => {
+  if (params.ethOutMin === 0n) {
+    throw new Error("ethOutMin must be non-zero");
+  }
+
   const flETH = FLETHAddress[params.chainId];
 
   const flETHHooks = FLETHHooksAddress[params.chainId];
