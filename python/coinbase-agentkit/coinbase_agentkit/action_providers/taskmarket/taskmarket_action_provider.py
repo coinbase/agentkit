@@ -76,10 +76,11 @@ class TaskMarketActionProvider(ActionProvider[WalletProvider]):
                     and submission_count > validated_args.max_submissions
                 ):
                     continue
+                task_id = task.get("id")
                 tasks.append(
                     {
-                        "id": task.get("id"),
-                        "url": f"https://taskmarket.dev/task/{task.get('id')}",
+                        "id": task_id,
+                        "url": f"https://taskmarket.dev/task/{task_id}" if task_id else None,
                         "title": task.get("title") or (task.get("description") or "")[:120],
                         "mode": task.get("mode"),
                         "status": task.get("status"),
