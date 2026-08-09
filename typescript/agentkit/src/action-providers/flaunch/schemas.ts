@@ -14,7 +14,11 @@ export const FlaunchSchema = z
   .object({
     name: z.string().min(1).describe("The name of the token to flaunch"),
     symbol: z.string().min(1).describe("The symbol of the token to flaunch"),
-    image: z.string().describe("Local image file path or URL to the token image"),
+    image: z
+      .string()
+      .describe(
+        "HTTPS URL of the token image, or a local image path under the working directory",
+      ),
     description: z.string().describe("Description of the token"),
     websiteUrl: z.string().nullable().describe("URL to the token website"),
     discordUrl: z.string().nullable().describe("URL to the token Discord"),

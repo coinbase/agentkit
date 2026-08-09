@@ -44,6 +44,79 @@ interface TokenUriParams {
 }
 
 /**
+ * True when hostname is a literal IP in a non-global range (loopback, RFC1918,
+ * link-local/metadata, CGNAT, benchmarking). DNS rebinding is out of scope
+ * here; hostname literals and https-only reduce the agent-tool SSRF surface.
+ */
+export function isBlockedImageHost(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "::1" ||
+    host.endsWith(".localhost") ||
+    host.endsWith(".local")
+  ) {
+    return true;
+  }
+
+  const v4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
+  if (v4) {
+    const [a, b] = [Number(v4[1]), Number(v4[2])];
+    if (a === 0 || a === 10 || a === 127) return true;
+    if (a === 169 && b === 254) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 100 && b >= 64 && b <= 127) return true;
+    if (a === 198 && (b === 18 || b === 19)) return true;
+    return false;
+  }
+
+  // IPv6 unique-local / link-local
+  return host.startsWith("fc") || host.startsWith("fd") || host.startsWith("fe80:");
+}
+
+/**
+ * Fail closed before fetching a remote token image (SSRF).
+ * Only https:// with a non-blocked host is allowed.
+ */
+export function assertSafeRemoteImageUrl(imageUrl: string): URL {
+  let parsed: URL;
+  try {
+    parsed = new URL(imageUrl);
+  } catch {
+    throw new Error(`Invalid image URL: ${imageUrl}`);
+  }
+  if (parsed.protocol !== "https:") {
+    throw new Error("Remote token images must use https://");
+  }
+  if (parsed.username || parsed.password) {
+    throw new Error("Image URL must not include credentials");
+  }
+  if (!parsed.hostname || isBlockedImageHost(parsed.hostname)) {
+    throw new Error(`Image URL host is not allowed: ${parsed.hostname || "(empty)"}`);
+  }
+  return parsed;
+}
+
+/**
+ * Resolve a local image path and require it to stay under process.cwd()
+ * (realpath), so agent-supplied paths cannot read arbitrary files for IPFS.
+ */
+export function resolveSafeLocalImagePath(imageFileName: string): string {
+  const root = fs.realpathSync(process.cwd());
+  const resolved = path.resolve(root, imageFileName);
+  if (resolved !== root && !resolved.startsWith(root + path.sep)) {
+    throw new Error("Local image path must be within the working directory");
+  }
+  const real = fs.realpathSync(resolved);
+  if (real !== root && !real.startsWith(root + path.sep)) {
+    throw new Error("Local image path escapes the working directory");
+  }
+  return real;
+}
+
+/**
  * Reads a local file and converts it to base64
  *
  * @param imageFileName - Path to the local file
@@ -52,15 +125,16 @@ interface TokenUriParams {
 async function readFileAsBase64(
   imageFileName: string,
 ): Promise<{ base64: string; mimeType: string }> {
+  const safePath = resolveSafeLocalImagePath(imageFileName);
   return new Promise((resolve, reject) => {
-    fs.readFile(imageFileName, (err, data) => {
+    fs.readFile(safePath, (err, data) => {
       if (err) {
         reject(new Error(`Failed to read file: ${err.message}`));
         return;
       }
 
       // Determine mime type based on file extension
-      const extension = path.extname(imageFileName).toLowerCase();
+      const extension = path.extname(safePath).toLowerCase();
       let mimeType = "application/octet-stream"; // default
 
       if (extension === ".png") mimeType = "image/png";
@@ -183,7 +257,10 @@ const uploadJsonToIPFS = async (params: {
  */
 const convertImageUrlToBase64 = async (imageUrl: string): Promise<string> => {
   try {
-    const response = await fetch(imageUrl);
+    assertSafeRemoteImageUrl(imageUrl);
+    // Do not follow redirects: Location could point at a blocked host after
+    // the initial URL check.
+    const response = await fetch(imageUrl, { redirect: "error" });
 
     if (!response.ok) {
       throw new Error(`Failed to fetch image: ${response.statusText}`);
@@ -253,9 +330,10 @@ export const generateTokenUri = async (name: string, symbol: string, params: Tok
   const image = params.metadata.image;
 
   if (image.startsWith("https://") || image.startsWith("http://")) {
+    // http:// rejected inside assertSafeRemoteImageUrl (https only).
     base64Image = await convertImageUrlToBase64(image);
   } else {
-    // assume local file
+    // Local file: path must resolve under process.cwd().
     const { base64, mimeType } = await readFileAsBase64(image);
     base64Image = `data:${mimeType};base64,${base64}`;
   }
