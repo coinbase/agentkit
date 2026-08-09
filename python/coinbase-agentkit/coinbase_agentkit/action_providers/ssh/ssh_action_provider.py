@@ -19,6 +19,7 @@ from ..action_decorator import create_action
 from ..action_provider import ActionProvider
 from .connection import SSHConnectionError, SSHKeyError, UnknownHostKeyError
 from .connection_pool import SSHConnectionPool
+from .path_utils import resolve_safe_local_path
 from .schemas import (
     AddHostKeySchema,
     ConnectionStatusSchema,
@@ -380,7 +381,7 @@ Important notes:
         try:
             validated_args = FileUploadSchema(**args)
             connection_id = validated_args.connection_id
-            local_path = validated_args.local_path
+            local_path = resolve_safe_local_path(validated_args.local_path)
             remote_path = validated_args.remote_path
 
             if not self.connection_pool.has_connection(connection_id):
@@ -411,6 +412,8 @@ Important notes:
             return f"Error: SFTP operation: {e!s}"
         except OSError as e:
             return f"Error: I/O operation: {e!s}"
+        except ValueError as e:
+            return f"Error: {e!s}"
         except ValidationError as e:
             return f"Error: Invalid input parameters: {e!s}"
         except Exception as e:
@@ -459,7 +462,7 @@ Important notes:
             validated_args = FileDownloadSchema(**args)
             connection_id = validated_args.connection_id
             remote_path = validated_args.remote_path
-            local_path = validated_args.local_path
+            local_path = resolve_safe_local_path(validated_args.local_path)
 
             if not self.connection_pool.has_connection(connection_id):
                 return f"Error: Connection ID '{connection_id}' not found. Use ssh_connect first."
@@ -468,8 +471,6 @@ Important notes:
 
             if not connection.is_connected():
                 return f"Error: Connection '{connection_id}' is not currently active. Use ssh_connect to establish the connection."
-
-            local_path = os.path.expanduser(local_path)
 
             local_dir = os.path.dirname(local_path)
             if local_dir and not os.path.exists(local_dir):
@@ -489,6 +490,8 @@ Important notes:
             return f"Error: SFTP operation: {e!s}"
         except OSError as e:
             return f"Error: I/O operation: {e!s}"
+        except ValueError as e:
+            return f"Error: {e!s}"
         except ValidationError as e:
             return f"Error: Invalid input parameters: {e!s}"
         except Exception as e:
