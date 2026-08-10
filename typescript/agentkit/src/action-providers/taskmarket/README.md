@@ -8,8 +8,9 @@ It exposes three actions:
 - `list_tasks`: discover open USDC tasks without spending funds.
 - `get_task`: inspect a task, escrow transaction, deadline, and pending actions.
 - `submit_work`: submit a complete text artifact after explicit user
-  authorization. The worker wallet signs `taskmarket:submit:<taskId>` and the
-  provider sends the artifact to Taskmarket. It does not automatically pay an
+  authorization. The worker wallet signs `taskmarket:submit:<taskId>`, uploads
+  the artifact through Taskmarket's presigned flow, then signs the artifact-key
+  binding before finalizing the submission. It does not automatically pay an
   X402 fee; payment-required responses are returned as errors.
 
 ```ts

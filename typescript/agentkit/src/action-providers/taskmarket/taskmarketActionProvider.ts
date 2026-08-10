@@ -1,3 +1,6 @@
+import { createHash, randomUUID } from "node:crypto";
+
+import { keccak256 } from "viem";
 import { z } from "zod";
 
 import { ActionProvider } from "../actionProvider";
@@ -150,24 +153,93 @@ brief. Do not upload secrets, credentials, private keys, or confidential data.
     }
 
     try {
+      const artifact = Buffer.from(args.content, "utf8");
       const signature = await wallet.signMessage(`taskmarket:submit:${args.taskId}`);
-      const response = await fetch(`${this.apiUrl}/api/tasks/${args.taskId}/submissions`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          taskId: args.taskId,
-          workerAddress: wallet.getAddress(),
-          signature,
-          artifacts: [
-            {
-              fileName: args.fileName,
-              mimeType: args.mimeType,
-              role: args.role,
-              file: Buffer.from(args.content, "utf8").toString("base64"),
-            },
-          ],
-        }),
+      const uploadResponse = await fetch(
+        `${this.apiUrl}/api/tasks/${args.taskId}/submissions/request-upload-url`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            taskId: args.taskId,
+            workerAddress: wallet.getAddress(),
+            signature,
+            fileName: args.fileName,
+            mimeType: args.mimeType,
+            role: args.role,
+            sizeBytes: artifact.length,
+          }),
+        },
+      );
+      const uploadData = await this.parseResponse(uploadResponse);
+      if (!uploadResponse.ok) {
+        return JSON.stringify({
+          success: false,
+          status: uploadResponse.status,
+          error: "Taskmarket rejected upload preparation; no automatic payment was attempted",
+          details: uploadData,
+        });
+      }
+
+      const uploadInfo = this.getUploadInfo(uploadData);
+      if (!uploadInfo) {
+        return JSON.stringify({
+          success: false,
+          error: "Taskmarket returned an invalid upload preparation response",
+        });
+      }
+
+      const uploadUrl = new URL(uploadInfo.uploadUrl);
+      if (uploadUrl.protocol !== "https:") {
+        return JSON.stringify({
+          success: false,
+          error: "Taskmarket returned a non-HTTPS artifact upload URL",
+        });
+      }
+
+      const artifactResponse = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "content-type": args.mimeType },
+        body: artifact,
+        redirect: "error",
       });
+      if (!artifactResponse.ok) {
+        return JSON.stringify({
+          success: false,
+          status: artifactResponse.status,
+          error: "Taskmarket artifact upload failed; no automatic payment was attempted",
+        });
+      }
+
+      const contentBoundSignature = await wallet.signMessage(
+        `taskmarket:submit:${args.taskId}:${uploadInfo.artifactKey}`,
+      );
+      const response = await fetch(
+        `${this.apiUrl}/api/tasks/${args.taskId}/submissions/from-keys`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "X-Taskmarket-Idempotency-Key": randomUUID(),
+          },
+          body: JSON.stringify({
+            taskId: args.taskId,
+            workerAddress: wallet.getAddress(),
+            artifacts: [
+              {
+                artifactKey: uploadInfo.artifactKey,
+                fileName: args.fileName,
+                mimeType: args.mimeType,
+                role: args.role,
+                sizeBytes: artifact.length,
+                sha256Hash: createHash("sha256").update(artifact).digest("hex"),
+                keccak256Hash: keccak256(artifact),
+              },
+            ],
+            signature: contentBoundSignature,
+          }),
+        },
+      );
 
       const data = await this.parseResponse(response);
       if (!response.ok) {
@@ -263,6 +335,23 @@ brief. Do not upload secrets, credentials, private keys, or confidential data.
     } catch {
       return text;
     }
+  }
+
+  /**
+   * Extracts the signed upload information returned by Taskmarket.
+   *
+   * @param data - Parsed API response.
+   * @returns Upload URL and artifact key when both are valid.
+   */
+  private getUploadInfo(data: unknown): { uploadUrl: string; artifactKey: string } | null {
+    if (typeof data !== "object" || data === null) return null;
+
+    const uploadInfo = data as Record<string, unknown>;
+    if (typeof uploadInfo.uploadUrl !== "string" || typeof uploadInfo.artifactKey !== "string") {
+      return null;
+    }
+
+    return { uploadUrl: uploadInfo.uploadUrl, artifactKey: uploadInfo.artifactKey };
   }
 }
 

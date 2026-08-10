@@ -93,11 +93,25 @@ describe("TaskMarketActionProvider", () => {
   });
 
   it("submits a signed text artifact without attempting an automatic payment", async () => {
-    fetchMock.mockResolvedValue({
-      ok: true,
-      status: 201,
-      text: jest.fn().mockResolvedValue('{"submissionId":"sub-1"}'),
-    });
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: jest
+          .fn()
+          .mockResolvedValue(
+            '{"uploadUrl":"https://uploads.taskmarket.test/artifact","artifactKey":"key-1"}',
+          ),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: jest.fn().mockResolvedValue('{"submissionId":"sub-1"}'),
+      });
 
     const provider = new TaskMarketActionProvider({ apiUrl: "https://api.taskmarket.test" });
     const taskId = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -115,20 +129,38 @@ describe("TaskMarketActionProvider", () => {
       workerAddress: "0x1111111111111111111111111111111111111111",
       submission: { submissionId: "sub-1" },
     });
-    expect(wallet.signMessage).toHaveBeenCalledWith(`taskmarket:submit:${taskId}`);
-    expect(fetchMock).toHaveBeenCalledWith(
-      `https://api.taskmarket.test/api/tasks/${taskId}/submissions`,
+    expect(wallet.signMessage).toHaveBeenNthCalledWith(1, `taskmarket:submit:${taskId}`);
+    expect(wallet.signMessage).toHaveBeenNthCalledWith(2, `taskmarket:submit:${taskId}:key-1`);
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      `https://api.taskmarket.test/api/tasks/${taskId}/submissions/request-upload-url`,
       expect.objectContaining({
         method: "POST",
         headers: { "content-type": "application/json" },
       }),
     );
 
-    const request = fetchMock.mock.calls[0][1] as RequestInit;
+    expect(fetchMock.mock.calls[1][0].toString()).toBe("https://uploads.taskmarket.test/artifact");
+    expect(fetchMock.mock.calls[1][1]).toEqual(
+      expect.objectContaining({ method: "PUT", body: Buffer.from("final work", "utf8") }),
+    );
+
+    const request = fetchMock.mock.calls[2][1] as RequestInit;
     const body = JSON.parse(String(request.body));
     expect(body.workerAddress).toBe("0x1111111111111111111111111111111111111111");
     expect(body.signature).toBe("0xsignature");
-    expect(body.artifacts[0].file).toBe(Buffer.from("final work", "utf8").toString("base64"));
+    expect(body.artifacts[0]).toMatchObject({
+      artifactKey: "key-1",
+      fileName: "deliverable.md",
+      mimeType: "text/markdown",
+      role: "final",
+      sizeBytes: 10,
+    });
+    expect(body.artifacts[0].sha256Hash).toMatch(/^[0-9a-f]{64}$/);
+    expect(body.artifacts[0].keccak256Hash).toMatch(/^0x[a-f0-9]{64}$/);
+    expect(request.headers).toMatchObject({
+      "X-Taskmarket-Idempotency-Key": expect.any(String),
+    });
   });
 
   it("does not expose taskmarket actions on another network", async () => {
