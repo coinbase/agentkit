@@ -5,7 +5,16 @@ export const CreateCoinSchema = z
     name: z.string().describe("The name of the coin to create"),
     symbol: z.string().describe("The symbol of the coin to create"),
     description: z.string().describe("The description of the coin"),
-    image: z.string().describe("Local image file path or URI (ipfs:// or https://)"),
+    image: z
+      .string()
+      .refine(
+        val => val.startsWith("https://") || val.startsWith("ipfs://") || val.startsWith("data:"),
+        {
+          message:
+            "image must be an https:// URL, an ipfs:// URI, or a data: URI. Local file paths are not supported.",
+        },
+      )
+      .describe("Image URI for the coin (ipfs:// or https://)"),
     category: z
       .string()
       .nullable()
