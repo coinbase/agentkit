@@ -103,9 +103,10 @@ async function uploadFileToIPFS(params: {
     }
 
     const blob = new Blob(byteArrays, { type: params.mimeType });
-    const file = new File([blob], params.fileName, { type: params.mimeType });
 
-    formData.append("file", file);
+    // Appending the Blob with a filename rather than wrapping it in a `File`: `File` is not a
+    // global on Node 18, which this package still supports.
+    formData.append("file", blob, params.fileName);
 
     const pinataMetadata = {
       name: params.fileName,
