@@ -124,9 +124,11 @@ describe("PeerCashActionProvider", () => {
         .fn()
         .mockReturnValue({ protocolFamily: "evm", networkId: "base-mainnet", chainId: "8453" }),
       sendTransaction: jest.fn().mockResolvedValue("0xhash1" as `0x${string}`),
-      waitForTransactionReceipt: jest
-        .fn()
-        .mockResolvedValue({ status: "success", transactionHash: "0xhash1", logs: [] }),
+      waitForTransactionReceipt: jest.fn().mockImplementation(async txHash => ({
+        status: "success",
+        transactionHash: txHash,
+        logs: [],
+      })),
     } as unknown as jest.Mocked<EvmWalletProvider>;
     provider = new PeerCashActionProvider();
   });
@@ -403,6 +405,77 @@ describe("PeerCashActionProvider", () => {
       expect(mockClient.finalizePreparedCashout).not.toHaveBeenCalled();
     });
 
+    it("preserves the submitted hash when a receipt lookup fails", async () => {
+      mockWallet.waitForTransactionReceipt.mockRejectedValueOnce(new Error("RPC timeout"));
+
+      const response = await provider.cashout(mockWallet, {
+        amountUsdc: "250",
+        platform: "venmo",
+        currency: "USD",
+        payee: "@alice",
+      });
+
+      expect(response).toContain("approve transaction for the cash-out was submitted");
+      expect(response).toContain("0xhash1");
+      expect(response).toContain("Do not submit the operation again");
+      expect(mockWallet.sendTransaction).toHaveBeenCalledTimes(1);
+    });
+
+    it("treats an unrecognized receipt status as an unknown outcome", async () => {
+      mockWallet.waitForTransactionReceipt.mockResolvedValueOnce({
+        transactionHash: "0xbase1",
+        logs: [],
+      });
+
+      const response = await provider.cashout(mockWallet, {
+        amountUsdc: "250",
+        platform: "venmo",
+        currency: "USD",
+        payee: "@alice",
+      });
+
+      expect(response).toContain("wallet submission hash: 0xhash1");
+      expect(response).toContain("receipt could not be confirmed");
+      expect(mockWallet.sendTransaction).toHaveBeenCalledTimes(1);
+    });
+
+    it("preserves earlier confirmed hashes when a later receipt lookup fails", async () => {
+      mockWallet.waitForTransactionReceipt
+        .mockResolvedValueOnce({ status: "success", transactionHash: "0xhash1", logs: [] })
+        .mockRejectedValueOnce(new Error("RPC timeout"));
+
+      const response = await provider.cashout(mockWallet, {
+        amountUsdc: "250",
+        platform: "venmo",
+        currency: "USD",
+        payee: "@alice",
+      });
+
+      expect(response).toContain("createDeposit transaction for the cash-out was submitted");
+      expect(response).toContain("0xhash2");
+      expect(response).toContain("Earlier confirmed steps: approve: 0xhash1");
+      expect(response).toContain("Do not submit the operation again");
+    });
+
+    it("warns against retrying when receipt finalization cannot recover the order id", async () => {
+      mockClient.finalizePreparedCashout.mockImplementation(() => {
+        throw new Error("missing event");
+      });
+
+      const response = await provider.cashout(mockWallet, {
+        amountUsdc: "250",
+        platform: "venmo",
+        currency: "USD",
+        payee: "@alice",
+      });
+
+      expect(response).toContain(
+        "createDeposit transaction confirmed (Base transaction hash: 0xhash2)",
+      );
+      expect(response).toContain("Do not create another cash-out");
+      expect(response).toContain("list_orders");
+    });
+
     it("keeps the deposit and points at configure_access_policy when the policy fails", async () => {
       mockClient.prepare.mockResolvedValue({ ...PREPARE_RESULT, accessPolicyRequired: true });
       mockClient.prepareAccessPolicy.mockReturnValue(MOCK_TX);
@@ -422,6 +495,50 @@ describe("PeerCashActionProvider", () => {
       expect(response).toContain("access policy transaction reverted");
       expect(response).toContain("never create another cash-out");
       expect(response).toContain("configure_access_policy");
+    });
+
+    it("does not retry an access policy whose receipt outcome is unknown", async () => {
+      mockClient.prepare.mockResolvedValue({ ...PREPARE_RESULT, accessPolicyRequired: true });
+      mockClient.prepareAccessPolicy.mockReturnValue(MOCK_TX);
+      mockWallet.waitForTransactionReceipt
+        .mockResolvedValueOnce({ status: "success", transactionHash: "0xhash1", logs: [] })
+        .mockResolvedValueOnce({ status: "success", transactionHash: "0xhash2", logs: [] })
+        .mockRejectedValueOnce(new Error("RPC timeout"));
+
+      const response = await provider.cashout(mockWallet, {
+        amountUsdc: "250",
+        platform: "venmo",
+        currency: "USD",
+        payee: "@alice",
+      });
+
+      expect(response).toContain(`Created Peer Cash cash-out order ${MOCK_DEPOSIT_ID}`);
+      expect(response).toContain(
+        "access policy transaction was submitted (wallet submission hash: 0xhash3)",
+      );
+      expect(response).toContain("Do not create another cash-out or resubmit the policy");
+      expect(response).not.toContain("configure_access_policy");
+    });
+
+    it("uses the containing Base transaction hash for smart-wallet confirmations", async () => {
+      mockWallet.waitForTransactionReceipt.mockImplementation(async txHash => ({
+        status: "success",
+        transactionHash: txHash === "0xhash1" ? "0xbase1" : "0xbase2",
+        logs: [{ address: "0x3333333333333333333333333333333333333333" }],
+      }));
+
+      const response = await provider.cashout(mockWallet, {
+        amountUsdc: "250",
+        platform: "venmo",
+        currency: "USD",
+        payee: "@alice",
+      });
+
+      expect(mockClient.finalizePreparedCashout).toHaveBeenCalledWith(
+        expect.objectContaining({ transactionHash: "0xbase2" }),
+      );
+      expect(response).toContain("approve: 0xbase1 (wallet submission: 0xhash1)");
+      expect(response).toContain("createDeposit: 0xbase2 (wallet submission: 0xhash2)");
     });
 
     it("maps CashErrors from prepare", async () => {
@@ -675,6 +792,7 @@ describe("PeerCashActionProvider", () => {
       expect(EstimateSchema.safeParse({ amountUsdc: "250", currency: "USD" }).success).toBe(true);
       expect(EstimateSchema.safeParse({ amountUsdc: "12.34", currency: "USD" }).success).toBe(true);
       expect(EstimateSchema.safeParse({ amountUsdc: "-5", currency: "USD" }).success).toBe(false);
+      expect(EstimateSchema.safeParse({ amountUsdc: "0", currency: "USD" }).success).toBe(false);
       expect(EstimateSchema.safeParse({ amountUsdc: "1.1234567", currency: "USD" }).success).toBe(
         false,
       );
@@ -701,6 +819,11 @@ describe("PeerCashActionProvider", () => {
       expect(TopUpSchema.safeParse({ depositId: MOCK_DEPOSIT_ID, amountUsdc: "10" }).success).toBe(
         true,
       );
+    });
+
+    it("rejects malformed deposit ids", () => {
+      expect(WithdrawSchema.safeParse({ depositId: MOCK_DEPOSIT_ID }).success).toBe(true);
+      expect(WithdrawSchema.safeParse({ depositId: "bogus" }).success).toBe(false);
     });
   });
 });

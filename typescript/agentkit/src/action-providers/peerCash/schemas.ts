@@ -10,6 +10,7 @@ import { z } from "zod";
 const usdcAmount = z
   .string()
   .regex(/^\d+(\.\d{1,6})?$/, "Must be a decimal USDC amount with at most 6 decimal places")
+  .refine(value => /[1-9]/.test(value), "Must be greater than zero")
   .describe("The USDC amount in whole units, e.g. '250' or '12.34'");
 
 const currencyCode = z
@@ -19,7 +20,7 @@ const currencyCode = z
 
 const depositId = z
   .string()
-  .min(1)
+  .regex(/^0x[a-fA-F0-9]{40}_\d+$/, "Must be a Peer Cash deposit id")
   .describe("The deposit id of the cash-out order, as returned by the cashout action");
 
 /**

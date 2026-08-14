@@ -94,6 +94,21 @@ interface TransactionReceiptLike {
 }
 
 /**
+ * Formats a confirmed step using the containing Base transaction hash when a
+ * smart-wallet receipt exposes one, while retaining the wallet submission id.
+ *
+ * @param step - The confirmed prepared-plan step.
+ * @returns A compact step and transaction identifier.
+ */
+function formatSubmittedStep(step: SubmittedStep): string {
+  const transactionHash = step.receipt.transactionHash;
+  if (transactionHash && transactionHash !== step.txHash) {
+    return `${step.kind}: ${transactionHash} (wallet submission: ${step.txHash})`;
+  }
+  return `${step.kind}: ${step.txHash}`;
+}
+
+/**
  * Thrown when a submitted transaction of a prepared plan reverted on-chain.
  */
 class StepRevertedError extends Error {
@@ -113,6 +128,50 @@ class StepRevertedError extends Error {
 }
 
 /**
+ * Thrown when a transaction was submitted but its receipt could not be
+ * determined. The hash is a recovery handle: callers must inspect it before
+ * deciding whether it is safe to submit another transaction.
+ */
+class StepOutcomeUnknownError extends Error {
+  /**
+   * Constructor for the StepOutcomeUnknownError class.
+   *
+   * @param step - The step kind whose receipt could not be determined.
+   * @param txHash - The submitted transaction hash.
+   * @param completed - Earlier steps that were already confirmed.
+   * @param cause - The receipt lookup error.
+   */
+  constructor(
+    readonly step: string,
+    readonly txHash: `0x${string}`,
+    readonly completed: SubmittedStep[],
+    readonly cause: unknown,
+  ) {
+    super(`The outcome of ${step} is unknown (hash: ${txHash})`);
+    this.name = "StepOutcomeUnknownError";
+  }
+}
+
+/**
+ * Formats a submitted transaction whose receipt could not be determined.
+ *
+ * @param operation - The operation containing the uncertain step.
+ * @param error - The uncertain step and its recovery metadata.
+ * @returns A recovery-safe message that prevents blind resubmission.
+ */
+function describeUnknownOutcome(operation: string, error: StepOutcomeUnknownError): string {
+  const completed = error.completed.length
+    ? ` Earlier confirmed steps: ${error.completed.map(formatSubmittedStep).join(", ")}.`
+    : "";
+  return (
+    `Error: the ${error.step} transaction for ${operation} was submitted (wallet submission ` +
+    `hash: ${error.txHash}), but its receipt could not be confirmed.${completed} Do not submit ` +
+    `the operation again. Resolve that submission through the connected wallet provider or its ` +
+    `bundler; if it produced a Base transaction, inspect that transaction and check the order state.`
+  );
+}
+
+/**
  * Checks whether a wallet provider receipt reports an on-chain failure.
  * Viem receipts report "success" or "reverted"; CDP user operation receipts
  * report "complete" or "failed".
@@ -123,6 +182,18 @@ class StepRevertedError extends Error {
 function isRevertedReceipt(receipt: TransactionReceiptLike | null | undefined): boolean {
   const status = receipt?.status;
   return status === "reverted" || status === "failed" || status === 0 || status === "0x0";
+}
+
+/**
+ * Checks whether a wallet provider receipt explicitly reports confirmation.
+ * Unknown receipt shapes are treated as uncertain rather than successful.
+ *
+ * @param receipt - The receipt returned by waitForTransactionReceipt.
+ * @returns True when the receipt carries a known success marker.
+ */
+function isSuccessfulReceipt(receipt: TransactionReceiptLike | null | undefined): boolean {
+  const status = receipt?.status;
+  return status === "success" || status === "complete" || status === 1 || status === "0x1";
 }
 
 /**
@@ -314,6 +385,9 @@ Important notes:
       try {
         submitted = await this.#submitPreparedPlan(walletProvider, prepared.txs, prepared.steps);
       } catch (error) {
+        if (error instanceof StepOutcomeUnknownError) {
+          return describeUnknownOutcome("the cash-out", error);
+        }
         if (error instanceof StepRevertedError) {
           return (
             `Error: the ${error.step} transaction of the cash-out reverted ` +
@@ -327,13 +401,30 @@ Important notes:
       if (!depositStep) {
         return "Error: the prepared cash-out plan had no createDeposit step; no order was created.";
       }
-      const result = this.#client.finalizePreparedCashout({
-        // Smart wallet providers return user operation receipts; their
-        // transactionHash is the containing transaction that holds the logs.
-        transactionHash: depositStep.receipt.transactionHash ?? depositStep.txHash,
-        status: "success",
-        logs: (depositStep.receipt.logs ?? []) as PreparedCashoutReceipt["logs"],
-      });
+      let result;
+      try {
+        result = this.#client.finalizePreparedCashout({
+          // Smart wallet providers return user operation receipts; their
+          // transactionHash is the containing transaction that holds the logs.
+          transactionHash: depositStep.receipt.transactionHash ?? depositStep.txHash,
+          status: "success",
+          logs: (depositStep.receipt.logs ?? []) as PreparedCashoutReceipt["logs"],
+        });
+      } catch (error) {
+        const transactionHash = depositStep.receipt.transactionHash;
+        const recoveryHandle = transactionHash
+          ? `Base transaction hash: ${transactionHash}`
+          : `wallet submission hash: ${depositStep.txHash}`;
+        const recoveryInstruction = transactionHash
+          ? "inspect that transaction on Base"
+          : "resolve that submission through the connected wallet provider or its bundler";
+        return (
+          `The createDeposit transaction confirmed (${recoveryHandle}), but the ` +
+          `cash-out order id could not be derived from its receipt: ${String(error)}. The USDC ` +
+          `may already be in escrow. Do not create another cash-out; ${recoveryInstruction} and ` +
+          `use list_orders for the connected wallet to recover the order.`
+        );
+      }
 
       let accessPolicyNote = "";
       if (prepared.accessPolicyRequired) {
@@ -341,6 +432,17 @@ Important notes:
           const policyTxHash = await this.#submitAccessPolicy(walletProvider, result.depositId);
           accessPolicyNote = ` The restricted-platform access policy was configured (transaction: ${policyTxHash}).`;
         } catch (error) {
+          if (error instanceof StepOutcomeUnknownError) {
+            return (
+              `Created Peer Cash cash-out order ${result.depositId} for ${args.amountUsdc} USDC ` +
+              `on ${args.platform} (deposit transaction: ${result.txHash}). The access policy ` +
+              `transaction was submitted (wallet submission hash: ${error.txHash}), but its ` +
+              `receipt could not be ` +
+              `confirmed. The USDC is already in escrow. Do not create another cash-out or ` +
+              `resubmit the policy. Resolve that submission through the connected wallet provider ` +
+              `or its bundler first.`
+            );
+          }
           const reason =
             error instanceof StepRevertedError
               ? `the access policy transaction reverted (hash: ${error.txHash})`
@@ -355,7 +457,7 @@ Important notes:
         }
       }
 
-      const steps = submitted.map(step => `${step.kind}: ${step.txHash}`).join(", ");
+      const steps = submitted.map(formatSubmittedStep).join(", ");
       return (
         `Created Peer Cash cash-out order ${result.depositId} for ${args.amountUsdc} USDC on ` +
         `${args.platform} (transactions: ${steps}).${accessPolicyNote} The order is now ` +
@@ -473,13 +575,16 @@ Important notes:
         prepared.txs,
         prepared.steps,
       );
-      const steps = submitted.map(step => `${step.kind}: ${step.txHash}`).join(", ");
+      const steps = submitted.map(formatSubmittedStep).join(", ");
       const summary =
         args.amountUsdc !== undefined
           ? `Withdrew ${args.amountUsdc} USDC from order ${args.depositId}`
           : `Closed order ${args.depositId} and withdrew the remaining USDC`;
       return `${summary} (transactions: ${steps}).`;
     } catch (error) {
+      if (error instanceof StepOutcomeUnknownError) {
+        return describeUnknownOutcome("the withdrawal", error);
+      }
       if (error instanceof StepRevertedError) {
         return (
           `Error: the ${error.step} transaction of the withdrawal reverted ` +
@@ -521,9 +626,12 @@ The added funds pay out to the same payee and fill at the same live oracle marke
         prepared.txs,
         prepared.steps,
       );
-      const steps = submitted.map(step => `${step.kind}: ${step.txHash}`).join(", ");
+      const steps = submitted.map(formatSubmittedStep).join(", ");
       return `Added ${args.amountUsdc} USDC to order ${args.depositId} (transactions: ${steps}).`;
     } catch (error) {
+      if (error instanceof StepOutcomeUnknownError) {
+        return describeUnknownOutcome("the top up", error);
+      }
       if (error instanceof StepRevertedError) {
         return (
           `Error: the ${error.step} transaction of the top up reverted (hash: ${error.txHash}). ` +
@@ -567,6 +675,9 @@ Important notes:
         `Intent signaling is now restricted to the required buyer groups.`
       );
     } catch (error) {
+      if (error instanceof StepOutcomeUnknownError) {
+        return describeUnknownOutcome("the access policy update", error);
+      }
       if (error instanceof StepRevertedError) {
         return (
           `Error: the access policy transaction reverted (hash: ${error.txHash}). Inspect that ` +
@@ -620,11 +731,24 @@ Important notes:
         data: tx.data,
         value: tx.value,
       });
-      const receipt = (await walletProvider.waitForTransactionReceipt(
-        txHash,
-      )) as TransactionReceiptLike;
+      let receipt: TransactionReceiptLike;
+      try {
+        receipt = (await walletProvider.waitForTransactionReceipt(
+          txHash,
+        )) as TransactionReceiptLike;
+      } catch (error) {
+        throw new StepOutcomeUnknownError(kind, txHash, [...submitted], error);
+      }
       if (isRevertedReceipt(receipt)) {
-        throw new StepRevertedError(kind, txHash);
+        throw new StepRevertedError(kind, receipt.transactionHash ?? txHash);
+      }
+      if (!isSuccessfulReceipt(receipt)) {
+        throw new StepOutcomeUnknownError(
+          kind,
+          txHash,
+          [...submitted],
+          new Error(`Unrecognized receipt status: ${String(receipt.status)}`),
+        );
       }
       submitted.push({ kind, txHash, receipt });
     }
@@ -649,13 +773,24 @@ Important notes:
       data: policyTx.data,
       value: policyTx.value,
     });
-    const receipt = (await walletProvider.waitForTransactionReceipt(
-      txHash,
-    )) as TransactionReceiptLike;
-    if (isRevertedReceipt(receipt)) {
-      throw new StepRevertedError("accessPolicy", txHash);
+    let receipt: TransactionReceiptLike;
+    try {
+      receipt = (await walletProvider.waitForTransactionReceipt(txHash)) as TransactionReceiptLike;
+    } catch (error) {
+      throw new StepOutcomeUnknownError("accessPolicy", txHash, [], error);
     }
-    return txHash;
+    if (isRevertedReceipt(receipt)) {
+      throw new StepRevertedError("accessPolicy", receipt.transactionHash ?? txHash);
+    }
+    if (!isSuccessfulReceipt(receipt)) {
+      throw new StepOutcomeUnknownError(
+        "accessPolicy",
+        txHash,
+        [],
+        new Error(`Unrecognized receipt status: ${String(receipt.status)}`),
+      );
+    }
+    return receipt.transactionHash ?? txHash;
   }
 }
 
