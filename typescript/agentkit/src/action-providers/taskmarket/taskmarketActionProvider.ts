@@ -9,10 +9,12 @@ import { Network } from "../../network";
 import { EvmWalletProvider } from "../../wallet-providers";
 import {
   TaskMarketClaimTaskSchema,
+  TaskMarketCreateTaskSchema,
   TaskMarketGetTaskSchema,
   TaskMarketListTasksSchema,
   TaskMarketMySubmissionsSchema,
   TaskMarketSubmitTextSchema,
+  TaskMarketTaskSubmissionsSchema,
 } from "./schemas";
 
 const DEFAULT_API_URL = "https://api.taskmarket.dev";
@@ -125,6 +127,69 @@ export class TaskMarketActionProvider extends ActionProvider<EvmWalletProvider> 
   }
 
   /**
+   * Create and fund a bounty after fresh confirmation of its exact parameters.
+   *
+   * @param walletProvider - Wallet used to fund the escrow through x402.
+   * @param args - Description, deliverables, deadline, network, and spend cap.
+   * @returns The TaskMarket response containing the created task identifier.
+   */
+  @CreateAction({
+    name: "create_task",
+    description:
+      "Create and fund a TaskMarket bounty on Base mainnet only after showing the user the exact description, reward, deadline, deliverables, network, and maximum spend. Requires confirmed=true and never creates a task silently.",
+    schema: TaskMarketCreateTaskSchema,
+  })
+  async createTask(
+    walletProvider: EvmWalletProvider,
+    args: z.infer<typeof TaskMarketCreateTaskSchema>,
+  ): Promise<string> {
+    this.assertWritesEnabled();
+    if (!args.confirmed) {
+      throw new Error("TaskMarket task creation requires fresh explicit confirmation");
+    }
+    if (args.rewardUsdc > args.maxSpendUsdc) {
+      throw new Error("TaskMarket reward exceeds the caller's maximum authorized spend");
+    }
+    if (args.maxSpendUsdc > this.maxPaymentUsdc) {
+      throw new Error(
+        `TaskMarket maxSpendUsdc exceeds the provider's configured ${this.maxPaymentUsdc} USDC payment cap`,
+      );
+    }
+
+    const deadlineMs = Date.parse(args.deadlineIso);
+    const durationHours = (deadlineMs - Date.now()) / (60 * 60 * 1_000);
+    if (!Number.isFinite(durationHours) || durationHours <= 0) {
+      throw new Error("TaskMarket deadlineIso must be in the future");
+    }
+
+    const description = [
+      args.description.trim(),
+      "",
+      "Deliverables:",
+      ...args.deliverables.map(deliverable => `- ${deliverable.trim()}`),
+      "",
+      `Deadline (ISO): ${args.deadlineIso}`,
+      "Settlement network: Base mainnet (eip155:8453)",
+      `Maximum authorized spend: ${args.maxSpendUsdc} USDC`,
+    ].join("\n");
+
+    return this.requestWithX402("/api/tasks", walletProvider, {
+      method: "POST",
+      body: {
+        description,
+        reward: this.toUsdcBaseUnits(args.rewardUsdc),
+        duration: durationHours,
+        mode: "bounty",
+        taskVisibility: "public",
+        submissionVisibility: "public",
+        tags: args.tags ?? [],
+        stakeRequired: false,
+        stakeBps: 0,
+      },
+    });
+  }
+
+  /**
    * List submissions for the current wallet, with TaskMarket read authentication.
    *
    * @param walletProvider - Wallet used to sign the read request.
@@ -170,6 +235,33 @@ export class TaskMarketActionProvider extends ActionProvider<EvmWalletProvider> 
       return JSON.stringify({ ...result, submissions: filtered }, null, 2);
     }
     return JSON.stringify(result, null, 2);
+  }
+
+  /**
+   * Retrieve submissions for a task so a human can review them.
+   *
+   * @param walletProvider - Wallet used for TaskMarket read authentication.
+   * @param args - Task identifier.
+   * @returns The submission list as formatted JSON.
+   */
+  @CreateAction({
+    name: "task_submissions",
+    description:
+      "Retrieve all submissions for a TaskMarket task for human review. This action is read-only and never accepts or rejects work.",
+    schema: TaskMarketTaskSubmissionsSchema,
+  })
+  async taskSubmissions(
+    walletProvider: EvmWalletProvider,
+    args: z.infer<typeof TaskMarketTaskSubmissionsSchema>,
+  ): Promise<string> {
+    const address = walletProvider.getAddress();
+    const signature = await walletProvider.signMessage(`taskmarket:read:${address.toLowerCase()}`);
+    return this.request(`/api/tasks/${encodeURIComponent(args.taskId)}/submissions`, {
+      headers: {
+        [READ_AUTH_ADDRESS_HEADER]: address,
+        [READ_AUTH_SIGNATURE_HEADER]: signature,
+      },
+    });
   }
 
   /**
@@ -375,6 +467,20 @@ export class TaskMarketActionProvider extends ActionProvider<EvmWalletProvider> 
       );
     }
     return payload as T;
+  }
+
+  /**
+   * Convert a finite USDC amount to six-decimal base units without accepting an unsafe integer.
+   *
+   * @param amount - Human-readable USDC amount.
+   * @returns Base-unit amount for the TaskMarket API.
+   */
+  private toUsdcBaseUnits(amount: number): string {
+    const baseUnits = Math.round(amount * 1_000_000);
+    if (!Number.isSafeInteger(baseUnits) || baseUnits <= 0) {
+      throw new Error("TaskMarket rewardUsdc must convert to a positive safe USDC amount");
+    }
+    return String(baseUnits);
   }
 
   /**

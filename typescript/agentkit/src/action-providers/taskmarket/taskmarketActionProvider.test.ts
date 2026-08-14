@@ -33,6 +33,10 @@ const mockWallet = {
 } as unknown as jest.Mocked<EvmWalletProvider>;
 
 describe("TaskMarketActionProvider", () => {
+  beforeEach(() => {
+    mockWallet.signMessage.mockClear();
+  });
+
   afterEach(() => {
     jest.restoreAllMocks();
   });
@@ -56,6 +60,58 @@ describe("TaskMarketActionProvider", () => {
       "https://taskmarket.test/api/tasks?status=open&limit=5",
       expect.objectContaining({ method: "GET" }),
     );
+  });
+
+  it("requires explicit confirmation before creating a funded task", async () => {
+    const provider = new TaskMarketActionProvider({
+      apiUrl: "https://taskmarket.test",
+      allowWriteActions: true,
+      maxPaymentUsdc: 1,
+    });
+
+    await expect(
+      provider.createTask(mockWallet, {
+        description: "Ship a tested integration",
+        deliverables: ["Public pull request"],
+        rewardUsdc: 0.5,
+        deadlineIso: new Date(Date.now() + 3_600_000).toISOString(),
+        network: "base-mainnet",
+        maxSpendUsdc: 0.5,
+        confirmed: false as never,
+      }),
+    ).rejects.toThrow("fresh explicit confirmation");
+  });
+
+  it("creates a confirmed task with the requested guardrails", async () => {
+    const fetchMock = jest
+      .spyOn(global, "fetch")
+      .mockResolvedValue(mockResponse({ taskId: "task-created" }));
+    const provider = new TaskMarketActionProvider({
+      apiUrl: "https://taskmarket.test",
+      allowWriteActions: true,
+      maxPaymentUsdc: 1,
+    });
+
+    const result = await provider.createTask(mockWallet, {
+      description: "Ship a tested integration",
+      deliverables: ["Public pull request", "Reproduction logs"],
+      rewardUsdc: 0.5,
+      deadlineIso: new Date(Date.now() + 3_600_000).toISOString(),
+      network: "base-mainnet",
+      maxSpendUsdc: 0.5,
+      confirmed: true,
+      tags: ["integration"],
+    });
+
+    expect(result).toContain("task-created");
+    const [input, init] = fetchMock.mock.calls[0] ?? [];
+    const serializedBody =
+      init?.body ?? (input instanceof Request ? await input.clone().text() : undefined);
+    const body = JSON.parse(String(serializedBody));
+    expect(body.reward).toBe("500000");
+    expect(body.description).toContain("Settlement network: Base mainnet (eip155:8453)");
+    expect(body.description).toContain("Maximum authorized spend: 0.5 USDC");
+    expect(body.description).toContain("- Public pull request");
   });
 
   it("keeps wallet writes disabled by default", async () => {
@@ -83,6 +139,24 @@ describe("TaskMarketActionProvider", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "https://taskmarket.test/api/tasks/0xabc/claim",
       expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("retrieves task submissions with read authentication", async () => {
+    const fetchMock = jest
+      .spyOn(global, "fetch")
+      .mockResolvedValue(mockResponse({ submissions: [{ id: "submission-1" }] }));
+    const provider = new TaskMarketActionProvider({ apiUrl: "https://taskmarket.test" });
+
+    const result = await provider.taskSubmissions(mockWallet, { taskId: "0xabc" });
+
+    expect(result).toContain("submission-1");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://taskmarket.test/api/tasks/0xabc/submissions",
+      expect.objectContaining({ method: "GET" }),
+    );
+    expect(mockWallet.signMessage).toHaveBeenCalledWith(
+      "taskmarket:read:0x1111111111111111111111111111111111111111",
     );
   });
 
