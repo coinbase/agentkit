@@ -2,7 +2,6 @@
  * Offramp Action Provider
  *
  * Native AgentKit wrapper around @usdctofiat/offramp (Galleon / USDCtoFiat).
- * Does not republish or flatten the SDK.
  *
  * @module offramp
  */

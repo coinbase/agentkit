@@ -8,7 +8,7 @@ export const CashoutActionSchema = z.object({
   mode: z
     .enum(["fast", "best"])
     .describe(
-      "fast: Peer Cash at the live market rate, 0% spread (Galleon earns TOFIAT). best: Delegate-managed rates, 10 bps. Do not force fast onto Delegate.",
+      "fast: live market pricing with 0% spread. best: Delegate-managed pricing with a 10 bps fee.",
     ),
   amount: z
     .string()
