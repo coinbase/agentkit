@@ -2,10 +2,11 @@ import { z } from "zod";
 import { ActionProvider } from "../actionProvider";
 import { CreateAction } from "../actionDecorator";
 import { FetchOpenTasksSchema, GetTaskSchema } from "./schemas";
-import { TASKMARKET_BASE_URL, TASKMARKET_TASKS_URL } from "./constants";
+import { TASKMARKET_TASKS_URL } from "./constants";
 
 /** A TaskMarket board task as returned by the public API. */
 export interface TaskMarketTask {
+  [key: string]: unknown;
   id?: string;
   title?: string;
   description?: string;
@@ -15,9 +16,14 @@ export interface TaskMarketTask {
   submissionCount?: number;
   expiryTime?: string;
   tags?: string[];
-  [key: string]: unknown;
 }
 
+/**
+ * Extracts the task list from a TaskMarket API response payload.
+ *
+ * @param payload - The parsed JSON payload from the API
+ * @returns The list of tasks, or an empty array if none is present
+ */
 function asTaskList(payload: unknown): TaskMarketTask[] {
   if (!payload || typeof payload !== "object") return [];
   const record = payload as Record<string, unknown>;
@@ -25,6 +31,12 @@ function asTaskList(payload: unknown): TaskMarketTask[] {
   return Array.isArray(list) ? (list as TaskMarketTask[]) : [];
 }
 
+/**
+ * Converts an unknown error into a readable message string.
+ *
+ * @param error - The error to convert
+ * @returns The error message
+ */
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
@@ -39,6 +51,9 @@ function errorMessage(error: unknown): string {
  * (operators must explicitly authorize spend).
  */
 export class TaskMarketActionProvider extends ActionProvider {
+  /**
+   * Constructor for the TaskMarketActionProvider class.
+   */
   constructor() {
     super("taskmarket", []);
   }
@@ -65,9 +80,7 @@ tags, and a short description. Use this to decide whether delegating a request t
 an external worker is cheaper or more reliable than burning inference locally.`,
     schema: FetchOpenTasksSchema,
   })
-  async fetchOpenTasks(
-    args: z.infer<typeof FetchOpenTasksSchema>,
-  ): Promise<string> {
+  async fetchOpenTasks(args: z.infer<typeof FetchOpenTasksSchema>): Promise<string> {
     try {
       const query = new URLSearchParams({ limit: String(args.limit ?? 20) });
       const response = await fetch(`${TASKMARKET_TASKS_URL}?${query}`);
@@ -78,24 +91,24 @@ an external worker is cheaper or more reliable than burning inference locally.`,
 
       const payload: unknown = await response.json();
       let open = asTaskList(payload).filter(
-        (task) => task.status === "open" && task.submissionWindowOpen !== false,
+        task => task.status === "open" && task.submissionWindowOpen !== false,
       );
-      open = open.sort(
-        (a, b) => (a.submissionCount ?? 0) - (b.submissionCount ?? 0),
-      );
+      open = open.sort((a, b) => (a.submissionCount ?? 0) - (b.submissionCount ?? 0));
 
       if (args.query) {
         const needle = args.query.toLowerCase();
-        open = open.filter((task) =>
-          String(task.description ?? "").toLowerCase().includes(needle),
+        open = open.filter(task =>
+          String(task.description ?? "")
+            .toLowerCase()
+            .includes(needle),
         );
       }
       if (args.minReward !== undefined) {
         const minReward = args.minReward;
-        open = open.filter((task) => (task.reward ?? 0) >= minReward);
+        open = open.filter(task => (task.reward ?? 0) >= minReward);
       }
 
-      const slim = open.slice(0, args.limit ?? 20).map((task) => ({
+      const slim = open.slice(0, args.limit ?? 20).map(task => ({
         id: String(task.id ?? ""),
         title: task.title,
         reward: task.reward,

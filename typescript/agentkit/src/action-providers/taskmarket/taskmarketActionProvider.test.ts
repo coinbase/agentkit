@@ -109,9 +109,7 @@ describe("TaskMarketActionProvider", () => {
 
       const result = await provider.getTask({ taskId: mockTask.id });
       expect(JSON.parse(result).id).toBe(mockTask.id);
-      expect(fetchMock).toHaveBeenCalledWith(
-        expect.stringContaining(`/api/tasks/${mockTask.id}`),
-      );
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining(`/api/tasks/${mockTask.id}`));
     });
 
     it("should handle API errors gracefully", async () => {
