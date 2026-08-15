@@ -618,7 +618,10 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
       // confirmation, so cap the signed amount at the configured limit.
       const client = await this.createX402Client(
         walletProvider,
-        createCappedPaymentSelector(this.config.maxPaymentUsdc),
+        createCappedPaymentSelector(this.config.maxPaymentUsdc, {
+          isAllowedAsset: asset => isUsdcAsset(asset, walletProvider),
+          allowedNetworks: getX402Networks(walletProvider.getNetwork()),
+        }),
       );
       const fetchWithPayment = wrapFetchWithPayment(fetch, client);
 

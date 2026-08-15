@@ -56,16 +56,34 @@ describe("createApprovedPaymentSelector", () => {
   });
 });
 
+const isBaseUsdc = (asset: string) => asset.toLowerCase() === BASE_REQ.asset;
+const CAPPED_OPTS = {
+  isAllowedAsset: isBaseUsdc,
+  allowedNetworks: [BASE_REQ.network],
+};
+
 describe("createCappedPaymentSelector", () => {
   it("accepts requirements within the configured limit", () => {
-    const selector = createCappedPaymentSelector(0.5);
+    const selector = createCappedPaymentSelector(0.5, CAPPED_OPTS);
     const req = { ...BASE_REQ, amount: "500000" }; // 0.5 USDC
     expect(selector(2, [req])).toBe(req);
   });
 
   it("refuses requirements above the configured limit", () => {
-    const selector = createCappedPaymentSelector(0.5);
+    const selector = createCappedPaymentSelector(0.5, CAPPED_OPTS);
     const req = { ...BASE_REQ, amount: "500001" };
     expect(() => selector(2, [req])).toThrow(/exceed the configured spending limit/);
+  });
+
+  it("refuses a within-cap requirement on a non-USDC asset", () => {
+    const selector = createCappedPaymentSelector(0.5, CAPPED_OPTS);
+    const req = { ...BASE_REQ, amount: "1", asset: "0x0000000000000000000000000000000000000001" };
+    expect(() => selector(2, [req])).toThrow(/not USDC/);
+  });
+
+  it("refuses a within-cap USDC requirement on an unsupported network", () => {
+    const selector = createCappedPaymentSelector(0.5, CAPPED_OPTS);
+    const req = { ...BASE_REQ, amount: "1", network: "eip155:1" };
+    expect(() => selector(2, [req])).toThrow(/unsupported network/);
   });
 });

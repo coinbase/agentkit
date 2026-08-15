@@ -796,18 +796,35 @@ export function createApprovedPaymentSelector(approved: ApprovedPaymentOption) {
 /**
  * Builds a selector that caps automatically-signed payments at the configured
  * USDC limit, for the direct (no user confirmation) request path.
+ * Also refuses non-USDC assets and (when provided) networks the wallet
+ * cannot pay on. The numeric cap alone is not enough: a live 402 can return
+ * a small maxAmountRequired denominated in a different token.
  *
  * @param maxPaymentUsdc - Maximum USDC amount allowed per payment
+ * @param options.isAllowedAsset - True only for the wallet's USDC address
+ * @param options.allowedNetworks - Wallet-compatible x402 network ids
  * @returns Selector compatible with the x402Client constructor
  */
-export function createCappedPaymentSelector(maxPaymentUsdc: number) {
+export function createCappedPaymentSelector(
+  maxPaymentUsdc: number,
+  options: {
+    isAllowedAsset: (asset: string) => boolean;
+    allowedNetworks?: readonly string[];
+  },
+) {
   const cap = parseUnits(maxPaymentUsdc.toString(), USDC_DECIMALS);
   return <T extends PaymentRequirementLike>(_x402Version: number, accepts: T[]): T => {
-    const match = accepts.find(req => BigInt(req.maxAmountRequired ?? req.amount ?? "0") <= cap);
+    const match = accepts.find(req => {
+      if (!options.isAllowedAsset(req.asset)) return false;
+      if (options.allowedNetworks && !options.allowedNetworks.includes(req.network)) {
+        return false;
+      }
+      return BigInt(req.maxAmountRequired ?? req.amount ?? "0") <= cap;
+    });
     if (!match) {
       throw new Error(
         `x402 payment requirements exceed the configured spending limit of ` +
-          `${maxPaymentUsdc} USDC. Refusing to sign.`,
+          `${maxPaymentUsdc} USDC, are not USDC, or are on an unsupported network. Refusing to sign.`,
       );
     }
     return match;
