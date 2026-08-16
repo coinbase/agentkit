@@ -18,6 +18,15 @@ const ResourceUrlSchema = z
     );
   }, "Must be an HTTP(S) URL without embedded credentials");
 
+export const PreflightAgentEndpointSchema = z
+  .object({
+    endpoint: ResourceUrlSchema.describe(
+      "Exact public A2A or MCP operational endpoint to check, such as https://agent.example/a2a",
+    ),
+  })
+  .strip()
+  .describe("Run a free, read-only live preflight on one autonomous-agent endpoint");
+
 /** Exact x402 v2 option returned by Agent Guild's Base-mainnet quote. */
 export const AgentGuildPaymentOptionSchema = z
   .object({
