@@ -95,6 +95,41 @@ describe("AgentGuildActionProvider", () => {
     global.fetch = originalFetch;
   });
 
+  it("preflights one endpoint for free without constructing a payment client", async () => {
+    const preflight = {
+      verdict: "no_failed_checks",
+      checks: { a2a_handshake: "passed", signed_card: "unknown" },
+      limitations: ["Point-in-time evidence only"],
+    };
+    (global.fetch as jest.Mock).mockResolvedValue(
+      new Response(JSON.stringify(preflight), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    const result = JSON.parse(
+      await provider.preflightAgentEndpoint({ endpoint: "https://worker.example/a2a" }),
+    );
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "https://guild.example/preflight?url=https%3A%2F%2Fworker.example%2Fa2a",
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "coinbase-agentkit-agent-guild/1",
+        },
+      },
+    );
+    expect(result).toEqual(
+      expect.objectContaining({ success: true, paid: false, status: 200, data: preflight }),
+    );
+    expect(result.note).toContain("not an endorsement");
+    expect(mockWrapFetchWithPayment).not.toHaveBeenCalled();
+    expect(walletProvider.toSigner).not.toHaveBeenCalled();
+  });
+
   it("quotes a trust decision without constructing a payment client", async () => {
     const paymentRequired = {
       x402Version: 2,
