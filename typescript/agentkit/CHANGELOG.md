@@ -10,8 +10,6 @@
 
 ### Patch Changes
 
-- Added `offrampActionProvider` wrapping Galleon / USDCtoFiat `@usdctofiat/offramp` cashout fast|best for Base mainnet. Fast stays Fast (0% TOFIAT). Best is delegated 10 bps.
-
 - [#966](https://github.com/coinbase/agentkit/pull/966) [`b211701`](https://github.com/coinbase/agentkit/commit/b21170143825cb1892daaa8e52c68e9c8c446ae1) Thanks [@phdargen](https://github.com/phdargen)! - Bumped x402 packages and fix missing readContract interface
 
 - [#982](https://github.com/coinbase/agentkit/pull/982) [`c3dbef6`](https://github.com/coinbase/agentkit/commit/c3dbef60d1613effc9d9805816bec15f5510fdca) Thanks [@fffilimonov](https://github.com/fffilimonov)! - Added dTelecom action provider for decentralized voice services (WebRTC, STT, TTS) with x402 micropayments, and a voice agent example.
