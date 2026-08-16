@@ -802,21 +802,21 @@ export function createApprovedPaymentSelector(approved: ApprovedPaymentOption) {
  *
  * @param maxPaymentUsdc - Maximum USDC amount allowed per payment
  * @param options.isAllowedAsset - True only for the wallet's USDC address
- * @param options.allowedNetworks - Wallet-compatible x402 network ids
+ * @param options.allowedNetworks - Wallet-compatible x402 network ids (required)
  * @returns Selector compatible with the x402Client constructor
  */
 export function createCappedPaymentSelector(
   maxPaymentUsdc: number,
   options: {
     isAllowedAsset: (asset: string) => boolean;
-    allowedNetworks?: readonly string[];
+    allowedNetworks: readonly string[];
   },
 ) {
   const cap = parseUnits(maxPaymentUsdc.toString(), USDC_DECIMALS);
   return <T extends PaymentRequirementLike>(_x402Version: number, accepts: T[]): T => {
     const match = accepts.find(req => {
       if (!options.isAllowedAsset(req.asset)) return false;
-      if (options.allowedNetworks && !options.allowedNetworks.includes(req.network)) {
+      if (!options.allowedNetworks.includes(req.network)) {
         return false;
       }
       return BigInt(req.maxAmountRequired ?? req.amount ?? "0") <= cap;
