@@ -168,6 +168,10 @@ const agent = createAgent({
 <summary><strong>Agent Guild</strong></summary>
 <table width="100%">
 <tr>
+    <td width="200"><code>preflight_agent_endpoint</code></td>
+    <td width="768">Runs a free, read-only live preflight on one exact public A2A or MCP endpoint before delegation.</td>
+</tr>
+<tr>
     <td width="200"><code>quote_agent_trust</code></td>
     <td width="768">Quotes a capability-specific Agent Guild trust decision without paying.</td>
 </tr>
