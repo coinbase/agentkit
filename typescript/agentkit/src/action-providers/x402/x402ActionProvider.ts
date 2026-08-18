@@ -41,6 +41,7 @@ interface ResolvedX402Config {
   allowDynamicServiceRegistration: boolean;
   registeredFacilitators: Record<string, string>;
   maxPaymentUsdc: number;
+  beforePayment?: X402Config["beforePayment"];
 }
 
 /**
@@ -66,6 +67,7 @@ export class X402ActionProvider extends ActionProvider<WalletProvider> {
       registeredFacilitators: config.registeredFacilitators ?? {},
       maxPaymentUsdc:
         config.maxPaymentUsdc ?? parseFloat(process.env.X402_MAX_PAYMENT_USDC ?? "1.0"),
+      beforePayment: config.beforePayment,
     };
     this.registeredServices = new Set(this.config.registeredServices);
   }
@@ -458,6 +460,34 @@ DO NOT use this action directly without first trying make_http_request!`,
           null,
           2,
         );
+      }
+
+      // Optional buyer-side pre-payment gate. Runs after amount + network
+      // validation and immediately before any signing or settlement, so an
+      // integrator can screen the recipient (payTo) — sanctions, reputation,
+      // allowlist — and abort without paying. Provider-neutral: it receives the
+      // payment context and nothing vendor-specific, so any backend can plug in.
+      if (this.config.beforePayment) {
+        const decision = await this.config.beforePayment({
+          url: args.url,
+          payTo: args.selectedPaymentOption.payTo ?? null,
+          network: selectedNetwork,
+          asset: args.selectedPaymentOption.asset,
+          amount: paymentAmount,
+          method: args.method,
+        });
+        if (decision && decision.abort) {
+          return JSON.stringify(
+            {
+              error: true,
+              message: "Payment aborted by beforePayment hook",
+              details: decision.reason ?? "The pre-payment check refused this recipient.",
+              payTo: args.selectedPaymentOption.payTo,
+            },
+            null,
+            2,
+          );
+        }
       }
 
       // Create x402 client with appropriate signer
