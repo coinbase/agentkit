@@ -1,5 +1,11 @@
 # AgentKit Changelog
 
+## 0.12.0
+
+### Minor Changes
+
+- [#1432](https://github.com/coinbase/agentkit/pull/1432) [`455a6c5`](https://github.com/coinbase/agentkit/commit/455a6c5a29375de290da0f3b440119ec7f511440) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Removed local filesystem reads from the flaunch and zora action providers. The `image` parameter previously treated any non-URL string as a local file path, read it off the agent host, and uploaded the contents to a third-party IPFS pinning service. It now accepts only remote URLs (`http(s)://` for flaunch, `https://` or `ipfs://` for zora) or a `data:` URI. To publish a local file, read it yourself and pass a data URI: `` image: `data:image/png;base64,${fs.readFileSync(path, "base64")}` ``
+
 ## 0.11.0
 
 ### Minor Changes
