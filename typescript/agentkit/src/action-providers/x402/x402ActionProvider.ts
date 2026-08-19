@@ -11,10 +11,16 @@ import {
   EmptySchema,
   X402Config,
 } from "./schemas";
-import { EvmWalletProvider, WalletProvider, SvmWalletProvider } from "../../wallet-providers";
+import {
+  EvmWalletProvider,
+  NearWalletProvider,
+  WalletProvider,
+  SvmWalletProvider,
+} from "../../wallet-providers";
 import { x402Client, wrapFetchWithPayment } from "@x402/fetch";
 import { registerExactEvmScheme } from "@x402/evm/exact/client";
 import { registerExactSvmScheme } from "@x402/svm/exact/client";
+import { ExactNearScheme } from "@x402/near/exact/client";
 import {
   getX402Networks,
   handleHttpError,
@@ -446,14 +452,17 @@ DO NOT use this action directly without first trying make_http_request!`,
       // Check if wallet provider is supported
       if (
         !(
-          walletProvider instanceof SvmWalletProvider || walletProvider instanceof EvmWalletProvider
+          walletProvider instanceof SvmWalletProvider ||
+          walletProvider instanceof EvmWalletProvider ||
+          walletProvider instanceof NearWalletProvider
         )
       ) {
         return JSON.stringify(
           {
             error: true,
             message: "Unsupported wallet provider",
-            details: "Only SvmWalletProvider and EvmWalletProvider are supported",
+            details:
+              "Only SvmWalletProvider, EvmWalletProvider, and NearWalletProvider are supported",
           },
           null,
           2,
@@ -593,14 +602,17 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
 
       if (
         !(
-          walletProvider instanceof SvmWalletProvider || walletProvider instanceof EvmWalletProvider
+          walletProvider instanceof SvmWalletProvider ||
+          walletProvider instanceof EvmWalletProvider ||
+          walletProvider instanceof NearWalletProvider
         )
       ) {
         return JSON.stringify(
           {
             error: true,
             message: "Unsupported wallet provider",
-            details: "Only SvmWalletProvider and EvmWalletProvider are supported",
+            details:
+              "Only SvmWalletProvider, EvmWalletProvider, and NearWalletProvider are supported",
           },
           null,
           2,
@@ -865,6 +877,8 @@ These are the only services that can be called using make_http_request or make_h
     } else if (walletProvider instanceof SvmWalletProvider) {
       const signer = await walletProvider.toSigner();
       registerExactSvmScheme(client, { signer });
+    } else if (walletProvider instanceof NearWalletProvider) {
+      client.register("near:*", new ExactNearScheme(walletProvider));
     }
 
     return client;

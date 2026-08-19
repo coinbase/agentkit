@@ -7,6 +7,7 @@ describe("Wallet Action Provider", () => {
   const MOCK_ADDRESS = "0xe6b2af36b3bb8d47206a129ff11d5a2de2a63c83";
   const MOCK_ETH_BALANCE = 1000000000000000000n;
   const MOCK_SOL_BALANCE = 1000000000n;
+  const MOCK_NEAR_BALANCE = 1000000000000000000000000n;
   const MOCK_EVM_NETWORK = {
     protocolFamily: "evm",
     networkId: "base-sepolia",
@@ -15,6 +16,11 @@ describe("Wallet Action Provider", () => {
   const MOCK_SOLANA_NETWORK = {
     protocolFamily: "svm",
     networkId: "mainnet",
+  };
+  const MOCK_NEAR_NETWORK = {
+    protocolFamily: "near",
+    networkId: "near-testnet",
+    chainId: "testnet",
   };
   const MOCK_UNKNOWN_NETWORK = {
     protocolFamily: "unknown",
@@ -78,6 +84,16 @@ describe("Wallet Action Provider", () => {
       ].join("\n");
 
       expect(response).toBe(expectedResponse);
+    });
+
+    it("should show yoctoNEAR and NEAR balances for NEAR networks", async () => {
+      mockWallet.getNetwork.mockReturnValue(MOCK_NEAR_NETWORK);
+      mockWallet.getBalance.mockResolvedValue(MOCK_NEAR_BALANCE);
+
+      const response = await actionProvider.getWalletDetails(mockWallet, {});
+
+      expect(response).toContain(`Native Balance: ${MOCK_NEAR_BALANCE} yoctoNEAR`);
+      expect(response).toContain("Native Balance: 1 NEAR");
     });
 
     it("should handle unknown protocol families", async () => {
@@ -182,6 +198,24 @@ describe("Wallet Action Provider", () => {
       );
       expect(response).toBe(
         `Transferred ${MOCK_AMOUNT} SOL to ${MOCK_DESTINATION}\nSignature: ${MOCK_SIGNATURE}`,
+      );
+    });
+
+    it("should successfully transfer NEAR", async () => {
+      mockWallet.getNetwork.mockReturnValue(MOCK_NEAR_NETWORK);
+      mockWallet.nativeTransfer.mockResolvedValue(MOCK_TRANSACTION_HASH);
+
+      const response = await actionProvider.nativeTransfer(mockWallet, {
+        to: "receiver.testnet",
+        value: MOCK_AMOUNT,
+      });
+
+      expect(mockWallet.nativeTransfer).toHaveBeenCalledWith(
+        "receiver.testnet",
+        parseUnits(MOCK_AMOUNT, 24).toString(),
+      );
+      expect(response).toBe(
+        `Transferred ${MOCK_AMOUNT} NEAR to receiver.testnet\nTransaction hash: ${MOCK_TRANSACTION_HASH}`,
       );
     });
 
