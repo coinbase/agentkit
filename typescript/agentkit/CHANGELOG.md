@@ -26,6 +26,19 @@
 
 ### Patch Changes
 
+- Added `oneLyActionProvider` to enable AI agents to buy AND sell APIs on the 1ly marketplace using x402 payments
+  - Added `onely_search` action for searching APIs and services
+  - Added `onely_get_details` action for getting x402 payment details
+  - Added `onely_call` action for paying and calling APIs with automatic USDC payments
+  - Added `onely_review` action for leaving reviews after purchases
+  - Added `onely_create_store` action for creating agent stores with wallet signature
+  - Added `onely_create_link` action for listing APIs for sale
+  - Added `onely_list_links` action for viewing all listings
+  - Added `onely_get_stats` action for checking earnings and statistics
+  - Added `onely_withdraw` action for withdrawing revenue to Solana wallet
+  - First action provider enabling agents to be both buyers AND sellers
+  - Supports Base mainnet and Solana mainnet via x402 protocol
+
 - [#883](https://github.com/coinbase/agentkit/pull/883) [`02f9291`](https://github.com/coinbase/agentkit/commit/02f9291ef09c6edab2bb81ed6de81a06206e866d) Thanks [@pawelpolak2](https://github.com/pawelpolak2)! - Updated Vaults.fyi provider to use the v2 API
 
 - [#863](https://github.com/coinbase/agentkit/pull/863) [`2471251`](https://github.com/coinbase/agentkit/commit/24712518430c787f5c543781b39116708a2d759a) Thanks [@phdargen](https://github.com/phdargen)! - Converted all dynamic to static imports
