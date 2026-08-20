@@ -519,6 +519,88 @@ describe("X402ActionProvider", () => {
       expect(parsedResult.details.paymentProof).toEqual(MOCK_PAYMENT_PROOF);
     });
 
+    it("should abort payment when the beforePayment hook returns { abort: true }", async () => {
+      mockGetX402Networks.mockReturnValue(["base-sepolia"]);
+      const beforePayment = jest
+        .fn()
+        .mockResolvedValue({ abort: true, reason: "flagged recipient" });
+      const guarded = new X402ActionProvider({
+        registeredServices: ["https://www.x402.org"],
+        beforePayment,
+      });
+
+      const result = await guarded.retryWithX402(makeMockWalletProvider("base-sepolia"), {
+        url: "https://www.x402.org/protected",
+        method: "GET",
+        headers: null,
+        queryParams: null,
+        body: null,
+        selectedPaymentOption: {
+          scheme: "exact",
+          network: "base-sepolia",
+          maxAmountRequired: "10000",
+          asset: "0x456",
+          amount: null,
+          price: null,
+          payTo: "0xSanctionedRecipient",
+        },
+      });
+
+      // Hook saw the recipient + context...
+      expect(beforePayment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: "https://www.x402.org/protected",
+          payTo: "0xSanctionedRecipient",
+          network: "base-sepolia",
+          method: "GET",
+        }),
+      );
+      // ...and no payment was ever signed/settled.
+      expect(wrapFetchWithPayment).not.toHaveBeenCalled();
+      const parsedResult = JSON.parse(result);
+      expect(parsedResult.error).toBe(true);
+      expect(parsedResult.message).toBe("Payment aborted by beforePayment hook");
+      expect(parsedResult.details).toContain("flagged recipient");
+    });
+
+    it("should proceed with payment when the beforePayment hook allows", async () => {
+      mockGetX402Networks.mockReturnValue(["base-sepolia"]);
+      const beforePayment = jest.fn().mockResolvedValue(undefined);
+      const guarded = new X402ActionProvider({
+        registeredServices: ["https://www.x402.org"],
+        beforePayment,
+      });
+      mockFetchWithPayment.mockResolvedValue(
+        createMockResponse({
+          status: 200,
+          data: { message: "Paid content" },
+          headers: { "content-type": "application/json" },
+        }),
+      );
+
+      const result = await guarded.retryWithX402(makeMockWalletProvider("base-sepolia"), {
+        url: "https://www.x402.org/protected",
+        method: "GET",
+        headers: null,
+        queryParams: null,
+        body: null,
+        selectedPaymentOption: {
+          scheme: "exact",
+          network: "base-sepolia",
+          maxAmountRequired: "10000",
+          asset: "0x456",
+          amount: null,
+          price: null,
+          payTo: "0xCleanRecipient",
+        },
+      });
+
+      expect(beforePayment).toHaveBeenCalledTimes(1);
+      expect(wrapFetchWithPayment).toHaveBeenCalled();
+      const parsedResult = JSON.parse(result);
+      expect(parsedResult.status).toBe("success");
+    });
+
     it("should handle network errors during payment", async () => {
       const error = new TypeError("fetch failed");
       mockGetX402Networks.mockReturnValue(["base-sepolia"]);
