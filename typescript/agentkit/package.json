@@ -58,6 +58,7 @@
     "@zerodev/ecdsa-validator": "^5.4.5",
     "@zerodev/intent": "^0.0.24",
     "@zerodev/sdk": "^5.4.28",
+    "@zkp2p/cash": "^0.4.8",
     "@zoralabs/coins-sdk": "0.2.8",
     "@zoralabs/protocol-deployments": "0.6.1",
     "agent0-sdk": "^1.7.1",

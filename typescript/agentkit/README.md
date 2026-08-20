@@ -542,6 +542,43 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Peer Cash</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>estimate</code></td>
+    <td width="768">Estimates the fiat amount a cash-out would deliver at the live oracle market rate.</td>
+</tr>
+<tr>
+    <td width="200"><code>capabilities</code></td>
+    <td width="768">Lists payout platforms, supported currencies, payee format hints, and USDC amount bounds.</td>
+</tr>
+<tr>
+    <td width="200"><code>cashout</code></td>
+    <td width="768">Cashes out USDC to fiat in the user's payment app (Venmo, Revolut, Wise, Zelle, and more) via the Peer P2P protocol.</td>
+</tr>
+<tr>
+    <td width="200"><code>order_status</code></td>
+    <td width="768">Reads the lifecycle state of a cash-out order by its deposit id.</td>
+</tr>
+<tr>
+    <td width="200"><code>list_orders</code></td>
+    <td width="768">Lists cash-out orders owned by a wallet.</td>
+</tr>
+<tr>
+    <td width="200"><code>withdraw</code></td>
+    <td width="768">Withdraws USDC from a cash-out order back to the wallet, pruning expired buyer intents automatically.</td>
+</tr>
+<tr>
+    <td width="200"><code>top_up</code></td>
+    <td width="768">Adds USDC to a live cash-out order at the same payee and market rate.</td>
+</tr>
+<tr>
+    <td width="200"><code>configure_access_policy</code></td>
+    <td width="768">Retries the access policy transaction for a restricted cash-out whose policy did not confirm.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Pyth</strong></summary>
 <table width="100%">
 <tr>
