@@ -769,6 +769,23 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Taskmarket</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>list_tasks</code></td>
+    <td width="768">Discovers public Taskmarket work with reward, tag, mode, deadline, and pagination filters.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_task</code></td>
+    <td width="768">Fetches a Taskmarket task specification, escrow state, submission window, and available next actions.</td>
+</tr>
+<tr>
+    <td width="200"><code>create_task</code></td>
+    <td width="768">Previews a task and, only after explicit confirmation, creates it with USDC escrow on Base mainnet under a configurable reward limit.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>x402</strong></summary>
 <table width="100%">
 <tr>
