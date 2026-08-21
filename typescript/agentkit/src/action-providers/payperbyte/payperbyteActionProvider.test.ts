@@ -8,6 +8,7 @@ import {
   BYTE_ATTESTATION_VERIFYING_CONTRACT,
   PAYLOAD_ATTESTATION_TYPES,
 } from "./constants";
+import { REAL_FIXTURE_BODY, REAL_FIXTURE_ATTESTATION } from "./realFixture.test-data";
 import type { PaymentPolicy, PaymentRequirements } from "@x402/fetch";
 
 // Mock @x402/fetch and @x402/evm so no real payment logic runs. The x402Client mock has a real
@@ -606,6 +607,127 @@ describe("PayperbyteActionProvider", () => {
 
       expect(parsed.verified).toBe(false);
       expect(parsed.reason).toContain("invalid input");
+    });
+  });
+
+  describe("payperbyte_verify_attestation — real production fixture (2026-08-21 capture, sanctions-screen)", () => {
+    // REAL_FIXTURE_BODY / REAL_FIXTURE_ATTESTATION are a real X-BYTE-Attestation receipt
+    // captured from the live PayPerByte gateway, not synthesized — see realFixture.test-data.ts
+    // for provenance. This complements the ephemeral-key tests above with one genuine
+    // real-world positive vector, cross-checked against an independent implementation at
+    // capture time (see the header comment on realFixture.test-data.ts).
+    it("POSITIVE: verifies the real captured receipt, recovering the real gateway publisher", async () => {
+      // Sanity-check the fixture itself before trusting the provider's verdict about it.
+      const bodyBytes = new TextEncoder().encode(REAL_FIXTURE_BODY);
+      expect(bodyBytes.length).toBe(REAL_FIXTURE_ATTESTATION.payloadLength);
+      expect(keccak256(bodyBytes).toLowerCase()).toBe(
+        REAL_FIXTURE_ATTESTATION.payloadHash.toLowerCase(),
+      );
+
+      const result = await provider.verifyAttestation(mockWallet, {
+        body: REAL_FIXTURE_BODY,
+        attestation: REAL_FIXTURE_ATTESTATION,
+      });
+      const parsed = JSON.parse(result);
+
+      expect(parsed.verified).toBe(true);
+      expect(parsed.publisher).toBe(REAL_FIXTURE_ATTESTATION.publisher);
+      expect(parsed.recoveredSigner.toLowerCase()).toBe(
+        REAL_FIXTURE_ATTESTATION.publisher.toLowerCase(),
+      );
+      expect(parsed.publisherTrusted).toBeNull();
+    });
+
+    it("trustedPublishers: the real fixture's publisher on the allowlist verifies with publisherTrusted:true", async () => {
+      const trustingProvider = payperbyteActionProvider({
+        trustedPublishers: [REAL_FIXTURE_ATTESTATION.publisher],
+      });
+
+      const result = await trustingProvider.verifyAttestation(mockWallet, {
+        body: REAL_FIXTURE_BODY,
+        attestation: REAL_FIXTURE_ATTESTATION,
+      });
+      const parsed = JSON.parse(result);
+
+      expect(parsed.verified).toBe(true);
+      expect(parsed.publisherTrusted).toBe(true);
+    });
+
+    it("trustedPublishers: a different address on the allowlist rejects the real fixture even though hash+signature check out", async () => {
+      const trustingProvider = payperbyteActionProvider({
+        trustedPublishers: ["0x000000000000000000000000000000000000dEaD"],
+      });
+
+      const result = await trustingProvider.verifyAttestation(mockWallet, {
+        body: REAL_FIXTURE_BODY,
+        attestation: REAL_FIXTURE_ATTESTATION,
+      });
+      const parsed = JSON.parse(result);
+
+      expect(parsed.verified).toBe(false);
+      expect(parsed.hashMatch).toBe(true);
+      expect(parsed.signerMatch).toBe(true);
+      expect(parsed.publisherTrusted).toBe(false);
+      expect(parsed.reason).toContain("not in the configured trustedPublishers allowlist");
+    });
+
+    it("NEGATIVE (tampered body): flipping a single byte of the real fixture body fails closed without throwing", async () => {
+      // Flip one character in the middle of the real body -- still valid-length UTF-8, so this
+      // exercises the hash-mismatch path specifically, not a length mismatch.
+      const midpoint = Math.floor(REAL_FIXTURE_BODY.length / 2);
+      const flippedChar = REAL_FIXTURE_BODY[midpoint] === "a" ? "b" : "a";
+      const tamperedBody =
+        REAL_FIXTURE_BODY.slice(0, midpoint) + flippedChar + REAL_FIXTURE_BODY.slice(midpoint + 1);
+      expect(tamperedBody).not.toBe(REAL_FIXTURE_BODY);
+
+      const result = await provider.verifyAttestation(mockWallet, {
+        body: tamperedBody,
+        attestation: REAL_FIXTURE_ATTESTATION,
+      });
+      const parsed = JSON.parse(result);
+
+      expect(parsed.verified).toBe(false);
+      expect(parsed.reason).toContain("does not match the attested payloadHash");
+    });
+
+    it("NEGATIVE (tampered signature): corrupting the real fixture's signature fails closed without throwing", async () => {
+      const originalSig = REAL_FIXTURE_ATTESTATION.signature;
+      const tamperedSig = `0x${originalSig.slice(2, 4) === "00" ? "01" : "00"}${originalSig.slice(4)}`;
+      expect(tamperedSig).not.toBe(originalSig);
+      const tamperedAttestation = { ...REAL_FIXTURE_ATTESTATION, signature: tamperedSig };
+
+      const result = await provider.verifyAttestation(mockWallet, {
+        body: REAL_FIXTURE_BODY,
+        attestation: tamperedAttestation,
+      });
+      const parsed = JSON.parse(result);
+
+      expect(parsed.verified).toBe(false);
+      // A corrupted signature either fails recovery outright or recovers to a different address
+      // than the claimed publisher -- both are acceptable fail-closed outcomes here.
+      expect(
+        parsed.reason.includes("signature recovery failed") ||
+          parsed.reason.includes("does not match the claimed publisher"),
+      ).toBe(true);
+    });
+
+    it("NEGATIVE (attestationDomain override to another chainId): the real fixture, signed under chainId 421614, is rejected against a provider pinned to a different chainId", async () => {
+      const migratedProvider = payperbyteActionProvider({
+        attestationDomain: {
+          chainId: 84532,
+          verifyingContract: REAL_FIXTURE_ATTESTATION.domain.verifyingContract,
+        },
+      });
+
+      const result = await migratedProvider.verifyAttestation(mockWallet, {
+        body: REAL_FIXTURE_BODY,
+        attestation: REAL_FIXTURE_ATTESTATION,
+      });
+      const parsed = JSON.parse(result);
+
+      expect(parsed.verified).toBe(false);
+      expect(parsed.reason).toContain("domain mismatch");
+      expect(parsed.reason).toContain("chainId 421614 != 84532");
     });
   });
 });
