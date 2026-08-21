@@ -58,6 +58,8 @@ class DiscoveryResource(TypedDict, total=False):
     url: str
     resource: str
     type: str
+    # v2: the discovery API returns description as a top-level field on the resource.
+    description: str
     metadata: dict
     accepts: list[PaymentOption]
     x402_version: int

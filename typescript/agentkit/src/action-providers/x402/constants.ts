@@ -67,6 +67,8 @@ export interface DiscoveryResource {
   url?: string;
   resource?: string;
   type?: string;
+  // v2: the discovery API returns description as a top-level field on the resource.
+  description?: string;
   metadata?: {
     [key: string]: unknown;
     description?: string;
