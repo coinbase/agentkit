@@ -215,6 +215,33 @@ describe("X402ActionProvider", () => {
       expect(parsedResult.registeredServices).toBeDefined();
     });
 
+    it("should not silently flip the HTTP method on 404", async () => {
+      mockFetch.mockResolvedValue(
+        createMockResponse({
+          status: 404,
+          data: { error: "not found" },
+          headers: { "content-type": "application/json" },
+        }),
+      );
+
+      const result = await provider.makeHttpRequest(makeMockWalletProvider("base-sepolia"), {
+        url: "https://api.example.com/items/123",
+        method: "GET",
+        headers: null,
+        queryParams: null,
+        body: JSON.stringify({ role: "admin" }),
+      });
+
+      // Exactly one request, with the method the caller chose. A silent
+      // GET->POST retry would turn an intended read into a write.
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch.mock.calls[0][1]?.method).toBe("GET");
+      const parsed = JSON.parse(result);
+      expect(parsed.status).toBe(404);
+      expect(parsed.method).toBe("GET");
+      expect(parsed.hint).toContain("explicitly");
+    });
+
     it("should handle successful non-payment requests", async () => {
       mockFetch.mockResolvedValue(
         createMockResponse({
