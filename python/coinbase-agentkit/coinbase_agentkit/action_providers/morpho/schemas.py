@@ -21,5 +21,8 @@ class MorphoWithdrawSchema(BaseModel):
     """Input schema for Morpho Vault withdraw action."""
 
     vault_address: str = Field(..., description="The address of the Morpho Vault to withdraw from")
-    assets: str = Field(..., description="The amount of assets to withdraw in atomic units")
+    assets: str = Field(..., description="The amount of assets to withdraw in whole units")
     receiver: str = Field(..., description="The address to receive the withdrawn assets")
+    token_address: str = Field(
+        ..., description="The address of the assets token to withdraw from the vault"
+    )

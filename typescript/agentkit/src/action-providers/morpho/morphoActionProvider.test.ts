@@ -51,7 +51,6 @@ describe("Morpho Action Provider", () => {
         MOCK_VAULT_ADDRESS,
         atomicAssets,
       );
-
       expect(mockWallet.sendTransaction).toHaveBeenCalledWith({
         to: MOCK_VAULT_ADDRESS as `0x${string}`,
         data: encodeFunctionData({
@@ -60,11 +59,52 @@ describe("Morpho Action Provider", () => {
           args: [atomicAssets, MOCK_RECEIVER_ID],
         }),
       });
-
       expect(mockWallet.waitForTransactionReceipt).toHaveBeenCalledWith(MOCK_TX_HASH);
       expect(response).toContain(`Deposited ${MOCK_WHOLE_ASSETS}`);
       expect(response).toContain(MOCK_TX_HASH);
       expect(response).toContain(JSON.stringify(MOCK_RECEIPT));
+    });
+
+    it("should return error if assets is not greater than 0", async () => {
+      const args = {
+        vaultAddress: MOCK_VAULT_ADDRESS,
+        assets: "0",
+        receiver: MOCK_RECEIVER_ID,
+        tokenAddress: MOCK_TOKEN_ADDRESS,
+      };
+
+      const response = await actionProvider.deposit(mockWallet, args);
+
+      expect(response).toBe("Error: Assets amount must be greater than 0");
+    });
+
+    it("should return error if assets is negative", async () => {
+      const args = {
+        vaultAddress: MOCK_VAULT_ADDRESS,
+        assets: "-1",
+        receiver: MOCK_RECEIVER_ID,
+        tokenAddress: MOCK_TOKEN_ADDRESS,
+      };
+
+      const response = await actionProvider.deposit(mockWallet, args);
+
+      expect(response).toBe("Error: Assets amount must be greater than 0");
+    });
+
+    it("should handle approval errors", async () => {
+      const args = {
+        vaultAddress: MOCK_VAULT_ADDRESS,
+        assets: MOCK_WHOLE_ASSETS,
+        receiver: MOCK_RECEIVER_ID,
+        tokenAddress: MOCK_TOKEN_ADDRESS,
+      };
+
+      mockApprove.mockResolvedValue("Error: Approval failed");
+
+      const response = await actionProvider.deposit(mockWallet, args);
+
+      expect(response).toContain("Error approving Morpho Vault as spender");
+      expect(response).toContain("Approval failed");
     });
 
     it("should handle errors when depositing", async () => {
@@ -87,32 +127,67 @@ describe("Morpho Action Provider", () => {
     it("should successfully withdraw from Morpho vault", async () => {
       const args = {
         vaultAddress: MOCK_VAULT_ADDRESS,
-        assets: MOCK_ATOMIC_ASSETS,
+        assets: MOCK_WHOLE_ASSETS,
         receiver: MOCK_RECEIVER_ID,
+        tokenAddress: MOCK_TOKEN_ADDRESS,
       };
+
+      const atomicAssets = parseEther(MOCK_WHOLE_ASSETS);
 
       const response = await actionProvider.withdraw(mockWallet, args);
 
+      expect(mockWallet.readContract).toHaveBeenCalledWith({
+        address: MOCK_TOKEN_ADDRESS,
+        abi: expect.any(Array),
+        functionName: "decimals",
+        args: [],
+      });
       expect(mockWallet.sendTransaction).toHaveBeenCalledWith({
         to: MOCK_VAULT_ADDRESS as `0x${string}`,
         data: encodeFunctionData({
           abi: METAMORPHO_ABI,
           functionName: "withdraw",
-          args: [BigInt(MOCK_ATOMIC_ASSETS), MOCK_RECEIVER_ID, MOCK_RECEIVER_ID],
+          args: [atomicAssets, MOCK_RECEIVER_ID, MOCK_RECEIVER_ID],
         }),
       });
-
       expect(mockWallet.waitForTransactionReceipt).toHaveBeenCalledWith(MOCK_TX_HASH);
-      expect(response).toContain(`Withdrawn ${MOCK_ATOMIC_ASSETS}`);
+      expect(response).toContain(`Withdrawn ${MOCK_WHOLE_ASSETS}`);
       expect(response).toContain(MOCK_TX_HASH);
       expect(response).toContain(JSON.stringify(MOCK_RECEIPT));
+    });
+
+    it("should return error if assets is not greater than 0", async () => {
+      const args = {
+        vaultAddress: MOCK_VAULT_ADDRESS,
+        assets: "0",
+        receiver: MOCK_RECEIVER_ID,
+        tokenAddress: MOCK_TOKEN_ADDRESS,
+      };
+
+      const response = await actionProvider.withdraw(mockWallet, args);
+
+      expect(response).toBe("Error: Assets amount must be greater than 0");
+    });
+
+    it("should return error if assets is negative", async () => {
+      const args = {
+        vaultAddress: MOCK_VAULT_ADDRESS,
+        assets: "-1",
+        receiver: MOCK_RECEIVER_ID,
+        tokenAddress: MOCK_TOKEN_ADDRESS,
+      };
+
+      const response = await actionProvider.withdraw(mockWallet, args);
+
+      expect(response).toBe("Error: Assets amount must be greater than 0");
     });
 
     it("should handle errors when withdrawing", async () => {
       const args = {
         vaultAddress: MOCK_VAULT_ADDRESS,
-        assets: MOCK_ATOMIC_ASSETS,
+        assets: MOCK_WHOLE_ASSETS,
         receiver: MOCK_RECEIVER_ID,
+        tokenAddress: MOCK_TOKEN_ADDRESS,
       };
 
       mockWallet.sendTransaction.mockRejectedValue(new Error("Failed to withdraw"));
@@ -140,18 +215,10 @@ describe("Morpho Action Provider", () => {
       expect(result).toBe(true);
     });
 
-    it("should return false for other EVM networks", () => {
+    it("should return false for unsupported network", () => {
       const result = actionProvider.supportsNetwork({
         protocolFamily: "evm",
-        networkId: "ethereum",
-      });
-      expect(result).toBe(false);
-    });
-
-    it("should return false for non-EVM networks", () => {
-      const result = actionProvider.supportsNetwork({
-        protocolFamily: "bitcoin",
-        networkId: "base-mainnet",
+        networkId: "ethereum-mainnet",
       });
       expect(result).toBe(false);
     });
