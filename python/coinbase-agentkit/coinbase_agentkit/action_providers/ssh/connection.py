@@ -28,21 +28,20 @@ class SSHConnectionParams(BaseModel):
     )
     port: int = Field(22, description="SSH port number")
 
-    @classmethod
     @model_validator(mode="after")
-    def check_auth_method_provided(cls):
+    def check_auth_method_provided(self):
         """Ensure at least one authentication method is provided."""
-        if not any([cls.password, cls.private_key, cls.private_key_path]):
+        if not any([self.password, self.private_key, self.private_key_path]):
             raise ValueError(
                 "At least one authentication method must be provided (password, private_key, or private_key_path)"
             )
 
-        if not cls.host:
+        if not self.host:
             raise ValueError("Host must be provided")
-        if not cls.username:
+        if not self.username:
             raise ValueError("Username must be provided")
 
-        return cls
+        return self
 
 
 class SSHConnectionError(Exception):
