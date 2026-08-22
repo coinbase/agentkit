@@ -101,9 +101,16 @@ Important notes:
         description="""
 This tool allows withdrawing assets from a Morpho Vault. It takes:
 - vault_address: The address of the Morpho Vault to withdraw from
-- assets: The amount of assets to withdraw in atomic units
+- assets: The amount of assets to withdraw in whole units
+    Examples for WETH:
+    - 1 WETH
+    - 0.1 WETH
+    - 0.01 WETH
 - receiver: The address to receive the shares
-""",
+- token_address: The address of the token to determine decimal precision
+Important notes:
+- Make sure to use the exact amount provided. Do not convert units for assets for this action.
+- Please use a token address for the token_address field. If you are unsure of the token address, please clarify before continuing.""",
         schema=MorphoWithdrawSchema,
     )
     def withdraw(self, wallet_provider: EvmWalletProvider, args: dict[str, Any]) -> str:
@@ -122,14 +129,21 @@ This tool allows withdrawing assets from a Morpho Vault. It takes:
         if assets <= Decimal("0.0"):
             return "Error: Assets amount must be greater than 0"
 
-        atomic_assets = Web3.to_wei(assets, "ether")
-
-        contract = Web3().eth.contract(address=args["vault_address"], abi=METAMORPHO_ABI)
-        encoded_data = contract.encode_abi(
-            "withdraw", args=[atomic_assets, args["receiver"], args["receiver"]]
-        )
-
         try:
+            decimals = wallet_provider.read_contract(
+                contract_address=args["token_address"],
+                abi=ERC20_ABI,
+                function_name="decimals",
+                args=[],
+            )
+
+            atomic_assets = int(assets * (10**decimals))
+
+            contract = Web3().eth.contract(address=args["vault_address"], abi=METAMORPHO_ABI)
+            encoded_data = contract.encode_abi(
+                "withdraw", args=[atomic_assets, args["receiver"], args["receiver"]]
+            )
+
             params = {
                 "to": args["vault_address"],
                 "data": encoded_data,
