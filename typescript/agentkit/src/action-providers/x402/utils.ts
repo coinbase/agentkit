@@ -615,10 +615,13 @@ export function buildUrlWithParams(
 
 /**
  * Checks if a URL is registered for x402 requests.
- * Matches by origin (protocol + hostname + port) or prefix.
+ * Matches by origin (protocol + hostname + port) or by same-origin path prefix.
+ *
+ * Does **not** use raw `url.startsWith(registered)` — that allows hostname-suffix
+ * and other prefix bypasses (e.g. `https://good.com.evil.com` vs `https://good.com`).
  *
  * @param url - The URL to check
- * @param registeredServices - Set of registered service URLs
+ * @param registeredServices - Set of registered service URLs or origins
  * @returns True if the service is registered, false otherwise
  */
 export function isServiceRegistered(url: string, registeredServices: Set<string>): boolean {
@@ -628,11 +631,32 @@ export function isServiceRegistered(url: string, registeredServices: Set<string>
 
   try {
     const parsed = new URL(url);
-    const origin = parsed.origin;
 
     for (const registered of registeredServices) {
-      // Check if origin matches or URL starts with registered prefix
-      if (origin === registered || url.startsWith(registered)) {
+      // Bare origin registration: "https://api.example.com"
+      if (parsed.origin === registered) {
+        return true;
+      }
+
+      let reg: URL;
+      try {
+        reg = new URL(registered);
+      } catch {
+        continue;
+      }
+
+      if (parsed.origin !== reg.origin) {
+        continue;
+      }
+
+      // Origin-only URL form ("https://api.example.com/") → any path on that origin
+      if (reg.pathname === "/" && reg.search === "" && reg.hash === "") {
+        return true;
+      }
+
+      // Same-origin path match or segment-boundary prefix
+      const regPrefix = reg.pathname.endsWith("/") ? reg.pathname : `${reg.pathname}/`;
+      if (parsed.pathname === reg.pathname || parsed.pathname.startsWith(regPrefix)) {
         return true;
       }
     }
