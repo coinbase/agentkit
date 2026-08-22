@@ -722,3 +722,111 @@ export function validateFacilitator(
 
   return { isAllowed: false, resolvedUrl: facilitator };
 }
+
+/**
+ * Subset of the user-approved x402 payment option used to bind the payment
+ * that actually gets signed to the option that was presented and approved.
+ */
+export interface ApprovedPaymentOption {
+  scheme?: string | null;
+  network: string;
+  asset: string;
+  maxAmountRequired?: string | null;
+  amount?: string | null;
+  price?: string | null;
+  payTo?: string | null;
+}
+
+/** Structural view of the x402 payment requirements the selector receives. */
+interface PaymentRequirementLike {
+  scheme?: string;
+  network: string;
+  asset: string;
+  amount?: string;
+  maxAmountRequired?: string;
+  payTo?: string;
+}
+
+const USDC_DECIMALS = 6;
+
+/**
+ * Resolves an approved option to an atomic USDC amount.
+ *
+ * @param option - The approved payment option
+ * @returns Atomic amount as bigint
+ */
+function approvedAtomicAmount(option: ApprovedPaymentOption): bigint {
+  const raw = option.maxAmountRequired ?? option.amount;
+  if (raw) return BigInt(raw);
+  if (option.price) return parseUnits(option.price.replace(/^\$/, "").trim(), USDC_DECIMALS);
+  return 0n;
+}
+
+/**
+ * Builds a payment-requirements selector that only accepts a requirement
+ * matching the approved option (network, asset, payTo when present) at an
+ * amount not exceeding the approved amount. Without this binding, the payment
+ * wrapper signs whatever the server returns on the retry's 402 response, so a
+ * service could present a cheap option and then demand a larger amount.
+ *
+ * @param approved - The payment option the user approved
+ * @returns Selector compatible with the x402Client constructor
+ */
+export function createApprovedPaymentSelector(approved: ApprovedPaymentOption) {
+  const approvedAmount = approvedAtomicAmount(approved);
+  return <T extends PaymentRequirementLike>(_x402Version: number, accepts: T[]): T => {
+    const match = accepts.find(
+      req =>
+        req.network === approved.network &&
+        req.asset.toLowerCase() === approved.asset.toLowerCase() &&
+        (!approved.scheme || !req.scheme || req.scheme === approved.scheme) &&
+        (!approved.payTo || (req.payTo ?? "").toLowerCase() === approved.payTo.toLowerCase()) &&
+        BigInt(req.maxAmountRequired ?? req.amount ?? "0") <= approvedAmount,
+    );
+    if (!match) {
+      throw new Error(
+        "x402 payment requirements returned by the server do not match the approved " +
+          `payment option (network/asset/payTo) or exceed the approved amount. Refusing to sign.`,
+      );
+    }
+    return match;
+  };
+}
+
+/**
+ * Builds a selector that caps automatically-signed payments at the configured
+ * USDC limit, for the direct (no user confirmation) request path.
+ * Also refuses non-USDC assets and (when provided) networks the wallet
+ * cannot pay on. The numeric cap alone is not enough: a live 402 can return
+ * a small maxAmountRequired denominated in a different token.
+ *
+ * @param maxPaymentUsdc - Maximum USDC amount allowed per payment
+ * @param options.isAllowedAsset - True only for the wallet's USDC address
+ * @param options.allowedNetworks - Wallet-compatible x402 network ids (required)
+ * @returns Selector compatible with the x402Client constructor
+ */
+export function createCappedPaymentSelector(
+  maxPaymentUsdc: number,
+  options: {
+    isAllowedAsset: (asset: string) => boolean;
+    allowedNetworks: readonly string[];
+  },
+) {
+  const cap = parseUnits(maxPaymentUsdc.toString(), USDC_DECIMALS);
+  return <T extends PaymentRequirementLike>(_x402Version: number, accepts: T[]): T => {
+    const match = accepts.find(req => {
+      if (!options.isAllowedAsset(req.asset)) return false;
+      if (!options.allowedNetworks.includes(req.network)) {
+        return false;
+      }
+      return BigInt(req.maxAmountRequired ?? req.amount ?? "0") <= cap;
+    });
+    if (!match) {
+      throw new Error(
+        `x402 payment requirements exceed the configured spending limit of ` +
+          `${maxPaymentUsdc} USDC, are not USDC, or are on an unsupported network. Refusing to sign.`,
+      );
+    }
+    return match;
+  };
+}
