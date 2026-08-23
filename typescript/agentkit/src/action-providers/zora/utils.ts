@@ -1,6 +1,3 @@
-import fs from "fs";
-import path from "path";
-
 /**
  * Configuration for Pinata
  */
@@ -42,40 +39,34 @@ interface TokenUriParams {
   name: string;
   symbol: string;
   description: string;
-  image: string; // Can be a local file path or a URI (https:// or ipfs://)
+  image: string; // A URI (https:// or ipfs://) or a data: URI
   category?: string;
   pinataConfig: PinataConfig;
 }
 
+const MIME_TO_EXTENSION: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/gif": "gif",
+  "image/svg+xml": "svg",
+};
+
 /**
- * Reads a local file and converts it to base64
+ * Parses a base64-encoded data URI into its mime type and payload.
  *
- * @param imageFileName - Path to the local file
- * @returns Base64 encoded file and mime type
+ * @param dataUri - A data URI of the form `data:<mimeType>;base64,<data>`
+ * @returns The decoded mime type and base64 payload
  */
-async function readFileAsBase64(
-  imageFileName: string,
-): Promise<{ base64: string; mimeType: string }> {
-  return new Promise((resolve, reject) => {
-    fs.readFile(imageFileName, (err, data) => {
-      if (err) {
-        reject(new Error(`Failed to read file: ${err.message}`));
-        return;
-      }
+function parseBase64DataUri(dataUri: string): { base64: string; mimeType: string } {
+  const match = dataUri.match(/^data:([^;,]+);base64,([\s\S]*)$/);
 
-      // Determine mime type based on file extension
-      const extension = path.extname(imageFileName).toLowerCase();
-      let mimeType = "application/octet-stream"; // default
+  if (!match) {
+    throw new Error(
+      "Invalid data URI: expected the form `data:<mimeType>;base64,<data>` (e.g. data:image/png;base64,...).",
+    );
+  }
 
-      if (extension === ".png") mimeType = "image/png";
-      else if (extension === ".jpg" || extension === ".jpeg") mimeType = "image/jpeg";
-      else if (extension === ".gif") mimeType = "image/gif";
-      else if (extension === ".svg") mimeType = "image/svg+xml";
-
-      const base64 = data.toString("base64");
-      resolve({ base64, mimeType });
-    });
-  });
+  return { mimeType: match[1], base64: match[2] };
 }
 
 /**
@@ -112,9 +103,10 @@ async function uploadFileToIPFS(params: {
     }
 
     const blob = new Blob(byteArrays, { type: params.mimeType });
-    const file = new File([blob], params.fileName, { type: params.mimeType });
 
-    formData.append("file", file);
+    // Appending the Blob with a filename rather than wrapping it in a `File`: `File` is not a
+    // global on Node 18, which this package still supports.
+    formData.append("file", blob, params.fileName);
 
     const pinataMetadata = {
       name: params.fileName,
@@ -207,7 +199,7 @@ async function uploadJsonToIPFS(params: {
 }
 
 /**
- * Generates a Zora token URI by handling local file or URI
+ * Generates a Zora token URI from a remote URI or a data URI
  *
  * @param params - Parameters for generating the token URI
  * @returns A promise that resolves to object containing the IPFS URI
@@ -222,10 +214,12 @@ export async function generateZoraTokenUri(params: TokenUriParams): Promise<{
     // Check if image is already a URI (ipfs:// or https://)
     if (params.image.startsWith("ipfs://") || params.image.startsWith("https://")) {
       imageUri = params.image;
-    } else {
-      // Handle local file
-      const { base64, mimeType } = await readFileAsBase64(params.image);
-      const fileName = path.basename(params.image);
+    } else if (params.image.startsWith("data:")) {
+      // Handle inline image data. Local filesystem paths are intentionally not supported:
+      // the image is uploaded to a third party and pinned to public IPFS, so reading
+      // caller-supplied paths here would let an agent exfiltrate arbitrary host files.
+      const { base64, mimeType } = parseBase64DataUri(params.image);
+      const fileName = `${params.symbol}.${MIME_TO_EXTENSION[mimeType] ?? "bin"}`;
 
       const imageRes = await uploadFileToIPFS({
         pinataConfig: params.pinataConfig,
@@ -235,6 +229,12 @@ export async function generateZoraTokenUri(params: TokenUriParams): Promise<{
       });
 
       imageUri = `ipfs://${imageRes.IpfsHash}`;
+    } else {
+      throw new Error(
+        "Invalid image: expected an https:// URL, an ipfs:// URI, or a data: URI. Reading " +
+          "images from the local filesystem is not supported. To publish a local file, read " +
+          'it yourself and pass a data URI, e.g. `data:image/png;base64,${fs.readFileSync(path, "base64")}`.',
+      );
     }
 
     // Create and upload the metadata
