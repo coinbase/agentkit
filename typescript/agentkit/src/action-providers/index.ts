@@ -33,6 +33,7 @@ export * from "./weth";
 export * from "./wow";
 export * from "./allora";
 export * from "./flaunch";
+export * from "./helixa";
 export * from "./onramp";
 export * from "./vaultsfyi";
 export * from "./x402";
