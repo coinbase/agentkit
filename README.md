@@ -218,6 +218,7 @@ Guardrails middleware is one common strategy. See the [LangChain middleware docs
 ## 📜 Documentation
 
 - [AgentKit Documentation](https://docs.cdp.coinbase.com/agentkit/docs/welcome)
+- [Agent Lifecycle States](./AGENT-LIFECYCLE.md) - Understanding agent execution flow and states
 - Python API References
   - [AgentKit](https://coinbase.github.io/agentkit/coinbase-agentkit/python/index.html)
   - [AgentKit Langchain Extension](https://coinbase.github.io/agentkit/coinbase-agentkit-langchain/python/index.html)
