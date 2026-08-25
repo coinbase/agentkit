@@ -2,7 +2,14 @@ import { z } from "zod";
 import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
-import { FarcasterAccountDetailsSchema, FarcasterPostCastSchema } from "./schemas";
+import {
+  FarcasterAccountDetailsSchema,
+  FarcasterPostCastSchema,
+  FarcasterGetUserDetailsSchema,
+  FarcasterReplyCastSchema,
+  FarcasterGetFeedSchema,
+  FarcasterGetMentionsSchema,
+} from "./schemas";
 
 /**
  * Configuration options for the FarcasterActionProvider.
@@ -141,6 +148,198 @@ A failure response will return a message with the Farcaster API request error:
       return `Successfully posted cast to Farcaster:\n${JSON.stringify(data)}`;
     } catch (error) {
       return `Error posting to Farcaster:\n${error}`;
+    }
+  }
+
+  /**
+   * Gets details for any Farcaster user by username or FID.
+   *
+   * @param args - The input arguments containing username or FID.
+   * @returns A message containing the user's Farcaster account details.
+   */
+  @CreateAction({
+    name: "get_user_details",
+    description: `
+This tool will retrieve the account details for any Farcaster user by their username or FID.
+You must provide either a username or FID to look up.
+
+A successful response will return a message with the API response as a JSON payload:
+    { "object": "user", "fid": 193, "username": "derek", "display_name": "Derek", ... }
+
+A failure response will return a message with the error:
+    Unable to retrieve user details for the specified user.
+`,
+    schema: FarcasterGetUserDetailsSchema,
+  })
+  async getUserDetails(args: z.infer<typeof FarcasterGetUserDetailsSchema>): Promise<string> {
+    try {
+      const headers: HeadersInit = {
+        accept: "application/json",
+        "x-api-key": this.neynarApiKey,
+        "x-neynar-experimental": "true",
+      };
+
+      let url: string;
+      if (args.fid) {
+        url = `https://api.neynar.com/v2/farcaster/user/bulk?fids=${args.fid}`;
+      } else if (args.username) {
+        url = `https://api.neynar.com/v2/farcaster/user/by_username?username=${args.username}`;
+      } else {
+        return "Error: Either username or fid must be provided";
+      }
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers,
+      });
+
+      const data = await response.json();
+      const user = args.fid ? data.users?.[0] : data.user;
+
+      if (!user) {
+        return `User not found for ${args.fid ? `FID: ${args.fid}` : `username: ${args.username}`}`;
+      }
+
+      return `Successfully retrieved Farcaster user details:\n${JSON.stringify(user)}`;
+    } catch (error) {
+      return `Error retrieving Farcaster user details:\n${error}`;
+    }
+  }
+
+  /**
+   * Replies to a cast on Farcaster.
+   *
+   * @param args - The input arguments for the reply action.
+   * @returns A message indicating the success or failure of the reply.
+   */
+  @CreateAction({
+    name: "reply_to_cast",
+    description: `
+This tool will post a reply to an existing cast on Farcaster.
+The tool takes the parent cast hash and the reply text as input. Replies can be maximum 280 characters.
+Optionally, up to 2 embeds (links to websites or mini apps) can be attached.
+
+A successful response will return a message with the API response as a JSON payload:
+    { "cast": { "hash": "...", "text": "..." } }
+
+A failure response will return a message with the Farcaster API request error.
+`,
+    schema: FarcasterReplyCastSchema,
+  })
+  async replyToCast(args: z.infer<typeof FarcasterReplyCastSchema>): Promise<string> {
+    try {
+      const headers: HeadersInit = {
+        api_key: this.neynarApiKey,
+        "Content-Type": "application/json",
+      };
+
+      const response = await fetch("https://api.neynar.com/v2/farcaster/cast", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          signer_uuid: this.signerUuid,
+          text: args.replyText,
+          parent: args.parentHash,
+          embeds: args.embeds,
+        }),
+      });
+
+      const data = await response.json();
+      return `Successfully posted reply to Farcaster:\n${JSON.stringify(data)}`;
+    } catch (error) {
+      return `Error posting reply to Farcaster:\n${error}`;
+    }
+  }
+
+  /**
+   * Gets a user's feed/casts from Farcaster.
+   *
+   * @param args - The input arguments for getting the feed.
+   * @returns A message containing the user's casts.
+   */
+  @CreateAction({
+    name: "get_feed",
+    description: `
+This tool will retrieve casts from a user's Farcaster feed.
+If no FID is provided, it will retrieve the agent's own casts.
+You can specify the number of casts to retrieve (1-100, default: 25) and whether to include replies.
+
+A successful response will return a message with the casts as a JSON array:
+    { "casts": [{ "hash": "...", "text": "...", "timestamp": "..." }, ...] }
+
+A failure response will return a message with the error.
+`,
+    schema: FarcasterGetFeedSchema,
+  })
+  async getFeed(args: z.infer<typeof FarcasterGetFeedSchema>): Promise<string> {
+    try {
+      const headers: HeadersInit = {
+        accept: "application/json",
+        "x-api-key": this.neynarApiKey,
+        "x-neynar-experimental": "true",
+      };
+
+      const fid = args.fid || this.agentFid;
+      const limit = args.limit || 25;
+      const includeReplies = args.includeReplies || false;
+
+      const response = await fetch(
+        `https://api.neynar.com/v2/farcaster/feed/user/casts?fid=${fid}&limit=${limit}&include_replies=${includeReplies}`,
+        {
+          method: "GET",
+          headers,
+        },
+      );
+
+      const data = await response.json();
+      return `Successfully retrieved Farcaster feed (${data.casts?.length || 0} casts):\n${JSON.stringify(data.casts)}`;
+    } catch (error) {
+      return `Error retrieving Farcaster feed:\n${error}`;
+    }
+  }
+
+  /**
+   * Gets mentions of the agent on Farcaster.
+   *
+   * @param args - The input arguments for getting mentions.
+   * @returns A message containing the mentions.
+   */
+  @CreateAction({
+    name: "get_mentions",
+    description: `
+This tool will retrieve casts that mention the agent on Farcaster.
+This is useful for the agent to respond to users who have mentioned them.
+You can specify the number of mentions to retrieve (1-100, default: 25).
+
+A successful response will return a message with the mentions as a JSON array:
+    { "notifications": [{ "cast": { "hash": "...", "text": "...", "author": {...} }, ... }] }
+
+A failure response will return a message with the error.
+`,
+    schema: FarcasterGetMentionsSchema,
+  })
+  async getMentions(args: z.infer<typeof FarcasterGetMentionsSchema>): Promise<string> {
+    try {
+      const headers: HeadersInit = {
+        accept: "application/json",
+        "x-api-key": this.neynarApiKey,
+        "x-neynar-experimental": "true",
+      };
+
+      const limit = args.limit || 25;
+
+      const response = await fetch(
+        `https://api.neynar.com/v2/farcaster/notifications?fid=${this.agentFid}&type=mentions&limit=${limit}`,
+        {
+          method: "GET",
+          headers,
+        },
+      );
+
+      const data = await response.json();
+      return `Successfully retrieved Farcaster mentions (${data.notifications?.length || 0} mentions):\n${JSON.stringify(data.notifications)}`;
+    } catch (error) {
+      return `Error retrieving Farcaster mentions:\n${error}`;
     }
   }
 
