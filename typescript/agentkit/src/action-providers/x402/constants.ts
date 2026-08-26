@@ -86,3 +86,5 @@ export interface SimplifiedResource {
   price: string;
   description: string;
 }
+
+/** Quote-binding TTL is 60 seconds; max unused pending approvals is 8. See quoteBinding.ts. */
