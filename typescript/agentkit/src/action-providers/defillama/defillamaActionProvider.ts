@@ -49,8 +49,10 @@ Important notes:
       }
 
       const protocols = await response.json();
-      const searchResults = protocols.filter((protocol: Protocol) =>
-        protocol.name.toLowerCase().includes(args.query.toLowerCase()),
+      const searchResults = protocols.filter(
+        (protocol: Protocol) =>
+          typeof protocol?.name === "string" &&
+          protocol.name.toLowerCase().includes(args.query.toLowerCase()),
       );
 
       if (searchResults.length === 0) {

@@ -133,5 +133,19 @@ describe("DefiLlamaActionProvider", () => {
       const result = await provider.searchProtocols({ query: "UNISWAP" });
       expect(JSON.parse(result)).toEqual(mockProtocols);
     });
+
+    it("should ignore protocol entries without a name", async () => {
+      fetchMock.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue([
+          { tvl: 1000 },
+          ...mockProtocols,
+        ]),
+      });
+
+      const result = await provider.searchProtocols({ query: "uniswap" });
+
+      expect(JSON.parse(result)).toEqual(mockProtocols);
+    });
   });
 });
