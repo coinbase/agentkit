@@ -215,6 +215,8 @@ Guardrails middleware is one common strategy. See the [LangChain middleware docs
 - To see a list of actions and frameworks we'd love to see open-source contributions for, see [WISHLIST.md](./WISHLIST.md).
 - To understand the process for contributing to AgentKit, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
+| x402-express | Express.js middleware for monetizing endpoints for AI agents via HTTP 402 on Base. | [GitHub](https://github.com/IkeHentrel/x402-express) / `npm install x402-express` |
+
 ## 📜 Documentation
 
 - [AgentKit Documentation](https://docs.cdp.coinbase.com/agentkit/docs/welcome)
