@@ -108,11 +108,14 @@ This says that the input schema has two fields: `contract_address` and `destinat
 ### Implementing the action provider
 
 ```python
-class CdpWalletActionProvider(ActionProvider[CdpWalletProvider]):
-    """Provides actions for interacting with CDP wallets."""
+from coinbase_agentkit import ActionProvider, EvmWalletProvider
+from coinbase_agentkit.network import Network
+
+class Erc721ActionProvider(ActionProvider[EvmWalletProvider]):
+    """Provides ERC-721 actions for EVM wallets."""
 
     def __init__(self):
-        super().__init__("cdp-wallet", [])
+        super().__init__("erc721", [])
 
     def supports_network(self, network: Network) -> bool:
         return network.protocol_family == "evm"
@@ -123,6 +126,11 @@ class CdpWalletActionProvider(ActionProvider[CdpWalletProvider]):
 Now we need to implement the actual function that the AI will call when using your action. Actions are defined using the `@create_action` decorator. The function receives as input the wallet provider that the Agent has access to, along with the inputs defined in the input schema, and it must return a string. Here's an example of the Mint NFT implementation:
 
 ```python
+from eth_typing import HexStr
+from web3 import Web3
+
+from coinbase_agentkit import EvmWalletProvider, create_action
+
 @create_action(
     name="mint",
     description="""
@@ -132,20 +140,27 @@ Do not use the contract address as the destination address. If you are unsure of
     """,
     schema=MintSchema,
 )
-def mint(self, wallet_provider: CdpWalletProvider, args: dict[str, Any]) -> str:
+def mint(self, wallet_provider: EvmWalletProvider, args: dict[str, Any]) -> str:
     """Mint an NFT."""
     try:
-        nft_contract = wallet_provider.mint(
-            contract_address=args["contract_address"],
-            destination=args["destination"]
-        ).wait()
-    except Exception as e:
-        return f"Error deploying NFT {e!s}"
+        contract = Web3().eth.contract(address=args["contract_address"], abi=ERC721_ABI)
+        data = contract.encode_abi("mint", args=[args["destination"], 1])
 
-    return f"Minted NFT to address {args['destination']}.\nTransaction hash: {nft_contract.transaction.transaction_hash}\nTransaction link: {nft_contract.transaction.transaction_link}"
+        tx_hash = wallet_provider.send_transaction(
+            {
+                "to": HexStr(args["contract_address"]),
+                "data": HexStr(data),
+            }
+        )
+
+        wallet_provider.wait_for_transaction_receipt(tx_hash)
+    except Exception as e:
+        return f"Error minting NFT {args['contract_address']} to {args['destination']}: {e!s}"
+
+    return f"Successfully minted NFT {args['contract_address']} to {args['destination']}"
 ```
 
-Notice the return value contains useful information for the user, such as the transaction hash and link. It's important to include this information in the return value so that the user can easily see the result of the action.
+Notice the return value contains useful information for the user about the result of the action. When possible, include details such as transaction hashes so the user can inspect what happened onchain.
 
 This class is then exported out of [python/coinbase-agentkit/coinbase_agentkit/\_\_init\_\_.py](https://github.com/coinbase/agentkit/blob/master/python/coinbase-agentkit/coinbase_agentkit/__init__.py) so that it is consumable by users of the `coinbase-agentkit` package.
 

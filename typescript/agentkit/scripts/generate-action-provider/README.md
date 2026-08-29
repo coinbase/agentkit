@@ -36,10 +36,10 @@ Create a Evm provider for Evm networks:
 pnpm run generate:action-provider -- -n example -p evm
 ```
 
-Create an Evm provider with CDP wallet provider:
+Create an EVM provider with the CDP EVM wallet provider:
 
 ```bash
-pnpm run generate:action-provider -- -n example -p evm -w CdpWalletProvider
+pnpm run generate:action-provider -- -n example -p evm -w CdpEvmWalletProvider
 ```
 
 ## Generated Files
