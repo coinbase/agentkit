@@ -38,6 +38,7 @@ from .weth.weth_action_provider import WethActionProvider, weth_action_provider
 from .wow.wow_action_provider import WowActionProvider, wow_action_provider
 from .x402.schemas import X402Config
 from .x402.x402_action_provider import x402_action_provider, x402ActionProvider
+from .x402search.x402search_action_provider import X402SearchActionProvider, x402search_action_provider
 
 __all__ = [
     "AaveActionProvider",
@@ -84,4 +85,6 @@ __all__ = [
     "wow_action_provider",
     "x402ActionProvider",
     "x402_action_provider",
+    "X402SearchActionProvider",
+    "x402search_action_provider",
 ]
