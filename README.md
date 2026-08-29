@@ -145,7 +145,8 @@ agentkit/
 │   │       └── wallet-providers/
 │   │           ├── cdp/
 │   │           ├── privy/
-│   │           └── viem/
+│   │           ├── viem/
+│   │           └── waap/
 │   ├── create-onchain-agent/
 │   ├── framework-extensions/
 │   │   ├── langchain/
@@ -159,10 +160,12 @@ agentkit/
 │       ├── langchain-privy-chatbot/
 │       ├── langchain-solana-chatbot/
 │       ├── langchain-twitter-chatbot/
+│       ├── langchain-waap-chatbot/
 │       ├── langchain-xmtp-chatbot/
 │       ├── langchain-zerodev-chatbot/
 │       ├── model-context-protocol-smart-wallet-server/
 │       └── vercel-ai-sdk-smart-wallet-chatbot/
+│       └── vercel-ai-sdk-waap-chatbot/
 ├── python/
 │   ├── coinbase-agentkit/
 │   │   └── coinbase_agentkit/
@@ -295,6 +298,7 @@ AgentKit is proud to have support for the following protocols, frameworks, walle
 <a href="https://coinbase.com" target="_blank"><img src="./assets/wallets/coinbase.svg" width="100" height="auto" alt="Coinbase"></a>
 <a href="https://privy.io" target="_blank"><img src="./assets/wallets/privy.svg" width="100" height="auto" alt="Privy"></a>
 <a href="https://viem.sh" target="_blank"><img src="./assets/wallets/viem.svg" width="100" height="auto" alt="ViEM"></a>
+<a href="https://waap.xyz" target="_blank"><img src="./assets/wallets/waap.svg" width="100" height="auto" alt="WaaP"></a>
 
 ### Protocols
 
