@@ -15,6 +15,7 @@ import {
   CompoundPortfolioSchema,
 } from "./schemas";
 import {
+  getBaseAssetBalance,
   getCollateralBalance,
   getHealthRatio,
   getHealthRatioAfterBorrow,
@@ -165,22 +166,40 @@ Important notes:
       const decimals = await getTokenDecimals(wallet, tokenAddress);
       const amountAtomic = parseUnits(args.amount, decimals);
 
-      // Check that there is enough collateral supplied to withdraw
-      const collateralBalance = await getCollateralBalance(wallet, cometAddress, tokenAddress);
-      if (amountAtomic > collateralBalance) {
-        const humanBalance = formatUnits(collateralBalance, decimals);
-        return `Error: Insufficient balance. Trying to withdraw ${args.amount}, but only have ${humanBalance} supplied`;
-      }
+      // Determine if this is the base asset (e.g. USDC) or a collateral asset
+      const baseTokenAddress = await getBaseTokenAddress(wallet, cometAddress);
+      const isBaseAsset =
+        tokenAddress.toLowerCase() === baseTokenAddress.toLowerCase();
 
-      // Check if position would be healthy after withdrawal
-      const projectedHealthRatio = await getHealthRatioAfterWithdraw(
-        wallet,
-        cometAddress,
-        tokenAddress,
-        amountAtomic,
-      );
-      if (projectedHealthRatio.lessThan(1)) {
-        return `Error: Withdrawing ${args.amount} would result in an unhealthy position. Health ratio would be ${projectedHealthRatio.toFixed(2)}`;
+      if (isBaseAsset) {
+        // Base asset: check Comet.balanceOf() (supply balance, earns APY)
+        const baseBalance = await getBaseAssetBalance(wallet, cometAddress);
+        if (amountAtomic > baseBalance) {
+          const humanBalance = formatUnits(baseBalance, decimals);
+          return `Error: Insufficient balance. Trying to withdraw ${args.amount}, but only have ${humanBalance} supplied`;
+        }
+      } else {
+        // Collateral asset: check collateralBalanceOf
+        const collateralBalance = await getCollateralBalance(
+          wallet,
+          cometAddress,
+          tokenAddress,
+        );
+        if (amountAtomic > collateralBalance) {
+          const humanBalance = formatUnits(collateralBalance, decimals);
+          return `Error: Insufficient balance. Trying to withdraw ${args.amount}, but only have ${humanBalance} supplied`;
+        }
+
+        // Only check health ratio for collateral withdrawals (affects borrow capacity)
+        const projectedHealthRatio = await getHealthRatioAfterWithdraw(
+          wallet,
+          cometAddress,
+          tokenAddress,
+          amountAtomic,
+        );
+        if (projectedHealthRatio.lessThan(1)) {
+          return `Error: Withdrawing ${args.amount} would result in an unhealthy position. Health ratio would be ${projectedHealthRatio.toFixed(2)}`;
+        }
       }
 
       // Withdraw from Compound
