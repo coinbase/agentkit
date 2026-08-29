@@ -26,12 +26,8 @@ const mockApprove = approve as jest.MockedFunction<typeof approve>;
 describe("Moonwell Action Provider", () => {
   const actionProvider = new MoonwellActionProvider();
   let mockWallet: jest.Mocked<EvmWalletProvider>;
-  let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    // Mock console.error to suppress debug logs
-    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
-
     mockWallet = {
       getAddress: jest.fn().mockReturnValue(MOCK_TOKEN_ADDRESS),
       getNetwork: jest
@@ -44,9 +40,6 @@ describe("Moonwell Action Provider", () => {
     mockApprove.mockResolvedValue("Approval successful");
   });
 
-  afterEach(() => {
-    consoleErrorSpy.mockRestore();
-  });
 
   describe("Mint Schema", () => {
     it("should successfully parse valid input", () => {
@@ -356,7 +349,6 @@ describe("Moonwell Action Provider", () => {
       expect(mockApprove).toHaveBeenCalled();
       expect(mockWallet.sendTransaction).toHaveBeenCalled();
       expect(response).toBe("Error minting Moonwell MToken: Failed to deposit");
-      expect(consoleErrorSpy).toHaveBeenCalledWith("DEBUG - Mint error:", error);
     });
 
     describe("ETH deposits via router", () => {
@@ -474,7 +466,6 @@ describe("Moonwell Action Provider", () => {
         // Should not call approve for ETH deposits on mainnet
         expect(mockApprove).not.toHaveBeenCalled();
         expect(response).toBe("Error minting Moonwell MToken: Failed to deposit ETH");
-        expect(consoleErrorSpy).toHaveBeenCalledWith("DEBUG - Mint error:", error);
       });
     });
   });
@@ -547,7 +538,6 @@ describe("Moonwell Action Provider", () => {
 
       expect(mockWallet.sendTransaction).toHaveBeenCalled();
       expect(response).toBe("Error redeeming from Moonwell MToken: Failed to redeem");
-      expect(consoleErrorSpy).toHaveBeenCalledWith("DEBUG - Redeem error:", error);
     });
   });
 
