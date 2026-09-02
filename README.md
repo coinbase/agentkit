@@ -27,6 +27,7 @@
   - [Node.js](#nodejs)
   - [Python](#python)
 - [🗂 Repository Structure](#-repository-structure)
+- [⚠️ Managing Risk](#%EF%B8%8F-managing-risk)
 - [🤝 Contributing](#-contributing)
 - [📜 Documentation](#-documentation)
 - [🌙 Nightly Builds](#-nightly-builds)
@@ -191,6 +192,21 @@ agentkit/
 │       ├── pydantic-ai-cdp-chatbot/
 │       └── strands-agents-cdp-server-chatbot/
 ```
+
+## ⚠️ Managing Risk
+
+AgentKit gives an AI agent a wallet. LLMs do not reliably distinguish instructions from data, so text that reaches the model's context can influence which actions the agent takes, including transfers. This is inherent to the design and cannot be resolved within the SDK.
+
+Every surface that feeds the model text increases the injection surface:
+
+- **Direct** — interfaces where a third party sends text to the agent, such as a public website, chat bot, or API.
+- **Indirect** — actions that pull external content into context. `twitterActionProvider` returns mentions and `farcasterActionProvider` returns profile data, both as tool output the model reads.
+
+Either surface, combined with a funded wallet and a fund-moving action provider (`walletActionProvider` is registered by default), is sufficient for injected text to result in an onchain transfer. AgentKit does not gate transfers behind human approval, enforce spend caps, or allowlist destinations.
+
+By using AgentKit you accept that managing these surfaces and keeping your funds safe is your responsibility as the developer.
+
+Guardrails middleware is one common strategy. See the [LangChain middleware docs](./typescript/framework-extensions/langchain/README.md#middleware) and the [guardrails chatbot example](./typescript/examples/langchain-guardrails-cdp-chatbot), which combines human-in-the-loop approval for transfers with prompt injection filtering.
 
 ## 🤝 Contributing
 

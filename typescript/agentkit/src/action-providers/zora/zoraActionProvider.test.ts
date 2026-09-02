@@ -139,6 +139,23 @@ describe("ZoraActionProvider", () => {
       expect(parseResult.success).toBe(false);
     });
 
+    it.each(["/root/.env", "/proc/self/environ", "../../etc/passwd", "./logo.png", "logo.png"])(
+      "should reject local file path %s as an image",
+      path => {
+        const parseResult = CreateCoinSchema.safeParse({
+          name: "Test Coin",
+          symbol: "TEST",
+          description: "A test coin",
+          image: path,
+          category: "social",
+          currency: "ZORA" as const,
+          payoutRecipient: null,
+          platformReferrer: null,
+        });
+        expect(parseResult.success).toBe(false);
+      },
+    );
+
     it("should successfully create a coin", async () => {
       const args = {
         name: "Test Coin",
