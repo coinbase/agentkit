@@ -1,5 +1,15 @@
 # AgentKit Changelog
 
+## 0.12.0
+
+### Minor Changes
+
+- [#1432](https://github.com/coinbase/agentkit/pull/1432) [`455a6c5`](https://github.com/coinbase/agentkit/commit/455a6c5a29375de290da0f3b440119ec7f511440) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Removed local filesystem reads from the flaunch and zora action providers. The `image` parameter previously treated any non-URL string as a local file path, read it off the agent host, and uploaded the contents to a third-party IPFS pinning service. It now accepts only remote URLs (`http(s)://` for flaunch, `https://` or `ipfs://` for zora) or a `data:` URI. To publish a local file, read it yourself and pass a data URI: `` image: `data:image/png;base64,${fs.readFileSync(path, "base64")}` ``
+
+### Patch Changes
+
+- [#1480](https://github.com/coinbase/agentkit/pull/1480) [`2e6dbaf`](https://github.com/coinbase/agentkit/commit/2e6dbaf725b9ec5f3b53003278100b0e655c214d) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Sanitized onchain token names/symbols (erc20, cdp, zeroX, flaunch, compound) before including them in agent tool output. This metadata is fully attacker-controlled by whoever deploys the contract, and was previously passed through unmodified into text returned to the agent, allowing a malicious token to attempt indirect prompt injection. Names and symbols are now stripped of control, zero-width, and other non-printable characters, and truncated to 50 characters.
+
 ## 0.11.0
 
 ### Minor Changes
