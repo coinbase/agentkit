@@ -8,7 +8,7 @@
     "agentkit": "./build/index.js"
   },
   "scripts": {
-    "build": "tsup && node -e \"require('fs').chmodSync('build/index.js', '755')\""
+    "build": "node init && tsup && node -e \"require('fs').chmodSync('build/index.js', '755')\""
   },
   "dependencies": {
     "@coinbase/agentkit": "latest",

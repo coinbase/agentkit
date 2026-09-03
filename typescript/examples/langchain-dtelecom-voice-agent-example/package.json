@@ -4,7 +4,7 @@
   "private": true,
   "description": "Voice AI agent using Coinbase AgentKit + dTelecom",
   "scripts": {
-    "start": "tsx voice-agent.ts"
+    "start": "node init && tsx voice-agent.ts"
   },
   "dependencies": {
     "@coinbase/agentkit": "workspace:*",

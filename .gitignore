@@ -4,7 +4,6 @@
 
 # IDE
 .idea/*
-.vscode/*
 
 ## Emacs
 *~
@@ -39,7 +38,6 @@
 # Environment Configurations
 **/env/
 **/.env/
-**/.env
 **/.env.local/
 **/.env.test/
 
@@ -54,7 +52,6 @@ lerna-debug.log*
 
 # IDE
 .idea/*
-.vscode/*
 
 ## Emacs
 *~
@@ -97,7 +94,6 @@ web_modules/
 .rts2_cache_umd/
 
 # IDE
-.vscode
 .vscode-test
 .idea
 .tern-port
@@ -105,7 +101,6 @@ web_modules/
 # Environment Configurations
 **/env/
 **/.env/
-**/.env
 **/.env.local/
 **/.env.test/
 
@@ -139,3 +134,4 @@ docs/
 # pnpm
 typescript/.pnpm-store
 typescript/.pnp.*
+config.bat

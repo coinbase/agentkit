@@ -7,9 +7,9 @@
   "author": "Ephemera HQ",
   "license": "Apache-2.0",
   "scripts": {
-    "build": "tsc",
-    "start": "npm run build && node dist/chatbot.js",
-    "dev": "nodemon --watch '*.ts' --watch 'scripts/**/*.ts' --ignore dist/ --exec 'npm run build && node' dist/chatbot.js",
+    "build": "node init && tsc",
+    "start": "node init && npm run build && node dist/chatbot.js",
+    "dev": "node init && nodemon --watch '*.ts' --watch 'scripts/**/*.ts' --ignore dist/ --exec 'npm run build && node' dist/chatbot.js",
     "gen:keys": "npm run build && node dist/scripts/generate-keys.js",
     "lint": "eslint -c .eslintrc.json *.ts",
     "lint:fix": "eslint -c .eslintrc.json *.ts --fix",

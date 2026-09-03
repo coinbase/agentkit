@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "pnpm@10.7.0",
   "scripts": {
-    "build": "turbo run build",
+    "build": "node init && turbo run build",
     "changeset": "changeset",
     "changeset:publish": "pnpm install --frozen-lockfile && pnpm run build && changeset publish",
     "changeset:version": "changeset version",
@@ -11,7 +11,7 @@
     "lint": "turbo run lint",
     "clean": "turbo run clean",
     "docs": "turbo run docs",
-    "dev": "turbo run dev",
+    "dev": "node init && turbo run dev",
     "format": "turbo run format",
     "format:check": "turbo run format:check",
     "lint:fix": "turbo run lint:fix",
