@@ -1,5 +1,6 @@
 """Utility functions for ERC20 action provider."""
 
+import unicodedata
 from dataclasses import dataclass
 
 from eth_abi import decode
@@ -7,6 +8,28 @@ from web3 import Web3
 
 from ...wallet_providers.evm_wallet_provider import EvmWalletProvider
 from .constants import ERC20_ABI
+
+MAX_ONCHAIN_METADATA_LENGTH = 50
+
+# Cc: control, Cf: format (zero-width/bidi-override), Co: private-use, Cs: surrogate.
+_UNSAFE_UNICODE_CATEGORIES = ("Cc", "Cf", "Co", "Cs")
+
+
+def sanitize_onchain_metadata(value: str, max_length: int = MAX_ONCHAIN_METADATA_LENGTH) -> str:
+    """Sanitize an untrusted onchain string (e.g. ERC20 name/symbol) before agent-facing use.
+
+    Args:
+        value (str): The raw string returned from a contract call.
+        max_length (int): The maximum length of the sanitized string.
+
+    Returns:
+        str: The sanitized string.
+
+    """
+    cleaned = "".join(
+        char for char in value if unicodedata.category(char) not in _UNSAFE_UNICODE_CATEGORIES
+    )
+    return cleaned.strip()[:max_length]
 
 
 @dataclass
@@ -112,7 +135,7 @@ def get_token_details(
                 return None
 
         # Decode each result using eth_abi
-        name = decode(["string"], results[0][1])[0]
+        name = sanitize_onchain_metadata(decode(["string"], results[0][1])[0])
         decimals = decode(["uint8"], results[1][1])[0]
         balance = decode(["uint256"], results[2][1])[0]
 

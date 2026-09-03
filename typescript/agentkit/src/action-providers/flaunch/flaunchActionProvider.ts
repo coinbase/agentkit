@@ -3,6 +3,7 @@ import { ActionProvider } from "../actionProvider";
 import { Network, NETWORK_ID_TO_VIEM_CHAIN } from "../../network";
 import { CreateAction } from "../actionDecorator";
 import { EvmWalletProvider } from "../../wallet-providers";
+import { sanitizeOnchainMetadata } from "../../utils";
 import {
   encodeFunctionData,
   parseEther,
@@ -499,11 +500,13 @@ It takes:
         chainId: Number(chainId),
       }) as SellSwapAmounts;
 
-      const coinSymbol = await walletProvider.readContract({
-        address: args.coinAddress as Address,
-        abi: ERC20_ABI,
-        functionName: "symbol",
-      });
+      const coinSymbol = sanitizeOnchainMetadata(
+        await walletProvider.readContract({
+          address: args.coinAddress as Address,
+          abi: ERC20_ABI,
+          functionName: "symbol",
+        }),
+      );
 
       return `Sold ${formatEther(swapAmounts.coinsSold)} $${coinSymbol} for ${formatEther(swapAmounts.ethBought)} ETH\n
         Tx hash: [${hash}](${NETWORK_ID_TO_VIEM_CHAIN[networkId].blockExplorers?.default.url}/tx/${hash})`;

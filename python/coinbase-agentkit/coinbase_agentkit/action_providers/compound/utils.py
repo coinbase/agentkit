@@ -5,6 +5,7 @@ from typing import Any
 
 from ...wallet_providers import EvmWalletProvider
 from ..erc20.constants import ERC20_ABI
+from ..erc20.utils import sanitize_onchain_metadata
 from .constants import COMET_ABI, PRICE_FEED_ABI
 
 
@@ -34,7 +35,7 @@ def get_token_symbol(wallet: EvmWalletProvider, token_address: str) -> str:
         str: The token symbol.
 
     """
-    return wallet.read_contract(token_address, ERC20_ABI, "symbol")
+    return sanitize_onchain_metadata(wallet.read_contract(token_address, ERC20_ABI, "symbol"))
 
 
 def get_token_balance(wallet: EvmWalletProvider, token_address: str) -> int:
