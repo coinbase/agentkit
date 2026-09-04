@@ -832,8 +832,22 @@ These are the only services that can be called using make_http_request or make_h
    * @param network - The network to check support for
    * @returns True if the network is supported, false otherwise
    */
-  supportsNetwork = (network: Network) =>
-    (SUPPORTED_NETWORKS as readonly string[]).includes(network.networkId!);
+  supportsNetwork = (network: Network) => {
+    if (!(SUPPORTED_NETWORKS as readonly string[]).includes(network.networkId!)) {
+      return false;
+    }
+
+    switch (network.networkId) {
+      case "base-mainnet":
+      case "base-sepolia":
+        return network.protocolFamily === "evm";
+      case "solana-mainnet":
+      case "solana-devnet":
+        return network.protocolFamily === "svm";
+      default:
+        return false;
+    }
+  };
 
   /**
    * Creates an x402 client configured for the given wallet provider.
