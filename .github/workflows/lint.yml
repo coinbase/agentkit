@@ -10,9 +10,11 @@ jobs:
           [
             "coinbase-agentkit",
             "create-onchain-agent",
+            "framework-extensions/crewai",
             "framework-extensions/langchain",
             "framework-extensions/openai-agents-sdk",
             "framework-extensions/strands-agents",
+            "examples/crew-ai-cdp-chatbot",
             "examples/langchain-cdp-chatbot",
             "examples/langchain-cdp-solana-chatbot",
             "examples/langchain-cdp-smart-wallet-chatbot",

@@ -1,0 +1,79 @@
+[project]
+name = "coinbase-agentkit-crewai"
+version = "0.1.0"
+description = "Coinbase AgentKit CrewAI extension"
+authors = [{ name = "Coinbase Developer Platform", email = "cdp-support@coinbase.com" }]
+requires-python = "~=3.10"
+readme = "README.md"
+license = "Apache-2.0"
+keywords = [
+    "coinbase",
+    "sdk",
+    "crypto",
+    "cdp",
+    "crewai",
+    "agentkit",
+    "ai",
+    "agent",
+]
+dependencies = [
+    "coinbase-agentkit>=0.7.2,<0.8",
+    "crewai>=1.14.0,<2",
+    "python-dotenv>=1.0.1,<2",
+    "nest-asyncio>=1.6.0,<2",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.7.1,<0.8",
+    "mypy>=1.13.0,<2",
+    "pytest>=8.3.3,<9",
+    "pytest-cov>=6.0.0,<7",
+    "towncrier>=24.8.0,<25",
+]
+
+[tool.hatch.build.targets.sdist]
+include = ["coinbase_agentkit_crewai"]
+
+[tool.hatch.build.targets.wheel]
+include = ["coinbase_agentkit_crewai"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = ["./build/**", "./dist/**", "./docs/**"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "D", "UP", "B", "C4", "SIM", "RUF"]
+ignore = ["D213", "D203", "D100", "D104", "D107", "E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+known-first-party = ["coinbase_agentkit", "coinbase_agentkit_crewai"]
+
+[tool.towncrier]
+package = "coinbase_agentkit_crewai"
+filename = "CHANGELOG.md"
+directory = "changelog.d/"
+title_format = "## [{version}] - {project_date}"
+issue_format = "[#{issue}](https://github.com/coinbase/agentkit/pull/{issue})"
+
+[tool.towncrier.fragment.feature]
+name = "Added"
+
+[tool.towncrier.fragment.bugfix]
+name = "Fixed"
