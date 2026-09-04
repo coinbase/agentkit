@@ -25,6 +25,7 @@ export * from "./morpho";
 export * from "./opensea";
 export * from "./spl";
 export * from "./superfluid";
+export * from "./taskmarket";
 export * from "./sushi";
 export * from "./truemarkets";
 export * from "./twitter";
