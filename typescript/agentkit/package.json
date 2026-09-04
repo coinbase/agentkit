@@ -73,7 +73,8 @@
     "sushi": "6.2.1",
     "twitter-api-v2": "^1.18.2",
     "viem": "2.47.4",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "@usdctofiat/offramp": "7.0.1"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
