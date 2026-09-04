@@ -1,0 +1,22 @@
+{
+  "name": "@coinbase/x402-sentinel-preflight-guard-example",
+  "description": "Example: gate an on-chain transfer behind a pre-execution risk check using x402ActionProvider and a third-party x402 safety oracle (SENTINEL)",
+  "version": "1.0.0",
+  "private": true,
+  "author": "Community contribution",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "NODE_OPTIONS='--no-warnings' tsx ./guard-before-transfer.ts",
+    "lint": "eslint -c .eslintrc.json *.ts",
+    "lint:fix": "eslint -c .eslintrc.json *.ts --fix",
+    "format": "prettier --write \"**/*.{ts,js,cjs,json,md}\"",
+    "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\""
+  },
+  "dependencies": {
+    "@coinbase/agentkit": "workspace:*",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.1"
+  }
+}
