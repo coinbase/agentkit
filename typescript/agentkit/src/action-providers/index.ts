@@ -37,6 +37,7 @@ export * from "./onramp";
 export * from "./vaultsfyi";
 export * from "./x402";
 export * from "./yelay";
+export * from "./taskmarket";
 export * from "./zerion";
 export * from "./zerodev";
 export * from "./zeroX";
