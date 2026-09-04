@@ -2,6 +2,10 @@
 
 <!-- towncrier release notes start -->
 
+### Added
+
+- Added Optume Translations x402 Legal Translation and Document Parser Action Provider (`OptumeActionProvider`).
+
 ## [0.7.4] - 2025-10-03
 
 ### Fixed
