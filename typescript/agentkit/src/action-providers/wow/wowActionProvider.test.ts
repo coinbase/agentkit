@@ -217,6 +217,19 @@ describe("WowActionProvider", () => {
       const response = await provider.buyToken(mockWallet, args);
       expect(response).toBe(`Error buying Zora Wow ERC20 memecoin: ${error}`);
     });
+
+    it("should refuse buy when quote fails closed (no minOut=0 trade)", async () => {
+      const args = {
+        contractAddress: MOCK_CONTRACT_ADDRESS,
+        amountEthInWei: MOCK_AMOUNT_ETH_IN_WEI.toString(),
+      };
+
+      (getBuyQuote as jest.Mock).mockRejectedValue(new Error("Failed fetching buy quote"));
+
+      const response = await provider.buyToken(mockWallet, args);
+      expect(response).toContain("Failed fetching buy quote");
+      expect(mockWallet.sendTransaction).not.toHaveBeenCalled();
+    });
   });
 
   describe("createToken", () => {
