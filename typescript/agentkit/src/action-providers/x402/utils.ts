@@ -180,15 +180,31 @@ export function filterByNetwork(
 /**
  * Extracts description from a resource based on its x402 version.
  * - v1: description is in accepts[].description
- * - v2: description is in metadata.description
+ * - v2: the discovery API returns description as a top-level field on the resource;
+ *   metadata.description and accepts[].description are checked as fallbacks for
+ *   resources published under an older or non-standard v2 shape.
  *
  * @param resource - The discovery resource
  * @returns The description string or empty string if not found
  */
 function getResourceDescription(resource: DiscoveryResource): string {
   if (resource.x402Version === 2) {
+    if (typeof resource.description === "string" && resource.description.trim()) {
+      return resource.description;
+    }
+
     const metadataDesc = resource.metadata?.description;
-    return typeof metadataDesc === "string" ? metadataDesc : "";
+    if (typeof metadataDesc === "string" && metadataDesc.trim()) {
+      return metadataDesc;
+    }
+
+    const accepts = resource.accepts ?? [];
+    for (const option of accepts) {
+      if (option.description?.trim()) {
+        return option.description;
+      }
+    }
+    return "";
   }
 
   // v1: look in accepts[].description
@@ -204,7 +220,8 @@ function getResourceDescription(resource: DiscoveryResource): string {
 /**
  * Filters resources by having a valid description.
  * Removes resources with empty or default descriptions.
- * Supports both v1 (accepts[].description) and v2 (metadata.description) formats.
+ * Supports both v1 (accepts[].description) and v2 (description, with metadata.description
+ * and accepts[].description as fallbacks) formats.
  *
  * @param resources - Array of discovery resources
  * @returns Filtered array of resources with valid descriptions
@@ -240,7 +257,8 @@ export function filterByX402Version(
 /**
  * Filters resources by keyword appearing in description or URL.
  * Case-insensitive search.
- * Supports both v1 (accepts[].description) and v2 (metadata.description) formats.
+ * Supports both v1 (accepts[].description) and v2 (description, with metadata.description
+ * and accepts[].description as fallbacks) formats.
  *
  * @param resources - Array of discovery resources
  * @param keyword - The keyword to search for in descriptions and URLs
