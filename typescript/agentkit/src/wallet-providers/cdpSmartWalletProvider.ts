@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { CdpClient, EvmSmartAccount, EvmServerAccount } from "@coinbase/cdp-sdk";
 import {
   Abi,
@@ -239,9 +240,10 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
    * Sends a user operation through the smart wallet.
    *
    * @param transaction - The transaction to send.
+   * @param idempotencyKey - Optional CDP idempotency key for safe retries of the same intent.
    * @returns The user operation hash.
    */
-  async sendTransaction(transaction: TransactionRequest): Promise<Hex> {
+  async sendTransaction(transaction: TransactionRequest, idempotencyKey?: string): Promise<Hex> {
     const calls = [
       {
         to: transaction.to as Address,
@@ -255,6 +257,7 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
       network: this.getCdpSdkNetwork(),
       calls,
       paymasterUrl: this.#paymasterUrl,
+      idempotencyKey: idempotencyKey ?? randomUUID(),
     });
 
     return userOperation.userOpHash as Hex;
@@ -371,12 +374,15 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
    * @param value - The amount to transfer in atomic units (Wei).
    * @returns The user operation hash.
    */
-  async nativeTransfer(to: Address, value: string): Promise<Hex> {
-    return this.sendTransaction({
-      to: to,
-      value: BigInt(value),
-      data: "0x",
-    });
+  async nativeTransfer(to: Address, value: string, idempotencyKey?: string): Promise<Hex> {
+    return this.sendTransaction(
+      {
+        to: to,
+        value: BigInt(value),
+        data: "0x",
+      },
+      idempotencyKey,
+    );
   }
 
   /**

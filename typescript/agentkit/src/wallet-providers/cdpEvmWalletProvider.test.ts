@@ -342,7 +342,20 @@ describe("CdpEvmWalletProvider", () => {
 
       const txHash = await provider.sendTransaction(transaction);
       expect(mockSendTransaction).toHaveBeenCalled();
+      expect(mockSendTransaction.mock.calls[0][0].idempotencyKey).toEqual(expect.any(String));
       expect(txHash).toBe(MOCK_TRANSACTION_HASH);
+    });
+
+    it("should forward a caller-supplied idempotencyKey", async () => {
+      const transaction: TransactionRequest = {
+        to: "0x1234567890123456789012345678901234567890" as `0x${string}`,
+        value: BigInt(1000000000000000000),
+      };
+
+      await provider.sendTransaction(transaction, "retry-key-123");
+      expect(mockSendTransaction).toHaveBeenCalledWith(
+        expect.objectContaining({ idempotencyKey: "retry-key-123" }),
+      );
     });
 
     it("should handle transaction failures during send", async () => {

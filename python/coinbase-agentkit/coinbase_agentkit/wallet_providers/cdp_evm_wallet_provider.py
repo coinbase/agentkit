@@ -2,6 +2,7 @@
 
 import asyncio
 import os
+import uuid
 from decimal import Decimal
 from typing import Any
 
@@ -125,7 +126,7 @@ class CdpEvmWalletProvider(EvmWalletProvider):
         """
         return self._network
 
-    def native_transfer(self, to: str, value: Decimal) -> str:
+    def native_transfer(self, to: str, value: Decimal, idempotency_key: str | None = None) -> str:
         """Transfer the native asset of the network.
 
         Args:
@@ -148,6 +149,7 @@ class CdpEvmWalletProvider(EvmWalletProvider):
                         value=value_wei,
                     ),
                     network=self._get_cdp_sdk_network(),
+                    idempotency_key=idempotency_key or str(uuid.uuid4()),
                 )
 
         return self._run_async(_send_transaction())
@@ -179,7 +181,7 @@ class CdpEvmWalletProvider(EvmWalletProvider):
             args = []
         return func(*args).call(block_identifier=block_identifier)
 
-    def send_transaction(self, transaction: TxParams) -> HexStr:
+    def send_transaction(self, transaction: TxParams, idempotency_key: str | None = None) -> HexStr:
         """Send a transaction to the network.
 
         Args:
@@ -201,6 +203,7 @@ class CdpEvmWalletProvider(EvmWalletProvider):
                         data=transaction.get("data", "0x"),
                     ),
                     network=self._get_cdp_sdk_network(),
+                    idempotency_key=idempotency_key or str(uuid.uuid4()),
                 )
 
         return self._run_async(_send_transaction())
