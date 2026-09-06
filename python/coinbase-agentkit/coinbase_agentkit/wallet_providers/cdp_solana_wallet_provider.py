@@ -6,11 +6,26 @@ from decimal import Decimal
 
 from cdp import CdpClient
 from pydantic import BaseModel, Field
-from solana.rpc.api import Client as SolanaClient
-from solders.pubkey import Pubkey as PublicKey
 
 from ..network import Network
 from .wallet_provider import WalletProvider
+
+def _load_solana_deps():
+    """Import Solana RPC deps lazily so EVM-only users can import AgentKit.
+
+    ``solana>=0.37`` removed ``solana.rpc.api``; pinning handles that for Solana
+    users, but EVM-only installs should not fail at import time either.
+    """
+    try:
+        from solana.rpc.api import Client as SolanaClient
+        from solders.pubkey import Pubkey as PublicKey
+    except ImportError as e:
+        raise ImportError(
+            "Solana dependencies are required for CdpSolanaWalletProvider. "
+            "Install a compatible solana package (solana>=0.36.6,<0.37) "
+            "or pin coinbase-agentkit dependencies."
+        ) from e
+    return SolanaClient, PublicKey
 
 
 class CdpSolanaWalletProviderConfig(BaseModel):
@@ -62,6 +77,7 @@ class CdpSolanaWalletProvider(WalletProvider):
             else:
                 rpc_url = "https://api.testnet.solana.com"
 
+            SolanaClient, _ = _load_solana_deps()
             self._connection = SolanaClient(rpc_url)
 
             # Initialize the wallet with CDP client
@@ -157,6 +173,7 @@ class CdpSolanaWalletProvider(WalletProvider):
 
         """
         # Check current balance
+        _, PublicKey = _load_solana_deps()
         source_pubkey = PublicKey.from_string(self._address)
         balance_resp = self._connection.get_balance(source_pubkey)
         balance = balance_resp.value
