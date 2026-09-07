@@ -1,0 +1,5 @@
+---
+"@coinbase/agentkit": patch
+---
+
+Added Dexter (`https://x402.dexter.cash`) as a built-in known facilitator for the x402 action provider, enabling service discovery and verification across Solana and EVM chains without requiring custom facilitator registration.
