@@ -1,0 +1,23 @@
+[project]
+name = "walletforge-x402-example"
+version = "0.0.1"
+description = "WalletForge x402 AgentKit example (unpaid 402 smoke + provider wiring)"
+requires-python = "~=3.10"
+readme = "README.md"
+dependencies = [
+    "coinbase-agentkit",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+coinbase-agentkit = { path = "../../coinbase-agentkit", editable = true }
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "D", "UP", "B", "C4", "SIM", "RUF"]
+ignore = ["D213", "D203", "D100", "D104", "D107", "E501"]
