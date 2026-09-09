@@ -12,8 +12,12 @@ cdp/
 ├── cdpSmartWalletActionProvider.ts      # Provider for CDP Smart Wallet operations
 ├── cdpEvmWalletActionProvider.test.ts   # Tests for CDP EVM Wallet provider
 ├── cdpSmartWalletActionProvider.test.ts # Tests for CDP Smart Wallet provider
+├── cdpSqlApiActionProvider.ts       # Main provider implementation
+├── cdpSqlApiActionProvider.test.ts  # Provider test suite
+├── baseSqlApiDescription.ts        # Variables describing the action and valid SQL Schemas
 ├── schemas.ts                           # Action schemas for CDP operations
 ├── index.ts                             # Main exports
+├── constants.ts                    # Constant variables
 └── README.md                            # This file
 ```
 
@@ -22,8 +26,8 @@ cdp/
 ### CDP API Actions
 
 - `request_faucet_funds`: Request testnet funds from CDP faucet
-
   - Available only on Base Sepolia, Ethereum Sepolia or Solana Devnet
+- `execute_cdp_sql_query`: Execute a SQL query for Base or Sepolia Base data
 
 ### CDP EVM Wallet Actions
 
@@ -61,5 +65,7 @@ The CDP providers support all networks available on the Coinbase Developer Platf
 ## Notes
 
 - Requires CDP API credentials (API Key ID and Secret). Visit the [CDP Portal](https://portal.cdp.coinbase.com/) to get your credentials.
+
+- Requires a **CDP Client API Key** for authentication. Visit [CDP](https://portal.cdp.coinbase.com/projects/api-keys/client-key/) to get your key.
 
 For more information on the **Coinbase Developer Platform**, visit [CDP Documentation](https://docs.cdp.coinbase.com/).
