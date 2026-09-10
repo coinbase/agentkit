@@ -485,6 +485,15 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>MainStreet</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>check_reputation</code></td>
+    <td width="768">Returns an onchain-verifiable SAFE/CAUTION/BLOCK reputation verdict + 0-100 score for a Base wallet, agent, or token before payment, so an agent can refuse to pay BLOCK-rated or unscored counterparties.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Messari</strong></summary>
 <table width="100%">
 <tr>
