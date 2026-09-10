@@ -46,6 +46,7 @@
     "@dtelecom/x402-client": "^0.1.3",
     "@ensofinance/sdk": "^2.0.6",
     "@jup-ag/api": "^6.0.39",
+    "@modelcontextprotocol/sdk": "^1.27.0",
     "@privy-io/public-api": "2.18.5",
     "@privy-io/server-auth": "1.18.4",
     "@solana/kit": "^2.1.1",
