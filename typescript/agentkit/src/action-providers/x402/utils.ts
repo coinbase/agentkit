@@ -707,7 +707,7 @@ export function validateFacilitator(
   facilitator: string,
   registeredFacilitators: Record<string, string>,
 ): { isAllowed: boolean; resolvedUrl: string } {
-  // Check if it's a known facilitator name (CDP, PayAI)
+  // Check if it's a known facilitator name (CDP, PayAI, Dexter)
   if (facilitator in KNOWN_FACILITATORS) {
     return {
       isAllowed: true,

@@ -21,7 +21,7 @@ export interface X402Config {
   allowDynamicServiceRegistration?: boolean;
 
   /**
-   * Additional facilitators beyond the defaults (CDP + PayAI).
+   * Additional facilitators beyond the defaults (CDP, PayAI, Dexter).
    * Map of name -> URL. Names can be used with discover_x402_services action.
    * Example: { "myFacilitator": "https://my-facilitator.com" }
    */
@@ -52,7 +52,7 @@ export const ListX402ServicesSchema = z
       .nullable()
       .transform(val => val ?? DEFAULT_FACILITATOR)
       .describe(
-        "Facilitator to query: 'cdp' (Coinbase CDP), 'payai' (PayAI) or a registered custom facilitator name.",
+        "Facilitator to query: 'cdp' (Coinbase CDP), 'payai' (PayAI), 'dexter' (Dexter) or a registered custom facilitator name.",
       ),
     maxUsdcPrice: z
       .number()
