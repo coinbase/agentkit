@@ -6,6 +6,7 @@ import {
 } from "./schemas";
 import { EvmWalletProvider } from "../../wallet-providers";
 import { getTokenDetails } from "../erc20/utils";
+import { retryWithExponentialBackoff } from "../../utils";
 
 // Mock the getTokenDetails function from ERC20 utils
 jest.mock("../erc20/utils", () => ({
@@ -20,7 +21,14 @@ jest.mock("@base-org/account/spend-permission", () => ({
   prepareRevokeCallData: jest.fn(),
 }));
 
+jest.mock("../../utils", () => ({
+  retryWithExponentialBackoff: jest.fn(),
+}));
+
 const mockGetTokenDetails = getTokenDetails as jest.MockedFunction<typeof getTokenDetails>;
+const mockRetryWithExponentialBackoff = retryWithExponentialBackoff as jest.MockedFunction<
+  typeof retryWithExponentialBackoff
+>;
 
 // Get references to the mocked functions from the mocked modules
 const mockFetchPermissions = jest.fn();
@@ -198,6 +206,8 @@ describe("BaseAccountActionProvider", () => {
     mockPrepareSpendCallData.mockReset();
     mockPrepareRevokeCallData.mockReset();
     mockGetTokenDetails.mockReset();
+    mockRetryWithExponentialBackoff.mockReset();
+    mockRetryWithExponentialBackoff.mockImplementation(async fn => await fn());
   });
 
   describe("supportsNetwork", () => {
@@ -234,6 +244,26 @@ describe("BaseAccountActionProvider", () => {
       expect(parsedResponse.baseAccount).toBe(MOCK_BASE_ACCOUNT);
       expect(parsedResponse.spender).toBe(MOCK_SPENDER_ADDRESS);
       expect(parsedResponse.permissionsCount).toBe(0);
+    });
+
+    it("should report permission lookup errors instead of an empty permission set", async () => {
+      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+      mockFetchPermissions.mockRejectedValue(new Error("permission service unavailable"));
+
+      const response = await actionProvider.listBaseAccountSpendPermissions(mockWallet, {
+        baseAccount: MOCK_BASE_ACCOUNT,
+      });
+      const parsedResponse = JSON.parse(response);
+
+      expect(parsedResponse.success).toBe(false);
+      expect(parsedResponse.error).toContain("permission service unavailable");
+      expect(parsedResponse.error).not.toContain("No spend permissions found");
+      expect(mockRetryWithExponentialBackoff).toHaveBeenCalledWith(expect.any(Function), 3, 1000);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Error listing spend permissions:",
+        expect.any(Error),
+      );
+      consoleErrorSpy.mockRestore();
     });
 
     it("should list permissions when found", async () => {

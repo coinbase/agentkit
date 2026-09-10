@@ -33,24 +33,19 @@ async function fetchUserSpendPermissions(
   spenderAccount: Address,
   tokenAddress?: Address,
 ): Promise<FetchedPermission[]> {
-  try {
-    const permissions = await fetchPermissions({
-      account: userAccount,
-      chainId: 8453,
-      spender: spenderAccount,
-    });
+  const permissions = await fetchPermissions({
+    account: userAccount,
+    chainId: 8453,
+    spender: spenderAccount,
+  });
 
-    if (tokenAddress) {
-      return permissions.filter(
-        p => p.permission?.token?.toLowerCase() === tokenAddress.toLowerCase(),
-      );
-    }
-
-    return permissions;
-  } catch (error) {
-    console.error("❌ Failed to fetch spend permissions:", error);
-    return [];
+  if (tokenAddress) {
+    return permissions.filter(
+      p => p.permission?.token?.toLowerCase() === tokenAddress.toLowerCase(),
+    );
   }
+
+  return permissions;
 }
 
 /**
