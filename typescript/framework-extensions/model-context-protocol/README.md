@@ -55,7 +55,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     return toolHandler(request.params.name, request.params.arguments);
   } catch (error) {
-    throw new Error(`Tool ${name} failed: ${error}`);
+    throw new Error(`Tool ${request.params.name} failed: ${error}`);
   }
 });
 
