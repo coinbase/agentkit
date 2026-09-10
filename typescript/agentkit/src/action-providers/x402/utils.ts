@@ -2,9 +2,15 @@ import { Network } from "../../network";
 import { getTokenDetails } from "../erc20/utils";
 import { TOKEN_ADDRESSES_BY_SYMBOLS } from "../erc20/constants";
 import { formatUnits, parseUnits } from "viem";
-import { EvmWalletProvider, SvmWalletProvider, WalletProvider } from "../../wallet-providers";
+import {
+  EvmWalletProvider,
+  NearWalletProvider,
+  SvmWalletProvider,
+  WalletProvider,
+} from "../../wallet-providers";
 import {
   SOLANA_USDC_ADDRESSES,
+  NEAR_USDC_ADDRESSES,
   NETWORK_MAPPINGS,
   KNOWN_FACILITATORS,
   KnownFacilitatorName,
@@ -458,6 +464,7 @@ export async function formatPaymentOption(
   // Check if this is an EVM network and we can use ERC20 helpers
   const walletNetwork = walletProvider.getNetwork();
   const isEvmNetwork = walletNetwork.protocolFamily === "evm";
+  const isNearNetwork = walletNetwork.protocolFamily === "near";
   const isSvmNetwork = walletNetwork.protocolFamily === "svm";
 
   if (isEvmNetwork && walletProvider instanceof EvmWalletProvider) {
@@ -498,7 +505,14 @@ export async function formatPaymentOption(
     }
   }
 
-  // Fallback to original format for non-EVM/SVM networks or when token details can't be fetched
+  if (isNearNetwork && walletProvider instanceof NearWalletProvider) {
+    const networkId = walletNetwork.networkId as keyof typeof NEAR_USDC_ADDRESSES;
+    if (NEAR_USDC_ADDRESSES[networkId] === asset) {
+      return `${formatUnits(BigInt(maxAmountRequired), 6)} USDC on ${getNetworkId(network)}`;
+    }
+  }
+
+  // Fallback to original format for unknown assets and networks
   return `${asset} ${maxAmountRequired} on ${getNetworkId(network)}`;
 }
 
@@ -512,6 +526,7 @@ export async function formatPaymentOption(
 export function isUsdcAsset(asset: string, walletProvider: WalletProvider): boolean {
   const walletNetwork = walletProvider.getNetwork();
   const isEvmNetwork = walletNetwork.protocolFamily === "evm";
+  const isNearNetwork = walletNetwork.protocolFamily === "near";
   const isSvmNetwork = walletNetwork.protocolFamily === "svm";
 
   if (isEvmNetwork && walletProvider instanceof EvmWalletProvider) {
@@ -530,6 +545,11 @@ export function isUsdcAsset(asset: string, walletProvider: WalletProvider): bool
     if (usdcAddress) {
       return asset === usdcAddress;
     }
+  }
+
+  if (isNearNetwork && walletProvider instanceof NearWalletProvider) {
+    const networkId = walletNetwork.networkId as keyof typeof NEAR_USDC_ADDRESSES;
+    return NEAR_USDC_ADDRESSES[networkId] === asset;
   }
 
   return false;
@@ -551,6 +571,7 @@ export async function convertWholeUnitsToAtomic(
   // Check if this is an EVM network and we can use ERC20 helpers
   const walletNetwork = walletProvider.getNetwork();
   const isEvmNetwork = walletNetwork.protocolFamily === "evm";
+  const isNearNetwork = walletNetwork.protocolFamily === "near";
   const isSvmNetwork = walletNetwork.protocolFamily === "svm";
 
   if (isEvmNetwork && walletProvider instanceof EvmWalletProvider) {
@@ -584,6 +605,13 @@ export async function convertWholeUnitsToAtomic(
 
     if (usdcAddress && asset === usdcAddress) {
       // USDC has 6 decimals on Solana
+      return parseUnits(wholeUnits.toString(), 6).toString();
+    }
+  }
+
+  if (isNearNetwork && walletProvider instanceof NearWalletProvider) {
+    const networkId = walletNetwork.networkId as keyof typeof NEAR_USDC_ADDRESSES;
+    if (NEAR_USDC_ADDRESSES[networkId] === asset) {
       return parseUnits(wholeUnits.toString(), 6).toString();
     }
   }

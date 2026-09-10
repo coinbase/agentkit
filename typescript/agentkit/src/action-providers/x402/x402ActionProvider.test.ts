@@ -1,9 +1,10 @@
 import { X402ActionProvider } from "./x402ActionProvider";
-import { EvmWalletProvider } from "../../wallet-providers";
+import { EvmWalletProvider, NearWalletProvider } from "../../wallet-providers";
 import { Network } from "../../network";
 import { x402Client, wrapFetchWithPayment } from "@x402/fetch";
 import { registerExactEvmScheme } from "@x402/evm/exact/client";
 import { registerExactSvmScheme } from "@x402/svm/exact/client";
+import { ExactNearScheme } from "@x402/near/exact/client";
 
 import * as utils from "./utils";
 
@@ -12,6 +13,7 @@ jest.mock("@x402/fetch");
 jest.mock("@x402/evm");
 jest.mock("@x402/evm/exact/client");
 jest.mock("@x402/svm/exact/client");
+jest.mock("@x402/near/exact/client");
 jest.mock("./utils");
 
 // Create mock functions
@@ -20,6 +22,7 @@ const mockFetchWithPayment = jest.fn();
 
 // Mock x402 client
 const mockX402Client = {
+  register: jest.fn(),
   registerScheme: jest.fn(),
 };
 
@@ -80,6 +83,19 @@ const makeMockWalletProvider = (networkId: string) => {
   mockProvider.getPublicClient = jest.fn().mockReturnValue("mock-public-client");
   mockProvider.getNetwork = jest.fn().mockReturnValue({ protocolFamily: "evm", networkId });
   return mockProvider as EvmWalletProvider;
+};
+
+const makeMockNearWalletProvider = () => {
+  const mockProvider = Object.create(NearWalletProvider.prototype);
+  mockProvider.getNetwork = jest.fn().mockReturnValue({
+    protocolFamily: "near",
+    networkId: "near-testnet",
+    chainId: "testnet",
+  });
+  mockProvider.getAddress = jest.fn().mockReturnValue("agent.testnet");
+  mockProvider.getName = jest.fn().mockReturnValue("near_wallet_provider");
+  mockProvider.createSignedDelegateAction = jest.fn();
+  return mockProvider as NearWalletProvider;
 };
 
 // Sample responses based on real examples
@@ -187,6 +203,11 @@ describe("X402ActionProvider", () => {
 
     it("should support SVM networks", () => {
       const network: Network = { protocolFamily: "svm", networkId: "solana-mainnet" };
+      expect(provider.supportsNetwork(network)).toBe(true);
+    });
+
+    it("should support NEAR networks", () => {
+      const network: Network = { protocolFamily: "near", networkId: "near-mainnet" };
       expect(provider.supportsNetwork(network)).toBe(true);
     });
 
@@ -600,6 +621,29 @@ describe("X402ActionProvider", () => {
       expect(parsedResult.success).toBe(true);
       expect(parsedResult.data).toEqual({ message: "Paid content" });
       expect(parsedResult.paymentProof).toEqual(MOCK_PAYMENT_PROOF);
+    });
+
+    it("should register the NEAR exact scheme for a NEAR wallet", async () => {
+      mockFetchWithPayment.mockResolvedValue(
+        createMockResponse({
+          status: 200,
+          data: { message: "Paid content" },
+          headers: { "content-type": "application/json" },
+        }),
+      );
+
+      const nearWallet = makeMockNearWalletProvider();
+      const result = await provider.makeHttpRequestWithX402(nearWallet, {
+        url: "https://www.x402.org/protected",
+        method: "GET",
+        headers: null,
+        queryParams: null,
+        body: null,
+      });
+
+      expect(ExactNearScheme).toHaveBeenCalledWith(nearWallet);
+      expect(mockX402Client.register).toHaveBeenCalledWith("near:*", expect.any(ExactNearScheme));
+      expect(JSON.parse(result).success).toBe(true);
     });
 
     it("should handle successful non-payment requests", async () => {

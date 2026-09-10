@@ -1,9 +1,12 @@
+import { DEFAULT_ASSET_BY_NETWORK } from "@x402/near";
+
 /**
  * Known facilitator registry
  */
 export const KNOWN_FACILITATORS = {
   cdp: "https://api.cdp.coinbase.com/platform/v2/x402",
   payai: "https://facilitator.payai.network",
+  solvador: "https://api.solvador.com",
 } as const;
 
 export type KnownFacilitatorName = keyof typeof KNOWN_FACILITATORS;
@@ -18,6 +21,8 @@ export const SUPPORTED_NETWORKS = [
   "base-sepolia",
   "solana-mainnet",
   "solana-devnet",
+  "near-mainnet",
+  "near-testnet",
 ] as const;
 
 /**
@@ -26,6 +31,12 @@ export const SUPPORTED_NETWORKS = [
 export const SOLANA_USDC_ADDRESSES = {
   "solana-devnet": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
   "solana-mainnet": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+} as const;
+
+/** Circle-issued native USDC contracts exported by the NEAR x402 mechanism. */
+export const NEAR_USDC_ADDRESSES = {
+  "near-mainnet": DEFAULT_ASSET_BY_NETWORK["near:mainnet"],
+  "near-testnet": DEFAULT_ASSET_BY_NETWORK["near:testnet"],
 } as const;
 
 /**
@@ -37,6 +48,8 @@ export const NETWORK_MAPPINGS: Record<string, string[]> = {
   "base-sepolia": ["base-sepolia", "eip155:84532"],
   "solana-mainnet": ["solana", "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"],
   "solana-devnet": ["solana-devnet", "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1"],
+  "near-mainnet": ["near:mainnet"],
+  "near-testnet": ["near:testnet"],
 };
 
 /**

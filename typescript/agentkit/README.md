@@ -64,6 +64,9 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
       - [Connection Configuration](#connection-configuration)
       - [Authorization Keys](#authorization-keys-1)
       - [Exporting Privy Wallet information](#exporting-privy-wallet-information-1)
+  - [NEAR Wallet Providers](#near-wallet-providers)
+    - [NearWalletProvider](#nearwalletprovider)
+      - [NEAR actions and x402](#near-actions-and-x402)
   - [Contributing](#contributing)
 
 ## Getting Started
@@ -516,6 +519,23 @@ const agent = createAgent({
 <tr>
     <td width="200"><code>withdraw</code></td>
     <td width="768">Withdraws a specified amount of assets from a designated Morpho Vault.</td>
+</tr>
+</table>
+</details>
+<details>
+<summary><strong>NEAR</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_nep141_balance</code></td>
+    <td width="768">Reads and formats a NEP-141 fungible-token balance.</td>
+</tr>
+<tr>
+    <td width="200"><code>transfer_nep141</code></td>
+    <td width="768">Transfers a NEP-141 token after checking the wallet's balance.</td>
+</tr>
+<tr>
+    <td width="200"><code>call_contract</code></td>
+    <td width="768">Calls a state-changing NEAR contract method with explicit gas and deposit.</td>
 </tr>
 </table>
 </details>
@@ -1607,6 +1627,67 @@ const walletData = await walletProvider.exportWallet();
   networkId: string | undefined;
 }
 ```
+
+## NEAR Wallet Providers
+
+### NearWalletProvider
+
+`NearWalletProvider` uses a local full-access key and NEAR JSON-RPC for native
+balance and transfer, NEP-141 operations, contract calls, and x402 delegate
+action signing. It supports `near-mainnet` and `near-testnet`.
+
+```typescript
+import {
+  AgentKit,
+  NearWalletProvider,
+  NEAR_TESTNET_NETWORK_ID,
+  nearActionProvider,
+  walletActionProvider,
+  x402ActionProvider,
+} from "@coinbase/agentkit";
+
+const walletProvider = new NearWalletProvider({
+  accountId: process.env.NEAR_ACCOUNT_ID!,
+  secretKey: process.env.NEAR_PRIVATE_KEY as `ed25519:${string}`,
+  networkId: NEAR_TESTNET_NETWORK_ID,
+  // rpcUrl: "https://your-dedicated-near-rpc.example.com", // optional
+});
+
+const agentKit = await AgentKit.from({
+  walletProvider,
+  actionProviders: [walletActionProvider(), nearActionProvider()],
+});
+```
+
+Use a dedicated RPC endpoint for production workloads. The key must have full
+access; keep it in a secret manager and outside model context.
+
+#### NEAR actions and x402
+
+The standard wallet action provider supplies native NEAR balance and transfer.
+Add `nearActionProvider()` for NEP-141 balances/transfers and state-changing
+contract calls.
+
+`NearWalletProvider` also implements the `ClientNearSigner` interface from
+`@x402/near`. Adding AgentKit's existing x402 provider automatically registers
+the NEAR exact scheme:
+
+```typescript
+const agentKit = await AgentKit.from({
+  walletProvider,
+  actionProviders: [
+    walletActionProvider(),
+    nearActionProvider(),
+    x402ActionProvider({
+      registeredServices: ["https://paid-api.example.com"],
+    }),
+  ],
+});
+```
+
+NEAR x402 payments use NEP-366 signed delegate actions. A compatible
+facilitator, such as the built-in `solvador` discovery option, relays the
+payment and sponsors gas.
 
 ## Contributing
 
