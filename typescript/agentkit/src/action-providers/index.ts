@@ -35,6 +35,7 @@ export * from "./allora";
 export * from "./flaunch";
 export * from "./onramp";
 export * from "./vaultsfyi";
+export * from "./walletprint";
 export * from "./x402";
 export * from "./yelay";
 export * from "./zerion";
