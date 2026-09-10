@@ -36,6 +36,8 @@ export * from "./flaunch";
 export * from "./onramp";
 export * from "./vaultsfyi";
 export * from "./x402";
+export * from "./ucp";
+export * from "./hcrb";
 export * from "./yelay";
 export * from "./zerion";
 export * from "./zerodev";
