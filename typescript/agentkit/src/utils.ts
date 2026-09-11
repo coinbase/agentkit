@@ -1,6 +1,26 @@
 import { encodeFunctionData } from "viem";
 import { EvmWalletProvider } from "./wallet-providers";
 import { erc20Abi } from "viem";
+
+const MAX_ONCHAIN_METADATA_LENGTH = 50;
+
+// Strips Cc (control), Cf (format/zero-width/bidi-override), Co (private-use), and Cs (surrogate) characters.
+const UNSAFE_UNICODE_CATEGORY_REGEX = /\p{Cc}|\p{Cf}|\p{Co}|\p{Cs}/gu;
+
+/**
+ * Sanitizes an untrusted onchain string (e.g. an ERC20 name/symbol) before it is included in agent-facing output.
+ *
+ * @param value - The raw string returned from a contract call.
+ * @param maxLength - The maximum length of the sanitized string.
+ * @returns The sanitized string.
+ */
+export function sanitizeOnchainMetadata(
+  value: string,
+  maxLength = MAX_ONCHAIN_METADATA_LENGTH,
+): string {
+  return value.replace(UNSAFE_UNICODE_CATEGORY_REGEX, "").trim().slice(0, maxLength);
+}
+
 /**
  * Approves a spender to spend tokens on behalf of the owner
  *

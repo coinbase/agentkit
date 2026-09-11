@@ -1,5 +1,6 @@
 import { Hex, erc20Abi } from "viem";
 import { EvmWalletProvider } from "../../wallet-providers";
+import { sanitizeOnchainMetadata } from "../../utils";
 
 // Permit2 contract address is the same across all networks
 export const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
@@ -99,7 +100,7 @@ export async function getTokenDetails(
 
         if (decimalsResult.status === "success" && nameResult.status === "success") {
           fromTokenDecimals = decimalsResult.result as number;
-          fromTokenName = nameResult.result as string;
+          fromTokenName = sanitizeOnchainMetadata(nameResult.result as string);
         } else {
           throw new Error(
             `Failed to read details for fromToken ${fromToken}. This address may not be a valid ERC20 contract.`,
@@ -114,7 +115,7 @@ export async function getTokenDetails(
 
         if (decimalsResult.status === "success" && nameResult.status === "success") {
           toTokenDecimals = decimalsResult.result as number;
-          toTokenName = nameResult.result as string;
+          toTokenName = sanitizeOnchainMetadata(nameResult.result as string);
         } else {
           throw new Error(
             `Failed to read details for toToken ${toToken}. This address may not be a valid ERC20 contract.`,
