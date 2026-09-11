@@ -6,6 +6,7 @@ from web3 import Web3
 
 from ...wallet_providers import EvmWalletProvider
 from ..erc20.constants import ERC20_ABI
+from ..erc20.utils import sanitize_onchain_metadata
 from .constants import (
     POOL_ABI,
     POOL_ADDRESSES,
@@ -45,12 +46,13 @@ def get_token_symbol(wallet: EvmWalletProvider, token_address: str) -> str:
         str: The token symbol.
 
     """
-    return wallet.read_contract(
+    symbol = wallet.read_contract(
         contract_address=Web3.to_checksum_address(token_address),
         abi=ERC20_ABI,
         function_name="symbol",
         args=[],
     )
+    return sanitize_onchain_metadata(symbol)
 
 
 def get_token_balance(wallet: EvmWalletProvider, token_address: str) -> int:
