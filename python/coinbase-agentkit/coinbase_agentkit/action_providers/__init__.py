@@ -23,6 +23,10 @@ from .hyperboliclabs.hyperbolic_action_provider import (
     HyperbolicActionProvider,
     hyperbolic_action_provider,
 )
+from .hyperlane.hyperlane_action_provider import (
+    HyperlaneActionProvider,
+    hyperlane_action_provider,
+)
 from .morpho.morpho_action_provider import MorphoActionProvider, morpho_action_provider
 from .nillion.nillion_action_provider import NillionActionProvider, nillion_action_provider
 from .onramp.onramp_action_provider import OnrampActionProvider, onramp_action_provider
@@ -51,6 +55,7 @@ __all__ = [
     "ERC20ActionProvider",
     "Erc721ActionProvider",
     "HyperbolicActionProvider",
+    "HyperlaneActionProvider",
     "MorphoActionProvider",
     "NillionActionProvider",
     "OnrampActionProvider",
@@ -72,6 +77,7 @@ __all__ = [
     "erc20_action_provider",
     "erc721_action_provider",
     "hyperbolic_action_provider",
+    "hyperlane_action_provider",
     "morpho_action_provider",
     "nillion_action_provider",
     "onramp_action_provider",
