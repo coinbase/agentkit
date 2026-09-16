@@ -61,6 +61,20 @@ export interface X402BeforePaymentContext {
   amount: string;
   /** HTTP method of the request being paid for. */
   method: string;
+  /**
+   * The full PaymentRequired object as decoded from the 402 (in x402 v2 that is
+   * the `PAYMENT-REQUIRED` response header, not the body), or `null` if the
+   * caller did not thread it through. This is the canonical source for a
+   * requirements-integrity check: the `payTo`/`asset`/`amount` fields above are a
+   * convenience projection of the selected option, not the authenticated wire form.
+   */
+  paymentRequirements?: Record<string, unknown> | null;
+  /**
+   * The raw, still-base64-encoded `PAYMENT-REQUIRED` header value (v2), or `null`.
+   * Exposed so a hook that verifies a signature over the exact wire bytes can
+   * reach them; a hook that signs a canonical decoded subset can ignore it.
+   */
+  paymentRequirementsHeader?: string | null;
 }
 
 /** Decision returned by the optional {@link X402Config.beforePayment} hook. */
@@ -69,6 +83,12 @@ export interface X402BeforePaymentDecision {
   abort: boolean;
   /** Optional human-readable reason surfaced in the action result. */
   reason?: string;
+  /**
+   * Optional machine-readable reason code (e.g. a provider's verdict code),
+   * preserved across the hook boundary so autonomous callers can branch on it
+   * without parsing the human-readable `reason`.
+   */
+  code?: string;
 }
 
 /**
@@ -201,6 +221,25 @@ export const RetryWithX402Schema = z
     selectedPaymentOption: PaymentOptionSchema.describe(
       "The payment option to use for this request",
     ),
+    paymentRequirements: z
+      .any()
+      .nullable()
+      .optional()
+      .describe(
+        "Optional: the full PaymentRequired object from the 402 response " +
+          "(returned by make_http_request as `paymentRequirements`). Thread it " +
+          "through so a beforePayment hook can verify requirements integrity, not " +
+          "just the single selected option.",
+      ),
+    paymentRequirementsHeader: z
+      .string()
+      .nullable()
+      .optional()
+      .describe(
+        "Optional: the raw base64 `PAYMENT-REQUIRED` header value from the 402 " +
+          "(returned by make_http_request), for a beforePayment hook that verifies " +
+          "a signature over the exact wire bytes.",
+      ),
   })
   .describe("Instructions for retrying a request with x402 payment after receiving a 402 response");
 

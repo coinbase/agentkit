@@ -10,6 +10,7 @@ import {
   RegisterServiceSchema,
   EmptySchema,
   X402Config,
+  X402BeforePaymentDecision,
 } from "./schemas";
 import { EvmWalletProvider, WalletProvider, SvmWalletProvider } from "../../wallet-providers";
 import { x402Client, wrapFetchWithPayment } from "@x402/fetch";
@@ -338,6 +339,11 @@ If you receive a 402 Payment Required response, use retry_http_request_with_x402
       return JSON.stringify({
         status: "error_402_payment_required",
         acceptablePaymentOptions: usdcOptions,
+        // Canonical payment requirements, forwarded so retry_http_request_with_x402
+        // can hand them to a beforePayment integrity check. In x402 v2 the header
+        // is the authenticated source, so surface the raw wire bytes too.
+        paymentRequirements: paymentData,
+        ...(paymentRequiredHeader ? { paymentRequirementsHeader: paymentRequiredHeader } : {}),
         ...(Object.keys(discoveryInfo).length > 0 && { discoveryInfo }),
         nextSteps: [
           "Inform the user that the requested server replied with a 402 Payment Required response.",
@@ -347,7 +353,7 @@ If you receive a 402 Payment Required response, use retry_http_request_with_x402
           "CRITICAL: For POST/PUT/PATCH requests, you MUST use the 'body' parameter (NOT queryParams) to send data.",
           hasMatchingNetwork ? "Ask the user if they want to retry the request with payment." : "",
           hasMatchingNetwork
-            ? "Use retry_http_request_with_x402 to retry the request with payment. IMPORTANT: You must retry_http_request_with_x402 with the correct Http method. "
+            ? "Use retry_http_request_with_x402 to retry the request with payment. IMPORTANT: You must retry_http_request_with_x402 with the correct Http method. If a pre-payment check is configured, also pass `paymentRequirements` (and `paymentRequirementsHeader`) through so it can verify the requirements."
             : "",
         ],
       });
@@ -475,18 +481,46 @@ DO NOT use this action directly without first trying make_http_request!`,
           asset: args.selectedPaymentOption.asset,
           amount: paymentAmount,
           method: args.method,
+          // Canonical requirements for an integrity check, if the caller threaded
+          // them through from the 402. x402 v2's authenticated source is the
+          // header, so expose both the decoded object and the raw wire bytes.
+          paymentRequirements:
+            (args.paymentRequirements as Record<string, unknown> | null | undefined) ?? null,
+          paymentRequirementsHeader: args.paymentRequirementsHeader ?? null,
         });
-        if (decision && decision.abort) {
-          return JSON.stringify(
-            {
-              error: true,
-              message: "Payment aborted by beforePayment hook",
-              details: decision.reason ?? "The pre-payment check refused this recipient.",
-              payTo: args.selectedPaymentOption.payTo,
-            },
-            null,
-            2,
-          );
+        // An empty return (void / null / undefined) means "no opinion" -> allow.
+        // But a NON-empty return that is not a recognized decision must fail
+        // CLOSED: an unrecognized shape (e.g. a provider's raw verdict an adapter
+        // forgot to map into { abort }) must never silently become permission to
+        // sign. Guard the invariant here, not in every adapter.
+        if (decision !== undefined && decision !== null) {
+          if (typeof (decision as X402BeforePaymentDecision).abort !== "boolean") {
+            return JSON.stringify(
+              {
+                error: true,
+                message: "Invalid beforePayment decision",
+                details:
+                  "The beforePayment hook returned an unrecognized shape. Expected " +
+                  "{ abort: boolean, reason?, code? }. Refusing to sign (fail-closed).",
+                payTo: args.selectedPaymentOption.payTo,
+              },
+              null,
+              2,
+            );
+          }
+          if (decision.abort) {
+            return JSON.stringify(
+              {
+                error: true,
+                message: "Payment aborted by beforePayment hook",
+                details: decision.reason ?? "The pre-payment check refused this recipient.",
+                ...(decision.code ? { code: decision.code } : {}),
+                payTo: args.selectedPaymentOption.payTo,
+              },
+              null,
+              2,
+            );
+          }
         }
       }
 

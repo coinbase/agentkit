@@ -80,6 +80,14 @@ const config: X402Config = {
 };
 ```
 
+The hook's return contract is small and fails closed:
+
+- `undefined` / `void` (or `null`) → no opinion, payment proceeds.
+- `{ abort: true, reason?, code? }` → payment refused; `reason` is surfaced to the caller and the optional machine-readable `code` is passed through so an autonomous caller can branch without parsing prose.
+- **Any other non-empty shape** (e.g. a provider's raw `{ verdict: "review" }` an adapter forgot to map into `{ abort }`) is treated as a hook-contract error and the payment is **not** signed. An unrecognized return never silently becomes permission to pay.
+
+Beyond the recipient, the context also carries the payment requirements for hooks that verify *integrity* rather than reputation. Because x402 v2's authenticated source is the `PAYMENT-REQUIRED` header (the body may be empty), `make_http_request` returns both the decoded `paymentRequirements` and the raw `paymentRequirementsHeader`; thread them into `retry_http_request_with_x402` and they reach the hook, letting it verify a signed requirements set (e.g. detect a `payTo` substituted in transit, which reputation screening alone can miss) before paying.
+
 > Note: the hook covers the two-step flow (which exposes `payTo` before paying). The one-shot `make_http_request_with_x402` action auto-settles a `402` inside the payment wrapper and does not expose the recipient pre-settlement, so it is not gated by this hook.
 
 ## Actions
