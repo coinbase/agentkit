@@ -39,7 +39,18 @@ const config: X402Config = {
   
   // Maximum payment per request in USDC
   // Default: 1.0 (or X402_MAX_PAYMENT_USDC env var)
-  maxPaymentUsdc: 0.5
+  maxPaymentUsdc: 0.5,
+
+  // Optional buyer-side pre-payment hook. Runs in retry_http_request_with_x402
+  // after amount + network validation and immediately before signing/settlement,
+  // receiving the recipient (payTo) and payment context. Return { abort: true }
+  // to refuse the payment without paying. Provider-neutral: plug in any recipient
+  // screening (sanctions / reputation / allowlist).
+  beforePayment: async ({ payTo }) => {
+    if (payTo && (await isSanctioned(payTo))) {
+      return { abort: true, reason: "recipient flagged" };
+    }
+  }
 };
 
 const provider = x402ActionProvider(config);
@@ -49,6 +60,35 @@ const provider = x402ActionProvider(config);
 - **USDC-Only Payments**: All payments are restricted to USDC assets only
 - **Payment Limits**: Enforces maximum payment amount per request (default: 1.0 USDC)
 - **Dynamic Registration Control**: Optional runtime service registration via agent
+- **Recipient screening (optional)**: `beforePayment` gates the recipient before any signing/settlement — see below
+
+### Screening the recipient before paying (`beforePayment`)
+
+`registeredServices` whitelists *where* the agent can pay and `maxPaymentUsdc` caps *how much*, but neither checks *who* the recipient is. The optional `beforePayment` hook fills that gap: it fires in the recommended two-step flow (`make_http_request` → `retry_http_request_with_x402`) after amount/network validation and just before payment is signed, with the selected option's `payTo`. Returning `{ abort: true, reason }` refuses the payment — no signature, no settlement.
+
+It's deliberately provider-neutral (no screening backend is bundled). Any implementation plugs in — for example [`anchor-x402-safe-pay`](https://github.com/hypeprinter007-stack/anchor-x402-safe-pay), which returns an `allow` / `review` / `block` verdict:
+
+```typescript
+import { screenAllows } from "anchor-x402-safe-pay";
+
+const config: X402Config = {
+  registeredServices: ["https://api.example.com"],
+  beforePayment: async ({ payTo }) => {
+    const { ok, verdict } = await screenAllows(payTo, { fetchImpl: paidFetch });
+    return ok ? undefined : { abort: true, reason: verdict.recommendation };
+  },
+};
+```
+
+The hook's return contract is small and fails closed:
+
+- `undefined` / `void` (or `null`) → no opinion, payment proceeds.
+- `{ abort: true, reason?, code? }` → payment refused; `reason` is surfaced to the caller and the optional machine-readable `code` is passed through so an autonomous caller can branch without parsing prose.
+- **Any other non-empty shape** (e.g. a provider's raw `{ verdict: "review" }` an adapter forgot to map into `{ abort }`) is treated as a hook-contract error and the payment is **not** signed. An unrecognized return never silently becomes permission to pay.
+
+Beyond the recipient, the context also carries the payment requirements for hooks that verify *integrity* rather than reputation. Because x402 v2's authenticated source is the `PAYMENT-REQUIRED` header (the body may be empty), `make_http_request` returns both the decoded `paymentRequirements` and the raw `paymentRequirementsHeader`; thread them into `retry_http_request_with_x402` and they reach the hook, letting it verify a signed requirements set (e.g. detect a `payTo` substituted in transit, which reputation screening alone can miss) before paying.
+
+> Note: the hook covers the two-step flow (which exposes `payTo` before paying). The one-shot `make_http_request_with_x402` action auto-settles a `402` inside the payment wrapper and does not expose the recipient pre-settlement, so it is not gated by this hook.
 
 ## Actions
 
