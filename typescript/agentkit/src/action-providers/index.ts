@@ -10,6 +10,7 @@ export * from "./basename";
 export * from "./cdp";
 export * from "./clanker";
 export * from "./compound";
+export * from "./connectmeguru";
 export * from "./defillama";
 export * from "./dtelecom";
 export * from "./enso";
