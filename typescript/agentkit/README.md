@@ -238,6 +238,23 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>ConnectMeGuru</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>search_esim_plans</code></td>
+    <td width="768">Searches over 3,000+ international travel eSIM data plans across 190+ countries with retail prices and validity periods.</td>
+</tr>
+<tr>
+    <td width="200"><code>purchase_esim</code></td>
+    <td width="768">Initiates an eSIM purchase and generates a non-custodial USDT payment invoice on Polygon, Arbitrum One, or TRON.</td>
+</tr>
+<tr>
+    <td width="200"><code>check_order_status</code></td>
+    <td width="768">Checks on-chain payment settlement and retrieves the fulfilled eSIM profile (ICCID, SM-DP+ LPA string, and QR code URL).</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>CDP API</strong></summary>
 <table width="100%">
 <tr>
