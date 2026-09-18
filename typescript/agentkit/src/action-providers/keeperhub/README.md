@@ -47,4 +47,6 @@ Any EVM network KeeperHub supports, including Base, Base Sepolia, Ethereum, Sepo
 
 - The simulation flag is set by code, never by model input, so it cannot be switched off.
 - `taskId` is the durable handle. Recovery through the same `taskId` lasts 24 hours; after that the same key executes again.
+- `get_execution_status` retries on timeout, network error, 429 and 5xx, behind a deadline that holds even if fetch ignores its abort signal. If no answer is obtained it reports "not yet known", never "failed".
+- A transfer answered with 409 "already being processed" is retried with the same idempotency key, so it cannot execute twice.
 - Only transfers are supported. Contract calls and protocol actions are not.

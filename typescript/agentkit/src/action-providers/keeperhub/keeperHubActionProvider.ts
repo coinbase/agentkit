@@ -1,4 +1,6 @@
 import { z } from "zod";
+// EvmWalletProvider must be a VALUE import: @CreateAction reads the parameter
+// type from decorator metadata to decide whether to pass the wallet.
 import { ActionProvider } from "../actionProvider";
 import { CreateAction } from "../actionDecorator";
 import { Network } from "../../network";
@@ -12,6 +14,12 @@ export interface KeeperHubActionProviderConfig {
   apiKey?: string;
   baseUrl?: string;
   timeoutMs?: number;
+  /**
+   * Extra attempts for get_execution_status, and for a transfer answered with
+   * 409 "already being processed" (same key, so it cannot execute twice). Default 3.
+   */
+  statusRetries?: number;
+  retryDelayMs?: number;
 }
 
 /**
@@ -34,11 +42,13 @@ export interface KeeperHubActionProviderConfig {
  */
 export class KeeperHubActionProvider extends ActionProvider<EvmWalletProvider> {
   readonly #client: KeeperHubClient;
+  readonly #inProgressRetries: number;
+  readonly #retryDelayMs: number;
 
   /**
    * Creates the provider.
    *
-   * @param config - API key (default: KEEPERHUB_API_KEY), optional base URL and timeout
+   * @param config - API key (default: KEEPERHUB_API_KEY), base URL, timeout and retry settings
    */
   constructor(config: KeeperHubActionProviderConfig = {}) {
     super("keeperhub", []);
@@ -47,7 +57,11 @@ export class KeeperHubActionProvider extends ActionProvider<EvmWalletProvider> {
       apiKey,
       baseUrl: config.baseUrl,
       timeoutMs: config.timeoutMs,
+      statusRetries: config.statusRetries,
+      retryDelayMs: config.retryDelayMs,
     });
+    this.#inProgressRetries = config.statusRetries ?? 3;
+    this.#retryDelayMs = config.retryDelayMs ?? 1_000;
   }
 
   /**
@@ -132,7 +146,21 @@ the taskId.
       tokenAddress: args.tokenAddress,
     });
 
-    const exec = await this.#client.executeTransfer(body, idempotencyKey);
+    // A 409 other than idempotency_conflict means the same key is still being
+    // processed ("Retry the same key shortly; do not rotate it"). This cost the
+    // unresolved trial in the 0.9.1 run: we gave up and had no executionId.
+    // Retrying the SAME key is safe: it cannot execute twice.
+    let exec = await this.#client.executeTransfer(body, idempotencyKey);
+    for (
+      let i = 0;
+      i < this.#inProgressRetries &&
+      exec.httpStatus === 409 &&
+      exec.code !== "idempotency_conflict";
+      i++
+    ) {
+      await new Promise(r => setTimeout(r, this.#retryDelayMs * 2 ** i));
+      exec = await this.#client.executeTransfer(body, idempotencyKey);
+    }
 
     if (exec.code === "idempotency_conflict") {
       return `Error: taskId "${args.taskId}" was already used for work with different details. Use a new taskId for different work, and the same taskId only to retry the same work.`;
@@ -186,6 +214,14 @@ taskId to get it back (valid for 24 hours).
     args: z.infer<typeof GetExecutionStatusSchema>,
   ): Promise<string> {
     const st = await this.#client.getStatus(args.executionId);
+    if (st.httpStatus === 0) {
+      // No answer after every retry. That says nothing about the transfer.
+      return [
+        `executionId: ${args.executionId}`,
+        `KeeperHub did not answer after ${st.attempts} attempts (${st.error}).`,
+        `The outcome is NOT YET KNOWN, which is not the same as failed. Do not resend. Ask again later.`,
+      ].join("\n");
+    }
     if (st.httpStatus >= 400) {
       return `Error: cannot read status for ${args.executionId} (HTTP ${st.httpStatus}).`;
     }

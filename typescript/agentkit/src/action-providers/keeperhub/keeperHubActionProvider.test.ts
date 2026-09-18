@@ -40,7 +40,11 @@ afterEach(() => {
 });
 
 const walletOn = (chainId: string) =>
-  ({ getNetwork: () => ({ protocolFamily: "evm", chainId, networkId: "base-sepolia" }) }) as never;
+  ({
+    getName: () => "fake_wallet",
+    getAddress: () => "0x0000000000000000000000000000000000000001",
+    getNetwork: () => ({ protocolFamily: "evm", chainId, networkId: "base-sepolia" }),
+  }) as never;
 
 const kh = () => keeperHubActionProvider({ apiKey: "kh_test" });
 
@@ -209,6 +213,100 @@ describe("get_execution_status: tells THREE states apart", () => {
     });
     const out = await kh().getExecutionStatus(walletOn("84532"), { executionId: "e1" } as never);
     expect(out).toMatch(/NOT YET KNOWN/);
+  });
+});
+
+describe("get_execution_status: survives a flaky or hanging status endpoint", () => {
+  // The one unresolved trial in the 0.10.4 campaign: the transfer landed, but
+  // the single status call hung for 925 s and was never retried.
+  const fast = () => keeperHubActionProvider({ apiKey: "kh_test", timeoutMs: 50, retryDelayMs: 1 });
+  const verified = {
+    body: {
+      executionId: "e1",
+      status: "completed",
+      receipts: [{ hash: "0xabc", chainId: 84532, verified: true, receiptStatus: "success" }],
+    },
+  };
+
+  it("retries after 5xx and 429, then reports the verified outcome", async () => {
+    queue.push({ status: 503, body: {} }, { status: 429, body: {} }, verified);
+    const out = await fast().getExecutionStatus(walletOn("84532"), { executionId: "e1" } as never);
+    expect(out).toMatch(/transaction SUCCEEDED/);
+    expect(sent).toHaveLength(3);
+  });
+
+  it("retries the SAME key after 409 in-progress, and returns the executionId", async () => {
+    // The unresolved trial in the 0.9.1 run: we gave up on this 409 and never
+    // got the executionId, although the transfer landed.
+    queue.push(
+      OK_SIM,
+      {
+        status: 409,
+        body: {
+          error:
+            "A request with this Idempotency-Key is already being processed. Retry the same key shortly; do not rotate it.",
+        },
+      },
+      { body: { executionId: "e9", status: "completed" } },
+    );
+    const out = await fast().transfer(walletOn("84532"), args as never);
+    expect(out).toMatch(/executionId: e9/);
+    const keys = sent.slice(1).map(r => r.headers["Idempotency-Key"]);
+    expect(keys).toHaveLength(2);
+    expect(keys[0]).toBe(keys[1]);
+  });
+
+  it("does not retry a 404: the answer is definite", async () => {
+    queue.push({ status: 404, body: { error: "not found" } });
+    const out = await fast().getExecutionStatus(walletOn("84532"), { executionId: "e1" } as never);
+    expect(out).toMatch(/HTTP 404/);
+    expect(sent).toHaveLength(1);
+  });
+
+  it("enforces the deadline even when fetch ignores the abort signal", async () => {
+    let calls = 0;
+    globalThis.fetch = (async () => {
+      calls++;
+      if (calls <= 2) return new Promise<Response>(() => {}); // never settles, ignores the signal
+      return new Response(JSON.stringify(verified.body), { status: 200 });
+    }) as typeof fetch;
+    const started = Date.now();
+    const out = await fast().getExecutionStatus(walletOn("84532"), { executionId: "e1" } as never);
+    expect(out).toMatch(/transaction SUCCEEDED/);
+    expect(calls).toBe(3);
+    expect(Date.now() - started).toBeLessThan(2_000);
+  });
+
+  it("says NOT YET KNOWN, not failed, when every attempt times out", async () => {
+    globalThis.fetch = (async () => new Promise<Response>(() => {})) as typeof fetch;
+    const out = await fast().getExecutionStatus(walletOn("84532"), { executionId: "e1" } as never);
+    expect(out).toMatch(/did not answer after 4 attempts/);
+    expect(out).toMatch(/NOT YET KNOWN, which is not the same as failed/);
+    expect(out).toMatch(/Do not resend/);
+  });
+});
+
+describe("through AgentKit's action list, the way an agent calls it", () => {
+  // Found by the LLM agent demo: with a type-only import of EvmWalletProvider,
+  // the decorator metadata was `Function`, AgentKit did not pass the wallet, and
+  // every action failed with "walletProvider.getNetwork is not a function".
+  // The other tests call the methods directly, so they could not see it.
+  it("passes the wallet provider to the action", async () => {
+    const actions = kh().getActions(walletOn("100"));
+    const transfer = actions.find(a => a.name.endsWith("_transfer"))!;
+    const out = await transfer.invoke(args as never);
+    expect(out).toMatch(/does not support chainId 100/);
+  });
+
+  it("exposes exactly transfer and get_execution_status", () => {
+    const names = kh()
+      .getActions(walletOn("84532"))
+      .map(a => a.name)
+      .sort();
+    expect(names).toEqual([
+      "KeeperHubActionProvider_get_execution_status",
+      "KeeperHubActionProvider_transfer",
+    ]);
   });
 });
 
