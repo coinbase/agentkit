@@ -27,13 +27,13 @@ export const PurchaseEsimSchema = z
       .email("A valid email address is required for eSIM profile delivery")
       .describe("The delivery email address where eSIM installation credentials and receipt will be sent"),
     network: z
-      .enum(["polygon", "arbitrum", "tron"])
-      .default("polygon")
-      .describe("The blockchain network to settle the USDT payment on ('polygon', 'arbitrum', or 'tron')"),
+      .enum(["base", "polygon", "arbitrum", "tron"])
+      .default("base")
+      .describe("The blockchain network to settle the payment on ('base', 'polygon', 'arbitrum', or 'tron'). Defaults to 'base'"),
     currency: z
-      .literal("USDT")
-      .default("USDT")
-      .describe("Payment currency, must be USDT"),
+      .enum(["USDC", "USDT"])
+      .default("USDC")
+      .describe("Payment stablecoin currency, 'USDC' or 'USDT'. Defaults to 'USDC'"),
   })
   .strip()
   .describe("Parameters for initiating an eSIM purchase and generating a payment invoice");

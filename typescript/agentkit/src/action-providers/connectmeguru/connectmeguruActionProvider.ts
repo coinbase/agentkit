@@ -84,9 +84,10 @@ Takes the destination country name or ISO code and returns a list of package cod
    */
   @CreateAction({
     name: "purchase_esim",
-    description: `Initiates an eSIM purchase and generates a non-custodial USDT payment invoice.
-Requires packageCode (from search_esim_plans), customerEmail, and network ('polygon', 'arbitrum', or 'tron').
-Returns payment instructions including receiving address, exact USDT amount to transfer, and expiry timestamp.`,
+    description: `Initiates an eSIM purchase and generates a non-custodial USDC or USDT payment invoice.
+Requires packageCode (from search_esim_plans), customerEmail, network ('base', 'polygon', 'arbitrum', or 'tron'), and currency ('USDC' or 'USDT').
+Defaults to USDC on Base (Coinbase L2) for sub-cent transaction fees.
+Returns payment instructions including receiving address, exact token amount to transfer, and expiry timestamp.`,
     schema: PurchaseEsimSchema,
   })
   async purchaseEsim(args: z.infer<typeof PurchaseEsimSchema>): Promise<string> {
@@ -104,8 +105,8 @@ Returns payment instructions including receiving address, exact USDT amount to t
         body: JSON.stringify({
           packageCode: args.packageCode,
           customerEmail: args.customerEmail,
-          currency: args.currency || "USDT",
-          network: args.network || "polygon",
+          preferredCurrency: args.currency ? args.currency.toUpperCase() : "USDC",
+          preferredNetwork: args.network ? args.network.toUpperCase() : "BASE",
         }),
       });
 
