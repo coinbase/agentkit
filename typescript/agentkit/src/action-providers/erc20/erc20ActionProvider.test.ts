@@ -139,6 +139,25 @@ describe("Transfer Action", () => {
     expect(response).toContain(`Transaction hash for the transfer: ${TRANSACTION_HASH}`);
   });
 
+  it("should refuse a transfer whose destination is the token contract in a different case", async () => {
+    mockMulticall.mockResolvedValueOnce([
+      { result: "MockToken" }, // name
+      { result: MOCK_DECIMALS }, // decimals
+      { result: BigInt(100000 * 10 ** MOCK_DECIMALS) }, // balance
+    ]);
+
+    const args = {
+      amount: MOCK_AMOUNT.toString(),
+      tokenAddress: "0xABCDEF1234567890123456789012345678901234",
+      destinationAddress: "0xabcdef1234567890123456789012345678901234",
+    };
+
+    const response = await actionProvider.transfer(mockWallet, args);
+
+    expect(mockWallet.sendTransaction).not.toHaveBeenCalled();
+    expect(response).toContain("Transfer destination is the token contract address");
+  });
+
   it("should fail with an error", async () => {
     mockMulticall.mockRejectedValue(new Error("Failed to get token details"));
 

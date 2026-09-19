@@ -97,7 +97,7 @@ Important notes:
       }
 
       // Guardrails to prevent loss of funds
-      if (args.tokenAddress === args.destinationAddress) {
+      if (args.tokenAddress.toLowerCase() === args.destinationAddress.toLowerCase()) {
         return "Error: Transfer destination is the token contract address. Refusing transfer to prevent loss of funds.";
       }
       if (

@@ -124,7 +124,9 @@ APY: ${vault.apy}%
       const chainId = wallet.getNetwork().chainId! as ChainId;
       const vaultsResponse = await fetch(`${YELAY_BACKEND_URL}/vaults?chainId=${chainId}`);
       const vaults = (await vaultsResponse.json()) as VaultsDetailsResponse[];
-      const vault = vaults.find(vault => vault.address === args.vaultAddress);
+      const vault = vaults.find(
+        vault => vault.address.toLowerCase() === args.vaultAddress.toLowerCase(),
+      );
 
       if (!vault) {
         return "Error: Vault not found";
@@ -181,7 +183,9 @@ Important notes:
       const chainId = wallet.getNetwork().chainId! as ChainId;
       const vaultsResponse = await fetch(`${YELAY_BACKEND_URL}/vaults?chainId=${chainId}`);
       const vaults = (await vaultsResponse.json()) as VaultsDetailsResponse[];
-      const vault = vaults.find(vault => vault.address === args.vaultAddress);
+      const vault = vaults.find(
+        vault => vault.address.toLowerCase() === args.vaultAddress.toLowerCase(),
+      );
 
       if (!vault) {
         return "Error: Vault not found";
@@ -287,7 +291,9 @@ It takes:
       const chainId = wallet.getNetwork().chainId! as ChainId;
       const vaultsResponse = await fetch(`${YELAY_BACKEND_URL}/vaults?chainId=${chainId}`);
       const vaults = (await vaultsResponse.json()) as VaultsDetailsResponse[];
-      const vault = vaults.find(vault => vault.address === args.vaultAddress);
+      const vault = vaults.find(
+        vault => vault.address.toLowerCase() === args.vaultAddress.toLowerCase(),
+      );
 
       if (!vault) {
         return "Error: Vault not found";
