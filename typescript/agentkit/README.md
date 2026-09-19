@@ -178,6 +178,17 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>AZZLE</strong></summary>
+<table width="100%">
+<tr><td width="200"><code>post_azzle_task</code></td><td width="768">Posts an AZZLE V2 task on Base using an AZL-wei amount.</td></tr>
+<tr><td width="200"><code>claim_azzle_task</code></td><td width="768">Claims a posted AZZLE V2 task.</td></tr>
+<tr><td width="200"><code>fund_azzle_task</code></td><td width="768">Funds a claimed AZZLE task in AZL wei.</td></tr>
+<tr><td width="200"><code>mark_azzle_task_delivered</code></td><td width="768">Marks an active AZZLE task delivered.</td></tr>
+<tr><td width="200"><code>release_azzle_escrow</code></td><td width="768">Releases AZL escrow for a delivered task.</td></tr>
+<tr><td width="200"><code>complete_azzle_task</code></td><td width="768">Completes a delivered AZZLE task after release.</td></tr>
+</table>
+</details>
+<details>
 <summary><strong>Base Account</strong></summary>
 <table width="100%">
 <tr>
