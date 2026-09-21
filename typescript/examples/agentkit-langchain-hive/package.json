@@ -1,0 +1,25 @@
+{
+  "name": "@coinbase/agentkit-langchain-hive-example",
+  "description": "HiveActionProvider + LangChain agent — x402 micro-payments on Base mainnet",
+  "version": "1.0.0",
+  "private": true,
+  "author": "Steve Rotzin <steve@thehiveryiq.com>",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "NODE_OPTIONS='--no-warnings' tsx ./agent.ts",
+    "dev": "nodemon ./agent.ts"
+  },
+  "dependencies": {
+    "@coinbase/agentkit": "workspace:*",
+    "@coinbase/agentkit-langchain": "workspace:*",
+    "@langchain/core": "^1.1.0",
+    "@langchain/langgraph": "^1.2.0",
+    "@langchain/openai": "^1.2.0",
+    "dotenv": "^16.4.5",
+    "langchain": "^1.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0",
+    "tsx": "^4.7.1"
+  }
+}
