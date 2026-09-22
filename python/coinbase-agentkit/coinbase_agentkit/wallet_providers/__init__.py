@@ -14,6 +14,7 @@ from .cdp_solana_wallet_provider import (
 )
 from .eth_account_wallet_provider import EthAccountWalletProvider, EthAccountWalletProviderConfig
 from .evm_wallet_provider import EvmWalletProvider
+from .nano_wallet_provider import NanoWalletProvider, NanoWalletProviderConfig
 from .wallet_provider import WalletProvider
 
 __all__ = [
@@ -26,5 +27,7 @@ __all__ = [
     "EthAccountWalletProvider",
     "EthAccountWalletProviderConfig",
     "EvmWalletProvider",
+    "NanoWalletProvider",
+    "NanoWalletProviderConfig",
     "WalletProvider",
 ]
