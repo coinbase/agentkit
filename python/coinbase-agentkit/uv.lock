@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10, <4"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -634,7 +634,7 @@ requires-dist = [
     { name = "pyjwt", extras = ["crypto"], specifier = ">=2.12.0,<3" },
     { name = "python-dotenv", specifier = ">=1.0.1,<2" },
     { name = "requests", specifier = ">=2.31.0,<3" },
-    { name = "solana", specifier = ">=0.36.6" },
+    { name = "solana", specifier = ">=0.36.6,<0.40" },
     { name = "solders", specifier = ">=0.26.0" },
     { name = "web3", specifier = ">=7.6.0,<8" },
     { name = "x402", extras = ["requests"], specifier = ">=2.4.0" },
