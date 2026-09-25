@@ -11,6 +11,7 @@ export * from "./cdp";
 export * from "./clanker";
 export * from "./compound";
 export * from "./defillama";
+export * from "./dexscreener";
 export * from "./dtelecom";
 export * from "./enso";
 export * from "./erc20";
