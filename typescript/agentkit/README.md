@@ -555,6 +555,23 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>SBOR</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_sbor_rate</code></td>
+    <td width="768">Gets the current SBOR benchmark lending rates, read from lending contract state and published daily: the SBOR indices on Stacks, and the cost of borrowing USDC against bitcoin on Base and Ethereum.</td>
+</tr>
+<tr>
+    <td width="200"><code>compare_rate_to_sbor</code></td>
+    <td width="768">Compares an offered borrow or supply rate against an SBOR benchmark before acting, and flags a borrow more than 50 basis points above it as one to stop and ask a human about.</td>
+</tr>
+<tr>
+    <td width="200"><code>list_sbor_markets</code></td>
+    <td width="768">Lists the lending markets behind an SBOR benchmark, with each market's rates, utilization and depth.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Superfluid</strong></summary>
 <table width="100%">
 <tr>
