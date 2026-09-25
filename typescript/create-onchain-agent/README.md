@@ -25,6 +25,14 @@ This command lets you choose between two project templates:
 - **Next.js Template**: A full-stack web application with React, Tailwind CSS, and ESLint
 - **MCP Template**: A Model Context Protocol server project
 
+### LLM Provider Configuration
+By default, the template connects to OpenAI utilizing `gpt-4o-mini`. However, `create-onchain-agent` is fully provider-agnostic and works with any OpenAI-compatible API out of the box (e.g. Anthropic, Google Gemini, OpenRouter, Groq, Ollama). 
+
+To use a different provider, simply update the `.env` variables after generating your project:
+- `AI_API_KEY`: Your provider's API key
+- `AI_BASE_URL`: The OpenAI-compatible endpoint for your provider (e.g., `https://api.anthropic.com/v1/`)
+- `AI_MODEL`: Your preferred model (e.g., `claude-3-5-sonnet-latest`)
+
 ### Component Generation
 
 After installing the `create-onchain-agent` CLI, you will also have the `agenkit` CLI installed. This allows you to generate components for your project.
