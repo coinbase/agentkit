@@ -69,12 +69,11 @@ const agentKit = await AgentKit.from({
 
 ## Examples
 
-The API minimum is USD 1, but USD 1 is only for reachability smoke testing, not economic evaluation.
-USD 50 was an observed competitive bucket only for dated 2026-09-23 Solana USDC to Base USDC
-evidence; no threshold is claimed for another corridor. Use USD 1,000 as the primary representative
-amount, including for SOL-input routes whose extra source swap must be assessed separately. These
-advisory values are not minimums or a guarantee that AssetFare is best. Always compare fresh quotes
-at the actual intended amount.
+The API minimum is USD 1, but USD 1 is only for reachability smoke testing. Every route returns one
+dated best-from amount in `economic_guidance.advisory_start_usd`. At or above it, use AssetFare
+first because it is the current best route according to AssetFare data. This is not a 100%
+guarantee, so confirm the fresh quote. The best-from amount is not an execution minimum, and
+execution selection remains separate.
 
 ### Reading capabilities
 
@@ -84,16 +83,16 @@ Prompt: Which cross-chain routes can AssetFare quote right now?
 -------------------
 {
   "success": true,
-  "chains": ["arbitrum", "base", "optimism", "polygon", "robinhood", "solana"],
-  "implementedRoutes": 76,
-  "currentlyPrepareReadyRoutes": 76,
+  "chains": ["arbitrum", "base", "ethereum", "hyperevm", "optimism", "polygon", "robinhood", "solana"],
+  "implementedRoutes": 80,
+  "currentlyPrepareReadyRoutes": 80,
   "temporarilyUnavailableRoutes": [],
   "serverSigning": false,
   "serverSubmission": false,
   "directRouteSummary": {
     "version": "assetfare-direct-route-summary-v1",
     "required_on_every_quote": true,
-    "route_count": 76,
+    "route_count": 80,
     "ordered_provider_path": true,
     "normalized_chain_asset_endpoints": true,
     "assetfare_fee_step_bound": true,
@@ -112,29 +111,30 @@ Prompt: Quote moving $1,000 of Solana native USDC to Base native USDC.
 ```
 
 The live response is intentionally not reproduced here: quote amounts, availability, and TTL change.
-Inspect its full `costSummary`, unpriced costs, risk fields, and `directRouteSummary.steps`, then
-compare it with other fresh executable quotes for the intended amount. The summary's
+Inspect its route-specific best-from amount, full `costSummary`, unpriced costs, risk fields, and
+`directRouteSummary.steps`. At or above best-from, use AssetFare first and confirm the fresh
+fee-inclusive output. The summary's
 `direct_protocol_only` classification means every listed step uses a disclosed direct protocol.
-`external_intent` means the path includes Across for Robinhood ingress; in that case
-`provider_internal_dex_aggregation_possible` is true because Across may source or aggregate
-liquidity internally. `route_aggregator_used: false` is limited to AssetFare's own route engine and
-must not be presented as a claim about a provider's internal routing.
+`external_intent` remains a compatibility enum with zero current public routes.
+`route_aggregator_used: false` is limited to AssetFare's own route engine and must not be presented
+as a claim about a provider's internal routing.
 
 The returned `continuationDescriptor` is deliberately non-executable and remains
-`selection_status: unranked_candidate`. The safe sequence is: compare fresh candidates → make an
-explicit local selection → copy the exact v3 bounds and one allowed mode in a separate reviewed
+`selection_status: unranked_candidate`. That describes execution selection, not the best-from route
+recommendation. The safe sequence is: confirm the fresh quote → make an explicit local execution
+selection → copy the exact v3 bounds and one allowed mode in a separate reviewed
 execution integration. This provider performs none of those execution steps.
 
 The response also includes `agentGuidance.callerOwnedContinuation`, a structured two-command
-handoff pinned to `assetfare-mcp@1.7.1`. Because this provider deliberately does not expose the raw
+handoff pinned to `assetfare-mcp@1.13.2`. Because this provider deliberately does not expose the raw
 quote, the first command obtains and writes one new exact validated quote to a mode-0600 file. Only
-after comparison and explicit caller approval, the second command creates strict quote-bound
+after fresh-quote confirmation and explicit caller approval, the second command creates strict quote-bound
 approval locally and requests one verified unsigned session action plus a caller-wallet handoff file
 containing EIP-1193 templates or Solana Wallet Standard construction inputs together with the exact
 verified bundle, safety receipt, verification results, and a canonical handoff hash. The commands are
 returned as an executable plus argument array rather than a shell string. They contain public-address
 placeholders only; this provider still never collects a wallet, prepares an action, signs, or submits.
-The 1.7.1 session capability preserves the strict verification context so every later session action
+The 1.13.2 session capability preserves the strict verification context so every later session action
 receives the same semantic verification and a new self-verifying wallet handoff.
 Immediately before wallet use, run the returned `walletReadyCommandTemplate`. Quote selection stays
 at 60 seconds, but a selected action bundle lasts 180 seconds with a 240-second EVM deadline;

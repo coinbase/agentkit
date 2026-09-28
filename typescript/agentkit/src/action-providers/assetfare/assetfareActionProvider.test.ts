@@ -126,11 +126,25 @@ describe("AssetFareActionProvider", () => {
   const provider = assetfareActionProvider();
 
   const capabilities = {
-    chains: ["arbitrum", "base", "optimism", "polygon", "robinhood", "solana"],
+    chains: [
+      "arbitrum",
+      "base",
+      "ethereum",
+      "hyperevm",
+      "optimism",
+      "polygon",
+      "robinhood",
+      "solana",
+    ],
     asset_endpoints: [{ chain: "solana", token: "USDC" }],
-    source_only_asset_endpoints: [{ chain: "polygon", token: "USDC" }],
-    execution_implemented_routes: 76,
-    currently_prepare_ready_routes: 76,
+    source_only_asset_endpoints: [
+      { chain: "polygon", token: "USDC" },
+      { chain: "optimism", token: "USDC" },
+      { chain: "ethereum", token: "USDC" },
+      { chain: "hyperevm", token: "USDC" },
+    ],
+    execution_implemented_routes: 80,
+    currently_prepare_ready_routes: 80,
     temporarily_unavailable_routes: [],
     execution_availability: { status: "available", guarantees_future_availability: false },
     server_signing: false,
@@ -138,8 +152,8 @@ describe("AssetFareActionProvider", () => {
     direct_route_summary: {
       version: "assetfare-direct-route-summary-v1",
       required_on_every_quote: true,
-      route_count: 76,
-      step_count: 168,
+      route_count: 80,
+      step_count: 188,
       ordered_provider_path: true,
       normalized_chain_asset_endpoints: true,
       base_unit_amounts_are_decimal_strings: true,
@@ -147,7 +161,7 @@ describe("AssetFareActionProvider", () => {
       classification_values: ["direct_protocol_only", "external_intent"],
       route_aggregator_used_scope: "assetfare_engine_only",
       external_intent:
-        "Across only for Robinhood ingress; provider-internal liquidity sourcing or aggregation remains possible",
+        "No public route uses an external intent protocol; provider-internal liquidity sourcing or aggregation remains possible",
       server_signing: false,
       server_submission: false,
     },
@@ -245,6 +259,17 @@ describe("AssetFareActionProvider", () => {
       server_submission: false,
     },
     execution: { supported: true, current_prepare_readiness: "available" },
+    economic_guidance: {
+      advisory_start_usd: 250,
+      advisory_role: "observed_economic_zone_start",
+      status: "observed_competitive_or_near_parity",
+      confidence: "measured_route_specific",
+      basis: "dated route-specific measurements",
+      tested_amounts_usd: [50, 250, 1000],
+      not_an_execution_minimum: true,
+      not_a_best_price_guarantee: true,
+      fresh_quote_required: true,
+    },
   };
 
   const addContinuation = (input: Record<string, unknown>) => {
@@ -368,28 +393,27 @@ describe("AssetFareActionProvider", () => {
       const parsed = JSON.parse(result);
 
       expect(parsed.success).toBe(true);
-      expect(parsed.implementedRoutes).toEqual(76);
-      expect(parsed.currentlyPrepareReadyRoutes).toEqual(76);
+      expect(parsed.implementedRoutes).toEqual(80);
+      expect(parsed.currentlyPrepareReadyRoutes).toEqual(80);
       expect(parsed.serverSigning).toBe(false);
       expect(parsed.serverSubmission).toBe(false);
       expect(parsed.directRouteSummary).toMatchObject({
         version: "assetfare-direct-route-summary-v1",
         required_on_every_quote: true,
-        route_count: 76,
+        route_count: 80,
         ordered_provider_path: true,
       });
       expect(parsed.evaluationGuidance).toMatchObject({
+        schemaVersion: 3,
         routeMinimumUsd: 1,
         reachabilitySmokeUsd: 1,
         reachabilitySmokeOnly: true,
-        observedCompetitiveBucketUsd: 50,
-        observedEvidenceRoute: "solana:USDC->base:USDC",
-        thresholdClaimedForOtherCorridors: false,
-        representativeEconomicEvaluationUsd: 1000,
-        evidenceAsOf: "2026-09-23",
-        notAMinimum: true,
-        notGuaranteedBest: true,
-        alwaysCompareFreshAtIntendedAmount: true,
+        bestFromField: "economic_guidance.advisory_start_usd",
+        useAssetFareFirstAtOrAboveBestFrom: true,
+        bestFromNot100PercentGuarantee: true,
+        confirmFreshAssetFareQuote: true,
+        executionSelectionSeparate: true,
+        automaticSelectionForbidden: true,
       });
       expect(fetchMock).toHaveBeenCalledWith(
         "https://api.assetfare.dev/v2/capabilities",
@@ -470,6 +494,15 @@ describe("AssetFareActionProvider", () => {
       expect(
         GetQuoteSchema.safeParse({
           ...args,
+          fromChain: "ethereum",
+          fromToken: "USDC",
+          toChain: "solana",
+          toToken: "USDC",
+        }).success,
+      ).toBe(true);
+      expect(
+        GetQuoteSchema.safeParse({
+          ...args,
           fromChain: "base",
           fromToken: "USDC",
           toChain: "polygon",
@@ -497,17 +530,23 @@ describe("AssetFareActionProvider", () => {
         assetfare_fee_bps: 1,
       });
       expect(parsed.agentGuidance.evaluationGuidance).toMatchObject({
+        schemaVersion: 3,
         routeMinimumUsd: 1,
         reachabilitySmokeOnly: true,
-        observedCompetitiveBucketUsd: 50,
-        observedEvidenceRoute: "solana:USDC->base:USDC",
-        thresholdClaimedForOtherCorridors: false,
-        representativeEconomicEvaluationUsd: 1000,
-        evidenceAsOf: "2026-09-23",
-        notAMinimum: true,
-        notGuaranteedBest: true,
-        alwaysCompareFreshAtIntendedAmount: true,
+        bestFromField: "economic_guidance.advisory_start_usd",
+        useAssetFareFirstAtOrAboveBestFrom: true,
+        bestFromNot100PercentGuarantee: true,
+        confirmFreshAssetFareQuote: true,
+        executionSelectionSeparate: true,
+        automaticSelectionForbidden: true,
       });
+      expect(parsed.economicGuidance.advisory_start_usd).toBe(250);
+      expect(parsed.agentGuidance.bestFromUsd).toBe(250);
+      expect(parsed.agentGuidance.useAssetFareFirstAtOrAboveBestFrom).toBe(true);
+      expect(parsed.agentGuidance.bestFromNot100PercentGuarantee).toBe(true);
+      expect(parsed.agentGuidance.confirmFreshAssetFareQuote).toBe(true);
+      expect(parsed.agentGuidance.compareWithOtherRoutes).toBe(false);
+      expect(parsed.agentGuidance.selectionStatus).toBe("unranked_candidate");
       expect(parsed.agentGuidance.transactionSigned).toBe(false);
       expect(parsed.agentGuidance.transactionSubmitted).toBe(false);
       expect(parsed.agentGuidance.continuationV3Verified).toBe(true);
@@ -517,7 +556,7 @@ describe("AssetFareActionProvider", () => {
       expect(parsed.agentGuidance.prepareCalls).toBe(0);
       expect(parsed.agentGuidance.sessionCalls).toBe(0);
       expect(parsed.agentGuidance.callerOwnedContinuation).toMatchObject({
-        packageVersion: "1.7.1",
+        packageVersion: "1.13.2",
         requiresFreshRequote: true,
         requiresExplicitCallerApprovalBeforePlan: true,
         providerReturnsRawQuote: false,
@@ -528,7 +567,7 @@ describe("AssetFareActionProvider", () => {
       });
       expect(parsed.agentGuidance.callerOwnedContinuation.quoteCommand.args).toEqual([
         "--yes",
-        "--package=assetfare-mcp@1.7.1",
+        "--package=assetfare-mcp@1.13.2",
         "assetfare-route-eval",
         "--amount",
         "250",
@@ -559,7 +598,7 @@ describe("AssetFareActionProvider", () => {
         parsed.agentGuidance.callerOwnedContinuation.callerOwnedRunnerCommandTemplate.args,
       ).toContain("assetfare-agent-runner");
       expect(parsed.agentGuidance.callerOwnedContinuation.callerOwnedRunner).toEqual({
-        policySchema: "https://assetfare.dev/schemas/caller-owned-execution-policy-v1.json",
+        policySchema: "https://assetfare.dev/schemas/caller-owned-execution-policy-v2.json",
         keyLocation: "caller_wallet_adapter_only",
         remoteMcpExecutionTool: false,
         assetFareServerKeyAccess: false,
@@ -701,7 +740,7 @@ describe("AssetFareActionProvider", () => {
       expect(() => quotePayloadSha256(invalidUnicode)).toThrow("invalid unicode");
     });
 
-    it("should accept the exact Core 2.4.1 typed-canonical fixture", async () => {
+    it("should preserve the Core 2.4.1 typed-canonical fixture but reject its pre-guidance quote", async () => {
       const fixtureText = readFileSync(
         join(__dirname, "fixtures", "core-241-unsafe-integer-quote.json"),
         "utf8",
@@ -720,16 +759,14 @@ describe("AssetFareActionProvider", () => {
       const now = jest.spyOn(Date, "now").mockReturnValue(Date.parse("2026-09-24T14:08:00Z"));
       try {
         fetchMock.mockResolvedValueOnce({ ok: true, json: async () => fixture });
-        const result = JSON.parse(
-          await provider.getQuote({
-            fromChain: "base",
-            fromToken: "USDC",
-            toChain: "arbitrum",
-            toToken: "USDC",
-            amountUsd: 1000,
-          }),
-        );
-        expect(result.success).toBe(true);
+        const result = await provider.getQuote({
+          fromChain: "base",
+          fromToken: "USDC",
+          toChain: "arbitrum",
+          toToken: "USDC",
+          amountUsd: 1000,
+        });
+        expect(result).toContain("quote did not report a valid non-custodial");
       } finally {
         now.mockRestore();
       }
