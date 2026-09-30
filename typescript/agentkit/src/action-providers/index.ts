@@ -4,6 +4,7 @@ export * from "./actionProvider";
 export * from "./customActionProvider";
 
 export * from "./across";
+export * from "./agorean";
 export * from "./alchemy";
 export * from "./baseAccount";
 export * from "./basename";
