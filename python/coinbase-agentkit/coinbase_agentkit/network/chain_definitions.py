@@ -357,3 +357,50 @@ polygon = Chain(
         },
     },
 )
+
+radius = Chain(
+    id="723487",
+    name="Radius Network",
+    native_currency={"name": "Radius USD", "symbol": "RUSD", "decimals": 18},
+    rpc_urls={
+        "default": {
+            "http": ["https://rpc.radiustech.xyz"],
+        },
+    },
+    block_explorers={
+        "default": {
+            "name": "Radius Explorer",
+            "url": "https://network.radiustech.xyz",
+            "api_url": "https://network.radiustech.xyz/api",
+        },
+    },
+    contracts={
+        "multicall3": {
+            "address": "0xca11bde05977b3631167028862be2a173976ca11",
+        },
+    },
+)
+
+radius_testnet = Chain(
+    id="72344",
+    name="Radius Testnet",
+    native_currency={"name": "Radius USD", "symbol": "RUSD", "decimals": 18},
+    rpc_urls={
+        "default": {
+            "http": ["https://rpc.testnet.radiustech.xyz"],
+        },
+    },
+    block_explorers={
+        "default": {
+            "name": "Radius Testnet Explorer",
+            "url": "https://testnet.radiustech.xyz",
+            "api_url": "https://testnet.radiustech.xyz/api",
+        },
+    },
+    contracts={
+        "multicall3": {
+            "address": "0xca11bde05977b3631167028862be2a173976ca11",
+        },
+    },
+    testnet=True,
+)

@@ -59,6 +59,8 @@ EVM_NETWORKS = [
     ("optimism-sepolia", "Optimism Sepolia"),
     ("polygon-mainnet", "Polygon Mainnet"),
     ("polygon-mumbai", "Polygon Mumbai"),
+    ("radius-mainnet", "Radius Mainnet"),
+    ("radius-testnet", "Radius Testnet"),
 ]
 
 SVM_NETWORKS = [

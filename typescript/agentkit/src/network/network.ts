@@ -11,7 +11,35 @@ import {
   polygonAmoy,
   polygon,
 } from "viem/chains";
+import { defineChain } from "viem";
 import * as chains from "viem/chains";
+
+const radius = defineChain({
+  id: 723487,
+  name: "Radius Network",
+  nativeCurrency: { name: "Radius USD", symbol: "RUSD", decimals: 18 },
+  rpcUrls: { default: { http: ["https://rpc.radiustech.xyz"] } },
+  blockExplorers: {
+    default: { name: "Radius Explorer", url: "https://network.radiustech.xyz" },
+  },
+  contracts: {
+    multicall3: { address: "0xcA11bde05977b3631167028862bE2a173976CA11" },
+  },
+});
+
+const radiusTestnet = defineChain({
+  id: 72344,
+  name: "Radius Testnet",
+  nativeCurrency: { name: "Radius USD", symbol: "RUSD", decimals: 18 },
+  rpcUrls: { default: { http: ["https://rpc.testnet.radiustech.xyz"] } },
+  blockExplorers: {
+    default: { name: "Radius Testnet Explorer", url: "https://testnet.radiustech.xyz" },
+  },
+  contracts: {
+    multicall3: { address: "0xcA11bde05977b3631167028862bE2a173976CA11" },
+  },
+  testnet: true,
+});
 
 /**
  * Maps EVM chain IDs to Coinbase network IDs
@@ -27,6 +55,8 @@ export const CHAIN_ID_TO_NETWORK_ID: Record<number, string> = {
   421614: "arbitrum-sepolia",
   10: "optimism-mainnet",
   11155420: "optimism-sepolia",
+  723487: "radius-mainnet",
+  72344: "radius-testnet",
 };
 
 /**
@@ -56,6 +86,8 @@ export const NETWORK_ID_TO_VIEM_CHAIN: Record<string, Chain> = {
   "arbitrum-sepolia": arbitrumSepolia,
   "optimism-mainnet": optimism,
   "optimism-sepolia": optimismSepolia,
+  "radius-mainnet": radius,
+  "radius-testnet": radiusTestnet,
 };
 
 /**

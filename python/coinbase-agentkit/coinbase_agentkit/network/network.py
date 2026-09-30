@@ -10,6 +10,8 @@ from .chain_definitions import (
     optimism_sepolia,
     polygon,
     polygon_amoy,
+    radius,
+    radius_testnet,
     sepolia,
 )
 
@@ -34,6 +36,8 @@ CHAIN_ID_TO_NETWORK_ID: dict[str, str] = {
     "421614": "arbitrum-sepolia",
     "10": "optimism-mainnet",
     "11155420": "optimism-sepolia",
+    "723487": "radius-mainnet",
+    "72344": "radius-testnet",
 }
 
 # Maps Coinbase network IDs to EVM chain IDs
@@ -53,4 +57,6 @@ NETWORK_ID_TO_CHAIN: dict[str, dict] = {
     "arbitrum-sepolia": arbitrum_sepolia,
     "optimism-mainnet": optimism,
     "optimism-sepolia": optimism_sepolia,
+    "radius-mainnet": radius,
+    "radius-testnet": radius_testnet,
 }
