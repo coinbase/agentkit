@@ -5,6 +5,7 @@ export * from "./customActionProvider";
 
 export * from "./across";
 export * from "./alchemy";
+export * from "./automatonFirewall";
 export * from "./baseAccount";
 export * from "./basename";
 export * from "./cdp";
