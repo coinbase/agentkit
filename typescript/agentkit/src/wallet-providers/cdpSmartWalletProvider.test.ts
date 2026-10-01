@@ -316,6 +316,43 @@ describe("CdpSmartWalletProvider", () => {
       expect(userOpHash).toBe(MOCK_USER_OP_HASH);
     });
 
+    it("should forward a caller-supplied idempotency key", async () => {
+      const transaction: TransactionRequest = {
+        to: "0x1234567890123456789012345678901234567890" as `0x${string}`,
+        value: BigInt(1000000000000000000),
+      };
+
+      await provider.sendTransaction(transaction, "logical-transfer-1");
+
+      expect(mockCdpClient.evm.sendUserOperation).toHaveBeenCalledWith(
+        expect.objectContaining({ idempotencyKey: "logical-transfer-1" }),
+      );
+    });
+
+    it("should reuse the idempotency key across retries of the same transfer", async () => {
+      const transaction: TransactionRequest = {
+        to: "0x1234567890123456789012345678901234567890" as `0x${string}`,
+        value: BigInt(1000000000000000000),
+      };
+
+      // A lost response makes the caller retry the same logical transfer.
+      await provider.nativeTransfer(
+        transaction.to as `0x${string}`,
+        "1000000000000000000",
+        "retry-1",
+      );
+      await provider.nativeTransfer(
+        transaction.to as `0x${string}`,
+        "1000000000000000000",
+        "retry-1",
+      );
+
+      const keys = (mockCdpClient.evm.sendUserOperation as jest.Mock).mock.calls.map(
+        call => call[0].idempotencyKey,
+      );
+      expect(keys).toEqual(["retry-1", "retry-1"]);
+    });
+
     it("should handle native transfers", async () => {
       const userOpHash = await provider.nativeTransfer(
         "0x1234567890123456789012345678901234567890" as `0x${string}`,

@@ -27,6 +27,53 @@ def test_send_transaction(mocked_wallet_provider, mock_cdp_client):
     assert mock_cdp_client.evm.send_transaction.called
 
 
+def test_send_transaction_forwards_idempotency_key(mocked_wallet_provider, mock_cdp_client):
+    """A caller-supplied idempotency key reaches the CDP SDK."""
+    transaction = {"to": MOCK_ADDRESS_TO, "value": MOCK_ONE_ETH_WEI, "data": "0x"}
+
+    mocked_wallet_provider.send_transaction(transaction, idempotency_key="logical-transfer-1")
+
+    _, kwargs = mock_cdp_client.evm.send_transaction.call_args
+    assert kwargs["idempotency_key"] == "logical-transfer-1"
+
+
+def test_send_transaction_reuses_idempotency_key_across_retries(
+    mocked_wallet_provider, mock_cdp_client
+):
+    """Retrying the same logical transfer reuses one key instead of minting a new one."""
+    transaction = {"to": MOCK_ADDRESS_TO, "value": MOCK_ONE_ETH_WEI, "data": "0x"}
+
+    # A lost response makes the caller retry the same logical transfer.
+    mocked_wallet_provider.send_transaction(transaction, idempotency_key="retry-1")
+    mocked_wallet_provider.send_transaction(transaction, idempotency_key="retry-1")
+
+    keys = [
+        call.kwargs["idempotency_key"]
+        for call in mock_cdp_client.evm.send_transaction.call_args_list
+    ]
+    assert keys == ["retry-1", "retry-1"]
+
+
+def test_native_transfer_forwards_idempotency_key(mocked_wallet_provider, mock_cdp_client):
+    """native_transfer forwards the idempotency key to the underlying send."""
+    mocked_wallet_provider.native_transfer(
+        MOCK_ADDRESS_TO, Decimal("0.5"), idempotency_key="retry-2"
+    )
+
+    _, kwargs = mock_cdp_client.evm.send_transaction.call_args
+    assert kwargs["idempotency_key"] == "retry-2"
+
+
+def test_send_transaction_defaults_idempotency_key_to_none(mocked_wallet_provider, mock_cdp_client):
+    """When the caller supplies no key the SDK receives None, preserving existing behaviour."""
+    transaction = {"to": MOCK_ADDRESS_TO, "value": MOCK_ONE_ETH_WEI, "data": "0x"}
+
+    mocked_wallet_provider.send_transaction(transaction)
+
+    _, kwargs = mock_cdp_client.evm.send_transaction.call_args
+    assert kwargs["idempotency_key"] is None
+
+
 def test_send_transaction_failure(mocked_wallet_provider, mock_cdp_client):
     """Test send_transaction method when broadcast fails."""
     transaction = {"to": MOCK_ADDRESS_TO, "value": MOCK_ONE_ETH_WEI, "data": "0x"}

@@ -345,6 +345,46 @@ describe("CdpEvmWalletProvider", () => {
       expect(txHash).toBe(MOCK_TRANSACTION_HASH);
     });
 
+    it("should forward a caller-supplied idempotency key", async () => {
+      const transaction: TransactionRequest = {
+        to: "0x1234567890123456789012345678901234567890" as `0x${string}`,
+        value: BigInt(1000000000000000000),
+      };
+
+      await provider.sendTransaction(transaction, "logical-transfer-1");
+
+      expect(mockSendTransaction).toHaveBeenCalledWith(
+        expect.objectContaining({ idempotencyKey: "logical-transfer-1" }),
+      );
+    });
+
+    it("should leave the idempotency key undefined when the caller supplies none", async () => {
+      const transaction: TransactionRequest = {
+        to: "0x1234567890123456789012345678901234567890" as `0x${string}`,
+        value: BigInt(1000000000000000000),
+      };
+
+      await provider.sendTransaction(transaction);
+
+      expect(mockSendTransaction).toHaveBeenCalledWith(
+        expect.objectContaining({ idempotencyKey: undefined }),
+      );
+    });
+
+    it("should reuse the idempotency key across retries of the same transfer", async () => {
+      const transaction: TransactionRequest = {
+        to: "0x1234567890123456789012345678901234567890" as `0x${string}`,
+        value: BigInt(1000000000000000000),
+      };
+
+      // A lost response makes the caller retry the same logical transfer.
+      await provider.sendTransaction(transaction, "logical-transfer-1");
+      await provider.sendTransaction(transaction, "logical-transfer-1");
+
+      const keys = mockSendTransaction.mock.calls.map(call => call[0].idempotencyKey);
+      expect(keys).toEqual(["logical-transfer-1", "logical-transfer-1"]);
+    });
+
     it("should handle transaction failures during send", async () => {
       mockSendTransaction.mockRejectedValueOnce(new Error("Transaction signing failed"));
 

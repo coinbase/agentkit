@@ -239,9 +239,11 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
    * Sends a user operation through the smart wallet.
    *
    * @param transaction - The transaction to send.
+   * @param idempotencyKey - Optional idempotency key. Pass the same key when retrying the
+   * same logical user operation so the CDP backend deduplicates it instead of sending twice.
    * @returns The user operation hash.
    */
-  async sendTransaction(transaction: TransactionRequest): Promise<Hex> {
+  async sendTransaction(transaction: TransactionRequest, idempotencyKey?: string): Promise<Hex> {
     const calls = [
       {
         to: transaction.to as Address,
@@ -255,6 +257,7 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
       network: this.getCdpSdkNetwork(),
       calls,
       paymasterUrl: this.#paymasterUrl,
+      idempotencyKey,
     });
 
     return userOperation.userOpHash as Hex;
@@ -369,14 +372,19 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
    *
    * @param to - The destination address.
    * @param value - The amount to transfer in atomic units (Wei).
+   * @param idempotencyKey - Optional idempotency key. Pass the same key when retrying the
+   * same logical transfer so the CDP backend deduplicates it instead of sending twice.
    * @returns The user operation hash.
    */
-  async nativeTransfer(to: Address, value: string): Promise<Hex> {
-    return this.sendTransaction({
-      to: to,
-      value: BigInt(value),
-      data: "0x",
-    });
+  async nativeTransfer(to: Address, value: string, idempotencyKey?: string): Promise<Hex> {
+    return this.sendTransaction(
+      {
+        to: to,
+        value: BigInt(value),
+        data: "0x",
+      },
+      idempotencyKey,
+    );
   }
 
   /**
