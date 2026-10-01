@@ -485,6 +485,55 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Market Intelligence</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_trading_decision</code></td>
+    <td width="768">Gets a live trading decision (STRONG_BUY to STRONG_SELL) for a crypto pair or US stock, with the stance of each pillar and its measured hit rate.</td>
+</tr>
+<tr>
+    <td width="200"><code>check_token_risk</code></td>
+    <td width="768">Checks a token before buying it: sell simulation, owner powers, liquidity, taxes, holders, Uniswap v4 hooks and impersonation, with a verdict.</td>
+</tr>
+<tr>
+    <td width="200"><code>find_new_tokens</code></td>
+    <td width="768">Lists tokens launched recently on Base or Ethereum, already risk-checked.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_swap_quote</code></td>
+    <td width="768">Simulates a swap on the best Uniswap or Aerodrome route, with price impact and hook warnings.</td>
+</tr>
+<tr>
+    <td width="200"><code>explain_price_move</code></td>
+    <td width="768">Explains why a symbol is moving from order flow, smart money, perps, news, SEC filings and insiders.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_market_regime</code></td>
+    <td width="768">Gets the current crypto market regime (BULLISH, BEARISH or MIXED) with breadth, flows and upcoming macro events.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_macro_calendar</code></td>
+    <td width="768">Lists upcoming high-impact macro events (CPI, jobs report, FOMC, ECB) in UTC.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_futures_positioning</code></td>
+    <td width="768">Gets CFTC Commitments of Traders positioning with a 3-year index flagging crowded longs and shorts.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_stock_fundamentals</code></td>
+    <td width="768">Gets fundamentals of up to 10 US-listed companies from SEC filings.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_insider_trades</code></td>
+    <td width="768">Gets insider buying and selling from SEC Form 4 filings, with a signal.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_decision_track_record</code></td>
+    <td width="768">Gets the measured hit rates of the trading decisions (free).</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Messari</strong></summary>
 <table width="100%">
 <tr>
