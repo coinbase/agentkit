@@ -125,12 +125,15 @@ class CdpEvmWalletProvider(EvmWalletProvider):
         """
         return self._network
 
-    def native_transfer(self, to: str, value: Decimal) -> str:
+    def native_transfer(self, to: str, value: Decimal, idempotency_key: str | None = None) -> str:
         """Transfer the native asset of the network.
 
         Args:
             to (str): The destination address to receive the transfer
             value (Decimal): The amount to transfer in whole units (e.g. 1.5 for 1.5 ETH)
+            idempotency_key (str | None): Optional idempotency key. Pass the same key when
+                retrying the same logical transfer so the CDP backend deduplicates it
+                instead of sending the transfer twice.
 
         Returns:
             str: The transaction hash as a string
@@ -148,6 +151,7 @@ class CdpEvmWalletProvider(EvmWalletProvider):
                         value=value_wei,
                     ),
                     network=self._get_cdp_sdk_network(),
+                    idempotency_key=idempotency_key,
                 )
 
         return self._run_async(_send_transaction())
@@ -179,11 +183,14 @@ class CdpEvmWalletProvider(EvmWalletProvider):
             args = []
         return func(*args).call(block_identifier=block_identifier)
 
-    def send_transaction(self, transaction: TxParams) -> HexStr:
+    def send_transaction(self, transaction: TxParams, idempotency_key: str | None = None) -> HexStr:
         """Send a transaction to the network.
 
         Args:
             transaction (TxParams): Transaction parameters including to, value, and data
+            idempotency_key (str | None): Optional idempotency key. Pass the same key when
+                retrying the same logical transaction so the CDP backend deduplicates it
+                instead of sending the transaction twice.
 
         Returns:
             HexStr: The transaction hash as a hex string
@@ -201,6 +208,7 @@ class CdpEvmWalletProvider(EvmWalletProvider):
                         data=transaction.get("data", "0x"),
                     ),
                     network=self._get_cdp_sdk_network(),
+                    idempotency_key=idempotency_key,
                 )
 
         return self._run_async(_send_transaction())
