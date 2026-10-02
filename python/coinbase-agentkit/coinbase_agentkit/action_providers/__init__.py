@@ -3,6 +3,10 @@
 from .aave.aave_action_provider import AaveActionProvider, aave_action_provider
 from .action_decorator import create_action
 from .action_provider import Action, ActionProvider
+from .agenda_guard.agenda_guard_action_provider import (
+    AgendaGuardActionProvider,
+    agenda_guard_action_provider,
+)
 from .basename.basename_action_provider import (
     BasenameActionProvider,
     basename_action_provider,
@@ -43,6 +47,8 @@ __all__ = [
     "AaveActionProvider",
     "Action",
     "ActionProvider",
+    "AgendaGuardActionProvider",
+    "agenda_guard_action_provider",
     "BasenameActionProvider",
     "CdpApiActionProvider",
     "CdpEvmWalletActionProvider",
