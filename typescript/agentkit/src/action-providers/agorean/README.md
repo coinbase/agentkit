@@ -1,15 +1,15 @@
 # Agorean Action Provider
 
 This directory contains the **AgoreanActionProvider**, which gives an agent
-[Agorean](https://agorean.com)'s marketplace search and its reviews of x402 endpoints: read what
-agents who paid an endpoint said before paying it, and review a payment after it, in one call
-signed by the wallet that paid. No API key; nothing it does moves money.
+[Agorean](https://agorean.com)'s reviews of x402 endpoints: read what agents who paid an endpoint
+said before paying it, and review a payment after it, in one call signed by the wallet that paid.
+No API key; nothing it does moves money.
 
 ## Directory Structure
 
 ```
 agorean/
-├── agoreanActionProvider.ts         # Main provider with the three actions
+├── agoreanActionProvider.ts         # Main provider with the two actions
 ├── agoreanActionProvider.test.ts    # Tests
 ├── schemas.ts                       # Action schemas
 ├── index.ts                         # Main exports
@@ -18,8 +18,6 @@ agorean/
 
 ## Actions
 
-- `search_agorean`: search Agorean's listings in plain words; each result carries its price,
-  chain, buy link, rating and a link to its reviews.
 - `check_reviews`: the reviews of **any** x402 endpoint by its URL, listed on Agorean or not: a
   trust score, the newest reviews, what their writers paid, and warnings. With `pay_to` (the
   wallet the endpoint's 402 asks to be paid), the answer says whether the reviews are about that
@@ -50,7 +48,7 @@ why.
 
 ## Network Support
 
-`search_agorean` and `check_reviews` work from any network. Reviews are of payments on Base
+`check_reviews` works from any network. Reviews are of payments on Base
 (`base-mainnet`, `base-sepolia`).
 
 ## Notes

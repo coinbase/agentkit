@@ -5,7 +5,7 @@ import { Network } from "../../network";
 import { EvmWalletProvider, WalletProvider } from "../../wallet-providers";
 import { CreateAction } from "../actionDecorator";
 import { ActionProvider } from "../actionProvider";
-import { CheckReviewsSchema, ReviewPaymentSchema, SearchAgoreanSchema } from "./schemas";
+import { CheckReviewsSchema, ReviewPaymentSchema } from "./schemas";
 
 /**
  * Configuration for the AgoreanActionProvider.
@@ -26,9 +26,9 @@ const UNTRUSTED =
 class NotThePayersSignature extends Error {}
 
 /**
- * AgoreanActionProvider gives an agent Agorean's search and its reviews of x402 endpoints: read
- * what agents who paid an endpoint said before paying it, and review a payment after it, in one
- * call signed by the wallet that paid. Keyless; nothing it does moves money.
+ * AgoreanActionProvider gives an agent Agorean's reviews of x402 endpoints: read what agents who
+ * paid an endpoint said before paying it, and review a payment after it, in one call signed by
+ * the wallet that paid. Keyless; nothing it does moves money.
  */
 export class AgoreanActionProvider extends ActionProvider<WalletProvider> {
   readonly site: string;
@@ -41,48 +41,6 @@ export class AgoreanActionProvider extends ActionProvider<WalletProvider> {
   constructor(config: AgoreanActionProviderConfig = {}) {
     super("agorean", []);
     this.site = (config.site ?? AGOREAN).replace(/\/+$/, "");
-  }
-
-  /**
-   * Searches Agorean's listings.
-   *
-   * @param args - The search.
-   * @returns The matching listings as stringified JSON.
-   */
-  @CreateAction({
-    name: "search_agorean",
-    description:
-      "Searches Agorean, a marketplace of paid services for AI agents: x402 endpoints and hosted goods, paid in USDC on Base. Takes a plain-words query and returns the matching listings with price, chain, buy link, rating and a link to their reviews. Needs no API key and moves no money.",
-    schema: SearchAgoreanSchema,
-  })
-  async searchAgorean(args: z.infer<typeof SearchAgoreanSchema>): Promise<string> {
-    const reply = await this.door("search", {
-      query: args.query,
-      ...(args.max_price_usdc !== undefined ? { max_price: args.max_price_usdc } : {}),
-      ...(args.network ? { network: args.network } : {}),
-      limit: args.limit ?? 10,
-    });
-    if ("error" in reply) return JSON.stringify(reply);
-    const results = (reply.results as Record<string, unknown>[] | undefined) ?? [];
-    return JSON.stringify({
-      query: args.query,
-      total: reply.total,
-      results: results.map(r => ({
-        listing_id: r.listing_id,
-        title: r.title,
-        summary: r.summary ?? null,
-        price_usdc: r.price_usdc,
-        network: r.network,
-        buyable_here: r.buyable_here,
-        buy_url: r.buy_url,
-        delivery: r.delivery,
-        seller: r.seller ?? null,
-        ...(r.promoted ? { promoted: true } : {}),
-        reviews: `${this.site}/reviews/${r.listing_id}`,
-      })),
-      next_offset: reply.next_offset ?? null,
-      _untrusted: UNTRUSTED,
-    });
   }
 
   /**
@@ -252,7 +210,7 @@ export class AgoreanActionProvider extends ActionProvider<WalletProvider> {
   }
 
   /**
-   * Search and reviews work from any chain; `review_payment` says itself when it cannot.
+   * `check_reviews` works from any chain; `review_payment` says itself when it cannot.
    *
    * @param _ - The network.
    * @returns Always true.

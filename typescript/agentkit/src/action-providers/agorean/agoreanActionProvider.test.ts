@@ -74,34 +74,6 @@ describe("AgoreanActionProvider", () => {
     );
   });
 
-  describe("searchAgorean", () => {
-    it("asks the keyless search and returns the listings with their reviews link", async () => {
-      fetchMock.mockResolvedValueOnce({
-        json: async () => ({
-          total: 1,
-          next_offset: null,
-          results: [{ listing_id: "lst_w", title: "Weather now", price_usdc: 0.01 }],
-        }),
-      });
-      const parsed = JSON.parse(await provider.searchAgorean({ query: "weather" }));
-      expect(fetchMock).toHaveBeenCalledWith(
-        `${SITE}/api/v1/search`,
-        expect.objectContaining({ method: "POST" }),
-      );
-      expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ query: "weather", limit: 10 });
-      expect(parsed.results[0]).toMatchObject({
-        listing_id: "lst_w",
-        reviews: `${SITE}/reviews/lst_w`,
-      });
-    });
-
-    it("passes an error through", async () => {
-      fetchMock.mockRejectedValueOnce(new Error("offline"));
-      const parsed = JSON.parse(await provider.searchAgorean({ query: "weather" }));
-      expect(parsed.error.code).toBe("unavailable");
-    });
-  });
-
   describe("checkReviews", () => {
     it("asks for the reviews of the URL, about the wallet it asks to be paid", async () => {
       fetchMock.mockResolvedValueOnce({
