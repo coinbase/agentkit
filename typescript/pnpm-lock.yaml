@@ -65,6 +65,9 @@ importers:
       '@across-protocol/app-sdk':
         specifier: ^0.2.0
         version: 0.2.0(viem@2.47.4(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@4.3.6))
+      '@agorean/x402-reviews':
+        specifier: ^0.1.1
+        version: 0.1.1(@x402/core@2.7.0)
       '@alloralabs/allora-sdk':
         specifier: ^0.1.0
         version: 0.1.0
@@ -806,6 +809,12 @@ packages:
 
   '@adraffy/ens-normalize@1.11.1':
     resolution: {integrity: sha512-nhCBV3quEgesuf7c7KYfperqSS14T8bYuvJ8PcLJp6znkZpFc0AuW4qBtr8eKVyPPe/8RSr7sglCWPU5eaxwKQ==}
+
+  '@agorean/x402-reviews@0.1.1':
+    resolution: {integrity: sha512-ZJt+mwmsdGllqzYoO6kzAtWfxf8/TqAdSCiflmRHTrEQ4XSK0xjQu1F6r+qP8Z4C2d9Yz7bAepOtLCsI9OCGlA==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      '@x402/core': '>=2.7.0 <2.15.0 || >=2.16.0'
 
   '@ai-sdk/gateway@3.0.66':
     resolution: {integrity: sha512-SIQ0YY0iMuv+07HLsZ+bB990zUJ6S4ujORAh+Jv1V2KGNn73qQKnGO0JBk+w+Res8YqOFSycwDoWcFlQrVxS4A==}
@@ -8611,6 +8620,10 @@ snapshots:
   '@adraffy/ens-normalize@1.10.1': {}
 
   '@adraffy/ens-normalize@1.11.1': {}
+
+  '@agorean/x402-reviews@0.1.1(@x402/core@2.7.0)':
+    dependencies:
+      '@x402/core': 2.7.0
 
   '@ai-sdk/gateway@3.0.66(zod@4.3.6)':
     dependencies:
