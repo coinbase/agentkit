@@ -17,6 +17,7 @@ export * from "./erc20";
 export * from "./erc721";
 export * from "./erc8004";
 export * from "./farcaster";
+export * from "./flipcoin";
 export * from "./jupiter";
 export * from "./messari";
 export * from "./pyth";
