@@ -26,32 +26,48 @@ export async function getTokenDetails(
   address?: string,
 ): Promise<TokenDetails | null> {
   try {
-    const results = await walletProvider.getPublicClient().multicall({
-      contracts: [
-        {
-          address: contractAddress as Hex,
-          abi: erc20Abi,
-          functionName: "name",
-          args: [],
-        },
-        {
-          address: contractAddress as Hex,
-          abi: erc20Abi,
-          functionName: "decimals",
-          args: [],
-        },
-        {
-          address: contractAddress as Hex,
-          abi: erc20Abi,
-          functionName: "balanceOf",
-          args: [(address || walletProvider.getAddress()) as Hex],
-        },
-      ],
-    });
+    const publicClient = walletProvider.getPublicClient();
+    const contracts = [
+      {
+        address: contractAddress as Hex,
+        abi: erc20Abi,
+        functionName: "name",
+        args: [],
+      },
+      {
+        address: contractAddress as Hex,
+        abi: erc20Abi,
+        functionName: "decimals",
+        args: [],
+      },
+      {
+        address: contractAddress as Hex,
+        abi: erc20Abi,
+        functionName: "balanceOf",
+        args: [(address || walletProvider.getAddress()) as Hex],
+      },
+    ] as const;
 
-    const rawName = results[0].result;
-    const decimals = results[1]?.result;
-    const balance = results[2]?.result;
+    let rawName: string | undefined;
+    let decimals: number | undefined;
+    let balance: bigint | undefined;
+    try {
+      const results = await publicClient.multicall({ contracts });
+      rawName = results[0].result;
+      decimals = results[1]?.result;
+      balance = results[2]?.result;
+    } catch (error) {
+      // Chains whose definition has no Multicall3 address (e.g. local Anvil or custom chains)
+      // cannot use multicall, so read each value with a plain call instead.
+      if ((error as Error)?.name !== "ChainDoesNotSupportContract") {
+        throw error;
+      }
+      [rawName, decimals, balance] = await Promise.all([
+        publicClient.readContract(contracts[0]),
+        publicClient.readContract(contracts[1]),
+        publicClient.readContract(contracts[2]),
+      ]);
+    }
 
     if (balance === undefined || decimals === undefined || rawName === undefined) {
       return null;
