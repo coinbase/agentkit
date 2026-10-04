@@ -103,7 +103,7 @@ export function CreateAction(params: CreateActionDecoratorParams) {
         };
       }
 
-      sendAnalyticsEvent({
+      void sendAnalyticsEvent({
         name: "agent_action_invocation",
         action: "invoke_action",
         component: "agent_action",
@@ -111,6 +111,8 @@ export function CreateAction(params: CreateActionDecoratorParams) {
         class_name: target.constructor.name,
         method_name: propertyKey,
         ...walletMetrics,
+      }).catch(error => {
+        console.warn("Failed to track action invocation:", error);
       });
 
       return originalMethod.apply(this, args);
