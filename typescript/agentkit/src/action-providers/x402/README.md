@@ -88,8 +88,6 @@ This provider supports **both v1 and v2 x402 endpoints** automatically.
 
 This flow provides better control and visibility into the payment process.
 
-Provider selection before downstream spend
-
 ### Provider selection before downstream spend
 
 An agent that needs paid web search but has not chosen a provider can compose two x402 purchases: buy a provider-selection decision, review it, then separately decide whether to buy the search. Skip selection when the provider is already specified. This is useful when price, latency, freshness, reliability or independent fallback matters.
