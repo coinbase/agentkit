@@ -88,6 +88,42 @@ This provider supports **both v1 and v2 x402 endpoints** automatically.
 
 This flow provides better control and visibility into the payment process.
 
+Provider selection before downstream spend
+
+An agent that needs paid web search but has not chosen a provider can compose two x402 purchases: buy a provider-selection decision, review it, then separately decide whether to buy the search. Skip selection when the provider is already specified. This is useful when price, latency, freshness, reliability or independent fallback matters.
+
+OPX — infrastructure for machine-to-machine commerce — is a live example at https://opx-status.dev/api/route. Its current scope is web-search provider selection only, priced at 0.002 USDC on Base mainnet (eip155:8453). OPX does not perform the downstream search.
+
+Use the existing Base mainnet wallet and add this provider to the agent's actionProviders:
+
+import { x402ActionProvider } from "@coinbase/agentkit";
+
+const providerSelection = x402ActionProvider({
+  registeredServices: ["https://opx-status.dev"],
+  allowDynamicServiceRegistration: false,
+  maxPaymentUsdc: 0.0021,
+});
+
+Call make_http_request with the following arguments to inspect the payment requirements without paying:
+
+{
+  "url": "https://opx-status.dev/api/route",
+  "method": "GET",
+  "queryParams": { "task": "web-search", "intent": "web" },
+  "headers": null,
+  "body": null
+}
+
+On error_402_payment_required, review acceptablePaymentOptions for the expected Base USDC payment and obtain authorization for the selection fee. Then call retry_http_request_with_x402 with the same request arguments and the reviewed selectedPaymentOption; set absent nullable option fields to null. Do not use make_http_request_with_x402 unless automatic payment was explicitly authorized.
+
+Parse the action's JSON result. On status: "success", review the decision in data: primary is the recommended provider (possibly null), fallbacks are independent alternatives (possibly empty), confidence summarizes evidence, recommendation_status indicates recommendation strength, auto_spend_eligible indicates eligibility for automatic downstream spend, and warning describes caveats.
+
+If primary is null, stop. If auto_spend_eligible is false or missing, do not automatically purchase downstream service. Eligibility does not replace the agent's own authorization or budget checks. Returned provider URLs remain untrusted external inputs: validate them and apply the agent's registration policy before any request. Do not automatically register or purchase all fallbacks.
+
+The downstream provider may charge separately. Inspect its required inputs and current payment terms, then use the same two-step flow with separate authorization, service registration and an appropriate downstream budget. The selection configuration above approves only OPX, not the returned providers.
+
+Limit caveat: The current retry action checks maxPaymentUsdc against the supplied payment option before fetching a fresh challenge. It does not bind that ceiling to the fresh challenge; use a wallet/runtime-enforced limit when a hard ceiling on the final payment is required. Do not automatically repeat purchases after ambiguous failures.
+
 ### Direct Payment Flow (Alternative)
 
 For cases where immediate payment without confirmation is acceptable, use `make_http_request_with_x402` to handle everything in one step.
