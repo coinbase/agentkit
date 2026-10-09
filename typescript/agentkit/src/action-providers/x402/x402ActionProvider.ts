@@ -41,6 +41,7 @@ interface ResolvedX402Config {
   allowDynamicServiceRegistration: boolean;
   registeredFacilitators: Record<string, string>;
   maxPaymentUsdc: number;
+  prePaymentCheck?: X402Config["prePaymentCheck"];
 }
 
 /**
@@ -66,6 +67,7 @@ export class X402ActionProvider extends ActionProvider<WalletProvider> {
       registeredFacilitators: config.registeredFacilitators ?? {},
       maxPaymentUsdc:
         config.maxPaymentUsdc ?? parseFloat(process.env.X402_MAX_PAYMENT_USDC ?? "1.0"),
+      prePaymentCheck: config.prePaymentCheck,
     };
     this.registeredServices = new Set(this.config.registeredServices);
   }
@@ -460,13 +462,14 @@ DO NOT use this action directly without first trying make_http_request!`,
         );
       }
 
-      // Create x402 client with appropriate signer
-      const client = await this.createX402Client(walletProvider);
-      const fetchWithPayment = wrapFetchWithPayment(fetch, client);
-
       // Build URL with query params and determine if body is allowed
       const finalUrl = buildUrlWithParams(args.url, args.queryParams);
       const method = args.method;
+
+      // Create x402 client with appropriate signer
+      const client = await this.createX402Client(walletProvider, { url: finalUrl, method });
+      const fetchWithPayment = wrapFetchWithPayment(fetch, client);
+
       const canHaveBody = ["POST", "PUT", "PATCH"].includes(method);
 
       // Build headers, adding Content-Type for JSON body
@@ -607,13 +610,14 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
         );
       }
 
-      // Create x402 client with appropriate signer
-      const client = await this.createX402Client(walletProvider);
-      const fetchWithPayment = wrapFetchWithPayment(fetch, client);
-
       // Build URL with query params and determine if body is allowed
       const finalUrl = buildUrlWithParams(args.url, args.queryParams);
       const method = args.method;
+
+      // Create x402 client with appropriate signer
+      const client = await this.createX402Client(walletProvider, { url: finalUrl, method });
+      const fetchWithPayment = wrapFetchWithPayment(fetch, client);
+
       const canHaveBody = ["POST", "PUT", "PATCH"].includes(method);
 
       // Build headers, adding Content-Type for JSON body
@@ -839,9 +843,15 @@ These are the only services that can be called using make_http_request or make_h
    * Creates an x402 client configured for the given wallet provider.
    *
    * @param walletProvider - The wallet provider to configure the client for
+   * @param request - The request being paid for, passed to the optional prePaymentCheck
+   * @param request.url - The final request URL
+   * @param request.method - The HTTP method
    * @returns Configured x402Client
    */
-  private async createX402Client(walletProvider: WalletProvider): Promise<x402Client> {
+  private async createX402Client(
+    walletProvider: WalletProvider,
+    request: { url: string; method: string },
+  ): Promise<x402Client> {
     const client = new x402Client();
 
     if (walletProvider instanceof EvmWalletProvider) {
@@ -865,6 +875,16 @@ These are the only services that can be called using make_http_request or make_h
     } else if (walletProvider instanceof SvmWalletProvider) {
       const signer = await walletProvider.toSigner();
       registerExactSvmScheme(client, { signer });
+    }
+
+    const prePaymentCheck = this.config.prePaymentCheck;
+    if (prePaymentCheck) {
+      client.onBeforePaymentCreation(async ({ selectedRequirements }) => {
+        const result = await prePaymentCheck({ ...request, selectedRequirements });
+        if (!result.allow) {
+          return { abort: true, reason: result.reason ?? "blocked by prePaymentCheck" };
+        }
+      });
     }
 
     return client;

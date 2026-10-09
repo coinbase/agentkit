@@ -32,7 +32,35 @@ export interface X402Config {
    * Default: 1.0 (or X402_MAX_PAYMENT_USDC env var)
    */
   maxPaymentUsdc?: number;
+
+  /**
+   * Optional hook run right before a payment is signed (retry_http_request_with_x402 and
+   * make_http_request_with_x402). Return `{ allow: false, reason }` to block: nothing is signed.
+   * Default: unset (no check).
+   */
+  prePaymentCheck?: PrePaymentCheck;
 }
+
+/**
+ * What a pre-payment check sees: the request and the payment requirement the x402 client selected.
+ */
+export interface PrePaymentCheckContext {
+  url: string;
+  method: string;
+  selectedRequirements: {
+    scheme: string;
+    network: string;
+    asset: string;
+    amount?: string;
+    maxAmountRequired?: string;
+    payTo: string;
+  };
+}
+
+/** Decides whether a payment may be signed. */
+export type PrePaymentCheck = (
+  context: PrePaymentCheckContext,
+) => Promise<{ allow: boolean; reason?: string }>;
 
 /**
  * Schema for registering a service URL for x402 requests.
