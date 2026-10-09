@@ -2,6 +2,7 @@ export * from "./actionDecorator";
 export * from "./actionProvider";
 
 export * from "./customActionProvider";
+export * from "./spendpreflight";
 
 export * from "./across";
 export * from "./alchemy";
