@@ -30,8 +30,8 @@ MOCK_BALANCE_XNO = Decimal("12.5")
 MOCK_TX_HASH = "F9DF18449FECC6F789A94D2B1E3AEEAA25F07A1D6290D83B7230A94243000BB7"
 MOCK_TO = "nano_3pdripjhteyymwjnaspc5nd96gyxgcdxcskiwwwoqxttnrncrxi974riid94"
 
-FAKE_RESULT_BALANCE = str(int(MOCK_BALANCE_XNO * (10 ** 30)))
-FAKE_RESULT_BALANCE_RAW = int(MOCK_BALANCE_XNO * (10 ** 30))
+FAKE_RESULT_BALANCE = str(int(MOCK_BALANCE_XNO * (10**30)))
+FAKE_RESULT_BALANCE_RAW = int(MOCK_BALANCE_XNO * (10**30))
 
 
 def _fake_account_info(balance_raw=None, frontier=None, rep=None):

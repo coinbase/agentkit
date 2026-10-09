@@ -103,9 +103,7 @@ class NanoWalletProvider(WalletProvider):
         """
         self.config = config
         self._seed = config.seed
-        self._rpc_url: str = config.rpc_url or str(
-            os.getenv("NANO_RPC_URL", "https://rpc.nano.to")
-        )
+        self._rpc_url: str = config.rpc_url or str(os.getenv("NANO_RPC_URL", "https://rpc.nano.to"))
         if not config.address and not self._seed:
             raise ValueError("NanoWalletProvider needs an address or a seed")
         seed_local = self._seed  # narrowed by the guard above
@@ -180,7 +178,9 @@ class NanoWalletProvider(WalletProvider):
         import hashlib
 
         b = hashlib.blake2b(digest_size=32)
-        b.update(self._hex_to_bytes("0000000000000000000000000000000000000000000000000000000000000006"))
+        b.update(
+            self._hex_to_bytes("0000000000000000000000000000000000000000000000000000000000000006")
+        )
         b.update(self._hex_to_bytes(self._public_key_from_address(block["account"])))
         b.update(self._hex_to_bytes(block["previous"]))
         b.update(self._hex_to_bytes(self._public_key_from_address(block["representative"])))
@@ -200,9 +200,7 @@ class NanoWalletProvider(WalletProvider):
 
     def _require_signing(self) -> None:
         if not self._signing_key:
-            raise RuntimeError(
-                "this NanoWalletProvider is read-only: pass a seed to sign blocks"
-            )
+            raise RuntimeError("this NanoWalletProvider is read-only: pass a seed to sign blocks")
 
     def _rpc(self, action: str, **params: Any) -> dict[str, Any]:
         """Call the Nano RPC and return its ``result``."""

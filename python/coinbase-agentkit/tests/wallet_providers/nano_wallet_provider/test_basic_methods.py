@@ -62,9 +62,7 @@ def test_get_name(wallet_provider):
 def test_rpc_url_default_from_env(monkeypatch):
     """Test the RPC URL falls back to NANO_RPC_URL when config omits it."""
     monkeypatch.setenv("NANO_RPC_URL", "https://env.nano.rpc")
-    provider = NanoWalletProvider(
-        NanoWalletProviderConfig(address=MOCK_ADDRESS, seed=TEST_SEED)
-    )
+    provider = NanoWalletProvider(NanoWalletProviderConfig(address=MOCK_ADDRESS, seed=TEST_SEED))
     assert provider._rpc_url == "https://env.nano.rpc"
 
 
@@ -72,9 +70,7 @@ def test_rpc_url_config_wins_over_env(monkeypatch):
     """Test the config RPC URL wins over the env default."""
     monkeypatch.setenv("NANO_RPC_URL", "https://env.nano.rpc")
     provider = NanoWalletProvider(
-        NanoWalletProviderConfig(
-            address=MOCK_ADDRESS, seed=TEST_SEED, rpc_url=MOCK_RPC_URL
-        )
+        NanoWalletProviderConfig(address=MOCK_ADDRESS, seed=TEST_SEED, rpc_url=MOCK_RPC_URL)
     )
     assert provider._rpc_url == MOCK_RPC_URL
 
@@ -88,17 +84,13 @@ def test_address_derived_from_seed():
 def test_address_seed_mismatch_raises():
     """Test a seed that does not derive the configured address is rejected."""
     with pytest.raises(ValueError):
-        NanoWalletProvider(
-            NanoWalletProviderConfig(address=DERIVED_ADDR, seed="1" * 64)
-        )
+        NanoWalletProvider(NanoWalletProviderConfig(address=DERIVED_ADDR, seed="1" * 64))
 
 
 def test_no_address_no_seed_raises():
     """Test that an empty config is rejected at provider init."""
     with pytest.raises(ValueError):
-        NanoWalletProvider(
-            NanoWalletProviderConfig(address=None, seed=None)
-        )
+        NanoWalletProvider(NanoWalletProviderConfig(address=None, seed=None))
 
 
 def test_invalid_seed_length_raises():
