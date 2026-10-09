@@ -83,6 +83,9 @@ importers:
       '@jup-ag/api':
         specifier: ^6.0.39
         version: 6.0.40
+      '@noble/post-quantum':
+        specifier: ^0.4.1
+        version: 0.4.1
       '@privy-io/public-api':
         specifier: 2.18.5
         version: 2.18.5(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -2057,6 +2060,9 @@ packages:
   '@noble/hashes@2.0.1':
     resolution: {integrity: sha512-XlOlEbQcE9fmuXxrVTXCTlG2nlRXa9Rj3rr5Ue/+tX+nmkgbX720YHh0VR3hBF9xDvwnb8D2shVGOwNx+ulArw==}
     engines: {node: '>= 20.19.0'}
+
+  '@noble/post-quantum@0.4.1':
+    resolution: {integrity: sha512-TRXjvnY9jAFNWbxOx+pKt21BNsCEWKFjMbIKwdx9CQXBudDanpY20EfOcooV7DIsRS/+Mf8D8utpUPjfGrQ8fA==}
 
   '@noble/secp256k1@2.3.0':
     resolution: {integrity: sha512-0TQed2gcBbIrh7Ccyw+y/uZQvbJwm7Ao4scBUxqpBCcsOlZG0O4KGfjtNAy/li4W8n1xt3dxrwJ0beZ2h2G6Kw==}
@@ -11350,6 +11356,10 @@ snapshots:
   '@noble/hashes@1.8.0': {}
 
   '@noble/hashes@2.0.1': {}
+
+  '@noble/post-quantum@0.4.1':
+    dependencies:
+      '@noble/hashes': 1.8.0
 
   '@noble/secp256k1@2.3.0': {}
 
