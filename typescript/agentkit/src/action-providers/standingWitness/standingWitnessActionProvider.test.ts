@@ -1,282 +1,236 @@
-import { standingWitnessActionProvider, StandingWitnessActionProvider } from "./standingWitnessActionProvider";
+import { createHash, generateKeyPairSync, sign } from "node:crypto";
+import { standingWitnessActionProvider } from "./standingWitnessActionProvider";
+import { canonical, verifyRecord } from "./verification";
+
+const { publicKey, privateKey } = generateKeyPairSync("ed25519");
+const key = publicKey.export({ format: "der", type: "spki" }).subarray(-32).toString("base64url");
+const now = Math.floor(Date.now() / 1000);
+const request = {
+  subject: "target",
+  claim: "action",
+  provenance: {
+    source: "test",
+    authority: "test",
+    evidence: [{ action: "action", target: "target", valueUsd: 1, timestamp: "exact" }],
+  },
+};
+/**
+ * Inspect ordinary records without granting execution.
+ *
+ * @param input - Input for this check.
+ * @param changes - Input for this check.
+ * @returns The checked result.
+ */
+function envelope(input: unknown = request, changes: Record<string, unknown> = {}) {
+  const record = {
+    type: "WHP-FRONTDOOR-EVALUATION-v1",
+    not_sealed_mark: true,
+    input,
+    input_hash: createHash("sha256").update(canonical(input)).digest("hex"),
+    issued_at: now,
+    valid_until: now + 300,
+    determination: { outcome: "ESTABLISHED" },
+    ...changes,
+  };
+  const bytes = Buffer.from(canonical(record));
+  return {
+    record,
+    record_hash: createHash("sha256").update(bytes).digest("hex"),
+    signature: {
+      alg: "Ed25519",
+      public_key_b64url: key,
+      value_b64url: sign(null, bytes, privateKey).toString("base64url"),
+    },
+  };
+}
+/**
+ * Inspect ordinary records without granting execution.
+ *
+ * @param data - Input for this check.
+ * @param status - Input for this check.
+ * @returns The checked result.
+ */
+function reply(data: unknown, status = 200) {
+  return { status, json: async () => data } as Response;
+}
+const discovery = reply({ signer: { alg: "Ed25519", public_key_b64url: key } });
+
+describe("ordinary signed-record verification", () => {
+  it("verifies authentic hash/signature/input and time without granting authority", () => {
+    expect(verifyRecord(envelope(), request, key, now)).toMatch(/^[0-9a-f]{64}$/);
+  });
+  it("rejects missing signature", () => {
+    const e = { ...envelope(), signature: undefined };
+    expect(() => verifyRecord(e, request, key, now)).toThrow();
+  });
+  it("rejects bad signature", () => {
+    const e = envelope();
+    e.signature.value_b64url = Buffer.alloc(64).toString("base64url");
+    expect(() => verifyRecord(e, request, key, now)).toThrow("signature");
+  });
+  it("rejects a different signing key", () => {
+    expect(() =>
+      verifyRecord(envelope(), request, Buffer.alloc(32).toString("base64url"), now),
+    ).toThrow("key");
+  });
+  it("rejects tampering/hash mismatch", () => {
+    const e = envelope();
+    e.record_hash = "0".repeat(64);
+    expect(() => verifyRecord(e, request, key, now)).toThrow("hash");
+  });
+  it.each([
+    { issued_at: now - 121 },
+    { valid_until: now },
+    { issued_at: now + 1 },
+    { valid_until: now - 1 },
+  ])("rejects stale/expired/future window %j", changes => {
+    expect(() => verifyRecord(envelope(request, changes), request, key, now)).toThrow("window");
+  });
+  it.each(["REVOKED", "INSUFFICIENTLY ESTABLISHED", "CLEARED"])(
+    "rejects non-positive %s",
+    outcome => {
+      expect(() =>
+        verifyRecord(envelope(request, { determination: { outcome } }), request, key, now),
+      ).toThrow("determination");
+    },
+  );
+  it("rejects signed revoked flag", () => {
+    expect(() => verifyRecord(envelope(request, { revoked: true }), request, key, now)).toThrow(
+      "Revoked",
+    );
+  });
+  it("rejects signed test record", () => {
+    expect(() =>
+      verifyRecord(envelope(request, { environment: "TEST" }), request, key, now),
+    ).toThrow("test");
+  });
+  it.each(["action", "target", "valueUsd", "timestamp"])(
+    "rejects exact %s binding mismatch",
+    field => {
+      const changed = JSON.parse(JSON.stringify(request));
+      changed.provenance.evidence[0][field] = "different";
+      expect(() => verifyRecord(envelope(changed), request, key, now)).toThrow("binding");
+    },
+  );
+  it("rejects input hash mismatch", () => {
+    expect(() =>
+      verifyRecord(envelope(request, { input_hash: "wrong" }), request, key, now),
+    ).toThrow("Input hash");
+  });
+  it("rejects unsafe/noninteger numbers", () => {
+    expect(() => canonical({ amount: 1.25 })).toThrow();
+  });
+});
 
 describe("StandingWitnessActionProvider", () => {
   const provider = standingWitnessActionProvider();
-
-  it("supports network", () => {
-    expect(provider.supportsNetwork({} as any)).toBe(true);
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
-
-  it("initializes action provider with standing_witness name", () => {
+  it("supports network", () => {
+    expect(provider.supportsNetwork({} as Parameters<typeof provider.supportsNetwork>[0])).toBe(
+      true,
+    );
+  });
+  it("uses provider name", () => {
     expect(provider.name).toBe("standing_witness");
   });
-
-  describe("circuitBreakerGate", () => {
-    beforeEach(() => {
-      jest.restoreAllMocks();
-    });
-
-    it("trips (BLOCKED) when payment is required (HTTP 402)", async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        status: 402,
-        ok: false,
-      } as any);
-
-      const res = JSON.parse(
-        await provider.circuitBreakerGate({
-          proposedAction: "Transfer 5000 USDC",
-        }),
-      );
-
-      expect(res.gate_status).toBe("BLOCKED");
-      expect(res.reason).toContain("Payment required (HTTP 402)");
-    });
-
-    it("trips (BLOCKED) on HTTP error (e.g. 500 Internal Error)", async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        status: 500,
-        ok: false,
-      } as any);
-
-      const res = JSON.parse(
-        await provider.circuitBreakerGate({
-          proposedAction: "Transfer 5000 USDC",
-        }),
-      );
-
-      expect(res.gate_status).toBe("BLOCKED");
-      expect(res.reason).toContain("HTTP 500");
-    });
-
-    it("trips (BLOCKED) when mock structural validation fails", async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        status: 200,
-        ok: true,
-        json: async () => ({
-          mock: true,
-          structurally_complete: false,
-          failed: ["provenance.evidence"],
-        }),
-      } as any);
-
-      const res = JSON.parse(
-        await provider.circuitBreakerGate({
-          proposedAction: "Transfer 5000 USDC",
-          mock: true,
-        }),
-      );
-
-      expect(res.gate_status).toBe("BLOCKED");
-      expect(res.reason).toContain("Mock structural check failed");
-    });
-
-    it("trips (BLOCKED) when unauthenticated mock is returned without mock=true", async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        status: 200,
-        ok: true,
-        json: async () => ({
-          mock: true,
-          not_a_determination: true,
-          structurally_complete: true,
-        }),
-      } as any);
-
-      const res = JSON.parse(
-        await provider.circuitBreakerGate({
-          proposedAction: "Transfer 5000 USDC",
-          mock: false,
-        }),
-      );
-
-      expect(res.gate_status).toBe("BLOCKED");
-      expect(res.reason).toContain("Unauthenticated mock response returned when live determination was required");
-    });
-
-    it("passes (DRY_RUN_PASSED) when mock=true and structural check succeeds", async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        status: 200,
-        ok: true,
-        json: async () => ({
-          mock: true,
-          structurally_complete: true,
-          failed: [],
-        }),
-      } as any);
-
-      const res = JSON.parse(
-        await provider.circuitBreakerGate({
-          proposedAction: "Transfer 5000 USDC",
-          mock: true,
-        }),
-      );
-
-      expect(res.gate_status).toBe("DRY_RUN_PASSED");
-      expect(res.notice).toContain("does NOT authorize real execution");
-    });
-
-    it("clears (CLEARED) when determination outcome is RECOGNIZED WITH BOUNDARIES", async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        status: 200,
-        ok: true,
-        json: async () => ({
-          record: {
-            determination: {
-              outcome: "RECOGNIZED WITH BOUNDARIES",
-            },
-          },
-          record_hash: "0xabc123",
-        }),
-      } as any);
-
-      const res = JSON.parse(
-        await provider.circuitBreakerGate({
-          proposedAction: "Deploy smart contract",
-        }),
-      );
-
-      expect(res.gate_status).toBe("CLEARED");
-      expect(res.outcome).toBe("RECOGNIZED WITH BOUNDARIES");
-    });
-
-    it("clears (CLEARED) when determination outcome is ESTABLISHED", async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        status: 200,
-        ok: true,
-        json: async () => ({
-          outcome: "ESTABLISHED",
-          record_hash: "0xdef456",
-        }),
-      } as any);
-
-      const res = JSON.parse(
-        await provider.circuitBreakerGate({
-          proposedAction: "Audit contract code",
-        }),
-      );
-
-      expect(res.gate_status).toBe("CLEARED");
-      expect(res.outcome).toBe("ESTABLISHED");
-    });
-
-    it("trips (BLOCKED) when determination outcome is INSUFFICIENTLY ESTABLISHED", async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        status: 200,
-        ok: true,
-        json: async () => ({
-          outcome: "INSUFFICIENTLY ESTABLISHED",
-        }),
-      } as any);
-
-      const res = JSON.parse(
-        await provider.circuitBreakerGate({
-          proposedAction: "Execute high-risk trade",
-        }),
-      );
-
-      expect(res.gate_status).toBe("BLOCKED");
-      expect(res.reason).toContain("does not satisfy clearing criteria");
-    });
-
-    it("trips (BLOCKED) when fetch throws network error", async () => {
-      global.fetch = jest.fn().mockRejectedValue(new Error("Connection refused"));
-
-      const res = JSON.parse(
-        await provider.circuitBreakerGate({
-          proposedAction: "Execute transaction",
-        }),
-      );
-
-      expect(res.gate_status).toBe("BLOCKED");
-      expect(res.reason).toContain("Connection refused");
-    });
+  it.each([201, 402, 500])("blocks HTTP %s", async status => {
+    jest.spyOn(global, "fetch").mockResolvedValue(reply({}, status));
+    expect(
+      JSON.parse(await provider.circuitBreakerGate({ proposedAction: "action" })).gate_status,
+    ).toBe("BLOCKED");
   });
-
-  describe("standingAudit", () => {
-    beforeEach(() => {
-      jest.restoreAllMocks();
-    });
-
-    it("returns payment_required on 402", async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        status: 402,
-        ok: false,
-      } as any);
-
-      const res = JSON.parse(
-        await provider.standingAudit({
-          subject: "0x123",
-          claim: "Test claim",
-        }),
+  it("blocks network error", async () => {
+    jest.spyOn(global, "fetch").mockRejectedValue(new Error("offline"));
+    expect(
+      JSON.parse(await provider.circuitBreakerGate({ proposedAction: "action" })).gate_status,
+    ).toBe("BLOCKED");
+  });
+  it.each([
+    { outcome: "ESTABLISHED" },
+    { outcome: "CLEARED" },
+    { outcome: "INSUFFICIENTLY ESTABLISHED" },
+    { error: "failed" },
+    { mock: true },
+    { type: "WHP-MOCK-DRY-RUN-v1" },
+  ])("blocks unsigned or unexpected response %j", async data => {
+    jest.spyOn(global, "fetch").mockResolvedValueOnce(reply(data)).mockResolvedValue(discovery);
+    expect(
+      JSON.parse(await provider.circuitBreakerGate({ proposedAction: "action" })).gate_status,
+    ).toBe("BLOCKED");
+  });
+  it.each([
+    { mock: true },
+    { mock: true, structurally_complete: false, failed: [] },
+    { mock: true, structurally_complete: true, failed: "bad" },
+    { mock: true, structurally_complete: true },
+    { mock: true, structurally_complete: true, failed: ["missing"] },
+    { outcome: "ESTABLISHED" },
+  ])("rejects malformed mock or positive to mock request %j", async data => {
+    jest.spyOn(global, "fetch").mockResolvedValue(reply(data));
+    expect(
+      JSON.parse(await provider.circuitBreakerGate({ proposedAction: "action", mock: true }))
+        .gate_status,
+    ).toBe("BLOCKED");
+  });
+  it("labels explicit complete mock non-authorizing", async () => {
+    jest
+      .spyOn(global, "fetch")
+      .mockResolvedValue(reply({ mock: true, structurally_complete: true, failed: [] }));
+    const result = JSON.parse(
+      await provider.circuitBreakerGate({ proposedAction: "action", mock: true }),
+    );
+    expect(result.gate_status).toBe("DRY_RUN_PASSED");
+    expect(result.execution_authorized).toBe(false);
+  });
+  it("blocks even an authentic fresh request-bound positive without current standing", async () => {
+    jest
+      .spyOn(global, "fetch")
+      .mockImplementation(async (_url, init) =>
+        init?.method === "POST" ? reply(envelope(JSON.parse(init.body as string))) : discovery,
       );
-
-      expect(res.status).toBe("payment_required");
+    const result = JSON.parse(
+      await provider.circuitBreakerGate({
+        proposedAction: "action",
+        targetAddress: "target",
+        valueUsd: 1,
+      }),
+    );
+    expect(result.gate_status).toBe("BLOCKED");
+    expect(result.record_integrity_verified).toBe(true);
+    expect(result.current_standing_verified).toBe(false);
+    expect(result.execution_authorized).toBe(false);
+  });
+  it("sends evidence as an array and binds action/target/value/timestamp", async () => {
+    const mocked = jest.spyOn(global, "fetch").mockResolvedValue(reply({}, 402));
+    await provider.circuitBreakerGate({
+      proposedAction: "action",
+      targetAddress: "target",
+      valueUsd: 1,
     });
-
-    it("returns failed when mock structural check fails", async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        status: 200,
-        ok: true,
-        json: async () => ({
-          mock: true,
-          structurally_complete: false,
-          failed: ["provenance.source"],
-        }),
-      } as any);
-
-      const res = JSON.parse(
-        await provider.standingAudit({
-          subject: "0x123",
-          claim: "Test claim",
-          mock: true,
-        }),
+    const input = JSON.parse(mocked.mock.calls[0][1]!.body as string);
+    expect(input.provenance.evidence).toEqual([
+      { action: "action", target: "target", valueUsd: 1, timestamp: expect.any(String) },
+    ]);
+  });
+  it("fails closed on signing-key discovery failure", async () => {
+    jest
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(reply(envelope()))
+      .mockResolvedValueOnce(reply({}, 500));
+    expect(
+      JSON.parse(await provider.circuitBreakerGate({ proposedAction: "action" })).gate_status,
+    ).toBe("BLOCKED");
+  });
+  it("audit reports only record integrity not authority", async () => {
+    jest
+      .spyOn(global, "fetch")
+      .mockImplementation(async (_url, init) =>
+        init?.method === "POST" ? reply(envelope(JSON.parse(init.body as string))) : discovery,
       );
-
-      expect(res.status).toBe("failed");
-      expect(res.missing_fields).toEqual(["provenance.source"]);
-    });
-
-    it("returns dry_run_passed when mock audit passes", async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        status: 200,
-        ok: true,
-        json: async () => ({
-          mock: true,
-          structurally_complete: true,
-          failed: [],
-        }),
-      } as any);
-
-      const res = JSON.parse(
-        await provider.standingAudit({
-          subject: "0x123",
-          claim: "Test claim",
-          mock: true,
-        }),
-      );
-
-      expect(res.status).toBe("dry_run_passed");
-    });
-
-    it("returns success when live audit succeeds", async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        status: 200,
-        ok: true,
-        json: async () => ({
-          determination: {
-            outcome: "RECOGNIZED WITH BOUNDARIES",
-          },
-        }),
-      } as any);
-
-      const res = JSON.parse(
-        await provider.standingAudit({
-          subject: "0x123",
-          claim: "Test claim",
-        }),
-      );
-
-      expect(res.status).toBe("success");
-      expect(res.determination.outcome).toBe("RECOGNIZED WITH BOUNDARIES");
-    });
+    const result = JSON.parse(await provider.standingAudit({ subject: "subject", claim: "claim" }));
+    expect(result.status).toBe("record_verified");
+    expect(result.execution_authorized).toBe(false);
   });
 });
