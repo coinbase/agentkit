@@ -48,7 +48,8 @@ export class StandingWitnessActionProvider extends ActionProvider {
         provenance: {
           source: "agentkit",
           authority: "autonomous-agent",
-          evidence: [{ timestamp: new Date().toISOString() }],
+          evidence: [{ timestamp: new Date().toISOString(),
+        ...(args.warrantHash ? { warrant_hash: args.warrantHash } : {}), ...(args.warrantHash ? { warrant_hash: args.warrantHash } : {}) }],
         },
       };
       const result = await this.inspect(
@@ -87,6 +88,7 @@ export class StandingWitnessActionProvider extends ActionProvider {
         target: args.targetAddress ?? null,
         valueUsd: args.valueUsd ?? null,
         timestamp: new Date().toISOString(),
+        ...(args.warrantHash ? { warrant_hash: args.warrantHash } : {}),
       };
       const input = {
         subject: args.targetAddress || "autonomous-agent-action",

@@ -129,7 +129,7 @@ export function verifyRecord(
   if (createHash("sha256").update(canonical(request)).digest("hex") !== record.input_hash)
     throw new Error("Input hash mismatch");
   if (record.revoked === true || record.status === "REVOKED") throw new Error("Revoked record");
-  if (!["RECOGNIZED WITH BOUNDARIES", "ESTABLISHED"].includes(record.determination?.outcome ?? ""))
-    throw new Error("Non-positive determination");
+  if (record.determination?.outcome !== "ESTABLISHED")
+    throw new Error("Determination is not ESTABLISHED");
   return envelope.record_hash as string;
 }

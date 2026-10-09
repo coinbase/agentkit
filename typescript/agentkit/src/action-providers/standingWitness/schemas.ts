@@ -13,7 +13,13 @@ export const StandingAuditSchema = z
       .describe(
         "The specific claim or transaction intent to be verified and evaluated for epistemic standing",
       ),
-    mock: z
+    
+  warrantHash: z
+    .string()
+    .regex(/^[0-9a-f]{64}$/i)
+    .optional()
+    .describe("SHA-256 hash of the target contract call parameters A(c) to bind to P(c)"),
+  mock: z
       .boolean()
       .optional()
       .describe("Set to true for a free zero-cost structural verification dry-run"),
@@ -40,7 +46,13 @@ export const StandingCircuitBreakerSchema = z
       .number()
       .optional()
       .describe("Estimated USD value or transfer amount involved in the action"),
-    mock: z.boolean().optional().describe("Set to true for dry-run verification"),
+    
+  warrantHash: z
+    .string()
+    .regex(/^[0-9a-f]{64}$/i)
+    .optional()
+    .describe("SHA-256 hash of the target contract call parameters A(c) to bind to P(c)"),
+  mock: z.boolean().optional().describe("Set to true for dry-run verification"),
     paymentSignature: z
       .string()
       .optional()
