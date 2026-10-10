@@ -342,6 +342,23 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>DEBYKO</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>debyko_snapshots</code></td>
+    <td width="768">Reads current snapshot layers from DEBYKO. Paying uses the x402 client on Base, capped before signing. An API key sends Bearer and does not pay.</td>
+</tr>
+<tr>
+    <td width="200"><code>debyko_screen</code></td>
+    <td width="768">Runs one DQL query. Names come from the catalogue. The guide is https://docs.debyko.com/dql/guide/.</td>
+</tr>
+<tr>
+    <td width="200"><code>debyko_history</code></td>
+    <td width="768">Reads past snapshots. Send exactly one of interval, at, or raw, with from and to when interval or raw is used.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>DefiLlama</strong></summary>
 <table width="100%">
 <tr>
