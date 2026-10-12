@@ -9,6 +9,7 @@ export * from "./baseAccount";
 export * from "./basename";
 export * from "./cdp";
 export * from "./clanker";
+export * from "./clicks";
 export * from "./compound";
 export * from "./defillama";
 export * from "./dtelecom";
