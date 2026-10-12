@@ -178,6 +178,27 @@ describe("Transfer Action", () => {
     expect(response).toContain("Do not send this transfer again");
   });
 
+  it("reports a mined transfer that reverted as not transferred, with its hash", async () => {
+    mockMulticall.mockResolvedValueOnce([
+      { result: "MockToken" }, // name
+      { result: MOCK_DECIMALS }, // decimals
+      { result: BigInt(100000 * 10 ** MOCK_DECIMALS) }, // balance
+    ]);
+    mockWallet.waitForTransactionReceipt.mockResolvedValue({ status: "reverted" });
+
+    const args = {
+      amount: MOCK_AMOUNT.toString(),
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      destinationAddress: MOCK_DESTINATION,
+    };
+
+    const response = await actionProvider.transfer(mockWallet, args);
+
+    expect(response).not.toContain("Transferred");
+    expect(response).toContain("reverted on chain: no tokens were transferred");
+    expect(response).toContain(`Transaction hash for the transfer: ${TRANSACTION_HASH}`);
+  });
+
   it("still reports a failure when the transfer transaction is not sent", async () => {
     mockMulticall.mockResolvedValueOnce([
       { result: "MockToken" }, // name
@@ -405,6 +426,27 @@ describe("Approve Action", () => {
     const response = await actionProvider.approve(mockWallet, args);
 
     expect(response).toContain("Error approving tokens: Error: Transaction failed");
+  });
+
+  it("reports a mined approval that reverted as not approved, with its hash", async () => {
+    mockMulticall.mockResolvedValueOnce([
+      { result: "MockToken" }, // name
+      { result: MOCK_DECIMALS }, // decimals
+      { result: BigInt(100000 * 10 ** MOCK_DECIMALS) }, // balance
+    ]);
+    mockWallet.waitForTransactionReceipt.mockResolvedValue({ status: "reverted" });
+
+    const args = {
+      amount: MOCK_AMOUNT.toString(),
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      spenderAddress: MOCK_SPENDER,
+    };
+
+    const response = await actionProvider.approve(mockWallet, args);
+
+    expect(response).not.toContain("Approved");
+    expect(response).toContain("reverted on chain: the allowance was not changed");
+    expect(response).toContain(`Transaction hash: ${TRANSACTION_HASH}`);
   });
 
   it("reports a sent approval as unconfirmed, with its hash, when only the receipt lookup fails", async () => {
