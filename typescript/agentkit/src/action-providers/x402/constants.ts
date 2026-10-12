@@ -4,6 +4,7 @@
 export const KNOWN_FACILITATORS = {
   cdp: "https://api.cdp.coinbase.com/platform/v2/x402",
   payai: "https://facilitator.payai.network",
+  bazaar: "https://402.com.tr",
 } as const;
 
 export type KnownFacilitatorName = keyof typeof KNOWN_FACILITATORS;
