@@ -154,6 +154,50 @@ describe("Transfer Action", () => {
     expect(response).toContain("Error: Could not fetch token details");
   });
 
+  it("reports a sent transfer as unconfirmed, with its hash, when only the receipt lookup fails", async () => {
+    mockMulticall.mockResolvedValueOnce([
+      { result: "MockToken" }, // name
+      { result: MOCK_DECIMALS }, // decimals
+      { result: BigInt(100000 * 10 ** MOCK_DECIMALS) }, // balance
+    ]);
+    mockWallet.waitForTransactionReceipt.mockRejectedValue(new Error("Internal JSON-RPC error"));
+
+    const args = {
+      amount: MOCK_AMOUNT.toString(),
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      destinationAddress: MOCK_DESTINATION,
+    };
+
+    const response = await actionProvider.transfer(mockWallet, args);
+
+    expect(mockWallet.sendTransaction).toHaveBeenCalledTimes(1);
+    expect(response.startsWith("Error")).toBe(false);
+    expect(response).toContain("was sent, but its receipt could not be confirmed yet");
+    expect(response).toContain("Internal JSON-RPC error");
+    expect(response).toContain(`Transaction hash for the transfer: ${TRANSACTION_HASH}`);
+    expect(response).toContain("Do not send this transfer again");
+  });
+
+  it("still reports a failure when the transfer transaction is not sent", async () => {
+    mockMulticall.mockResolvedValueOnce([
+      { result: "MockToken" }, // name
+      { result: MOCK_DECIMALS }, // decimals
+      { result: BigInt(100000 * 10 ** MOCK_DECIMALS) }, // balance
+    ]);
+    mockWallet.sendTransaction.mockRejectedValue(new Error("Transaction failed"));
+
+    const args = {
+      amount: MOCK_AMOUNT.toString(),
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      destinationAddress: MOCK_DESTINATION,
+    };
+
+    const response = await actionProvider.transfer(mockWallet, args);
+
+    expect(mockWallet.waitForTransactionReceipt).not.toHaveBeenCalled();
+    expect(response).toContain("Error transferring the asset: Error: Transaction failed");
+  });
+
   describe("supportsNetwork", () => {
     it("should return true when protocolFamily is evm", () => {
       expect(actionProvider.supportsNetwork({ protocolFamily: "evm" })).toBe(true);
@@ -361,6 +405,29 @@ describe("Approve Action", () => {
     const response = await actionProvider.approve(mockWallet, args);
 
     expect(response).toContain("Error approving tokens: Error: Transaction failed");
+  });
+
+  it("reports a sent approval as unconfirmed, with its hash, when only the receipt lookup fails", async () => {
+    mockMulticall.mockResolvedValueOnce([
+      { result: "MockToken" }, // name
+      { result: MOCK_DECIMALS }, // decimals
+      { result: BigInt(100000 * 10 ** MOCK_DECIMALS) }, // balance
+    ]);
+    mockWallet.waitForTransactionReceipt.mockRejectedValue(new Error("Internal JSON-RPC error"));
+
+    const args = {
+      amount: MOCK_AMOUNT.toString(),
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      spenderAddress: MOCK_SPENDER,
+    };
+
+    const response = await actionProvider.approve(mockWallet, args);
+
+    expect(mockWallet.sendTransaction).toHaveBeenCalledTimes(1);
+    expect(response.startsWith("Error")).toBe(false);
+    expect(response).toContain("was sent, but its receipt could not be confirmed yet");
+    expect(response).toContain(`Transaction hash: ${TRANSACTION_HASH}`);
+    expect(response).toContain("Do not send this approval again");
   });
 });
 
