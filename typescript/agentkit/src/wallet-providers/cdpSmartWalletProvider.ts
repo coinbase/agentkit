@@ -18,6 +18,36 @@ import { EvmWalletProvider } from "./evmWalletProvider";
 import { WalletProviderWithClient, CdpSmartWalletProviderConfig } from "./cdpShared";
 
 /**
+ * keccak256("UserOperationEvent(bytes32,address,address,uint256,bool,uint256,uint256)"), emitted
+ * by the ERC-4337 EntryPoint (v0.6 and v0.7) once for each user operation in a bundle.
+ */
+const USER_OPERATION_EVENT_TOPIC =
+  "0x49628fd1471006c1482da88028e9ce4dbb080b815c9b0344d39e5a8e6ec1419f";
+
+/**
+ * Reads whether a user operation's own call succeeded from the bundle transaction's logs. The
+ * bundle transaction succeeds even when one of its user operations reverts; the EntryPoint records
+ * each operation's result in the `success` field of its UserOperationEvent.
+ *
+ * @param logs - The logs of the bundle transaction.
+ * @param userOpHash - The user operation hash.
+ * @returns The event's `success` value, or undefined when the logs hold no event for this hash.
+ */
+function userOperationSucceeded(
+  logs: ReadonlyArray<{ topics: readonly Hex[]; data: Hex }>,
+  userOpHash: Hex,
+): boolean | undefined {
+  const event = logs.find(
+    log =>
+      log.topics[0]?.toLowerCase() === USER_OPERATION_EVENT_TOPIC &&
+      log.topics[1]?.toLowerCase() === userOpHash.toLowerCase(),
+  );
+  // non-indexed data: nonce, success, actualGasCost, actualGasUsed, 32 bytes each
+  if (!event || event.data.length < 2 + 64 * 2) return undefined;
+  return BigInt("0x" + event.data.slice(2 + 64, 2 + 128)) !== BigInt(0);
+}
+
+/**
  * Supported network types for CDP SDK smart wallet operations
  */
 type CdpSmartWalletNetwork =
@@ -342,7 +372,16 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
       const receiptTx = await this.#publicClient.waitForTransactionReceipt({
         hash: receipt.transactionHash as Hex,
       });
-      if (receiptTx.logs) return { ...receipt, logs: receiptTx.logs };
+      if (receiptTx.logs) {
+        // "complete" means the bundle transaction was mined, not that this operation's call
+        // succeeded, so an operation the EntryPoint marked unsuccessful is reported as failed
+        const succeeded = userOperationSucceeded(receiptTx.logs, userOpHash);
+        return {
+          ...receipt,
+          ...(succeeded === false ? { status: "failed" } : {}),
+          logs: receiptTx.logs,
+        };
+      }
     }
 
     return receipt;
