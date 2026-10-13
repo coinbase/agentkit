@@ -112,7 +112,7 @@ describe("Transfer Action", () => {
     } as unknown as jest.Mocked<EvmWalletProvider>;
 
     mockWallet.sendTransaction.mockResolvedValue(TRANSACTION_HASH);
-    mockWallet.waitForTransactionReceipt.mockResolvedValue({});
+    mockWallet.waitForTransactionReceipt.mockResolvedValue({ status: "success" });
   });
 
   it("should successfully respond", async () => {
@@ -195,8 +195,77 @@ describe("Transfer Action", () => {
     const response = await actionProvider.transfer(mockWallet, args);
 
     expect(response).not.toContain("Transferred");
-    expect(response).toContain("reverted on chain: no tokens were transferred");
+    expect(response).toContain(
+      "failed on chain (receipt status: reverted): no tokens were transferred",
+    );
     expect(response).toContain(`Transaction hash for the transfer: ${TRANSACTION_HASH}`);
+  });
+
+  it("reports a smart-wallet user operation that failed as not transferred", async () => {
+    mockMulticall.mockResolvedValueOnce([
+      { result: "MockToken" }, // name
+      { result: MOCK_DECIMALS }, // decimals
+      { result: BigInt(100000 * 10 ** MOCK_DECIMALS) }, // balance
+    ]);
+    mockWallet.waitForTransactionReceipt.mockResolvedValue({ status: "failed" });
+
+    const args = {
+      amount: MOCK_AMOUNT.toString(),
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      destinationAddress: MOCK_DESTINATION,
+    };
+
+    const response = await actionProvider.transfer(mockWallet, args);
+
+    expect(response).not.toContain("Transferred");
+    expect(response).toContain(
+      "failed on chain (receipt status: failed): no tokens were transferred",
+    );
+    expect(response).toContain(`Transaction hash for the transfer: ${TRANSACTION_HASH}`);
+  });
+
+  it("reports a completed smart-wallet user operation as transferred", async () => {
+    mockMulticall.mockResolvedValueOnce([
+      { result: "MockToken" }, // name
+      { result: MOCK_DECIMALS }, // decimals
+      { result: BigInt(100000 * 10 ** MOCK_DECIMALS) }, // balance
+    ]);
+    mockWallet.waitForTransactionReceipt.mockResolvedValue({ status: "complete" });
+
+    const args = {
+      amount: MOCK_AMOUNT.toString(),
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      destinationAddress: MOCK_DESTINATION,
+    };
+
+    const response = await actionProvider.transfer(mockWallet, args);
+
+    expect(response).toContain(
+      `Transferred ${MOCK_AMOUNT} of MockToken (${MOCK_CONTRACT_ADDRESS}) to ${MOCK_DESTINATION}`,
+    );
+  });
+
+  it("does not report a transfer when the receipt status does not say it succeeded", async () => {
+    mockMulticall.mockResolvedValueOnce([
+      { result: "MockToken" }, // name
+      { result: MOCK_DECIMALS }, // decimals
+      { result: BigInt(100000 * 10 ** MOCK_DECIMALS) }, // balance
+    ]);
+    mockWallet.waitForTransactionReceipt.mockResolvedValue({});
+
+    const args = {
+      amount: MOCK_AMOUNT.toString(),
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      destinationAddress: MOCK_DESTINATION,
+    };
+
+    const response = await actionProvider.transfer(mockWallet, args);
+
+    expect(response).not.toContain("Transferred");
+    expect(response.startsWith("Error")).toBe(false);
+    expect(response).toContain("was sent, but its receipt does not confirm success");
+    expect(response).toContain(`Transaction hash for the transfer: ${TRANSACTION_HASH}`);
+    expect(response).toContain("Do not send this transfer again");
   });
 
   it("still reports a failure when the transfer transaction is not sent", async () => {
@@ -366,7 +435,7 @@ describe("Approve Action", () => {
     } as unknown as jest.Mocked<EvmWalletProvider>;
 
     mockWallet.sendTransaction.mockResolvedValue(TRANSACTION_HASH);
-    mockWallet.waitForTransactionReceipt.mockResolvedValue({});
+    mockWallet.waitForTransactionReceipt.mockResolvedValue({ status: "success" });
   });
 
   it("should successfully approve tokens", async () => {
@@ -445,8 +514,53 @@ describe("Approve Action", () => {
     const response = await actionProvider.approve(mockWallet, args);
 
     expect(response).not.toContain("Approved");
-    expect(response).toContain("reverted on chain: the allowance was not changed");
+    expect(response).toContain(
+      "failed on chain (receipt status: reverted): the allowance was not changed",
+    );
     expect(response).toContain(`Transaction hash: ${TRANSACTION_HASH}`);
+  });
+
+  it("reports a smart-wallet user operation that failed as not approved", async () => {
+    mockMulticall.mockResolvedValueOnce([
+      { result: "MockToken" }, // name
+      { result: MOCK_DECIMALS }, // decimals
+      { result: BigInt(100000 * 10 ** MOCK_DECIMALS) }, // balance
+    ]);
+    mockWallet.waitForTransactionReceipt.mockResolvedValue({ status: "failed" });
+
+    const args = {
+      amount: MOCK_AMOUNT.toString(),
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      spenderAddress: MOCK_SPENDER,
+    };
+
+    const response = await actionProvider.approve(mockWallet, args);
+
+    expect(response).not.toContain("Approved");
+    expect(response).toContain(
+      "failed on chain (receipt status: failed): the allowance was not changed",
+    );
+  });
+
+  it("does not report an approval when the receipt status does not say it succeeded", async () => {
+    mockMulticall.mockResolvedValueOnce([
+      { result: "MockToken" }, // name
+      { result: MOCK_DECIMALS }, // decimals
+      { result: BigInt(100000 * 10 ** MOCK_DECIMALS) }, // balance
+    ]);
+    mockWallet.waitForTransactionReceipt.mockResolvedValue({});
+
+    const args = {
+      amount: MOCK_AMOUNT.toString(),
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      spenderAddress: MOCK_SPENDER,
+    };
+
+    const response = await actionProvider.approve(mockWallet, args);
+
+    expect(response).not.toContain("Approved");
+    expect(response).toContain("was sent, but its receipt does not confirm success");
+    expect(response).toContain("Do not send this approval again");
   });
 
   it("reports a sent approval as unconfirmed, with its hash, when only the receipt lookup fails", async () => {
