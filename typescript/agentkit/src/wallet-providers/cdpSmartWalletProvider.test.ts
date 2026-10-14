@@ -416,6 +416,21 @@ describe("CdpSmartWalletProvider", () => {
       warn.mockRestore();
     });
 
+    it("should report failed when the bundle transaction itself reverted", async () => {
+      const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+      // a reverted transaction keeps no logs, so there is no UserOperationEvent to read
+      mockPublicClient.waitForTransactionReceipt.mockResolvedValue({
+        status: "reverted",
+        logs: [],
+      } as never);
+
+      const receipt = await provider.waitForTransactionReceipt(MOCK_USER_OP_HASH);
+
+      expect(receipt.status).toBe("failed");
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
+    });
+
     it("should return a receipt that is not complete without reading the bundle transaction", async () => {
       setUserOperation({ status: "failed", userOpHash: MOCK_USER_OP_HASH });
 
