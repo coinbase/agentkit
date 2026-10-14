@@ -379,9 +379,9 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
         // "complete" means the bundle transaction was mined, not that this operation's call
         // succeeded, so an operation the EntryPoint marked unsuccessful is reported as failed
         const succeeded = userOperationSucceeded(receiptTx.logs, userOpHash);
-        // a reverted bundle transaction keeps no logs, so it holds no event, and none of its
-        // operations can have succeeded
-        const bundleReverted = receiptTx.status === "reverted";
+        // a bundle transaction that did not succeed keeps no logs, so it holds no event, and none
+        // of its operations can have succeeded; only "success" counts as done
+        const bundleReverted = receiptTx.status !== "success";
         if (succeeded === undefined && !bundleReverted) {
           // "complete" is all we can report, but say that the operation's own result was not read
           console.warn(
