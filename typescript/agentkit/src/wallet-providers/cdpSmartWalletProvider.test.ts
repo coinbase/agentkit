@@ -29,6 +29,7 @@ jest.mock("viem", () => {
   return {
     createPublicClient: jest.fn(() => mockPublicClient),
     http: jest.fn(),
+    toEventSelector: jest.requireActual("viem").toEventSelector,
   };
 });
 
@@ -331,8 +332,12 @@ describe("CdpSmartWalletProvider", () => {
   // =========================================================
 
   describe("transaction receipts", () => {
-    const USER_OPERATION_EVENT_TOPIC =
-      "0x49628fd1471006c1482da88028e9ce4dbb080b815c9b0344d39e5a8e6ec1419f";
+    // derived from the EntryPoint ABI, independently of the provider, so a wrong topic in the
+    // provider fails these tests by name instead of passing while production never matches
+    const { toEventSelector } = jest.requireActual<typeof import("viem")>("viem");
+    const USER_OPERATION_EVENT_TOPIC = toEventSelector(
+      "event UserOperationEvent(bytes32 indexed userOpHash, address indexed sender, address indexed paymaster, uint256 nonce, bool success, uint256 actualGasCost, uint256 actualGasUsed)",
+    );
     const MOCK_TX_HASH = "0x9999999999999999999999999999999999999999999999999999999999999999";
     const word = (n: number) => n.toString(16).padStart(64, "0");
     const userOpEvent = (userOpHash: string, success: boolean) => ({
@@ -390,7 +395,14 @@ describe("CdpSmartWalletProvider", () => {
       expect(receipt.logs).toEqual(logs);
     });
 
+    it("should use the UserOperationEvent topic the EntryPoint emits", () => {
+      expect(USER_OPERATION_EVENT_TOPIC).toBe(
+        "0x49628fd1471006c1482da88028e9ce4dbb080b815c9b0344d39e5a8e6ec1419f",
+      );
+    });
+
     it("should leave the status alone when the logs hold no event for this operation", async () => {
+      const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
       const otherHash = "0x1111111111111111111111111111111111111111111111111111111111111111";
       mockPublicClient.waitForTransactionReceipt.mockResolvedValue({
         status: "success",
@@ -400,6 +412,8 @@ describe("CdpSmartWalletProvider", () => {
       const receipt = await provider.waitForTransactionReceipt(MOCK_USER_OP_HASH);
 
       expect(receipt.status).toBe("complete");
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("No UserOperationEvent for"));
+      warn.mockRestore();
     });
 
     it("should return a receipt that is not complete without reading the bundle transaction", async () => {

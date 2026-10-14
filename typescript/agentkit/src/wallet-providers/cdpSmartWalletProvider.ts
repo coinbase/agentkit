@@ -12,17 +12,20 @@ import {
   ReadContractReturnType,
   TransactionRequest,
   LocalAccount,
+  toEventSelector,
 } from "viem";
 import { Network, NETWORK_ID_TO_CHAIN_ID, NETWORK_ID_TO_VIEM_CHAIN } from "../network";
 import { EvmWalletProvider } from "./evmWalletProvider";
 import { WalletProviderWithClient, CdpSmartWalletProviderConfig } from "./cdpShared";
 
 /**
- * keccak256("UserOperationEvent(bytes32,address,address,uint256,bool,uint256,uint256)"), emitted
- * by the ERC-4337 EntryPoint (v0.6 and v0.7) once for each user operation in a bundle.
+ * The topic of UserOperationEvent, emitted by the ERC-4337 EntryPoint (v0.6 and v0.7) once for
+ * each user operation in a bundle. Derived from the event signature rather than written out, so a
+ * typo cannot silently stop every match.
  */
-const USER_OPERATION_EVENT_TOPIC =
-  "0x49628fd1471006c1482da88028e9ce4dbb080b815c9b0344d39e5a8e6ec1419f";
+const USER_OPERATION_EVENT_TOPIC = toEventSelector(
+  "UserOperationEvent(bytes32,address,address,uint256,bool,uint256,uint256)",
+).toLowerCase();
 
 /**
  * Reads whether a user operation's own call succeeded from the bundle transaction's logs. The
@@ -376,6 +379,12 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
         // "complete" means the bundle transaction was mined, not that this operation's call
         // succeeded, so an operation the EntryPoint marked unsuccessful is reported as failed
         const succeeded = userOperationSucceeded(receiptTx.logs, userOpHash);
+        if (succeeded === undefined) {
+          // "complete" is all we can report, but say that the operation's own result was not read
+          console.warn(
+            `No UserOperationEvent for ${userOpHash} in bundle ${receipt.transactionHash}; reporting the SDK status "${receipt.status}" without confirming the operation's own result.`,
+          );
+        }
         return {
           ...receipt,
           ...(succeeded === false ? { status: "failed" } : {}),
