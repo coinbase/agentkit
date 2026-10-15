@@ -1,0 +1,82 @@
+{
+  "format": "fractalai.trust-roots/1",
+  "issuer": "FractalAI (FRACTAL AI S.A.S.)",
+  "pinned_at": "2026-10-07T04:25:11Z",
+  "provenance": "Governance key and epoch-3 checkpoint fetched over TLS from https://fractalai.net.co/.well-known/x402-receipt-keys on 2026-10-07T04:25:11Z, byte-identical to python/tests/fixtures/x402-receipt-keys-epoch3.json (committed earlier); ML-DSA-65 signature and root recomputed locally. This is trust-on-first-use of the governance key, made explicit and auditable here — not an on-chain anchor (FractalCheckpoint on Base is still pending).",
+  "governance": {
+    "algorithm": "ML-DSA-65 (FIPS 204)",
+    "use": "key-directory-governance",
+    "public_key_b64": "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",
+    "kid": "8005759019a101f6"
+  },
+  "directory_checkpoint": {
+    "spec": "FRACTALAI-key-directory-v1",
+    "epoch": 3,
+    "root": "8748d4d6966857adbab6e9f555cc8323f7726c0681b31e9f64df8d989ca088d7",
+    "prev_root": "16e916f4351d266c56e29532817fba38207309c2facbb760dfa5f88f8236122a",
+    "signature_sha256": "0709c64b9a3f40266a52554cf4556c7c236d559e5356c2f0f98eadfc060b29f5",
+    "known_previous_roots": {
+      "1": "a97d9bdb5128817a08ec6449c5a9627bf7c09a932a76a6338e3a0c9d223b8a5a",
+      "2": "16e916f4351d266c56e29532817fba38207309c2facbb760dfa5f88f8236122a"
+    },
+    "source": "https://fractalai.net.co/.well-known/x402-receipt-keys"
+  },
+  "anchors": {
+    "evm": {
+      "5042": {
+        "name": "Arc mainnet",
+        "network_class": "production",
+        "contract": "0x1f0d2774943250a7eb179e960203ea86319a8181",
+        "runtime_codehash": "0xe4733ce5c69278cb8072bebfd2500679236551039f896850929d0ceb443f2595",
+        "from_block": 24072431,
+        "default_rpc": "https://rpc.mainnet.arc.io",
+        "time_note": "block.timestamp proposed by the permissioned validator set"
+      },
+      "42161": {
+        "name": "Arbitrum One",
+        "network_class": "production",
+        "contract": "0x3a23c614033cb22139dc13932524767c5fe841d8",
+        "runtime_codehash": "0xe4733ce5c69278cb8072bebfd2500679236551039f896850929d0ceb443f2595",
+        "from_block": 511335138,
+        "default_rpc": "https://arb1.arbitrum.io/rpc",
+        "time_note": "block.timestamp set by the sequencer within SequencerInbox maxTimeVariation (up to 24 h before / 768 s after L1 time, read 2026-10-06)"
+      }
+    },
+    "solana": {
+      "memo_program": "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
+      "clusters": {
+        "mainnet-beta": {
+          "genesis_hash": "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d",
+          "network_class": "production",
+          "default_rpc": "https://api.mainnet-beta.solana.com"
+        },
+        "devnet": {
+          "genesis_hash": "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG",
+          "network_class": "test",
+          "default_rpc": "https://api.devnet.solana.com"
+        },
+        "testnet": {
+          "genesis_hash": "4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY",
+          "network_class": "test",
+          "default_rpc": "https://api.testnet.solana.com"
+        }
+      },
+      "announced_signers": {
+        "devnet": [
+          "7cpTE4C7sRWsHyeGsiqTfwNv9ntyribrRJV3s8vmN624"
+        ],
+        "mainnet-beta": ["7cpTE4C7sRWsHyeGsiqTfwNv9ntyribrRJV3s8vmN624"],
+        "testnet": []
+      }
+    }
+  },
+  "known_anchorers": {
+    "evm": [
+      "0xc13789e82661635d9cea38a53a0390cf9939ef4f"
+    ]
+  },
+  "verified_live_2026_10_07": {
+    "evm_codehash": "keccak256(eth_getCode) == runtime_codehash on both 42161 (arb1.arbitrum.io) and 5042 (rpc.mainnet.arc.io)",
+    "solana_genesis": "getGenesisHash on api.{mainnet-beta,devnet,testnet}.solana.com"
+  }
+}

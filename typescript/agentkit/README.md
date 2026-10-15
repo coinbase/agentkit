@@ -485,6 +485,19 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>FractalAI Receipts</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>verify_x402_receipt</code></td>
+    <td width="768">Verifies a post-quantum (ML-DSA-65) signed x402 receipt (delivery-receipt extension, FractalAI notary seal, served proof or MIDAS alert) and reports integrity, authenticity, key trust, settlement and delivery separately.</td>
+</tr>
+<tr>
+    <td width="200"><code>request_x402_receipt</code></td>
+    <td width="768">Pays the FractalAI notary 0.005 USDC on Base via x402 for an independent signed seal of an already-settled x402 payment, then verifies the seal.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Messari</strong></summary>
 <table width="100%">
 <tr>
