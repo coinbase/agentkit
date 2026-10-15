@@ -18,6 +18,7 @@ export * from "./erc721";
 export * from "./erc8004";
 export * from "./farcaster";
 export * from "./jupiter";
+export * from "./keeperhub";
 export * from "./messari";
 export * from "./pyth";
 export * from "./moonwell";
