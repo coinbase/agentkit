@@ -211,6 +211,23 @@ APY: 5.2%
       const response = await provider.deposit(mockWallet, args);
       expect(response).toContain("Deposit failed");
     });
+
+    it("should find the vault when its address case differs from the API response", async () => {
+      const checksummedVault = "0xAbCdEf1234567890123456789012345678901234";
+      mockedFetch.mockResolvedValueOnce(
+        mockFetchResult(200, [{ ...mockVaults[0], address: checksummedVault }]),
+      );
+
+      const args = {
+        assets: MOCK_WHOLE_ASSETS,
+        vaultAddress: checksummedVault.toLowerCase(),
+      };
+
+      const response = await provider.deposit(mockWallet, args);
+
+      expect(response).not.toContain("Vault not found");
+      expect(response).toContain(`Deposited ${MOCK_WHOLE_ASSETS}`);
+    });
   });
 
   describe("redeem action", () => {
