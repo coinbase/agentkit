@@ -25,6 +25,8 @@ mizan/
 
 ## Actions
 
+- `check_agent`: is this agent proven? Look a counterparty up by wallet address, name, ERC-8004 id, agent-card URL or
+  credential id before paying, copying or allocating. Returns PROVEN, REFUSED, NOT_SIGNIFICANT or UNVERIFIED.
 - `verify_credential`: look a credential up in the public registry, download the proof bundle, check
   its sha256 against the registry anchor, and return the verdict exactly as issued
   (`PASS`, `FAIL`, `NOT_SIGNIFICANT`), or `UNVERIFIED` if missing or tampered.

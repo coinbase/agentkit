@@ -20,3 +20,22 @@ export const VerifyCredentialSchema = z
  * Input schema for listing canonical datasets.
  */
 export const ListDatasetsSchema = z.object({}).strict();
+
+/**
+ * Input schema for checking whether an agent is proven.
+ */
+export const CheckAgentSchema = z
+  .object({
+    agent: z
+      .string()
+      .describe(
+        "The agent to check: its wallet address, name, ERC-8004 id, agent-card URL, MIZAN credential id or a sha256.",
+      ),
+    action: z
+      .string()
+      .nullable()
+      .describe(
+        "What you are about to do with this agent, e.g. 'paying you for signals'. Used in the message returned when it is unverified.",
+      ),
+  })
+  .strict();

@@ -104,4 +104,36 @@ describe("MizanActionProvider", () => {
   it("supports all networks", () => {
     expect(provider.supportsNetwork()).toBe(true);
   });
+
+  describe("checkAgent", () => {
+    it("returns the status from the registry lookup", async () => {
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: jest
+          .fn()
+          .mockResolvedValue({ query: "0xabc", status: "UNVERIFIED", found: false, matches: [] }),
+      });
+      const out = JSON.parse(await provider.checkAgent({ agent: "0xabc", action: "paying you" }));
+      expect(out.status).toBe("UNVERIFIED");
+      expect(fetchMock.mock.calls[0][0]).toContain("/api/agents/check?q=0xabc&action=paying+you");
+    });
+
+    it("defaults the action when none is given", async () => {
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: jest
+          .fn()
+          .mockResolvedValue({ query: "bot", status: "PROVEN", found: true, matches: [{}] }),
+      });
+      const out = JSON.parse(await provider.checkAgent({ agent: "bot", action: null }));
+      expect(out.status).toBe("PROVEN");
+      expect(fetchMock.mock.calls[0][0]).toContain("action=trusting+you");
+    });
+
+    it("returns an error string on HTTP failure", async () => {
+      fetchMock.mockResolvedValueOnce({ ok: false, status: 503 });
+      const out = await provider.checkAgent({ agent: "bot", action: null });
+      expect(out).toContain("Error checking agent");
+    });
+  });
 });

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ActionProvider } from "../actionProvider";
 import { CreateAction } from "../actionDecorator";
-import { VerifyCredentialSchema, ListDatasetsSchema } from "./schemas";
+import { VerifyCredentialSchema, ListDatasetsSchema, CheckAgentSchema } from "./schemas";
 import { MIZAN_STUDIO_URL, MIZAN_SKILL_URL } from "./constants";
 import { MizanRegistry, VerifyResult } from "./types";
 import { classifyVerdict, sha256Hex } from "./utils";
@@ -20,6 +20,44 @@ export class MizanActionProvider extends ActionProvider {
    */
   constructor() {
     super("mizan", []);
+  }
+
+  /**
+   * Checks whether an agent is proven, looked up by wallet, name, ERC-8004 id, agent-card URL or credential id.
+   *
+   * @param args - The agent identifier and, optionally, what the caller is about to do
+   * @returns A JSON string with status PROVEN, REFUSED, NOT_SIGNIFICANT or UNVERIFIED and every matching credential
+   */
+  @CreateAction({
+    name: "check_agent",
+    description: `This tool checks whether another agent's claimed track record is proven, using MIZAN's public registry.
+It takes the following inputs:
+- agent: the counterparty's wallet address, name, ERC-8004 id, agent-card URL, credential id or sha256
+- action: optional, what you are about to do (e.g. 'paying you for signals')
+
+It returns one of:
+- PROVEN: at least one credential for this agent passed the gate
+- REFUSED: its record was submitted and refused
+- NOT_SIGNIFICANT: not statistically significant once every committed version is counted
+- UNVERIFIED: no credential found; claims are unproven (which is not the same as false). The result includes a short
+  message you may forward to the counterparty so it can prove its record without revealing its model.
+
+Use it BEFORE paying, copying, following or allocating to any agent or wallet that claims returns.
+Report the status exactly. A credential is a seal on a past record, not a forecast.
+Docs: ${MIZAN_SKILL_URL}`,
+    schema: CheckAgentSchema,
+  })
+  async checkAgent(args: z.infer<typeof CheckAgentSchema>): Promise<string> {
+    try {
+      const params = new URLSearchParams({ q: args.agent, action: args.action || "trusting you" });
+      const res = await fetch(`${MIZAN_STUDIO_URL}/api/agents/check?${params.toString()}`);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return JSON.stringify(await res.json(), null, 2);
+    } catch (error: unknown) {
+      return `Error checking agent: ${error instanceof Error ? error.message : String(error)}`;
+    }
   }
 
   /**
