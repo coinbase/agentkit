@@ -178,6 +178,23 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>agentsvc.io</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>check_token_risk</code></td>
+    <td width="768">Grades a token A to F before buying it, from a buy and sell simulation, owner powers and liquidity. Paid per call in USDC over x402, no API key.</td>
+</tr>
+<tr>
+    <td width="200"><code>check_scam_message</code></td>
+    <td width="768">Checks a DM, cast, tweet or email for scams and phishing, including domain age and look-alike domains of every link. Paid per call in USDC over x402.</td>
+</tr>
+<tr>
+    <td width="200"><code>check_prompt_injection</code></td>
+    <td width="768">Checks untrusted text for prompt injection before the agent reads it. Paid per call in USDC over x402.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Base Account</strong></summary>
 <table width="100%">
 <tr>
