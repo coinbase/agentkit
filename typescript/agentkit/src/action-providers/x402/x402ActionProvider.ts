@@ -32,6 +32,8 @@ import {
   isUsdcAsset,
   isUrlAllowed,
   validateFacilitator,
+  createApprovedPaymentSelector,
+  createCappedPaymentSelector,
 } from "./utils";
 import { SUPPORTED_NETWORKS, KNOWN_FACILITATORS } from "./constants";
 
@@ -460,8 +462,13 @@ DO NOT use this action directly without first trying make_http_request!`,
         );
       }
 
-      // Create x402 client with appropriate signer
-      const client = await this.createX402Client(walletProvider);
+      // Create x402 client with appropriate signer. Bind the signed payment to
+      // the option the user approved, so a service cannot return a larger
+      // amount or different recipient on the retry's 402.
+      const client = await this.createX402Client(
+        walletProvider,
+        createApprovedPaymentSelector(args.selectedPaymentOption),
+      );
       const fetchWithPayment = wrapFetchWithPayment(fetch, client);
 
       // Build URL with query params and determine if body is allowed
@@ -607,8 +614,15 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
         );
       }
 
-      // Create x402 client with appropriate signer
-      const client = await this.createX402Client(walletProvider);
+      // Create x402 client with appropriate signer. This path skips user
+      // confirmation, so cap the signed amount at the configured limit.
+      const client = await this.createX402Client(
+        walletProvider,
+        createCappedPaymentSelector(this.config.maxPaymentUsdc, {
+          isAllowedAsset: asset => isUsdcAsset(asset, walletProvider),
+          allowedNetworks: getX402Networks(walletProvider.getNetwork()),
+        }),
+      );
       const fetchWithPayment = wrapFetchWithPayment(fetch, client);
 
       // Build URL with query params and determine if body is allowed
@@ -839,10 +853,15 @@ These are the only services that can be called using make_http_request or make_h
    * Creates an x402 client configured for the given wallet provider.
    *
    * @param walletProvider - The wallet provider to configure the client for
+   * @param paymentRequirementsSelector - Optional selector constraining which
+   * server-returned payment requirements may be signed
    * @returns Configured x402Client
    */
-  private async createX402Client(walletProvider: WalletProvider): Promise<x402Client> {
-    const client = new x402Client();
+  private async createX402Client(
+    walletProvider: WalletProvider,
+    paymentRequirementsSelector?: ConstructorParameters<typeof x402Client>[0],
+  ): Promise<x402Client> {
+    const client = new x402Client(paymentRequirementsSelector);
 
     if (walletProvider instanceof EvmWalletProvider) {
       const account = walletProvider.toSigner();
