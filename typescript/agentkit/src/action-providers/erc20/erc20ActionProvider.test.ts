@@ -1,6 +1,8 @@
 import { erc20ActionProvider } from "./erc20ActionProvider";
 import { TransferSchema, GetTokenAddressSchema, ApproveSchema, AllowanceSchema } from "./schemas";
 import { EvmWalletProvider } from "../../wallet-providers";
+import { ChainDoesNotSupportContract } from "viem";
+import { foundry } from "viem/chains";
 
 const MOCK_AMOUNT = 15;
 const MOCK_DECIMALS = 6;
@@ -34,12 +36,15 @@ describe("Transfer Schema", () => {
 describe("Get Balance Action", () => {
   let mockWallet: jest.Mocked<EvmWalletProvider>;
   let mockMulticall: jest.Mock;
+  let mockReadContract: jest.Mock;
   const actionProvider = erc20ActionProvider();
 
   beforeEach(async () => {
     mockMulticall = jest.fn();
+    mockReadContract = jest.fn();
     const mockPublicClient = {
       multicall: mockMulticall,
+      readContract: mockReadContract,
       getCode: jest.fn().mockResolvedValue("0x"),
     };
 
@@ -80,6 +85,54 @@ describe("Get Balance Action", () => {
     const response = await actionProvider.getBalance(mockWallet, args);
 
     expect(mockMulticall).toHaveBeenCalled();
+    expect(mockReadContract).not.toHaveBeenCalled();
+
+    expect(response).toContain("Error: Could not fetch token details");
+  });
+
+  it("should read the token with plain calls on a chain without multicall3", async () => {
+    mockMulticall.mockRejectedValue(
+      new ChainDoesNotSupportContract({ chain: foundry, contract: { name: "multicall3" } }),
+    );
+    mockReadContract.mockImplementation(async ({ functionName }) => {
+      switch (functionName) {
+        case "name":
+          return "MockToken";
+        case "decimals":
+          return MOCK_DECIMALS;
+        case "balanceOf":
+          return BigInt(MOCK_AMOUNT * 10 ** MOCK_DECIMALS);
+      }
+    });
+
+    const args = {
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      address: null,
+    };
+
+    const response = await actionProvider.getBalance(mockWallet, args);
+
+    expect(mockReadContract).toHaveBeenCalledTimes(3);
+    expect(mockReadContract).toHaveBeenCalledWith(
+      expect.objectContaining({ functionName: "balanceOf", args: [MOCK_ADDRESS] }),
+    );
+    expect(response).toContain(
+      `Balance of MockToken (${MOCK_CONTRACT_ADDRESS}) at address ${MOCK_ADDRESS} is ${MOCK_AMOUNT}`,
+    );
+  });
+
+  it("should fail when a plain call fails on a chain without multicall3", async () => {
+    mockMulticall.mockRejectedValue(
+      new ChainDoesNotSupportContract({ chain: foundry, contract: { name: "multicall3" } }),
+    );
+    mockReadContract.mockRejectedValue(new Error("execution reverted"));
+
+    const args = {
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      address: null,
+    };
+
+    const response = await actionProvider.getBalance(mockWallet, args);
 
     expect(response).toContain("Error: Could not fetch token details");
   });
