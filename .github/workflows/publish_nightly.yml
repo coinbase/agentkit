@@ -50,6 +50,7 @@ jobs:
         package:
           - coinbase-agentkit
           - create-onchain-agent
+          - framework-extensions/crewai
           - framework-extensions/langchain
           - framework-extensions/openai-agents-sdk
           - framework-extensions/strands-agents
