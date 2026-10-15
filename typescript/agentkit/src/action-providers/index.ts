@@ -34,6 +34,7 @@ export * from "./wow";
 export * from "./allora";
 export * from "./flaunch";
 export * from "./onramp";
+export * from "./offramp";
 export * from "./vaultsfyi";
 export * from "./x402";
 export * from "./yelay";
