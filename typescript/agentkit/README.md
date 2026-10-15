@@ -494,6 +494,19 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>MIZAN</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>verify_credential</code></td>
+    <td width="768">Verifies a MIZAN zero-knowledge track-record credential (VTR-1): registry lookup, proof-bundle sha256 check, verdict returned exactly as issued (PASS, FAIL, NOT_SIGNIFICANT). Use before paying another agent for signals or allocating to a listed record.</td>
+</tr>
+<tr>
+    <td width="200"><code>list_datasets</code></td>
+    <td width="768">Lists the canonical public markets a sealed-path credential can be minted on (key, bars, interval, venue, sha256).</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Moonwell</strong></summary>
 <table width="100%">
 <tr>
