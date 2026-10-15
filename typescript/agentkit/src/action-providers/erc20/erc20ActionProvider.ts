@@ -15,6 +15,30 @@ import { encodeFunctionData, Hex, getAddress, erc20Abi, parseUnits, formatUnits 
 import { EvmWalletProvider } from "../../wallet-providers";
 
 /**
+ * Short text for an error caught while waiting for a receipt.
+ *
+ * @param error - The caught value.
+ * @returns The error's message, or the value as a string.
+ */
+const describeError = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
+/**
+ * What a receipt's status says about a sent transaction. Wallet providers use different
+ * vocabularies: viem transaction receipts say "success" or "reverted", CDP smart-wallet user
+ * operations say "complete" or "failed". Only a status that says the transaction succeeded
+ * counts as done; a status this file does not know is not read as success.
+ *
+ * @param status - The `status` field of the receipt the wallet provider returned.
+ * @returns "succeeded", "failed", or "unconfirmed".
+ */
+const receiptOutcome = (status: unknown): "succeeded" | "failed" | "unconfirmed" => {
+  if (status === "success" || status === "complete") return "succeeded";
+  if (status === "reverted" || status === "failed") return "failed";
+  return "unconfirmed";
+};
+
+/**
  * ERC20ActionProvider is an action provider for ERC20 tokens.
  */
 export class ERC20ActionProvider extends ActionProvider<EvmWalletProvider> {
@@ -126,7 +150,32 @@ Important notes:
         }),
       });
 
-      await walletProvider.waitForTransactionReceipt(hash);
+      // The transaction is sent once we have a hash. A failed receipt lookup (an RPC error, a
+      // node switch) does not mean the transfer failed, so report it as sent and unconfirmed
+      // with its hash: an "Error" answer here leads agents to send the payment a second time.
+      let receipt: { status?: unknown } | undefined;
+      try {
+        receipt = await walletProvider.waitForTransactionReceipt(hash);
+      } catch (receiptError) {
+        return `Transfer of ${args.amount} of ${tokenDetails.name} (${args.tokenAddress}) to ${
+          args.destinationAddress
+        } was sent, but its receipt could not be confirmed yet (${describeError(receiptError)}).\nTransaction hash for the transfer: ${hash}\nDo not send this transfer again: it may already be on chain. Check this transaction hash before retrying.`;
+      }
+
+      // A mined transaction can still revert (a paused or blacklisting token, a balance spent by a
+      // concurrent transaction). The receipt reports that in its status without throwing, and only a
+      // status that says it succeeded is reported as a transfer.
+      const outcome = receiptOutcome(receipt?.status);
+      if (outcome === "failed") {
+        return `Transfer of ${args.amount} of ${tokenDetails.name} (${args.tokenAddress}) to ${
+          args.destinationAddress
+        } failed on chain (receipt status: ${String(receipt?.status)}): no tokens were transferred.\nTransaction hash for the transfer: ${hash}`;
+      }
+      if (outcome === "unconfirmed") {
+        return `Transfer of ${args.amount} of ${tokenDetails.name} (${args.tokenAddress}) to ${
+          args.destinationAddress
+        } was sent, but its receipt does not confirm success (receipt status: ${String(receipt?.status)}).\nTransaction hash for the transfer: ${hash}\nDo not send this transfer again: it may already be on chain. Check this transaction hash before retrying.`;
+      }
 
       return `Transferred ${args.amount} of ${tokenDetails?.name} (${args.tokenAddress}) to ${
         args.destinationAddress
@@ -184,7 +233,22 @@ Important notes:
         }),
       });
 
-      await walletProvider.waitForTransactionReceipt(hash);
+      // As in transfer: once sent, a failed receipt lookup is reported as unconfirmed, not failed.
+      let receipt: { status?: unknown } | undefined;
+      try {
+        receipt = await walletProvider.waitForTransactionReceipt(hash);
+      } catch (receiptError) {
+        return `Approval of ${args.amount} ${tokenDetails.name} (${args.tokenAddress}) for spender ${args.spenderAddress} was sent, but its receipt could not be confirmed yet (${describeError(receiptError)}).\nTransaction hash: ${hash}\nDo not send this approval again: it may already be on chain. Check this transaction hash before retrying.`;
+      }
+
+      // As in transfer: a mined approval can revert, and only a status that says it succeeded counts.
+      const outcome = receiptOutcome(receipt?.status);
+      if (outcome === "failed") {
+        return `Approval of ${args.amount} ${tokenDetails.name} (${args.tokenAddress}) for spender ${args.spenderAddress} failed on chain (receipt status: ${String(receipt?.status)}): the allowance was not changed.\nTransaction hash: ${hash}`;
+      }
+      if (outcome === "unconfirmed") {
+        return `Approval of ${args.amount} ${tokenDetails.name} (${args.tokenAddress}) for spender ${args.spenderAddress} was sent, but its receipt does not confirm success (receipt status: ${String(receipt?.status)}).\nTransaction hash: ${hash}\nDo not send this approval again: it may already be on chain. Check this transaction hash before retrying.`;
+      }
 
       return `Approved ${args.amount} ${tokenDetails.name} (${args.tokenAddress}) for spender ${args.spenderAddress}.\nTransaction hash: ${hash}`;
     } catch (error) {
