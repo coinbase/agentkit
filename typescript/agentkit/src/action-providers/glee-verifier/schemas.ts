@@ -7,7 +7,10 @@ export const AssertionSchema = z
   .object({
     type: z.enum(["contains", "prohibits"]).describe("Assertion type: contains or prohibits"),
     pattern: z.string().describe("Pattern to search for in the patch content"),
-    message: z.string().optional().describe("Optional error message emitted when the assertion fails"),
+    message: z
+      .string()
+      .optional()
+      .describe("Optional error message emitted when the assertion fails"),
   })
   .describe("Assertion rule for diff verification");
 
@@ -32,10 +35,17 @@ export const PathPolicySchema = z
  */
 export const VerifyPatchSchema = z
   .object({
-    patch: z.string().describe("Unified git diff patch content to verify"),
+    patch: z
+      .string()
+      .refine(patch => patch.trim().length > 0, "patch must not be empty")
+      .describe("Unified git diff patch content to verify"),
     path_policy: PathPolicySchema.optional().describe("Path safety policy constraints"),
     assertions: z.array(AssertionSchema).optional().describe("Content assertions to enforce"),
-    job_id: z.string().optional().describe("Optional tracking job ID echoed in signed receipt"),
+    job_id: z
+      .string()
+      .max(128)
+      .optional()
+      .describe("Optional tracking job ID echoed in signed receipt"),
   })
   .strip()
   .describe("Instructions for verifying a git diff patch against security and content constraints");

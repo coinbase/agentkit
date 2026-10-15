@@ -1,0 +1,217 @@
+{
+  "provenance": "Locally generated Ed25519 key and mocked settlement; executePatchVerification/signAcceptanceReceipt from GLEE source 23501640bb728c4a2ddd121067bf6fdaf6db2d2b. No wallet or payment.",
+  "request": {
+    "patch": "diff --git a/src/index.js b/src/index.js\n--- a/src/index.js\n+++ b/src/index.js\n@@ -1 +1 @@\n-old\n+new\n",
+    "path_policy": {
+      "allowed_paths": ["src/"]
+    },
+    "assertions": [
+      {
+        "type": "contains",
+        "pattern": "new"
+      }
+    ],
+    "job_id": "test-job-123"
+  },
+  "body": {
+    "ok": true,
+    "result": {
+      "service": "patch_verification",
+      "verification_mode": "static_analysis",
+      "verdict": "PASS",
+      "score": 100,
+      "findings": [],
+      "modified_files": ["src/index.js"],
+      "stats": {
+        "added_lines": 1,
+        "deleted_lines": 1,
+        "hunks_count": 1
+      },
+      "limitations": [
+        "No patch application, code execution, or runtime guarantee",
+        "No proof of program correctness; static structural and policy checks only",
+        "Binary diffs, quoted paths, and rename-only changes are unsupported",
+        "Commit/URL/HTTP artifact bindings are not resolvable in v0 and yield INSUFFICIENT_EVIDENCE"
+      ],
+      "artifact_hash": "fc184ca08f449a65ace3397a644cbae63f043393e6c71a175819838524e380de",
+      "acceptance_contract_hash": "d8df41c29628a272f9569d053935bb220db11e501656246e00d1ab7272f00247",
+      "job_id": "test-job-123",
+      "verifier": {
+        "name": "glee-acceptance-verifier",
+        "version": "0.1.0"
+      },
+      "methodology_hash": "0f3b0b09ab269ca98c862b20ec6eb39af4de14751bd6a3a1bd47d947b5ac0cb1",
+      "evidence": {
+        "verification_hash": "96a941173693805118c051cb1078f4937f1083532b3c9037b88603b741bb7389",
+        "observation_time": "2026-10-15T13:12:55.446Z"
+      },
+      "verification_hash": "96a941173693805118c051cb1078f4937f1083532b3c9037b88603b741bb7389",
+      "proof_hash": "96a941173693805118c051cb1078f4937f1083532b3c9037b88603b741bb7389",
+      "timestamp": "2026-10-15T13:12:55.446Z"
+    },
+    "acceptance_receipt": {
+      "receipt_schema": "glee.acceptance_receipt.v0",
+      "receipt_id": "local-test-receipt",
+      "issued_at": "2026-10-15T00:00:00.000Z",
+      "observation_time": "2026-10-15T13:12:55.446Z",
+      "service": "/api/x402/verify/patch",
+      "capability": "patch_verification",
+      "outcome": "PASS",
+      "artifact_hash": "fc184ca08f449a65ace3397a644cbae63f043393e6c71a175819838524e380de",
+      "acceptance_contract_hash": "d8df41c29628a272f9569d053935bb220db11e501656246e00d1ab7272f00247",
+      "job_id": "test-job-123",
+      "verification_hash": "96a941173693805118c051cb1078f4937f1083532b3c9037b88603b741bb7389",
+      "request_hash": "e23f4b389d1149b5ab976bd5f30d81c69743eba2c78234195a926538d44e3b6e",
+      "request_hash_schema": "glee.canonical_request.v1",
+      "verifier": {
+        "name": "glee-acceptance-verifier",
+        "version": "0.1.0"
+      },
+      "methodology_hash": "0f3b0b09ab269ca98c862b20ec6eb39af4de14751bd6a3a1bd47d947b5ac0cb1",
+      "freshness": {
+        "mode": "content_addressed",
+        "expires_at": null,
+        "invalidated_by": [
+          "verifier.version change",
+          "methodology_hash change",
+          "acceptance_contract_hash change",
+          "artifact_hash change"
+        ]
+      },
+      "payment": {
+        "rail": "x402",
+        "network": "eip155:8453",
+        "asset": "USDC",
+        "payer": "0x1234567890123456789012345678901234567890",
+        "pay_to": "0x2222222222222222222222222222222222222222",
+        "amount_atomic": "50000",
+        "settlement_tx": "0xabababababababababababababababababababababababababababababababab",
+        "stage": "settled"
+      },
+      "limitations": [
+        "No patch application, code execution, or runtime guarantee",
+        "No proof of program correctness; static structural and policy checks only",
+        "Binary diffs, quoted paths, and rename-only changes are unsupported",
+        "Commit/URL/HTTP artifact bindings are not resolvable in v0 and yield INSUFFICIENT_EVIDENCE"
+      ],
+      "key": {
+        "algorithm": "Ed25519",
+        "key_id": "glee-acceptance-9be4ccb83da1d2bf",
+        "public_key_hex": "8deb81e4cfbcc262275cf1068111820aab5af1a9639baf817c0e637d7f57308e",
+        "fingerprint_sha256": "9be4ccb83da1d2bf3bcd5cdd65ebb91b204258a17935d50e7fafb02de14786d6"
+      },
+      "signature": "414f51f30e6b47ba0529eec21c42af2d1a5efe3c2ad7445d1c0ca719c04c16668c1cba61c5f558773617eed880f9cec5ea05326a1bf5c0196fedc7ea6d6ee707"
+    }
+  },
+  "fail": {
+    "request": {
+      "patch": "diff --git a/src/index.js b/src/index.js\n--- a/src/index.js\n+++ b/src/index.js\n@@ -1 +1 @@\n-old\n+new\n",
+      "path_policy": {
+        "banned_paths": ["src/"]
+      },
+      "assertions": [
+        {
+          "type": "contains",
+          "pattern": "new"
+        }
+      ],
+      "job_id": "test-job-123"
+    },
+    "body": {
+      "ok": true,
+      "result": {
+        "service": "patch_verification",
+        "verification_mode": "static_analysis",
+        "verdict": "FAIL",
+        "score": 60,
+        "findings": [
+          {
+            "severity": "CRITICAL",
+            "rule": "banned_path",
+            "message": "Modification of user-banned path: src/index.js"
+          }
+        ],
+        "modified_files": ["src/index.js"],
+        "stats": {
+          "added_lines": 1,
+          "deleted_lines": 1,
+          "hunks_count": 1
+        },
+        "limitations": [
+          "No patch application, code execution, or runtime guarantee",
+          "No proof of program correctness; static structural and policy checks only",
+          "Binary diffs, quoted paths, and rename-only changes are unsupported",
+          "Commit/URL/HTTP artifact bindings are not resolvable in v0 and yield INSUFFICIENT_EVIDENCE"
+        ],
+        "artifact_hash": "fc184ca08f449a65ace3397a644cbae63f043393e6c71a175819838524e380de",
+        "acceptance_contract_hash": "33179d6f9129204da8968bf688cb3f165ae3bd94d57045c944ca9d5ede16f940",
+        "job_id": "test-job-123",
+        "verifier": {
+          "name": "glee-acceptance-verifier",
+          "version": "0.1.0"
+        },
+        "methodology_hash": "0f3b0b09ab269ca98c862b20ec6eb39af4de14751bd6a3a1bd47d947b5ac0cb1",
+        "evidence": {
+          "verification_hash": "ce63a129d4e3179176458f79b43aeb3975cd753831eff41edd2fc3b28b4f43dd",
+          "observation_time": "2026-10-15T13:12:55.449Z"
+        },
+        "verification_hash": "ce63a129d4e3179176458f79b43aeb3975cd753831eff41edd2fc3b28b4f43dd",
+        "proof_hash": "ce63a129d4e3179176458f79b43aeb3975cd753831eff41edd2fc3b28b4f43dd",
+        "timestamp": "2026-10-15T13:12:55.449Z"
+      },
+      "acceptance_receipt": {
+        "receipt_schema": "glee.acceptance_receipt.v0",
+        "receipt_id": "local-test-receipt",
+        "issued_at": "2026-10-15T00:00:00.000Z",
+        "observation_time": "2026-10-15T13:12:55.449Z",
+        "service": "/api/x402/verify/patch",
+        "capability": "patch_verification",
+        "outcome": "FAIL",
+        "artifact_hash": "fc184ca08f449a65ace3397a644cbae63f043393e6c71a175819838524e380de",
+        "acceptance_contract_hash": "33179d6f9129204da8968bf688cb3f165ae3bd94d57045c944ca9d5ede16f940",
+        "job_id": "test-job-123",
+        "verification_hash": "ce63a129d4e3179176458f79b43aeb3975cd753831eff41edd2fc3b28b4f43dd",
+        "request_hash": "62e5ba60df1b337ea3a3457feedffc491b146925148ef9b4e7ba17a3c75f1080",
+        "request_hash_schema": "glee.canonical_request.v1",
+        "verifier": {
+          "name": "glee-acceptance-verifier",
+          "version": "0.1.0"
+        },
+        "methodology_hash": "0f3b0b09ab269ca98c862b20ec6eb39af4de14751bd6a3a1bd47d947b5ac0cb1",
+        "freshness": {
+          "mode": "content_addressed",
+          "expires_at": null,
+          "invalidated_by": [
+            "verifier.version change",
+            "methodology_hash change",
+            "acceptance_contract_hash change",
+            "artifact_hash change"
+          ]
+        },
+        "payment": {
+          "rail": "x402",
+          "network": "eip155:8453",
+          "asset": "USDC",
+          "payer": "0x1234567890123456789012345678901234567890",
+          "pay_to": "0x2222222222222222222222222222222222222222",
+          "amount_atomic": "50000",
+          "settlement_tx": "0xabababababababababababababababababababababababababababababababab",
+          "stage": "settled"
+        },
+        "limitations": [
+          "No patch application, code execution, or runtime guarantee",
+          "No proof of program correctness; static structural and policy checks only",
+          "Binary diffs, quoted paths, and rename-only changes are unsupported",
+          "Commit/URL/HTTP artifact bindings are not resolvable in v0 and yield INSUFFICIENT_EVIDENCE"
+        ],
+        "key": {
+          "algorithm": "Ed25519",
+          "key_id": "glee-acceptance-9be4ccb83da1d2bf",
+          "public_key_hex": "8deb81e4cfbcc262275cf1068111820aab5af1a9639baf817c0e637d7f57308e",
+          "fingerprint_sha256": "9be4ccb83da1d2bf3bcd5cdd65ebb91b204258a17935d50e7fafb02de14786d6"
+        },
+        "signature": "7b3244bb8c60082ebea01b9df1cc91b90e87e53887953f23271a16d5d399e4feb807241b345ae8461598e4a07cbc8b154a5e761b851d95a33c82a97eb3534b01"
+      }
+    }
+  }
+}
