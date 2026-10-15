@@ -21,6 +21,7 @@ const mockFetchWithPayment = jest.fn();
 // Mock x402 client
 const mockX402Client = {
   registerScheme: jest.fn(),
+  onBeforePaymentCreation: jest.fn(),
 };
 
 // Mock utils functions
@@ -543,6 +544,77 @@ describe("X402ActionProvider", () => {
 
       const parsedResult = JSON.parse(result);
       expect(parsedResult.error).toBe(true);
+    });
+  });
+
+  describe("prePaymentCheck", () => {
+    const retryArgs = {
+      url: "https://www.x402.org/protected",
+      method: "GET" as const,
+      headers: null,
+      queryParams: null,
+      body: null,
+      selectedPaymentOption: {
+        scheme: "exact",
+        network: "base-sepolia",
+        maxAmountRequired: "10000",
+        asset: "0x456",
+        amount: null,
+        price: null,
+        payTo: null,
+      },
+    };
+    const selectedRequirements = MOCK_PAYMENT_INFO_RESPONSE.accepts[0];
+
+    beforeEach(() => {
+      mockGetX402Networks.mockReturnValue(["base-sepolia"]);
+      mockFetchWithPayment.mockResolvedValue(
+        createMockResponse({ status: 200, data: { ok: true }, headers: {} }),
+      );
+    });
+
+    it("should not register a hook when unset", async () => {
+      await provider.retryWithX402(makeMockWalletProvider("base-sepolia"), retryArgs);
+      expect(mockX402Client.onBeforePaymentCreation).not.toHaveBeenCalled();
+    });
+
+    it("should abort payment creation when the check blocks", async () => {
+      const prePaymentCheck = jest.fn().mockResolvedValue({ allow: false, reason: "skip" });
+      provider = new X402ActionProvider({
+        registeredServices: ["https://www.x402.org"],
+        prePaymentCheck,
+      });
+      await provider.retryWithX402(makeMockWalletProvider("base-sepolia"), retryArgs);
+
+      const hook = mockX402Client.onBeforePaymentCreation.mock.calls[0][0];
+      await expect(hook({ selectedRequirements })).resolves.toEqual({
+        abort: true,
+        reason: "skip",
+      });
+      expect(prePaymentCheck).toHaveBeenCalledWith({
+        url: "https://www.x402.org/protected",
+        method: "GET",
+        selectedRequirements,
+      });
+    });
+
+    it("should let payment creation continue when the check allows", async () => {
+      const prePaymentCheck = jest.fn().mockResolvedValue({ allow: true });
+      provider = new X402ActionProvider({
+        registeredServices: ["https://www.x402.org"],
+        prePaymentCheck,
+      });
+      await provider.makeHttpRequestWithX402(makeMockWalletProvider("base-sepolia"), {
+        url: "https://www.x402.org/protected",
+        method: "POST",
+        headers: null,
+        queryParams: null,
+        body: null,
+      });
+
+      const hook = mockX402Client.onBeforePaymentCreation.mock.calls[0][0];
+      await expect(hook({ selectedRequirements })).resolves.toBeUndefined();
+      expect(prePaymentCheck).toHaveBeenCalledWith(expect.objectContaining({ method: "POST" }));
     });
   });
 

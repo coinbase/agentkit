@@ -1,2 +1,2 @@
 export * from "./x402ActionProvider";
-export type { X402Config } from "./schemas";
+export type { X402Config, PrePaymentCheck, PrePaymentCheckContext } from "./schemas";

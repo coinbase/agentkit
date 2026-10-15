@@ -49,6 +49,44 @@ const provider = x402ActionProvider(config);
 - **USDC-Only Payments**: All payments are restricted to USDC assets only
 - **Payment Limits**: Enforces maximum payment amount per request (default: 1.0 USDC)
 - **Dynamic Registration Control**: Optional runtime service registration via agent
+- **Pre-Payment Check (optional)**: `prePaymentCheck` runs right before a payment is signed and can block it
+
+### Pre-Payment Check
+
+`prePaymentCheck` is off by default. When set, it is called with the request URL, method and the payment
+requirement the x402 client selected, right before signing. Returning `{ allow: false, reason }` aborts the
+payment and nothing is signed. It applies to `retry_http_request_with_x402` and `make_http_request_with_x402`.
+
+```typescript
+import { x402ActionProvider } from "@coinbase/agentkit";
+
+const provider = x402ActionProvider({
+  registeredServices: ["https://api.example.com"],
+  prePaymentCheck: async ({ url, method, selectedRequirements }) => {
+    // Your own rules: allowlists, price checks, an external endpoint check, ...
+    return { allow: true };
+  },
+});
+```
+
+Example (optional, third-party): ask [x402 Endpoint Spot-Check](https://github.com/withgrokbot/x402-spotcheck), a
+service not affiliated with AgentKit, about the endpoint before paying. It probes the endpoint without paying it.
+This example blocks unless the verdict is `pay`, and lets the payment proceed if Spot-Check doesn't return a verdict.
+
+```typescript
+const SPOT_CHECK = "https://verified-catalog-lookup.withgrokbot.workers.dev/v1/products/endpoint-spot-check";
+
+const provider = x402ActionProvider({
+  prePaymentCheck: async ({ url, method }) => {
+    const probe = method === "POST" ? "POST" : "GET";
+    const query = new URLSearchParams({ url, method: probe, ref: "via-agentkit" });
+    const res = await fetch(`${SPOT_CHECK}?${query}`).catch(() => null);
+    if (res?.status !== 200) return { allow: true }; // no verdict: fail open
+    const { verdict, reason } = await res.json();
+    return verdict === "pay" ? { allow: true } : { allow: false, reason: `Spot-Check ${verdict}: ${reason}` };
+  },
+});
+```
 
 ## Actions
 
