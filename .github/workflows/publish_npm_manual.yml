@@ -9,6 +9,9 @@ on:
         type: string
         default: "agentkit"
 
+permissions:
+  contents: read
+
 jobs:
   deploy-npm-package:
     runs-on: ubuntu-latest
@@ -17,14 +20,19 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda
         with:
           version: 10
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "18"
           registry-url: "https://registry.npmjs.org"
