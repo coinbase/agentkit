@@ -8,12 +8,17 @@ import {
 } from "./gleeVerifierActionProvider";
 import { EvmWalletProvider } from "../../wallet-providers";
 import fixture from "./receipt.fixture.json";
+import { AssertionSchema, VerifyPatchSchema } from "./schemas";
 
 jest.mock("../../analytics", () => ({ sendAnalyticsEvent: jest.fn() }));
 
 const PAY_TO = fixture.body.acceptance_receipt.payment.pay_to;
 const PUBLIC_KEY = fixture.body.acceptance_receipt.key.public_key_hex;
 const PAYER = fixture.body.acceptance_receipt.payment.payer;
+const PATCH_REQUEST = {
+  ...fixture.request,
+  assertions: fixture.request.assertions.map(assertion => AssertionSchema.parse(assertion)),
+};
 
 /**
  * Makes an isolated JSON copy for adversarial mutation.
@@ -78,7 +83,7 @@ describe("GleeVerifierActionProvider", () => {
     fetchMock
       .mockResolvedValueOnce(new Response(JSON.stringify(challenge()), { status: 402 }))
       .mockResolvedValueOnce(new Response(JSON.stringify(fixture.body), { status: 200 }));
-    const result = JSON.parse(await provider.verifyPatch(wallet, fixture.request));
+    const result = JSON.parse(await provider.verifyPatch(wallet, PATCH_REQUEST));
     expect(result.receipt_verified).toBe(true);
     expect(result.result.verdict).toBe("PASS");
     expect(wallet.signTypedData).toHaveBeenCalledTimes(1);
@@ -110,13 +115,15 @@ describe("GleeVerifierActionProvider", () => {
       fetchMock
         .mockResolvedValueOnce(new Response(JSON.stringify(challenge()), { status: 402 }))
         .mockResolvedValueOnce(new Response(JSON.stringify(example.body), { status: 200 }));
-      const result = JSON.parse(await provider.verifyPatch(wallet, example.request));
+      const result = JSON.parse(
+        await provider.verifyPatch(wallet, VerifyPatchSchema.parse(example.request)),
+      );
       expect(result.receipt_verified).toBe(true);
       expect(result.result.verdict).toBe("FAIL");
     },
   );
 
-  it.each([{ patch: "" }, { patch: "   " }, { ...fixture.request, job_id: "x".repeat(129) }])(
+  it.each([{ patch: "" }, { patch: "   " }, { ...PATCH_REQUEST, job_id: "x".repeat(129) }])(
     "rejects unsupported input before payment",
     async request => {
       expect(JSON.parse(await provider.verifyPatch(wallet, request)).error).toBeDefined();
@@ -147,7 +154,7 @@ describe("GleeVerifierActionProvider", () => {
     const quote = challenge();
     Object.assign(quote.accepts[0], { [field as string]: value });
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(quote), { status: 402 }));
-    expect(JSON.parse(await provider.verifyPatch(wallet, fixture.request)).error).toBeDefined();
+    expect(JSON.parse(await provider.verifyPatch(wallet, PATCH_REQUEST)).error).toBeDefined();
     expect(wallet.signTypedData).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
@@ -163,7 +170,7 @@ describe("GleeVerifierActionProvider", () => {
       fetchMock.mockResolvedValueOnce(
         new Response(JSON.stringify(kind === "null" ? null : quote), { status: 402 }),
       );
-      expect(JSON.parse(await provider.verifyPatch(wallet, fixture.request)).error).toBeDefined();
+      expect(JSON.parse(await provider.verifyPatch(wallet, PATCH_REQUEST)).error).toBeDefined();
       expect(wallet.signTypedData).not.toHaveBeenCalled();
     },
   );
@@ -175,7 +182,7 @@ describe("GleeVerifierActionProvider", () => {
         trustedPayTo: PAY_TO,
         trustedReceiptPublicKeyHex: key,
       });
-      expect(JSON.parse(await provider.verifyPatch(wallet, fixture.request)).error).toContain(
+      expect(JSON.parse(await provider.verifyPatch(wallet, PATCH_REQUEST)).error).toContain(
         "configure",
       );
       expect(wallet.signTypedData).not.toHaveBeenCalled();
@@ -186,7 +193,7 @@ describe("GleeVerifierActionProvider", () => {
   it("requires an approved recipient and fails closed for legacy endpoint-only callers", async () => {
     for (const config of [{ trustedReceiptPublicKeyHex: PUBLIC_KEY }, GLEE_VERIFIER_URL]) {
       expect(
-        JSON.parse(await gleeVerifierActionProvider(config).verifyPatch(wallet, fixture.request))
+        JSON.parse(await gleeVerifierActionProvider(config).verifyPatch(wallet, PATCH_REQUEST))
           .error,
       ).toContain("configure");
     }
@@ -203,7 +210,7 @@ describe("GleeVerifierActionProvider", () => {
         chainId,
       });
       expect(provider.supportsNetwork(wallet.getNetwork())).toBe(false);
-      expect(JSON.parse(await provider.verifyPatch(wallet, fixture.request)).error).toContain(
+      expect(JSON.parse(await provider.verifyPatch(wallet, PATCH_REQUEST)).error).toContain(
         "Base mainnet",
       );
       expect(wallet.signTypedData).not.toHaveBeenCalled();
@@ -215,7 +222,7 @@ describe("GleeVerifierActionProvider", () => {
       wallet.getNetwork.mockReturnValue({ protocolFamily: "evm", chainId: "1" });
       return new Response(JSON.stringify(challenge()), { status: 402 });
     });
-    expect(JSON.parse(await provider.verifyPatch(wallet, fixture.request)).error).toContain(
+    expect(JSON.parse(await provider.verifyPatch(wallet, PATCH_REQUEST)).error).toContain(
       "network changed",
     );
     expect(wallet.signTypedData).not.toHaveBeenCalled();
@@ -223,7 +230,7 @@ describe("GleeVerifierActionProvider", () => {
 
   it.each([200, 400, 500])("rejects initial HTTP %s including an unsigned PASS", async status => {
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(fixture.body), { status }));
-    expect(JSON.parse(await provider.verifyPatch(wallet, fixture.request)).error).toContain(
+    expect(JSON.parse(await provider.verifyPatch(wallet, PATCH_REQUEST)).error).toContain(
       "Expected HTTP 402",
     );
     expect(wallet.signTypedData).not.toHaveBeenCalled();
@@ -235,7 +242,7 @@ describe("GleeVerifierActionProvider", () => {
       fetchMock
         .mockResolvedValueOnce(new Response(JSON.stringify(challenge()), { status: 402 }))
         .mockResolvedValueOnce(new Response(JSON.stringify(fixture.body), { status }));
-      const result = JSON.parse(await provider.verifyPatch(wallet, fixture.request));
+      const result = JSON.parse(await provider.verifyPatch(wallet, PATCH_REQUEST));
       expect(result.error).toContain(`HTTP ${status}`);
       expect(result.receipt_verified).toBeUndefined();
       expect(result.result).toBeUndefined();
@@ -275,7 +282,7 @@ describe("GleeVerifierActionProvider", () => {
     fetchMock
       .mockResolvedValueOnce(new Response(JSON.stringify(challenge()), { status: 402 }))
       .mockResolvedValueOnce(new Response(JSON.stringify(body), { status: 200 }));
-    const result = JSON.parse(await provider.verifyPatch(wallet, fixture.request));
+    const result = JSON.parse(await provider.verifyPatch(wallet, PATCH_REQUEST));
     expect(result.error).toContain("Receipt verification");
     expect(result.result).toBeUndefined();
   });
@@ -283,7 +290,7 @@ describe("GleeVerifierActionProvider", () => {
   it.each(["patch", "policy", "assertions", "job"])(
     "rejects a valid signature for a different %s",
     async field => {
-      const request = clone(fixture.request);
+      const request = clone(PATCH_REQUEST);
       if (field === "patch") request.patch += "\n";
       if (field === "policy") request.path_policy.allowed_paths = ["other/"];
       if (field === "assertions") request.assertions[0].pattern = "different";
@@ -333,13 +340,13 @@ describe("GleeVerifierActionProvider", () => {
     fetchMock
       .mockResolvedValueOnce(new Response(JSON.stringify(challenge()), { status: 402 }))
       .mockResolvedValueOnce(new Response(JSON.stringify(body), { status: 200 }));
-    expect(JSON.parse(await provider.verifyPatch(wallet, fixture.request)).error).toContain(
+    expect(JSON.parse(await provider.verifyPatch(wallet, PATCH_REQUEST)).error).toContain(
       "untrusted signing key",
     );
   });
 
   it("uses a snapshot of the request for both calls and receipt binding", async () => {
-    const request = clone(fixture.request);
+    const request = clone(PATCH_REQUEST);
     fetchMock
       .mockImplementationOnce(async () => {
         request.patch += "mutated";
@@ -352,13 +359,13 @@ describe("GleeVerifierActionProvider", () => {
 
   it("returns a clear error on unavailable or malformed verification", async () => {
     fetchMock.mockRejectedValueOnce(new Error("Network connection refused"));
-    expect(JSON.parse(await provider.verifyPatch(wallet, fixture.request)).error).toContain(
+    expect(JSON.parse(await provider.verifyPatch(wallet, PATCH_REQUEST)).error).toContain(
       "Network connection refused",
     );
     fetchMock
       .mockResolvedValueOnce(new Response(JSON.stringify(challenge()), { status: 402 }))
       .mockResolvedValueOnce(new Response("not json", { status: 200 }));
-    expect(JSON.parse(await provider.verifyPatch(wallet, fixture.request)).error).toContain(
+    expect(JSON.parse(await provider.verifyPatch(wallet, PATCH_REQUEST)).error).toContain(
       "verification failed",
     );
   });

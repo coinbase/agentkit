@@ -7,8 +7,6 @@ import { Network } from "../../network";
 import { VerifyPatchSchema } from "./schemas";
 import { authenticateDelivery } from "./receiptVerification";
 
-export const SUPPORTED_NETWORKS = ["base-mainnet", "base"];
-
 export const BASE_USDC_MAINNET_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 export const BASE_CHAIN_ID = 8453;
 export const GLEE_PRICE_ATOMIC = "50000";
