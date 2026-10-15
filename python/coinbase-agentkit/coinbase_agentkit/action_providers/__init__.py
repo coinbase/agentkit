@@ -34,6 +34,10 @@ from .superfluid.superfluid_action_provider import (
 )
 from .twitter.twitter_action_provider import TwitterActionProvider, twitter_action_provider
 from .wallet.wallet_action_provider import WalletActionProvider, wallet_action_provider
+from .walletforge.walletforge_action_provider import (
+    WalletForgeActionProvider,
+    walletforge_action_provider,
+)
 from .weth.weth_action_provider import WethActionProvider, weth_action_provider
 from .wow.wow_action_provider import WowActionProvider, wow_action_provider
 from .x402.schemas import X402Config
@@ -59,6 +63,7 @@ __all__ = [
     "SuperfluidActionProvider",
     "TwitterActionProvider",
     "WalletActionProvider",
+    "WalletForgeActionProvider",
     "WethActionProvider",
     "WowActionProvider",
     "X402Config",
@@ -80,6 +85,7 @@ __all__ = [
     "superfluid_action_provider",
     "twitter_action_provider",
     "wallet_action_provider",
+    "walletforge_action_provider",
     "weth_action_provider",
     "wow_action_provider",
     "x402ActionProvider",

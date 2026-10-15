@@ -584,6 +584,20 @@ This section provides a detailed list of all available action providers and thei
 </details>
 
 <details>
+<summary><strong>WalletForge</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>fetch_markdown</code></td>
+    <td width="768">Fetches a public URL as cleaned markdown via WalletForge x402 V2 (0.05 USDC on Base mainnet).</td>
+</tr>
+<tr>
+    <td width="200"><code>normalize_text</code></td>
+    <td width="768">Normalizes text and extracts emails, URLs, and phone numbers via WalletForge x402 V2 (0.01 USDC on Base mainnet).</td>
+</tr>
+</table>
+</details>
+
+<details>
 <summary><strong>WETH</strong></summary>
 <table width="100%">
 <tr>
