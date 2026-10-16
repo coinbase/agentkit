@@ -204,6 +204,23 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Chord</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>search_tokens</code></td>
+    <td width="768">Searches Chord's token index on the wallet's chain by symbol, name or address.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_swap_quote</code></td>
+    <td width="768">Fetches the best route for a swap across the chain's DEXs, with expected and minimum output, price impact and fee, without sending anything.</td>
+</tr>
+<tr>
+    <td width="200"><code>swap</code></td>
+    <td width="768">Swaps tokens through the Chord router after approving the exact input amount, checking the built transaction and simulating it from the wallet.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Clanker</strong></summary>
 <table width="100%">
 <tr>
