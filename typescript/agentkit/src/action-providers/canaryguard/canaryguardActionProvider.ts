@@ -11,10 +11,12 @@ import { CANARYGUARD_DEFAULT_URL } from "./constants";
  */
 export class CanaryGuardActionProvider extends ActionProvider {
   private serviceUrl: string;
+  private paymentHeader?: string;
 
-  constructor(config?: { serviceUrl?: string }) {
+  constructor(config?: { serviceUrl?: string; paymentHeader?: string }) {
     super("canaryguard", []);
     this.serviceUrl = (config?.serviceUrl || CANARYGUARD_DEFAULT_URL).replace(/\/$/, "");
+    this.paymentHeader = config?.paymentHeader || process.env.CANARYGUARD_PAYMENT_HEADER;
   }
 
   @CreateAction({
@@ -27,16 +29,25 @@ Inputs:
   })
   async sanitize(args: z.infer<typeof CanaryGuardSanitizeSchema>): Promise<string> {
     try {
-      const response = await fetch(`${this.serviceUrl}/v1/sanitize`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            content: args.content,
-            strict_mode: args.strict_mode ?? true,
-          }),
-        }
-      );
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (this.paymentHeader) {
+        headers["PAYMENT-SIGNATURE"] = this.paymentHeader;
+        headers["X-PAYMENT"] = this.paymentHeader;
+      }
+
+      // If no payment header is configured, route to zero-wallet instant evaluation preview
+      const endpoint = this.paymentHeader
+        ? `${this.serviceUrl}/v1/sanitize`
+        : `${this.serviceUrl}/v1/sanitize/preview`;
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          content: args.content,
+          strict_mode: args.strict_mode ?? true,
+        }),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -59,5 +70,5 @@ Inputs:
   supportsNetwork = (_network: Network) => true;
 }
 
-export const canaryguardActionProvider = (config?: { serviceUrl?: string }) =>
+export const canaryguardActionProvider = (config?: { serviceUrl?: string; paymentHeader?: string }) =>
   new CanaryGuardActionProvider(config);
