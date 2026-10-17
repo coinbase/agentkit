@@ -1,0 +1,25 @@
+[project]
+name = "gasless-usdc-transfer-example"
+version = "0.1.0"
+description = "EIP-3009 USDC gasless transfer example on Base"
+authors = [{ name = "420358249q-hub" }]
+requires-python = ">=3.10"
+readme = "README.md"
+dependencies = [
+    "web3>=6.15,<8",
+    "eth-account>=0.11,<0.14",
+    "hexbytes>=1.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8,<9",
+    "ruff>=0.7,<0.8",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
