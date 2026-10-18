@@ -38,6 +38,7 @@ from .weth.weth_action_provider import WethActionProvider, weth_action_provider
 from .wow.wow_action_provider import WowActionProvider, wow_action_provider
 from .x402.schemas import X402Config
 from .x402.x402_action_provider import x402_action_provider, x402ActionProvider
+from .triqee.triqee_action_provider import TriqeeActionProvider, triqee_action_provider
 
 __all__ = [
     "AaveActionProvider",
@@ -58,6 +59,7 @@ __all__ = [
     "SshActionProvider",
     "SuperfluidActionProvider",
     "TwitterActionProvider",
+    "TriqeeActionProvider",
     "WalletActionProvider",
     "WethActionProvider",
     "WowActionProvider",
@@ -78,6 +80,7 @@ __all__ = [
     "pyth_action_provider",
     "ssh_action_provider",
     "superfluid_action_provider",
+    "triqee_action_provider",
     "twitter_action_provider",
     "wallet_action_provider",
     "weth_action_provider",
@@ -85,3 +88,4 @@ __all__ = [
     "x402ActionProvider",
     "x402_action_provider",
 ]
+
