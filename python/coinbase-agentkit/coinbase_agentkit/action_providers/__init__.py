@@ -19,6 +19,7 @@ from .cdp.cdp_smart_wallet_action_provider import (
 from .compound.compound_action_provider import CompoundActionProvider, compound_action_provider
 from .erc20.erc20_action_provider import ERC20ActionProvider, erc20_action_provider
 from .erc721.erc721_action_provider import Erc721ActionProvider, erc721_action_provider
+from .hirepulse import HirePulseActionProvider, hirepulse_action_provider
 from .hyperboliclabs.hyperbolic_action_provider import (
     HyperbolicActionProvider,
     hyperbolic_action_provider,
@@ -42,6 +43,8 @@ from .x402.x402_action_provider import x402_action_provider, x402ActionProvider
 __all__ = [
     "AaveActionProvider",
     "Action",
+    "HirePulseActionProvider",
+    "hirepulse_action_provider",
     "ActionProvider",
     "BasenameActionProvider",
     "CdpApiActionProvider",

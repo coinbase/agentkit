@@ -14,6 +14,7 @@ from .action_providers import (
     create_action,
     erc20_action_provider,
     erc721_action_provider,
+    hirepulse_action_provider,
     hyperbolic_action_provider,
     morpho_action_provider,
     nillion_action_provider,
@@ -43,6 +44,7 @@ from .wallet_providers import (
 
 __all__ = [
     "Action",
+    "hirepulse_action_provider",
     "ActionProvider",
     "AgentKit",
     "AgentKitConfig",
