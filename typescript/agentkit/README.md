@@ -289,6 +289,23 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>CrewPay</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>preview_crewpay_launch</code></td>
+    <td width="768">Free, read-only preview of a CrewPay launch: KOL crew, fee map (launching agent earns 15% of creator fees) and costs.</td>
+</tr>
+<tr>
+    <td width="200"><code>launch_coin_with_crewpay</code></td>
+    <td width="768">Launches a coin on Base (Zora or Clanker) with a hired KOL crew; the wallet signs unsigned transactions built by CrewPay.</td>
+</tr>
+<tr>
+    <td width="200"><code>list_crewpay_launches</code></td>
+    <td width="768">Lists coins launched with this CrewPay API key.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>dTelecom</strong></summary>
 <table width="100%">
 <tr>
