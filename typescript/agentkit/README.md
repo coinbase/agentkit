@@ -359,6 +359,35 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Dexra</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>describe_address</code></td>
+    <td width="768">Describes any Solana address with Dexra: wallet, token, pool or program, its age and activity (free).</td>
+</tr>
+<tr>
+    <td width="200"><code>token_deep_check</code></td>
+    <td width="768">Checks a Solana token's real holders, liquidity history, mint authorities and Token-2022 extensions, returning a verdict with reasons.</td>
+</tr>
+<tr>
+    <td width="200"><code>new_launches</code></td>
+    <td width="768">Lists new Solana token launches from pump.fun, LetsBonk, Raydium, Meteora and PumpSwap with a verdict for each.</td>
+</tr>
+<tr>
+    <td width="200"><code>wallet_check</code></td>
+    <td width="768">Checks a Solana wallet: exchange or not, age, bot or human, launch PnL and sanctions links, returning a verdict.</td>
+</tr>
+<tr>
+    <td width="200"><code>pool_health</code></td>
+    <td width="768">Checks a Solana liquidity pool's depth, slippage, liquidity flow, LP return and sandwich share, returning a verdict.</td>
+</tr>
+<tr>
+    <td width="200"><code>swap_preflight</code></td>
+    <td width="768">Checks a planned Solana swap for price impact, sandwich risk and Token-2022 traps before it is sent.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Enso</strong></summary>
 <table width="100%">
 <tr>
