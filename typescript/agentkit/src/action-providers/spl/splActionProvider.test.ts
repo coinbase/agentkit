@@ -278,6 +278,23 @@ describe("SplActionProvider", () => {
     });
 
     /**
+     * Test that fractional amounts are converted to an integer number of base units.
+     * 2.01 * 10 ** 6 is 2009999.9999999998 in floating point.
+     */
+    it("should transfer fractional amounts that are not exact in floating point", async () => {
+      mockGetAccount.mockResolvedValue(mockTokenAccount);
+
+      const result = await actionProvider.transfer(mockWallet, { ...transferArgs, amount: 2.01 });
+
+      expect(result).toContain("Successfully transferred 2.01 tokens");
+
+      const { createTransferCheckedInstruction } = jest.requireMock("@solana/spl-token");
+      const [, , , , amount, decimals] = createTransferCheckedInstruction.mock.calls[0];
+      expect(amount).toBe(BigInt(2010000));
+      expect(decimals).toBe(6);
+    });
+
+    /**
      * Test that ATA is created by default when missing
      */
     it("should create ATA by default when missing", async () => {

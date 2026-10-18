@@ -135,6 +135,26 @@ describe("JupiterActionProvider", () => {
     });
 
     /**
+     * Test that fractional amounts are converted to an integer number of base units.
+     * 2.01 * 10 ** 6 is 2009999.9999999998 in floating point.
+     */
+    it("should request a quote with an integer amount for fractional inputs", async () => {
+      mockQuoteGet.mockResolvedValue({ route: "mock-route" });
+      mockSwapPost.mockResolvedValue({
+        swapTransaction: Buffer.from("mock-transaction").toString("base64"),
+      });
+
+      await actionProvider.swap(mockWallet, { ...swapArgs, amount: 2.01 });
+
+      expect(mockQuoteGet).toHaveBeenCalledWith({
+        inputMint: INPUT_MINT,
+        outputMint: OUTPUT_MINT,
+        amount: 2010000,
+        slippageBps: swapArgs.slippageBps,
+      });
+    });
+
+    /**
      * Test handling of errors when retrieving a swap quote
      */
     it("should handle swap quote errors", async () => {

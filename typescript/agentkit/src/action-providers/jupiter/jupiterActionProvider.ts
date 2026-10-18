@@ -53,7 +53,7 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
       } catch (error) {
         return `Failed to fetch mint info for mint address ${args.inputMint}. Error: ${error}`;
       }
-      const amount = args.amount * 10 ** mintInfo.decimals;
+      const amount = Math.round(args.amount * 10 ** mintInfo.decimals);
 
       const quoteResponse = await jupiterApi.quoteGet({
         inputMint: inputMint.toBase58(),
