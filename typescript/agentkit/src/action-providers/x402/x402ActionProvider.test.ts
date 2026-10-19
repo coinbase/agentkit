@@ -21,6 +21,7 @@ const mockFetchWithPayment = jest.fn();
 // Mock x402 client
 const mockX402Client = {
   registerScheme: jest.fn(),
+  onBeforePaymentCreation: jest.fn(),
 };
 
 // Mock utils functions
@@ -645,6 +646,40 @@ describe("X402ActionProvider", () => {
 
       const parsedResult = JSON.parse(result);
       expect(parsedResult.error).toBe(true);
+    });
+  });
+
+  describe("beforePayment hook", () => {
+    const request = {
+      url: "https://api.example.com/paid",
+      method: "GET" as const,
+      headers: null,
+      queryParams: null,
+      body: null,
+    };
+
+    beforeEach(() => {
+      mockFetchWithPayment.mockResolvedValue(
+        createMockResponse({ status: 200, data: { ok: true }, headers: {} }),
+      );
+    });
+
+    it("registers the hook on the x402 client when configured", async () => {
+      const beforePayment = jest.fn();
+      const hooked = new X402ActionProvider({
+        registeredServices: ["https://api.example.com"],
+        beforePayment,
+      });
+
+      await hooked.makeHttpRequestWithX402(makeMockWalletProvider("base-sepolia"), request);
+
+      expect(mockX402Client.onBeforePaymentCreation).toHaveBeenCalledWith(beforePayment);
+    });
+
+    it("does not register a hook by default", async () => {
+      await provider.makeHttpRequestWithX402(makeMockWalletProvider("base-sepolia"), request);
+
+      expect(mockX402Client.onBeforePaymentCreation).not.toHaveBeenCalled();
     });
   });
 });

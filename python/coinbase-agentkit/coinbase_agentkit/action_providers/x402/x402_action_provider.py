@@ -80,6 +80,7 @@ class x402ActionProvider(ActionProvider[WalletProvider]):  # noqa: N801
                 if config.max_payment_usdc != 1.0
                 else float(os.getenv("X402_MAX_PAYMENT_USDC", "1.0"))
             ),
+            before_payment=config.before_payment,
         )
 
         self._registered_services: set[str] = set(self._config.registered_services)
@@ -863,6 +864,8 @@ These are the only services that can be called using make_http_request or make_h
 
         """
         client = x402ClientSync()
+        if self._config.before_payment is not None:
+            client.on_before_payment_creation(self._config.before_payment)
         signer = wallet_provider.to_signer()
         register_exact_evm_client(client, EthAccountSigner(signer))
         return client

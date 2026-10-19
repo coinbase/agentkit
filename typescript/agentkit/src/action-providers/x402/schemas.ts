@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { x402Client } from "@x402/fetch";
 import { DEFAULT_FACILITATOR } from "./constants";
 
 /**
@@ -32,6 +33,13 @@ export interface X402Config {
    * Default: 1.0 (or X402_MAX_PAYMENT_USDC env var)
    */
   maxPaymentUsdc?: number;
+
+  /**
+   * Optional hook called right before each payment is signed, for example to screen the
+   * payTo address or apply a spend policy. Return `{ abort: true, reason }` to block the payment.
+   * Passed to the x402 client's `onBeforePaymentCreation`.
+   */
+  beforePayment?: Parameters<x402Client["onBeforePaymentCreation"]>[0];
 }
 
 /**
