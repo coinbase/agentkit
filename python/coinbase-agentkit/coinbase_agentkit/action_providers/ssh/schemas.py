@@ -6,7 +6,7 @@ for the ssh action provider's actions.
 @module ssh/schemas
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from .connection import SSHConnectionParams
 
@@ -87,3 +87,17 @@ class AddHostKeySchema(BaseModel):
         default="~/.ssh/known_hosts",
         description="Path to the known_hosts file",
     )
+
+    @field_validator("host", "key", "key_type")
+    @classmethod
+    def _reject_control_characters(cls, value: str) -> str:
+        r"""Reject ASCII control characters (newline, CR, NUL, etc.).
+
+        ``ssh_add_host_key`` writes ``f"{host} {key_type} {key}\n"`` to the
+        line-oriented ``known_hosts`` file, so an embedded newline in any of
+        these fields would inject additional entries. Keeping them free of
+        control characters ensures each call writes a single, well-formed line.
+        """
+        if any(ord(ch) < 0x20 or ord(ch) == 0x7F for ch in value):
+            raise ValueError("must not contain control characters (e.g. newlines)")
+        return value
