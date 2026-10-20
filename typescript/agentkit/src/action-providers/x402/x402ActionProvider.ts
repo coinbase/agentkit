@@ -12,9 +12,22 @@ import {
   X402Config,
 } from "./schemas";
 import { EvmWalletProvider, WalletProvider, SvmWalletProvider } from "../../wallet-providers";
-import { x402Client, wrapFetchWithPayment } from "@x402/fetch";
+import { x402Client, x402HTTPClient, type SelectPaymentRequirements } from "@x402/fetch";
 import { registerExactEvmScheme } from "@x402/evm/exact/client";
 import { registerExactSvmScheme } from "@x402/svm/exact/client";
+import {
+  QuoteBindingStore,
+  QUOTE_BINDING_MAX_PENDING,
+  QUOTE_BINDING_TTL_MS,
+  canonicalizeRequest,
+  createFrozenBeforePaymentHook,
+  createFrozenSelector,
+  frozenPaymentUsed,
+  isWellFormedSettlementTransaction,
+  settlementPayersEqual,
+  type FrozenApproval,
+  type FrozenRequirement,
+} from "./quoteBinding";
 import {
   getX402Networks,
   handleHttpError,
@@ -49,6 +62,7 @@ interface ResolvedX402Config {
 export class X402ActionProvider extends ActionProvider<WalletProvider> {
   private readonly config: ResolvedX402Config;
   private registeredServices: Set<string>;
+  private readonly quoteStore = new QuoteBindingStore();
 
   /**
    * Creates a new instance of X402ActionProvider.
@@ -184,7 +198,8 @@ export class X402ActionProvider extends ActionProvider<WalletProvider> {
     name: "make_http_request",
     description: `
 Makes a basic HTTP request to an API endpoint. If the endpoint requires payment (returns 402),
-it will return payment details that can be used with retry_http_request_with_x402.
+it freezes the inspected request and one selected payment requirement, and returns a quoteBinding
+handle for retry_http_request_with_x402. No payment authority is created on this step.
 
 EXAMPLES:
 - Production API: make_http_request("https://api.example.com/weather")
@@ -219,22 +234,42 @@ If you receive a 402 Payment Required response, use retry_http_request_with_x402
       const finalUrl = buildUrlWithParams(args.url, args.queryParams);
       let method = args.method;
       let canHaveBody = ["POST", "PUT", "PATCH"].includes(method);
+      let bodyBytes = canHaveBody && args.body ? JSON.stringify(args.body) : null;
 
       let response = await fetch(finalUrl, {
         method,
         headers: args.headers ?? undefined,
-        body: canHaveBody && args.body ? JSON.stringify(args.body) : undefined,
+        body: bodyBytes ?? undefined,
+        redirect: "manual",
       });
 
       // Retry with other http method for 404 status code
       if (response.status === 404) {
         method = method === "GET" ? "POST" : "GET";
         canHaveBody = ["POST", "PUT", "PATCH"].includes(method);
+        bodyBytes = canHaveBody && args.body ? JSON.stringify(args.body) : null;
         response = await fetch(finalUrl, {
           method,
           headers: args.headers ?? undefined,
-          body: canHaveBody && args.body ? JSON.stringify(args.body) : undefined,
+          body: bodyBytes ?? undefined,
+          redirect: "manual",
         });
+      }
+
+      if (response.status >= 300 && response.status < 400) {
+        return JSON.stringify(
+          {
+            error: true,
+            message: "Redirect rejected",
+            details:
+              "The unpaid inspect request received a redirect. Redirect targets are not followed and cannot be frozen for payment.",
+            httpStatus: response.status,
+            url: finalUrl,
+            method,
+          },
+          null,
+          2,
+        );
       }
 
       if (response.status !== 402) {
@@ -333,9 +368,35 @@ If you receive a 402 Payment Required response, use retry_http_request_with_x402
       if (paymentData.mimeType) discoveryInfo.mimeType = paymentData.mimeType;
       if (paymentData.extensions) discoveryInfo.extensions = paymentData.extensions;
 
+      const matchingUsdc = usdcOptions.filter(option => walletNetworks.includes(option.network));
+      const selectedRequirement = matchingUsdc[0] as FrozenRequirement | undefined;
+      let quoteBinding: string | undefined;
+      if (selectedRequirement) {
+        const nowMs = Date.now();
+        quoteBinding = this.quoteStore.create(
+          {
+            createdAtMs: nowMs,
+            expiresAtMs: nowMs + QUOTE_BINDING_TTL_MS,
+            request: canonicalizeRequest({
+              method,
+              url: finalUrl,
+              headers: args.headers,
+              bodyBytes,
+            }),
+            paymentRequiredEnvelope: paymentData,
+            selectedRequirement,
+          },
+          nowMs,
+        );
+      }
+
       return JSON.stringify({
         status: "error_402_payment_required",
         acceptablePaymentOptions: usdcOptions,
+        selectedRequirement: selectedRequirement ?? null,
+        quoteBinding: quoteBinding ?? null,
+        quoteBindingTtlMs: QUOTE_BINDING_TTL_MS,
+        quoteBindingMaxPending: QUOTE_BINDING_MAX_PENDING,
         ...(Object.keys(discoveryInfo).length > 0 && { discoveryInfo }),
         nextSteps: [
           "Inform the user that the requested server replied with a 402 Payment Required response.",
@@ -345,7 +406,7 @@ If you receive a 402 Payment Required response, use retry_http_request_with_x402
           "CRITICAL: For POST/PUT/PATCH requests, you MUST use the 'body' parameter (NOT queryParams) to send data.",
           hasMatchingNetwork ? "Ask the user if they want to retry the request with payment." : "",
           hasMatchingNetwork
-            ? "Use retry_http_request_with_x402 to retry the request with payment. IMPORTANT: You must retry_http_request_with_x402 with the correct Http method. "
+            ? "Use retry_http_request_with_x402 with the quoteBinding handle and the same method, URL, headers, query, and body. The handle is one-use and expires in 60 seconds (max 8 pending)."
             : "",
         ],
       });
@@ -365,7 +426,10 @@ If you receive a 402 Payment Required response, use retry_http_request_with_x402
     name: "retry_http_request_with_x402",
     description: `
 Retries an HTTP request with x402 payment after receiving a 402 Payment Required response.
-This should be used after make_http_request returns a 402 response.
+This should be used after make_http_request returns a 402 response with a quoteBinding.
+The official signing client is bound to the frozen request and payment requirement; drifted quotes are refused before the signer is invoked.
+Prepared retry signs the frozen requirement via the official 2.7.0 selector and onBeforePaymentCreation hook, then plain-fetches the frozen request once with that payment header. It does not call wrapFetchWithPayment (which re-fetches 402 and can pick a drifted quote).
+HTTP binding is transport replay of frozen request bytes. EIP-3009 transferWithAuthorization covers payment authorization fields, not URL/method/body.
 
 EXAMPLE WORKFLOW:
 1. First call make_http_request("http://localhost:3000/protected")
@@ -460,80 +524,136 @@ DO NOT use this action directly without first trying make_http_request!`,
         );
       }
 
-      // Create x402 client with appropriate signer
-      const client = await this.createX402Client(walletProvider);
-      const fetchWithPayment = wrapFetchWithPayment(fetch, client);
-
-      // Build URL with query params and determine if body is allowed
       const finalUrl = buildUrlWithParams(args.url, args.queryParams);
       const method = args.method;
       const canHaveBody = ["POST", "PUT", "PATCH"].includes(method);
-
-      // Build headers, adding Content-Type for JSON body
-      const headers: Record<string, string> = { ...(args.headers ?? {}) };
-      if (canHaveBody && args.body) {
-        headers["Content-Type"] = "application/json";
-      }
-
-      // Make the request with payment handling
-      const response = await fetchWithPayment(finalUrl, {
+      const bodyBytes = canHaveBody && args.body ? JSON.stringify(args.body) : null;
+      const frozenRequest = canonicalizeRequest({
         method,
-        headers,
-        body: canHaveBody && args.body ? JSON.stringify(args.body) : undefined,
+        url: finalUrl,
+        headers: args.headers,
+        bodyBytes,
       });
 
-      const data = await this.parseResponseData(response);
-
-      // Check for payment proof in headers (v2: payment-response, v1: x-payment-response)
-      const paymentResponseHeader =
-        response.headers.get("payment-response") ?? response.headers.get("x-payment-response");
-
-      let paymentProof: Record<string, unknown> | null = null;
-      if (paymentResponseHeader) {
-        try {
-          paymentProof = JSON.parse(atob(paymentResponseHeader));
-        } catch {
-          // If parsing fails, include raw header
-          paymentProof = { raw: paymentResponseHeader };
-        }
+      const consumed = this.quoteStore.consume({
+        handle: args.quoteBinding,
+        request: frozenRequest,
+        selectedPaymentOption: args.selectedPaymentOption,
+        extensions: args.extensions,
+        nowMs: Date.now(),
+      });
+      if (!consumed.ok) {
+        return JSON.stringify(
+          {
+            error: true,
+            message: consumed.message,
+            details: consumed.details,
+            signCount: 0,
+            possibleSpend: false,
+          },
+          null,
+          2,
+        );
       }
 
-      // Get the amount used (supports both v1 and v2 formats)
-      const amountUsed =
-        args.selectedPaymentOption.maxAmountRequired ??
-        args.selectedPaymentOption.amount ??
-        args.selectedPaymentOption.price;
-
-      // Check if the response was successful
-      // Payment is only settled on 200 status
-      if (response.status !== 200) {
-        return JSON.stringify({
-          status: "error",
-          message: `Request failed with status ${response.status}. Payment was not settled.`,
-          httpStatus: response.status,
-          data,
-          details: {
-            url: finalUrl,
-            method,
-          },
-        });
-      }
-
-      return JSON.stringify({
-        status: "success",
-        data,
-        message: "Request completed successfully with payment",
-        details: {
-          url: finalUrl,
-          method,
-          paymentUsed: {
-            network: args.selectedPaymentOption.network,
-            asset: args.selectedPaymentOption.asset,
-            amount: amountUsed,
-          },
-          paymentProof,
+      const signState = { count: 0 };
+      const client = await this.createX402Client(walletProvider, {
+        paymentRequirementsSelector: createFrozenSelector(
+          consumed.value.selectedRequirement,
+        ) as SelectPaymentRequirements,
+        onBeforePaymentCreation: createFrozenBeforePaymentHook(consumed.value),
+        onSign: () => {
+          signState.count += 1;
         },
       });
+      const httpClient = new x402HTTPClient(client);
+
+      try {
+        const paymentPayload = await httpClient.createPaymentPayload(
+          consumed.value.paymentRequiredEnvelope as never,
+        );
+        const paymentHeaders = httpClient.encodePaymentSignatureHeader(paymentPayload);
+        const response = await fetch(consumed.value.request.url, {
+          method: consumed.value.request.method,
+          headers: {
+            ...consumed.value.request.headers,
+            ...paymentHeaders,
+          },
+          body: consumed.value.request.bodyBytes ?? undefined,
+          redirect: "manual",
+        });
+
+        const data = await this.parseResponseData(response);
+        const paymentProof = this.readOfficialSettlement(httpClient, response);
+        const frozenRequirement = consumed.value.selectedRequirement;
+        const confirmed = this.isConfirmedSettlement({
+          paymentProof,
+          walletAddress: walletProvider.getAddress(),
+          frozenNetwork: frozenRequirement.network,
+        });
+
+        if (response.status === 200 && confirmed) {
+          return JSON.stringify({
+            status: "success",
+            data,
+            message: "Request completed successfully with payment",
+            details: {
+              url: consumed.value.request.url,
+              method: consumed.value.request.method,
+              paymentUsed: frozenPaymentUsed(frozenRequirement),
+              paymentProof,
+            },
+          });
+        }
+
+        if (signState.count > 0) {
+          return this.possibleSpendResponse({
+            signCount: signState.count,
+            httpStatus: response.status,
+            url: consumed.value.request.url,
+            method: consumed.value.request.method,
+            data,
+            reason: "A payment signature was created but settlement was not confirmed.",
+          });
+        }
+
+        return JSON.stringify({
+          status: "error",
+          error: true,
+          message:
+            response.status === 200
+              ? "Request returned 200 without a well-formed payment-response"
+              : `Request failed with status ${response.status}`,
+          httpStatus: response.status,
+          data,
+          signCount: 0,
+          possibleSpend: false,
+          details: {
+            url: consumed.value.request.url,
+            method: consumed.value.request.method,
+          },
+        });
+      } catch (error) {
+        if (signState.count > 0) {
+          return this.possibleSpendResponse({
+            signCount: signState.count,
+            url: consumed.value.request.url,
+            method: consumed.value.request.method,
+            reason: error instanceof Error ? error.message : String(error),
+          });
+        }
+        return JSON.stringify(
+          {
+            error: true,
+            message: error instanceof Error ? error.message : String(error),
+            details: "Signer was not invoked; refusing without possible-spend.",
+            signCount: 0,
+            possibleSpend: false,
+          },
+          null,
+          2,
+        );
+      }
     } catch (error) {
       return handleHttpError(error, args.url);
     }
@@ -560,7 +680,12 @@ This action combines both steps into one, which means:
 - No chance to review payment details before paying
 - No confirmation step
 - Automatic payment processing
-- Assumes payment option is compatible with wallet network
+- Still not a user-confirmation flow
+- Auto-pay freezes the first 402's exact-one wallet-matching USDC requirement, or fails closed before sign
+- A later 402 is never signed: payment is created from the frozen requirement via x402HTTPClient.createPaymentPayload + encodePaymentSignatureHeader + plain fetch (same as retry_http_request_with_x402). wrapFetchWithPayment is not used.
+- NOT recipient-screened
+- HTTP binding is transport replay of the inspected request, not EIP-3009 crypto binding of URL/method/body
+- Paid delivery success requires official x402HTTPClient.getPaymentSettleResponse proof, success===true, nonempty payer, exact frozen network, network-aware transaction, and family-correct payer equality (EVM case-insensitive hex; SVM exact Base58). HTTP 200 alone is never paid success. After a signature, missing or invalid settlement is terminal unreconciled_possible_spend.
 
 EXAMPLES:
 - Production: make_http_request_with_x402("https://api.example.com/data")
@@ -607,73 +732,221 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
         );
       }
 
-      // Create x402 client with appropriate signer
-      const client = await this.createX402Client(walletProvider);
-      const fetchWithPayment = wrapFetchWithPayment(fetch, client);
-
-      // Build URL with query params and determine if body is allowed
       const finalUrl = buildUrlWithParams(args.url, args.queryParams);
       const method = args.method;
       const canHaveBody = ["POST", "PUT", "PATCH"].includes(method);
+      const bodyBytes = canHaveBody && args.body ? JSON.stringify(args.body) : null;
 
-      // Build headers, adding Content-Type for JSON body
       const headers: Record<string, string> = { ...(args.headers ?? {}) };
       if (canHaveBody && args.body) {
         headers["Content-Type"] = "application/json";
       }
 
-      const response = await fetchWithPayment(finalUrl, {
-        method,
-        headers,
-        body: canHaveBody && args.body ? JSON.stringify(args.body) : undefined,
-      });
+      const signState = { count: 0 };
 
-      const data = await this.parseResponseData(response);
+      try {
+        const inspectResponse = await fetch(finalUrl, {
+          method,
+          headers,
+          body: bodyBytes ?? undefined,
+          redirect: "manual",
+        });
 
-      // Check for payment proof in headers (v2: payment-response, v1: x-payment-response)
-      const paymentResponseHeader =
-        response.headers.get("payment-response") ?? response.headers.get("x-payment-response");
-
-      let paymentProof: Record<string, unknown> | null = null;
-      if (paymentResponseHeader) {
-        try {
-          paymentProof = JSON.parse(atob(paymentResponseHeader));
-        } catch {
-          // If parsing fails, include raw header
-          paymentProof = { raw: paymentResponseHeader };
+        if (inspectResponse.status !== 402) {
+          const data = await this.parseResponseData(inspectResponse);
+          return JSON.stringify(
+            {
+              success: false,
+              error: true,
+              message:
+                inspectResponse.status === 200
+                  ? "Request returned 200 without a well-formed payment-response"
+                  : `Request failed with status ${inspectResponse.status}`,
+              url: finalUrl,
+              method,
+              status: inspectResponse.status,
+              data,
+              signCount: 0,
+              possibleSpend: false,
+            },
+            null,
+            2,
+          );
         }
-      }
 
-      // Check if the response was successful
-      // Payment is only settled on 200 status
-      if (response.status !== 200) {
+        const { paymentData, acceptsArray } =
+          await this.readPaymentRequiredEnvelope(inspectResponse);
+        const walletNetworks = getX402Networks(walletProvider.getNetwork());
+        const usdcOptions = filterUsdcPaymentOptions(acceptsArray, walletProvider);
+        const matching = usdcOptions.filter(
+          option =>
+            walletNetworks.includes(option.network) &&
+            typeof option.scheme === "string" &&
+            option.scheme.length > 0,
+        );
+
+        if (matching.length !== 1) {
+          return JSON.stringify(
+            {
+              success: false,
+              error: true,
+              message: "Cannot freeze an exact-one payment requirement",
+              details:
+                matching.length === 0
+                  ? "Auto-pay requires exactly one wallet-matching USDC requirement; found 0. Signer will not be invoked."
+                  : "Auto-pay requires exactly one wallet-matching USDC requirement; found multiple. A later or drifted 402 is refused before sign.",
+              signCount: 0,
+              possibleSpend: false,
+            },
+            null,
+            2,
+          );
+        }
+
+        const selectedRequirement = matching[0] as FrozenRequirement;
+        const frozenApproval: FrozenApproval = {
+          handle: "autopay",
+          createdAtMs: Date.now(),
+          expiresAtMs: Date.now() + QUOTE_BINDING_TTL_MS,
+          request: canonicalizeRequest({
+            method,
+            url: finalUrl,
+            headers,
+            bodyBytes,
+          }),
+          paymentRequiredEnvelope: paymentData,
+          selectedRequirement,
+        };
+
+        const paymentAmount =
+          (typeof selectedRequirement.maxAmountRequired === "string"
+            ? selectedRequirement.maxAmountRequired
+            : undefined) ??
+          (typeof selectedRequirement.amount === "string"
+            ? selectedRequirement.amount
+            : undefined) ??
+          (typeof selectedRequirement.price === "string" ? selectedRequirement.price : undefined) ??
+          "0";
+        const paymentValidation = validatePaymentLimit(paymentAmount, this.config.maxPaymentUsdc);
+        if (!paymentValidation.isValid) {
+          return JSON.stringify(
+            {
+              success: false,
+              error: true,
+              message: "Payment exceeds limit",
+              details: `The requested payment of ${paymentValidation.requestedAmount} USDC exceeds the maximum spending limit of ${paymentValidation.maxAmount} USDC.`,
+              maxPaymentUsdc: this.config.maxPaymentUsdc,
+              signCount: 0,
+              possibleSpend: false,
+            },
+            null,
+            2,
+          );
+        }
+
+        const client = await this.createX402Client(walletProvider, {
+          paymentRequirementsSelector: createFrozenSelector(
+            selectedRequirement,
+          ) as SelectPaymentRequirements,
+          onBeforePaymentCreation: createFrozenBeforePaymentHook(frozenApproval),
+          onSign: () => {
+            signState.count += 1;
+          },
+        });
+        const httpClient = new x402HTTPClient(client);
+        const paymentPayload = await httpClient.createPaymentPayload(paymentData as never);
+        const paymentHeaders = httpClient.encodePaymentSignatureHeader(paymentPayload);
+        const response = await fetch(finalUrl, {
+          method,
+          headers: {
+            ...headers,
+            ...paymentHeaders,
+          },
+          body: bodyBytes ?? undefined,
+          redirect: "manual",
+        });
+
+        const data = await this.parseResponseData(response);
+        const paymentProof = this.readOfficialSettlement(httpClient, response);
+        const confirmed = this.isConfirmedSettlement({
+          paymentProof,
+          walletAddress: walletProvider.getAddress(),
+          frozenNetwork: selectedRequirement.network,
+        });
+
+        if (response.status === 200 && confirmed) {
+          return JSON.stringify(
+            {
+              success: true,
+              message: "Request completed successfully (payment handled automatically if required)",
+              url: finalUrl,
+              method,
+              status: response.status,
+              data,
+              paymentProof,
+              signCount: signState.count,
+              possibleSpend: signState.count > 0,
+            },
+            null,
+            2,
+          );
+        }
+
+        if (signState.count > 0) {
+          return this.possibleSpendResponse({
+            signCount: signState.count,
+            httpStatus: response.status,
+            url: finalUrl,
+            method,
+            data,
+            reason: "A payment signature was created but settlement was not confirmed.",
+          });
+        }
+
         return JSON.stringify(
           {
             success: false,
-            message: `Request failed with status ${response.status}. Payment was not settled.`,
+            error: true,
+            message:
+              response.status === 200
+                ? "Request returned 200 without a well-formed payment-response"
+                : `Request failed with status ${response.status}`,
             url: finalUrl,
             method,
             status: response.status,
             data,
+            signCount: 0,
+            possibleSpend: false,
           },
           null,
           2,
         );
+      } catch (error) {
+        if (signState.count > 0) {
+          return this.possibleSpendResponse({
+            signCount: signState.count,
+            url: finalUrl,
+            method,
+            reason: error instanceof Error ? error.message : String(error),
+          });
+        }
+        if (error instanceof Error && /frozen|exact-one|drift|refusing/i.test(error.message)) {
+          return JSON.stringify(
+            {
+              success: false,
+              error: true,
+              message: error.message,
+              details:
+                "Signer was not invoked; refusing drifted auto-pay quote without possible-spend.",
+              signCount: 0,
+              possibleSpend: false,
+            },
+            null,
+            2,
+          );
+        }
+        return handleHttpError(error, args.url);
       }
-
-      return JSON.stringify(
-        {
-          success: true,
-          message: "Request completed successfully (payment handled automatically if required)",
-          url: finalUrl,
-          method,
-          status: response.status,
-          data,
-          paymentProof,
-        },
-        null,
-        2,
-      );
     } catch (error) {
       return handleHttpError(error, args.url);
     }
@@ -839,15 +1112,59 @@ These are the only services that can be called using make_http_request or make_h
    * Creates an x402 client configured for the given wallet provider.
    *
    * @param walletProvider - The wallet provider to configure the client for
+   * @param options - Optional selector, pre-sign hook, and sign probe
+   * @param options.paymentRequirementsSelector - Official 2.7.0 payment-requirements selector
+   * @param options.onBeforePaymentCreation - Official pre-creation hook that may abort drift
+   * @param options.onSign - Invoked when the official scheme calls a signer method
    * @returns Configured x402Client
    */
-  private async createX402Client(walletProvider: WalletProvider): Promise<x402Client> {
-    const client = new x402Client();
+  private async createX402Client(
+    walletProvider: WalletProvider,
+    options?: {
+      paymentRequirementsSelector?: SelectPaymentRequirements;
+      onBeforePaymentCreation?: (context: {
+        paymentRequired: unknown;
+        selectedRequirements: unknown;
+      }) => Promise<void | { abort: true; reason: string }>;
+      onSign?: () => void;
+    },
+  ): Promise<x402Client> {
+    const client = new x402Client(options?.paymentRequirementsSelector);
+
+    const wrapSign = <TArgs extends unknown[], TResult>(
+      fn: (...args: TArgs) => Promise<TResult>,
+    ) => {
+      return async (...args: TArgs): Promise<TResult> => {
+        options?.onSign?.();
+        return fn(...args);
+      };
+    };
 
     if (walletProvider instanceof EvmWalletProvider) {
       const account = walletProvider.toSigner();
+      const signerRecord =
+        account && typeof account === "object"
+          ? (account as {
+              signTypedData?: (args: never) => Promise<`0x${string}`>;
+              signMessage?: (args: never) => Promise<`0x${string}`>;
+              signTransaction?: (args: never) => Promise<`0x${string}`>;
+              sign?: (args: never) => Promise<`0x${string}`>;
+            })
+          : {};
       const signer = {
-        ...account,
+        ...(typeof account === "object" && account ? account : {}),
+        ...(typeof signerRecord.signTypedData === "function"
+          ? { signTypedData: wrapSign(signerRecord.signTypedData.bind(signerRecord)) }
+          : {}),
+        ...(typeof signerRecord.signMessage === "function"
+          ? { signMessage: wrapSign(signerRecord.signMessage.bind(signerRecord)) }
+          : {}),
+        ...(typeof signerRecord.signTransaction === "function"
+          ? { signTransaction: wrapSign(signerRecord.signTransaction.bind(signerRecord)) }
+          : {}),
+        ...(typeof signerRecord.sign === "function"
+          ? { sign: wrapSign(signerRecord.sign.bind(signerRecord)) }
+          : {}),
         readContract: (args: {
           address: `0x${string}`;
           abi: readonly unknown[];
@@ -861,13 +1178,193 @@ These are the only services that can be called using make_http_request or make_h
             args: args.args as never,
           }),
       };
-      registerExactEvmScheme(client, { signer });
+      registerExactEvmScheme(client, { signer: signer as never });
     } else if (walletProvider instanceof SvmWalletProvider) {
-      const signer = await walletProvider.toSigner();
-      registerExactSvmScheme(client, { signer });
+      const account = await walletProvider.toSigner();
+      const signerRecord =
+        account && typeof account === "object"
+          ? (account as {
+              signTransactions?: (...args: never[]) => Promise<unknown>;
+            })
+          : {};
+      // Official @x402/svm 2.7.0 ExactSvmScheme* createPaymentPayload attaches
+      // this signer as transfer authority, then
+      // @solana/kit partiallySignTransactionMessageWithSigners calls
+      // TransactionPartialSigner.signTransactions. Wrap THAT method only.
+      const signer = {
+        ...(typeof account === "object" && account ? account : {}),
+        ...(typeof signerRecord.signTransactions === "function"
+          ? { signTransactions: wrapSign(signerRecord.signTransactions.bind(signerRecord)) }
+          : {}),
+      };
+      registerExactSvmScheme(client, { signer: signer as never });
+    }
+
+    if (options?.onBeforePaymentCreation) {
+      client.onBeforePaymentCreation(options.onBeforePaymentCreation);
     }
 
     return client;
+  }
+
+  /**
+   * Reads a 402 payment-required envelope from the v2 header or v1 body.
+   *
+   * @param response - HTTP 402 response
+   * @returns Envelope object and accepts array
+   */
+  private async readPaymentRequiredEnvelope(response: Response): Promise<{
+    paymentData: Record<string, unknown>;
+    acceptsArray: Array<{
+      scheme?: string;
+      network: string;
+      asset: string;
+      maxAmountRequired?: string;
+      amount?: string;
+      payTo?: string;
+    }>;
+  }> {
+    let acceptsArray: Array<{
+      scheme?: string;
+      network: string;
+      asset: string;
+      maxAmountRequired?: string;
+      amount?: string;
+      payTo?: string;
+    }> = [];
+    let paymentData: Record<string, unknown> = {};
+
+    const paymentRequiredHeader = response.headers.get("payment-required");
+    if (paymentRequiredHeader) {
+      try {
+        const decoded = JSON.parse(atob(paymentRequiredHeader)) as Record<string, unknown>;
+        acceptsArray = (decoded.accepts as typeof acceptsArray) ?? [];
+        paymentData = decoded;
+      } catch {
+        // Header parsing failed, fall back to body
+      }
+    }
+
+    if (acceptsArray.length === 0) {
+      paymentData = (await response.json()) as Record<string, unknown>;
+      acceptsArray = (paymentData.accepts as typeof acceptsArray) ?? [];
+    }
+
+    return { paymentData, acceptsArray };
+  }
+
+  /**
+   * Decodes settlement through the locked official x402 2.7.0 surface.
+   * Missing or malformed PAYMENT-RESPONSE / X-PAYMENT-RESPONSE is null.
+   *
+   * @param httpClient - Official HTTP client already used to create the payload
+   * @param response - Paid or unpaid HTTP response
+   * @returns Official settle response, or null when the decoder throws
+   */
+  private readOfficialSettlement(
+    httpClient: x402HTTPClient,
+    response: Response,
+  ): {
+    success?: boolean;
+    transaction?: string;
+    network?: string;
+    payer?: string;
+  } | null {
+    try {
+      return httpClient.getPaymentSettleResponse(name => response.headers.get(name));
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Official settlement gates shared by prepared retry and auto-pay.
+   * Both paths require a frozen selected requirement. Paid success requires
+   * decoded success===true, a nonempty payer equal to the signing wallet
+   * (EVM: case-insensitive hex; SVM: exact case-sensitive Base58), the exact
+   * frozen network, and a network-aware transaction identifier (EVM: 0x+64 hex;
+   * SVM: Bitcoin-alphabet Base58 64-byte signature). Missing or empty payer or
+   * network, arbitrary text such as "not-a-tx", and wrong-family hashes do not
+   * promote.
+   *
+   * @param args - Decoded proof plus wallet / freeze context
+   * @param args.paymentProof - Official decoder output, or null
+   * @param args.walletAddress - Signing wallet address
+   * @param args.frozenNetwork - Frozen selected requirement network
+   * @returns True only when paid delivery may be labeled successful
+   */
+  private isConfirmedSettlement(args: {
+    paymentProof: {
+      success?: boolean;
+      transaction?: string;
+      network?: string;
+      payer?: string;
+    } | null;
+    walletAddress: string;
+    frozenNetwork: string;
+  }): boolean {
+    const proof = args.paymentProof;
+    if (!proof || proof.success !== true) {
+      return false;
+    }
+    const transactionId = typeof proof.transaction === "string" ? proof.transaction : "";
+    if (!isWellFormedSettlementTransaction(args.frozenNetwork, transactionId)) {
+      return false;
+    }
+
+    if (typeof proof.network !== "string" || proof.network.length === 0) {
+      return false;
+    }
+    if (proof.network !== args.frozenNetwork) {
+      return false;
+    }
+
+    const decodedPayer = proof.payer;
+    if (typeof decodedPayer !== "string" || decodedPayer.length === 0) {
+      return false;
+    }
+    if (!settlementPayersEqual(args.frozenNetwork, decodedPayer, args.walletAddress)) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Formats possible-spend evidence after a signature was created.
+   *
+   * @param args - Sign count and request context
+   * @param args.signCount - Number of signer invocations observed
+   * @param args.httpStatus - HTTP status after the signed request, if any
+   * @param args.url - Frozen request URL
+   * @param args.method - Frozen request method
+   * @param args.data - Response body if one was parsed
+   * @param args.reason - Why settlement could not be confirmed
+   * @returns JSON failure that never claims settlement and never invents a tx id
+   */
+  private possibleSpendResponse(args: {
+    signCount: number;
+    httpStatus?: number;
+    url: string;
+    method: string;
+    data?: unknown;
+    reason: string;
+  }): string {
+    return JSON.stringify({
+      error: true,
+      status: "unreconciled_possible_spend",
+      unreconciled: true,
+      message:
+        "Unreconciled possible-spend: a payment signature was created but settlement was not confirmed.",
+      details: args.reason,
+      signCount: args.signCount,
+      possibleSpend: true,
+      httpStatus: args.httpStatus,
+      request: {
+        url: args.url,
+        method: args.method,
+      },
+      data: args.data,
+    });
   }
 
   /**

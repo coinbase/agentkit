@@ -1,11 +1,22 @@
+/* eslint-disable import/first */
 import { X402ActionProvider } from "./x402ActionProvider";
 import { EvmWalletProvider } from "../../wallet-providers";
 import { Network } from "../../network";
-import { x402Client, wrapFetchWithPayment } from "@x402/fetch";
+import { x402Client, wrapFetchWithPayment, x402HTTPClient } from "@x402/fetch";
 import { registerExactEvmScheme } from "@x402/evm/exact/client";
 import { registerExactSvmScheme } from "@x402/svm/exact/client";
 
 import * as utils from "./utils";
+
+jest.mock("../../wallet-providers", () => {
+  const wallet = jest.requireActual("../../wallet-providers/walletProvider");
+  const evm = jest.requireActual("../../wallet-providers/evmWalletProvider");
+  return {
+    WalletProvider: wallet.WalletProvider,
+    EvmWalletProvider: evm.EvmWalletProvider,
+    SvmWalletProvider: class SvmWalletProvider {},
+  };
+});
 
 // Mock external modules
 jest.mock("@x402/fetch");
@@ -21,6 +32,7 @@ const mockFetchWithPayment = jest.fn();
 // Mock x402 client
 const mockX402Client = {
   registerScheme: jest.fn(),
+  onBeforePaymentCreation: jest.fn(),
 };
 
 // Mock utils functions
@@ -46,6 +58,14 @@ jest
   .mocked(x402Client)
   .mockImplementation(() => mockX402Client as unknown as InstanceType<typeof x402Client>);
 jest.mocked(wrapFetchWithPayment).mockReturnValue(mockFetchWithPayment);
+jest.mocked(x402HTTPClient).mockImplementation(
+  () =>
+    ({
+      getPaymentSettleResponse: mockGetPaymentSettleResponse,
+      createPaymentPayload: mockCreatePaymentPayload,
+      encodePaymentSignatureHeader: mockEncodePaymentSignatureHeader,
+    }) as unknown as InstanceType<typeof x402HTTPClient>,
+);
 jest
   .mocked(registerExactEvmScheme)
   .mockImplementation(() => mockX402Client as unknown as InstanceType<typeof x402Client>);
@@ -79,6 +99,7 @@ const makeMockWalletProvider = (networkId: string) => {
   mockProvider.toSigner = jest.fn().mockReturnValue("mock-signer");
   mockProvider.getPublicClient = jest.fn().mockReturnValue("mock-public-client");
   mockProvider.getNetwork = jest.fn().mockReturnValue({ protocolFamily: "evm", networkId });
+  mockProvider.getAddress = jest.fn().mockReturnValue("0xa8c1a5D3C372C65c04f91f87a43F549619A9483f");
   return mockProvider as EvmWalletProvider;
 };
 
@@ -106,10 +127,15 @@ const MOCK_PAYMENT_INFO_RESPONSE = {
 };
 
 const MOCK_PAYMENT_PROOF = {
+  success: true,
   transaction: "0xcbc385789d3744b52af5106c32809534f64adcbe097e050ec03d6b53fed5d305",
   network: "base-sepolia",
   payer: "0xa8c1a5D3C372C65c04f91f87a43F549619A9483f",
 };
+
+const mockGetPaymentSettleResponse = jest.fn();
+const mockCreatePaymentPayload = jest.fn();
+const mockEncodePaymentSignatureHeader = jest.fn();
 
 // Helper to create mock Response
 const createMockResponse = (options: {
@@ -163,6 +189,14 @@ describe("X402ActionProvider", () => {
       isAllowed: true,
       resolvedUrl: "https://facilitator.com",
     });
+    mockGetPaymentSettleResponse.mockReset();
+    mockGetPaymentSettleResponse.mockImplementation(() => {
+      throw new Error("Payment response header not found");
+    });
+    mockCreatePaymentPayload.mockReset();
+    mockCreatePaymentPayload.mockResolvedValue({ payload: "mock" });
+    mockEncodePaymentSignatureHeader.mockReset();
+    mockEncodePaymentSignatureHeader.mockReturnValue({ "x-payment": "mock-header" });
   });
 
   afterEach(() => {
@@ -478,7 +512,7 @@ describe("X402ActionProvider", () => {
       expect(parsedResult.maxPaymentUsdc).toBeDefined();
     });
 
-    it("should successfully retry with payment", async () => {
+    it("should refuse retry without a frozen quote binding and not call the signer", async () => {
       mockGetX402Networks.mockReturnValue(["base-sepolia"]);
 
       // Encode the payment proof as base64
@@ -512,17 +546,17 @@ describe("X402ActionProvider", () => {
         },
       });
 
-      expect(wrapFetchWithPayment).toHaveBeenCalledWith(fetch, mockX402Client);
+      expect(wrapFetchWithPayment).not.toHaveBeenCalled();
 
       const parsedResult = JSON.parse(result);
-      expect(parsedResult.status).toBe("success");
-      expect(parsedResult.details.paymentProof).toEqual(MOCK_PAYMENT_PROOF);
+      expect(parsedResult.error).toBe(true);
+      expect(parsedResult.message).toMatch(/quote binding/i);
+      expect(parsedResult.signCount).toBe(0);
+      expect(parsedResult.possibleSpend).toBe(false);
     });
 
-    it("should handle network errors during payment", async () => {
-      const error = new TypeError("fetch failed");
+    it("should refuse retry with a malformed quote binding without calling wrapFetchWithPayment", async () => {
       mockGetX402Networks.mockReturnValue(["base-sepolia"]);
-      mockFetchWithPayment.mockRejectedValue(error);
 
       const result = await provider.retryWithX402(makeMockWalletProvider("base-sepolia"), {
         url: "https://www.x402.org/protected",
@@ -530,6 +564,7 @@ describe("X402ActionProvider", () => {
         headers: null,
         queryParams: null,
         body: null,
+        quoteBinding: "x",
         selectedPaymentOption: {
           scheme: "exact",
           network: "base-sepolia",
@@ -541,8 +576,10 @@ describe("X402ActionProvider", () => {
         },
       });
 
+      expect(wrapFetchWithPayment).not.toHaveBeenCalled();
       const parsedResult = JSON.parse(result);
       expect(parsedResult.error).toBe(true);
+      expect(parsedResult.signCount).toBe(0);
     });
   });
 
@@ -569,19 +606,28 @@ describe("X402ActionProvider", () => {
     });
 
     it("should handle successful direct payment requests", async () => {
-      // Encode the payment proof as base64
       const encodedPaymentProof = btoa(JSON.stringify(MOCK_PAYMENT_PROOF));
+      mockGetPaymentSettleResponse.mockImplementation(() => MOCK_PAYMENT_PROOF);
+      mockGetX402Networks.mockReturnValue(["base-sepolia"]);
 
-      mockFetchWithPayment.mockResolvedValue(
-        createMockResponse({
-          status: 200,
-          data: { message: "Paid content" },
-          headers: {
-            "content-type": "application/json",
-            "x-payment-response": encodedPaymentProof,
-          },
-        }),
-      );
+      mockFetch
+        .mockResolvedValueOnce(
+          createMockResponse({
+            status: 402,
+            data: MOCK_PAYMENT_INFO_RESPONSE,
+            headers: { "content-type": "application/json" },
+          }),
+        )
+        .mockResolvedValueOnce(
+          createMockResponse({
+            status: 200,
+            data: { message: "Paid content" },
+            headers: {
+              "content-type": "application/json",
+              "x-payment-response": encodedPaymentProof,
+            },
+          }),
+        );
 
       const result = await provider.makeHttpRequestWithX402(
         makeMockWalletProvider("base-sepolia"),
@@ -594,7 +640,8 @@ describe("X402ActionProvider", () => {
         },
       );
 
-      expect(wrapFetchWithPayment).toHaveBeenCalledWith(fetch, mockX402Client);
+      expect(wrapFetchWithPayment).not.toHaveBeenCalled();
+      expect(mockCreatePaymentPayload).toHaveBeenCalled();
 
       const parsedResult = JSON.parse(result);
       expect(parsedResult.success).toBe(true);
@@ -602,8 +649,8 @@ describe("X402ActionProvider", () => {
       expect(parsedResult.paymentProof).toEqual(MOCK_PAYMENT_PROOF);
     });
 
-    it("should handle successful non-payment requests", async () => {
-      mockFetchWithPayment.mockResolvedValue(
+    it("should not treat unsigned HTTP 200 with null official settlement as success", async () => {
+      mockFetch.mockResolvedValue(
         createMockResponse({
           status: 200,
           data: { message: "Free content" },
@@ -622,15 +669,18 @@ describe("X402ActionProvider", () => {
         },
       );
 
+      expect(wrapFetchWithPayment).not.toHaveBeenCalled();
       const parsedResult = JSON.parse(result);
-      expect(parsedResult.success).toBe(true);
-      expect(parsedResult.data).toEqual({ message: "Free content" });
-      expect(parsedResult.paymentProof).toBeNull();
+      expect(parsedResult.success).not.toBe(true);
+      expect(parsedResult.error).toBe(true);
+      expect(parsedResult.signCount).toBe(0);
+      expect(parsedResult.possibleSpend).toBe(false);
+      expect(String(parsedResult.message)).toMatch(/without a well-formed payment-response/i);
     });
 
     it("should handle network errors", async () => {
       const error = new TypeError("fetch failed");
-      mockFetchWithPayment.mockRejectedValue(error);
+      mockFetch.mockRejectedValue(error);
 
       const result = await provider.makeHttpRequestWithX402(
         makeMockWalletProvider("base-sepolia"),

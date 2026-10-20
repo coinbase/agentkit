@@ -125,6 +125,13 @@ const PaymentOptionSchema = z
     amount: z.string().nullable().describe("Amount required (v2 format)"),
     price: z.string().nullable().describe("Price (v2 format, e.g., '$0.01')"),
     payTo: z.string().nullable().describe("Payment recipient address (v2 format)"),
+    maxTimeoutSeconds: z.number().nullable().optional().describe("Optional timeout from inspect"),
+    resource: z.string().nullable().optional().describe("Optional resource URL from inspect"),
+    extra: z
+      .record(z.string(), z.unknown())
+      .nullable()
+      .optional()
+      .describe("Optional EIP-712 domain extra from inspect"),
   })
   .describe("Payment option supporting both v1 and v2 x402 formats");
 
@@ -164,8 +171,24 @@ export const RetryWithX402Schema = z
     selectedPaymentOption: PaymentOptionSchema.describe(
       "The payment option to use for this request",
     ),
+    quoteBinding: z
+      .string()
+      .nullable()
+      .optional()
+      .describe(
+        "Opaque quoteBinding handle returned by make_http_request after a 402. " +
+          "Required to pay the frozen inspected quote. Absent, expired, evicted, or mismatched " +
+          "quote state is refused without signing. TTL 60s, max 8 pending approvals.",
+      ),
+    extensions: z
+      .record(z.string(), z.unknown())
+      .nullable()
+      .optional()
+      .describe("Optional envelope extensions from inspect"),
   })
-  .describe("Instructions for retrying a request with x402 payment after receiving a 402 response");
+  .describe(
+    "Prepared quote-bound retry. HTTP binding is transport replay of frozen request bytes, not an EIP-3009 cryptographic HTTP-request binding.",
+  );
 
 // Schema for direct x402 payment request (with warning)
 export const DirectX402RequestSchema = z
