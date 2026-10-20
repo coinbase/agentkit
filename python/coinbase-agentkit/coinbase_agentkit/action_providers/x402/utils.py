@@ -196,7 +196,10 @@ def _get_resource_description(resource: DiscoveryResource) -> str:
     """Extract description from a resource based on its x402 version.
 
     - v1: description is in accepts[].description
-    - v2: description is in metadata.description
+    - v2: the discovery API returns description as a top-level field on the
+      resource; metadata.description and accepts[].description are checked
+      as fallbacks for resources published under an older or non-standard
+      v2 shape.
 
     Args:
         resource: The discovery resource
@@ -207,9 +210,21 @@ def _get_resource_description(resource: DiscoveryResource) -> str:
     """
     x402_version = resource.get("x402_version", resource.get("x402Version"))
     if x402_version == 2:
+        top_level_desc = resource.get("description")
+        if isinstance(top_level_desc, str) and top_level_desc.strip():
+            return top_level_desc
+
         metadata = resource.get("metadata", {})
         metadata_desc = metadata.get("description") if metadata else None
-        return metadata_desc if isinstance(metadata_desc, str) else ""
+        if isinstance(metadata_desc, str) and metadata_desc.strip():
+            return metadata_desc
+
+        accepts = resource.get("accepts", [])
+        for option in accepts:
+            desc = option.get("description", "")
+            if desc and desc.strip():
+                return desc
+        return ""
 
     # v1: look in accepts[].description
     accepts = resource.get("accepts", [])
@@ -224,7 +239,8 @@ def filter_by_description(resources: list[DiscoveryResource]) -> list[DiscoveryR
     """Filter resources by having a valid description.
 
     Removes resources with empty or default descriptions.
-    Supports both v1 (accepts[].description) and v2 (metadata.description) formats.
+    Supports both v1 (accepts[].description) and v2 (description, with
+    metadata.description and accepts[].description as fallbacks) formats.
 
     Args:
         resources: Array of discovery resources
@@ -278,7 +294,8 @@ def filter_by_keyword(
     """Filter resources by keyword appearing in description or URL.
 
     Case-insensitive search.
-    Supports both v1 (accepts[].description) and v2 (metadata.description) formats.
+    Supports both v1 (accepts[].description) and v2 (description, with
+    metadata.description and accepts[].description as fallbacks) formats.
 
     Args:
         resources: Array of discovery resources
