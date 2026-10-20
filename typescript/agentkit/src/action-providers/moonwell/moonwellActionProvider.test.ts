@@ -272,6 +272,33 @@ describe("Moonwell Action Provider", () => {
       expect(response).toContain(JSON.stringify(MOCK_RECEIPT));
     });
 
+    it("should use 8 decimals when depositing cbBTC", async () => {
+      const args = {
+        mTokenAddress: "0xF877ACaFA28c19b96727966690b2f44d35aD5976", // Moonwell cbBTC
+        assets: "0.5",
+        tokenAddress: "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf", // cbBTC
+      };
+
+      const response = await actionProvider.mint(mockWallet, args);
+
+      expect(mockApprove).toHaveBeenCalledWith(
+        mockWallet,
+        args.tokenAddress,
+        args.mTokenAddress,
+        50000000n,
+      );
+      expect(mockWallet.sendTransaction).toHaveBeenCalledWith({
+        to: args.mTokenAddress as `0x${string}`,
+        data: encodeFunctionData({
+          abi: MTOKEN_ABI,
+          functionName: "mint",
+          args: [50000000n],
+        }),
+        value: 0n,
+      });
+      expect(response).toContain(`Deposited ${args.assets}`);
+    });
+
     it("should reject deposit with zero assets amount", async () => {
       const args = {
         mTokenAddress: MOCK_MTOKEN_ADDRESS,
@@ -507,6 +534,51 @@ describe("Moonwell Action Provider", () => {
       expect(response).toContain(`Redeemed ${args.assets}`);
       expect(response).toContain(MOCK_TX_HASH);
       expect(response).toContain(JSON.stringify(MOCK_RECEIPT));
+    });
+
+    it("should successfully redeem from Moonwell MToken on sepolia", async () => {
+      const args = {
+        mTokenAddress: "0x876852425331a113d8E432eFFB3aC5BEf38f033a", // Sepolia USDBC mToken
+        assets: "1.5",
+      };
+
+      mockWallet.getNetwork.mockReturnValue({
+        protocolFamily: "evm",
+        networkId: "base-sepolia",
+      } as Network);
+
+      const response = await actionProvider.redeem(mockWallet, args);
+
+      expect(mockWallet.sendTransaction).toHaveBeenCalledWith({
+        to: args.mTokenAddress as `0x${string}`,
+        data: encodeFunctionData({
+          abi: MTOKEN_ABI,
+          functionName: "redeemUnderlying",
+          args: [1500000n],
+        }),
+        value: 0n,
+      });
+      expect(response).toContain(`Redeemed ${args.assets}`);
+    });
+
+    it("should use 8 decimals when redeeming cbBTC", async () => {
+      const args = {
+        mTokenAddress: "0xF877ACaFA28c19b96727966690b2f44d35aD5976", // Moonwell cbBTC
+        assets: "0.5",
+      };
+
+      const response = await actionProvider.redeem(mockWallet, args);
+
+      expect(mockWallet.sendTransaction).toHaveBeenCalledWith({
+        to: args.mTokenAddress as `0x${string}`,
+        data: encodeFunctionData({
+          abi: MTOKEN_ABI,
+          functionName: "redeemUnderlying",
+          args: [50000000n],
+        }),
+        value: 0n,
+      });
+      expect(response).toContain(`Redeemed ${args.assets}`);
     });
 
     it("should reject redeem with zero assets amount", async () => {

@@ -230,7 +230,7 @@ Important notes:
 
     try {
       // Handle different token decimals
-      const decimals = MTOKENS_UNDERLYING_DECIMALS[MOONWELL_BASE_ADDRESSES[args.mTokenAddress]];
+      const decimals = MTOKENS_UNDERLYING_DECIMALS[networkObject[args.mTokenAddress]];
 
       if (!decimals) {
         return `Error: Unsupported token address ${args.mTokenAddress}. Please verify the token address is correct.`;
