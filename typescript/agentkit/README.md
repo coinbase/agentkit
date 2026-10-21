@@ -609,6 +609,19 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>TAP Labs</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>check_token_safety</code></td>
+    <td width="768">Checks a token on Base or Solana, or a contract on Base, for scam and rug pull warning signs before buying or swapping into it. Paid per check (currently $0.01 in USDC on Base) with x402, within a per-check cap and a total budget.</td>
+</tr>
+<tr>
+    <td width="200"><code>check_transaction</code></td>
+    <td width="768">Reads what a wallet request (transaction, approval, permit, sign-in message) would do and whether it matches the user's instruction, before signing. Paid per check (currently $0.02 in USDC on Base) with x402, within a per-check cap and a total budget.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Twitter</strong></summary>
 <table width="100%">
 <tr>
