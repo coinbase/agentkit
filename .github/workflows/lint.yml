@@ -13,6 +13,7 @@ jobs:
             "framework-extensions/langchain",
             "framework-extensions/openai-agents-sdk",
             "framework-extensions/strands-agents",
+            "framework-extensions/model-context-protocol",
             "examples/langchain-cdp-chatbot",
             "examples/langchain-cdp-solana-chatbot",
             "examples/langchain-cdp-smart-wallet-chatbot",

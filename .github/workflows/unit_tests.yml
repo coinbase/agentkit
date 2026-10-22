@@ -31,6 +31,35 @@ jobs:
       - name: Run tests
         run: make test
 
+  test-model-context-protocol-python:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./python/framework-extensions/model-context-protocol
+    strategy:
+      matrix:
+        python: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+
+      - name: Run tests
+        run: make test
+
   test-agentkit-typescript:
     runs-on: ubuntu-latest
     strategy:
