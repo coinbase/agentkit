@@ -289,6 +289,19 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>DevX Token Check</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>check_token_risk</code></td>
+    <td width="768">Checks a token for rug-pull and honeypot risk (safe/caution/danger with reasons), paid 0.01 USDC on Base via x402.</td>
+</tr>
+<tr>
+    <td width="200"><code>pre_swap_token_check</code></td>
+    <td width="768">Returns whether a swap into a token should proceed, based on the Token Check verdict.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>dTelecom</strong></summary>
 <table width="100%">
 <tr>
