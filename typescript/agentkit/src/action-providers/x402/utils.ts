@@ -1,3 +1,4 @@
+import type { EvmClientConfig } from "@x402/evm/exact/client";
 import { Network } from "../../network";
 import { getTokenDetails } from "../erc20/utils";
 import { TOKEN_ADDRESSES_BY_SYMBOLS } from "../erc20/constants";
@@ -721,4 +722,33 @@ export function validateFacilitator(
   }
 
   return { isAllowed: false, resolvedUrl: facilitator };
+}
+
+type EvmX402Signer = EvmClientConfig["signer"];
+
+/**
+ * Builds the EVM signer the x402 exact scheme uses from an AgentKit wallet.
+ * Shared by X402ActionProvider and StablecoinGatewaysActionProvider so the
+ * `toSigner()` plus `readContract` wiring stays in one place.
+ *
+ * @param walletProvider - The EVM wallet that will sign the payment.
+ * @returns A signer for `registerExactEvmScheme`.
+ */
+export function createEvmX402Signer(walletProvider: EvmWalletProvider): EvmX402Signer {
+  const account = walletProvider.toSigner();
+  return {
+    ...account,
+    readContract: (args: {
+      address: `0x${string}`;
+      abi: readonly unknown[];
+      functionName: string;
+      args?: readonly unknown[];
+    }) =>
+      walletProvider.readContract({
+        address: args.address,
+        abi: args.abi as never,
+        functionName: args.functionName as never,
+        args: args.args as never,
+      }),
+  };
 }
