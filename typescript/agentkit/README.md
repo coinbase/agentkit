@@ -609,6 +609,23 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Stablecoin Gateways</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>screen_crypto_address</code></td>
+    <td width="768">Checks whether a wallet address is on OFAC's published list of sanctioned digital currency addresses before sending funds. Pays an x402 v2 quote in USDC on Base. Results are neutral sourced facts, not a compliance determination; individuals are not screened.</td>
+</tr>
+<tr>
+    <td width="200"><code>counterparty_check</code></td>
+    <td width="768">KYB preflight facts on a business counterparty (sanctions, LEI, domain, VAT format) before paying it. Pays an x402 v2 quote in USDC on Base. Results are neutral sourced facts, not a compliance determination; individuals are not screened.</td>
+</tr>
+<tr>
+    <td width="200"><code>merchant_check</code></td>
+    <td width="768">Neutral facts about a merchant (domain age, email auth, OFAC name screen, LEI/SEC match) before paying it. Pays an x402 v2 quote in USDC on Base. Results are neutral sourced facts, not a compliance determination; individuals are not screened.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Twitter</strong></summary>
 <table width="100%">
 <tr>
