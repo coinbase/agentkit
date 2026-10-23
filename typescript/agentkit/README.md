@@ -816,6 +816,36 @@ it will return payment details that can be used on retry.</td>
 </table>
 </details>
 <details>
+<summary><strong>YourAITools</strong></summary>
+<p>Pay-per-call x402 actions on <code>https://api.youraitools.co</code>, operated by the provider author. Prices are USDC per call (Base, and any other network the live 402 lists). Wallet payment is off by default and returns the 402 terms. Each tool also has a free preview route; these actions call the paid routes.</p>
+<table width="100%">
+<tr>
+    <td width="200"><code>payguard_screen_address</code></td>
+    <td width="768">Screens a crypto address against the US Treasury OFAC SDN list before a payment. Safety check only, not legal advice. $0.001 per call.</td>
+</tr>
+<tr>
+    <td width="200"><code>tokenverdict_check_token</code></td>
+    <td width="768">Safety check for a Base ERC-20 before buying, accepting, or approving it. $0.005 per call.</td>
+</tr>
+<tr>
+    <td width="200"><code>smartperps_smart_money</code></td>
+    <td width="768">Read-only Hyperliquid top-trader positioning for a coin. Not financial advice. $0.003 per call.</td>
+</tr>
+<tr>
+    <td width="200"><code>toolpick_find_paid_api</code></td>
+    <td width="768">Ranks paid x402 APIs for a task from the public discovery indexes. Rankings are not endorsements. $0.003 per call.</td>
+</tr>
+<tr>
+    <td width="200"><code>webread_read_url</code></td>
+    <td width="768">Reads a public web page as clean Markdown. $0.002 per call.</td>
+</tr>
+<tr>
+    <td width="200"><code>injectscan_scan_text</code></td>
+    <td width="768">Scans untrusted text for prompt injection before acting on it. Safety check only. $0.003 per call.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>ZeroX</strong></summary>
 <table width="100%">
 <tr>
