@@ -555,6 +555,35 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>SelfPaid</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>check_yield_rates</code></td>
+    <td width="768">Fetches live USDC lending APYs on Base Mainnet for Aave V3 and Morpho Vaults and estimates 100% capital recovery durations.</td>
+</tr>
+<tr>
+    <td width="200"><code>quote_zero_cost_payment</code></td>
+    <td width="768">Calculates required yield collateral deposit, maintenance fee, and days to 100% reimbursement for a zero-net-cost USDC payment.</td>
+</tr>
+<tr>
+    <td width="200"><code>prepare_zero_cost_payment</code></td>
+    <td width="768">Prepares a 4-call atomic zero-cost payment batch on Base and exports Safe Transaction Builder JSON for DAOs without broadcasting.</td>
+</tr>
+<tr>
+    <td width="200"><code>send_zero_cost_payment</code></td>
+    <td width="768">Executes a zero-net-cost USDC payment on Base Mainnet and deposits yield collateral into Aave V3 or Morpho with Zero Lockup.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_treasury_status</code></td>
+    <td width="768">Inspects liquid USDC, active yield-bearing collateral (aBasUSDC/maUSDC), and accrued yield interest on Base.</td>
+</tr>
+<tr>
+    <td width="200"><code>redeem_collateral</code></td>
+    <td width="768">Withdraws yield-bearing collateral from Aave V3 or Morpho back to liquid USDC with zero lockup penalty.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Superfluid</strong></summary>
 <table width="100%">
 <tr>

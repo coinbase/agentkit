@@ -23,6 +23,7 @@ export * from "./pyth";
 export * from "./moonwell";
 export * from "./morpho";
 export * from "./opensea";
+export * from "./selfpaid";
 export * from "./spl";
 export * from "./superfluid";
 export * from "./sushi";
