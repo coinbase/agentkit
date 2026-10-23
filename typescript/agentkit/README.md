@@ -204,6 +204,19 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>BotsRated</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>preflight</code></td>
+    <td width="768">Free lookup of BotsRated's latest unpaid probe of an x402 seller, with an optional check of the payTo about to be paid.</td>
+</tr>
+<tr>
+    <td width="200"><code>paid_check</code></td>
+    <td width="768">Paid ($0.001 USDC on Base, first 100 per day free) full facts for one seller host. Disabled unless a spend limit is configured.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Clanker</strong></summary>
 <table width="100%">
 <tr>
