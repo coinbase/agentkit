@@ -16,6 +16,12 @@ export interface CdpProviderConfig {
    * The CDP Wallet Secret.
    */
   walletSecret?: string;
+
+  /**
+   * Optional base URL for the CDP API, including the API path prefix.
+   * Defaults to the CDP SDK's production API URL when not provided.
+   */
+  basePath?: string;
 }
 
 /**
