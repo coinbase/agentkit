@@ -609,6 +609,19 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>SwapChan</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_swap_quote_from_swapchan</code></td>
+    <td width="768">Fetches ranked same-chain and cross-chain swap quotes from SwapChan (no API key).</td>
+</tr>
+<tr>
+    <td width="200"><code>execute_swap_on_swapchan</code></td>
+    <td width="768">Executes a swap or bridge at the best SwapChan route, sending an ERC20 approval first if needed.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Twitter</strong></summary>
 <table width="100%">
 <tr>
