@@ -140,6 +140,32 @@ describe("WalletProvider", () => {
     );
   });
 
+  it("should handle tracking rejections gracefully", () => {
+    (sendAnalyticsEvent as jest.Mock).mockImplementationOnce(() =>
+      Promise.reject(new Error("HTTP error! status: 400")),
+    );
+
+    const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const unhandledRejectionSpy = jest.fn();
+    process.on("unhandledRejection", unhandledRejectionSpy);
+
+    new MockWalletProvider();
+
+    return new Promise(resolve =>
+      setTimeout(() => {
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+          "Failed to track wallet provider initialization:",
+          expect.any(Error),
+        );
+        expect(unhandledRejectionSpy).not.toHaveBeenCalled();
+
+        process.off("unhandledRejection", unhandledRejectionSpy);
+        consoleWarnSpy.mockRestore();
+        resolve(null);
+      }, 0),
+    );
+  });
+
   it("should convert wallet provider to signer", () => {
     const provider = new MockWalletProvider();
     const signer = provider.toSigner();

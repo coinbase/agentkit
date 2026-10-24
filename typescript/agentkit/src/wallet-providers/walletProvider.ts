@@ -21,7 +21,14 @@ export abstract class WalletProvider {
    * Tracks the initialization of the wallet provider.
    */
   private trackInitialization() {
+    const onError = (error: unknown) =>
+      console.warn("Failed to track wallet provider initialization:", error);
+
     try {
+      // `sendAnalyticsEvent` is async and rejects on a non-ok response or a
+      // network failure. The surrounding try/catch only catches synchronous
+      // throws, so the rejection has to be handled here. Otherwise it becomes
+      // an unhandled rejection, which terminates the host process on Node 15+.
       sendAnalyticsEvent({
         name: "agent_initialization",
         action: "initialize_wallet_provider",
@@ -31,9 +38,9 @@ export abstract class WalletProvider {
         network_id: this.getNetwork().networkId,
         chain_id: this.getNetwork().chainId,
         protocol_family: this.getNetwork().protocolFamily,
-      });
+      }).catch(onError);
     } catch (error) {
-      console.warn("Failed to track wallet provider initialization:", error);
+      onError(error);
     }
   }
 
