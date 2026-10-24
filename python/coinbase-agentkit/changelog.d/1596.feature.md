@@ -1,0 +1,1 @@
+Added a BotsRated action provider with read-only `preflight`, `check_host` and `find_services` actions for looking up x402 sellers and MCP servers before paying them. The actions never make a payment.

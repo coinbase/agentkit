@@ -7,6 +7,10 @@ from .basename.basename_action_provider import (
     BasenameActionProvider,
     basename_action_provider,
 )
+from .botsrated.botsrated_action_provider import (
+    BotsRatedActionProvider,
+    botsrated_action_provider,
+)
 from .cdp.cdp_api_action_provider import CdpApiActionProvider, cdp_api_action_provider
 from .cdp.cdp_evm_wallet_action_provider import (
     CdpEvmWalletActionProvider,
@@ -44,6 +48,7 @@ __all__ = [
     "Action",
     "ActionProvider",
     "BasenameActionProvider",
+    "BotsRatedActionProvider",
     "CdpApiActionProvider",
     "CdpEvmWalletActionProvider",
     "CdpSmartWalletActionProvider",
@@ -64,6 +69,7 @@ __all__ = [
     "X402Config",
     "aave_action_provider",
     "basename_action_provider",
+    "botsrated_action_provider",
     "cdp_api_action_provider",
     "cdp_evm_wallet_action_provider",
     "cdp_smart_wallet_action_provider",
