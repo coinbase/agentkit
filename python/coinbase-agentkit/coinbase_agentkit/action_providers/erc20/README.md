@@ -34,6 +34,7 @@ tests/action_providers/erc20/
   - Takes amount, contract address, and destination as inputs
   - Constructs and sends the transfer transaction
   - Returns the **transaction hash** upon success
+  - Reports a transaction that was mined but reverted as failed, and one whose receipt could not be confirmed as sent but unconfirmed, both with the transaction hash
   - Handles decimal formatting automatically
 
 - `approve`: Approve a spender to transfer ERC20 tokens
@@ -41,6 +42,7 @@ tests/action_providers/erc20/
   - Allows a spender address to transfer tokens on behalf of the wallet
   - Takes amount, contract address, and spender address as inputs
   - Returns the **transaction hash** upon success
+  - Reports a reverted or unconfirmed approval the same way as `transfer`
   - Can be used to revoke allowances by setting amount to 0
 
 - `get_allowance`: Check the allowance for a spender of an ERC20 token

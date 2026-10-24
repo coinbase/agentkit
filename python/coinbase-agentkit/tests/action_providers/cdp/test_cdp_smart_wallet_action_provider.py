@@ -1,6 +1,7 @@
 """Tests for CDP Smart Wallet action provider."""
 
 import json
+from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -717,3 +718,88 @@ class TestSwapSchemaForSmartWallet:
 
         with pytest.raises(ValueError):
             SwapSchema(**invalid_input)
+
+
+# Regression tests for the Permit2 approval receipt check (coinbase/agentkit#1592). Unlike the
+# mocked-loop test above, these run the swap coroutine, so the receipt check actually executes.
+
+A1_FROM_TOKEN = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
+A1_TO_TOKEN = "0x4200000000000000000000000000000000000006"
+
+
+def _a1_provider_with(receipt_status):
+    """Build a smart-wallet provider whose approval receipt carries `receipt_status`."""
+    wallet = Mock()
+    wallet.get_network.return_value = Network(protocol_family="evm", network_id="base-mainnet")
+    wallet.send_transaction.return_value = "0xapproval"
+    wallet.wait_for_transaction_receipt.return_value = Mock(status=receipt_status)
+    wallet._paymaster_url = None
+
+    # A quote that reports an allowance issue, so the approval branch is taken.
+    quote = Mock()
+    quote.liquidity_available = True
+    issues = Mock(spec=["allowance"])  # spec so hasattr(issues, "balance") is False
+    issues.allowance = Mock(required_allowance="1", current_allowance="0")
+    quote.issues = issues
+    quote.execute = AsyncMock(return_value=Mock(user_op_hash="0xuserop"))
+
+    smart_account = Mock()
+    smart_account.quote_swap = AsyncMock(return_value=quote)
+    # The user-operation receipt genuinely is a string status; only the approval
+    # receipt above comes from web3.py.
+    smart_account.wait_for_user_operation = AsyncMock(return_value=Mock(status="complete"))
+    wallet._get_smart_account = AsyncMock(return_value=smart_account)
+
+    @asynccontextmanager
+    async def _client(*_a, **_k):
+        yield Mock()
+
+    wallet.get_client.return_value = _client()
+    return wallet
+
+
+def _a1_run_swap(wallet):
+    provider = CdpSmartWalletActionProvider()
+    with (
+        patch.object(provider, "_get_client", return_value=wallet.get_client.return_value),
+        patch(
+            "coinbase_agentkit.action_providers.cdp.cdp_smart_wallet_action_provider.get_token_details",
+            return_value={
+                "from_token_decimals": 6,
+                "to_token_decimals": 18,
+                "from_token_name": "USDC",
+                "to_token_name": "WETH",
+            },
+        ),
+        patch(
+            "coinbase_agentkit.action_providers.cdp.cdp_smart_wallet_action_provider.Web3"
+        ) as web3,
+    ):
+        web3.return_value.eth.contract.return_value.encodeABI.return_value = "0xdata"
+        return provider.swap(
+            wallet,
+            {
+                "from_token": A1_FROM_TOKEN,
+                "to_token": A1_TO_TOKEN,
+                "from_amount": "1",
+                "slippage_bps": 100,
+            },
+        )
+
+
+def test_swap_approval_accepts_integer_receipt_status():
+    """web3.py approval receipts carry status 1 on success; that must not read as a failure."""
+    result = _a1_run_swap(_a1_provider_with(1))
+    assert "Approval transaction failed" not in str(result)
+
+
+def test_swap_approval_rejects_reverted_receipt():
+    """Stop the swap when the approval receipt has status 0 (reverted)."""
+    result = _a1_run_swap(_a1_provider_with(0))
+    assert "Approval transaction failed" in str(result)
+
+
+def test_swap_approval_still_accepts_string_status():
+    """The string form the code was written for keeps working."""
+    result = _a1_run_swap(_a1_provider_with("complete"))
+    assert "Approval transaction failed" not in str(result)

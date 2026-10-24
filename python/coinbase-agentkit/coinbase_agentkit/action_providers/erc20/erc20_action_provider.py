@@ -1,5 +1,6 @@
 """ERC20 action provider."""
 
+from collections.abc import Mapping
 from decimal import Decimal
 from typing import Any
 
@@ -18,6 +19,36 @@ from .schemas import (
     TransferSchema,
 )
 from .utils import get_token_details
+
+_SUCCEEDED_RECEIPT_STATUSES = (1, "success", "complete")
+_FAILED_RECEIPT_STATUSES = (0, "reverted", "failed")
+
+
+def _receipt_outcome(receipt: Any) -> tuple[str, Any]:
+    """Read what a receipt says about a sent transaction.
+
+    Receipts do not share one vocabulary: web3.py receipts carry an integer status (1 or 0),
+    CDP transaction receipts say "success" or "reverted", and CDP smart-wallet user operations
+    say "complete" or "failed". Only a status that says the transaction succeeded counts as
+    done; a missing or unknown status is not read as success.
+
+    Args:
+        receipt (Any): The receipt the wallet provider returned.
+
+    Returns:
+        tuple[str, Any]: "succeeded", "failed" or "unconfirmed", and the receipt's status.
+
+    """
+    if isinstance(receipt, Mapping):
+        status = receipt.get("status")
+    else:
+        status = getattr(receipt, "status", None)
+
+    if status in _SUCCEEDED_RECEIPT_STATUSES:
+        return "succeeded", status
+    if status in _FAILED_RECEIPT_STATUSES:
+        return "failed", status
+    return "unconfirmed", status
 
 
 class ERC20ActionProvider(ActionProvider[EvmWalletProvider]):
@@ -145,7 +176,42 @@ class ERC20ActionProvider(ActionProvider[EvmWalletProvider]):
                 }
             )
 
-            wallet_provider.wait_for_transaction_receipt(tx_hash)
+            transfer_summary = (
+                f"Transfer of {validated_args.amount} of {token_details.name} "
+                f"({validated_args.contract_address}) to {validated_args.destination_address}"
+            )
+
+            # The transaction is sent once there is a hash. A failed receipt lookup (an RPC error,
+            # a timeout) does not mean the transfer failed, so it is not reported as an error:
+            # that leads agents to send the payment a second time.
+            try:
+                receipt = wallet_provider.wait_for_transaction_receipt(tx_hash)
+            except Exception as receipt_error:
+                return (
+                    f"{transfer_summary} was sent, but its receipt could not be confirmed yet "
+                    f"({receipt_error!s}).\n"
+                    f"Transaction hash for the transfer: {tx_hash}\n"
+                    "Do not send this transfer again: it may already be on chain. "
+                    "Check this transaction hash before retrying."
+                )
+
+            # A mined transaction can still revert (a paused or blacklisting token, a balance
+            # spent by a concurrent transaction). The receipt reports that without raising.
+            outcome, status = _receipt_outcome(receipt)
+            if outcome == "failed":
+                return (
+                    f"Error: {transfer_summary} failed on chain (receipt status: {status}): "
+                    "no tokens were transferred.\n"
+                    f"Transaction hash for the transfer: {tx_hash}"
+                )
+            if outcome == "unconfirmed":
+                return (
+                    f"{transfer_summary} was sent, but its receipt does not confirm success "
+                    f"(receipt status: {status}).\n"
+                    f"Transaction hash for the transfer: {tx_hash}\n"
+                    "Do not send this transfer again: it may already be on chain. "
+                    "Check this transaction hash before retrying."
+                )
 
             return (
                 f"Transferred {validated_args.amount} of {token_details.name} ({validated_args.contract_address}) "
@@ -212,7 +278,39 @@ class ERC20ActionProvider(ActionProvider[EvmWalletProvider]):
                 }
             )
 
-            wallet_provider.wait_for_transaction_receipt(tx_hash)
+            approval_summary = (
+                f"Approval of {validated_args.amount} {token_details.name} "
+                f"({validated_args.contract_address}) for spender {validated_args.spender_address}"
+            )
+
+            # As in transfer: once sent, a failed receipt lookup is reported as unconfirmed.
+            try:
+                receipt = wallet_provider.wait_for_transaction_receipt(tx_hash)
+            except Exception as receipt_error:
+                return (
+                    f"{approval_summary} was sent, but its receipt could not be confirmed yet "
+                    f"({receipt_error!s}).\n"
+                    f"Transaction hash: {tx_hash}\n"
+                    "Do not send this approval again: it may already be on chain. "
+                    "Check this transaction hash before retrying."
+                )
+
+            # As in transfer: a mined approval can revert, and only a successful status counts.
+            outcome, status = _receipt_outcome(receipt)
+            if outcome == "failed":
+                return (
+                    f"Error: {approval_summary} failed on chain (receipt status: {status}): "
+                    "the allowance was not changed.\n"
+                    f"Transaction hash: {tx_hash}"
+                )
+            if outcome == "unconfirmed":
+                return (
+                    f"{approval_summary} was sent, but its receipt does not confirm success "
+                    f"(receipt status: {status}).\n"
+                    f"Transaction hash: {tx_hash}\n"
+                    "Do not send this approval again: it may already be on chain. "
+                    "Check this transaction hash before retrying."
+                )
 
             return (
                 f"Approved {validated_args.amount} {token_details.name} ({validated_args.contract_address}) "

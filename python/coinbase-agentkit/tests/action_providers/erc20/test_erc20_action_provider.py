@@ -1,9 +1,11 @@
 """Tests for the ERC20 action provider."""
 
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 from web3 import Web3
+from web3.datastructures import AttributeDict
 
 from coinbase_agentkit.action_providers.erc20.constants import ERC20_ABI
 from coinbase_agentkit.action_providers.erc20.erc20_action_provider import (
@@ -26,6 +28,56 @@ from .conftest import (
     MOCK_TOKEN_NAME,
     create_token_details,
 )
+
+TRANSFER_ARGS = {
+    "amount": "1.5",
+    "contract_address": MOCK_CONTRACT_ADDRESS,
+    "destination_address": MOCK_DESTINATION,
+}
+APPROVE_ARGS = {
+    "amount": "100",
+    "contract_address": MOCK_CONTRACT_ADDRESS,
+    "spender_address": MOCK_SPENDER,
+}
+
+# web3.py receipts carry an integer status; CDP receipts and user operations use strings.
+SUCCEEDED_RECEIPTS = [
+    AttributeDict({"status": 1}),
+    {"status": 1},
+    SimpleNamespace(status="success"),
+    SimpleNamespace(status="complete"),
+]
+FAILED_RECEIPTS = [
+    AttributeDict({"status": 0}),
+    {"status": 0},
+    SimpleNamespace(status="reverted"),
+    SimpleNamespace(status="failed"),
+]
+UNCONFIRMED_RECEIPTS = [
+    {},
+    {"status": None},
+    SimpleNamespace(status="pending"),
+    None,
+]
+
+
+def run_transfer(mock_wallet):
+    """Run a transfer whose token lookups succeed."""
+    with patch(
+        "coinbase_agentkit.action_providers.erc20.erc20_action_provider.get_token_details"
+    ) as mock_get_token_details:
+        # Source token details, then None because the destination is not an ERC20 token
+        mock_get_token_details.side_effect = [create_token_details(), None]
+        return erc20_action_provider().transfer(mock_wallet, TRANSFER_ARGS)
+
+
+def run_approve(mock_wallet):
+    """Run an approval whose token lookup succeeds."""
+    with patch(
+        "coinbase_agentkit.action_providers.erc20.erc20_action_provider.get_token_details"
+    ) as mock_get_token_details:
+        mock_get_token_details.return_value = create_token_details()
+        return erc20_action_provider().approve(mock_wallet, APPROVE_ARGS)
 
 
 def test_get_balance_schema_valid():
@@ -109,6 +161,7 @@ def test_transfer_success(mock_wallet):
 
     mock_tx_hash = "0xghijkl987654321"
     mock_wallet.send_transaction.return_value = mock_tx_hash
+    mock_wallet.wait_for_transaction_receipt.return_value = AttributeDict({"status": 1})
 
     with patch(
         "coinbase_agentkit.action_providers.erc20.erc20_action_provider.get_token_details"
@@ -188,6 +241,63 @@ def test_transfer_error(mock_wallet):
     assert f"Error transferring the asset: {error!s}" in response
 
 
+@pytest.mark.parametrize("receipt", SUCCEEDED_RECEIPTS)
+def test_transfer_reports_success_for_each_receipt_vocabulary(mock_wallet, receipt):
+    """Test that every known success status is reported as a transfer."""
+    mock_wallet.send_transaction.return_value = "0xtransferhash"
+    mock_wallet.wait_for_transaction_receipt.return_value = receipt
+
+    response = run_transfer(mock_wallet)
+
+    assert response.startswith(f"Transferred {TRANSFER_ARGS['amount']}")
+    assert "Transaction hash for the transfer: 0xtransferhash" in response
+
+
+@pytest.mark.parametrize("receipt", FAILED_RECEIPTS)
+def test_transfer_reverted_is_not_reported_as_transferred(mock_wallet, receipt):
+    """Test that a mined transfer that reverted is reported as failed."""
+    mock_wallet.send_transaction.return_value = "0xtransferhash"
+    mock_wallet.wait_for_transaction_receipt.return_value = receipt
+
+    response = run_transfer(mock_wallet)
+
+    assert response.startswith("Error:")
+    assert "failed on chain" in response
+    assert "no tokens were transferred" in response
+    assert "Transaction hash for the transfer: 0xtransferhash" in response
+    assert "Transferred" not in response
+
+
+@pytest.mark.parametrize("receipt", UNCONFIRMED_RECEIPTS)
+def test_transfer_unknown_receipt_status_is_unconfirmed(mock_wallet, receipt):
+    """Test that a receipt that does not say success is not reported as a transfer."""
+    mock_wallet.send_transaction.return_value = "0xtransferhash"
+    mock_wallet.wait_for_transaction_receipt.return_value = receipt
+
+    response = run_transfer(mock_wallet)
+
+    assert "does not confirm success" in response
+    assert "Transaction hash for the transfer: 0xtransferhash" in response
+    assert "Do not send this transfer again" in response
+    assert "Transferred" not in response
+    assert not response.startswith("Error")
+
+
+def test_transfer_receipt_lookup_failure_is_sent_not_failed(mock_wallet):
+    """Test that a failed receipt lookup after sending is not reported as an error."""
+    mock_wallet.send_transaction.return_value = "0xtransferhash"
+    mock_wallet.wait_for_transaction_receipt.side_effect = Exception("RPC timed out")
+
+    response = run_transfer(mock_wallet)
+
+    mock_wallet.send_transaction.assert_called_once()
+    assert "was sent, but its receipt could not be confirmed yet (RPC timed out)" in response
+    assert "Transaction hash for the transfer: 0xtransferhash" in response
+    assert "Do not send this transfer again" in response
+    assert "Transferred" not in response
+    assert not response.startswith("Error")
+
+
 def test_supports_network():
     """Test network support based on protocol family."""
     test_cases = [
@@ -242,6 +352,7 @@ def test_approve_success(mock_wallet):
 
     mock_tx_hash = "0xapprove123456789"
     mock_wallet.send_transaction.return_value = mock_tx_hash
+    mock_wallet.wait_for_transaction_receipt.return_value = AttributeDict({"status": 1})
 
     with patch(
         "coinbase_agentkit.action_providers.erc20.erc20_action_provider.get_token_details"
@@ -314,6 +425,63 @@ def test_approve_error_transaction_fails(mock_wallet):
         response = provider.approve(mock_wallet, args)
 
     assert f"Error approving tokens: {error!s}" in response
+
+
+@pytest.mark.parametrize("receipt", SUCCEEDED_RECEIPTS)
+def test_approve_reports_success_for_each_receipt_vocabulary(mock_wallet, receipt):
+    """Test that every known success status is reported as an approval."""
+    mock_wallet.send_transaction.return_value = "0xapprovehash"
+    mock_wallet.wait_for_transaction_receipt.return_value = receipt
+
+    response = run_approve(mock_wallet)
+
+    assert response.startswith(f"Approved {APPROVE_ARGS['amount']} {MOCK_TOKEN_NAME}")
+    assert "Transaction hash: 0xapprovehash" in response
+
+
+@pytest.mark.parametrize("receipt", FAILED_RECEIPTS)
+def test_approve_reverted_is_not_reported_as_approved(mock_wallet, receipt):
+    """Test that a mined approval that reverted is reported as failed."""
+    mock_wallet.send_transaction.return_value = "0xapprovehash"
+    mock_wallet.wait_for_transaction_receipt.return_value = receipt
+
+    response = run_approve(mock_wallet)
+
+    assert response.startswith("Error:")
+    assert "failed on chain" in response
+    assert "the allowance was not changed" in response
+    assert "Transaction hash: 0xapprovehash" in response
+    assert "Approved" not in response
+
+
+@pytest.mark.parametrize("receipt", UNCONFIRMED_RECEIPTS)
+def test_approve_unknown_receipt_status_is_unconfirmed(mock_wallet, receipt):
+    """Test that a receipt that does not say success is not reported as an approval."""
+    mock_wallet.send_transaction.return_value = "0xapprovehash"
+    mock_wallet.wait_for_transaction_receipt.return_value = receipt
+
+    response = run_approve(mock_wallet)
+
+    assert "does not confirm success" in response
+    assert "Transaction hash: 0xapprovehash" in response
+    assert "Do not send this approval again" in response
+    assert "Approved" not in response
+    assert not response.startswith("Error")
+
+
+def test_approve_receipt_lookup_failure_is_sent_not_failed(mock_wallet):
+    """Test that a failed receipt lookup after sending is not reported as an error."""
+    mock_wallet.send_transaction.return_value = "0xapprovehash"
+    mock_wallet.wait_for_transaction_receipt.side_effect = Exception("RPC timed out")
+
+    response = run_approve(mock_wallet)
+
+    mock_wallet.send_transaction.assert_called_once()
+    assert "was sent, but its receipt could not be confirmed yet (RPC timed out)" in response
+    assert "Transaction hash: 0xapprovehash" in response
+    assert "Do not send this approval again" in response
+    assert "Approved" not in response
+    assert not response.startswith("Error")
 
 
 def test_allowance_schema_valid():
