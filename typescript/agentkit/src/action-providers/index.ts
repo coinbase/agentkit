@@ -5,6 +5,7 @@ export * from "./customActionProvider";
 
 export * from "./across";
 export * from "./alchemy";
+export * from "./assetfare";
 export * from "./baseAccount";
 export * from "./basename";
 export * from "./cdp";
