@@ -634,6 +634,23 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Pre-Trade Stack</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>pre_trade_guard</code></td>
+    <td width="768">Screens a payTo before paying it (catalog history, OFAC check, wallet age/activity → PROCEED / CAUTION / ABORT) for $0.005 USDC on Base via x402.</td>
+</tr>
+<tr>
+    <td width="200"><code>counterparty_report</code></td>
+    <td width="768">Builds a full multi-leg counterparty report on an x402 seller for $1.00 USDC on Base via x402.</td>
+</tr>
+<tr>
+    <td width="200"><code>receipt_verify</code></td>
+    <td width="768">Verifies a Base payment receipt on-chain (payer, payTo, amount) for $0.002 USDC on Base via x402.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>TrueMarkets</strong></summary>
 <table width="100%">
 <tr>
