@@ -634,6 +634,15 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>RouteVerdict</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>route_verdict</code></td>
+    <td width="768">Gets a pay-per-call trust verdict (TRUSTED / CAUTION / AVOID, 0-100 score, itemized reasons, liveness, payment terms, discovery-schema quality, catalog presence, diff) on an x402 endpoint for $0.05 USDC on Base via x402.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>TrueMarkets</strong></summary>
 <table width="100%">
 <tr>
