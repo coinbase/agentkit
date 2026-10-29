@@ -1,4 +1,4 @@
-import { openai } from "@ai-sdk/openai";
+import { createOpenAI } from "@ai-sdk/openai";
 import { getVercelAITools } from "@coinbase/agentkit-vercel-ai-sdk";
 import { generateText, stepCountIs } from "ai";
 import { prepareAgentkitAndWalletProvider } from "./prepareAgentkit";
@@ -11,8 +11,10 @@ import { prepareAgentkitAndWalletProvider } from "./prepareAgentkit";
  * Key Steps to Customize Your Agent:
  *
  * 1. Select your LLM:
- *    - Modify the `openai` instantiation to choose your preferred LLM
- *    - Configure model parameters like temperature and max tokens
+ *    - Set AI_API_KEY with your provider's API key
+ *    - Set AI_MODEL to choose your model (default: gpt-4o-mini)
+ *    - Set AI_BASE_URL to use a different provider (e.g., Anthropic, Google, OpenRouter)
+ *    - All major providers support the OpenAI-compatible API format
  *
  * 2. Instantiate your Agent:
  *    - Pass the LLM, tools, and memory into `createAgent()`
@@ -23,7 +25,7 @@ import { prepareAgentkitAndWalletProvider } from "./prepareAgentkit";
 type Agent = {
   tools: ReturnType<typeof getVercelAITools>;
   system: string;
-  model: ReturnType<typeof openai>;
+  model: ReturnType<ReturnType<typeof createOpenAI>>;
   stopWhen?: Parameters<typeof generateText>[0]["stopWhen"];
 };
 let agent: Agent;
@@ -46,8 +48,19 @@ export async function createAgent(): Promise<Agent> {
   }
 
   try {
-    // Initialize LLM: https://platform.openai.com/docs/models#gpt-4o
-    const model = openai.chat("gpt-4o-mini");
+    // Initialize LLM — works with any OpenAI-compatible provider.
+    // Configure via env vars: AI_API_KEY, AI_BASE_URL, AI_MODEL
+    // Examples:
+    //   OpenAI:      AI_API_KEY=sk-... (no AI_BASE_URL needed)
+    //   Anthropic:   AI_API_KEY=sk-ant-...  AI_BASE_URL=https://api.anthropic.com/v1/
+    //   Google:      AI_API_KEY=AIza...     AI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+    //   OpenRouter:  AI_API_KEY=sk-or-...   AI_BASE_URL=https://openrouter.ai/api/v1
+    const apiKey = process.env.AI_API_KEY || process.env.OPENAI_API_KEY;
+    const provider = createOpenAI({
+      ...(apiKey && { apiKey }),
+      ...(process.env.AI_BASE_URL && { baseURL: process.env.AI_BASE_URL }),
+    });
+    const model = provider.chat(process.env.AI_MODEL || "gpt-4o-mini");
 
     const { agentkit, walletProvider } = await prepareAgentkitAndWalletProvider();
 
