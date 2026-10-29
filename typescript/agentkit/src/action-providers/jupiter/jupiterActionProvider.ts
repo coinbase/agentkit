@@ -7,6 +7,7 @@ import { SwapTokenSchema } from "./schemas";
 import { PublicKey, VersionedTransaction } from "@solana/web3.js";
 import { createJupiterApiClient, SwapRequest } from "@jup-ag/api";
 import { getMint } from "@solana/spl-token";
+import { toTokenBaseUnits } from "../../utils";
 
 /**
  * JupiterActionProvider handles token swaps using Jupiter's API.
@@ -53,7 +54,7 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
       } catch (error) {
         return `Failed to fetch mint info for mint address ${args.inputMint}. Error: ${error}`;
       }
-      const amount = args.amount * 10 ** mintInfo.decimals;
+      const amount = Number(toTokenBaseUnits(args.amount, mintInfo.decimals));
 
       const quoteResponse = await jupiterApi.quoteGet({
         inputMint: inputMint.toBase58(),
