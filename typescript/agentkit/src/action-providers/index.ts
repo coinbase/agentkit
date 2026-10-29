@@ -26,6 +26,7 @@ export * from "./opensea";
 export * from "./spl";
 export * from "./superfluid";
 export * from "./sushi";
+export * from "./taskmarket";
 export * from "./truemarkets";
 export * from "./twitter";
 export * from "./wallet";
