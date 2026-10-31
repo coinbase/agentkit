@@ -117,6 +117,31 @@ describe("get_priors_agent_record", () => {
   });
 });
 
+describe("get_priors_credit_line", () => {
+  it("reads the line from the public hub API in USDG (atomic amounts)", async () => {
+    const fetchImpl = jest.fn(async () =>
+      Response.json({
+        agent: { line: { limit: 5000000, drawn: 1000000, available: 4000000 }, activeLoans: 1 },
+      }),
+    );
+    const out = await priorsActionProvider(fetchImpl as unknown as typeof fetch).getCreditLine(
+      wallet({}).provider,
+      { agentId: 437 },
+    );
+    expect(fetchImpl).toHaveBeenCalledWith("https://priors.trade/api/hub/agent?id=437");
+    expect(out).toBe("Agent #437's Priors line: 5 USDG, drawn 1, available 4; open loans: 1.");
+  });
+
+  it("says when an agent has no line", async () => {
+    const fetchImpl = jest.fn(async () => Response.json({ agent: {} }));
+    const out = await priorsActionProvider(fetchImpl as unknown as typeof fetch).getCreditLine(
+      wallet({}).provider,
+      { agentId: 9 },
+    );
+    expect(out).toBe("Agent #9 has no Priors line.");
+  });
+});
+
 describe("borrow_from_priors", () => {
   it("quotes the fee, borrows with it as the most to pay, and reads the loan from the Borrowed event", async () => {
     const { provider, sent } = wallet({ quoteFee: [1666n, 0n, 0n, 0n] });
