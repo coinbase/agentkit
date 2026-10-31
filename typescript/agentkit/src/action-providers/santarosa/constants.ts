@@ -1,8 +1,12 @@
-export const SANTA_ROSA_ROUTER_BASE = "0xcd4f88bca4e2653fd24f61b4ef3aaccd76310a57";
-export const SANTA_ROSA_DEFAULT_REFERRAL = "0xf8e8f98CB88199650Fa8e93965fDf4F02c2EA7a8";
-export const MORPHO_BLUE_BASE = "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb";
+export const SANTA_ROSA_ROUTER_BASE = "0xcd4f88bca4e2653fd24f61b4ef3aaccd76310a57" as const;
+export const SANTA_ROSA_DEFAULT_REFERRAL = "0x8f7670EA615910D0A86320e84A611577F68E3908" as const;
+export const MORPHO_BLUE_BASE = "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb" as const;
 
-export const SUPPORTED_NETWORKS = ["base-mainnet"];
+export const SUPPORTED_NETWORKS = ["base-mainnet", "base-sepolia"];
+
+export const SWAP_FEE_BPS = 3; // 0.03% (saving 88% vs Uniswap 0.25%)
+export const PROTOCOL_FEE_BPS = 2; // 0.02%
+export const BUILDER_REV_SHARE_BPS = 1; // 0.01% instant revenue share to builder
 
 export const SANTA_ROSA_ROUTER_ABI = [
   {

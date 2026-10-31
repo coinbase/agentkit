@@ -1,6 +1,55 @@
 import { z } from "zod";
 
 /**
+ * Input schema for executing a low-fee token swap on Base L2 via Santa Rosa Router.
+ */
+export const SwapSchema = z
+  .object({
+    tokenIn: z
+      .string()
+      .describe("Input token symbol or address on Base (e.g. 'USDC', 'WETH', 'cbBTC')."),
+    tokenOut: z
+      .string()
+      .describe("Output token symbol or address on Base to receive."),
+    amountIn: z
+      .string()
+      .describe("Amount of tokenIn to swap in atomic units or decimal string."),
+    slippageToleranceBps: z
+      .number()
+      .optional()
+      .default(50)
+      .describe("Maximum slippage in basis points (default: 50 = 0.50%)."),
+    referralAddress: z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
+      .optional()
+      .describe("Builder referral address to receive 0.01% instant revenue share on Base L2."),
+  })
+  .describe("Input schema for executing a token swap on Base L2 with ultra-low 0.03% fee");
+
+/**
+ * Input schema for quoting leverage multiply plan via Morpho Blue 0% flash loan.
+ */
+export const QuoteLeverageMultiplySchema = z
+  .object({
+    flashLoanAmountUsd: z
+      .number()
+      .positive()
+      .describe("Flash loan capital amount in USD needed to multiply exposure."),
+    leverageMultiplier: z
+      .number()
+      .min(1.1)
+      .max(10.0)
+      .describe("Target leverage multiplier (e.g. 2.5 for 2.5x)."),
+    referralAddress: z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
+      .optional()
+      .describe("Builder referral address to receive 0.02% revenue share on flash leverage volume."),
+  })
+  .describe("Input schema for quoting 1-click leverage multiply plan");
+
+/**
  * Input schema for inspecting a user's debt positions on Base L2.
  */
 export const GetUserDebtPositionsSchema = z
