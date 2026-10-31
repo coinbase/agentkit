@@ -124,19 +124,50 @@ def test_morpho_withdraw_success():
     """Test successful morpho withdraw with valid parameters."""
     mock_wallet = MagicMock()
     mock_wallet.send_transaction.return_value = MOCK_TX_HASH
+    mock_wallet.read_contract.return_value = MOCK_DECIMALS
 
-    with patch("web3.eth.Contract") as mock_contract:
-        mock_contract.return_value.encode_abi.return_value = b"encoded_data"
+    result = morpho_action_provider().withdraw(
+        mock_wallet,
+        {
+            "vault_address": MOCK_VAULT_ADDRESS,
+            "assets": "1.0",
+            "receiver": MOCK_RECEIVER,
+            "token_address": MOCK_TOKEN_ADDRESS,
+        },
+    )
 
-        result = morpho_action_provider().withdraw(
-            mock_wallet,
-            {"vault_address": MOCK_VAULT_ADDRESS, "assets": "1.0", "receiver": MOCK_RECEIVER},
-        )
+    assert MOCK_TX_HASH in result
+    assert "Withdrawn 1.0" in result
+    mock_wallet.send_transaction.assert_called_once()
+    mock_wallet.wait_for_transaction_receipt.assert_called_once_with(MOCK_TX_HASH)
+    mock_wallet.read_contract.assert_called_once()
 
-        assert MOCK_TX_HASH in result
-        assert "Withdrawn 1.0" in result
-        mock_wallet.send_transaction.assert_called_once()
-        mock_wallet.wait_for_transaction_receipt.assert_called_once_with(MOCK_TX_HASH)
+
+def test_morpho_withdraw_non_18_decimal_token():
+    """Test morpho withdraw with a non-18-decimal token (e.g. USDC with 6 decimals)."""
+    mock_wallet = MagicMock()
+    mock_wallet.send_transaction.return_value = MOCK_TX_HASH
+    mock_wallet.read_contract.return_value = 6  # USDC has 6 decimals
+
+    result = morpho_action_provider().withdraw(
+        mock_wallet,
+        {
+            "vault_address": MOCK_VAULT_ADDRESS,
+            "assets": "100",
+            "receiver": MOCK_RECEIVER,
+            "token_address": MOCK_TOKEN_ADDRESS,
+        },
+    )
+
+    assert MOCK_TX_HASH in result
+    assert "Withdrawn 100" in result
+
+    # Verify the read_contract was called to fetch decimals
+    mock_wallet.read_contract.assert_called_once()
+
+    # Verify send_transaction was called (the encoded data would contain the correct atomic amount)
+    mock_wallet.send_transaction.assert_called_once()
+    mock_wallet.wait_for_transaction_receipt.assert_called_once_with(MOCK_TX_HASH)
 
 
 def test_morpho_withdraw_zero_amount():
@@ -145,7 +176,12 @@ def test_morpho_withdraw_zero_amount():
 
     result = morpho_action_provider().withdraw(
         mock_wallet,
-        {"vault_address": MOCK_VAULT_ADDRESS, "assets": "0.0", "receiver": MOCK_RECEIVER},
+        {
+            "vault_address": MOCK_VAULT_ADDRESS,
+            "assets": "0.0",
+            "receiver": MOCK_RECEIVER,
+            "token_address": MOCK_TOKEN_ADDRESS,
+        },
     )
 
     assert "Error: Assets amount must be greater than 0" in result
@@ -158,7 +194,12 @@ def test_morpho_withdraw_negative_amount():
 
     result = morpho_action_provider().withdraw(
         mock_wallet,
-        {"vault_address": MOCK_VAULT_ADDRESS, "assets": "-1.0", "receiver": MOCK_RECEIVER},
+        {
+            "vault_address": MOCK_VAULT_ADDRESS,
+            "assets": "-1.0",
+            "receiver": MOCK_RECEIVER,
+            "token_address": MOCK_TOKEN_ADDRESS,
+        },
     )
 
     assert "Error: Assets amount must be greater than 0" in result
@@ -175,6 +216,7 @@ def test_morpho_withdraw_invalid_amount():
                 "vault_address": MOCK_VAULT_ADDRESS,
                 "assets": "invalid_amount",
                 "receiver": MOCK_RECEIVER,
+                "token_address": MOCK_TOKEN_ADDRESS,
             },
         )
 
@@ -183,16 +225,19 @@ def test_morpho_withdraw_transaction_error():
     """Test morpho withdraw with transaction error."""
     mock_wallet = MagicMock()
     mock_wallet.send_transaction.side_effect = Exception("Transaction failed")
+    mock_wallet.read_contract.return_value = MOCK_DECIMALS
 
-    with patch("web3.eth.Contract") as mock_contract:
-        mock_contract.return_value.encode_abi.return_value = b"encoded_data"
+    result = morpho_action_provider().withdraw(
+        mock_wallet,
+        {
+            "vault_address": MOCK_VAULT_ADDRESS,
+            "assets": "1.0",
+            "receiver": MOCK_RECEIVER,
+            "token_address": MOCK_TOKEN_ADDRESS,
+        },
+    )
 
-        result = morpho_action_provider().withdraw(
-            mock_wallet,
-            {"vault_address": MOCK_VAULT_ADDRESS, "assets": "1.0", "receiver": MOCK_RECEIVER},
-        )
-
-        assert "Error withdrawing from Morpho Vault" in result
+    assert "Error withdrawing from Morpho Vault" in result
 
 
 # Network Support Tests
