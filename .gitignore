@@ -139,3 +139,6 @@ docs/
 # pnpm
 typescript/.pnpm-store
 typescript/.pnp.*
+
+# Uniswap v4 agentkit folder
+agentkit-uniswap-v4/
