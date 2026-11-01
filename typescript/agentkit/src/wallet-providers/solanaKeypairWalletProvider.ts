@@ -13,6 +13,7 @@ import {
   SignatureResult,
   SignatureStatus,
   SignatureStatusConfig,
+  SendTransactionError,
 } from "@solana/web3.js";
 import bs58 from "bs58";
 import {
@@ -211,7 +212,14 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
    */
   async sendTransaction(transaction: VersionedTransaction): Promise<string> {
     const signature = await this.#connection.sendTransaction(transaction);
-    await this.waitForSignatureResult(signature);
+    const confirmation = await this.waitForSignatureResult(signature);
+    if (confirmation.value.err !== null) {
+      throw new SendTransactionError({
+        action: "send",
+        signature,
+        transactionMessage: JSON.stringify(confirmation.value.err),
+      });
+    }
     return signature;
   }
 
@@ -318,9 +326,7 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
 
     tx.sign([this.#keypair]);
 
-    const signature = await this.#connection.sendTransaction(tx);
-    await this.waitForSignatureResult(signature);
-    return signature;
+    return this.sendTransaction(tx);
   }
 
   /**
