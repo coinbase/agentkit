@@ -2,4 +2,4 @@
 "@coinbase/agentkit": patch
 ---
 
-Reject failed Solana keypair transaction confirmations instead of returning their signatures as completed sends. Preserve the low-level confirmation response API.
+Fixed Solana keypair transaction sends to reject confirmed execution failures instead of returning their signatures as completed sends. Preserved the low-level confirmation response API.
