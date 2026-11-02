@@ -54,7 +54,7 @@ def test_preflight_check_payment_required():
         )
         assert result["success"] is False
         assert result["error"] == "x402check_payment_required"
-        assert "0.002" in result["hint"]
+        assert "0.01" in result["hint"]
 
 
 def test_verify_payto_mismatch():

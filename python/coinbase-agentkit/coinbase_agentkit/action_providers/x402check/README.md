@@ -14,7 +14,7 @@ from coinbase_agentkit import x402check_action_provider, create_x402check_before
 provider = x402check_action_provider(
     # optional; defaults to https://x402check.dev or X402CHECK_URL
     base_url="https://x402check.dev",
-    # supply a prior PAYMENT-SIGNATURE for the $0.002 Exact USDC Base charge
+    # supply a prior PAYMENT-SIGNATURE for the $0.01 Exact USDC Base charge
     payment_headers={"PAYMENT-SIGNATURE": "..."},
 )
 

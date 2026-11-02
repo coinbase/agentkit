@@ -135,7 +135,7 @@ def create_x402check_before_payment(
 
     Args:
         base_url: Override API origin.
-        payment_headers: Optional PAYMENT-SIGNATURE headers for the $0.002 charge.
+        payment_headers: Optional PAYMENT-SIGNATURE headers for the $0.01 charge.
         abort_on_caution: Treat caution like avoid (default False).
         fail_open: Allow payment when the check itself fails (default False).
 

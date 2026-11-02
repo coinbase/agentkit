@@ -31,7 +31,7 @@ import {
 } from "@coinbase/agentkit";
 import { wrapFetchWithPayment } from "@x402/fetch";
 
-// Prefer a payment-wrapped fetch so the $0.002 Exact USDC Base charge settles.
+// Prefer a payment-wrapped fetch so the $0.01 Exact USDC Base charge settles.
 const paidFetch = wrapFetchWithPayment(fetch, /* your signer + ExactEvmScheme */);
 
 const x402check = x402checkActionProvider({
@@ -54,7 +54,7 @@ const x402check = x402checkActionProvider({
 
 ### Billing
 
-x402check charges **$0.002 USDC Exact on Base (`eip155:8453`)** per tool checked (x402 v2 `PAYMENT-SIGNATURE`). Pass `config.fetch = wrapFetchWithPayment(...)` or supply a prior `paymentHeaders` map. Unpaid calls return a structured `x402check_payment_required` error with a hint — they do not throw past the action boundary.
+x402check charges **$0.01 USDC Exact on Base (`eip155:8453`)** per tool checked (x402 v2 `PAYMENT-SIGNATURE`). Pass `config.fetch = wrapFetchWithPayment(...)` or supply a prior `paymentHeaders` map. Unpaid calls return a structured `x402check_payment_required` error with a hint — they do not throw past the action boundary.
 
 ## Actions
 

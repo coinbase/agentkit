@@ -27,7 +27,7 @@ class X402checkActionProvider(ActionProvider[WalletProvider]):
 
         Args:
             base_url: Override API origin (default https://x402check.dev or X402CHECK_URL).
-            payment_headers: Optional headers (e.g. PAYMENT-SIGNATURE) for the $0.002 charge.
+            payment_headers: Optional headers (e.g. PAYMENT-SIGNATURE) for the $0.01 charge.
 
         """
         super().__init__("x402check", [])
@@ -62,7 +62,7 @@ class X402checkActionProvider(ActionProvider[WalletProvider]):
                 "error": "x402check_payment_required",
                 "status": 402,
                 "hint": (
-                    "x402check charges $0.002 USDC Exact on Base (eip155:8453) per check. "
+                    "x402check charges $0.01 USDC Exact on Base (eip155:8453) per check. "
                     "Pass payment_headers with a PAYMENT-SIGNATURE, or use a payment-aware HTTP client."
                 ),
             }
@@ -119,7 +119,7 @@ Use when about to settle / sign PAYMENT-SIGNATURE to a third-party x402 tool:
 - uptime and recent probe history for that URL only
 
 Returns verdict ok|caution|avoid + history. If verdict=avoid do NOT pay.
-Billed $0.002 USDC Exact on Base per check. Endpoint+history only — not OFAC/simulation.
+Billed $0.01 USDC Exact on Base per check. Endpoint+history only — not OFAC/simulation.
 """,
         schema=PreflightCheckSchema,
     )
@@ -144,7 +144,7 @@ Billed $0.002 USDC Exact on Base per check. Endpoint+history only — not OFAC/s
         name="verify_payto",
         description="""Verify the receiving wallet (payTo) from an x402 seller's live 402 challenge before signing USDC.
 
-Same $0.002 billing as preflight_check. Optionally compare against expected_pay_to.
+Same $0.01 billing as preflight_check. Optionally compare against expected_pay_to.
 Deny payment when verdict=avoid. Escalate on caution or payTo mismatch.
 """,
         schema=VerifyPayToSchema,
@@ -202,7 +202,7 @@ def x402check_action_provider(
 
     Args:
         base_url: Optional API origin override.
-        payment_headers: Optional payment headers for the $0.002 charge.
+        payment_headers: Optional payment headers for the $0.01 charge.
 
     Returns:
         X402checkActionProvider instance.

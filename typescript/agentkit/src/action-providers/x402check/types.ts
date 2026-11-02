@@ -56,7 +56,7 @@ export interface X402checkActionProviderConfig {
 
   /**
    * Headers to attach on every preflight request (e.g. a prior `PAYMENT-SIGNATURE`
-   * for the $0.002 Exact USDC Base charge). Prefer {@link fetch} when using
+   * for the $0.01 Exact USDC Base charge). Prefer {@link fetch} when using
    * `@x402/fetch` `wrapFetchWithPayment`.
    */
   paymentHeaders?: Record<string, string>;

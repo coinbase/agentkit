@@ -11,7 +11,7 @@ import { resolveBaseUrl } from "./utils";
  * X402checkActionProvider — trust-preflight x402 seller URLs before paying.
  *
  * Calls https://x402check.dev (or a configured origin). Each check costs
- * $0.002 Exact USDC on Base (eip155:8453). Pass a payment-wrapped `fetch`
+ * $0.01 Exact USDC on Base (eip155:8453). Pass a payment-wrapped `fetch`
  * (e.g. `@x402/fetch` wrapFetchWithPayment) via config so 402s settle.
  *
  * Also see {@link createX402checkBeforePayment} to wire the same check into
@@ -63,7 +63,7 @@ Use when about to settle / sign PAYMENT-SIGNATURE to a third-party x402 tool:
 Returns verdict ok|caution|avoid + history (checks, uptimePct, payToChanges, priceChanges).
 If verdict=avoid do NOT pay. If caution, escalate. If ok, still enforce maxAmount.
 
-Billed $0.002 USDC Exact on Base per check (configure payment-wrapped fetch).
+Billed $0.01 USDC Exact on Base per check (configure payment-wrapped fetch).
 Not an OFAC/drainer/simulation scan of a wallet — endpoint + history only.
     `,
     schema: PreflightCheckSchema,
@@ -92,7 +92,7 @@ Verify the receiving wallet (payTo) from an x402 seller's live 402 challenge bef
 Extracts payTo + network + priceUsd from the live challenge and returns that tool's
 payTo change history (wallet rotations). Optionally compare against expectedPayTo.
 
-Same $0.002 USDC Exact billing as preflight_check (same /preflight endpoint).
+Same $0.01 USDC Exact billing as preflight_check (same /preflight endpoint).
 Deny payment when verdict=avoid. Escalate on caution or payTo mismatch vs expectedPayTo.
     `,
     schema: VerifyPayToSchema,

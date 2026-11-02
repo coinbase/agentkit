@@ -79,7 +79,7 @@ export async function fetchPreflight(
       status: 402,
       paymentRequired,
       hint:
-        "x402check charges $0.002 USDC Exact on Base (eip155:8453) per check. " +
+        "x402check charges $0.01 USDC Exact on Base (eip155:8453) per check. " +
         "Pass config.fetch = wrapFetchWithPayment(...) from @x402/fetch, or set paymentHeaders with a PAYMENT-SIGNATURE.",
     });
   }
