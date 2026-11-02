@@ -44,7 +44,8 @@ export interface X402checkToolCheck {
 }
 
 /**
- * Configuration for {@link X402checkActionProvider}.
+ * Configuration for {@link X402checkActionProvider} and
+ * {@link createX402checkBeforePayment}.
  */
 export interface X402checkActionProviderConfig {
   /**
@@ -68,31 +69,67 @@ export interface X402checkActionProviderConfig {
   fetch?: typeof fetch;
 
   /**
-   * When true, `verify_payto` / beforePayment treat `caution` like `avoid`.
-   * Default: false (caution is reported but does not abort).
+   * When true, beforePayment treats `caution` like `avoid` (abort).
+   * Default: false (caution is reported via `code`/`reason` but does not abort).
    */
   abortOnCaution?: boolean;
+
+  /**
+   * When true, preflight failures (network/HTTP/payment errors, missing url)
+   * allow payment to proceed (`abort: false`, `code: "x402check:unavailable"`).
+   * Default: false (fail closed — refuse when the check cannot evaluate).
+   */
+  failOpen?: boolean;
 }
 
 /**
- * Context passed to a `beforePayment` hook (matches coinbase/agentkit#1454).
- * Defined locally so this helper works before that PR merges.
+ * Context passed to a `beforePayment` hook.
+ *
+ * Locally mirrors coinbase/agentkit#1454's `X402BeforePaymentContext` so
+ * {@link createX402checkBeforePayment} is a drop-in for `X402Config.beforePayment`
+ * before that PR merges. Defined here on purpose — do not import unmerged
+ * symbols from the x402 provider.
  */
 export interface X402BeforePaymentContext {
-  payTo?: string | null;
+  /** The service URL being paid. */
   url: string;
-  network?: string | null;
-  asset?: string | null;
-  amount?: string | number | null;
-  method?: string | null;
+  /** Recipient address (v2 `payTo`), or `null` if the selected option did not declare one. */
+  payTo: string | null;
+  /** CAIP-2 network of the selected payment option. */
+  network: string;
+  /** Asset address / identifier being paid. */
+  asset: string;
+  /** Amount to be paid, as the option declared it (atomic or whole-unit string). */
+  amount: string;
+  /** HTTP method of the request being paid for. */
+  method: string;
+  /**
+   * The full PaymentRequired object as decoded from the 402, or `null`.
+   * Canonical source for a requirements-integrity check.
+   */
+  paymentRequirements?: Record<string, unknown> | null;
+  /**
+   * The raw, still-base64-encoded `PAYMENT-REQUIRED` header value (v2), or `null`.
+   */
+  paymentRequirementsHeader?: string | null;
 }
 
 /**
  * Decision returned by a `beforePayment` hook.
+ *
+ * Exact shape of coinbase/agentkit#1454's `X402BeforePaymentDecision`
+ * (`{ abort, reason?, code? }`). No extra fields, so #1454's unrecognized-shape
+ * fail-closed guard accepts it as a recognized decision.
  */
 export interface X402BeforePaymentDecision {
-  abort?: boolean;
+  /** When `true`, the payment is refused and never signed or settled. */
+  abort: boolean;
+  /** Optional human-readable reason surfaced in the action result. */
   reason?: string;
-  /** Full ToolCheck when a live preflight ran (useful for logging). */
-  check?: X402checkToolCheck;
+  /**
+   * Optional machine-readable reason code (e.g. `x402check:avoid`),
+   * preserved across the hook boundary so autonomous callers can branch
+   * without parsing the human-readable `reason`.
+   */
+  code?: string;
 }
