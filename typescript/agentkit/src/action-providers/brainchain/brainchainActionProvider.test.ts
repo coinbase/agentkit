@@ -208,7 +208,7 @@ describe("BrainChainActionProvider", () => {
         )
         .mockResolvedValueOnce(new Response("the summary"));
       const view = JSON.parse(
-        await new BrainChainActionProvider().getTask(wallet, { order: ORDER }),
+        await new BrainChainActionProvider().getTask(wallet, { order: ORDER, waitSeconds: 0 }),
       );
       expect(fetchMock).toHaveBeenNthCalledWith(
         1,
@@ -227,7 +227,7 @@ describe("BrainChainActionProvider", () => {
         }),
       );
       const view = JSON.parse(
-        await new BrainChainActionProvider().getTask(wallet, { order: ORDER }),
+        await new BrainChainActionProvider().getTask(wallet, { order: ORDER, waitSeconds: 0 }),
       );
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(view.resultText).toBeUndefined();
@@ -238,7 +238,9 @@ describe("BrainChainActionProvider", () => {
         Response.json({ order: ORDER, state: "refunded", refundTx: "0xfeed" }),
       );
       expect(
-        JSON.parse(await new BrainChainActionProvider().getTask(wallet, { order: ORDER })),
+        JSON.parse(
+          await new BrainChainActionProvider().getTask(wallet, { order: ORDER, waitSeconds: 0 }),
+        ),
       ).toMatchObject({
         done: true,
         next: expect.stringContaining("0xfeed"),
@@ -247,17 +249,36 @@ describe("BrainChainActionProvider", () => {
         Response.json({ order: ORDER, state: "posted", task: { status: "hired" } }),
       );
       expect(
-        JSON.parse(await new BrainChainActionProvider().getTask(wallet, { order: ORDER })),
+        JSON.parse(
+          await new BrainChainActionProvider().getTask(wallet, { order: ORDER, waitSeconds: 0 }),
+        ),
       ).toMatchObject({
         done: false,
         retryAfterSeconds: 60,
       });
     });
 
+    it("waits for the order to finish before answering", async () => {
+      jest.useFakeTimers();
+      fetchMock
+        .mockResolvedValueOnce(
+          Response.json({ order: ORDER, state: "posted", task: { status: "delivered" } }),
+        )
+        .mockResolvedValueOnce(Response.json({ order: ORDER, state: "refunded" }));
+      const pending = new BrainChainActionProvider().getTask(wallet, {
+        order: ORDER,
+        waitSeconds: 30,
+      });
+      await jest.advanceTimersByTimeAsync(10_000);
+      expect(JSON.parse(await pending)).toMatchObject({ state: "refunded", done: true });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      jest.useRealTimers();
+    });
+
     it("asks to read again when the desk does not know the order yet", async () => {
       fetchMock.mockResolvedValueOnce(Response.json({ error: "Not found." }, { status: 404 }));
       const view = JSON.parse(
-        await new BrainChainActionProvider().getTask(wallet, { order: ORDER }),
+        await new BrainChainActionProvider().getTask(wallet, { order: ORDER, waitSeconds: 0 }),
       );
       expect(view).toMatchObject({ done: false, retryAfterSeconds: 60 });
     });

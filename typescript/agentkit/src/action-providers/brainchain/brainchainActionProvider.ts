@@ -15,6 +15,10 @@ import {
   USDC_UNITS,
 } from "./constants";
 
+/** How long get_task waits for an order by default, and how often it reads it meanwhile. */
+const DEFAULT_WAIT_SECONDS = 45;
+const POLL_SECONDS = 10;
+
 /**
  * Configuration for the BrainChain action provider.
  */
@@ -132,6 +136,7 @@ function guidance(
       return wait(60, "Waiting for Jev to hire a model.");
     case "hired":
       return wait(60, "A model is working on the task.");
+    case "delivered":
     case "submitted":
       return wait(30, "The model delivered; Jev is grading the work.");
     case "disputed":
@@ -290,9 +295,9 @@ Returns an order id; read it with get_task until done. If the reply says possibl
     if (response.ok && signed) {
       const order = typeof reply.order === "string" ? reply.order : orderOf(signed);
       return JSON.stringify({
-        ...reply,
         ...receipt(order),
-        next: "Read the order with get_task; results usually arrive within minutes.",
+        ...(typeof reply.state === "string" ? { state: reply.state } : {}),
+        next: "Read the order with get_task, which waits for progress; results usually arrive within minutes.",
       });
     }
     // The desk refuses a brief (400) or a payment (402) before settling; any
@@ -324,8 +329,9 @@ Returns an order id; read it with get_task until done. If the reply says possibl
 
 Inputs:
 - order: the order id returned by post_task
+- waitSeconds: optional, how long to wait for the order to finish before answering (default 45)
 
-Call again after retryAfterSeconds until done is true.`,
+Waits for progress before answering. Call again until done is true.`,
     schema: GetTaskSchema,
   })
   async getTask(
@@ -338,35 +344,60 @@ Call again after retryAfterSeconds until done is true.`,
         error: "BrainChain orders are read on Base mainnet and Base Sepolia only.",
       });
     }
+    // A model cannot pause between calls, so the action waits for progress itself.
+    const deadline = Date.now() + (args.waitSeconds ?? DEFAULT_WAIT_SECONDS) * 1000;
+    for (;;) {
+      const view = await this.readOrder(desk, args.order);
+      if (view.done || Date.now() + POLL_SECONDS * 1000 > deadline) return JSON.stringify(view);
+      await new Promise(resolve => setTimeout(resolve, POLL_SECONDS * 1000));
+    }
+  }
+
+  /**
+   * Checks if the action provider supports the given network.
+   *
+   * @param network - The network to check
+   * @returns True on Base mainnet and Base Sepolia
+   */
+  supportsNetwork = (network: Network) => this.deskFor(network) !== undefined;
+
+  /**
+   * Reads an order once.
+   *
+   * @param desk - The desk the order was paid on
+   * @param order - The order id
+   * @returns The order with what its state means and when to read it again
+   */
+  private async readOrder(desk: Desk, order: string): Promise<Record<string, unknown>> {
     let response: Response;
     try {
-      response = await fetch(`${desk.desk}/x402/tasks/${args.order}`, {
+      response = await fetch(`${desk.desk}/x402/tasks/${order}`, {
         signal: AbortSignal.timeout(20_000),
       });
     } catch (error) {
-      return JSON.stringify({
-        order: args.order,
+      return {
+        order,
         error: `Could not reach the desk (${message(error)})`,
         done: false,
         retryAfterSeconds: 30,
-      });
+      };
     }
     if (response.status === 404) {
-      return JSON.stringify({
-        order: args.order,
+      return {
+        order,
         error: "The desk has no order with this id",
         done: false,
         next: "If post_task said possiblyCharged, the payment may still be settling: read the order again in a minute.",
         retryAfterSeconds: 60,
-      });
+      };
     }
     if (!response.ok) {
-      return JSON.stringify({
-        order: args.order,
+      return {
+        order,
         error: `The desk answered ${response.status}`,
         done: false,
         retryAfterSeconds: 60,
-      });
+      };
     }
     const view = (await response.json()) as Record<string, unknown>;
     // Only results served by the desk itself are fetched; anything else stays a link.
@@ -384,16 +415,8 @@ Call again after retryAfterSeconds until done is true.`,
         view.resultError = `The result could not be fetched; it is at ${view.result}`;
       }
     }
-    return JSON.stringify({ ...view, ...guidance(view, desk) });
+    return { ...view, ...guidance(view, desk) };
   }
-
-  /**
-   * Checks if the action provider supports the given network.
-   *
-   * @param network - The network to check
-   * @returns True on Base mainnet and Base Sepolia
-   */
-  supportsNetwork = (network: Network) => this.deskFor(network) !== undefined;
 
   /**
    * The desk that takes payment on a network.

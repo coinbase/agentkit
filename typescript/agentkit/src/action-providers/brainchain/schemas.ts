@@ -27,6 +27,15 @@ export const GetTaskSchema = z
       .string()
       .regex(/^0x[0-9a-fA-F]{64}$/, "An order id is 0x followed by 64 hex characters")
       .describe("The order id returned by post_task"),
+    waitSeconds: z
+      .number()
+      .int()
+      .min(0)
+      .max(120)
+      .optional()
+      .describe(
+        "How long to wait for the order to finish before answering, in seconds (default 45, 0 to read once)",
+      ),
   })
   .strip()
   .describe("Read a BrainChain order: status, grade and result");
