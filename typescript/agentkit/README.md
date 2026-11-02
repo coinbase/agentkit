@@ -204,6 +204,27 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Bursar</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>inspect</code></td>
+    <td width="768">Reads the Bursar mandate the agent spends from: its balance, the per-call, daily and monthly caps, and the providers and capabilities it allows. Nothing is spent.</td>
+</tr>
+<tr>
+    <td width="200"><code>quote</code></td>
+    <td width="768">Asks the mandate what it would decide about one spend before making it, with the reason for a refusal. Nothing is spent.</td>
+</tr>
+<tr>
+    <td width="200"><code>pay</code></td>
+    <td width="768">Pays a provider for one job from the mandate, inside its limits; the amount is held in escrow on Robinhood Chain until the provider delivers.</td>
+</tr>
+<tr>
+    <td width="200"><code>settlements</code></td>
+    <td width="768">Lists what the agent has paid for through Bursar and where each payment stands, or reads one settlement by id.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Clanker</strong></summary>
 <table width="100%">
 <tr>
