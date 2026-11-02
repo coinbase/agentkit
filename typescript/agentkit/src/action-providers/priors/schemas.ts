@@ -4,7 +4,7 @@ const agentId = z
   .number()
   .int()
   .positive()
-  .describe("The ERC-8004 agent id on Robinhood Chain, e.g. 9233");
+  .describe("The ERC-8004 agent id on Robinhood Chain, e.g. 1234");
 
 export const GetAgentRecordSchema = z
   .object({ agentId })

@@ -81,7 +81,7 @@ const res402 = (amount: string) =>
 describe("Priors schemas", () => {
   it("parses a payment with its defaults, and refuses one without its price", () => {
     const ok = PayX402WithCreditSchema.safeParse({
-      url: "https://check.blockpin.dev/check",
+      url: "https://seller.example/check",
       agentId: 437,
       maxPrice: "0.10",
     });
@@ -100,7 +100,7 @@ describe("get_priors_agent_record", () => {
       Response.json({
         agents: [
           {
-            name: "Blockpin",
+            name: "Seller",
             record: { loansRepaid: 2, volumeRepaidUsdg: 10, activeLoans: 1, defaulted: false },
             scoreV2: { lateRepayments: 1, score: 0, rungName: "started" },
           },
@@ -109,9 +109,9 @@ describe("get_priors_agent_record", () => {
     );
     const out = await priorsActionProvider(fetchImpl as unknown as typeof fetch).getAgentRecord(
       wallet({}).provider,
-      { agentId: 9233 },
+      { agentId: 1234 },
     );
-    expect(fetchImpl).toHaveBeenCalledWith("https://priors.trade/api/check?agent=9233");
+    expect(fetchImpl).toHaveBeenCalledWith("https://priors.trade/api/check?agent=1234");
     expect(out).toContain("loans repaid: 2 (10 USDG)");
     expect(out).toContain("defaulted: no");
   });
@@ -207,7 +207,7 @@ describe("pay_x402_with_priors_credit", () => {
     const out = await priorsActionProvider(fetchImpl as unknown as typeof fetch).payX402WithCredit(
       provider,
       {
-        url: "https://check.blockpin.dev/check",
+        url: "https://seller.example/check",
         agentId: 437,
         maxPrice: "0.10",
         maxBorrow: "0",
@@ -224,7 +224,7 @@ describe("pay_x402_with_priors_credit", () => {
     const out = await priorsActionProvider(fetchImpl as unknown as typeof fetch).payX402WithCredit(
       provider,
       {
-        url: "https://check.blockpin.dev/check",
+        url: "https://seller.example/check",
         agentId: 437,
         maxPrice: "0.10",
         maxBorrow: "0",
@@ -245,7 +245,7 @@ describe("pay_x402_with_priors_credit", () => {
     const out = await priorsActionProvider(fetchImpl as unknown as typeof fetch).payX402WithCredit(
       provider,
       {
-        url: "https://check.blockpin.dev/check",
+        url: "https://seller.example/check",
         agentId: 437,
         maxPrice: "0.10",
         maxBorrow: "1",
@@ -253,7 +253,7 @@ describe("pay_x402_with_priors_credit", () => {
       },
     );
     expect(sent.map(t => t.to)).toEqual([PRIORS_POOL]);
-    expect(paidFetch).toHaveBeenCalledWith("https://check.blockpin.dev/check");
+    expect(paidFetch).toHaveBeenCalledWith("https://seller.example/check");
     expect(out).toContain("Borrowed 1 USDG first: loan #50900");
     expect(out).toContain("Paid 0.1 USDG");
   });
@@ -264,7 +264,7 @@ describe("pay_x402_with_priors_credit", () => {
     const out = await priorsActionProvider(fetchImpl as unknown as typeof fetch).payX402WithCredit(
       provider,
       {
-        url: "https://check.blockpin.dev/check",
+        url: "https://seller.example/check",
         agentId: 437,
         maxPrice: "0.10",
         maxBorrow: "1",
