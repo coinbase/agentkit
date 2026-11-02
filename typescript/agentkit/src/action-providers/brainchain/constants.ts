@@ -9,6 +9,7 @@ export const BRAINCHAIN_NETWORKS = {
     network: "eip155:8453",
     usdc: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
     payTo: "0xafB0C4Ef895D4895040cdC6435B96D3EE8350c6E",
+    chain: "Base",
     finalAfter: "about six hours",
   },
   "base-sepolia": {
@@ -16,6 +17,7 @@ export const BRAINCHAIN_NETWORKS = {
     network: "eip155:84532",
     usdc: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
     payTo: "0xf848984c8A0D9E49Cc9C97380C62b34C6f3b97D1",
+    chain: "Base Sepolia",
     finalAfter: "about an hour",
   },
 } as const;

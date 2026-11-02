@@ -179,6 +179,26 @@ describe("BrainChainActionProvider", () => {
       expect(result.next).toMatch(/do not post again/);
     });
 
+    it("explains a refused payment by the wallet's USDC balance", async () => {
+      deskReply = async () => Response.json({}, { status: 402 });
+      wallet.readContract.mockResolvedValue(500_000n as never);
+      const provider = new BrainChainActionProvider({ budgetUsdc: 1 });
+      const short = JSON.parse(await provider.postTask(wallet, TASK));
+      expect(short.error).toBe(
+        "This wallet (0x0000000000000000000000000000000000000001) holds 0.5 USDC on Base, and a task costs 1 USDC. Add USDC to it and post again. Nothing was charged.",
+      );
+
+      wallet.readContract.mockResolvedValue(5_000_000n as never);
+      const required = Buffer.from(
+        JSON.stringify({ x402Version: 2, error: "invalid_signature" }),
+      ).toString("base64");
+      deskReply = async () =>
+        new Response("{}", { status: 402, headers: { "payment-required": required } });
+      expect(JSON.parse(await provider.postTask(wallet, TASK)).error).toBe(
+        "The desk refused the payment (invalid_signature). Nothing was charged.",
+      );
+    });
+
     it("refuses networks BrainChain does not take payment on", async () => {
       wallet.getNetwork.mockReturnValue({ protocolFamily: "evm", networkId: "ethereum-mainnet" });
       const result = JSON.parse(await new BrainChainActionProvider().postTask(wallet, TASK));

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { keccak256, toBytes } from "viem";
+import { erc20Abi, keccak256, toBytes } from "viem";
 import { x402Client, wrapFetchWithPayment } from "@x402/fetch";
 import { registerExactEvmScheme } from "@x402/evm/exact/client";
 import { ActionProvider } from "../actionProvider";
@@ -312,7 +312,11 @@ Returns an order id; read it with get_task until done. If the reply says possibl
     }
     this.spent -= amount;
     const reason =
-      typeof reply.error === "string" ? reply.error : `The desk answered ${response.status}.`;
+      response.status === 402
+        ? await this.refusal(walletProvider, desk, amount, response)
+        : typeof reply.error === "string"
+          ? reply.error
+          : `The desk answered ${response.status}.`;
     return JSON.stringify({ error: `${reason} Nothing was charged.` });
   }
 
@@ -416,6 +420,45 @@ Waits for progress before answering. Call again until done is true.`,
       }
     }
     return { ...view, ...guidance(view, desk) };
+  }
+
+  /**
+   * Explains why the desk refused a signed payment.
+   *
+   * @param walletProvider - The wallet that signed the payment
+   * @param desk - The desk that refused it
+   * @param price - What the payment was for, in USDC base units
+   * @param response - The desk's 402 answer
+   * @returns A short balance when the wallet's USDC explains the refusal, else the desk's reason
+   */
+  private async refusal(
+    walletProvider: EvmWalletProvider,
+    desk: Desk,
+    price: bigint,
+    response: Response,
+  ): Promise<string> {
+    const { address } = walletProvider.toSigner();
+    const balance = await walletProvider
+      .readContract({
+        address: desk.usdc,
+        abi: erc20Abi,
+        functionName: "balanceOf",
+        args: [address],
+      })
+      .catch(() => undefined);
+    if (typeof balance === "bigint" && balance < price) {
+      return `This wallet (${address}) holds ${usdc(balance)} on ${desk.chain}, and a task costs ${usdc(price)}. Add USDC to it and post again.`;
+    }
+    const required = response.headers.get("payment-required");
+    let error: unknown;
+    try {
+      error = required
+        ? JSON.parse(Buffer.from(required, "base64").toString("utf8")).error
+        : undefined;
+    } catch {
+      error = undefined;
+    }
+    return `The desk refused the payment${typeof error === "string" ? ` (${error})` : ""}.`;
   }
 
   /**
