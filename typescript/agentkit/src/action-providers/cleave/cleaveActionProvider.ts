@@ -52,11 +52,14 @@ interface PlannedSwap {
   request: PlanSwapInput;
   plan: Body;
   validUntil: number;
+  expiresAt: number;
 }
 
 const DELEGATION_PREFIX = "0xef0100";
 
 const SMART_WALLETS = new Set(["cdp_smart_wallet_provider", "zerodev_wallet_provider"]);
+
+const USER_OP_WALLETS = new Set(["cdp_smart_wallet_provider"]);
 
 const GAS_PAY_CHAINS: readonly number[] = [1, 10, 137, 8453, 42161];
 
@@ -71,7 +74,26 @@ const PINNED_SYMBOLS: Record<number, readonly string[]> = {
 
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
 
-const APPROVE = "0x095ea7b3";
+const PULL_WORDS: Record<string, readonly number[]> = {
+  "0xab33b1ec": [2],
+  "0xe0b7822f": [9],
+  "0x84022178": [2, 9],
+  "0x9edd28ad": [1],
+  "0xad5425c6": [4],
+  "0x2e1a7d4d": [0],
+};
+
+const RECIPIENT_WORD: Record<string, number> = {
+  "0x84022178": 14,
+  "0xf79eec2e": 14,
+  "0x9edd28ad": 4,
+  "0xad5425c6": 1,
+  "0x609ea081": 2,
+};
+
+const USDC_DECIMALS: Record<number, number> = { 1: 6, 10: 6, 56: 18, 137: 6, 8453: 6, 42161: 6 };
+
+const PLAN_ONLY = "This route can't be executed by this provider; plan only";
 
 const NATIVE = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
 
@@ -93,14 +115,15 @@ function pinned(token: string, chainId: number): boolean {
 }
 
 /**
- * Tells whether a token is USDC or the chain's native or wrapped native coin, by symbol.
+ * Reads a 32-byte word of calldata after the selector.
  *
- * @param token - The token as given.
- * @param chainId - The chain the token is on.
- * @returns True for a pinned symbol.
+ * @param data - The calldata.
+ * @param k - The word index.
+ * @returns The word as 64 hex digits, or null when the calldata is too short.
  */
-function pinnedSymbol(token: string, chainId: number): boolean {
-  return (PINNED_SYMBOLS[chainId] ?? []).includes(token.trim().toLowerCase());
+function word(data: string, k: number): string | null {
+  const w = data.slice(10 + 64 * k, 10 + 64 * (k + 1));
+  return w.length === 64 ? w.toLowerCase() : null;
 }
 
 /**
@@ -304,6 +327,7 @@ ${CHECKS}
 Important notes:
 - execute_swap sends exactly this plan, once, by its requestId, before validUntil (about a minute), from the same wallet on the same chain; after that, plan again
 - execute_swap only runs plans whose sellToken and buyToken were given as addresses, or as USDC or the chain's native or wrapped native coin
+- execute_swap does not run a swap to another chain that swaps on arrival, or a plan that takes more than the requested amount; those can be planned only
 - Before execute_swap, show the user the warnings, the recipient, the amounts, the costs and the slippage, and get their confirmation
 - Do not raise slippage above the default 50 bps without the user's consent
 `,
@@ -338,6 +362,9 @@ Important notes:
         request,
         plan,
         validUntil: plan.validUntil,
+        expiresAt:
+          Date.now() / 1000 +
+          (typeof plan.quotedAt === "number" ? plan.validUntil - plan.quotedAt : 0),
       });
       return respond({
         ...plan,
@@ -365,7 +392,8 @@ It takes the following inputs:
 
 It sends exactly the calls of that plan, in order, through the wallet, and waits for each one, stopping at the first that fails.
 It runs a plan only once and only before its validUntil; otherwise it refuses, and the swap must be planned again.
-It also refuses when the plan's sellToken or buyToken was a symbol other than USDC or the chain's native or wrapped native coin, and, for a sell token other than those, when the approve is not for exactly the requested amount in the token's decimals, read from the chain.
+It also refuses when the plan's sellToken or buyToken was a symbol other than USDC or the chain's native or wrapped native coin, and when the plan does not take exactly the requested amount of an ERC-20 sell token (decimals read from the chain for a token given by address).
+A swap to another chain runs only when its transfer pays the recipient directly; a route that swaps on arrival is plan only, and so is a route that takes more than the requested amount.
 Before every call it checks that the wallet still has the address and chain the plan was made for.
 It returns the hashes and the requestId; then use track_swap with chainId, txHash and requestId to follow the swap.
 
@@ -406,10 +434,19 @@ Important notes:
       );
     }
     const calls = plan.calls as Body[];
-    const amountCheck = await this.#checkApprove(walletProvider, request, plan, calls);
+    const main = String(calls[calls.length - 1]?.data ?? "");
+    if (toChainId !== chainId) {
+      const k = RECIPIENT_WORD[main.slice(0, 10)];
+      const w = k === undefined ? null : word(main, k);
+      const recipient = (request.recipient ?? request.wallet).toLowerCase();
+      if (w === null || w !== `${"0".repeat(24)}${recipient.slice(2)}`) {
+        return refusal("plan_only", `${PLAN_ONLY}: it does not deliver to the recipient directly`);
+      }
+    }
+    const amountCheck = await this.#checkPull(walletProvider, request, plan, main);
     if (amountCheck !== null) return amountCheck;
 
-    const smart = SMART_WALLETS.has(walletProvider.getName());
+    const smart = USER_OP_WALLETS.has(walletProvider.getName());
     const label = smart ? "userOpHash" : "txHash";
     const sent: Body[] = [];
     const base = { chainId, requestId: plan.requestId, sent };
@@ -421,8 +458,8 @@ Important notes:
           : `A call may have been sent and may still be mined (${errorText(error)}). Track it with track_swap before any retry; do not execute this swap again until then`,
         base,
       );
-    for (const call of calls) {
-      if (Date.now() / 1000 >= kept.validUntil) {
+    for (const [index, call] of calls.entries()) {
+      if (Date.now() / 1000 >= Math.min(kept.validUntil, kept.expiresAt)) {
         return refusal(
           "plan_expired",
           sent.length === 0
@@ -468,7 +505,7 @@ Important notes:
       if (entry.status !== "success" && entry.status !== "complete") {
         return refusal(
           "transaction_failed",
-          sent.length > 1
+          index > 0 && index === calls.length - 1
             ? "A call failed; the calls after it were not sent. The approve before it stays mined: the Cleave contract keeps an allowance for exactly the planned amount"
             : "A call failed; the calls after it were not sent",
           base,
@@ -710,59 +747,69 @@ Important notes:
   }
 
   /**
-   * Checks that the approve of a sell token other than USDC or the native or wrapped native coin is for exactly the requested amount.
+   * Checks that the main call pulls exactly the requested amount of an ERC-20 sell token.
    *
    * @param walletProvider - The wallet provider, used to read the token's decimals.
    * @param request - The plan_swap request.
    * @param plan - The checked plan.
-   * @param calls - The plan's calls.
+   * @param main - The main call's calldata.
    * @returns The refusal as a JSON string, or null when the plan may be sent.
    */
-  async #checkApprove(
+  async #checkPull(
     walletProvider: EvmWalletProvider,
     request: PlanSwapInput,
     plan: Body,
-    calls: Body[],
+    main: string,
   ): Promise<string | null> {
-    if (pinnedSymbol(request.sellToken, request.fromChainId)) return null;
     const token = String((plan.send as Body | undefined)?.token ?? "").toLowerCase();
     if (token === NATIVE) return null;
-    const approves = calls.slice(0, -1).filter(c => String(c.data).startsWith(APPROVE));
-    const last = approves[approves.length - 1];
-    if (last === undefined) {
-      return refusal(
-        "amount_unchecked",
-        "The plan has no approve to check the amount sold against; it cannot be executed here",
-      );
+    const words = PULL_WORDS[main.slice(0, 10)];
+    if (words === undefined) {
+      return refusal("plan_only", `${PLAN_ONLY}: the amount it takes cannot be checked`);
     }
+    const symbol = request.sellToken.trim().toLowerCase();
     let decimals: number;
-    try {
-      decimals = Number(
-        await walletProvider.readContract({
-          address: token as Hex,
-          abi: erc20Abi,
-          functionName: "decimals",
-        }),
-      );
-    } catch (error) {
-      return refusal(
-        "amount_unchecked",
-        `The sell token's decimals could not be read: ${errorText(error)}`,
-      );
+    if (symbol === "usdc") {
+      decimals = USDC_DECIMALS[request.fromChainId] ?? -1;
+    } else if (!ADDRESS.test(symbol)) {
+      decimals = 18;
+    } else {
+      try {
+        decimals = Number(
+          await walletProvider.readContract({
+            address: token as Hex,
+            abi: erc20Abi,
+            functionName: "decimals",
+          }),
+        );
+      } catch (error) {
+        return refusal(
+          "amount_unchecked",
+          `The sell token's decimals could not be read: ${errorText(error)}`,
+        );
+      }
     }
     const fraction = request.amount.split(".")[1] ?? "";
-    const approved = BigInt(`0x${String(last.data).slice(74, 138)}`);
     if (
       !Number.isInteger(decimals) ||
       decimals < 0 ||
       decimals > 77 ||
-      fraction.length > decimals ||
-      approved !== parseUnits(request.amount, decimals)
+      fraction.length > decimals
     ) {
       return refusal(
         "amount_mismatch",
-        "The plan's approve is not for exactly the requested amount of the sell token; nothing was sent",
+        "The requested amount does not fit the sell token's decimals",
       );
+    }
+    const wanted = parseUnits(request.amount, decimals);
+    for (const k of words) {
+      const w = word(main, k);
+      if (w === null || BigInt(`0x${w}`) !== wanted) {
+        return refusal(
+          "amount_mismatch",
+          "The plan does not take exactly the requested amount of the sell token; it can be planned but not executed here",
+        );
+      }
     }
     return null;
   }

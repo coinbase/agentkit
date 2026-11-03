@@ -32,7 +32,9 @@ cleave/
   - Runs a plan only once, only before its `validUntil`, and only from the wallet address and chain it was made for; otherwise the swap must be planned again
   - Checks the wallet's address and chain again before every call
   - Needs `sellToken` and `buyToken` given as contract addresses, or as USDC or the chain's native or wrapped native coin
-  - For a sell token other than those, reads its `decimals()` from the chain through the wallet provider and needs the approve to be for exactly the requested amount
+  - For every ERC-20 sell, needs the main call to take exactly the requested amount, in the token's decimals (read from the chain through the wallet provider for a token given by address); a wallet that already holds an allowance works
+  - Measured routes that take more than the requested amount, such as stETH, can be planned but not executed
+  - A swap to another chain runs only when its transfer pays the recipient (or the wallet) directly; a route that swaps on arrival through a destination message can be planned but not executed
   - Records each hash as soon as it is sent: `txHash`, or `userOpHash` on smart wallets with the mined `txHash` once the wallet reports it
   - If a send or a receipt wait throws, returns `outcome_unknown` with every hash sent. For a smart wallet it first waits for the user operation once more, and the instruction is to check the wallet's user operation before any retry; otherwise it is to track the swap with `track_swap`
 
