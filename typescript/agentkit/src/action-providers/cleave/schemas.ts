@@ -68,7 +68,16 @@ export const CleavePlanSwapSchema = z
  * Input schema for executing a swap.
  */
 export const CleaveExecuteSwapSchema = z
-  .object({ ...swapFields, confirmed })
+  .object({
+    ...swapFields,
+    confirmed,
+    minimumReceive: amount
+      .nullable()
+      .optional()
+      .describe(
+        "receive.minimum from the plan the user confirmed, in buyToken units; the swap is refused when the new plan's minimum is lower",
+      ),
+  })
   .strip()
   .describe("Instructions for executing a swap");
 

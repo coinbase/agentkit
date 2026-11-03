@@ -48,6 +48,48 @@ type Body = Record<string, unknown>;
 
 const DELEGATION_PREFIX = "0xef0100";
 
+const SMART_WALLETS = new Set(["cdp_smart_wallet_provider", "zerodev_wallet_provider"]);
+
+const GAS_PAY_CHAINS: readonly number[] = [1, 10, 137, 8453, 42161];
+
+const DECIMAL = /^([0-9]+)(?:\.([0-9]+))?$/;
+
+const CHECKS = `Before a plan is returned or sent, it is checked: every call is from the wallet on its chain; the last call goes to a contract and function on Cleave's published list that fits the route and pays the recipient where its calldata names one; any earlier call only approves the sell token to that contract for exactly what the last call pulls. For USDC and the native or wrapped native coin, the amount sold is also checked against the request.
+The checks do not cover the price or the amount received. For other sell tokens they do not check the amount sold against the request, so show the user send.amount and pullsAtMost; when sellToken is another symbol, also show send.token.`;
+
+/**
+ * Turns an error into short text for the model, without URLs.
+ *
+ * @param error - The error.
+ * @returns The text.
+ */
+function errorText(error: unknown): string {
+  const e = error as { shortMessage?: unknown; message?: unknown } | null;
+  const text =
+    typeof e?.shortMessage === "string"
+      ? e.shortMessage
+      : typeof e?.message === "string"
+        ? e.message
+        : String(error);
+  return text.replace(/\b(?:https?|wss?):\/\/\S+/gi, "[url]").slice(0, 300);
+}
+
+/**
+ * Compares two decimal strings.
+ *
+ * @param value - The decimal to compare.
+ * @param floor - The decimal it must reach.
+ * @returns Whether value is at least floor, or null when either is not a decimal.
+ */
+function decimalAtLeast(value: string, floor: string): boolean | null {
+  const a = DECIMAL.exec(value);
+  const b = DECIMAL.exec(floor);
+  if (a === null || b === null) return null;
+  const scale = Math.max(a[2]?.length ?? 0, b[2]?.length ?? 0);
+  const units = (m: RegExpExecArray) => BigInt(m[1] + (m[2] ?? "").padEnd(scale, "0"));
+  return units(a) >= units(b);
+}
+
 /**
  * Returns a refusal in the shape the Cleave API uses.
  *
@@ -160,11 +202,12 @@ It takes the following inputs:
 - buyToken: The token to receive, a listed symbol or a contract address; it must be on Cleave's token list
 - amount: The amount of sellToken in whole units, such as "25.5"
 - toChainId: (Optional) The chain of the token to receive; defaults to the wallet's chain
-- recipient: (Optional) Who receives; defaults to the wallet
+- recipient: (Optional) Who receives; defaults to the wallet. A smart contract wallet must give it for a swap to another chain
 - maxSlippageBps: (Optional) The slippage limit in basis points; defaults to 50
 
-The answer leads with blocking notices and warnings, then gives the route, what is sent and received, every third-party cost except network gas, the expected time, validUntil and the calls in signing order, each checked against Cleave's published contracts.
+The answer leads with blocking notices and warnings, then gives the route, what is sent and received, every third-party cost except network gas, the expected time, validUntil and the calls in signing order.
 Cleave's fee is included in the price.
+${CHECKS}
 
 Important notes:
 - Before execute_swap, show the user the warnings, the recipient, the amounts and the slippage, and get their confirmation
@@ -180,10 +223,12 @@ Important notes:
     const fromChainId = walletChain(walletProvider);
     if (fromChainId === null) return this.#unsupported();
     const request = this.#planRequest(walletProvider, fromChainId, args);
+    const needsRecipient = await this.#needsRecipient(walletProvider, request);
+    if (needsRecipient !== null) return needsRecipient;
     try {
-      return JSON.stringify(
-        screenPlanSwap(request, await callTool("plan_swap", request, this.#options)),
-      );
+      const plan = screenPlanSwap(request, await callTool("plan_swap", request, this.#options));
+      const { next: _next, ...shown } = plan;
+      return JSON.stringify(shown);
     } catch (error) {
       return this.#unreachable(error);
     }
@@ -200,16 +245,20 @@ Important notes:
     name: "execute_swap",
     description: `
 This tool executes a token swap with Cleave from the wallet on its current chain.
-It takes the same inputs as plan_swap, plus confirmed, which must be true.
+It takes the same inputs as plan_swap, plus:
+- confirmed: Must be true
+- minimumReceive: (Optional) receive.minimum from the plan_swap answer the user confirmed, in buyToken units; the swap is refused when the new plan's minimum is lower
 
-It plans the swap again with the same inputs and checks every call against Cleave's published contracts, the wallet, the chain, the tokens and the amounts.
-It sends nothing when a check fails, when the plan is blocked or when it has expired.
+It plans the swap again with the same inputs and runs the same checks as plan_swap.
+It sends nothing when a check fails, when the plan is blocked, when it has expired or when its minimum is below minimumReceive.
 Otherwise it sends the calls in order through the wallet and waits for each one, stopping at the first that fails.
-It returns the transaction hashes and the requestId; then use track_swap to follow the swap.
+It returns the hashes and the requestId; then use track_swap to follow the swap.
+${CHECKS}
 
 Important notes:
 - Call it only after the user has seen the plan_swap answer and confirmed it, and only then set confirmed to true
-- The amounts can differ slightly from the plan the user saw; the slippage limit still applies
+- Pass minimumReceive from the plan the user confirmed
+- If it returns outcome_unknown, a call may have been sent: track it with track_swap before any retry
 - Never call it again for a swap that may still be in flight; check track_swap first, since sending again can pay twice
 `,
     schema: CleaveExecuteSwapSchema,
@@ -224,6 +273,8 @@ Important notes:
     const fromChainId = walletChain(walletProvider);
     if (fromChainId === null) return this.#unsupported();
     const request = this.#planRequest(walletProvider, fromChainId, args);
+    const needsRecipient = await this.#needsRecipient(walletProvider, request);
+    if (needsRecipient !== null) return needsRecipient;
     let plan: Body;
     try {
       plan = screenPlanSwap(request, await callTool("plan_swap", request, this.#options));
@@ -235,51 +286,70 @@ Important notes:
     if (plan.blocked !== false || calls.length === 0) {
       return refusal("blocked", "The plan is blocked; nothing was sent", { notices: plan.notices });
     }
-    const wallet = request.wallet.toLowerCase();
-    for (const call of calls) {
-      if (String(call.from).toLowerCase() !== wallet || Number(call.chainId) !== fromChainId) {
-        return refusal("address_not_allowed", "A call is not from this wallet on this chain");
+    if (args.minimumReceive != null) {
+      const minimum = (plan.receive as Body | undefined)?.minimum;
+      const kept =
+        typeof minimum === "string" ? decimalAtLeast(minimum, args.minimumReceive) : null;
+      if (kept !== true) {
+        return refusal(
+          "minimum_changed",
+          `The new plan's minimum receive is ${String(minimum)}, below the confirmed ${args.minimumReceive}; nothing was sent. Show the user the new plan`,
+          { requestId: plan.requestId, receive: plan.receive },
+        );
       }
     }
     const validUntil = typeof plan.validUntil === "number" ? plan.validUntil : 0;
-    const sent: { hash: string; status: string }[] = [];
-    try {
-      for (const call of calls) {
-        if (Date.now() / 1000 >= validUntil) {
-          return refusal(
-            "plan_expired",
-            "The plan expired before all calls were sent; plan again",
-            {
-              requestId: plan.requestId,
-              sent,
-            },
-          );
-        }
-        const hash = await walletProvider.sendTransaction({
+    const label = SMART_WALLETS.has(walletProvider.getName()) ? "userOpHash" : "txHash";
+    const sent: Body[] = [];
+    const unknown = (error: unknown) =>
+      refusal(
+        "outcome_unknown",
+        `A call may have been sent and may still be mined (${errorText(error)}). Track it with track_swap before any retry; do not execute this swap again until then`,
+        { chainId: fromChainId, requestId: plan.requestId, sent },
+      );
+    for (const call of calls) {
+      if (Date.now() / 1000 >= validUntil) {
+        return refusal("plan_expired", "The plan expired before all calls were sent; plan again", {
+          requestId: plan.requestId,
+          sent,
+        });
+      }
+      let hash: Hex;
+      try {
+        hash = await walletProvider.sendTransaction({
           to: call.to as Hex,
           data: call.data as Hex,
           value: BigInt(call.value as string),
         });
-        const receipt = await walletProvider.waitForTransactionReceipt(hash);
-        const status = String(receipt?.status);
-        sent.push({ hash: String(receipt?.transactionHash ?? hash), status });
-        if (status !== "success" && status !== "complete") {
-          return refusal("transaction_failed", "A call failed; the calls after it were not sent", {
-            requestId: plan.requestId,
-            sent,
-          });
-        }
+      } catch (error) {
+        return unknown(error);
       }
-    } catch (error) {
-      return refusal("send_failed", `Sending a call failed: ${error}`, {
-        requestId: plan.requestId,
-        sent,
-      });
+      const entry: Body = { [label]: hash, status: "pending" };
+      sent.push(entry);
+      let receipt: { status?: unknown; transactionHash?: unknown } | undefined;
+      try {
+        receipt = await walletProvider.waitForTransactionReceipt(hash);
+      } catch (error) {
+        return unknown(error);
+      }
+      entry.status = String(receipt?.status);
+      if (label === "userOpHash" && typeof receipt?.transactionHash === "string") {
+        entry.txHash = receipt.transactionHash;
+      }
+      if (entry.status !== "success" && entry.status !== "complete") {
+        return refusal(
+          "transaction_failed",
+          sent.length > 1
+            ? "A call failed; the calls after it were not sent. The approve before it stays mined: the Cleave contract keeps an allowance for exactly the planned amount"
+            : "A call failed; the calls after it were not sent",
+          { chainId: fromChainId, requestId: plan.requestId, sent },
+        );
+      }
     }
     return JSON.stringify({
       requestId: plan.requestId,
       chainId: fromChainId,
-      txHash: sent[sent.length - 1]?.hash,
+      txHash: sent[sent.length - 1]?.txHash,
       sent,
       route: plan.route,
       send: plan.send,
@@ -355,6 +425,7 @@ When the wallet already holds some gas, plan_swap can plan a swap to the native 
   ): Promise<string> {
     const payChainId = walletChain(walletProvider);
     if (payChainId === null) return this.#unsupported();
+    if (!GAS_PAY_CHAINS.includes(payChainId)) return this.#noGasPay();
     const request = this.#gasRequest(walletProvider, payChainId, args);
     try {
       const offer = screenGetGas(request, await callTool("get_gas", request, this.#options));
@@ -400,6 +471,7 @@ Important notes:
     }
     const payChainId = walletChain(walletProvider);
     if (payChainId === null) return this.#unsupported();
+    if (!GAS_PAY_CHAINS.includes(payChainId)) return this.#noGasPay();
     const request = this.#gasRequest(walletProvider, payChainId, args);
     let offer: Body;
     try {
@@ -435,14 +507,17 @@ Important notes:
         );
       }
     } catch (error) {
-      return refusal("wallet_not_supported", `The wallet's code could not be read: ${error}`);
+      return refusal(
+        "wallet_not_supported",
+        `The wallet's code could not be read: ${errorText(error)}`,
+      );
     }
     const trackRequestId = `g:${payChainId}:${offer.orderHash}`;
     let signature: string;
     try {
       signature = await walletProvider.signTypedData(signable(offer.typedData as Body));
     } catch (error) {
-      return refusal("signing_failed", `The wallet did not sign: ${error}`);
+      return refusal("signing_failed", `The wallet did not sign: ${errorText(error)}`);
     }
     const submit: GetGasInput = { offer: offer.offer, signature, wallet: request.wallet };
     try {
@@ -454,9 +529,13 @@ Important notes:
         next: "Call track_swap with requestId to follow the order.",
       });
     } catch (error) {
-      return refusal("submission_unknown", `The order may have been accepted: ${error}`, {
-        trackRequestId,
-      });
+      return refusal(
+        "submission_unknown",
+        `The order may have been accepted: ${errorText(error)}`,
+        {
+          trackRequestId,
+        },
+      );
     }
   }
 
@@ -537,6 +616,52 @@ Important notes:
   }
 
   /**
+   * Refuses a cross-chain swap from a smart contract wallet that names no recipient.
+   *
+   * @param walletProvider - The wallet provider.
+   * @param request - The plan_swap request.
+   * @returns The refusal as a JSON string, or null when the swap may go ahead.
+   */
+  async #needsRecipient(
+    walletProvider: EvmWalletProvider,
+    request: PlanSwapInput,
+  ): Promise<string | null> {
+    if (request.toChainId === undefined || request.toChainId === request.fromChainId) return null;
+    if (request.recipient !== undefined) return null;
+    let smart = SMART_WALLETS.has(walletProvider.getName());
+    if (!smart) {
+      try {
+        const code = await walletProvider
+          .getPublicClient()
+          .getCode({ address: request.wallet as Hex });
+        smart =
+          code !== undefined &&
+          code !== "0x" &&
+          !(code.startsWith(DELEGATION_PREFIX) && code.length === 48);
+      } catch {
+        smart = true;
+      }
+    }
+    if (!smart) return null;
+    return refusal(
+      "recipient_required",
+      "This wallet is a smart contract wallet, which may not exist at the same address on the other chain; pass the recipient on that chain",
+    );
+  }
+
+  /**
+   * Describes a wallet chain that gas top-ups are not paid from.
+   *
+   * @returns The refusal as a JSON string.
+   */
+  #noGasPay(): string {
+    return refusal(
+      "unsupported_chain",
+      "Gas top-ups are not offered for this chain; they are paid from Ethereum, Optimism, Polygon, Base or Arbitrum",
+    );
+  }
+
+  /**
    * Describes an unsupported wallet chain.
    *
    * @returns The refusal as a JSON string.
@@ -558,7 +683,7 @@ Important notes:
     return JSON.stringify({
       error: {
         code: "unreachable",
-        message: error instanceof Error ? error.message : String(error),
+        message: errorText(error),
         retryable: true,
       },
     });

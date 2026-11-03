@@ -225,7 +225,7 @@ const agent = createAgent({
 </tr>
 <tr>
     <td width="200"><code>execute_swap</code></td>
-    <td width="768">Plans a swap again, checks every call against Cleave's published contracts and sends the calls in order through the wallet.</td>
+    <td width="768">Plans a swap again, checks the calls with Cleave's address checks and sends them in order through the wallet.</td>
 </tr>
 <tr>
     <td width="200"><code>track_swap</code></td>
