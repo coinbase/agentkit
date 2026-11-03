@@ -69,17 +69,14 @@ export const CleavePlanSwapSchema = z
  */
 export const CleaveExecuteSwapSchema = z
   .object({
-    ...swapFields,
+    requestId: z
+      .string()
+      .regex(/^[A-Za-z0-9-]{1,64}$/, "Invalid requestId")
+      .describe("The requestId of the plan_swap answer the user confirmed"),
     confirmed,
-    minimumReceive: amount
-      .nullable()
-      .optional()
-      .describe(
-        "receive.minimum from the plan the user confirmed, in buyToken units; the swap is refused when the new plan's minimum is lower",
-      ),
   })
   .strip()
-  .describe("Instructions for executing a swap");
+  .describe("Instructions for executing a planned swap");
 
 /**
  * Input schema for tracking a swap or gas order.

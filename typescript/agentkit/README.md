@@ -221,11 +221,11 @@ const agent = createAgent({
 </tr>
 <tr>
     <td width="200"><code>plan_swap</code></td>
-    <td width="768">Plans a swap on one chain or between chains with Cleave and returns the checked unsigned calls without sending anything.</td>
+    <td width="768">Plans a swap on one chain or between chains with Cleave and returns the checked unsigned calls without sending anything; the plan is kept for one execute_swap.</td>
 </tr>
 <tr>
     <td width="200"><code>execute_swap</code></td>
-    <td width="768">Plans a swap again, checks the calls with Cleave's address checks and sends them in order through the wallet.</td>
+    <td width="768">Sends the checked calls of a plan from plan_swap once, by its requestId, from the same wallet on the same chain.</td>
 </tr>
 <tr>
     <td width="200"><code>track_swap</code></td>

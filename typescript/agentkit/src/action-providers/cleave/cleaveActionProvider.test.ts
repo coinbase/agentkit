@@ -153,6 +153,10 @@ function copy<T>(value: T): T {
   return JSON.parse(JSON.stringify(value));
 }
 
+const OTHER = "0x0000000000000000000000000000000000000B0b";
+const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+const hashOf = (n: number): `0x${string}` => `0x${n.toString(16).padStart(64, "0")}`;
+
 describe("CleaveActionProvider", () => {
   let provider: CleaveActionProvider;
   let wallet: jest.Mocked<EvmWalletProvider>;
@@ -168,21 +172,42 @@ describe("CleaveActionProvider", () => {
       getAddress: jest.fn().mockReturnValue(WALLET),
       getName: jest.fn().mockReturnValue("viem_wallet_provider"),
       getNetwork: jest.fn().mockReturnValue(BASE),
-      sendTransaction: jest
-        .fn()
-        .mockImplementation(async () => `0x${(++n).toString(16).padStart(64, "0")}`),
+      sendTransaction: jest.fn().mockImplementation(async () => hashOf(++n)),
       waitForTransactionReceipt: jest.fn().mockImplementation(async (hash: string) => ({
         status: "success",
         transactionHash: hash,
       })),
       signTypedData: jest.fn().mockResolvedValue(`0x${"11".repeat(65)}`),
       getPublicClient: jest.fn().mockReturnValue({ getCode }),
+      readContract: jest.fn().mockResolvedValue(6),
     } as unknown as jest.Mocked<EvmWalletProvider>;
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
   });
+
+  /**
+   * Plans a swap and returns its requestId.
+   *
+   * @param plan - The API answer.
+   * @param args - The plan_swap inputs.
+   * @returns The plan_swap answer.
+   */
+  async function planned(plan: unknown = PLAN, args: Record<string, unknown> = SWAP_ARGS) {
+    answering({ body: plan });
+    return JSON.parse(await provider.planSwap(wallet, args as typeof SWAP_ARGS));
+  }
+
+  /**
+   * Executes a plan by its requestId.
+   *
+   * @param requestId - The requestId.
+   * @returns The execute_swap answer.
+   */
+  async function executed(requestId: string = PLAN.requestId) {
+    return JSON.parse(await provider.executeSwap(wallet, { requestId, confirmed: true }));
+  }
 
   describe("supportsNetwork", () => {
     it("supports the six Cleave chains only", () => {
@@ -197,14 +222,16 @@ describe("CleaveActionProvider", () => {
   });
 
   describe("schemas", () => {
-    it("requires confirmed: true to execute or buy", () => {
-      expect(CleaveExecuteSwapSchema.safeParse({ ...SWAP_ARGS, confirmed: true }).success).toBe(
+    it("requires a requestId and confirmed: true to execute, and confirmed: true to buy", () => {
+      const id = PLAN.requestId;
+      expect(CleaveExecuteSwapSchema.safeParse({ requestId: id, confirmed: true }).success).toBe(
         true,
       );
-      expect(CleaveExecuteSwapSchema.safeParse({ ...SWAP_ARGS, confirmed: false }).success).toBe(
+      expect(CleaveExecuteSwapSchema.safeParse({ requestId: id, confirmed: false }).success).toBe(
         false,
       );
-      expect(CleaveExecuteSwapSchema.safeParse(SWAP_ARGS).success).toBe(false);
+      expect(CleaveExecuteSwapSchema.safeParse({ requestId: id }).success).toBe(false);
+      expect(CleaveExecuteSwapSchema.safeParse({ confirmed: true }).success).toBe(false);
       expect(CleaveBuyGasSchema.safeParse({ ...GAS_ARGS, confirmed: true }).success).toBe(true);
       expect(CleaveBuyGasSchema.safeParse(GAS_ARGS).success).toBe(false);
     });
@@ -241,23 +268,30 @@ describe("CleaveActionProvider", () => {
   });
 
   describe("plan_swap", () => {
-    it("plans for the wallet on its chain and sends nothing", async () => {
+    it("plans for the wallet on its chain, sends nothing and drops the API's next text", async () => {
       const posted = answering({ body: PLAN });
       const result = JSON.parse(await provider.planSwap(wallet, { ...SWAP_ARGS, toChainId: null }));
       expect(posted[0].body).toEqual({ fromChainId: 8453, wallet: WALLET, ...SWAP_ARGS });
       expect(result.requestId).toBe(PLAN.requestId);
       expect(result.calls).toHaveLength(2);
-      expect(result.next).toBeUndefined();
+      expect(result.next).not.toBe(PLAN.next);
+      expect(result.next).toContain("execute_swap");
       expect(wallet.sendTransaction).not.toHaveBeenCalled();
     });
 
-    it("refuses a plan whose call goes to a contract outside the published list", async () => {
+    it("refuses a plan whose call goes to a contract outside the published list, and keeps nothing", async () => {
       const plan = copy(PLAN);
       plan.calls[1].to = "0x000000000000000000000000000000000000dEaD";
-      answering({ body: plan });
-      const result = JSON.parse(await provider.planSwap(wallet, SWAP_ARGS));
+      const result = await planned(plan);
       expect(result.error.code).toBe("address_not_allowed");
       expect(result.calls).toBeUndefined();
+      expect((await executed()).error.code).toBe("plan_unavailable");
+      expect(wallet.sendTransaction).not.toHaveBeenCalled();
+    });
+
+    it("keeps no blocked plan", async () => {
+      await planned({ ...copy(PLAN), blocked: true, calls: [] });
+      expect((await executed()).error.code).toBe("plan_unavailable");
     });
 
     it("refuses a wallet on a chain Cleave does not support", async () => {
@@ -266,221 +300,20 @@ describe("CleaveActionProvider", () => {
       expect(result.error.code).toBe("unsupported_chain");
       expect(global.fetch).not.toHaveBeenCalled();
     });
-  });
-
-  describe("execute_swap", () => {
-    it("sends the checked calls in order and waits for each", async () => {
-      answering({ body: PLAN });
-      const result = JSON.parse(
-        await provider.executeSwap(wallet, { ...SWAP_ARGS, confirmed: true }),
-      );
-      expect(wallet.sendTransaction.mock.calls.map(([tx]) => tx)).toEqual(
-        PLAN.calls.map(c => ({ to: c.to, data: c.data, value: BigInt(c.value) })),
-      );
-      expect(wallet.waitForTransactionReceipt).toHaveBeenCalledTimes(2);
-      expect(result.requestId).toBe(PLAN.requestId);
-      expect(result.chainId).toBe(8453);
-      expect(result.sent).toEqual([
-        { txHash: `0x${"1".padStart(64, "0")}`, status: "success" },
-        { txHash: `0x${"2".padStart(64, "0")}`, status: "success" },
-      ]);
-      expect(result.txHash).toBe(result.sent[1].txHash);
-    });
-
-    it.each([
-      [
-        "an approve to another spender",
-        (p: typeof PLAN) => {
-          p.calls[0].data = p.calls[0].data.replace(
-            /b08f28a3575805ee1e3729fc19ab7e869cbaf563/i,
-            "000000000000000000000000000000000000dead",
-          );
-        },
-      ],
-      [
-        "a main call to another contract",
-        (p: typeof PLAN) => {
-          p.calls[1].to = "0x000000000000000000000000000000000000dEaD";
-        },
-      ],
-      [
-        "a call from another wallet",
-        (p: typeof PLAN) => {
-          p.calls[1].from = "0x0000000000000000000000000000000000000B0b";
-        },
-      ],
-      [
-        "a call for another chain",
-        (p: typeof PLAN) => {
-          p.calls[1].chainId = 42161;
-        },
-      ],
-      [
-        "another sell amount",
-        (p: typeof PLAN) => {
-          p.send.amount = "11";
-        },
-      ],
-    ])("sends nothing for %s", async (_name, tamper) => {
-      const plan = copy(PLAN);
-      tamper(plan);
-      answering({ body: plan });
-      const result = JSON.parse(
-        await provider.executeSwap(wallet, { ...SWAP_ARGS, confirmed: true }),
-      );
-      expect(result.error.code).toBe("address_not_allowed");
-      expect(wallet.sendTransaction).not.toHaveBeenCalled();
-    });
-
-    it("reports an unknown outcome with every sent hash when the last receipt wait throws", async () => {
-      wallet.waitForTransactionReceipt
-        .mockImplementationOnce(async (hash: string) => ({
-          status: "success",
-          transactionHash: hash,
-        }))
-        .mockRejectedValueOnce(new Error("Timed out while waiting for transaction"));
-      answering({ body: PLAN });
-      const result = JSON.parse(
-        await provider.executeSwap(wallet, { ...SWAP_ARGS, confirmed: true }),
-      );
-      expect(wallet.sendTransaction).toHaveBeenCalledTimes(2);
-      expect(result.error.code).toBe("outcome_unknown");
-      expect(result.error.message).toContain("track_swap before any retry");
-      expect(result.error.chainId).toBe(8453);
-      expect(result.error.requestId).toBe(PLAN.requestId);
-      expect(result.error.sent).toEqual([
-        { txHash: `0x${"1".padStart(64, "0")}`, status: "success" },
-        { txHash: `0x${"2".padStart(64, "0")}`, status: "pending" },
-      ]);
-    });
-
-    it("reports an unknown outcome when the approve's receipt wait throws", async () => {
-      wallet.waitForTransactionReceipt.mockRejectedValueOnce(new Error("timeout"));
-      answering({ body: PLAN });
-      const result = JSON.parse(
-        await provider.executeSwap(wallet, { ...SWAP_ARGS, confirmed: true }),
-      );
-      expect(wallet.sendTransaction).toHaveBeenCalledTimes(1);
-      expect(result.error.code).toBe("outcome_unknown");
-      expect(result.error.sent).toEqual([
-        { txHash: `0x${"1".padStart(64, "0")}`, status: "pending" },
-      ]);
-    });
-
-    it("reports an unknown outcome when sending throws", async () => {
-      wallet.sendTransaction
-        .mockResolvedValueOnce(`0x${"1".padStart(64, "0")}`)
-        .mockRejectedValueOnce(new Error("request timed out"));
-      answering({ body: PLAN });
-      const result = JSON.parse(
-        await provider.executeSwap(wallet, { ...SWAP_ARGS, confirmed: true }),
-      );
-      expect(result.error.code).toBe("outcome_unknown");
-      expect(result.error.message).not.toContain("Sending a call failed");
-      expect(result.error.sent).toHaveLength(1);
-    });
-
-    it("labels smart wallet hashes as user operations and keeps the mined tx hash", async () => {
-      wallet.getName.mockReturnValue("cdp_smart_wallet_provider");
-      wallet.waitForTransactionReceipt.mockImplementation(async (hash: string) => ({
-        status: "complete",
-        transactionHash: `0x${hash.slice(-1).repeat(64)}`,
-      }));
-      answering({ body: PLAN });
-      const result = JSON.parse(
-        await provider.executeSwap(wallet, { ...SWAP_ARGS, confirmed: true }),
-      );
-      expect(result.sent).toEqual([
-        {
-          userOpHash: `0x${"1".padStart(64, "0")}`,
-          status: "complete",
-          txHash: `0x${"1".repeat(64)}`,
-        },
-        {
-          userOpHash: `0x${"2".padStart(64, "0")}`,
-          status: "complete",
-          txHash: `0x${"2".repeat(64)}`,
-        },
-      ]);
-      expect(result.txHash).toBe(`0x${"2".repeat(64)}`);
-    });
-
-    it("labels a smart wallet hash as a user operation when its wait throws", async () => {
-      wallet.getName.mockReturnValue("cdp_smart_wallet_provider");
-      wallet.waitForTransactionReceipt.mockRejectedValueOnce(new Error("timeout"));
-      answering({ body: PLAN });
-      const result = JSON.parse(
-        await provider.executeSwap(wallet, { ...SWAP_ARGS, confirmed: true }),
-      );
-      expect(result.error.code).toBe("outcome_unknown");
-      expect(result.error.sent).toEqual([
-        { userOpHash: `0x${"1".padStart(64, "0")}`, status: "pending" },
-      ]);
-    });
-
-    it("keeps URLs out of error text", async () => {
-      wallet.waitForTransactionReceipt.mockRejectedValueOnce(
-        new Error(
-          "HTTP request failed. URL: https://rpc.example.com/v2/secret-key Details: timeout",
-        ),
-      );
-      answering({ body: PLAN });
-      const text = await provider.executeSwap(wallet, { ...SWAP_ARGS, confirmed: true });
-      expect(text).not.toContain("https://");
-      expect(text).not.toContain("secret-key");
-      expect(JSON.parse(text).error.code).toBe("outcome_unknown");
-    });
-
-    it("sends when the new minimum is at least the confirmed one", async () => {
-      answering({ body: PLAN });
-      const result = JSON.parse(
-        await provider.executeSwap(wallet, {
-          ...SWAP_ARGS,
-          confirmed: true,
-          minimumReceive: PLAN.receive.minimum,
-        }),
-      );
-      expect(result.requestId).toBe(PLAN.requestId);
-      expect(wallet.sendTransaction).toHaveBeenCalledTimes(2);
-    });
-
-    it.each([
-      ["a higher confirmed minimum", (p: typeof PLAN) => p, (m: string) => `${m}1`],
-      [
-        "a plan without a minimum",
-        (p: typeof PLAN) => {
-          delete (p.receive as { minimum?: string }).minimum;
-          return p;
-        },
-        (m: string) => m,
-      ],
-    ])("sends nothing for %s", async (_name, change, confirmedMinimum) => {
-      answering({ body: change(copy(PLAN)) });
-      const result = JSON.parse(
-        await provider.executeSwap(wallet, {
-          ...SWAP_ARGS,
-          confirmed: true,
-          minimumReceive: confirmedMinimum(PLAN.receive.minimum),
-        }),
-      );
-      expect(result.error.code).toBe("minimum_changed");
-      expect(wallet.sendTransaction).not.toHaveBeenCalled();
-    });
 
     it("needs a recipient for a cross-chain swap from a smart contract wallet", async () => {
       getCode.mockResolvedValue("0x6080604052");
       answering({ body: PLAN });
-      const result = JSON.parse(
-        await provider.executeSwap(wallet, { ...SWAP_ARGS, toChainId: 42161, confirmed: true }),
-      );
-      expect(result.error.code).toBe("recipient_required");
-      expect(global.fetch).not.toHaveBeenCalled();
-      wallet.getName.mockReturnValue("zerodev_wallet_provider");
-      getCode.mockResolvedValue(undefined);
-      const planned = JSON.parse(
+      const byCode = JSON.parse(
         await provider.planSwap(wallet, { ...SWAP_ARGS, toChainId: 42161 }),
       );
-      expect(planned.error.code).toBe("recipient_required");
+      expect(byCode.error.code).toBe("recipient_required");
+      wallet.getName.mockReturnValue("zerodev_wallet_provider");
+      getCode.mockResolvedValue(undefined);
+      const byType = JSON.parse(
+        await provider.planSwap(wallet, { ...SWAP_ARGS, toChainId: 42161 }),
+      );
+      expect(byType.error.code).toBe("recipient_required");
       expect(global.fetch).not.toHaveBeenCalled();
     });
 
@@ -492,52 +325,220 @@ describe("CleaveActionProvider", () => {
       await provider.planSwap(wallet, { ...SWAP_ARGS, toChainId: 42161, recipient: WALLET });
       expect(posted).toHaveLength(1);
     });
+  });
 
-    it("sends nothing for a blocked plan", async () => {
-      answering({ body: { ...copy(PLAN), blocked: true, calls: [] } });
-      const result = JSON.parse(
-        await provider.executeSwap(wallet, { ...SWAP_ARGS, confirmed: true }),
+  describe("execute_swap", () => {
+    it("sends exactly the planned calls in order, without planning again", async () => {
+      await planned();
+      const result = await executed();
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(wallet.sendTransaction.mock.calls.map(([tx]) => tx)).toEqual(
+        PLAN.calls.map(c => ({ to: c.to, data: c.data, value: BigInt(c.value) })),
       );
-      expect(result.error.code).toBe("blocked");
+      expect(wallet.waitForTransactionReceipt).toHaveBeenCalledTimes(2);
+      expect(result.requestId).toBe(PLAN.requestId);
+      expect(result.chainId).toBe(8453);
+      expect(result.sent).toEqual([
+        { txHash: hashOf(1), status: "success" },
+        { txHash: hashOf(2), status: "success" },
+      ]);
+      expect(result.txHash).toBe(hashOf(2));
+    });
+
+    it("runs a plan only once", async () => {
+      await planned();
+      await executed();
+      expect((await executed()).error.code).toBe("plan_unavailable");
+      expect(wallet.sendTransaction).toHaveBeenCalledTimes(2);
+    });
+
+    it("refuses an unknown requestId", async () => {
+      expect((await executed("not-planned")).error.code).toBe("plan_unavailable");
       expect(wallet.sendTransaction).not.toHaveBeenCalled();
     });
 
-    it("sends nothing for an expired plan", async () => {
+    it("refuses after validUntil and does not keep the plan", async () => {
+      await planned();
       (Date.now as jest.Mock).mockReturnValue((PLAN.validUntil + 1) * 1000);
-      answering({ body: PLAN });
-      const result = JSON.parse(
-        await provider.executeSwap(wallet, { ...SWAP_ARGS, confirmed: true }),
-      );
-      expect(result.error.code).toBe("plan_expired");
+      expect((await executed()).error.code).toBe("plan_expired");
+      (Date.now as jest.Mock).mockReturnValue(NOW_MS);
+      expect((await executed()).error.code).toBe("plan_unavailable");
       expect(wallet.sendTransaction).not.toHaveBeenCalled();
     });
 
-    it("sends nothing without confirmed: true", async () => {
-      answering({ body: PLAN });
+    it("refuses without confirmed: true and keeps the plan", async () => {
+      await planned();
       const result = JSON.parse(
-        await provider.executeSwap(wallet, { ...SWAP_ARGS, confirmed: false as unknown as true }),
+        await provider.executeSwap(wallet, {
+          requestId: PLAN.requestId,
+          confirmed: false as unknown as true,
+        }),
       );
       expect(result.error.code).toBe("not_confirmed");
-      expect(global.fetch).not.toHaveBeenCalled();
+      expect(wallet.sendTransaction).not.toHaveBeenCalled();
+      expect((await executed()).requestId).toBe(PLAN.requestId);
+    });
+
+    it.each([
+      [
+        "another address",
+        (w: jest.Mocked<EvmWalletProvider>) => w.getAddress.mockReturnValue(OTHER),
+      ],
+      [
+        "another chain",
+        (w: jest.Mocked<EvmWalletProvider>) =>
+          w.getNetwork.mockReturnValue({ protocolFamily: "evm", chainId: "42161" }),
+      ],
+    ])("refuses a wallet that now has %s", async (_name, change) => {
+      await planned();
+      change(wallet);
+      expect((await executed()).error.code).toBe("wallet_changed");
       expect(wallet.sendTransaction).not.toHaveBeenCalled();
     });
 
-    it("passes an API refusal on and sends nothing", async () => {
-      const refusal = { error: { code: "no_route", message: "No route", retryable: false } };
-      answering({ status: 422, body: refusal });
-      const result = JSON.parse(
-        await provider.executeSwap(wallet, { ...SWAP_ARGS, confirmed: true }),
-      );
-      expect(result.error.code).toBe("no_route");
+    it("stops when the wallet changes between calls and returns the sent hash", async () => {
+      await planned();
+      wallet.waitForTransactionReceipt.mockImplementationOnce(async (hash: string) => {
+        wallet.getAddress.mockReturnValue(OTHER);
+        return { status: "success", transactionHash: hash };
+      });
+      const result = await executed();
+      expect(result.error.code).toBe("wallet_changed");
+      expect(result.error.sent).toEqual([{ txHash: hashOf(1), status: "success" }]);
+      expect(wallet.sendTransaction).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+      ["a buy token symbol the checks do not pin", { ...SWAP_ARGS, buyToken: "DAI" }],
+      ["a sell token symbol the checks do not pin", { ...SWAP_ARGS, sellToken: "USDbC" }],
+    ])("refuses %s", async (_name, args) => {
+      const plan = await planned(PLAN, args);
+      expect(plan.requestId).toBe(PLAN.requestId);
+      const result = await executed();
+      expect(result.error.code).toBe("token_not_pinned");
+      expect(result.error.message).toContain("find_token");
       expect(wallet.sendTransaction).not.toHaveBeenCalled();
+    });
+
+    it("sends a sell token given by address when the approve is for exactly the amount in its decimals", async () => {
+      await planned(PLAN, { ...SWAP_ARGS, sellToken: USDC_BASE });
+      const result = await executed();
+      expect(wallet.readContract).toHaveBeenCalledWith(
+        expect.objectContaining({ address: USDC_BASE.toLowerCase(), functionName: "decimals" }),
+      );
+      expect(result.sent).toHaveLength(2);
+    });
+
+    it("refuses a sell token given by address when the approve is for another amount in its decimals", async () => {
+      wallet.readContract.mockResolvedValue(18);
+      await planned(PLAN, { ...SWAP_ARGS, sellToken: USDC_BASE });
+      expect((await executed()).error.code).toBe("amount_mismatch");
+      expect(wallet.sendTransaction).not.toHaveBeenCalled();
+    });
+
+    it("refuses a sell token given by address whose decimals cannot be read", async () => {
+      wallet.readContract.mockRejectedValue(new Error("execution reverted"));
+      await planned(PLAN, { ...SWAP_ARGS, sellToken: USDC_BASE });
+      expect((await executed()).error.code).toBe("amount_unchecked");
+      expect(wallet.sendTransaction).not.toHaveBeenCalled();
+    });
+
+    it("reports an unknown outcome with every sent hash when the last receipt wait throws", async () => {
+      wallet.waitForTransactionReceipt
+        .mockImplementationOnce(async (hash: string) => ({
+          status: "success",
+          transactionHash: hash,
+        }))
+        .mockRejectedValueOnce(new Error("Timed out while waiting for transaction"));
+      await planned();
+      const result = await executed();
+      expect(wallet.sendTransaction).toHaveBeenCalledTimes(2);
+      expect(result.error.code).toBe("outcome_unknown");
+      expect(result.error.message).toContain("track_swap before any retry");
+      expect(result.error.chainId).toBe(8453);
+      expect(result.error.requestId).toBe(PLAN.requestId);
+      expect(result.error.sent).toEqual([
+        { txHash: hashOf(1), status: "success" },
+        { txHash: hashOf(2), status: "pending" },
+      ]);
+    });
+
+    it("reports an unknown outcome when the approve's receipt wait throws", async () => {
+      wallet.waitForTransactionReceipt.mockRejectedValueOnce(new Error("timeout"));
+      await planned();
+      const result = await executed();
+      expect(wallet.sendTransaction).toHaveBeenCalledTimes(1);
+      expect(result.error.code).toBe("outcome_unknown");
+      expect(result.error.sent).toEqual([{ txHash: hashOf(1), status: "pending" }]);
+    });
+
+    it("reports an unknown outcome when sending throws", async () => {
+      wallet.sendTransaction
+        .mockResolvedValueOnce(hashOf(1))
+        .mockRejectedValueOnce(new Error("request timed out"));
+      await planned();
+      const result = await executed();
+      expect(result.error.code).toBe("outcome_unknown");
+      expect(result.error.sent).toHaveLength(1);
+    });
+
+    it("labels smart wallet hashes as user operations and keeps the mined tx hash", async () => {
+      wallet.getName.mockReturnValue("cdp_smart_wallet_provider");
+      wallet.waitForTransactionReceipt.mockImplementation(async (hash: string) => ({
+        status: "complete",
+        transactionHash: `0x${hash.slice(-1).repeat(64)}`,
+      }));
+      await planned();
+      const result = await executed();
+      expect(result.sent).toEqual([
+        { userOpHash: hashOf(1), status: "complete", txHash: `0x${"1".repeat(64)}` },
+        { userOpHash: hashOf(2), status: "complete", txHash: `0x${"2".repeat(64)}` },
+      ]);
+      expect(result.txHash).toBe(`0x${"2".repeat(64)}`);
+    });
+
+    it("waits again for a smart wallet's user operation before giving up", async () => {
+      wallet.getName.mockReturnValue("cdp_smart_wallet_provider");
+      wallet.waitForTransactionReceipt.mockRejectedValueOnce(new Error("timeout"));
+      await planned();
+      const result = await executed();
+      expect(wallet.waitForTransactionReceipt).toHaveBeenCalledTimes(3);
+      expect(result.sent).toHaveLength(2);
+    });
+
+    it("reports a smart wallet's unresolved user operation without pointing to track_swap", async () => {
+      wallet.getName.mockReturnValue("cdp_smart_wallet_provider");
+      wallet.waitForTransactionReceipt
+        .mockRejectedValueOnce(new Error("timeout"))
+        .mockRejectedValueOnce(new Error("timeout"));
+      await planned();
+      const result = await executed();
+      expect(result.error.code).toBe("outcome_unknown");
+      expect(result.error.message).toContain("user operation before any retry");
+      expect(result.error.message).not.toContain("track_swap");
+      expect(result.error.sent).toEqual([{ userOpHash: hashOf(1), status: "pending" }]);
+    });
+
+    it("keeps URLs out of error text", async () => {
+      wallet.waitForTransactionReceipt.mockRejectedValueOnce(
+        new Error(
+          "HTTP request failed. URL: https://rpc.example.com/v2/secret-key Details: timeout",
+        ),
+      );
+      await planned();
+      const text = await provider.executeSwap(wallet, {
+        requestId: PLAN.requestId,
+        confirmed: true,
+      });
+      expect(text).not.toContain("https://");
+      expect(text).not.toContain("secret-key");
+      expect(JSON.parse(text).error.code).toBe("outcome_unknown");
     });
 
     it("stops at the first failed call", async () => {
       wallet.waitForTransactionReceipt.mockResolvedValueOnce({ status: "reverted" });
-      answering({ body: PLAN });
-      const result = JSON.parse(
-        await provider.executeSwap(wallet, { ...SWAP_ARGS, confirmed: true }),
-      );
+      await planned();
+      const result = await executed();
       expect(result.error.code).toBe("transaction_failed");
       expect(result.error.sent).toHaveLength(1);
       expect(wallet.sendTransaction).toHaveBeenCalledTimes(1);
@@ -548,18 +549,22 @@ describe("CleaveActionProvider", () => {
         (Date.now as jest.Mock).mockReturnValue((PLAN.validUntil + 1) * 1000);
         return { status: "success", transactionHash: hash };
       });
-      answering({ body: PLAN });
-      const result = JSON.parse(
-        await provider.executeSwap(wallet, { ...SWAP_ARGS, confirmed: true }),
-      );
+      await planned();
+      const result = await executed();
       expect(result.error.code).toBe("plan_expired");
       expect(wallet.sendTransaction).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("track_swap", () => {
-    it("passes only the given fields", async () => {
-      const posted = answering({ body: { state: "delivered" } });
+    it("passes only the given fields and drops the API's next text and URLs", async () => {
+      const posted = answering({
+        body: {
+          state: "delivered",
+          next: "call cleave_track_swap",
+          note: "see https://example.com/x",
+        },
+      });
       const result = JSON.parse(
         await provider.trackSwap(wallet, {
           chainId: 8453,
@@ -567,7 +572,7 @@ describe("CleaveActionProvider", () => {
           requestId: PLAN.requestId,
         }),
       );
-      expect(result).toEqual({ state: "delivered" });
+      expect(result).toEqual({ state: "delivered", note: "see [url]" });
       expect(posted[0].body).toEqual({ chainId: 8453, requestId: PLAN.requestId });
     });
   });
@@ -603,6 +608,7 @@ describe("CleaveActionProvider", () => {
   });
 
   describe("buy_gas", () => {
+    const SIGNATURE = `0x${"11".repeat(65)}`;
     const SUBMITTED = {
       requestId: `g:8453:${GAS_OFFER.orderHash}`,
       state: "accepted",
@@ -620,7 +626,7 @@ describe("CleaveActionProvider", () => {
       expect(typed.message.nonce).toBe(GAS_OFFER.typedData.message.nonce);
       expect(posted[1].body).toEqual({
         offer: GAS_OFFER.offer,
-        signature: `0x${"11".repeat(65)}`,
+        signature: SIGNATURE,
         wallet: WALLET,
       });
       expect(result.requestId).toBe(SUBMITTED.requestId);
@@ -655,6 +661,15 @@ describe("CleaveActionProvider", () => {
       expect(wallet.signTypedData).not.toHaveBeenCalled();
     });
 
+    it("refuses a smart wallet provider before reading any code", async () => {
+      wallet.getName.mockReturnValue("cdp_smart_wallet_provider");
+      answering({ body: GAS_OFFER });
+      const result = JSON.parse(await provider.buyGas(wallet, { ...GAS_ARGS, confirmed: true }));
+      expect(result.error.code).toBe("wallet_not_supported");
+      expect(getCode).not.toHaveBeenCalled();
+      expect(wallet.signTypedData).not.toHaveBeenCalled();
+    });
+
     it("signs nothing for a smart contract wallet", async () => {
       getCode.mockResolvedValue("0x6080604052");
       answering({ body: GAS_OFFER });
@@ -669,6 +684,14 @@ describe("CleaveActionProvider", () => {
       const result = JSON.parse(await provider.buyGas(wallet, { ...GAS_ARGS, confirmed: true }));
       expect(result.requestId).toBe(SUBMITTED.requestId);
       expect(wallet.signTypedData).toHaveBeenCalledTimes(1);
+    });
+
+    it("signs nothing when the wallet changes before signing", async () => {
+      wallet.getAddress.mockReturnValueOnce(WALLET).mockReturnValue(OTHER);
+      answering({ body: GAS_OFFER });
+      const result = JSON.parse(await provider.buyGas(wallet, { ...GAS_ARGS, confirmed: true }));
+      expect(result.error.code).toBe("wallet_changed");
+      expect(wallet.signTypedData).not.toHaveBeenCalled();
     });
 
     it("signs nothing for an expired authorization", async () => {
@@ -690,18 +713,32 @@ describe("CleaveActionProvider", () => {
       expect(wallet.signTypedData).not.toHaveBeenCalled();
     });
 
-    it("returns the id to track when the submission does not answer", async () => {
-      answering({ body: GAS_OFFER });
+    it("redacts the signature from a submission refusal that echoes it", async () => {
+      answering(
+        { body: GAS_OFFER },
+        {
+          status: 400,
+          body: { error: { code: "bad_signature", message: `bad ${SIGNATURE}`, retryable: false } },
+        },
+      );
+      const text = await provider.buyGas(wallet, { ...GAS_ARGS, confirmed: true });
+      expect(text).not.toContain(SIGNATURE.slice(2));
+      expect(JSON.parse(text).error.code).toBe("bad_signature");
+    });
+
+    it("returns the id to track, without the signature, when the submission does not answer", async () => {
       (global.fetch as jest.Mock)
         .mockImplementationOnce(
           async () => new Response(JSON.stringify(GAS_OFFER), { status: 200 }),
         )
         .mockImplementationOnce(async () => {
-          throw new TypeError("fetch failed");
+          throw new TypeError(`fetch failed for ${SIGNATURE}`);
         });
-      const result = JSON.parse(await provider.buyGas(wallet, { ...GAS_ARGS, confirmed: true }));
+      const text = await provider.buyGas(wallet, { ...GAS_ARGS, confirmed: true });
+      const result = JSON.parse(text);
       expect(result.error.code).toBe("submission_unknown");
       expect(result.error.trackRequestId).toBe(SUBMITTED.requestId);
+      expect(text).not.toContain(SIGNATURE.slice(2));
     });
   });
 
