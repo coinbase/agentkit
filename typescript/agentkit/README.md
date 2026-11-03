@@ -213,6 +213,35 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Cleave</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>find_token</code></td>
+    <td width="768">Finds a token by symbol or contract address on the chains Cleave supports and says whether it is on Cleave's token list.</td>
+</tr>
+<tr>
+    <td width="200"><code>plan_swap</code></td>
+    <td width="768">Plans a swap on one chain or between chains with Cleave and returns the checked unsigned calls without sending anything.</td>
+</tr>
+<tr>
+    <td width="200"><code>execute_swap</code></td>
+    <td width="768">Plans a swap again, checks every call against Cleave's published contracts and sends the calls in order through the wallet.</td>
+</tr>
+<tr>
+    <td width="200"><code>track_swap</code></td>
+    <td width="768">Reports the status of a swap or gas top-up sent with Cleave.</td>
+</tr>
+<tr>
+    <td width="200"><code>quote_gas</code></td>
+    <td width="768">Quotes native gas (ETH, BNB or POL) paid in USDC, without signing.</td>
+</tr>
+<tr>
+    <td width="200"><code>buy_gas</code></td>
+    <td width="768">Signs a checked gas offer's single USDC authorization and submits it to Cleave's relayer.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Compound</strong></summary>
 <table width="100%">
 <tr>

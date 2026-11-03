@@ -71,6 +71,9 @@ importers:
       '@base-org/account':
         specifier: ^2.2.0
         version: 2.2.0(bufferutil@4.0.9)(react@18.3.1)(typescript@5.8.2)(use-sync-external-store@1.4.0(react@18.3.1))(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@cleave-protocol/ai-sdk':
+        specifier: ^0.2.0
+        version: 0.2.0(ai@6.0.116(zod@4.3.6))(zod@4.3.6)
       '@coinbase/cdp-sdk':
         specifier: ^1.45.0
         version: 1.45.0(bufferutil@4.0.9)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.2)(utf-8-validate@5.0.10)
@@ -1129,6 +1132,18 @@ packages:
 
   '@changesets/write@0.4.0':
     resolution: {integrity: sha512-CdTLvIOPiCNuH71pyDu3rA+Q0n65cmAbXnwWH84rKGiFumFzkmHNT8KHTMEchcxN+Kl8I54xGUhJ7l3E7X396Q==}
+
+  '@cleave-protocol/ai-sdk@0.2.0':
+    resolution: {integrity: sha512-bvjlz6sjauOvtWct+0h06eTQRaQgpRtbkexnzkKXFub21dlbCtyDqKNB8NMam0Y1N7tbhUirxDnSW+yp+dBBCw==}
+    engines: {node: '>=20.3.0'}
+    peerDependencies:
+      ai: ^6.0.0 || ^7.0.0
+      zod: ^3.25.76 || ^4.1.8
+    peerDependenciesMeta:
+      ai:
+        optional: true
+      zod:
+        optional: true
 
   '@coinbase/agentkit@0.10.4':
     resolution: {integrity: sha512-1ZnjY6ohuBXqseZDUhrkFnlU+UjNBr9TeZjpa4wjR8pGQq2RhhVKXQSe5UOFpitgtK3z8ytsQXTHwKRohkExKw==}
@@ -9145,6 +9160,13 @@ snapshots:
       fs-extra: 7.0.1
       human-id: 4.1.1
       prettier: 2.8.8
+
+  '@cleave-protocol/ai-sdk@0.2.0(ai@6.0.116(zod@4.3.6))(zod@4.3.6)':
+    dependencies:
+      '@noble/hashes': 1.8.0
+    optionalDependencies:
+      ai: 6.0.116(zod@4.3.6)
+      zod: 4.3.6
 
   '@coinbase/agentkit@0.10.4(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.2))(@tanstack/query-core@5.89.0)(@tanstack/react-query@5.89.0(react@18.3.1))(@types/node@20.17.27)(abitype@1.2.3(typescript@5.8.2)(zod@3.25.56))(bufferutil@4.0.9)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(graphql@16.11.0)(react@18.3.1)(typescript@5.8.2)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))':
     dependencies:
