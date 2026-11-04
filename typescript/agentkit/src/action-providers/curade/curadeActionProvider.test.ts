@@ -1,21 +1,4 @@
 import { curadeActionProvider } from "./curadeActionProvider";
-import { EvmWalletProvider } from "../../wallet-providers";
-
-const mockWallet = {
-  getAddress: jest.fn().mockReturnValue("0x1234567890abcdef1234567890abcdef12345678"),
-  getNetwork: jest.fn().mockReturnValue({
-    protocolFamily: "evm",
-    networkId: "base-mainnet",
-    chainId: "8453",
-  }),
-  getName: jest.fn().mockReturnValue("test-wallet"),
-  toSigner: jest.fn().mockReturnValue({
-    address: "0x1234567890abcdef1234567890abcdef12345678",
-    signMessage: jest.fn(),
-    signTypedData: jest.fn(),
-  }),
-} as unknown as EvmWalletProvider;
-
 const fetchMock = jest.fn();
 
 describe("CuradeActionProvider", () => {
@@ -64,19 +47,27 @@ describe("CuradeActionProvider", () => {
       expect(fetchMock).toHaveBeenCalledWith("https://api.curade.xyz/v1/polymarket/odds");
     });
 
-    it("should surface the x402 challenge on HTTP 402", async () => {
+
+    it("should surface the x402 challenge decoded from the Payment-Required header on HTTP 402", async () => {
+      const challenge = Buffer.from(
+        JSON.stringify({
+          x402Version: 2,
+          error: "Payment-Signature header is required",
+          accepts: [{ scheme: "exact", network: "eip155:8453", asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", amount: "5000" }],
+        }),
+      ).toString("base64");
       fetchMock.mockResolvedValueOnce({
         ok: false,
         status: 402,
-        text: async () => '{"x402Version":2,"accepts":[]}',
+        headers: { get: (name: string) => (name.toLowerCase() === "payment-required" ? challenge : null) },
+        text: async () => "",
       });
 
       const result = await provider.polymarketOdds({ limit: 1 });
 
       expect(result).toContain("Payment required (HTTP 402)");
-      expect(result).toContain("x402Version");
+      expect(result).toContain("Payment-Signature header is required");
     });
-
     it("should return an error message on HTTP failure", async () => {
       fetchMock.mockResolvedValueOnce({
         ok: false,
@@ -125,11 +116,19 @@ describe("CuradeActionProvider", () => {
       expect(result).toContain("disagreements");
     });
 
-    it("should surface the x402 challenge on HTTP 402", async () => {
+    it("should surface the x402 challenge decoded from the Payment-Required header on HTTP 402", async () => {
+      const challenge = Buffer.from(
+        JSON.stringify({
+          x402Version: 2,
+          error: "Payment-Signature header is required",
+          accepts: [{ scheme: "exact", network: "eip155:8453", asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", amount: "20000" }],
+        }),
+      ).toString("base64");
       fetchMock.mockResolvedValueOnce({
         ok: false,
         status: 402,
-        text: async () => '{"accepts":[{"scheme":"exact"}]}',
+        headers: { get: (name: string) => (name.toLowerCase() === "payment-required" ? challenge : null) },
+        text: async () => "",
       });
 
       const result = await provider.polymarketDisagreement({});
@@ -155,11 +154,19 @@ describe("CuradeActionProvider", () => {
       expect(result).toContain("license");
     });
 
-    it("should surface the x402 challenge on HTTP 402", async () => {
+    it("should surface the x402 challenge decoded from the Payment-Required header on HTTP 402", async () => {
+      const challenge = Buffer.from(
+        JSON.stringify({
+          x402Version: 2,
+          error: "Payment-Signature header is required",
+          accepts: [{ scheme: "exact", network: "eip155:8453", asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", amount: "2000000" }],
+        }),
+      ).toString("base64");
       fetchMock.mockResolvedValueOnce({
         ok: false,
         status: 402,
-        text: async () => "challenge",
+        headers: { get: (name: string) => (name.toLowerCase() === "payment-required" ? challenge : null) },
+        text: async () => "",
       });
 
       const result = await provider.polymarketPackage({ market: "x" });
@@ -194,11 +201,19 @@ describe("CuradeActionProvider", () => {
       expect(fetchMock).toHaveBeenCalledWith("https://api.curade.xyz/v1/funding/current");
     });
 
-    it("should surface the x402 challenge on HTTP 402", async () => {
+    it("should surface the x402 challenge decoded from the Payment-Required header on HTTP 402", async () => {
+      const challenge = Buffer.from(
+        JSON.stringify({
+          x402Version: 2,
+          error: "Payment-Signature header is required",
+          accepts: [{ scheme: "exact", network: "eip155:8453", asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", amount: "1000" }],
+        }),
+      ).toString("base64");
       fetchMock.mockResolvedValueOnce({
         ok: false,
         status: 402,
-        text: async () => "challenge",
+        headers: { get: (name: string) => (name.toLowerCase() === "payment-required" ? challenge : null) },
+        text: async () => "",
       });
 
       const result = await provider.hyperliquidFunding({ limit: 1 });
