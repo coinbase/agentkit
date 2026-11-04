@@ -4,7 +4,7 @@ This provider integrates [Curade](https://curade.xyz) — an x402-paid market-da
 
 ## Overview
 
-Curade serves derived market data with venue attribution, collected from public prediction-market and perp venues — **Polymarket, Kalshi, Limitless, and Hyperliquid**. Every paid endpoint uses the [x402 payment protocol](https://www.x402.org/): an unpaid call returns HTTP 402 with an x402 payment challenge, and the tools surface that challenge verbatim. This provider deliberately does **not** sign payments — settle the challenge with an x402-enabled wallet client (e.g. AgentKit's built-in `x402ActionProvider`, or an `x402-fetch` wrapper backed by an EVM wallet) and retry the identical request with the signed payment in the `X-PAYMENT` header.
+Curade serves derived market data with venue attribution, collected from public prediction-market and perp venues — **Polymarket, Kalshi, Limitless, and Hyperliquid**. Every paid endpoint uses the [x402 payment protocol](https://www.x402.org/): an unpaid call returns HTTP 402 with an x402 payment challenge, and the tools surface that challenge verbatim. This provider deliberately does **not** sign payments — settle the challenge with an x402-enabled wallet client (e.g. AgentKit's built-in `x402ActionProvider`, or an `x402-fetch` wrapper backed by an EVM wallet) and retry the identical request with the signed payment in the header the challenge's `error` field names (Curade's v2 endpoint expects `Payment-Signature`).
 
 ## Setup
 
