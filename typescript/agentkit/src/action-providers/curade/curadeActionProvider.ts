@@ -50,7 +50,7 @@ function formatX402Challenge(body: string): string {
   return [
     "Payment required (HTTP 402): this Curade endpoint is pay-per-call via the x402 protocol in USDC.",
     "The challenge below is the x402 PaymentRequired object (x402Version, accepts[] with USDC terms: scheme, network, asset, payTo, maxAmountRequired).",
-    "To proceed, settle the challenge with an x402-enabled wallet client (e.g. AgentKit's X402ActionProvider or an x402-fetch wrapper signing EIP-3009 USDC), then retry the exact same request with the signed payment in the X-PAYMENT header.",
+    "To proceed, settle the challenge with an x402-enabled wallet client (e.g. AgentKit's X402ActionProvider or an x402-fetch wrapper signing EIP-3009 USDC), then retry the exact same request with the signed payment in the header the challenge's `error` field names (Curade's v2 endpoint expects `Payment-Signature`).",
     `Challenge: ${body}`,
   ].join("\n");
 }
