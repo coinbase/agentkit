@@ -609,6 +609,43 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Tereno</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>tereno_check_contract</code></td>
+    <td width="768">Pre-action smart contract risk and safety verification on Base (bytecode, proxy implementation, pause status, verdict).</td>
+</tr>
+<tr>
+    <td width="200"><code>tereno_get_token_metadata</code></td>
+    <td width="768">Fetches block-fresh, verified ERC-20 token metadata (name, symbol, decimals, total supply) on Base.</td>
+</tr>
+<tr>
+    <td width="200"><code>tereno_get_chain_snapshot</code></td>
+    <td width="768">Fetches latest block, timestamp, base fee, and gas recommendations on Base.</td>
+</tr>
+<tr>
+    <td width="200"><code>tereno_get_prediction_evidence</code></td>
+    <td width="768">Fetches machine-readable evidence and proposition verification for prediction markets.</td>
+</tr>
+<tr>
+    <td width="200"><code>tereno_quote_contract_guard</code></td>
+    <td width="768">Quotes invocation cost for contract verification, including available reuse dividend credits and cash price.</td>
+</tr>
+<tr>
+    <td width="200"><code>tereno_list_capabilities</code></td>
+    <td width="768">Lists active Tereno capabilities, schemas, pricing, and operational validity windows.</td>
+</tr>
+<tr>
+    <td width="200"><code>tereno_list_bounties</code></td>
+    <td width="768">Lists available open verification bounties and dividend opportunities on Base.</td>
+</tr>
+<tr>
+    <td width="200"><code>tereno_publish_contract_fingerprint</code></td>
+    <td width="768">Publishes a verified contract fingerprint to the Tereno network to seed the cache and earn reuse dividends.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Twitter</strong></summary>
 <table width="100%">
 <tr>
