@@ -4,7 +4,7 @@ This provider integrates [Curade](https://curade.xyz) — an x402-paid market-da
 
 ## Overview
 
-Curade serves derived market data with venue attribution, collected from public prediction-market and perp venues — **Polymarket, Kalshi, Limitless, and Hyperliquid**. Every paid endpoint uses the [x402 payment protocol](https://www.x402.org/): an unpaid call returns HTTP 402 with an x402 payment challenge, and the tools surface that challenge verbatim. This provider deliberately does **not** sign payments — settle the challenge with an x402-enabled wallet client (e.g. AgentKit's built-in `x402ActionProvider`, or an `x402-fetch` wrapper backed by an EVM wallet) and retry the identical request with the signed payment in the header the challenge's `error` field names (Curade's v2 endpoint expects `Payment-Signature`).
+Curade serves derived market data with venue attribution, collected from public prediction-market and perp venues — **Polymarket, Kalshi, Limitless, and Hyperliquid**. Every paid endpoint uses the [x402 payment protocol](https://www.x402.org/): an unpaid call returns HTTP 402 with the x402 challenge base64-encoded in the `Payment-Required` response header (the body is empty), and the tools decode and surface that challenge verbatim. This provider deliberately does **not** sign payments — settle the challenge with an x402-enabled wallet client (e.g. AgentKit's built-in `x402ActionProvider`, or an `x402-fetch` wrapper backed by an EVM wallet) and retry the identical request with the signed payment in the header the challenge's `error` field names (Curade's v2 endpoint expects `Payment-Signature`).
 
 ## Setup
 
@@ -20,7 +20,7 @@ const agentkit = await AgentKit.from({
 });
 ```
 
-To pay automatically, pair it with AgentKit's `x402ActionProvider` and register `https://api.curade.xyz` in its `registeredServices` whitelist.
+To pay automatically, pair it with AgentKit's `x402ActionProvider` and register `https://api.curade.xyz` in its `registeredServices` whitelist. Note its default `maxPaymentUsdc` is 1.0 USDC — below the $2.00 `curade_polymarket_package` price — so raise it (e.g. `maxPaymentUsdc: 5`) if agents should buy packages.
 
 ## Actions
 
@@ -37,7 +37,7 @@ All data is derived and attributed to its source venues: prediction-market cover
 
 ## Network Support
 
-This provider supports EVM networks — x402 settlement is USDC on an EVM chain, with the exact terms (network, asset, payTo, maxAmountRequired) in each 402 challenge's `accepts[]`.
+This provider supports EVM networks — x402 settlement is USDC on an EVM chain, with the exact terms (network, asset, payTo, amount) in each 402 challenge's `accepts[]`.
 
 ## Dependencies
 
