@@ -278,6 +278,19 @@ describe("BrainChainActionProvider", () => {
       });
     });
 
+    it("keeps waiting while a dispute, a ruling or an appeal can still change a rejected grade", async () => {
+      for (const status of ["disputed", "ruled", "appealed"]) {
+        fetchMock.mockResolvedValueOnce(
+          Response.json({ order: ORDER, state: "posted", task: { status, accepted: false } }),
+        );
+        expect(
+          JSON.parse(
+            await new BrainChainActionProvider().getTask(wallet, { order: ORDER, waitSeconds: 0 }),
+          ),
+        ).toMatchObject({ done: false });
+      }
+    });
+
     it("waits for the order to finish before answering", async () => {
       jest.useFakeTimers();
       fetchMock

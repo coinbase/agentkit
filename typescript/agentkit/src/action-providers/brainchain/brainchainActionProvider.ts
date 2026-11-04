@@ -74,7 +74,7 @@ function guidance(
   view: Record<string, unknown>,
   desk: Desk,
 ): { done: boolean; next: string; retryAfterSeconds?: number } {
-  const task = (view.task ?? {}) as { status?: string; accepted?: boolean };
+  const task = (view.task ?? {}) as { status?: string; accepted?: boolean; due?: { by?: unknown } };
   const wait = (retryAfterSeconds: number, next: string) => ({
     done: false,
     next,
@@ -116,6 +116,25 @@ function guidance(
     case "refunding":
       return wait(60, "The work was not accepted; the refund is being sent.");
   }
+  // A dispute, a ruling still open to appeal, or an appeal can each change the grade, so none of them is final.
+  const by = typeof task.due?.by === "string" ? task.due.by : undefined;
+  switch (task.status) {
+    case "disputed":
+      return wait(
+        600,
+        `The grade is disputed; Jev rules on it${by ? ` by ${by}` : ""}. If no ruling comes, the grade stands.`,
+      );
+    case "ruled":
+      return wait(
+        900,
+        `Jev ruled on the dispute. The ruling settles when its appeal window closes${by ? ` at ${by}` : ""}, unless the side it went against appeals.`,
+      );
+    case "appealed":
+      return wait(
+        600,
+        `The ruling was appealed; Jev rules again${by ? ` by ${by}` : ""}. If no second ruling comes, the first one stands.`,
+      );
+  }
   if (task.accepted === true) {
     if (typeof view.resultText !== "string") {
       return wait(60, "Jev accepted the work; the result is being prepared.");
@@ -139,8 +158,6 @@ function guidance(
     case "delivered":
     case "submitted":
       return wait(30, "The model delivered; Jev is grading the work.");
-    case "disputed":
-      return wait(600, "The grade is disputed; Jev will rule on it.");
   }
   return wait(60, "The order is in progress.");
 }
