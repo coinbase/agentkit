@@ -49,7 +49,7 @@ function getErrorMessage(error: unknown): string {
 function formatX402Challenge(body: string): string {
   return [
     "Payment required (HTTP 402): this Curade endpoint is pay-per-call via the x402 protocol in USDC.",
-    "The challenge below is the x402 PaymentRequired object (x402Version, accepts[] with USDC terms: scheme, network, asset, payTo, maxAmountRequired).",
+    "The challenge below is the x402 PaymentRequired object (x402Version, accepts[] with USDC terms: scheme, network, asset, payTo, amount).",
     "To proceed, settle the challenge with an x402-enabled wallet client (e.g. AgentKit's X402ActionProvider or an x402-fetch wrapper signing EIP-3009 USDC), then retry the exact same request with the signed payment in the header the challenge's `error` field names (Curade's v2 endpoint expects `Payment-Signature`).",
     `Challenge: ${body}`,
   ].join("\n");
@@ -132,7 +132,7 @@ Inputs: none`,
   @CreateAction({
     name: "curade_polymarket_package",
     description: `Purchase the full attested data package for one Polymarket market from the Curade market-data API (https://api.curade.xyz).
-One-time purchase via the x402 protocol in USDC ($2.00 per market; payment settles before delivery): an unpaid call returns HTTP 402 with the x402 payment challenge, which this tool surfaces verbatim — settle it with an x402-enabled wallet client and retry. Keep the data: the response includes the attested package plus a signed license token.
+One-time purchase via the x402 protocol in USDC ($2.00 per market; payment settles before delivery): an unpaid call returns HTTP 402 with the x402 payment challenge, which this tool surfaces verbatim — settle it with an x402-enabled wallet client and retry. The response includes the attested package plus a signed license token.
 Derived data: full attested data package for a single Polymarket market. Venue attribution: Polymarket (Curade's prediction-market sources span Polymarket, Kalshi, and Limitless).
 
 Inputs:
@@ -184,7 +184,13 @@ Inputs:
       const response = await fetch(url);
 
       if (response.status === 402) {
-        return formatX402Challenge(await response.text());
+        // x402 v2 carries the challenge base64-encoded in the `Payment-Required`
+        // response header; the response body is typically empty.
+        const encoded = response.headers.get("payment-required");
+        const challenge = encoded
+          ? Buffer.from(encoded, "base64").toString("utf8")
+          : await response.text();
+        return formatX402Challenge(challenge);
       }
 
       const body = await response.text();
