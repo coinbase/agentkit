@@ -546,7 +546,7 @@ const agent = createAgent({
 <table width="100%">
 <tr>
     <td width="200"><code>pay_x402_with_priors_credit</code></td>
-    <td width="768">Pays an x402 URL in USDG on Robinhood Chain, borrowing the gap from the agent's Priors credit line when the wallet is short.</td>
+    <td width="768">Pays an x402 URL in USDG on Robinhood Chain, one payment per purchase, borrowing the gap from the agent's Priors credit line when the wallet is short.</td>
 </tr>
 <tr>
     <td width="200"><code>borrow_from_priors</code></td>

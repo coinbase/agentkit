@@ -1,7 +1,8 @@
+import { promises as dnsPromises } from "node:dns";
+import { isIP } from "node:net";
 import { z } from "zod";
 import { decodeEventLog, encodeFunctionData, erc20Abi, formatUnits, Hex, parseUnits } from "viem";
-import { x402Client, wrapFetchWithPayment } from "@x402/fetch";
-import { ExactEvmScheme } from "@x402/evm/exact/client";
+import { x402Client, x402HTTPClient } from "@x402/fetch";
 import { ActionProvider } from "../actionProvider";
 import { CreateAction } from "../actionDecorator";
 import { Network } from "../../network";
@@ -14,41 +15,279 @@ import {
   RepaySchema,
 } from "./schemas";
 import {
+  AUTO_TERM_DAYS,
+  AUTOREPAY,
+  AUTOREPAY_ABI,
+  DEFAULT_TERM_DAYS,
   LOAN_ACTIVE,
   POOL_ABI,
   PRIORS_API,
   PRIORS_POOL,
+  REGISTRY,
+  REGISTRY_ABI,
   ROBINHOOD_CHAIN_ID,
-  ROBINHOOD_NETWORK,
   USDG,
   USDG_DECIMALS,
 } from "./constants";
+// the data fence around the seller's text
+import { fenced, guarded, unfenced } from "./fence";
+// one signature per purchase
+import {
+  MAX_VALIDITY_SECONDS,
+  REQUEST_TIMEOUT_MS,
+  SKEW_SECONDS,
+  pickUsdgRequirement,
+  purchaseKey,
+  resend,
+  Sent,
+  usdgClient,
+} from "./payment";
+
+/** A payment signed for a purchase and not seen settled: until it expires, the only payment sent for that purchase. */
+type Signed = {
+  paymentHeaders: Record<string, string>;
+  validBefore: number;
+  price: bigint;
+  payTo: string;
+  borrowed: string;
+};
+/** A paid request's resends while its seller answers "settlement pending", as Priors' MCP server sends them. */
+const RESEND = { retries: 2, maxSleepMs: 10_000, timeoutMs: REQUEST_TIMEOUT_MS };
 
 const usdg = (atomic: bigint) => formatUnits(atomic, USDG_DECIMALS);
 const sameAddress = (a: unknown, b: string) => String(a).toLowerCase() === b.toLowerCase();
+const utcDay = () => new Date().toISOString().slice(0, 10);
 
-type Requirement = {
-  scheme?: string;
-  network?: string;
-  asset?: string;
-  amount?: string;
-  payTo?: string;
-};
+/**
+ * Auto-borrow, set by the owner in code (never by the model): pay_x402_with_priors_credit borrows the gap on its own,
+ * up to `perCall` USDG a call and `perDay` USDG a UTC day in this process, for the `hosts` listed only (exact host
+ * names), for 14 days, and only while this wallet's Autopay (AutoRepay v2) covers the new loan. The model's maxBorrow
+ * can only lower the amount.
+ */
+export type AutoBorrowOptions = { perCall: string; perDay: string; hosts: string[] };
+export type PriorsOptions = { autoBorrow?: AutoBorrowOptions };
+
+/** A refusal before anything is sent (its message is the answer). */
+class Refusal extends Error {}
+
+/**
+ * Atomic USDG from an amount the model gives: a plain decimal of at most 6 places, read exactly. viem's parseUnits
+ * rounds a longer one to the nearest unit, so a cap of 0.0999999 would admit 0.10.
+ *
+ * @param value - The amount, e.g. "0.10".
+ * @param name - Its argument's name, for the refusal.
+ * @returns Atomic USDG.
+ */
+function exactUsdg(value: string, name: string): bigint {
+  const s = String(value).trim();
+  if (!/^\d+(\.\d+)?$/.test(s))
+    throw new Refusal(`${name} must be a plain amount of USDG, such as 0.10. Nothing was sent.`);
+  if ((s.split(".")[1] ?? "").length > USDG_DECIMALS)
+    throw new Refusal(
+      `${name} ${s} has more than ${USDG_DECIMALS} decimals, and USDG counts in millionths: give at most 6 decimals. Nothing was sent.`,
+    );
+  return parseUnits(s, USDG_DECIMALS);
+}
+
+/**
+ * Throws unless a transaction's receipt says it succeeded: a reverted one moved nothing, and is never reported as done.
+ *
+ * @param receipt - The receipt the wallet provider answered.
+ * @param what - What the transaction was, e.g. "repay".
+ * @param hash - Its hash.
+ */
+function mined(receipt: unknown, what: string, hash: string): void {
+  const status = (receipt as { status?: unknown } | null)?.status;
+  if (status === "success" || status === 1 || status === 1n || status === "0x1") return;
+  if (status === "reverted" || status === 0 || status === 0n || status === "0x0")
+    throw new Error(`the ${what} transaction ${hash} reverted on chain: it moved nothing`);
+  throw new Error(
+    `the ${what} transaction ${hash} could not be confirmed (its receipt has no status): check it before acting on it`,
+  );
+}
+
+/**
+ * Whether an IPv4 address is not a public one: this host, private, CGNAT, link-local, test or reserved.
+ *
+ * @param root0 - The address's first three numbers.
+ * @param root0."0" - The first.
+ * @param root0."1" - The second.
+ * @param root0."2" - The third.
+ * @returns Whether it is not public.
+ */
+function v4Private([a, b, c]: number[]): boolean {
+  return (
+    a === 0 ||
+    a === 10 ||
+    a === 127 ||
+    a >= 224 ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    (a === 192 && b === 0 && (c === 0 || c === 2)) ||
+    (a === 198 && (b === 18 || b === 19)) ||
+    (a === 198 && b === 51 && c === 100) ||
+    (a === 203 && b === 0 && c === 113)
+  );
+}
+
+/**
+ * An IPv6 address's eight 16-bit words.
+ *
+ * @param ip - The address.
+ * @returns Its words, or null when it does not parse.
+ */
+function v6Words(ip: string): number[] | null {
+  let s = ip.split("%")[0].toLowerCase();
+  let tail: number[] = [];
+  const dotted = s.match(/(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+  if (dotted) {
+    const [p, q, r, t] = dotted.slice(1).map(Number);
+    tail = [(p << 8) | q, (r << 8) | t];
+    s = s.slice(0, -dotted[0].length);
+    if (s.endsWith(":") && !s.endsWith("::")) s = s.slice(0, -1);
+  }
+  const parts = s.split("::");
+  if (parts.length > 2) return null;
+  const words = (x: string) =>
+    x ? x.split(":").map(h => (/^[0-9a-f]{1,4}$/.test(h) ? parseInt(h, 16) : NaN)) : [];
+  const head = words(parts[0]);
+  const rest = parts.length === 2 ? words(parts[1]) : [];
+  const fill = 8 - head.length - rest.length - tail.length;
+  if (fill < 0 || (parts.length === 1 && fill !== 0)) return null;
+  const all = [...head, ...Array(fill).fill(0), ...rest, ...tail];
+  return all.some(Number.isNaN) ? null : all;
+}
+
+/**
+ * Whether an IPv6 address is not a public one (an IPv4 one it carries judged as IPv4).
+ *
+ * @param w - Its eight 16-bit words.
+ * @returns Whether it is not public.
+ */
+function v6Private(w: number[]): boolean {
+  const v4 = (hi: number, lo: number) => v4Private([hi >> 8, hi & 255, lo >> 8, lo & 255]);
+  if (w.slice(0, 6).every(x => x === 0)) return true; // ::, ::1, and the deprecated IPv4-compatible form
+  if (w.slice(0, 5).every(x => x === 0) && w[5] === 0xffff) return v4(w[6], w[7]); // IPv4-mapped
+  if (
+    (w[0] & 0xfe00) === 0xfc00 ||
+    (w[0] & 0xffc0) === 0xfe80 ||
+    (w[0] & 0xffc0) === 0xfec0 ||
+    (w[0] & 0xff00) === 0xff00
+  )
+    return true;
+  if (w[0] === 0x64 && w[1] === 0xff9b) return w[2] !== 0 || v4(w[6], w[7]); // NAT64, and its local-use range
+  if (w[0] === 0x2002) return v4(w[1], w[2]); // 6to4
+  return w[0] === 0x2001 && (w[1] === 0 || w[1] === 0xdb8); // Teredo, documentation
+}
+
+/**
+ * Whether an address is not a public one (a string that is not an address counts as not public).
+ *
+ * @param ip - The address.
+ * @returns Whether it is not public.
+ */
+function privateAddress(ip: string): boolean {
+  const kind = isIP(ip);
+  if (kind === 4) return v4Private(ip.split(".").map(Number));
+  if (kind === 6) {
+    const w = v6Words(ip);
+    return !w || v6Private(w);
+  }
+  return true;
+}
+
+/**
+ * Refuses, before anything is fetched, a URL whose host is a private, loopback or link-local address, a local name, or a
+ * name that resolves to one: the provider fetches what the model names and hands the answer back.
+ *
+ * SHORTCUT: the name is resolved here and again by fetch when it connects, so a DNS answer that turns private between
+ * the two (rebinding) is not caught. Upgrade when the provider fetches with credentials or reads private answers back:
+ * a dispatcher whose connect lookup applies this same check.
+ *
+ * @param url - The URL to be fetched.
+ */
+async function publicHost(url: URL): Promise<void> {
+  const host = url.hostname.replace(/^\[|\]$/g, "").toLowerCase();
+  const no = new Refusal(
+    `${url.host} is a private, loopback or link-local address, or a local name: only public https hosts are paid. Nothing was fetched or paid.`,
+  );
+  if (!host || host === "localhost" || /\.(localhost|local|home\.arpa)$/.test(host)) throw no;
+  if (isIP(host)) {
+    if (privateAddress(host)) throw no;
+    return;
+  }
+  let found: Array<{ address: string }>;
+  try {
+    found = await dnsPromises.lookup(host, { all: true, verbatim: true });
+  } catch (error) {
+    throw new Refusal(
+      `${url.host} could not be resolved (${unfenced(String((error as { code?: string })?.code ?? error))}). Nothing was fetched or paid.`,
+    );
+  }
+  if (!found.length || found.some(a => privateAddress(a.address))) throw no;
+}
+
+/**
+ * The settlement's transaction hash from an x402 payment-response header (nothing else of it).
+ *
+ * @param header - The header.
+ * @returns The hash, or null when it carries none.
+ */
+function settledTx(header: string | null): string | null {
+  if (!header) return null;
+  try {
+    const tx = JSON.parse(Buffer.from(header, "base64").toString("utf8"))?.transaction;
+    return typeof tx === "string" && /^0x[0-9a-fA-F]{64}$/.test(tx) ? tx : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * PriorsActionProvider gives an agent on Robinhood Chain a USDG credit line from Priors: pay an x402 URL and borrow
  * the gap when the wallet is short, borrow and repay, and read another agent's repayment record before paying it.
  */
 export class PriorsActionProvider extends ActionProvider<EvmWalletProvider> {
+  private readonly auto: { perCall: bigint; perDay: bigint; hosts: Set<string> } | null;
+  private borrowedToday = { day: "", amount: 0n };
+  // One signature per purchase (./payment.ts): a payment this provider signed for a wallet's purchase (the method, the
+  // URL as the seller reads it and the body: purchaseKey) and has not seen settle is sent again by a later call for
+  // that purchase, never signed again, until it expires.
+  // SHORTCUT: kept in this process's memory. A restart while such a payment may still settle (at most 600 s, plus
+  // SKEW_SECONDS) forgets it, and a call for the same purchase after the restart signs again: at most one more payment
+  // of at most maxPrice, to the seller the call named. Upgrade when the provider gets a place to keep state.
+  private readonly unsettled = new Map<string, Signed>();
+  /** The call under way for each purchase: another call for it waits for it, then finds its payment. */
+  private readonly running = new Map<string, Promise<void>>();
+
   /**
    * Constructor for the PriorsActionProvider.
    *
    * @param fetchImpl - The fetch used for Priors' API and the x402 URLs (injectable for tests).
+   * @param options - `autoBorrow` (off unless given): see AutoBorrowOptions.
    */
   constructor(
     private readonly fetchImpl: typeof fetch = (input, init) => globalThis.fetch(input, init),
+    options: PriorsOptions = {},
   ) {
     super("priors", []);
+    const a = options.autoBorrow;
+    if (!a) {
+      this.auto = null;
+      return;
+    }
+    const perCall = parseUnits(String(a.perCall), USDG_DECIMALS);
+    const perDay = parseUnits(String(a.perDay), USDG_DECIMALS);
+    if (perCall <= 0n) throw new Error("autoBorrow.perCall must be above 0");
+    if (perDay < perCall) throw new Error("autoBorrow.perDay must be at least autoBorrow.perCall");
+    const hosts = (a.hosts ?? []).map(h => String(h).trim().toLowerCase());
+    if (!hosts.length || hosts.some(h => !/^[a-z0-9.-]+(:\d{1,5})?$/.test(h)))
+      throw new Error(
+        'autoBorrow.hosts must list the host names it may borrow to pay, e.g. ["models.example"]',
+      );
+    this.auto = { perCall, perDay, hosts: new Set(hosts) };
   }
 
   /**
@@ -85,13 +324,17 @@ Inputs:
       const a = body.agents?.[0];
       if (!a || !a.record) return `Agent #${args.agentId} has no Priors record.`;
       const r = a.record;
-      return [
-        `Agent #${args.agentId}${a.name ? ` (${a.name})` : ""} on Priors:`,
-        `- loans repaid: ${r.loansRepaid ?? 0} (${r.volumeRepaidUsdg ?? 0} USDG), open loans: ${r.activeLoans ?? 0}`,
-        `- defaulted: ${r.defaulted ? "yes" : "no"}${r.frozen ? ", frozen" : ""}`,
-        `- late repayments: ${a.scoreV2?.lateRepayments ?? 0}, Score v2: ${a.scoreV2?.score ?? "n/a"} (${a.scoreV2?.rungName ?? "n/a"})`,
-        `A record shows how the agent repaid loans on Priors, not whether its service is good.`,
-      ].join("\n");
+      // the name is the agent's owner's own words: one line, no fence marker however spelt
+      const name = a.name ? unfenced(String(a.name).slice(0, 100)) : "";
+      return guarded(
+        [
+          `Agent #${args.agentId}${name ? ` (${name})` : ""} on Priors:`,
+          `- loans repaid: ${r.loansRepaid ?? 0} (${r.volumeRepaidUsdg ?? 0} USDG), open loans: ${r.activeLoans ?? 0}`,
+          `- defaulted: ${r.defaulted ? "yes" : "no"}${r.frozen ? ", frozen" : ""}`,
+          `- late repayments: ${a.scoreV2?.lateRepayments ?? 0}, Score v2: ${a.scoreV2?.score ?? "n/a"} (${a.scoreV2?.rungName ?? "n/a"})`,
+          `A record shows how the agent repaid loans on Priors, not whether its service is good.`,
+        ].join("\n"),
+      );
     } catch (error) {
       return `Error reading agent #${args.agentId}'s record: ${error}`;
     }
@@ -162,12 +405,13 @@ Inputs:
       const loan = await this.borrowAmount(
         walletProvider,
         args.agentId,
-        parseUnits(args.amount, USDG_DECIMALS),
+        exactUsdg(args.amount, "amount"),
         args.days,
       );
       return `Borrowed ${usdg(loan.amount)} USDG from agent #${args.agentId}'s Priors line: loan #${loan.loanId}, fee ${usdg(loan.fee)} USDG, due ${loan.dueAt}. Transaction: ${loan.hash}`;
     } catch (error) {
-      return `Error borrowing from Priors: ${error}`;
+      if (error instanceof Refusal) return `Error: ${error.message}`;
+      return `Error borrowing from Priors: ${unfenced(String(error))}`;
     }
   }
 
@@ -181,10 +425,12 @@ Inputs:
   @CreateAction({
     name: "repay_priors_loan",
     description: `
-This tool repays a Priors loan in full (principal and fee) from this wallet's USDG on Robinhood Chain. Real money.
+This tool repays a Priors loan in full (principal and fee) from this wallet's USDG on Robinhood Chain. Real money. Only a
+loan of an agent this wallet owns or is the declared wallet of, taken by its current owner, is repaid.
 
 Inputs:
-- loanId: the loan to repay.`,
+- loanId: the loan to repay.
+- agentId: the agent whose loan it is (optional; a loan of another agent is refused).`,
     schema: RepaySchema,
   })
   async repay(
@@ -197,8 +443,15 @@ Inputs:
         abi: POOL_ABI,
         functionName: "getLoan",
         args: [BigInt(args.loanId)],
-      })) as { agentId: bigint; principal: bigint; fee: bigint; status: number };
+      })) as { agentId: bigint; principal: bigint; fee: bigint; owner: string; status: number };
       if (Number(loan.status) !== LOAN_ACTIVE) return `Error: loan #${args.loanId} is not active.`;
+      if (args.agentId !== undefined && BigInt(args.agentId) !== BigInt(loan.agentId))
+        return `Error: loan #${args.loanId} belongs to agent #${loan.agentId}, not #${args.agentId}. Nothing was repaid.`;
+      // The pool lets anyone repay any loan: this wallet's USDG goes only to a loan of an agent it acts for (its owner or
+      // declared wallet), opened by the owner it has now (a loan taken while someone else held the agent is theirs)
+      const holder = await this.control(walletProvider, BigInt(loan.agentId), "repaid");
+      if (String(loan.owner).toLowerCase() !== holder.toLowerCase())
+        return `Error: loan #${args.loanId} was opened by ${loan.owner}, which held agent #${loan.agentId} then; its owner now (${holder}) did not take it. Nothing was repaid.`;
       const due = loan.principal + loan.fee;
       const me = walletProvider.getAddress() as Hex;
       const balance = (await walletProvider.readContract({
@@ -224,7 +477,7 @@ Inputs:
             args: [PRIORS_POOL, due],
           }),
         });
-        await walletProvider.waitForTransactionReceipt(approve);
+        mined(await walletProvider.waitForTransactionReceipt(approve), "USDG approval", approve);
       }
       const hash = await walletProvider.sendTransaction({
         to: PRIORS_POOL,
@@ -234,10 +487,11 @@ Inputs:
           args: [BigInt(args.loanId), loan.agentId, due],
         }),
       });
-      await walletProvider.waitForTransactionReceipt(hash);
+      mined(await walletProvider.waitForTransactionReceipt(hash), "repay", hash);
       return `Repaid Priors loan #${args.loanId}: ${usdg(due)} USDG. Transaction: ${hash}`;
     } catch (error) {
-      return `Error repaying loan #${args.loanId}: ${error}`;
+      if (error instanceof Refusal) return `Error: ${error.message}`;
+      return `Error repaying loan #${args.loanId}: ${unfenced(String(error))}`;
     }
   }
 
@@ -252,72 +506,221 @@ Inputs:
     name: "pay_x402_with_priors_credit",
     description: `
 This tool fetches a URL that charges per call with x402 (HTTP 402) and pays it in USDG on Robinhood Chain from this
-wallet. If the wallet is short of the price, it first borrows the gap from the agent's Priors line, only when maxBorrow
-covers it. Real money: confirm the URL, the price and the most to borrow with the user first.
+wallet, with GET, or with POST and a body (an OpenAI-style chat completion, for one). If the wallet is short of the
+price, it first borrows the gap from the agent's Priors line, only when maxBorrow covers it, or, when the provider was
+set up with autoBorrow, on its own within the owner's limits while Autopay covers the loan. Real money: confirm the URL,
+the price and the most to borrow with the user first. It signs one payment per purchase: while a payment it signed may
+still settle, a call for the same purchase (the same method, URL and body) sends that payment again, never a new one.
 
 Inputs:
 - url: the https URL.
 - agentId: the agent's ERC-8004 id whose line may be drawn.
 - maxPrice: the most to pay for this call, in USDG (e.g. 0.10).
-- maxBorrow: the most to borrow if the wallet is short, in USDG (default 0: never borrow).
-- days: the term of a loan taken for the gap (default 7).`,
+- maxBorrow: the most to borrow if the wallet is short, in USDG (default 0: never borrow; with autoBorrow, its amount
+  per call, which this can only lower).
+- days: the term of a loan taken for the gap (default 7; 14 with autoBorrow).
+- method, body: POST and its body (default GET with no body).`,
     schema: PayX402WithCreditSchema,
   })
   async payX402WithCredit(
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof PayX402WithCreditSchema>,
   ): Promise<string> {
+    // a loan taken for the gap stays in the answer, whatever happens to the payment after it
+    let borrowed = "";
     try {
       if (!/^https:\/\//i.test(args.url)) return "Error: only https URLs are paid.";
-      const maxPrice = parseUnits(args.maxPrice, USDG_DECIMALS);
-      const maxBorrow = parseUnits(args.maxBorrow || "0", USDG_DECIMALS);
-      const probe = await this.fetchImpl(args.url);
-      if (probe.status !== 402)
-        return `No payment asked (HTTP ${probe.status}):\n${(await probe.text()).slice(0, 2000)}`;
-      const requirement = await this.usdgRequirement(probe);
-      if (!requirement)
-        return "Error: the URL asks for no USDG payment on Robinhood Chain (x402 exact).";
-      const price = BigInt(requirement.amount ?? "0");
-      if (price > maxPrice)
-        return `Error: the URL asks ${usdg(price)} USDG, above maxPrice ${args.maxPrice}. Nothing was paid.`;
-      const me = walletProvider.getAddress() as Hex;
-      const balance = (await walletProvider.readContract({
-        address: USDG,
-        abi: erc20Abi,
-        functionName: "balanceOf",
-        args: [me],
-      })) as bigint;
-      let borrowed = "";
-      if (balance < price) {
-        const params = (await walletProvider.readContract({
-          address: PRIORS_POOL,
-          abi: POOL_ABI,
-          functionName: "getParams",
-        })) as { minLoan: bigint };
-        const gap = price - balance;
-        const amount = gap > params.minLoan ? gap : params.minLoan;
-        if (amount > maxBorrow) {
-          return `Error: the wallet holds ${usdg(balance)} USDG, short of ${usdg(price)}; borrowing ${usdg(amount)} (the pool's minimum loan is ${usdg(params.minLoan)}) is above maxBorrow ${args.maxBorrow || "0"}. Nothing was paid.`;
+      await publicHost(new URL(args.url));
+      const method = args.method ?? (args.body !== undefined ? "POST" : "GET");
+      if (method === "GET" && args.body !== undefined)
+        return "Error: a GET request cannot carry a body: use POST.";
+      let json = false;
+      if (args.body !== undefined) {
+        try {
+          JSON.parse(args.body);
+          json = true;
+        } catch {
+          json = false;
         }
-        const loan = await this.borrowAmount(walletProvider, args.agentId, amount, args.days);
-        borrowed = `Borrowed ${usdg(loan.amount)} USDG first: loan #${loan.loanId}, fee ${usdg(loan.fee)}, due ${loan.dueAt} (transaction ${loan.hash}). Repay it with repay_priors_loan before then.\n`;
       }
-      const client = new x402Client()
-        .register(ROBINHOOD_NETWORK, new ExactEvmScheme(walletProvider.toSigner()))
-        .registerPolicy((_version, reqs) =>
-          reqs.filter(
-            r =>
-              r.network === ROBINHOOD_NETWORK &&
-              sameAddress(r.asset, USDG) &&
-              BigInt((r as Requirement).amount ?? "0") <= maxPrice,
-          ),
+      // a redirect is never followed, the paid request's included (its signed payment would go with it)
+      const init = (): RequestInit =>
+        args.body !== undefined
+          ? {
+              method,
+              body: args.body,
+              headers: { "content-type": json ? "application/json" : "text/plain; charset=utf-8" },
+              redirect: "manual",
+            }
+          : { method, redirect: "manual" };
+      const maxPrice = exactUsdg(args.maxPrice, "maxPrice");
+      // autoBorrow: the owner's amount per call, which the model's maxBorrow can only lower, and only for its hosts
+      const auto = this.auto;
+      const host = new URL(args.url).host.toLowerCase();
+      const autoHere = !!auto && auto.hosts.has(host);
+      const named = exactUsdg(args.maxBorrow ?? "0", "maxBorrow");
+      const maxBorrow = !auto
+        ? named
+        : !autoHere
+          ? 0n
+          : args.maxBorrow === undefined || named > auto.perCall
+            ? auto.perCall
+            : named;
+      const days = args.days ?? (auto ? AUTO_TERM_DAYS : DEFAULT_TERM_DAYS);
+      const me = walletProvider.getAddress() as Hex;
+      const purchase = `${me.toLowerCase()} ${await purchaseKey(new Request(args.url, init()))}`;
+      return await this.onePerPurchase(purchase, async () => {
+        // a payment signed for this purchase that may still settle is sent again, before anything is probed or borrowed
+        const now = Math.floor(Date.now() / 1000);
+        for (const [k, v] of this.unsettled)
+          if (v.validBefore + SKEW_SECONDS <= now) this.unsettled.delete(k);
+        const out = this.unsettled.get(purchase);
+        if (out) {
+          const r = await resend(args.url, out.paymentHeaders, {
+            ...RESEND,
+            init: init(),
+            fetchImpl: this.fetchImpl,
+          });
+          if (r.response.ok) this.unsettled.delete(purchase);
+          const first = out.borrowed ? `Its first attempt: ${out.borrowed}` : "\n";
+          return guarded(
+            `No new payment was signed: the payment of ${usdg(out.price)} USDG to ${out.payTo} signed earlier for this purchase was sent again. ${first}${await this.outcome(r, out, SKEW_SECONDS)}`,
+          );
+        }
+        const probe = await this.fetchImpl(args.url, init());
+        if (probe.status >= 300 && probe.status < 400) {
+          const to = probe.headers.get("location");
+          return guarded(
+            `The URL answered a redirect (HTTP ${probe.status}), not followed: nothing was paid.${to ? `\n${fenced(to.slice(0, 500), "redirect target")}` : ""}`,
+          );
+        }
+        if (probe.status !== 402)
+          return guarded(
+            `No payment asked (HTTP ${probe.status}). Response:\n${fenced((await probe.text()).slice(0, 2000), "response body")}`,
+          );
+        // the 402 (the PAYMENT-REQUIRED header, else a v2 body), and its requirement: exact USDG on Robinhood Chain by
+        // EIP-3009, on USDG's own EIP-712 domain, to a 0x payTo
+        const http = new x402HTTPClient(new x402Client());
+        let body: { x402Version?: unknown; accepts?: unknown } | undefined;
+        try {
+          const text = await probe.text();
+          body = text ? JSON.parse(text) : undefined;
+        } catch {
+          body = undefined;
+        }
+        let required: ReturnType<typeof http.getPaymentRequiredResponse> | null;
+        try {
+          required = http.getPaymentRequiredResponse(n => probe.headers.get(n), body);
+        } catch {
+          required =
+            body && body.x402Version === 2 && Array.isArray(body.accepts)
+              ? (body as ReturnType<typeof http.getPaymentRequiredResponse>)
+              : null;
+        }
+        const requirement =
+          required && required.x402Version === 2 ? pickUsdgRequirement(required.accepts) : null;
+        if (!required || !requirement)
+          return "Error: the URL asks for no USDG payment on Robinhood Chain (x402 v2 exact, EIP-3009).";
+        const price = BigInt(requirement.amount);
+        if (price > maxPrice)
+          return `Error: the URL asks ${usdg(price)} USDG, above maxPrice ${args.maxPrice}. Nothing was paid.`;
+        const payTo = String(requirement.payTo);
+        // the client that signs (usdgClient): USDG on Robinhood Chain only, at most the probed price, an authorization
+        // valid at most 600 s; asked before anything is borrowed whether it signs this requirement (a refusal at signing
+        // time must never come after a loan)
+        const client = usdgClient(walletProvider.toSigner(), price);
+        try {
+          (
+            client as unknown as { selectPaymentRequirements(v: number, r: unknown[]): unknown }
+          ).selectPaymentRequirements(2, [requirement]);
+        } catch {
+          return "Error: x402 would not sign the requirement this URL asks for. Nothing was borrowed or paid.";
+        }
+        const balance = (await walletProvider.readContract({
+          address: USDG,
+          abi: erc20Abi,
+          functionName: "balanceOf",
+          args: [me],
+        })) as bigint;
+        if (balance < price) {
+          const params = (await walletProvider.readContract({
+            address: PRIORS_POOL,
+            abi: POOL_ABI,
+            functionName: "getParams",
+          })) as { minLoan: bigint; maxTerm: bigint };
+          const gap = price - balance;
+          const amount = gap > params.minLoan ? gap : params.minLoan;
+          if (auto && !autoHere)
+            return `Error: the wallet holds ${usdg(balance)} USDG, short of ${usdg(price)}, and auto-borrow borrows only to pay ${[...auto.hosts].join(", ")}. Nothing was borrowed or paid.`;
+          if (amount > maxBorrow) {
+            return `Error: the wallet holds ${usdg(balance)} USDG, short of ${usdg(price)}; borrowing ${usdg(amount)} (the pool's minimum loan is ${usdg(params.minLoan)}) is above ${auto ? `the most this call may borrow, ${usdg(maxBorrow)}` : `maxBorrow ${args.maxBorrow || "0"}`}. Nothing was paid.`;
+          }
+          // auto: the day's room is taken here, before any await, so two calls running at once never both pass the
+          // limit; it is given back whenever the borrow stops before it is sent, refused or a read failing;
+          // a borrow whose sending began stays counted (its answer may be lost: the safe direction)
+          let reserved: { day: string; amount: bigint } | null = null;
+          let sending = false;
+          if (auto) {
+            const today = utcDay();
+            if (this.borrowedToday.day !== today) this.borrowedToday = { day: today, amount: 0n };
+            if (this.borrowedToday.amount + amount > auto.perDay)
+              return `Error: the wallet holds ${usdg(balance)} USDG, short of ${usdg(price)}, and auto-borrow's limit of ${usdg(auto.perDay)} USDG a day has ${usdg(auto.perDay - this.borrowedToday.amount)} left in this process, less than ${usdg(amount)}. Nothing was borrowed or paid.`;
+            this.borrowedToday.amount += amount;
+            reserved = { day: today, amount };
+          }
+          // auto: 14 days, brought down to the pool's maxTerm; otherwise the term asked, as before
+          const termDays =
+            auto && params.maxTerm !== undefined && BigInt(days) * 86400n > BigInt(params.maxTerm)
+              ? Number(BigInt(params.maxTerm) / 86400n)
+              : days;
+          const loan = await this.borrowAmount(
+            walletProvider,
+            args.agentId,
+            amount,
+            termDays,
+            auto
+              ? async (fee: bigint) => {
+                  await this.autopayCovers(walletProvider, args.agentId, amount + fee);
+                  sending = true; // the borrow's transaction is sent right after this check
+                }
+              : undefined,
+            "borrowed or paid",
+          ).catch((error: unknown) => {
+            if (reserved && !sending && this.borrowedToday.day === reserved.day)
+              this.borrowedToday.amount -= reserved.amount;
+            throw error;
+          });
+          borrowed = `Borrowed ${usdg(loan.amount)} USDG first: loan #${loan.loanId}, fee ${usdg(loan.fee)}, due ${loan.dueAt} (transaction ${loan.hash}). ${auto ? "Auto-borrow: Autopay repays it from this wallet in its window, the last hours before it is due; keep its due in the wallet by then." : "Repay it with repay_priors_loan before then."}\n`;
+        }
+        // the one signature for this purchase: the requirement probed (checked against maxPrice, and borrowed for), kept
+        // before it leaves, and from then on only sent again (resend: once the payment may be out, a dropped connection
+        // or a timeout is an answer, never an error that loses it)
+        const payload = await client.createPaymentPayload({ ...required, accepts: [requirement] });
+        const validBefore = Number(
+          (payload.payload as { authorization?: { validBefore?: unknown } }).authorization
+            ?.validBefore,
         );
-      const paid = await wrapFetchWithPayment(this.fetchImpl, client)(args.url);
-      const receipt =
-        paid.headers.get("payment-response") || paid.headers.get("x-payment-response");
-      return `${borrowed}Paid ${usdg(price)} USDG to ${requirement.payTo} (HTTP ${paid.status})${receipt ? `; settlement: ${receipt.slice(0, 200)}` : ""}.\nResponse:\n${(await paid.text()).slice(0, 2000)}`;
+        const signed: Signed = {
+          paymentHeaders: http.encodePaymentSignatureHeader(payload),
+          validBefore: Number.isSafeInteger(validBefore) ? validBefore : now + MAX_VALIDITY_SECONDS,
+          price,
+          payTo,
+          borrowed,
+        };
+        this.unsettled.set(purchase, signed);
+        const r = await resend(args.url, signed.paymentHeaders, {
+          ...RESEND,
+          init: init(),
+          fetchImpl: this.fetchImpl,
+        });
+        if (r.response.ok) this.unsettled.delete(purchase);
+        return guarded(`${borrowed}${await this.outcome(r, signed, SKEW_SECONDS)}`);
+      });
     } catch (error) {
-      return `Error paying ${args.url} with Priors credit: ${error}`;
+      if (error instanceof Refusal) return guarded(`${borrowed}Error: ${error.message}`);
+      return guarded(
+        `${borrowed}Error paying ${unfenced(args.url)} with Priors credit: ${unfenced(String(error))}`,
+      );
     }
   }
 
@@ -331,37 +734,184 @@ Inputs:
     network.protocolFamily === "evm" && String(network.chainId) === ROBINHOOD_CHAIN_ID;
 
   /**
-   * The x402 v2 `exact` requirement for USDG on Robinhood Chain, from the 402's header or body.
+   * Auto-borrow's condition, read before the borrow is sent: this wallet is the agent's declared wallet, its Autopay
+   * plan is on and set under the agent's current owner and key, not held or paused, its limit per loan is at least
+   * `due`, and its USDG approval to AutoRepay covers `due` on top of the agent's open loans it already repays (those
+   * within its limit). Throws a Refusal saying what to turn on otherwise.
    *
-   * @param probe - The 402 response.
-   * @returns The requirement, or null.
+   * @param walletProvider - The wallet provider.
+   * @param agentId - The agent id.
+   * @param due - The new loan's principal plus fee, atomic USDG.
    */
-  private async usdgRequirement(probe: Response): Promise<Requirement | null> {
-    let accepts: Requirement[] = [];
-    const header = probe.headers.get("payment-required");
-    if (header) {
-      try {
-        accepts = JSON.parse(Buffer.from(header, "base64").toString("utf8")).accepts ?? [];
-      } catch {
-        accepts = [];
-      }
+  private async autopayCovers(walletProvider: EvmWalletProvider, agentId: number, due: bigint) {
+    const me = walletProvider.getAddress() as Hex;
+    const id = BigInt(agentId);
+    const read = (
+      address: Hex,
+      abi: typeof REGISTRY_ABI | typeof AUTOREPAY_ABI | typeof erc20Abi,
+      functionName: string,
+      args: unknown[] = [],
+    ) =>
+      walletProvider.readContract({
+        address,
+        abi,
+        functionName,
+        args,
+      } as never) as Promise<unknown>;
+    const [wallet, owner, plan, epoch, held, pausedUntil, allowance] = (await Promise.all([
+      read(REGISTRY, REGISTRY_ABI, "getAgentWallet", [id]),
+      read(REGISTRY, REGISTRY_ABI, "ownerOf", [id]),
+      read(AUTOREPAY, AUTOREPAY_ABI, "planOf", [me, id]),
+      read(AUTOREPAY, AUTOREPAY_ABI, "epochOf", [id]),
+      read(AUTOREPAY, AUTOREPAY_ABI, "held", [me]),
+      read(AUTOREPAY, AUTOREPAY_ABI, "pausedUntil"),
+      read(USDG, erc20Abi, "allowance", [me, AUTOREPAY]),
+    ])) as [
+      string,
+      string,
+      readonly [number | bigint, string, boolean, boolean, boolean, number | bigint],
+      readonly [number | bigint, boolean],
+      boolean,
+      bigint,
+      bigint,
+    ];
+    const no = (why: string) =>
+      new Refusal(
+        `auto-borrow borrows only when Autopay covers the new loan (${usdg(due)} USDG due), and ${why}. Nothing was borrowed or paid. Turn Autopay on for this wallet with a limit of at least ${usdg(due)} USDG per loan (Go mode, or @priors/mcp's autopay_on).`,
+      );
+    const [cap, planOwner, on, , , planEpoch] = plan;
+    if (!sameAddress(wallet, me))
+      throw no(`this wallet is not agent #${agentId}'s declared wallet`);
+    // AutoRepayV2 pays a wallet plan only from a declared wallet that is not the agent's owner (_walletPart: wallet !=
+    // l.owner); register() declares its caller, so an agent minted from this wallet has no wallet plan that pays
+    if (sameAddress(owner, me))
+      throw new Refusal(
+        `auto-borrow borrows only when Autopay covers the new loan (${usdg(due)} USDG due), and agent #${agentId}'s declared wallet is its owner's own address (this wallet): AutoRepay never repays from that address under a wallet plan, so no plan covers the loan. Nothing was borrowed or paid. Declare a key of the agent's own as its wallet (the registry's setAgentWallet) and turn Autopay on from that key, or repay by hand.`,
+      );
+    if (!on) throw no("Autopay is off for this wallet");
+    if (!sameAddress(planOwner, owner) || BigInt(planEpoch) !== BigInt(epoch[0]))
+      throw no("this wallet's Autopay plan was set under an earlier owner or key of the agent");
+    if (held) throw no("Autopay is on hold for this wallet");
+    if (BigInt(pausedUntil) > BigInt(Math.floor(Date.now() / 1000)))
+      throw no("Autopay is paused by the Safe");
+    if (BigInt(cap) < due) throw no(`Autopay's limit is ${usdg(BigInt(cap))} USDG per loan`);
+    // what the agent's open loans already need from that approval: each active loan within the plan's limit
+    const ids = (await walletProvider.readContract({
+      address: PRIORS_POOL,
+      abi: POOL_ABI,
+      functionName: "loansOf",
+      args: [id],
+    })) as readonly bigint[];
+    let owed = 0n;
+    for (const loanId of ids) {
+      const l = (await walletProvider.readContract({
+        address: PRIORS_POOL,
+        abi: POOL_ABI,
+        functionName: "getLoan",
+        args: [loanId],
+      })) as { principal: bigint; fee: bigint; status: number };
+      const loanDue = BigInt(l.principal) + BigInt(l.fee);
+      if (Number(l.status) === LOAN_ACTIVE && loanDue <= BigInt(cap)) owed += loanDue;
     }
-    if (!accepts.length) {
-      try {
-        accepts = ((await probe.clone().json()) as { accepts?: Requirement[] }).accepts ?? [];
-      } catch {
-        accepts = [];
-      }
-    }
-    return (
-      accepts.find(
-        r =>
-          r.scheme === "exact" &&
-          r.network === ROBINHOOD_NETWORK &&
-          sameAddress(r.asset, USDG) &&
-          /^\d+$/.test(String(r.amount)),
-      ) ?? null
+    if (BigInt(allowance) < owed + due)
+      throw no(
+        `Autopay may pull ${usdg(BigInt(allowance))} USDG from this wallet, and its open loans already need ${usdg(owed)} USDG`,
+      );
+  }
+
+  /**
+   * Before this wallet's money moves for agent `agentId` (a borrow into it, a repayment from it), Priors' own client
+   * rule (needController): the wallet controls the agent at the pool AND is its current owner or its declared
+   * ERC-8004 wallet. The pool lets an owner name any address its delegate with no word from that address, so being a
+   * controller is no proof this wallet acts for that owner; the declared wallet is set only by that wallet's own
+   * signature naming the owner, and a transfer clears it. Throws a Refusal (nothing sent) otherwise.
+   *
+   * @param walletProvider - The wallet provider.
+   * @param agentId - The agent id.
+   * @param did - What did not happen when refused ("repaid", "borrowed").
+   * @returns The agent's current owner.
+   */
+  private async control(
+    walletProvider: EvmWalletProvider,
+    agentId: bigint,
+    did: string,
+  ): Promise<string> {
+    const me = walletProvider.getAddress() as Hex;
+    const read = (
+      address: Hex,
+      abi: typeof REGISTRY_ABI | typeof POOL_ABI,
+      functionName: string,
+      args: unknown[],
+    ) =>
+      walletProvider.readContract({
+        address,
+        abi,
+        functionName,
+        args,
+      } as never) as Promise<unknown>;
+    if (!(await read(PRIORS_POOL, POOL_ABI, "isController", [agentId, me])))
+      throw new Refusal(
+        `this wallet (${me}) does not control agent #${agentId} on the pool (it is neither its owner nor its delegate). Nothing was ${did}.`,
+      );
+    const holder = String(await read(REGISTRY, REGISTRY_ABI, "ownerOf", [agentId]));
+    if (sameAddress(holder, me)) return holder;
+    if (sameAddress(await read(REGISTRY, REGISTRY_ABI, "getAgentWallet", [agentId]), me))
+      return holder;
+    throw new Refusal(
+      `this wallet (${me}) is neither agent #${agentId}'s owner (${holder}) nor its declared ERC-8004 wallet, and a pool delegate the owner named is no proof it acts for that owner. Nothing was ${did}. Declare this key as the agent's wallet (the registry's setAgentWallet, signed by this key), or use the owner's key.`,
     );
+  }
+
+  /**
+   * What became of a payment sent: paid only on a 2xx answer. Anything else (a dropped connection, no answer in time,
+   * a 5xx, a 402, a redirect) leaves it signed and sent, cashable by the seller until it expires, and a later call for
+   * the purchase sends it again.
+   *
+   * @param r - What resend answered.
+   * @param s - The payment sent.
+   * @param skew - SKEW_SECONDS, the margin kept past validBefore.
+   * @returns The answer's words for it.
+   */
+  private async outcome(r: Sent, s: Signed, skew: number): Promise<string> {
+    const res = r.response;
+    // of the settlement header, only its transaction hash: the rest is the seller's words
+    const tx = settledTx(
+      res.headers.get("payment-response") || res.headers.get("x-payment-response"),
+    );
+    const text = (await res.text()).slice(0, 2000);
+    const body = text ? `\nResponse:\n${fenced(text, "response body")}` : "";
+    const status = r.timedOut
+      ? "no answer in time"
+      : r.transportError
+        ? "the connection was lost"
+        : `HTTP ${res.status}`;
+    if (res.ok)
+      return `Paid ${usdg(s.price)} USDG to ${s.payTo} (${status})${tx ? `; settled in ${tx}` : ""}.${body}`;
+    const until = new Date((s.validBefore + skew) * 1000).toISOString();
+    const redirect = res.status >= 300 && res.status < 400 ? ", a redirect, not followed" : "";
+    return `The payment of ${usdg(s.price)} USDG to ${s.payTo} was signed and sent (${status}${redirect}), and the seller may still settle it until ${until}${tx ? ` (it names ${tx})` : ""}: do NOT call pay_x402_with_priors_credit again for this purchase (the same method, URL and body) before then. A later call for it sends this same payment again, never a new one.${body}`;
+  }
+
+  /**
+   * Runs one call for a purchase at a time: a call for a purchase that another call is paying waits for it, then finds
+   * the payment it signed (two calls at once never sign two).
+   *
+   * @param purchase - The wallet and the purchase's key.
+   * @param fn - The call.
+   * @returns What the call answers.
+   */
+  private async onePerPurchase<T>(purchase: string, fn: () => Promise<T>): Promise<T> {
+    const run = (this.running.get(purchase) ?? Promise.resolve()).then(fn);
+    const done = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    this.running.set(purchase, done);
+    try {
+      return await run;
+    } finally {
+      if (this.running.get(purchase) === done) this.running.delete(purchase);
+    }
   }
 
   /**
@@ -371,6 +921,8 @@ Inputs:
    * @param agentId - The agent id.
    * @param amount - Atomic USDG.
    * @param days - The term in days.
+   * @param check - Called with the quoted fee before the borrow is sent; a throw refuses it.
+   * @param did - What did not happen when the borrow is refused ("borrowed", "borrowed or paid").
    * @returns The loan.
    */
   private async borrowAmount(
@@ -378,6 +930,8 @@ Inputs:
     agentId: number,
     amount: bigint,
     days: number,
+    check?: (fee: bigint) => Promise<void>,
+    did = "borrowed",
   ) {
     const me = walletProvider.getAddress() as Hex;
     const term = BigInt(days * 86400);
@@ -387,6 +941,10 @@ Inputs:
       functionName: "quoteFee",
       args: [BigInt(agentId), amount, term],
     })) as readonly [bigint, bigint, bigint, bigint];
+    if (check) await check(fee);
+    // the same rule as repay, before anything is sent: no key borrows here for an agent it would then be refused to
+    // repay for
+    await this.control(walletProvider, BigInt(agentId), did);
     const hash = await walletProvider.sendTransaction({
       to: PRIORS_POOL,
       data: encodeFunctionData({
@@ -396,6 +954,7 @@ Inputs:
       }),
     });
     const receipt = await walletProvider.waitForTransactionReceipt(hash);
+    mined(receipt, "borrow", hash);
     let loanId = "?";
     let dueAt = "?";
     for (const log of (receipt?.logs ?? []) as Array<{
@@ -418,5 +977,5 @@ Inputs:
   }
 }
 
-export const priorsActionProvider = (fetchImpl?: typeof fetch) =>
-  new PriorsActionProvider(fetchImpl);
+export const priorsActionProvider = (fetchImpl?: typeof fetch, options?: PriorsOptions) =>
+  new PriorsActionProvider(fetchImpl, options);

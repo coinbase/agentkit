@@ -17,11 +17,37 @@ export const PRIORS_API = "https://priors.trade";
 /** Default loan term when borrowing the gap of a payment: 7 days. */
 export const DEFAULT_TERM_DAYS = 7;
 
+/**
+ * Auto-borrow's term: 14 days, so a loan Autopay repays in its window (the last hours before due) still counts as
+ * seasoned; brought down to the pool's maxTerm.
+ */
+export const AUTO_TERM_DAYS = 14;
+
+/** The ERC-8004 identity registry on Robinhood Chain (the agent's owner and declared wallet). */
+export const REGISTRY = "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" as const;
+
+/** AutoRepay v2 (Priors' Autopay): repays a loan from the agent's declared wallet in its window. */
+export const AUTOREPAY = "0x72B510AF4e66e5960aB9b975e0BdCf80239e83A0" as const;
+
+export const REGISTRY_ABI = parseAbi([
+  "function ownerOf(uint256 agentId) view returns (address)",
+  "function getAgentWallet(uint256 agentId) view returns (address)",
+]);
+
+export const AUTOREPAY_ABI = parseAbi([
+  "function planOf(address wallet, uint256 agentId) view returns (uint32 cap, address owner, bool on, bool useSavings, bool late, uint32 epoch)",
+  "function epochOf(uint256 agentId) view returns (uint32 epoch, bool stale)",
+  "function held(address who) view returns (bool)",
+  "function pausedUntil() view returns (uint64)",
+]);
+
 export const POOL_ABI = parseAbi([
   "function getParams() view returns ((uint256 minLoan, uint256 maxLoan, uint64 minTerm, uint64 maxTerm, uint64 grace, uint64 minScoreTerm, uint256 feeBps, uint256 sponsorFeeBps, uint256 protocolFeeBps, uint256 minStake, uint256 maxUtilizationBps, uint256 keeperBounty))",
   "function quoteFee(uint256 agentId, uint256 principal, uint64 term) view returns (uint256 fee, uint256 sponsorCut, uint256 reserveCut, uint256 premium)",
   "function borrow(uint256 agentId, uint256 amount, uint64 term, address to, uint256 maxFee) returns (uint256)",
   "function repay(uint256 loanId, uint256 expectedAgentId, uint256 maxDue)",
+  "function loansOf(uint256 agentId) view returns (uint256[])",
+  "function isController(uint256 agentId, address who) view returns (bool)",
   "function getLoan(uint256 loanId) view returns ((uint256 agentId, uint256 sponsorId, uint256 principal, uint256 fee, uint256 sponsorCut, uint256 reserveCut, uint256 premium, address owner, uint64 issuedAt, uint64 dueAt, uint64 defaultableAt, uint64 minScoreTerm, uint64 closedAt, uint8 status))",
   "event Borrowed(uint256 indexed loanId, uint256 indexed agentId, uint256 indexed sponsorId, uint256 principal, uint256 fee, uint64 dueAt, address to)",
 ]);
