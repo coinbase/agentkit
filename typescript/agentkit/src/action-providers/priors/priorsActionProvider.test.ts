@@ -1,5 +1,5 @@
 import { promises as dnsPromises } from "node:dns";
-import { encodeAbiParameters, encodeEventTopics, encodeFunctionData, erc20Abi } from "viem";
+import { encodeAbiParameters, encodeEventTopics, encodeFunctionData, erc20Abi, Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount, PrivateKeyAccount } from "viem/accounts";
 import { x402Client } from "@x402/fetch";
 import { EvmWalletProvider } from "../../wallet-providers";
@@ -175,6 +175,65 @@ const fenceOf = (t: string) =>
   t.match(
     /<<merchant-data ([0-9a-f]{16})>> \([^\n]*\)\n((?:\u2502 [^\n]*\n)*)<<end merchant-data \1>>/,
   );
+// the seller answered, then its body broke off (a reset, or the request's own timeout firing mid-body)
+const brokenBody =
+  (status: number, error: Error = new TypeError("terminated")) =>
+  (): Response =>
+    new Response(
+      new ReadableStream({
+        pull() {
+          throw error;
+        },
+      }),
+      { status },
+    );
+
+/**
+ * A wallet whose USDG balance and loans follow its borrows (each mined borrow adds its 5 USDG and a loan) and its
+ * payments (`spend`, when a seller settles one).
+ *
+ * @param reads - The other reads, as `wallet`'s.
+ * @returns The wallet, and `spend`.
+ */
+function lender(reads: Record<string, unknown>): Wallet & { spend: (amount: bigint) => void } {
+  const w = wallet(reads) as Wallet & { spend: (amount: bigint) => void };
+  let balance = 0n;
+  const loans: bigint[] = [];
+  const read = w.readContract;
+  w.readContract = (async (q: { functionName: string }) =>
+    q.functionName === "balanceOf"
+      ? balance
+      : q.functionName === "loansOf"
+        ? [...loans]
+        : q.functionName === "getLoan"
+          ? { principal: 5000000n, fee: 11666n, status: 1 }
+          : read(q)) as Wallet["readContract"];
+  const wait = w.waitForTransactionReceipt;
+  w.waitForTransactionReceipt = (async (hash: Hex) => {
+    const receipt = await wait(hash);
+    balance += 5000000n;
+    loans.push(50900n + BigInt(loans.length));
+    return receipt;
+  }) as Wallet["waitForTransactionReceipt"];
+  w.spend = amount => {
+    balance -= amount;
+  };
+  return w;
+}
+
+/**
+ * A wallet whose borrow receipt never comes: the transaction is sent, then the wait for it fails.
+ *
+ * @param reads - The reads, as `wallet`'s.
+ * @returns The wallet.
+ */
+function receiptLost(reads: Record<string, unknown>): Wallet {
+  const w = wallet(reads);
+  w.waitForTransactionReceipt = (async () => {
+    throw new Error("receipt timeout");
+  }) as Wallet["waitForTransactionReceipt"];
+  return w;
+}
 
 describe("PriorsActionProvider", () => {
   beforeAll(() => {
@@ -295,6 +354,7 @@ describe("PriorsActionProvider", () => {
         body,
         headers: { "content-type": "application/json" },
         redirect: "manual",
+        signal: expect.any(AbortSignal), // the probe's time bound
       });
       const { method, contentType, redirect } = paid[0];
       expect({ method, body: paid[0].body, contentType, redirect }).toEqual({
@@ -521,6 +581,49 @@ describe("PriorsActionProvider", () => {
       },
     );
 
+    it.each([
+      ["a reset", new TypeError("terminated")],
+      [
+        "the request's timeout",
+        new DOMException("The operation was aborted due to timeout", "TimeoutError"),
+      ],
+    ])(
+      "reports a paid 2xx whose body breaks off (%s) as paid, and says a call again pays again",
+      async (_name, error) => {
+        const p = priorsActionProvider(ask402("50000"));
+        const w = wallet({ balanceOf: 1000000n });
+        nextPaid = brokenBody(200, error);
+        const out = await p.payX402WithCredit(w, { url: URL_, agentId: 437, maxPrice: "0.10" });
+        expect(out).toMatch(
+          /^Paid 0\.05 USDG to 0x86727111a44084cc7a7c1c5d8ac4b0eca4d7db66 \(HTTP 200\)/m,
+        );
+        expect(out).toMatch(
+          /The response body could not be read completely \(the connection failed while it was sent\)\. This does not undo the payment, and calling again for this purchase pays again: ask the seller for the result instead\./,
+        );
+        expect(out).not.toMatch(/Error paying/);
+        expect(paid).toHaveLength(1);
+      },
+    );
+
+    it("says a payment whose non-2xx answer broke off was signed and sent, and sends it again on the retry", async () => {
+      const p = priorsActionProvider(ask402("50000"));
+      const w = wallet({ balanceOf: 1000000n });
+      const args = { url: URL_, agentId: 437, maxPrice: "0.10" };
+      nextPaid = brokenBody(500);
+      const first = await p.payX402WithCredit(w, args);
+      expect(first).toMatch(
+        /was signed and sent \(HTTP 500\).*do NOT call pay_x402_with_priors_credit again for this purchase/s,
+      );
+      expect(first).toMatch(/The response body could not be read completely/);
+      nextPaid = brokenBody(200);
+      const retry = await p.payX402WithCredit(w, args);
+      expect(paid).toHaveLength(2);
+      expect(paid[1].header).toBe(paid[0].header);
+      expect(retry).toMatch(
+        /No new payment was signed.*Paid 0\.05 USDG.*calling again for this purchase pays again/s,
+      );
+    });
+
     it("keys a JSON body by its value: the same body spelt again is the same purchase", async () => {
       const p = priorsActionProvider(ask402("20000"));
       const w = wallet({ balanceOf: 1000000n });
@@ -609,6 +712,132 @@ describe("PriorsActionProvider", () => {
       } finally {
         if (had) proto.setSpendControls = original;
         else delete proto.setSpendControls;
+      }
+    });
+  });
+
+  describe("one money call at a time per wallet", () => {
+    it("borrows once for two purchases at once on a short wallet", async () => {
+      const p = priorsActionProvider(ask402("100000"));
+      const w = lender({ getParams: { minLoan: 5000000n }, quoteFee: [11666n, 0n, 0n, 0n] });
+      const outs = await Promise.all(
+        [1, 2].map(n =>
+          p.payX402WithCredit(w, {
+            url: `${URL_}?n=${n}`,
+            agentId: 437,
+            maxPrice: "0.10",
+            maxBorrow: "5",
+          }),
+        ),
+      );
+      expect(w.sent).toHaveLength(1);
+      expect(paid).toHaveLength(2);
+      expect(outs.filter(o => /Borrowed 5 USDG first/.test(o))).toHaveLength(1);
+    });
+
+    it("never auto-borrows twice at once on an Autopay approval that covers one loan", async () => {
+      const w = lender(covered({ allowance: 6000000n }));
+      const seller = ask402("5000000");
+      const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+        const res = await seller(input, init);
+        if (res.status === 200) w.spend(5000000n); // the seller settles: the price leaves the wallet
+        return res;
+      }) as typeof fetch;
+      const p = priorsActionProvider(fetchImpl, AUTO);
+      const outs = await Promise.all(
+        [1, 2].map(n =>
+          p.payX402WithCredit(w, { url: `${CHAT}?n=${n}`, agentId: 437, maxPrice: "5" }),
+        ),
+      );
+      expect(w.sent).toEqual([borrowTx(5000000n, 14n * 86400n)]);
+      expect(
+        outs.some(o =>
+          /may pull 6 USDG from this wallet, and its open loans already need 5\.011666 USDG/.test(
+            o,
+          ),
+        ),
+      ).toBe(true);
+    });
+
+    it("runs a repayment and a borrow after the wallet's payment under way, not beside it", async () => {
+      let answer: () => void = () => undefined;
+      const answered = new Promise<void>(resolve => {
+        answer = resolve;
+      });
+      nextPaid = (() =>
+        answered.then(() => new Response("the data", { status: 200 }))) as unknown as (
+        r: Request,
+      ) => Response;
+      const order: string[] = [];
+      const w = wallet({
+        balanceOf: 6000000n,
+        allowance: 6000000n,
+        getLoan: { agentId: 437n, principal: 5000000n, fee: 11666n, owner: ME, status: 1 },
+        quoteFee: [11666n, 0n, 0n, 0n],
+      });
+      const p = priorsActionProvider(ask402("50000"));
+      const done = (what: string) => (out: string) => {
+        order.push(what);
+        return out;
+      };
+      const pay = p
+        .payX402WithCredit(w, { url: URL_, agentId: 437, maxPrice: "0.10" })
+        .then(done("paid"));
+      await new Promise(r => setTimeout(r, 20));
+      const repay = p.repay(w, { loanId: 50900 }).then(done("repaid"));
+      const borrow = p.borrow(w, { agentId: 437, amount: "5", days: 7 }).then(done("borrowed"));
+      await new Promise(r => setTimeout(r, 20));
+      expect(w.sent).toEqual([]); // both wait for the payment
+      answer();
+      const outs = await Promise.all([pay, repay, borrow]);
+      expect(order).toEqual(["paid", "repaid", "borrowed"]);
+      expect(outs[1]).toMatch(/^Repaid Priors loan #50900/);
+      expect(outs[2]).toMatch(/^Borrowed 5 USDG/);
+      expect(w.sent).toHaveLength(2);
+    });
+
+    it("gives a probe 60 s at most, so a seller that never answers holds no other call of the wallet", async () => {
+      const asked: number[] = [];
+      const timeout = jest.spyOn(AbortSignal, "timeout").mockImplementation((ms: number) => {
+        asked.push(ms);
+        const c = new AbortController();
+        setTimeout(
+          () =>
+            c.abort(new DOMException("The operation was aborted due to timeout", "TimeoutError")),
+          20,
+        );
+        return c.signal;
+      });
+      try {
+        const seller = ask402("50000");
+        const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+          const r = new Request(input, init);
+          if (r.url.startsWith("https://silent.example/"))
+            return new Promise<Response>((_, reject) =>
+              r.signal.addEventListener("abort", () => reject(r.signal.reason)),
+            );
+          return seller(input, init);
+        }) as typeof fetch;
+        const p = priorsActionProvider(fetchImpl);
+        const w = wallet({ balanceOf: 1000000n });
+        const outs = await Promise.race([
+          Promise.all([
+            p.payX402WithCredit(w, {
+              url: "https://silent.example/x",
+              agentId: 437,
+              maxPrice: "0.10",
+            }),
+            p.payX402WithCredit(w, { url: URL_, agentId: 437, maxPrice: "0.10" }),
+          ]),
+          new Promise<string[]>(r => setTimeout(() => r(["still waiting", ""]), 2000)),
+        ]);
+        expect(outs[0]).toMatch(
+          /silent\.example did not answer within 60 s\. Nothing was signed or paid\./,
+        );
+        expect(outs[1]).toMatch(/^Paid 0\.05 USDG/m);
+        expect(asked).toContain(60000);
+      } finally {
+        timeout.mockRestore();
       }
     });
   });
@@ -787,6 +1016,82 @@ describe("PriorsActionProvider", () => {
         await q.payX402WithCredit(next, { url: CHAT, agentId: 437, maxPrice: "0.02" }),
       ).toMatch(/limit of 6 USDG a day has 1 left/);
       expect(next.sent).toEqual([]);
+    });
+    it("says a borrow whose answer was lost was sent, with its hash, and keeps the day's room counted", async () => {
+      const options = { autoBorrow: { perCall: "6", perDay: "6", hosts: ["models.example"] } };
+      const p = priorsActionProvider(ask402("20000"), options);
+      const lost = receiptLost(covered());
+      const out = await p.payX402WithCredit(lost, { url: CHAT, agentId: 437, maxPrice: "0.02" });
+      expect(out).toMatch(
+        /the borrow of 5 USDG was sent \(transaction 0x0{63}1\) and its answer was lost \(Error: receipt timeout\), so it may have opened a loan: check it before calling again, and repay it with repay_priors_loan before its due date\. Nothing was signed or paid\./,
+      );
+      expect(paid).toEqual([]);
+      const next = wallet(covered());
+      expect(
+        await p.payX402WithCredit(next, { url: CHAT, agentId: 437, maxPrice: "0.02" }),
+      ).toMatch(/limit of 6 USDG a day has 1 left/);
+      const b = receiptLost({ quoteFee: [11666n, 0n, 0n, 0n] });
+      expect(
+        await priorsActionProvider().borrow(b, { agentId: 437, amount: "5", days: 7 }),
+      ).toMatch(
+        /^Error: the borrow of 5 USDG was sent \(transaction 0x0{63}1\) and its answer was lost/,
+      );
+    });
+
+    it("gives the day's room back when the wallet's control is refused or unread, or the borrow reverted", async () => {
+      const options = { autoBorrow: { perCall: "6", perDay: "6", hosts: ["models.example"] } };
+      const p = priorsActionProvider(ask402("20000"), options);
+      const call = (w: Wallet) =>
+        p.payX402WithCredit(w, { url: CHAT, agentId: 437, maxPrice: "0.02" });
+      const refused = wallet(covered({ isController: false }));
+      expect(await call(refused)).toMatch(/does not control agent #437/);
+      expect(refused.sent).toEqual([]);
+      const unread = wallet(covered());
+      const read = unread.readContract;
+      unread.readContract = (async (q: { functionName: string }) => {
+        if (q.functionName === "isController") throw new Error("connection reset");
+        return read(q);
+      }) as Wallet["readContract"];
+      expect(await call(unread)).toMatch(/connection reset/);
+      expect(unread.sent).toEqual([]);
+      const reverted = wallet(covered(), { status: "reverted" });
+      expect(await call(reverted)).toMatch(/reverted on chain: it moved nothing/);
+      expect(reverted.sent).toHaveLength(1);
+      const after = wallet(covered());
+      expect(await call(after)).toMatch(/Borrowed 5 USDG first/);
+      expect(after.sent).toHaveLength(1);
+    });
+
+    it("borrows for 14 days whatever days the model names, and reads the owner's limits exactly", async () => {
+      const w = wallet(covered());
+      await priorsActionProvider(ask402("20000"), AUTO).payX402WithCredit(w, {
+        url: CHAT,
+        agentId: 437,
+        maxPrice: "0.02",
+        days: 30,
+      });
+      expect(w.sent).toEqual([borrowTx(5000000n, 14n * 86400n)]);
+      for (const autoBorrow of [
+        { perCall: "5.0000001", perDay: "10", hosts: ["models.example"] },
+        { perCall: "5", perDay: "10.0000001", hosts: ["models.example"] },
+      ])
+        expect(() => priorsActionProvider(undefined, { autoBorrow })).toThrow(
+          /more than 6 decimals/,
+        );
+      // without autoBorrow the model's term stands
+      const m = wallet({
+        balanceOf: 0n,
+        getParams: { minLoan: 5000000n },
+        quoteFee: [11666n, 0n, 0n, 0n],
+      });
+      await priorsActionProvider(ask402("100000")).payX402WithCredit(m, {
+        url: URL_,
+        agentId: 437,
+        maxPrice: "0.10",
+        maxBorrow: "5",
+        days: 30,
+      });
+      expect(m.sent).toEqual([borrowTx(5000000n, 30n * 86400n)]);
     });
   });
 

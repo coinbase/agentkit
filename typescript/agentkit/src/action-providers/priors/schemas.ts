@@ -51,7 +51,7 @@ export const PayX402WithCreditSchema = z
       .max(90)
       .optional()
       .describe(
-        "Term of a loan taken for the gap (default 7, or 14 with the provider's autoBorrow)",
+        "Term of a loan taken for the gap (default 7). With the provider's autoBorrow the term is always 14 days, the owner's, and this is ignored",
       ),
     method: z
       .enum(["GET", "POST"])

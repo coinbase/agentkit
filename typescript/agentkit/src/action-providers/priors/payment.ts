@@ -17,8 +17,13 @@ import { ROBINHOOD_NETWORK, USDG } from "./constants";
 export const MAX_VALIDITY_SECONDS = 600;
 /** Seconds a payment is kept past its validBefore, for clock skew between this machine and the chain. */
 export const SKEW_SECONDS = 60;
-/** A paid request's timeout, in ms: past it the payment is pending, not lost. */
+/**
+ * A request's timeout, in ms: the probe's (past it nothing is paid), and a paid one's (past it the payment is pending,
+ * not lost).
+ */
 export const REQUEST_TIMEOUT_MS = 60_000;
+/** A seller's body is read at most this far: a seller that streams gigabytes cannot exhaust the process's memory. */
+export const MAX_BODY_BYTES = 256 * 1024;
 /** USDG's EIP-712 domain on Robinhood Chain: what an EIP-3009 TransferWithAuthorization is signed on. */
 export const USDG_DOMAIN = { name: "Global Dollar", version: "1" } as const;
 /** The `extra.paymentFlow` values x402's client signs (none at all is "authorization"). */
@@ -34,10 +39,55 @@ export type Sent = {
 };
 
 const sameAddress = (a: unknown, b: string) => String(a).toLowerCase() === b.toLowerCase();
-const isAbort = (e: unknown) =>
+/**
+ * Whether an error is a request's abort or its timeout.
+ *
+ * @param e - The error.
+ * @returns Whether it is one.
+ */
+export const isAbort = (e: unknown) =>
   (e as { name?: string })?.name === "AbortError" ||
   (e as { name?: string })?.name === "TimeoutError";
 const defaultSleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
+
+/**
+ * A response body as text, at most `max` bytes (UTF-8); the rest is cancelled, not read. A body that breaks off while
+ * it is read (a reset, the request's timeout) throws.
+ *
+ * @param response - The response.
+ * @param max - The most bytes read.
+ * @returns The text, and whether it was cut.
+ */
+export async function readCapped(
+  response: Response,
+  max = MAX_BODY_BYTES,
+): Promise<{ text: string; cut: boolean }> {
+  if (!response.body) return { text: "", cut: false };
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let n = 0;
+  let cut = false;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (n + value.byteLength > max) {
+      chunks.push(value.subarray(0, max - n));
+      n = max;
+      cut = true;
+      await reader.cancel().catch(() => undefined);
+      break;
+    }
+    chunks.push(value);
+    n += value.byteLength;
+  }
+  const buf = new Uint8Array(n);
+  let o = 0;
+  for (const c of chunks) {
+    buf.set(c, o);
+    o += c.byteLength;
+  }
+  return { text: new TextDecoder().decode(buf), cut };
+}
 
 /**
  * The first requirement this provider signs: x402 v2 `exact` for USDG on Robinhood Chain by its full address, by
