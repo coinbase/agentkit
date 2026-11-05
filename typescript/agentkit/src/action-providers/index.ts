@@ -7,6 +7,7 @@ export * from "./across";
 export * from "./alchemy";
 export * from "./baseAccount";
 export * from "./basename";
+export * from "./bolyra";
 export * from "./cdp";
 export * from "./clanker";
 export * from "./compound";
