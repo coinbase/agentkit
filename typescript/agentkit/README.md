@@ -542,6 +542,31 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Priors</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>pay_x402_with_priors_credit</code></td>
+    <td width="768">Pays an x402 URL in USDG on Robinhood Chain, one payment per purchase, borrowing the gap from the agent's Priors credit line when the wallet is short.</td>
+</tr>
+<tr>
+    <td width="200"><code>borrow_from_priors</code></td>
+    <td width="768">Borrows USDG from an agent's Priors credit line into the wallet.</td>
+</tr>
+<tr>
+    <td width="200"><code>repay_priors_loan</code></td>
+    <td width="768">Repays a Priors loan in full (principal and fee).</td>
+</tr>
+<tr>
+    <td width="200"><code>get_priors_credit_line</code></td>
+    <td width="768">Reads an agent's Priors credit line: size, drawn and available.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_priors_agent_record</code></td>
+    <td width="768">Reads an ERC-8004 agent's repayment record on Priors before paying or hiring it.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Pyth</strong></summary>
 <table width="100%">
 <tr>
