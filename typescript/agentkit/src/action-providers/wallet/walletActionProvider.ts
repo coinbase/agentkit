@@ -19,6 +19,13 @@ const PROTOCOL_FAMILY_TO_TERMINOLOGY: Record<
     type: "Transaction hash",
     verb: "transaction",
   },
+  near: {
+    unit: "yoctoNEAR",
+    displayUnit: "NEAR",
+    decimals: 24,
+    type: "Transaction hash",
+    verb: "transfer",
+  },
   svm: { unit: "LAMPORTS", displayUnit: "SOL", decimals: 9, type: "Signature", verb: "transfer" },
 };
 
@@ -54,7 +61,7 @@ export class WalletActionProvider extends ActionProvider {
     This tool will return the details of the connected wallet including:
     - Wallet address
     - Network information (protocol family, network ID, chain ID)
-    - Native token balance (ETH for EVM networks, SOL for Solana networks)
+    - Native token balance (ETH for EVM, NEAR for NEAR, SOL for Solana)
     - Wallet provider name
     `,
     schema: GetWalletDetailsSchema,
@@ -100,10 +107,10 @@ export class WalletActionProvider extends ActionProvider {
   @CreateAction({
     name: "native_transfer",
     description: `
-This tool will transfer (send) native tokens (ETH for EVM networks, SOL for SVM networks) from the wallet to another onchain address.
+This tool will transfer (send) native tokens (ETH for EVM, NEAR for NEAR, SOL for SVM) from the wallet to another onchain address.
 
 It takes the following inputs:
-- amount: The amount to transfer in whole units (e.g. 4.2 ETH, 0.1 SOL)
+- amount: The amount to transfer in whole units (e.g. 4.2 ETH, 1 NEAR, 0.1 SOL)
 - destination: The address to receive the funds
 `,
     schema: NativeTransferSchema,

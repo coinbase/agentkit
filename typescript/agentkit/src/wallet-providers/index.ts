@@ -1,4 +1,5 @@
 export * from "./walletProvider";
+export * from "./nearWalletProvider";
 export * from "./evmWalletProvider";
 export * from "./viemWalletProvider";
 export * from "./cdpShared";
