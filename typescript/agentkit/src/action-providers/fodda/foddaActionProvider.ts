@@ -86,7 +86,7 @@ Inputs:
       // Respect server's requested block finality delay (Retry-After header)
       const retryAfterSeconds = parseInt(response.headers.get("Retry-After") || "2", 10);
       if (retryAfterSeconds > 0) {
-        await new Promise((resolve) => setTimeout(resolve, retryAfterSeconds * 1000));
+        await new Promise(resolve => setTimeout(resolve, retryAfterSeconds * 1000));
       }
 
       // Resubmit paid request with proof of transaction
