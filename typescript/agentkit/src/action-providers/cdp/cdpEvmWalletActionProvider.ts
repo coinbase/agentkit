@@ -8,8 +8,7 @@ import { ActionProvider } from "../actionProvider";
 import { UseSpendPermissionSchema, ListSpendPermissionsSchema, SwapSchema } from "./schemas";
 import { listSpendPermissionsForSpender, findLatestSpendPermission } from "./spendPermissionUtils";
 import { getTokenDetails, PERMIT2_ADDRESS } from "./swapUtils";
-import { Hex, formatUnits, parseUnits, maxUint256, encodeFunctionData, erc20Abi } from "viem";
-import { retryWithExponentialBackoff } from "../../utils";
+import { Hex, formatUnits, parseUnits, encodeFunctionData, erc20Abi } from "viem";
 
 import type { Network } from "../../network";
 import type { Address } from "viem";
@@ -221,7 +220,7 @@ It takes the following inputs:
 - slippageBps: (Optional) Maximum allowed slippage in basis points (100 = 1%)
 Important notes:
 - The contract address for native ETH is "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-- If needed, it will automatically approve the permit2 contract to spend the fromToken
+- If needed, it will automatically approve the permit2 contract for this fromAmount only (not unlimited)
 - Use fromAmount units exactly as provided, do not convert to wei or any other units.
 - Never assume token or address, they have to be provided as inputs. If only token symbol is provided, use the get_token_address tool if available to get the token address first
 `,
@@ -248,6 +247,8 @@ Important notes:
       const { fromTokenDecimals, fromTokenName, toTokenName, toTokenDecimals } =
         await getTokenDetails(walletProvider, args.fromToken, args.toToken);
 
+      const fromAmountAtomic = parseUnits(args.fromAmount, fromTokenDecimals);
+
       // Get the account
       const account = await walletProvider.getClient().evm.getAccount({
         address: walletProvider.getAddress() as Hex,
@@ -257,7 +258,7 @@ Important notes:
       const swapPrice = await walletProvider.getClient().evm.getSwapPrice({
         fromToken: args.fromToken as Hex,
         toToken: args.toToken as Hex,
-        fromAmount: parseUnits(args.fromAmount, fromTokenDecimals),
+        fromAmount: fromAmountAtomic,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         network: cdpNetwork as any,
         taker: account.address as Hex,
@@ -282,7 +283,8 @@ Important notes:
         });
       }
 
-      // Check if allowance is enough
+      // Approve only this swap's fromAmount (never maxUint256) so a later
+      // compromised path cannot inherit an unlimited Permit2 allowance.
       let approvalTxHash: Hex | null = null;
       if (swapPrice.issues.allowance) {
         try {
@@ -291,7 +293,7 @@ Important notes:
             data: encodeFunctionData({
               abi: erc20Abi,
               functionName: "approve",
-              args: [PERMIT2_ADDRESS, maxUint256],
+              args: [PERMIT2_ADDRESS, fromAmountAtomic],
             }),
           });
 
@@ -310,23 +312,19 @@ Important notes:
         }
       }
 
-      // Execute swap using the all-in-one pattern with retry logic
-      const swapResult = await retryWithExponentialBackoff(
-        async () => {
-          return (await account.swap({
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            network: cdpNetwork as any,
-            fromToken: args.fromToken as Hex,
-            toToken: args.toToken as Hex,
-            fromAmount: parseUnits(args.fromAmount, fromTokenDecimals),
-            slippageBps: args.slippageBps,
-            signerAddress: account.address as Hex,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          })) as any;
-        },
-        3,
-        5000,
-      ); // Max 3 retries with 5s base delay
+      // Submit swap once. Do not retry submission: a throw after broadcast can
+      // cause a second unintended swap (same class as false-failure retries).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const swapResult = (await account.swap({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        network: cdpNetwork as any,
+        fromToken: args.fromToken as Hex,
+        toToken: args.toToken as Hex,
+        fromAmount: fromAmountAtomic,
+        slippageBps: args.slippageBps,
+        signerAddress: account.address as Hex,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      })) as any;
 
       // Check if swap was successful
       const swapReceipt = await walletProvider.waitForTransactionReceipt(
