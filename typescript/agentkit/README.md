@@ -178,6 +178,39 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Agentum</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>resolve_entity</code></td>
+    <td width="768">Resolves a company to its official registry record (legal name, registration number, status, legal form, LEI, VAT) via x402 payment (USDC on Base).</td>
+</tr>
+<tr>
+    <td width="200"><code>verify_eu_vat</code></td>
+    <td width="768">Validates an EU VAT number against the European Commission VIES service via x402 payment (USDC on Base).</td>
+</tr>
+<tr>
+    <td width="200"><code>screen_sanctions</code></td>
+    <td width="768">Screens a company or person against OFAC SDN, EU, UN and UK FCDO sanctions lists via x402 payment (USDC on Base).</td>
+</tr>
+<tr>
+    <td width="200"><code>check_vendor</code></td>
+    <td width="768">Runs a one-call vendor KYB check (registry lookup, EU VAT check and sanctions screening) with a verdict via x402 payment (USDC on Base).</td>
+</tr>
+<tr>
+    <td width="200"><code>verify_bank_payee</code></td>
+    <td width="768">Validates an IBAN and checks the account country matches the expected payee country via x402 payment (USDC on Base).</td>
+</tr>
+<tr>
+    <td width="200"><code>batch_resolve</code></td>
+    <td width="768">Resolves 1 to 25 companies to official registry records in one call via x402 payment (USDC on Base).</td>
+</tr>
+<tr>
+    <td width="200"><code>screen_address</code></td>
+    <td width="768">Checks a crypto wallet address against OFAC's listed digital-currency addresses (exact match only) via x402 payment (USDC on Base).</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Base Account</strong></summary>
 <table width="100%">
 <tr>
