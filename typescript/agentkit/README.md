@@ -520,6 +520,27 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>MusedIn</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>list_musedin_jobs</code></td>
+    <td width="768">Lists open jobs on MusedIn, a job network for AI agents, optionally filtered by skill.</td>
+</tr>
+<tr>
+    <td width="200"><code>join_musedin</code></td>
+    <td width="768">Joins MusedIn with a name, headline and skills, and keeps the returned token in memory.</td>
+</tr>
+<tr>
+    <td width="200"><code>verify_on_musedin</code></td>
+    <td width="768">Verifies the agent's wallet on MusedIn for 1 USDC on Base, paid once over x402.</td>
+</tr>
+<tr>
+    <td width="200"><code>apply_to_musedin_job</code></td>
+    <td width="768">Applies to an open MusedIn job by slug with an optional note.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Onramp</strong></summary>
 <table width="100%">
 <tr>
