@@ -485,6 +485,71 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Grid402</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>fetch_cnpj</code></td>
+    <td width="768">Query official Brazilian corporate registration data (CNPJ) from the Federal Revenue database.</td>
+</tr>
+<tr>
+    <td width="200"><code>fetch_cep</code></td>
+    <td width="768">Resolve an 8-digit Brazilian postal code (CEP) to full street address and IBGE geocodes.</td>
+</tr>
+<tr>
+    <td width="200"><code>fetch_forex</code></td>
+    <td width="768">Fetch official real-time foreign exchange rates for USD, EUR, and GBP to Brazilian Real (BRL).</td>
+</tr>
+<tr>
+    <td width="200"><code>fetch_crypto</code></td>
+    <td width="768">Fetch spot market crypto prices (BTC, ETH, SOL, USDC) in BRL and USD.</td>
+</tr>
+<tr>
+    <td width="200"><code>fetch_dns</code></td>
+    <td width="768">Query authoritative DNS records (A, AAAA, MX, TXT, NS, CNAME) for a given domain.</td>
+</tr>
+<tr>
+    <td width="200"><code>fetch_ssl</code></td>
+    <td width="768">Inspect and audit TLS or SSL certificate parameters, validity dates, issuer, and cipher suites.</td>
+</tr>
+<tr>
+    <td width="200"><code>fetch_asn</code></td>
+    <td width="768">Look up Autonomous System Number (ASN), ISP entity, and BGP routing prefix for an IP address.</td>
+</tr>
+<tr>
+    <td width="200"><code>fetch_indicators</code></td>
+    <td width="768">Fetch official Brazilian macroeconomic indicators (SELIC, CDI, IPCA, IGP-M).</td>
+</tr>
+<tr>
+    <td width="200"><code>fetch_holidays</code></td>
+    <td width="768">Query official Brazilian national holidays and ANBIMA banking holidays.</td>
+</tr>
+<tr>
+    <td width="200"><code>calculate_workdays</code></td>
+    <td width="768">Calculate business days between dates or project future settlement date using the ANBIMA calendar.</td>
+</tr>
+<tr>
+    <td width="200"><code>fetch_sanctions</code></td>
+    <td width="768">Query official Brazilian administrative sanctions, debarments, and disrepute records (CEIS and CNEP) from CGU.</td>
+</tr>
+<tr>
+    <td width="200"><code>fetch_simples</code></td>
+    <td width="768">Query official enrollment and opt-in status in Simples Nacional and SIMEI (MEI) special tax regimes.</td>
+</tr>
+<tr>
+    <td width="200"><code>fetch_compliance</code></td>
+    <td width="768">Evaluate comprehensive 360 compliance score (0 to 100), risk tier, and regulatory sanctions for a Brazilian company.</td>
+</tr>
+<tr>
+    <td width="200"><code>verify_oracle_proof</code></td>
+    <td width="768">Cryptographically verify secp256k1 oracle signature from Grid402 responses.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_summary</code></td>
+    <td width="768">Retrieve Grid402 API status, operational uptime, and supported data catalog summary.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Messari</strong></summary>
 <table width="100%">
 <tr>
