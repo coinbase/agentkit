@@ -485,6 +485,31 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Indexfy</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>list_indexes</code></td>
+    <td width="768">Lists Indexfy crypto index tokens on Base with price, TVL, 24h/7d performance and fees.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_index</code></td>
+    <td width="768">Fetches one index's mandate and current holdings (amount, USD value and weight per basket token), by address or ticker.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_portfolio</code></td>
+    <td width="768">Fetches a wallet's index positions with value, profit/loss and points (defaults to the agent's wallet).</td>
+</tr>
+<tr>
+    <td width="200"><code>buy_index</code></td>
+    <td width="768">Buys an index with USDC in one transaction that buys the basket and mints shares at basket value, with a minimum-output guard.</td>
+</tr>
+<tr>
+    <td width="200"><code>sell_index</code></td>
+    <td width="768">Sells index shares (or the whole position) for USDC in one transaction that redeems the basket, with a minimum-output guard.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Messari</strong></summary>
 <table width="100%">
 <tr>
