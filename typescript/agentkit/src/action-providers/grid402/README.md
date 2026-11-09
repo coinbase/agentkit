@@ -16,7 +16,7 @@ grid402/
 
 ## Actions
 
-The Grid402 action provider exposes 12 specialized actions:
+The Grid402 action provider exposes 15 specialized actions:
 
 | Action | Description |
 |---|---|
@@ -30,6 +30,9 @@ The Grid402 action provider exposes 12 specialized actions:
 | `fetch_indicators` | Fetch official macroeconomic rates (SELIC, CDI, IPCA, IGP-M) |
 | `fetch_holidays` | Retrieve national and banking holidays in Brazil |
 | `calculate_workdays` | Compute business days and future settlement dates using the ANBIMA calendar |
+| `fetch_sanctions` | Query administrative sanctions and debarment in CEIS and CNEP (CGU) |
+| `fetch_simples` | Query enrollment and opt-in status in Simples Nacional and MEI |
+| `fetch_compliance` | Evaluate comprehensive 360 compliance score (0 to 100) and risk tier |
 | `verify_oracle_proof` | Cryptographically verify secp256k1 oracle signature from Grid402 |
 | `get_summary` | Retrieve API status, uptime, and active catalog summary |
 

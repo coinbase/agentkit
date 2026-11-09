@@ -528,6 +528,18 @@ const agent = createAgent({
     <td width="768">Calculate business days between dates or project future settlement date using the ANBIMA calendar.</td>
 </tr>
 <tr>
+    <td width="200"><code>fetch_sanctions</code></td>
+    <td width="768">Query official Brazilian administrative sanctions, debarments, and disrepute records (CEIS and CNEP) from CGU.</td>
+</tr>
+<tr>
+    <td width="200"><code>fetch_simples</code></td>
+    <td width="768">Query official enrollment and opt-in status in Simples Nacional and SIMEI (MEI) special tax regimes.</td>
+</tr>
+<tr>
+    <td width="200"><code>fetch_compliance</code></td>
+    <td width="768">Evaluate comprehensive 360 compliance score (0 to 100), risk tier, and regulatory sanctions for a Brazilian company.</td>
+</tr>
+<tr>
     <td width="200"><code>verify_oracle_proof</code></td>
     <td width="768">Cryptographically verify secp256k1 oracle signature from Grid402 responses.</td>
 </tr>

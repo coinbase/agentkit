@@ -116,6 +116,39 @@ export const Grid402VerifyProofSchema = z
   .strict();
 
 /**
+ * Input schema for Grid402 administrative sanctions and debarment query.
+ */
+export const Grid402SanctionsSchema = z
+  .object({
+    cnpj: z
+      .string()
+      .describe("The 14-digit Brazilian company tax ID (CNPJ), formatted or unformatted digits"),
+  })
+  .strict();
+
+/**
+ * Input schema for Grid402 Simples Nacional and MEI tax status query.
+ */
+export const Grid402SimplesSchema = z
+  .object({
+    cnpj: z
+      .string()
+      .describe("The 14-digit Brazilian company tax ID (CNPJ), formatted or unformatted digits"),
+  })
+  .strict();
+
+/**
+ * Input schema for Grid402 comprehensive 360 compliance score and risk assessment.
+ */
+export const Grid402ComplianceSchema = z
+  .object({
+    cnpj: z
+      .string()
+      .describe("The 14-digit Brazilian company tax ID (CNPJ), formatted or unformatted digits"),
+  })
+  .strict();
+
+/**
  * Input schema for Grid402 summary status query.
  */
 export const Grid402SummarySchema = z

@@ -235,6 +235,66 @@ describe("Grid402ActionProvider", () => {
     });
   });
 
+  describe("fetchSanctions", () => {
+    it("should fetch sanctions for a given CNPJ", async () => {
+      const mockData = {
+        cnpj: "00000000000191",
+        has_sanctions: false,
+        total_sanctions: 0,
+      };
+      fetchMock.mockResolvedValueOnce({
+        status: 200,
+        ok: true,
+        json: async () => mockData,
+      });
+
+      const response = await provider.fetchSanctions({ cnpj: "00.000.000/0001-91" });
+      const parsed = JSON.parse(response);
+      expect(parsed.cnpj).toBe("00000000000191");
+      expect(parsed.has_sanctions).toBe(false);
+    });
+  });
+
+  describe("fetchSimples", () => {
+    it("should fetch Simples Nacional status for a given CNPJ", async () => {
+      const mockData = {
+        cnpj: "00000000000191",
+        optante_simples: false,
+        optante_simei: false,
+      };
+      fetchMock.mockResolvedValueOnce({
+        status: 200,
+        ok: true,
+        json: async () => mockData,
+      });
+
+      const response = await provider.fetchSimples({ cnpj: "00.000.000/0001-91" });
+      const parsed = JSON.parse(response);
+      expect(parsed.cnpj).toBe("00000000000191");
+      expect(parsed.optante_simples).toBe(false);
+    });
+  });
+
+  describe("fetchCompliance", () => {
+    it("should evaluate compliance score and risk tier for a given CNPJ", async () => {
+      const mockData = {
+        cnpj: "00000000000191",
+        compliance_score: 95,
+        risk_tier: "BAIXO",
+      };
+      fetchMock.mockResolvedValueOnce({
+        status: 200,
+        ok: true,
+        json: async () => mockData,
+      });
+
+      const response = await provider.fetchCompliance({ cnpj: "00.000.000/0001-91" });
+      const parsed = JSON.parse(response);
+      expect(parsed.compliance_score).toBe(95);
+      expect(parsed.risk_tier).toBe("BAIXO");
+    });
+  });
+
   describe("verifyOracleProof", () => {
     it("should verify cryptographic proof via POST", async () => {
       const mockVerification = {

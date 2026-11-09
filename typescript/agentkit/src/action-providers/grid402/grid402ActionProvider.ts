@@ -13,6 +13,9 @@ import {
   Grid402IndicatorsSchema,
   Grid402HolidaysSchema,
   Grid402WorkdaysSchema,
+  Grid402SanctionsSchema,
+  Grid402SimplesSchema,
+  Grid402ComplianceSchema,
   Grid402VerifyProofSchema,
   Grid402SummarySchema,
 } from "./schemas";
@@ -217,6 +220,54 @@ Returns company legal name, trade name, active status, address, economic activit
       params.days = String(args.days);
     }
     return this.executeQuery("/api/v1/workdays", params);
+  }
+
+  /**
+   * Look up Brazilian administrative sanctions and debarment in CEIS and CNEP registries (CGU).
+   *
+   * @param args - The input arguments containing the CNPJ tax ID
+   * @returns Stringified JSON containing active sanctions and debarment records
+   */
+  @CreateAction({
+    name: "fetch_sanctions",
+    description: `Query official Brazilian administrative sanctions, debarments, and disrepute records (CEIS and CNEP) from the Comptroller General of the Union (CGU).`,
+    schema: Grid402SanctionsSchema,
+  })
+  async fetchSanctions(args: z.infer<typeof Grid402SanctionsSchema>): Promise<string> {
+    const cleanDigits = args.cnpj.replace(/[^0-9]/g, "");
+    return this.executeQuery("/api/v1/sanctions", { cnpj: cleanDigits });
+  }
+
+  /**
+   * Look up Brazilian tax framework in Simples Nacional and MEI from Federal Revenue.
+   *
+   * @param args - The input arguments containing the CNPJ tax ID
+   * @returns Stringified JSON containing tax regime status and SIMEI enrollment
+   */
+  @CreateAction({
+    name: "fetch_simples",
+    description: `Query official enrollment and opt-in status in Simples Nacional and SIMEI (MEI) special tax regimes from the Federal Revenue database.`,
+    schema: Grid402SimplesSchema,
+  })
+  async fetchSimples(args: z.infer<typeof Grid402SimplesSchema>): Promise<string> {
+    const cleanDigits = args.cnpj.replace(/[^0-9]/g, "");
+    return this.executeQuery("/api/v1/simples", { cnpj: cleanDigits });
+  }
+
+  /**
+   * Evaluate comprehensive 360 compliance score and risk assessment for Brazilian corporate entities.
+   *
+   * @param args - The input arguments containing the CNPJ tax ID
+   * @returns Stringified JSON containing risk tier, compliance score 0 to 100, and factor breakdowns
+   */
+  @CreateAction({
+    name: "fetch_compliance",
+    description: `Evaluate comprehensive 360 compliance score (0 to 100), risk tier (LOW, MEDIUM, HIGH, CRITICAL), cadastral consistency, and regulatory sanctions for a Brazilian company.`,
+    schema: Grid402ComplianceSchema,
+  })
+  async fetchCompliance(args: z.infer<typeof Grid402ComplianceSchema>): Promise<string> {
+    const cleanDigits = args.cnpj.replace(/[^0-9]/g, "");
+    return this.executeQuery("/api/v1/compliance", { cnpj: cleanDigits });
   }
 
   /**
