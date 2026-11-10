@@ -27,6 +27,7 @@ export * from "./spl";
 export * from "./superfluid";
 export * from "./sushi";
 export * from "./truemarkets";
+export * from "./truthbear";
 export * from "./twitter";
 export * from "./wallet";
 export * from "./weth";
