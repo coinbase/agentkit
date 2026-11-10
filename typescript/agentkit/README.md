@@ -204,6 +204,15 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>CanaryGuard</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>sanitize_text</code></td>
+    <td width="768">Detects and scrubs prompt injections, instruction overrides, concealed Unicode, and wallet-drain commands before agent context ingestion (x402 Base/Solana + free preview).</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Clanker</strong></summary>
 <table width="100%">
 <tr>
