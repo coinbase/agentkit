@@ -474,6 +474,24 @@ This section provides a detailed list of all available action providers and thei
 </details>
 
 <details>
+<summary><strong>Pendle</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>swap_exact_token_for_pt</code></td>
+    <td width="768">Buys Pendle V2 Principal Tokens (PT) on a market by spending an underlying ERC-20.</td>
+</tr>
+<tr>
+    <td width="200"><code>swap_exact_pt_for_token</code></td>
+    <td width="768">Sells Pendle V2 Principal Tokens (PT) on a market for an ERC-20.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_pendle_market_info</code></td>
+    <td width="768">Reads PT/YT/SY addresses, expiry, and underlying asset for a Pendle V2 market.</td>
+</tr>
+</table>
+</details>
+
+<details>
 <summary><strong>Pyth</strong></summary>
 <table width="100%">
 <tr>
