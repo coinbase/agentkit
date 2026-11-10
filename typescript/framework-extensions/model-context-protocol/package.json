@@ -11,7 +11,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "node init && tsc",
     "lint": "eslint -c .eslintrc.json \"src/**/*.ts\"",
     "lint:fix": "eslint -c .eslintrc.json \"src/**/*.ts\" --fix",
     "format": "prettier -c .prettierrc --write \"**/*.{ts,js,cjs,json,md}\"",
@@ -24,7 +24,7 @@
     "prepack": "tsc",
     "docs": "typedoc --entryPoints ./src --entryPointStrategy expand --exclude ./src/tests/**/*.ts",
     "docs:serve": "http-server ./docs",
-    "dev": "tsc --watch"
+    "dev": "node init && tsc --watch"
   },
   "keywords": [
     "coinbase",

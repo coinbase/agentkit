@@ -9,7 +9,7 @@
     "agentkit": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc && node -e \"require('fs').chmodSync('dist/index.js', '755')\"",
+    "build": "node init && tsc && node -e \"require('fs').chmodSync('dist/index.js', '755')\"",
     "lint": "eslint -c .eslintrc.json *.ts",
     "lint:fix": "eslint -c .eslintrc.json *.ts --fix",
     "format": "prettier --write \"**/*.{ts,js,cjs,json,md}\"",
