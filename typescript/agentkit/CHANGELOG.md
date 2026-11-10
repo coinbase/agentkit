@@ -1,5 +1,13 @@
 # AgentKit Changelog
 
+## 0.10.5
+
+### Patch Changes
+
+- Fixed a process crash on wallet provider initialization when the analytics collector rejects (HTTP errors / network failures) — #1408
+- Fixed the equivalent unhandled rejection on action invocation — #1537
+- Analytics emission is now fully fire-and-forget: collector failures can no longer crash the agent process
+
 ## 0.10.4
 
 ### Patch Changes
