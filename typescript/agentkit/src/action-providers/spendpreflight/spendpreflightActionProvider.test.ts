@@ -1,189 +1,121 @@
-import { x402Client, wrapFetchWithPayment } from "@x402/fetch";
-import { EvmWalletProvider } from "../../wallet-providers/evmWalletProvider";
+import { WalletProvider } from "../../wallet-providers";
 import { SpendPreflightActionProvider } from "./spendpreflightActionProvider";
-import { CheckPayeeSchema } from "./schemas";
-
-type FeeHook = Parameters<x402Client["onBeforePaymentCreation"]>[0];
-const mockFeeHooks: FeeHook[] = [];
+import { createPreflightReviewer } from "./preflight";
+import { offlineExample } from "./offlineExample";
 
 jest.mock("../../analytics", () => ({ sendAnalyticsEvent: jest.fn() }));
-jest.mock("@x402/fetch", () => ({
-  x402Client: jest.fn().mockImplementation(() => ({
-    register: jest.fn().mockReturnThis(),
-    onBeforePaymentCreation: jest.fn().mockImplementation(hook => mockFeeHooks.push(hook)),
-  })),
-  wrapFetchWithPayment: jest.fn().mockImplementation(transport => transport),
-}));
+const input = { challenge: { x402Version: 2 }, resource_url: "https://merchant.example/data" };
+const wallet = new Proxy(
+  {},
+  {
+    get: () => {
+      throw new Error("wallet access forbidden");
+    },
+  },
+) as WalletProvider;
 
-const mockSigner = jest.fn().mockReturnValue({
-  address: "0x1111111111111111111111111111111111111111",
-});
-const wallet = {
-  getName: () => "test-wallet",
-  getAddress: () => "0x1111111111111111111111111111111111111111",
-  getNetwork: () => ({ protocolFamily: "evm", networkId: "base-mainnet", chainId: "8453" }),
-  toSigner: mockSigner,
-  readContract: jest.fn(),
-} as unknown as EvmWalletProvider;
-const challenge = {
-  x402Version: 2,
-  resource: { url: "https://merchant.example/data" },
-  accepts: [{ scheme: "exact", network: "eip155:8453", amount: "10000" }],
-};
-const preflightInput = {
-  challenge,
-  resource_url: "https://merchant.example/data",
-  rules: { max_per_payment_usd: 1 },
-};
-const fee = {
-  scheme: "exact",
-  network: "eip155:8453",
-  asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-  payTo: "0xBf4164e07552e4c1b1B1597E72C7acAA3F0a1c58",
-  amount: "10000",
-  maxTimeoutSeconds: 60,
-};
-
-describe("SpendPreflightActionProvider", () => {
-  let transport: jest.SpyInstance;
-
+describe("SpendPreflight preflight-only provider", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockFeeHooks.length = 0;
-    transport = jest.spyOn(globalThis, "fetch");
-  });
-
-  afterEach(() => transport.mockRestore());
-
-  it("registers exactly two disclosed screening actions", () => {
-    const actions = new SpendPreflightActionProvider().getActions(wallet);
-    expect(actions.map(action => action.name)).toEqual([
-      "SpendPreflightActionProvider_check_payee",
-      "SpendPreflightActionProvider_preflight_payment",
-    ]);
-    for (const action of actions)
-      expect(action.description).toContain("Operated by SpendPreflight");
-  });
-
-  it("screens encoded identifiers only at the fixed API origin", async () => {
-    transport.mockResolvedValue(Response.json({ risk: "high", flags: ["possible_match"] }));
-    const result = JSON.parse(
-      await new SpendPreflightActionProvider().checkPayee(wallet, { name: "Acme & Sons" }),
-    );
-    expect(result).toMatchObject({ success: true, data: { risk: "high" } });
-    const [rawUrl, options] = transport.mock.calls[0];
-    const url = new URL(rawUrl);
-    expect(url.origin).toBe("https://api.spendpreflight.com");
-    expect(url.searchParams.get("name")).toBe("Acme & Sons");
-    expect(options.redirect).toBe("error");
-    expect(wrapFetchWithPayment).toHaveBeenCalledTimes(1);
-  });
-
-  it.each(["allow", "hold", "block"])(
-    "preserves %s and receipt without calling the merchant",
-    async decision => {
-      transport.mockResolvedValue(
-        Response.json({ decision, reasons: [decision], receipt: { id: "test-receipt" } }),
-      );
-      const result = JSON.parse(
-        await new SpendPreflightActionProvider().preflightPayment(wallet, preflightInput),
-      );
-      expect(result).toMatchObject({
-        success: true,
-        data: { decision, receipt: { id: "test-receipt" } },
-      });
-      expect(transport).toHaveBeenCalledTimes(1);
-      const [url, options] = transport.mock.calls[0];
-      expect(url).toBe("https://api.spendpreflight.com/v1/preflight");
-      expect(JSON.parse(options.body)).toEqual(preflightInput);
-    },
-  );
-
-  it("accepts only the exact advertised screening fee", async () => {
-    transport.mockResolvedValue(Response.json({ risk: "low" }));
-    await new SpendPreflightActionProvider().checkPayee(wallet, { name: "Acme" });
-    const context = { selectedRequirements: fee } as Parameters<FeeHook>[0];
-    await expect(mockFeeHooks[0](context)).resolves.toBeUndefined();
-    for (const changed of [
-      { amount: "20000" },
-      { payTo: "0x1111111111111111111111111111111111111111" },
-      { asset: "0x1111111111111111111111111111111111111111" },
-      { network: "eip155:1" },
-      { scheme: "upto" },
-    ]) {
-      const rejected = { selectedRequirements: { ...fee, ...changed } } as Parameters<FeeHook>[0];
-      await expect(mockFeeHooks[0](rejected)).resolves.toMatchObject({ abort: true });
-    }
-  });
-
-  it("sets the preflight fee to exactly 20000 atomic USDC", async () => {
-    transport.mockResolvedValue(
-      Response.json({ decision: "allow", reasons: [], receipt: { id: "r" } }),
-    );
-    await new SpendPreflightActionProvider().preflightPayment(wallet, preflightInput);
-    const context = { selectedRequirements: { ...fee, amount: "20000" } } as Parameters<FeeHook>[0];
-    await expect(mockFeeHooks[0](context)).resolves.toBeUndefined();
-  });
-
-  it("uses trial without a signer or paid client, including exhausted quota", async () => {
-    transport.mockResolvedValue(new Response("", { status: 402 }));
-    const result = JSON.parse(
-      await new SpendPreflightActionProvider({ trial: true }).checkPayee(wallet, { name: "Acme" }),
-    );
-    expect(result).toMatchObject({ success: false, decision: "hold" });
-    expect(new URL(transport.mock.calls[0][0]).searchParams.get("trial")).toBe("1");
-    expect(mockSigner).not.toHaveBeenCalled();
-    expect(x402Client).not.toHaveBeenCalled();
-    expect(wrapFetchWithPayment).not.toHaveBeenCalled();
-  });
-
-  it.each([400, 402, 503])(
-    "holds on HTTP %s without returning screening approval",
-    async status => {
-      transport.mockResolvedValue(new Response("", { status }));
-      const result = JSON.parse(
-        await new SpendPreflightActionProvider({ trial: true }).preflightPayment(
-          wallet,
-          preflightInput,
-        ),
-      );
-      expect(result).toMatchObject({ success: false, decision: "hold" });
-    },
-  );
-
-  it("holds on malformed or incomplete screening results", async () => {
-    transport.mockResolvedValue(Response.json({ decision: "allow" }));
-    const result = JSON.parse(
-      await new SpendPreflightActionProvider({ trial: true }).preflightPayment(
-        wallet,
-        preflightInput,
-      ),
-    );
-    expect(result).toMatchObject({ success: false, decision: "hold" });
-  });
-
-  it("holds on network failure without exposing exception details", async () => {
-    transport.mockRejectedValue(new Error("private transport details"));
-    const result = await new SpendPreflightActionProvider({ trial: true }).checkPayee(wallet, {
-      name: "Acme",
+    jest.spyOn(globalThis, "fetch").mockImplementation(() => {
+      throw new Error("external fetch forbidden");
     });
-    expect(JSON.parse(result)).toMatchObject({ success: false, decision: "hold" });
-    expect(result).not.toContain("private transport details");
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  it("registers one disclosed action and never accesses a wallet", async () => {
+    const actions = new SpendPreflightActionProvider().getActions(wallet);
+    expect(actions).toHaveLength(1);
+    expect(actions[0].name).toBe("SpendPreflightActionProvider_preflight_payment");
+    expect(actions[0].description).toContain("our paid API");
+    expect(actions[0].description).toContain("$0.02");
+    expect(JSON.parse(await actions[0].invoke(input)).decision).toBe("hold");
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
-  it("rejects unsupported wallet networks before a request", async () => {
-    const wrongNetwork = {
-      ...wallet,
-      getNetwork: () => ({ protocolFamily: "evm", networkId: "base-sepolia" }),
-    } as unknown as EvmWalletProvider;
-    const result = JSON.parse(
-      await new SpendPreflightActionProvider().checkPayee(wrongNetwork, { name: "Acme" }),
+  it("runs the offline example with no request or signer", async () => {
+    expect(await offlineExample()).toEqual({
+      decision: "hold",
+      reasons: ["offline: screening client not configured"],
+      payment: "not_attempted",
+    });
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it.each(["allow", "hold", "block"])("preserves a valid %s and receipt", async decision => {
+    const receipt = { id: "test", signature: "synthetic-not-verified" };
+    const transport = jest
+      .fn()
+      .mockResolvedValue(Response.json({ decision, reasons: ["fixture"], receipt }));
+    expect(await createPreflightReviewer({ screeningFetch: transport })(input)).toEqual({
+      decision,
+      reasons: ["fixture"],
+      receipt,
+    });
+    expect(transport).toHaveBeenCalledTimes(1);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("uses a fixed API destination and snapshots operator rules", async () => {
+    const transport = jest.fn().mockResolvedValue(Response.json({ decision: "hold", reasons: [] }));
+    const rules = { max_per_payment_usd: 1 };
+    const review = createPreflightReviewer({ screeningFetch: transport, rules });
+    rules.max_per_payment_usd = 100;
+    await review({ ...input, rules: { max_per_payment_usd: 999 } } as typeof input);
+    const [url, init] = transport.mock.calls[0];
+    expect(url).toBe("https://api.spendpreflight.com/v1/preflight");
+    expect(init.redirect).toBe("error");
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+    expect(JSON.parse(init.body).rules).toEqual({ max_per_payment_usd: 1 });
+  });
+
+  it.each([402, 500])("holds on HTTP %s without retry", async status => {
+    const transport = jest.fn().mockResolvedValue(new Response(null, { status }));
+    expect((await createPreflightReviewer({ screeningFetch: transport })(input)).decision).toBe(
+      "hold",
     );
-    expect(result).toMatchObject({ success: false, decision: "hold" });
-    expect(transport).not.toHaveBeenCalled();
+    expect(transport).toHaveBeenCalledTimes(1);
   });
 
-  it("rejects empty payee input", () => {
-    expect(CheckPayeeSchema.safeParse({}).success).toBe(false);
+  it.each([
+    { decision: "allow", reasons: [] },
+    { decision: "allow", reasons: "bad" },
+    { decision: "safe", reasons: [] },
+  ])("holds on incomplete/malformed result %j", async response => {
+    const transport = jest.fn().mockResolvedValue(Response.json(response));
+    expect((await createPreflightReviewer({ screeningFetch: transport })(input)).decision).toBe(
+      "hold",
+    );
+  });
+
+  it("holds on a rejected transport without retry", async () => {
+    const transport = jest.fn().mockRejectedValue(new Error("timeout"));
+    expect((await createPreflightReviewer({ screeningFetch: transport })(input)).decision).toBe(
+      "hold",
+    );
+    expect(transport).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects excessive input before the transport and bounds the response", async () => {
+    const transport = jest.fn().mockResolvedValue(new Response("x".repeat(131073)));
+    const review = createPreflightReviewer({ screeningFetch: transport });
+    expect((await review({ ...input, challenge: { data: "x".repeat(65537) } })).decision).toBe(
+      "hold",
+    );
+    expect(transport).not.toHaveBeenCalled();
+    expect((await review(input)).decision).toBe("hold");
+    expect(transport).toHaveBeenCalledTimes(1);
+  });
+
+  it("holds on an invalid resource before requesting", async () => {
+    const transport = jest.fn();
+    expect(
+      (
+        await createPreflightReviewer({ screeningFetch: transport })({
+          ...input,
+          resource_url: "http://merchant.example",
+        })
+      ).decision,
+    ).toBe("hold");
+    expect(transport).not.toHaveBeenCalled();
   });
 });

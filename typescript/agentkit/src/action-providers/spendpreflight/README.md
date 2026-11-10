@@ -1,31 +1,36 @@
-# SpendPreflight Action Provider
+# SpendPreflight preflight action
 
-Maintained by the operator of [SpendPreflight](https://spendpreflight.com). Screens merchants and reviews x402 spending decisions before an agent pays. Screening is informational, not legal advice or a compliance certification.
+We operate [SpendPreflight](https://spendpreflight.com), a **paid API**. This contribution was prepared by its operator with AI assistance. Live preflight screening costs **$0.02 in Base USDC**, separately from any merchant payment. This is not a Coinbase service or endorsement.
+
+The provider registers one `preflight_payment` action. Its default is **offline hold, with no signer and no screening request**. It does not expose standalone payee screening, trial enrollment, automatic fee payment, wallet access or merchant execution. No new dependency is required.
 
 ```typescript
-import { AgentKit, spendpreflightActionProvider } from "@coinbase/agentkit";
+import { spendpreflightActionProvider } from "@coinbase/agentkit";
 
-const agentkit = await AgentKit.from({
-  walletProvider: existingBaseWallet,
-  actionProviders: [spendpreflightActionProvider()],
-});
+const provider = spendpreflightActionProvider(); // offline hold
+// Add this provider to an existing AgentKit configuration, if desired.
+// AgentKit's normal registered-action telemetry is independent of this reviewer.
 ```
 
-No SpendPreflight account, API key or OAuth is required. Reuse the existing Base-mainnet AgentKit wallet with USDC. Do not add a new credential for this provider.
+## Offline example and tests
 
-| Action | Inputs | Output | Screening fee |
-|---|---|---|---|
-| `check_payee` | At least one wallet `address`, payee `name` or `domain` | Risk and sanctions/domain flags | $0.01 Base USDC |
-| `preflight_payment` | Original x402 `challenge`, `resource_url`, optional `rules` and `context.spent_today_usd` | allow/hold/block, reasons and receipt | $0.02 Base USDC |
+`offlineExample.ts` calls the same reviewer directly, without creating a wallet, model or registered action. It returns `{decision: "hold", reasons: ["offline: screening client not configured"], payment: "not_attempted"}`. The colocated test executes this example and fails on any accidental global fetch. The action-registration test mocks AgentKit's analytics; no telemetry or external request is sent.
 
-Names are prefixed by AgentKit's normal action registration. The provider uses fixed HTTPS API routes, rejects redirects and accepts only the exact disclosed Base USDC fee to SpendPreflight's published wallet. Caller-supplied merchant URLs are screening input, never fetch or payment destinations in this provider. The provider signs payment for its own screening fee only; it never signs or executes the merchant payment under review.
+From `typescript/agentkit`:
 
-Use `spendpreflightActionProvider({ trial: true })` to opt into the shared three-call daily HTTP/MCP trial per IP. It uses plain fetch and does not access the signer. Exhausted quota returns a hold/error and does not silently fall back to a paid call.
+```sh
+pnpm exec jest --runInBand src/action-providers/spendpreflight/spendpreflightActionProvider.test.ts
+pnpm check
+```
 
-Treat `success: false`, unavailable screening and hold/block as denial until your explicit policy or human review resolves them. A model choosing to use this tool is not itself an enforcement gate; apply decisions in the actual merchant-payment path. Per-request rules and spend context belong to the caller. Receipt history and request bodies are not persisted by SpendPreflight.
+## Explicit live configuration
 
-Official API references: [OpenAPI](https://api.spendpreflight.com/openapi.json), [default rules](https://api.spendpreflight.com/v1/rules/default), [privacy](https://api.spendpreflight.com/privacy), [status](https://status.spendpreflight.com).
+An application may supply `screeningFetch` and operator-owned `rules` through the constructor. This callback is trusted application configuration, never a model input. Plain `fetch` will receive a payment challenge and return hold; this provider does not pay it. A payment-enabled client needs a separate explicit screening budget and must enforce the exact API origin, fee, asset, network and recipient before signing. No such client or signer is bundled, and there is no trial or paid fallback.
 
-## Development verification
+The reviewer sends one POST to `https://api.spendpreflight.com/v1/preflight`, rejects redirects, supplies an 8-second abort signal and caps input/output at 64/128 KiB. The transport must honor that signal. Merchant URLs are input data only; they are never fetched. Failures, non-2xx responses and malformed results hold, with no retries. The response receipt is preserved but its signature is **not cryptographically verified here**.
 
-From `typescript/agentkit`: `pnpm test --runTestsByPath src/action-providers/spendpreflight/spendpreflightActionProvider.test.ts --coverage=false`, `pnpm check`, and lint/format the changed files. Tests use mocked HTTP, wallets and analytics; no real credentials, LLM call or paid settlement is needed.
+## Application payment boundary
+
+Calling a risk tool does not automatically guard another payment tool. Before enabling a merchant signer, the application must bind the selected challenge and quote to its immutable order, verify the decision receipt, enforce policy and a durable atomic budget/reservation, and reject hold/block, expired quotes and unknown outcomes. Rules and spend history must come from trusted application state. Never expose a second payment path that bypasses these checks. An allow is informational; this action does not itself authorize, sign or settle anything.
+
+Tests use synthetic HTTP results, not live screening, chatbot/model calls, RPC or settlements. No safety, legal-compliance or paid-delivery guarantee is made.

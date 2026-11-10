@@ -2,4 +2,4 @@
 "@coinbase/agentkit": patch
 ---
 
-Added SpendPreflight payee screening and payment preflight actions with fixed Base USDC screening fees and optional shared trial access.
+Added a preflight-only SpendPreflight action with offline hold defaults, an explicit operator-supplied screening client, and a no-signer offline example.
