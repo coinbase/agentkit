@@ -1,0 +1,6 @@
+export const DEFAULT_HCRB_API_URL = "https://hcrb.in";
+export const DEFAULT_RAIL_API_URL = "https://rail.akrivis.in";
+export const BASE_CHAIN_ID = 8453;
+export const BASE_SEPOLIA_CHAIN_ID = 84532;
+export const BASE_EAS_CONTRACT = "0x4200000000000000000000000000000000000021";
+export const COINBASE_VERIFIED_ACCOUNT_SCHEMA = "0xf8b05c79f09e379ac48a880620154778f37cee448c21a043463d76f62e359be2";
