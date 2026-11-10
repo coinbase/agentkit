@@ -14,3 +14,6 @@ export const INDEXFY_ZAPPER_BASE = "0x44154FC4297823e39553649fea8cC6ce2517d7D4";
 
 /** Index shares are always 18-decimal ERC-20s. */
 export const INDEX_SHARE_DECIMALS = 18;
+
+/** A sell this far above the balance (0.000001 shares) is treated as a rounded "all". */
+export const SHARE_ROUNDING_DUST = BigInt(10) ** BigInt(12);

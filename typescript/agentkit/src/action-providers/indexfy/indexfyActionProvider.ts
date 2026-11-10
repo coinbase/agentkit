@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { erc20Abi, formatUnits, getAddress, isAddress } from "viem";
+import { erc20Abi, formatUnits, getAddress, isAddress, parseUnits } from "viem";
 import { ActionProvider } from "../actionProvider";
 import { CreateAction } from "../actionDecorator";
 import { EvmWalletProvider } from "../../wallet-providers";
@@ -16,6 +16,7 @@ import {
   INDEX_SHARE_DECIMALS,
   INDEXFY_API_URL,
   INDEXFY_ZAPPER_BASE,
+  SHARE_ROUNDING_DUST,
   USDC_BASE,
 } from "./constants";
 import { BuiltTransaction, IndexInfo, IndexfyToolError, callIndexfyTool } from "./utils";
@@ -184,16 +185,22 @@ An approval transaction may be sent first.`,
   ): Promise<string> {
     try {
       const index = await this.resolveIndex(args.index);
+      const balance = await walletProvider.readContract({
+        address: index.address as `0x${string}`,
+        abi: erc20Abi,
+        functionName: "balanceOf",
+        args: [walletProvider.getAddress() as `0x${string}`],
+      });
+      if (balance === BigInt(0)) return fail(`This wallet holds no ${index.symbol}.`);
       let shares = args.shares;
       if (shares === "all") {
-        const balance = await walletProvider.readContract({
-          address: index.address as `0x${string}`,
-          abi: erc20Abi,
-          functionName: "balanceOf",
-          args: [walletProvider.getAddress() as `0x${string}`],
-        });
-        if (balance === BigInt(0)) return fail(`This wallet holds no ${index.symbol}.`);
         shares = formatUnits(balance, INDEX_SHARE_DECIMALS);
+      } else {
+        // Agents often pass a rounded balance copied from get_portfolio; sell the exact balance instead.
+        const wanted = parseUnits(shares, INDEX_SHARE_DECIMALS);
+        if (wanted > balance && wanted - balance <= SHARE_ROUNDING_DUST) {
+          shares = formatUnits(balance, INDEX_SHARE_DECIMALS);
+        }
       }
       const built = await callIndexfyTool<BuiltTransaction>(this.apiUrl, "build_sell_index", {
         wallet: walletProvider.getAddress(),

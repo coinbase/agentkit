@@ -262,6 +262,22 @@ describe("IndexfyActionProvider", () => {
       expect(toolCalls.find(c => c.name === "build_sell_index")?.args.shares).toBe("2.5");
     });
 
+    it("sells the exact balance when given a slightly rounded-up amount", async () => {
+      wallet.readContract.mockResolvedValue(BigInt("6870629353998999999"));
+      tools.build_sell_index = built({ calls: sellCalls });
+      await provider.sellIndex(wallet, { index: "I5", shares: "6.870629353999" });
+      expect(toolCalls.find(c => c.name === "build_sell_index")?.args.shares).toBe(
+        "6.870629353998999999",
+      );
+    });
+
+    it("passes a partial amount through unchanged", async () => {
+      wallet.readContract.mockResolvedValue(BigInt("6870629353998999999"));
+      tools.build_sell_index = built({ calls: sellCalls });
+      await provider.sellIndex(wallet, { index: "I5", shares: "2.5" });
+      expect(toolCalls.find(c => c.name === "build_sell_index")?.args.shares).toBe("2.5");
+    });
+
     it("reports an empty position instead of building", async () => {
       wallet.readContract.mockResolvedValue(BigInt(0));
       const res = JSON.parse(await provider.sellIndex(wallet, { index: "I5", shares: "all" }));
