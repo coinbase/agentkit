@@ -5,6 +5,11 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to run against (defaults to the dispatching ref)"
+        required: false
+        default: ""
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -16,6 +21,8 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda
@@ -40,7 +47,7 @@ jobs:
           commit: "chore: version typescript packages"
           title: "chore: version typescript packages"
           version: pnpm run changeset:version
-          publish: pnpm run publish
+          publish: pnpm run changeset:publish
           cwd: ./typescript
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
