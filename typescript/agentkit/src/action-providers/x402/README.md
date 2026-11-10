@@ -135,11 +135,12 @@ Lists all facilitators available for service discovery (known defaults + custom)
   "facilitators": [
     { "name": "cdp", "url": "https://...", "type": "known" },
     { "name": "payai", "url": "https://...", "type": "known" },
+    { "name": "dexter", "url": "https://...", "type": "known" },
     { "name": "myFacilitator", "url": "https://...", "type": "custom" }
   ],
-  "knownCount": 2,
+  "knownCount": 3,
   "customCount": 1,
-  "totalCount": 3
+  "totalCount": 4
 }
 ```
 
@@ -218,7 +219,7 @@ Fetches all available services from the x402 Bazaar with full pagination support
 
 ```typescript
 {
-  facilitator: "cdp",             // Optional: 'cdp', 'payai', or registered custom facilitator name
+  facilitator: "cdp",             // Optional: 'cdp', 'payai', 'dexter', or registered custom facilitator name
                                    // Default: "cdp"
   maxUsdcPrice: 0.1,              // Optional: filter by max price in USDC (default: 1.0)
   keyword: "weather",             // Optional: filter by description/URL keyword

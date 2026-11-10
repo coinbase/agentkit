@@ -19,7 +19,7 @@ class X402Config:
     # Default: False (or X402_ALLOW_DYNAMIC_SERVICE_REGISTRATION="true" env var)
     allow_dynamic_service_registration: bool = False
 
-    # Additional facilitators beyond the defaults (CDP + PayAI).
+    # Additional facilitators beyond the defaults (CDP, PayAI, Dexter).
     # Map of name -> URL. Names can be used with discover_x402_services action.
     # Example: {"myFacilitator": "https://my-facilitator.com"}
     registered_facilitators: dict[str, str] = field(default_factory=dict)
@@ -54,7 +54,7 @@ class ListX402ServicesSchema(BaseModel):
 
     facilitator: str = Field(
         default=DEFAULT_FACILITATOR,
-        description="Facilitator to query: 'cdp' (Coinbase CDP), 'payai' (PayAI) or a registered custom facilitator name.",
+        description="Facilitator to query: 'cdp' (Coinbase CDP), 'payai' (PayAI), 'dexter' (Dexter) or a registered custom facilitator name.",
     )
     max_usdc_price: float = Field(
         default=1.0,

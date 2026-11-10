@@ -759,7 +759,7 @@ def validate_facilitator(
         Object with is_allowed flag and resolved URL
 
     """
-    # Check if it's a known facilitator name (CDP, PayAI)
+    # Check if it's a known facilitator name (CDP, PayAI, Dexter)
     if facilitator in KNOWN_FACILITATORS:
         return {
             "is_allowed": True,
