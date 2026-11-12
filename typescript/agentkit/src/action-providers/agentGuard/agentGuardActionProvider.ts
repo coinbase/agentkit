@@ -68,6 +68,7 @@ export class AgentGuardActionProvider extends ActionProvider<EvmWalletProvider> 
   private blockedDestinations: Set<string>;
   private strictInjectionDefense: boolean;
   private spendHistory: SpendRecord[] = [];
+  private usedNonces: Set<string> = new Set();
 
   /**
    * Constructs a new AgentGuardActionProvider.
@@ -160,29 +161,46 @@ Always call this tool before executing high-value or third-party contract intera
     }
 
     // 3. Inspect calldata
-    if (args.data && args.data !== "0x" && args.data.length >= 10) {
-      const selector = args.data.slice(0, 10).toLowerCase();
-      if (DANGEROUS_SELECTORS[selector]) {
-        return JSON.stringify(
-          {
-            verdict: "BLOCKED",
-            code: "DANGEROUS_CALLDATA",
-            riskScore: 95,
-            reason: `Blocked critical dangerous method: ${DANGEROUS_SELECTORS[selector]} (${selector}).`,
-          },
-          null,
-          2,
-        );
+    if (args.data && args.data !== "0x" && args.data !== "0x0") {
+      if (args.data.length >= 10) {
+        const selector = args.data.slice(0, 10).toLowerCase();
+        if (DANGEROUS_SELECTORS[selector]) {
+          return JSON.stringify(
+            {
+              verdict: "BLOCKED",
+              code: "DANGEROUS_CALLDATA",
+              riskScore: 95,
+              reason: `Blocked critical dangerous method: ${DANGEROUS_SELECTORS[selector]} (${selector}).`,
+            },
+            null,
+            2,
+          );
+        }
       }
 
+      let decodedSuccessfully = false;
       try {
         const decoded = decodeFunctionData({
           abi: ERC20_ABI,
           data: args.data as `0x${string}`,
         });
 
+        decodedSuccessfully = true;
+
         if (decoded.functionName === "approve") {
-          const [, amount] = decoded.args as [string, bigint];
+          const [spender, amount] = decoded.args as [string, bigint];
+          if (!isAddress(spender) || this.blockedDestinations.has(spender.toLowerCase())) {
+            return JSON.stringify(
+              {
+                verdict: "BLOCKED",
+                code: "DESTINATION_BLOCKLISTED",
+                riskScore: 95,
+                reason: `Approval spender '${spender}' is blocklisted or invalid.`,
+              },
+              null,
+              2,
+            );
+          }
           if (amount >= UNLIMITED_APPROVAL_THRESHOLD) {
             return JSON.stringify(
               {
@@ -199,7 +217,33 @@ Always call this tool before executing high-value or third-party contract intera
         }
 
         if (decoded.functionName === "transfer") {
-          const [, amount] = decoded.args as [string, bigint];
+          const [recipient, amount] = decoded.args as [string, bigint];
+          if (!isAddress(recipient)) {
+            return JSON.stringify(
+              {
+                verdict: "BLOCKED",
+                code: "INVALID_DESTINATION",
+                riskScore: 90,
+                reason: `ERC-20 transfer recipient '${recipient}' is not a valid Ethereum address.`,
+              },
+              null,
+              2,
+            );
+          }
+
+          if (this.blockedDestinations.has(recipient.toLowerCase())) {
+            return JSON.stringify(
+              {
+                verdict: "BLOCKED",
+                code: "DESTINATION_BLOCKLISTED",
+                riskScore: 100,
+                reason: `ERC-20 transfer recipient '${recipient}' is in the security blocklist.`,
+              },
+              null,
+              2,
+            );
+          }
+
           const isUsdc = normalizedTo === BASE_USDC_MAINNET || normalizedTo === BASE_USDC_SEPOLIA;
           const decimals = isUsdc ? 6 : 18;
           const limitUnits = parseUnits(this.maxUsdcPerTx, decimals);
@@ -216,17 +260,68 @@ Always call this tool before executing high-value or third-party contract intera
               2,
             );
           }
+
+          // Enforce 24h cumulative USDC spend cap
+          if (isUsdc) {
+            const cutoff = now - 24 * 60 * 60 * 1000;
+            const dailyUsed = this.spendHistory
+              .filter(item => item.asset === "USDC" && item.timestamp >= cutoff)
+              .reduce((acc, item) => acc + item.amount, BigInt(0));
+
+            const maxDailyUnits = parseUnits(this.maxUsdcDaily, decimals);
+            if (dailyUsed + amount > maxDailyUnits) {
+              return JSON.stringify(
+                {
+                  verdict: "BLOCKED",
+                  code: "EXCEEDS_SPEND_LIMIT",
+                  riskScore: 80,
+                  reason: `Cumulative 24h USDC spend exceeds daily limit of ${this.maxUsdcDaily} USDC.`,
+                },
+                null,
+                2,
+              );
+            }
+            this.spendHistory.push({ timestamp: now, asset: "USDC", amount });
+          }
         }
       } catch {
-        // Calldata is not standard ERC20, proceed with normal execution
+        // Calldata is not standard ERC20
+      }
+
+      if (!decodedSuccessfully && this.strictInjectionDefense) {
+        return JSON.stringify(
+          {
+            verdict: "BLOCKED",
+            code: "UNRECOGNIZED_CALLDATA",
+            riskScore: 90,
+            reason:
+              "Blocked unverified calldata in strict mode. Only allowlisted contract calls are permitted.",
+          },
+          null,
+          2,
+        );
       }
     }
 
     // 4. Validate native ETH spend limits
     if (args.value && args.value !== "0" && args.value !== "0x" && args.value !== "0x0") {
+      const cleanVal = args.value.trim();
+      if (!/^\d+(\.\d+)?$/.test(cleanVal)) {
+        return JSON.stringify(
+          {
+            verdict: "BLOCKED",
+            code: "MALFORMED_VALUE",
+            riskScore: 85,
+            reason: `Malformed or non-numeric native value: '${args.value}'. Negative values and hex notation are disallowed.`,
+          },
+          null,
+          2,
+        );
+      }
+
       let valueWei: bigint;
       try {
-        valueWei = args.value.includes(".") ? parseEther(args.value) : BigInt(args.value);
+        valueWei = parseEther(cleanVal);
       } catch {
         return JSON.stringify(
           {
@@ -327,7 +422,31 @@ Checks expiration deadline, merchant address validity, and ensures requested amo
       );
     }
 
-    if (args.deadline < now) {
+    if (!args.nonce || typeof args.nonce !== "string" || args.nonce.trim() === "") {
+      return JSON.stringify(
+        {
+          verdict: "BLOCKED",
+          code: "X402_MALFORMED",
+          reason: "Missing or invalid x402 payment nonce.",
+        },
+        null,
+        2,
+      );
+    }
+
+    if (this.usedNonces.has(args.nonce)) {
+      return JSON.stringify(
+        {
+          verdict: "BLOCKED",
+          code: "X402_NONCE_REPLAY",
+          reason: `Blocked x402 replay attack: Nonce '${args.nonce}' has already been consumed.`,
+        },
+        null,
+        2,
+      );
+    }
+
+    if (typeof args.deadline !== "number" || args.deadline <= now) {
       return JSON.stringify(
         {
           verdict: "BLOCKED",
@@ -339,9 +458,22 @@ Checks expiration deadline, merchant address validity, and ensures requested amo
       );
     }
 
-    const requestedAmount = parseFloat(args.amountUsdc);
+    const cleanAmount = (args.amountUsdc || "").trim();
+    if (!/^\d+(\.\d+)?$/.test(cleanAmount)) {
+      return JSON.stringify(
+        {
+          verdict: "BLOCKED",
+          code: "X402_MALFORMED",
+          reason: `Invalid x402 amount format: '${args.amountUsdc}'. Must be a positive decimal number.`,
+        },
+        null,
+        2,
+      );
+    }
+
+    const requestedAmount = parseFloat(cleanAmount);
     const maxAllowed = parseFloat(this.maxPaymentPerX402);
-    if (isNaN(requestedAmount) || requestedAmount > maxAllowed) {
+    if (isNaN(requestedAmount) || requestedAmount <= 0 || requestedAmount > maxAllowed) {
       return JSON.stringify(
         {
           verdict: "BLOCKED",
@@ -353,6 +485,8 @@ Checks expiration deadline, merchant address validity, and ensures requested amo
       );
     }
 
+    this.usedNonces.add(args.nonce);
+
     return JSON.stringify(
       {
         verdict: "APPROVED",
@@ -360,6 +494,7 @@ Checks expiration deadline, merchant address validity, and ensures requested amo
         reason: `x402 micropayment verified under configured Base USDC payment ceiling (${this.maxPaymentPerX402} USDC).`,
         merchant: getAddress(args.merchant),
         amountUsdc: args.amountUsdc,
+        nonce: args.nonce,
       },
       null,
       2,
@@ -412,7 +547,6 @@ Checks expiration deadline, merchant address validity, and ensures requested amo
   /**
    * Retrieves active guardrail policies and spending boundaries.
    *
-   * @param _wallet - The wallet provider.
    * @returns Current active policies.
    */
   @CreateAction({
