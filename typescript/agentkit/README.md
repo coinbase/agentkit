@@ -617,7 +617,7 @@ const agent = createAgent({
 </tr>
 <tr>
     <td width="200"><code>screen_sanctions</code></td>
-    <td width="768">Screens a company or person name against US, UK and EU sanctions lists and returns allow, review or block with the matching entries.</td>
+    <td width="768">Screens a company or person name against US, UK, EU and Canadian sanctions lists and returns allow, review or block with the matching entries.</td>
 </tr>
 </table>
 </details>

@@ -39,7 +39,7 @@ export const CheckX402SellerSchema = z
       .max(160)
       .nullable()
       .describe(
-        "Optional legal name of the company behind the seller, to also screen it against US, UK and EU sanctions lists.",
+        "Optional legal name of the company behind the seller, to also screen it against US, UK, EU and Canadian sanctions lists.",
       ),
   })
   .strip()

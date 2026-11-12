@@ -24,13 +24,13 @@ Tolca checks:
 - the `payTo` wallet against OFAC SDN crypto addresses
 - that the asset is the official USDC contract on its network, and that the network is a mainnet
 - that price and `payTo` match the seller's Coinbase x402 Bazaar listing
-- optionally, the seller's company name against US, UK and EU sanctions lists
+- optionally, the seller's company name against US, UK, EU and Canadian sanctions lists
 
 The answer's `action` is `allow`, `review` (ask a human before paying) or `block`, with the reasons and an Ed25519-signed receipt.
 
 ### `screen_sanctions`
 
-Screens a company or person name against US (Consolidated Screening List, including OFAC SDN), UK and EU sanctions lists ($0.005 USDC per check). Returns `allow`, `review` or `block`, the matching entries, the date of each list and a signed receipt.
+Screens a company or person name against US (Consolidated Screening List, including OFAC SDN), UK, EU and Canadian sanctions lists ($0.005 USDC per check). Returns `allow`, `review` or `block`, the matching entries, the date of each list and a signed receipt.
 
 ## Payment
 

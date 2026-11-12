@@ -59,7 +59,7 @@ function errorMessage(error: unknown): string {
  * - check_x402_seller: before paying an x402 seller, screen its payTo wallet against OFAC
  *   crypto addresses, confirm the asset is the official USDC on its network, and compare price
  *   and payTo with the seller's Coinbase x402 Bazaar listing. Returns allow / review / block.
- * - screen_sanctions: screen a company or person name against US, UK and EU lists.
+ * - screen_sanctions: screen a company or person name against US, UK, EU and Canadian lists.
  *
  * Each call is paid per use over x402 (USDC on Base or Solana) from the agent's wallet.
  * The provider only pays Tolca's own wallets, in official USDC, up to maxPriceUsdc per call.
@@ -146,7 +146,7 @@ It also lists the reasons and includes a signed receipt the agent can keep as ev
   @CreateAction({
     name: "screen_sanctions",
     description: `
-Screens a company or person name against US (Consolidated Screening List, incl. OFAC SDN), UK and EU sanctions lists, using Tolca ($0.005 USDC, paid automatically from the wallet).
+Screens a company or person name against US (Consolidated Screening List, incl. OFAC SDN), UK, EU and Canadian sanctions lists, using Tolca ($0.005 USDC, paid automatically from the wallet).
 
 Use it before paying, hiring or signing with a counterparty the agent does not know.
 The answer has an "action" (allow / review / block), the matching list entries if any, the date of each list, and a signed receipt.
