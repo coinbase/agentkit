@@ -609,6 +609,19 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Tolca</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>check_x402_seller</code></td>
+    <td width="768">Checks an x402 seller before paying it (OFAC crypto addresses, official USDC, mainnet, Bazaar price and payTo) and returns allow, review or block with a signed receipt.</td>
+</tr>
+<tr>
+    <td width="200"><code>screen_sanctions</code></td>
+    <td width="768">Screens a company or person name against US, UK and EU sanctions lists and returns allow, review or block with the matching entries.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Twitter</strong></summary>
 <table width="100%">
 <tr>
