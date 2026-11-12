@@ -2,6 +2,7 @@ import { Connection, PublicKey } from "@solana/web3.js";
 import { SvmWalletProvider } from "../../wallet-providers/svmWalletProvider";
 import { JupiterActionProvider } from "./jupiterActionProvider";
 import { createJupiterApiClient } from "@jup-ag/api";
+import { checkSwapBeforeSigning } from "./swapCheck";
 
 // Mock the @solana/web3.js module
 jest.mock("@solana/web3.js", () => ({
@@ -48,6 +49,11 @@ jest.mock("@jup-ag/api", () => ({
 
 // Mock the custom wallet provider used for Solana transactions
 jest.mock("../../wallet-providers/svmWalletProvider");
+
+// Mock the pre-sign simulation check (tested on its own in swapCheck.test.ts)
+jest.mock("./swapCheck", () => ({
+  checkSwapBeforeSigning: jest.fn().mockResolvedValue(null),
+}));
 
 describe("JupiterActionProvider", () => {
   let actionProvider;
@@ -132,6 +138,24 @@ describe("JupiterActionProvider", () => {
       expect(mockSwapPost).toHaveBeenCalled();
       expect(mockWallet.waitForSignatureResult).toHaveBeenCalledWith(MOCK_SIGNATURE);
       expect(result).toContain("Successfully swapped");
+    });
+
+    /**
+     * Test that a swap the pre-sign check refuses is never signed
+     */
+    it("should refuse to sign when the simulation check finds a problem", async () => {
+      mockQuoteGet.mockResolvedValue({ route: "mock-route" });
+      mockSwapPost.mockResolvedValue({
+        swapTransaction: Buffer.from("mock-transaction").toString("base64"),
+      });
+      (checkSwapBeforeSigning as jest.Mock).mockResolvedValueOnce(
+        "the wallet would receive 0 of the output token, less than the quote's minimum 1000",
+      );
+
+      const result = await actionProvider.swap(mockWallet, swapArgs);
+
+      expect(mockWallet.signAndSendTransaction).not.toHaveBeenCalled();
+      expect(result).toContain("Refused to sign the swap transaction");
     });
 
     /**
