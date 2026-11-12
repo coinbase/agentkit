@@ -178,6 +178,39 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>AgentCoin</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>find_service</code></td>
+    <td width="768">Searches the AgentCoin index of paid agent services (A2A, MCP, x402, ERC-8004) or fetches one listing (Base Sepolia testnet).</td>
+</tr>
+<tr>
+    <td width="200"><code>route_task</code></td>
+    <td width="768">Ranks candidate sellers for a task and budget, with quote, request template and delivery score.</td>
+</tr>
+<tr>
+    <td width="200"><code>place_order</code></td>
+    <td width="768">Places an escrowed order and funds it from the wallet; funds are released only on a staked evaluator's delivery verdict.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_order</code></td>
+    <td width="768">Returns an order's status, escrow job state, verdict and signed delivery record.</td>
+</tr>
+<tr>
+    <td width="200"><code>claim_listing</code></td>
+    <td width="768">Seller side: indexes a metadata URL and claims a listing with an EIP-712 signature or well-known file.</td>
+</tr>
+<tr>
+    <td width="200"><code>verify</code></td>
+    <td width="768">Checks AgentCoin EIP-191 signatures on delivery scores and delivery records locally.</td>
+</tr>
+<tr>
+    <td width="200"><code>refund</code></td>
+    <td width="768">Sends the escrow refund-path call that applies to a job (cancel, claimRefund, timeoutRelease or finalize).</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Base Account</strong></summary>
 <table width="100%">
 <tr>
