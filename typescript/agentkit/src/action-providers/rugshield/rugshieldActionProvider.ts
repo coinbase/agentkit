@@ -1,7 +1,11 @@
 import { z } from "zod";
+import { x402Client, wrapFetchWithPayment } from "@x402/fetch";
+import { registerExactEvmScheme } from "@x402/evm/exact/client";
+import { registerExactSvmScheme } from "@x402/svm/exact/client";
 import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
+import { EvmWalletProvider, SvmWalletProvider, WalletProvider } from "../../wallet-providers";
 import {
   RugShieldScanSchema,
   RugShieldHoneypotSchema,
@@ -9,72 +13,133 @@ import {
 } from "./schemas";
 import { RUGSHIELD_DEFAULT_URL } from "./constants";
 
-/**
- * RugShieldActionProvider provides pre-trade DEX swap simulation, honeypot detection,
- * buy/sell tax calculation, and LP lock verification for autonomous agents on Base via x402.
- */
-export class RugShieldActionProvider extends ActionProvider {
-  private serviceUrl: string;
-  private paymentHeader?: string;
+export interface RugShieldActionProviderConfig {
+  serviceUrl?: string;
+  paymentHeader?: string;
+  allowPreviewFallback?: boolean;
+}
 
-  /**
-   * Constructor for the RugShieldActionProvider.
-   *
-   * @param config - Optional configuration containing custom service URL or x402 payment header.
-   */
-  constructor(config?: { serviceUrl?: string; paymentHeader?: string }) {
+/**
+ * RugShieldActionProvider provides pre-trade honeypot simulation,
+ * buy/sell tax verification, and holder risk analysis via RugShield 402 (Base & Solana x402).
+ */
+export class RugShieldActionProvider extends ActionProvider<WalletProvider> {
+  private readonly serviceUrl: string;
+  private readonly paymentHeader?: string;
+  private readonly allowPreviewFallback: boolean;
+
+  constructor(config?: RugShieldActionProviderConfig) {
     super("rugshield", []);
     this.serviceUrl = (config?.serviceUrl || RUGSHIELD_DEFAULT_URL).replace(/\/$/, "");
     this.paymentHeader = config?.paymentHeader || process.env.RUGSHIELD_PAYMENT_HEADER;
+    this.allowPreviewFallback = config?.allowPreviewFallback ?? true;
   }
 
-  /**
-   * Run a comprehensive pre-trade DEX swap risk audit.
-   *
-   * @param args - The input arguments including tokenAddress, chain, and simulateSell.
-   * @returns JSON string containing honeypot verdict, taxes, liquidity, and safety score.
-   */
+  private async createX402Client(walletProvider: WalletProvider): Promise<x402Client | null> {
+    const client = new x402Client();
+    if (walletProvider instanceof EvmWalletProvider) {
+      registerExactEvmScheme(client, { signer: walletProvider.toSigner() });
+      return client;
+    }
+    if (walletProvider instanceof SvmWalletProvider) {
+      const signer = await walletProvider.toSigner();
+      registerExactSvmScheme(client, { signer });
+      return client;
+    }
+    return null;
+  }
+
+  private async callRugShield(
+    walletProvider: WalletProvider,
+    paidPath: string,
+    previewPath: string | null,
+    init: { method: "GET" | "POST"; body?: Record<string, unknown>; query?: Record<string, string> },
+  ): Promise<Record<string, unknown>> {
+    const qs = init.query ? `?${new URLSearchParams(init.query).toString()}` : "";
+    const headers: Record<string, string> = { Accept: "application/json" };
+    if (init.method === "POST") {
+      headers["Content-Type"] = "application/json";
+    }
+    const fetchOpts: RequestInit = {
+      method: init.method,
+      headers,
+      ...(init.body ? { body: JSON.stringify(init.body) } : {}),
+    };
+
+    const client = await this.createX402Client(walletProvider);
+    if (client) {
+      const fetchWithPayment = wrapFetchWithPayment(fetch, client);
+      const response = await fetchWithPayment(`${this.serviceUrl}${paidPath}${qs}`, fetchOpts);
+      if (response.ok) {
+        return (await response.json()) as Record<string, unknown>;
+      }
+      if (response.status !== 402 || !this.allowPreviewFallback || !previewPath) {
+        const errorText = await response.text();
+        return { error: `RugShield HTTP ${response.status}`, details: errorText };
+      }
+    }
+
+    if (this.paymentHeader) {
+      const headerRes = await fetch(`${this.serviceUrl}${paidPath}${qs}`, {
+        ...fetchOpts,
+        headers: {
+          ...headers,
+          "PAYMENT-SIGNATURE": this.paymentHeader,
+          "X-PAYMENT": this.paymentHeader,
+        },
+      });
+      if (headerRes.ok) {
+        return (await headerRes.json()) as Record<string, unknown>;
+      }
+      if (headerRes.status !== 402 || !this.allowPreviewFallback || !previewPath) {
+        const errorText = await headerRes.text();
+        return { error: `RugShield HTTP ${headerRes.status}`, details: errorText };
+      }
+    }
+
+    if (!previewPath || !this.allowPreviewFallback) {
+      return {
+        error: "RugShield 402 Payment Required",
+        details: "A funded Base or Solana wallet is required to pay $0.010-$0.020 USDC via x402.",
+      };
+    }
+
+    const previewRes = await fetch(`${this.serviceUrl}${previewPath}${qs}`, fetchOpts);
+    if (!previewRes.ok) {
+      const errorText = await previewRes.text();
+      return { error: `RugShield Preview HTTP ${previewRes.status}`, details: errorText };
+    }
+    const previewJson = (await previewRes.json()) as Record<string, unknown>;
+    return {
+      ...previewJson,
+      payment_mode: "free_preview",
+      upgrade_note:
+        "Evaluated via unsimulated preview. Use a funded EvmWalletProvider or SvmWalletProvider to settle paid /v1/scan swap simulation.",
+    };
+  }
+
   @CreateAction({
     name: "scan_token",
-    description: `Performs an institutional pre-trade DEX swap simulation and honeypot risk audit for a token on Base Mainnet or Solana.
-Verifies buy and sell execution, computes exact buy/sell tax basis points, checks LP lock duration, ownership renunciation status, and generates a trading recommendation ('SAFE', 'CAUTION', or 'DANGEROUS').
+    description: `Executes a full RugShield 402 token security scan before buying or swapping a token on Base or Solana. Detects honeypots, hidden buy/sell taxes, owner privileges, and liquidity lock risks via x402 ($0.010 USDC).
 Inputs:
-- tokenAddress: Contract address of the token (e.g. 0x... on Base or Base58 on Solana).
-- chain: Network ('base' or 'solana', defaults to 'base').
-- simulateSell: Whether to simulate DEX sell execution to confirm tokens can be liquidated (defaults to true).`,
+- tokenAddress: Contract or mint address of the token to audit.
+- chain: 'base' (default) or 'solana'.
+- simulateSell: True to execute sell-path calldata simulation (default: true).`,
     schema: RugShieldScanSchema,
   })
-  async scanToken(args: z.infer<typeof RugShieldScanSchema>): Promise<string> {
+  async scanToken(
+    walletProvider: WalletProvider,
+    args: z.infer<typeof RugShieldScanSchema>,
+  ): Promise<string> {
     try {
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (this.paymentHeader) {
-        headers["PAYMENT-SIGNATURE"] = this.paymentHeader;
-        headers["X-PAYMENT"] = this.paymentHeader;
-      }
-
-      const endpoint = this.paymentHeader
-        ? `${this.serviceUrl}/v1/scan`
-        : `${this.serviceUrl}/v1/scan/preview`;
-
-      const response = await fetch(endpoint, {
+      const result = await this.callRugShield(walletProvider, "/v1/scan", "/v1/scan/preview", {
         method: "POST",
-        headers,
-        body: JSON.stringify({
+        body: {
           token_address: args.tokenAddress,
           chain: args.chain ?? "base",
           simulate_sell: args.simulateSell ?? true,
-        }),
+        },
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        return JSON.stringify({
-          error: `RugShield HTTP ${response.status}`,
-          details: errorText,
-        });
-      }
-
-      const result = await response.json();
       return JSON.stringify(result, null, 2);
     } catch (error) {
       return JSON.stringify({
@@ -84,46 +149,59 @@ Inputs:
     }
   }
 
-  /**
-   * Fast boolean honeypot check.
-   *
-   * @param args - The token address and chain.
-   * @returns Quick safety verdict indicating whether the token is sellable.
-   */
   @CreateAction({
     name: "check_honeypot",
-    description: `Quickly verifies whether a token on Base or Solana is a honeypot (cannot be sold or has >50% sell tax). Returns a fast boolean is_honeypot verdict before initiating swaps.`,
+    description: `Fast pre-swap honeypot verification via RugShield 402 ($0.010 USDC). Returns explicit verification status without fabricating safe results on unsimulated previews.
+Inputs:
+- tokenAddress: Contract or mint address of the token.
+- chain: 'base' (default) or 'solana'.`,
     schema: RugShieldHoneypotSchema,
   })
-  async checkHoneypot(args: z.infer<typeof RugShieldHoneypotSchema>): Promise<string> {
+  async checkHoneypot(
+    walletProvider: WalletProvider,
+    args: z.infer<typeof RugShieldHoneypotSchema>,
+  ): Promise<string> {
     try {
-      const response = await fetch(`${this.serviceUrl}/v1/scan/preview`, {
+      const result = await this.callRugShield(walletProvider, "/v1/scan", "/v1/scan/preview", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           token_address: args.tokenAddress,
           chain: args.chain ?? "base",
           simulate_sell: true,
-        }),
+        },
       });
-
-      if (!response.ok) {
-        return JSON.stringify({ error: `RugShield HTTP ${response.status}` });
+      if ("error" in result) {
+        return JSON.stringify(result, null, 2);
       }
 
-      const result = (await response.json()) as {
-        is_honeypot?: boolean;
-        recommendation?: string;
-        sell_tax_bps?: number;
-      };
+      const isHoneypot = typeof result.is_honeypot === "boolean" ? result.is_honeypot : null;
+      const buyTaxBps = typeof result.buy_tax_bps === "number" ? result.buy_tax_bps : null;
+      const sellTaxBps = typeof result.sell_tax_bps === "number" ? result.sell_tax_bps : null;
+      const sellable = isHoneypot === false ? true : isHoneypot === true ? false : null;
+      const recommendation =
+        typeof result.recommendation === "string"
+          ? result.recommendation
+          : isHoneypot === true
+            ? "HIGH_RISK_BLOCK"
+            : isHoneypot === false && sellTaxBps !== null && sellTaxBps < 1000
+              ? "SAFE_TO_SWAP"
+              : "UNSIMULATED_PREVIEW";
 
-      return JSON.stringify({
-        token_address: args.tokenAddress,
-        is_honeypot: result.is_honeypot ?? false,
-        sellable: !(result.is_honeypot ?? false),
-        sell_tax_bps: result.sell_tax_bps ?? 0,
-        recommendation: result.recommendation ?? "UNKNOWN",
-      }, null, 2);
+      return JSON.stringify(
+        {
+          token_address: args.tokenAddress,
+          chain: args.chain ?? "base",
+          is_honeypot: isHoneypot,
+          sellable,
+          buy_tax_bps: buyTaxBps,
+          sell_tax_bps: sellTaxBps,
+          simulation_status: result.simulation_status ?? null,
+          recommendation,
+          payment_mode: result.payment_mode ?? "x402_paid",
+        },
+        null,
+        2,
+      );
     } catch (error) {
       return JSON.stringify({
         error: "Failed to check honeypot status",
@@ -132,64 +210,38 @@ Inputs:
     }
   }
 
-  /**
-   * Analyze top token holders and smart-money orderflow.
-   *
-   * @param args - The token address and chain.
-   * @returns Breakdown of top holder concentrations and whale clusters.
-   */
   @CreateAction({
-    name: "token_god_mode",
-    description: `Analyzes top token holder distributions, Sybil whale cluster maps, and smart-money orderflow for a token on Base or Solana. Identifies insider concentration risks.`,
+    name: "analyze_token_god_mode",
+    description: `Retrieves Token God Mode smart-money netflow, top holder concentration, and DEX orderflow via RugShield 402 /api/v1/token-god-mode ($0.020 USDC via x402).
+Inputs:
+- tokenAddress: Contract or mint address of the token.
+- chain: 'base' (default) or 'solana'.`,
     schema: RugShieldTokenGodModeSchema,
   })
-  async tokenGodMode(args: z.infer<typeof RugShieldTokenGodModeSchema>): Promise<string> {
+  async analyzeTokenGodMode(
+    walletProvider: WalletProvider,
+    args: z.infer<typeof RugShieldTokenGodModeSchema>,
+  ): Promise<string> {
     try {
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (this.paymentHeader) {
-        headers["PAYMENT-SIGNATURE"] = this.paymentHeader;
-        headers["X-PAYMENT"] = this.paymentHeader;
-      }
-
-      const endpoint = `${this.serviceUrl}/api/v1/tgm/holders`;
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
+      const result = await this.callRugShield(walletProvider, "/api/v1/token-god-mode", null, {
+        method: "GET",
+        query: {
           token_address: args.tokenAddress,
           chain: args.chain ?? "base",
-        }),
+        },
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        return JSON.stringify({
-          error: `RugShield HTTP ${response.status}`,
-          details: errorText,
-        });
-      }
-
-      const result = await response.json();
       return JSON.stringify(result, null, 2);
     } catch (error) {
       return JSON.stringify({
-        error: "Failed to retrieve Token God Mode analysis",
+        error: "Failed to analyze Token God Mode metrics",
         message: error instanceof Error ? error.message : String(error),
       });
     }
   }
 
-  /**
-   * Network support check (supports Base, Solana, and EVM chains).
-   */
-  supportsNetwork = (_network: Network) => true;
+  supportsNetwork = (network: Network) =>
+    network.protocolFamily === "evm" || network.protocolFamily === "svm";
 }
 
-/**
- * Factory function for creating a new RugShieldActionProvider instance.
- *
- * @param config - Optional configuration options.
- * @returns An instance of RugShieldActionProvider.
- */
-export const rugshieldActionProvider = (config?: { serviceUrl?: string; paymentHeader?: string }) =>
+export const rugshieldActionProvider = (config?: RugShieldActionProviderConfig) =>
   new RugShieldActionProvider(config);
