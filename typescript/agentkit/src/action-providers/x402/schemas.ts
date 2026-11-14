@@ -28,6 +28,18 @@ export interface X402Config {
   registeredFacilitators?: Record<string, string>;
 
   /**
+   * Optional spend policy evaluated before any x402 payment is signed.
+   *
+   * `maxPaymentUsdc` answers "how much". A policy answers the questions a single ceiling cannot:
+   * who may be paid, in which asset and on which network, how often, and which rules fired when a
+   * payment was refused. Same schema as `@paystage/policy`; omit it and nothing changes.
+   *
+   * Example: { version: 1, max_amount: { value: "0.05", asset: "USDC", decimals: 6 },
+   *            allowed_networks: ["eip155:8453"], unknown_payee: "deny" }
+   */
+  paymentPolicy?: unknown;
+
+  /**
    * Maximum payment per request in USDC whole units.
    * Default: 1.0 (or X402_MAX_PAYMENT_USDC env var)
    */
