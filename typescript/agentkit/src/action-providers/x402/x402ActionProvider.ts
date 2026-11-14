@@ -13,6 +13,7 @@ import {
 } from "./schemas";
 import { EvmWalletProvider, WalletProvider, SvmWalletProvider } from "../../wallet-providers";
 import { x402Client, wrapFetchWithPayment } from "@x402/fetch";
+import { guardFetch } from "@paystage/x402-guard";
 import { registerExactEvmScheme } from "@x402/evm/exact/client";
 import { registerExactSvmScheme } from "@x402/svm/exact/client";
 import {
@@ -41,6 +42,8 @@ interface ResolvedX402Config {
   allowDynamicServiceRegistration: boolean;
   registeredFacilitators: Record<string, string>;
   maxPaymentUsdc: number;
+  /** Opt-in: evaluated before any x402 payment is signed. */
+  paymentPolicy?: unknown;
 }
 
 /**
@@ -64,6 +67,7 @@ export class X402ActionProvider extends ActionProvider<WalletProvider> {
         config.allowDynamicServiceRegistration ??
         process.env.X402_ALLOW_DYNAMIC_SERVICE_REGISTRATION === "true",
       registeredFacilitators: config.registeredFacilitators ?? {},
+      paymentPolicy: config.paymentPolicy,
       maxPaymentUsdc:
         config.maxPaymentUsdc ?? parseFloat(process.env.X402_MAX_PAYMENT_USDC ?? "1.0"),
     };
@@ -462,7 +466,7 @@ DO NOT use this action directly without first trying make_http_request!`,
 
       // Create x402 client with appropriate signer
       const client = await this.createX402Client(walletProvider);
-      const fetchWithPayment = wrapFetchWithPayment(fetch, client);
+      const fetchWithPayment = this.createPaymentFetch(client);
 
       // Build URL with query params and determine if body is allowed
       const finalUrl = buildUrlWithParams(args.url, args.queryParams);
@@ -609,7 +613,7 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
 
       // Create x402 client with appropriate signer
       const client = await this.createX402Client(walletProvider);
-      const fetchWithPayment = wrapFetchWithPayment(fetch, client);
+      const fetchWithPayment = this.createPaymentFetch(client);
 
       // Build URL with query params and determine if body is allowed
       const finalUrl = buildUrlWithParams(args.url, args.queryParams);
@@ -868,6 +872,26 @@ These are the only services that can be called using make_http_request or make_h
     }
 
     return client;
+  }
+
+  /**
+   * Build the fetch that pays for x402 requests.
+   *
+   * With no `paymentPolicy` configured this is exactly the previous behaviour. With one, the request
+   * is still paid by the same client — the policy is evaluated against the 402 challenge first, and a
+   * refusal never reaches the signer. That ordering is the whole point: a check after signing can
+   * only report a loss, not prevent one.
+   */
+  private createPaymentFetch(client: x402Client): typeof fetch {
+    if (this.config.paymentPolicy === undefined) {
+      return wrapFetchWithPayment(fetch, client);
+    }
+    return guardFetch(fetch, {
+      policy: this.config.paymentPolicy,
+      // `guardFetch` hands this straight to `wrapFetchWithPayment`, so the x402 client travels
+      // through unchanged; the guard only decides whether that call happens.
+      walletClient: client,
+    });
   }
 
   /**
