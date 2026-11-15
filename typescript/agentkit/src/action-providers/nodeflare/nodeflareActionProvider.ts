@@ -28,19 +28,13 @@ const CHAINS: Record<string, { label: string; chainId: number; currency: string 
   unichain: { label: "Unichain", chainId: 130, currency: "ETH" },
   sonic: { label: "Sonic", chainId: 146, currency: "S" },
   polygon: { label: "Polygon PoS", chainId: 137, currency: "POL" },
-  linea: { label: "Linea", chainId: 59144, currency: "ETH" },
-  mantle: { label: "Mantle", chainId: 5000, currency: "MNT" },
   zircuit: { label: "Zircuit", chainId: 48900, currency: "ETH" },
   robinhood: { label: "Robinhood Chain", chainId: 4663, currency: "ETH" },
   xlayer: { label: "XLayer", chainId: 196, currency: "OKB" },
   soneium: { label: "Soneium", chainId: 1868, currency: "ETH" },
-  nova: { label: "Arbitrum Nova", chainId: 42170, currency: "ETH" },
   bob: { label: "BOB", chainId: 60808, currency: "ETH" },
   ink: { label: "Ink", chainId: 57073, currency: "ETH" },
-  cronos: { label: "Cronos", chainId: 25, currency: "CRO" },
   mode: { label: "Mode", chainId: 34443, currency: "ETH" },
-  sei: { label: "Sei", chainId: 1329, currency: "SEI" },
-  plasma: { label: "Plasma", chainId: 9745, currency: "XPL" },
 };
 
 const ALIASES: Record<string, string> = {
@@ -48,7 +42,6 @@ const ALIASES: Record<string, string> = {
   mainnet: "eth",
   arbitrum: "arb",
   "arbitrum-one": "arb",
-  "arbitrum-nova": "nova",
   optimism: "op",
   bsc: "bnb",
   binance: "bnb",
@@ -200,8 +193,8 @@ async function nodeflareBalances(body: {
 
 /**
  * NodeflareActionProvider gives an agent read access to on-chain data across the
- * 23 EVM chains NodeFlare serves — Ethereum, Base, Arbitrum, Optimism, BNB and
- * young chains like Robinhood Chain, Plasma and Ink — through NodeFlare's public
+ * 17 EVM chains NodeFlare serves — Ethereum, Base, Arbitrum, Optimism, BNB and
+ * young chains like Robinhood Chain, Zircuit and Ink — through NodeFlare's public
  * gateway. Every action takes an explicit `chain` argument (slug, name, or chain
  * ID), so an agent reads any supported chain without configuring a per-chain RPC.
  * All actions are read-only and keyless; the injected wallet provider is not used.
@@ -263,7 +256,7 @@ export class NodeflareActionProvider extends ActionProvider {
   @CreateAction({
     name: "get_native_balance",
     description:
-      "Gets the native gas-token balance of an address on any supported EVM chain (e.g. ETH, BNB, POL, SEI), returned human-readable.",
+      "Gets the native gas-token balance of an address on any supported EVM chain (e.g. ETH, BNB, POL, HYPE), returned human-readable.",
     schema: GetNativeBalanceSchema,
   })
   async getNativeBalance(args: z.infer<typeof GetNativeBalanceSchema>): Promise<string> {
@@ -427,7 +420,7 @@ export class NodeflareActionProvider extends ActionProvider {
   @CreateAction({
     name: "get_multichain_balances",
     description:
-      "Reads native + ERC-20 token balances for one address across many of the 23 EVM chains in a single call, including young chains (Robinhood, Plasma, Ink) that Alchemy/Moralis omit. Provide ERC-20 addresses per chain via `tokens` to include token balances.",
+      "Reads native + ERC-20 token balances for one address across many of the 17 EVM chains in a single call, including young chains (Robinhood, Zircuit, Ink) that Alchemy/Moralis omit. Provide ERC-20 addresses per chain via `tokens` to include token balances.",
     schema: GetMultichainBalancesSchema,
   })
   async getMultichainBalances(args: z.infer<typeof GetMultichainBalancesSchema>): Promise<string> {

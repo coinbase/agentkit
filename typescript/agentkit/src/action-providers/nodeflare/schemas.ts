@@ -82,7 +82,7 @@ export const GetMultichainBalancesSchema = z
     chains: z
       .array(z.string())
       .optional()
-      .describe("Chains to include (slug, name, or chain ID); defaults to all 23"),
+      .describe("Chains to include (slug, name, or chain ID); defaults to all 17"),
     tokens: z
       .record(z.string(), z.array(z.string()))
       .optional()
