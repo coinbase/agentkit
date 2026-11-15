@@ -434,6 +434,23 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>RugShield</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>scan_token</code></td>
+    <td width="768">Pre-trade DEX honeypot detection, buy/sell tax simulation, and LP lock verification on Base Mainnet.</td>
+</tr>
+<tr>
+    <td width="200"><code>check_honeypot</code></td>
+    <td width="768">Fast boolean honeypot check and sellability audit for a Base or Solana token.</td>
+</tr>
+<tr>
+    <td width="200"><code>token_god_mode</code></td>
+    <td width="768">Audits top token holders, whale clusters, and smart-money orderflow on Base.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>ERC721</strong></summary>
 <table width="100%">
 <tr>
