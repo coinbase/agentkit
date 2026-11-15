@@ -485,6 +485,23 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Keptvow</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>check_payment</code></td>
+    <td width="768">Checks a seller's wallet (0x or Solana) on Keptvow before paying it, returning ok, careful or stop with the reason and a link to the wallet's page.</td>
+</tr>
+<tr>
+    <td width="200"><code>check_bot</code></td>
+    <td width="768">Looks up a bot's public record on Keptvow by its ERC-8004 registry id, returning a trust level, a score and the reasons.</td>
+</tr>
+<tr>
+    <td width="200"><code>report_delivery</code></td>
+    <td width="768">Tells Keptvow whether a payment delivered what was paid for, so honest sellers earn trust and sellers that deliver nothing are flagged.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Messari</strong></summary>
 <table width="100%">
 <tr>
