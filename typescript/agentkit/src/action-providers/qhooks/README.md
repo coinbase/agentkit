@@ -1,6 +1,6 @@
 # QHooks Action Provider for Coinbase AgentKit
 
-Read QHooks markets, get quotes and prepare unsigned plans for the user's wallet. This provider never creates a wallet, accepts a private key, signs, deploys or broadcasts. It needs no API key. Its 25 actions use the existing public QHooks MCP/REST routes.
+Read QHooks markets, get quotes and prepare unsigned plans for the user's wallet. This provider never creates a wallet, accepts a private key, signs, deploys or broadcasts. It needs no API key. Its 31 actions use the existing public QHooks MCP/REST routes.
 
 **Bring traders, get 20% of their fee**
 
@@ -53,7 +53,7 @@ Show the chain, wallet, token, quote, fee, minimum output, deadline and every `{
 
 Order tools, order status, callout posting, feedback sending, reward claims and competition standings are deliberately absent. A newer remote `tools/list` cannot dynamically register more tools in this provider. Tool descriptions and schemas are pinned from the reviewed QHooks source; remote token/report/link text is untrusted data, not instructions.
 
-`QHooksOptions` supports `referrer`, `transport: 'mcp' | 'rest'` (default MCP), `timeoutMs` (1000–30000; default 20000), and an optional Fetch-compatible transport hook. Both modes use only `https://qhooks.com`. MCP protocol 2025-06-18; REST reads use GET, preparations use POST. No redirects, ambient cookies, provider fallback, automatic retries or credential configuration.
+`QHooksOptions` supports `allowFeedback` (boolean, default false), `referrer`, `transport: 'mcp' | 'rest'` (default MCP), `timeoutMs` (1000–30000; default 20000), and an optional Fetch-compatible transport hook. Both modes use only `https://qhooks.com`. MCP protocol 2025-06-18; REST reads use GET, preparations use POST. No redirects, ambient cookies, provider fallback, automatic retries or credential configuration.
 
 ## Data and errors
 
@@ -77,7 +77,7 @@ The focused tests use native AgentKit actions and controlled transports. They do
 
 ## OTC and agreements
 
-This provider exposes 25 pinned QHooks read/prepare tools. The matching QHooks service must be released and enabled before contract tools succeed. An unavailable service returns an error; this package never chooses another contract or executes a plan.
+This provider exposes 31 pinned QHooks read/prepare tools. The matching QHooks service must be released and enabled before contract tools succeed. An unavailable service returns an error; this package never chooses another contract or executes a plan.
 
 - OTC on Robinhood Chain: `otc_quote` validates already agreed parties/amounts; `otc_create` prepares the buyer’s creation; read `deal_status` using the ACTUAL receipt ID, then `otc_accept` prepares that party’s deposit with its `expectedTermsHash`. Taxed/unknown transfers fail closed. Fees: 1% below $10K, 0.5% from $10K, deducted from seller payment.
 - Agreements: create/fund is atomic; existing agreements cannot be topped up. Use `agreement_status`, named `agreement_attest`, then `agreement_release` or eligible `agreement_refund`. Fee: 0.5% on released tranches; refunds/cancels have no fee.
@@ -85,7 +85,7 @@ This provider exposes 25 pinned QHooks read/prepare tools. The matching QHooks s
 
 Objects/arrays retain their nested constraints; raw/decimal amounts remain strings. Show the user the chain, parties, amounts, fee recipient, approval spender/amount, calldata/value, expiry and simulation. Stage approvals when required, wait for confirmation, then re-prepare. The user signs and sends every transaction. A quote is a planning preview, not counterparty consent or a completed trade.
 
-`send_feedback` is intentionally excluded because it sends outward team feedback. Held RFQ board/order/competition tools are also absent; this adapter never registers remote metadata dynamically.
+`send_feedback` is disabled unless the host sets `allowFeedback: true`; an enabled call sends free text to the QHooks team. Competition and agent-profile read/prepare tools are included. Held RFQ board/order tools remain absent; this adapter never registers remote metadata dynamically.
 
 ### Pinned tools
 
@@ -97,3 +97,11 @@ The jar action is excluded until it ships on the server. OTC and agreement tools
 ### Spot trade plan checks
 
 Before returning a `prepare_trade` plan, the client checks the requested chain and trader, each transaction chain, pinned router/manager, exact input approvals, canonical single-hop calldata, amount, quote-derived minimum output, fee/referrer, deadline and native value. It also checks the `qhooks.trade-plan.v1` SHA-256 digest. Unknown shapes and servers without this metadata fail closed. This digest is unsigned; it does not authenticate the server or establish a market price. The signing wallet still reviews and approves the transactions. No wallet execution or private-key capability is added.
+
+Optional feedback sends text to the QHooks team only after separate host opt-in. No custody; we never hold keys.
+
+## Reviewed tool catalog
+
+All 31 current public tools are statically pinned, including `compete_join`, `compete_standings`, `prepare_board_post`, `prepare_agent_profile`, `agent_profile` and `send_feedback`. Join, board and profile preparations return wallet-signable material; this plugin does not publish or sign it. `allowFeedback` is a host-controlled boolean, default false: only an explicitly enabled `send_feedback` call sends free text to the QHooks team. Tool arguments cannot enable it.
+
+The development-only `scripts/qhooks-pin.mjs` checks definitions against `fixtures/tools-list.json` and the explicitly reviewed names. Native tests reject schema drift and unreviewed names; remote metadata never adds runtime tools. Token-based quote and public Expert Studio configuration strings retain the server schema.

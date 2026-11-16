@@ -3,6 +3,8 @@ import { validateTradePlan } from "./trade-plan";
 import { z } from "zod";
 import { DEFINITIONS, type ToolName } from "./definitions";
 export interface QHooksOptions {
+  /** Host-controlled consent; feedback stays disabled by default. */
+  allowFeedback?: boolean;
   referrer?: string;
   transport?: "mcp" | "rest";
   timeoutMs?: number;
@@ -29,6 +31,12 @@ export class QHooksError extends Error {
   }
 }
 const ROUTE: Record<ToolName, string> = {
+  compete_join: "compete-join",
+  compete_standings: "compete-standings",
+  prepare_board_post: "prepare-board-post",
+  prepare_agent_profile: "prepare-agent-profile",
+  agent_profile: "agent-profile",
+  send_feedback: "feedback",
   otc_quote: "otc-quote",
   otc_create: "otc-create",
   otc_accept: "otc-accept",
@@ -78,8 +86,50 @@ type PinnedSchema = {
   maxItems?: number;
   enum?: readonly unknown[];
   const?: unknown;
+  uniqueItems?: boolean;
+  default?: unknown;
+  anyOf?: readonly PinnedSchema[];
+  allOf?: readonly PinnedSchema[];
+  if?: PinnedSchema;
+  then?: PinnedSchema;
+  else?: PinnedSchema;
   description?: string;
 };
+/**
+ * Apply the reviewed catalog's conditional and collection constraints.
+ *
+ * @param value - Value after base Zod type validation.
+ * @param p - Pinned logical schema restrictions.
+ * @param depth - Recursion budget.
+ * @returns Whether the value meets the static restrictions.
+ */
+function restrictions(value: unknown, p: PinnedSchema, depth = 0): boolean {
+  if (depth > 16) return false;
+  if (p.required && object(value) && p.required.some(k => !hasOwn(value, k))) return false;
+  if (p.maxLength !== undefined && typeof value === "string" && value.length > p.maxLength)
+    return false;
+  if (
+    p.properties &&
+    object(value) &&
+    Object.entries(p.properties).some(
+      ([key, rule]) => hasOwn(value, key) && !restrictions(value[key], rule, depth + 1),
+    )
+  )
+    return false;
+  if (
+    p.uniqueItems &&
+    Array.isArray(value) &&
+    new Set(value.map(v => JSON.stringify(v))).size !== value.length
+  )
+    return false;
+  if (p.anyOf && !p.anyOf.some(rule => restrictions(value, rule, depth + 1))) return false;
+  if (p.allOf && !p.allOf.every(rule => restrictions(value, rule, depth + 1))) return false;
+  if (p.if) {
+    const branch = restrictions(value, p.if, depth + 1) ? p.then : p.else;
+    if (branch && !restrictions(value, branch, depth + 1)) return false;
+  }
+  return true;
+}
 /**
  * Convert the supported pinned schema subset into a local validator.
  *
@@ -105,6 +155,13 @@ function schemaValue(p: PinnedSchema, depth = 0): z.ZodTypeAny {
     "enum",
     "const",
     "description",
+    "uniqueItems",
+    "default",
+    "anyOf",
+    "allOf",
+    "if",
+    "then",
+    "else",
   ]);
   if (Object.keys(p).some(k => !supported.has(k))) throw Error("Unsupported pinned schema keyword");
   let type: z.ZodTypeAny;
@@ -137,7 +194,10 @@ function schemaValue(p: PinnedSchema, depth = 0): z.ZodTypeAny {
   } else throw Error("Unsupported pinned schema type");
   if (p.enum) type = type.refine(v => p.enum!.includes(v), "Invalid choice");
   if (hasOwn(p, "const")) type = type.refine(v => Object.is(v, p.const), "Unexpected value");
-  return type;
+  return type.refine(
+    v => restrictions(v, p),
+    "Arguments do not match the pinned schema constraints",
+  );
 }
 /**
  * Build a validator for one pinned tool.
@@ -225,6 +285,7 @@ export class QHooksClient {
   readonly #transport: "mcp" | "rest";
   readonly #timeout: number;
   readonly #fetch: typeof fetch;
+  readonly #allowFeedback: boolean;
   #id = 0;
   /**
    * Configure attribution and bounded transport behavior.
@@ -232,6 +293,9 @@ export class QHooksClient {
    * @param options - Public referrer and transport options; no credentials.
    */
   constructor(options: QHooksOptions = {}) {
+    if (options.allowFeedback !== undefined && typeof options.allowFeedback !== "boolean")
+      throw new QHooksError("invalid_options", "allowFeedback must be a boolean.");
+    this.#allowFeedback = options.allowFeedback === true;
     if (options.referrer !== undefined && !evm(options.referrer))
       throw new QHooksError("invalid_referrer", "Use a nonzero public EVM referral address.");
     if (options.transport !== undefined && !["mcp", "rest"].includes(options.transport))
@@ -260,6 +324,11 @@ export class QHooksClient {
       throw new QHooksError(
         "unsupported_tool",
         "This adapter exposes only the pinned QHooks read and prepare tools.",
+      );
+    if (name === "send_feedback" && !this.#allowFeedback)
+      throw new QHooksError(
+        "feedback_disabled",
+        "Feedback is disabled. The operator must explicitly opt in before text is sent to the QHooks team.",
       );
     const parsed = SCHEMAS[name].safeParse(args);
     if (!parsed.success)
@@ -298,6 +367,8 @@ export class QHooksClient {
     else {
       url = ORIGIN + "/api/v1/agent/" + ROUTE[name];
       if (
+        name === "compete_join" ||
+        name === "send_feedback" ||
         name.startsWith("prepare_") ||
         name.startsWith("otc_") ||
         (name.startsWith("agreement_") && name !== "agreement_status")

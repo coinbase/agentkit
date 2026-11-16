@@ -53,7 +53,7 @@ function fixture(options: { referrer?: string } = { referrer: address(4) }) {
   };
 }
 describe("QHooksActionProvider", () => {
-  it("registers 25 fixed read/prepare tools without reading a wallet", () => {
+  it("registers 31 fixed read/prepare tools without reading a wallet", () => {
     const f = fixture();
     const wallet = new Proxy(
       {},
@@ -64,10 +64,10 @@ describe("QHooksActionProvider", () => {
       },
     );
     const actions = f.provider.getActions(wallet as never);
-    expect(actions).toHaveLength(25);
+    expect(actions).toHaveLength(31);
     expect(
       actions.some(a =>
-        /agreement_jar|prepare_tpsl|prepare_limit_order|send_feedback|orders_status|competition_standings/.test(
+        /agreement_jar|prepare_tpsl|prepare_limit_order|orders_status|competition_standings/.test(
           a.name,
         ),
       ),

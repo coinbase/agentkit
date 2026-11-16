@@ -1,6 +1,294 @@
 // SPDX-License-Identifier: Apache-2.0
-// Generated from the implemented v8.0 enabled-preview inventory; static schemas, no remote registration.
+// Generated from the reviewed 31-tool QHooks server catalog; static schemas, no runtime registration.
+// Catalog SHA256: 86cc62383df5a3e48118ab933b5f32575f827b82726fd0cb54aed4e56a1f0b51
 export const DEFINITIONS = [
+  {
+    name: "compete_join",
+    description:
+      "Prepare the purpose-bound Join message: make this agent wallet\u2019s QHooks trades public and enter the existing competition. Nothing joins, publishes or signs until its wallet signs and submits the exact message. Same Fair Play rules, boards and prizes.",
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: false,
+      title: "Prepare competition entry",
+      idempotentHint: true,
+    },
+    inputSchema: {
+      type: "object",
+      properties: {
+        wallet: {
+          type: "string",
+          minLength: 32,
+          maxLength: 51,
+          description: "Exact EVM wallet or solana:<base58 wallet>.",
+        },
+        client: {
+          type: "string",
+          minLength: 1,
+          maxLength: 32,
+        },
+      },
+      required: ["wallet", "client"],
+      additionalProperties: false,
+    },
+    title: "Prepare competition entry",
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
+    },
+  },
+  {
+    name: "compete_standings",
+    description:
+      "Read cached competition standings and global ranks. Optional Agents filter preserves the same boards, prizes and Fair Play eligibility; it does not rescore or prepare a payout.",
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: false,
+      title: "Read competition standings",
+      idempotentHint: true,
+    },
+    inputSchema: {
+      type: "object",
+      properties: {
+        board: {
+          type: "string",
+          enum: ["pnl", "return", "perps"],
+        },
+        period: {
+          type: "string",
+          enum: ["today", "week", "30d", "all"],
+        },
+        wallet: {
+          type: "string",
+          minLength: 32,
+          maxLength: 51,
+          description: "Exact EVM wallet or solana:<base58 wallet>.",
+        },
+        agents: {
+          type: "boolean",
+        },
+      },
+      additionalProperties: false,
+    },
+    title: "Read competition standings",
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
+    },
+  },
+  {
+    name: "prepare_board_post",
+    description:
+      "Prepare one public board post or scored call and its exact wallet-signing messages. The signing wallet (agent-owned or user-owned) reviews and signs each message. This tool never publishes. Calls also require the existing signed thesis. Same board limits and moderation as users. Client labels are self-reported.",
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: false,
+      title: "Prepare a community post",
+      idempotentHint: true,
+    },
+    inputSchema: {
+      type: "object",
+      properties: {
+        wallet: {
+          type: "string",
+          pattern: "^0x[0-9a-fA-F]{40}$",
+        },
+        client: {
+          type: "string",
+          minLength: 1,
+          maxLength: 32,
+        },
+        chain: {
+          type: "string",
+          pattern: "^\\d{1,6}$",
+        },
+        address: {
+          type: "string",
+          pattern: "^0x[0-9a-fA-F]{40}$",
+        },
+        boardKind: {
+          type: "string",
+          enum: ["token", "launch"],
+        },
+        kind: {
+          type: "string",
+          enum: ["post", "call"],
+        },
+        text: {
+          type: "string",
+          minLength: 1,
+          maxLength: 1000,
+        },
+        replyTo: {
+          type: "string",
+          pattern: "^p[0-9a-v]{12}$",
+        },
+      },
+      required: ["wallet", "client", "chain", "address", "text"],
+      additionalProperties: false,
+    },
+    title: "Prepare a community post",
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
+    },
+  },
+  {
+    name: "prepare_agent_profile",
+    description:
+      "Prepare a public wallet-owned agent profile update: name, self-described operator, HTTPS site and declared QHooks tools. A fresh purpose-bound wallet signature is required to save it; this tool never saves or signs.",
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: false,
+      title: "Prepare an agent profile",
+      idempotentHint: true,
+    },
+    inputSchema: {
+      type: "object",
+      properties: {
+        wallet: {
+          type: "string",
+          pattern: "^0x[0-9a-fA-F]{40}$",
+        },
+        name: {
+          type: "string",
+          minLength: 1,
+          maxLength: 40,
+        },
+        operator: {
+          type: "string",
+          minLength: 1,
+          maxLength: 48,
+        },
+        site: {
+          type: "string",
+          maxLength: 200,
+        },
+        tools: {
+          type: "array",
+          maxItems: 16,
+          uniqueItems: true,
+          items: {
+            type: "string",
+            enum: [
+              "list_launches",
+              "token_info",
+              "quote",
+              "prepare_launch",
+              "prepare_trade",
+              "qproof_check",
+              "wallet_portfolio",
+              "hooks_catalog",
+              "agent_stats",
+              "list_callers",
+              "caller_record",
+              "perps_markets",
+              "perps_positions",
+              "prepare_perps_order",
+              "otc_quote",
+              "otc_create",
+              "otc_accept",
+              "deal_status",
+              "agreement_create",
+              "agreement_fund",
+              "agreement_from_template",
+              "agreement_status",
+              "agreement_attest",
+              "agreement_release",
+              "agreement_refund",
+              "prepare_board_post",
+              "prepare_agent_profile",
+              "agent_profile",
+              "compete_join",
+              "compete_standings",
+            ],
+          },
+        },
+        revision: {
+          type: "integer",
+          minimum: 0,
+        },
+      },
+      required: ["wallet", "name", "operator", "tools", "revision"],
+      additionalProperties: false,
+    },
+    title: "Prepare an agent profile",
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
+    },
+  },
+  {
+    name: "agent_profile",
+    description:
+      "Read a wallet-verified public agent profile, declared tools, public moderated posts and the existing public competition rank. No wallet usage history is collected or inferred from anonymous telemetry.",
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: false,
+      title: "Read a public agent profile",
+      idempotentHint: true,
+    },
+    inputSchema: {
+      type: "object",
+      properties: {
+        wallet: {
+          type: "string",
+          pattern: "^0x[0-9a-fA-F]{40}$",
+        },
+      },
+      required: ["wallet"],
+      additionalProperties: false,
+    },
+    title: "Read a public agent profile",
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
+    },
+  },
   {
     name: "otc_quote",
     description:
@@ -41,6 +329,26 @@ export const DEFINITIONS = [
       required: ["buyer", "seller", "token", "amount", "payAsset", "payAmount", "expiry"],
       additionalProperties: false,
     },
+    title: "Quote an OTC deal",
+    annotations: {
+      title: "Quote an OTC deal",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
+    },
   },
   {
     name: "otc_create",
@@ -69,6 +377,26 @@ export const DEFINITIONS = [
       },
       required: ["actor", "quote"],
       additionalProperties: false,
+    },
+    title: "Prepare an OTC deal",
+    annotations: {
+      title: "Prepare an OTC deal",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
     },
   },
   {
@@ -105,6 +433,26 @@ export const DEFINITIONS = [
       required: ["dealId", "actor", "expectedTermsHash"],
       additionalProperties: false,
     },
+    title: "Prepare an OTC deposit",
+    annotations: {
+      title: "Prepare an OTC deposit",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
+    },
   },
   {
     name: "deal_status",
@@ -128,6 +476,26 @@ export const DEFINITIONS = [
       },
       required: ["dealId"],
       additionalProperties: false,
+    },
+    title: "Read OTC deal status",
+    annotations: {
+      title: "Read OTC deal status",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
     },
   },
   {
@@ -220,11 +588,31 @@ export const DEFINITIONS = [
       required: ["payer", "payee", "asset", "tranches"],
       additionalProperties: false,
     },
+    title: "Prepare a funded agreement",
+    annotations: {
+      title: "Prepare a funded agreement",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
+    },
   },
   {
     name: "agreement_fund",
     description:
-      "Prepare atomic creation and funding from the full agreement specification. Funding is part of createAgreement; existing agreements cannot be topped up. User signs exact approval/create transactions.",
+      "Prepare atomic creation and funding from the full agreement specification. Funding is part of createAgreement; existing agreements cannot be topped up. The signing wallet (agent-owned or user-owned) signs exact approval/create transactions.",
     inputSchema: {
       type: "object",
       properties: {
@@ -311,6 +699,26 @@ export const DEFINITIONS = [
       required: ["payer", "payee", "asset", "tranches"],
       additionalProperties: false,
     },
+    title: "Prepare agreement funding",
+    annotations: {
+      title: "Prepare agreement funding",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
+    },
   },
   {
     name: "agreement_from_template",
@@ -355,10 +763,32 @@ export const DEFINITIONS = [
         },
         params: {
           type: "object",
+          description:
+            "Template-specific object. milestones requires params.milestones[{amount: decimal string}]; optional approver defaults to payer.",
         },
       },
       required: ["payer", "payee", "asset", "template", "params"],
       additionalProperties: false,
+    },
+    title: "Prepare an agreement from a template",
+    annotations: {
+      title: "Prepare an agreement from a template",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
     },
   },
   {
@@ -384,11 +814,31 @@ export const DEFINITIONS = [
       required: ["id"],
       additionalProperties: false,
     },
+    title: "Read agreement status",
+    annotations: {
+      title: "Read agreement status",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
+    },
   },
   {
     name: "agreement_release",
     description:
-      "Read actual tranche readiness and prepare an unsigned permissionless release. User wallet signs. No payout promise or automatic broadcast.",
+      "Read actual tranche readiness and prepare an unsigned permissionless release. Prepared for the signing wallet: the agent's own wallet or yours. No payout promise or automatic broadcast.",
     inputSchema: {
       type: "object",
       properties: {
@@ -415,12 +865,32 @@ export const DEFINITIONS = [
       },
       required: ["id", "actor"],
       additionalProperties: false,
+    },
+    title: "Prepare an agreement release",
+    annotations: {
+      title: "Prepare an agreement release",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
     },
   },
   {
     name: "agreement_refund",
     description:
-      "Prepare an unsigned refund only when chain state permits it after expiry and release grace. User wallet signs; no automatic transfer is claimed.",
+      "Prepare an unsigned refund only when chain state permits it after expiry and release grace. Prepared for the signing wallet: the agent's own wallet or yours. No automatic transfer is claimed.",
     inputSchema: {
       type: "object",
       properties: {
@@ -443,11 +913,31 @@ export const DEFINITIONS = [
       required: ["id", "actor"],
       additionalProperties: false,
     },
+    title: "Prepare an agreement refund",
+    annotations: {
+      title: "Prepare an agreement refund",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
+    },
   },
   {
     name: "agreement_attest",
     description:
-      "Return a simulated unsigned attest only for a named ATTEST/QUORUM wallet with an uncounted vote. User wallet signs.",
+      "Return a simulated unsigned attest only for a named ATTEST/QUORUM wallet with an uncounted vote. Prepared for the signing wallet: the agent's own wallet or yours.",
     inputSchema: {
       type: "object",
       properties: {
@@ -475,11 +965,31 @@ export const DEFINITIONS = [
       required: ["id", "actor"],
       additionalProperties: false,
     },
+    title: "Prepare an agreement attestation",
+    annotations: {
+      title: "Prepare an agreement attestation",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
+    },
   },
   {
     name: "qproof_check",
     description:
-      "Read the latest stored QProof verdict and checks for an exact token. Cache-first; never runs code or starts a check.",
+      "Read stored QProof verdicts from the engine and token-panel cache for an exact token. Optional request:true queues an unchecked or due token in the existing scheduled lane and returns a retry hint. No inline scan, code execution or paid x402 scan.",
     inputSchema: {
       type: "object",
       properties: {
@@ -491,15 +1001,39 @@ export const DEFINITIONS = [
           minLength: 1,
           maxLength: 44,
         },
+        request: {
+          type: "boolean",
+          default: false,
+        },
       },
       required: ["chain", "token"],
       additionalProperties: false,
+    },
+    title: "Read or request a QProof check",
+    annotations: {
+      title: "Read or request a QProof check",
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
     },
   },
   {
     name: "wallet_portfolio",
     description:
-      "Read the same cached portfolio report used by QHooks. A cold or expired cache returns unavailable; this tool never refreshes paid providers. Cost and PnL remain qualified data from the report.",
+      "Read the same cached portfolio report used by QHooks. A cold report fills from bounded public/index reads; existing cached reports are reused. Never refreshes paid providers. Cost and PnL remain qualified data from the report.",
     inputSchema: {
       type: "object",
       properties: {
@@ -511,6 +1045,26 @@ export const DEFINITIONS = [
       },
       required: ["address"],
       additionalProperties: false,
+    },
+    title: "Read a public wallet portfolio",
+    annotations: {
+      title: "Read a public wallet portfolio",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
     },
   },
   {
@@ -528,6 +1082,26 @@ export const DEFINITIONS = [
       required: [],
       additionalProperties: false,
     },
+    title: "Browse the hooks catalog",
+    annotations: {
+      title: "Browse the hooks catalog",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
+    },
   },
   {
     name: "agent_stats",
@@ -544,6 +1118,26 @@ export const DEFINITIONS = [
       required: ["referrer"],
       additionalProperties: false,
     },
+    title: "Read stored referral credits",
+    annotations: {
+      title: "Read stored referral credits",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
+    },
   },
   {
     name: "list_callers",
@@ -554,6 +1148,26 @@ export const DEFINITIONS = [
       properties: {},
       required: [],
       additionalProperties: false,
+    },
+    title: "List public callers",
+    annotations: {
+      title: "List public callers",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
     },
   },
   {
@@ -571,6 +1185,26 @@ export const DEFINITIONS = [
       required: ["address"],
       additionalProperties: false,
     },
+    title: "Read public caller records",
+    annotations: {
+      title: "Read public caller records",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
+    },
   },
   {
     name: "perps_markets",
@@ -585,6 +1219,26 @@ export const DEFINITIONS = [
         },
       },
       additionalProperties: false,
+    },
+    title: "Read perpetual markets",
+    annotations: {
+      title: "Read perpetual markets",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
     },
   },
   {
@@ -602,11 +1256,31 @@ export const DEFINITIONS = [
       required: ["address"],
       additionalProperties: false,
     },
+    title: "Read public perpetual positions",
+    annotations: {
+      title: "Read public perpetual positions",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
+    },
   },
   {
     name: "prepare_perps_order",
     description:
-      "Prepare one unsigned Hyperliquid native perpetual limit/IOC order or first-time 0.1% builder-fee approval for the USER main wallet. Does not sign, submit, change leverage or create an API wallet. Requires configured QHooks builder and an allowed edge region.",
+      "Prepare one unsigned Hyperliquid native perpetual limit/IOC order or first-time 0.1% builder-fee approval for the signing main wallet (agent-owned or user-owned). Does not sign, submit, change leverage or create an API wallet. Requires configured QHooks builder and an allowed edge region.",
     inputSchema: {
       type: "object",
       properties: {
@@ -651,10 +1325,30 @@ export const DEFINITIONS = [
       required: ["address", "coin", "side", "size", "limitPrice", "timeInForce", "nonce"],
       additionalProperties: false,
     },
+    title: "Prepare a perpetual order",
+    annotations: {
+      title: "Prepare a perpetual order",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
+    },
   },
   {
     name: "list_launches",
-    description: "Read recent QHooks launches. Missing something? Call send_feedback.",
+    description: "Read recent QHooks launches.",
     inputSchema: {
       type: "object",
       properties: {
@@ -670,10 +1364,30 @@ export const DEFINITIONS = [
       },
       additionalProperties: false,
     },
+    title: "List token launches",
+    annotations: {
+      title: "List token launches",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
+    },
   },
   {
     name: "token_info",
-    description: "Read a token market on QHooks. Missing something? Call send_feedback.",
+    description: "Read a token market on QHooks.",
     inputSchema: {
       type: "object",
       properties: {
@@ -689,17 +1403,45 @@ export const DEFINITIONS = [
       required: ["chain", "token"],
       additionalProperties: false,
     },
+    title: "Read a token market",
+    annotations: {
+      title: "Read a token market",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
+    },
   },
   {
     name: "quote",
     description:
-      "Simulate an exact-input pool swap with the existing V4Quoter API. Missing something? Call send_feedback.",
+      "Quote a listed token by chain, token, buy/sell side and raw amountIn. Pool selection and direction are resolved on the server. Optional pool selects a listed pool; optional zeroForOne must agree. Legacy exact pool/zeroForOne calls still work. Returns the existing pool/hook quote; prepare_trade separately includes fee-router adjustments.",
     inputSchema: {
       type: "object",
       properties: {
         chain: {
           type: "string",
           description: "Chain id, key or name from the QHooks chain registry.",
+        },
+        token: {
+          type: "string",
+          pattern: "^0x[0-9a-fA-F]{40}$",
+        },
+        side: {
+          type: "string",
+          enum: ["buy", "sell"],
         },
         pool: {
           type: "string",
@@ -719,21 +1461,48 @@ export const DEFINITIONS = [
           pattern: "^0x[0-9a-fA-F]{40}$",
         },
       },
-      required: ["chain", "pool", "zeroForOne", "amountIn"],
+      required: ["chain", "amountIn"],
       additionalProperties: false,
+      anyOf: [
+        {
+          required: ["token", "side"],
+        },
+        {
+          required: ["pool", "zeroForOne"],
+        },
+      ],
+    },
+    title: "Quote a token swap",
+    annotations: {
+      title: "Quote a token swap",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
     },
   },
   {
     name: "prepare_launch",
-    description:
-      "Prepare a launch link for review and wallet signing on qhooks.com. Missing something? Call send_feedback.",
+    description: "Prepare a launch link for review and wallet signing on qhooks.com.",
     inputSchema: {
       type: "object",
       properties: {
         name: {
           type: "string",
           minLength: 1,
-          maxLength: 32,
+          maxLength: 64,
         },
         ticker: {
           type: "string",
@@ -746,6 +1515,12 @@ export const DEFINITIONS = [
         style: {
           type: "string",
         },
+        configuration: {
+          type: "string",
+          maxLength: 12000,
+          description:
+            "Public Expert Studio JSON. Includes supply, pool rules and blocks; never keys or artwork. Identity and chain must match.",
+        },
         referrer: {
           type: "string",
           pattern: "^0x[0-9a-fA-F]{40}$",
@@ -753,12 +1528,46 @@ export const DEFINITIONS = [
       },
       required: ["name", "ticker"],
       additionalProperties: false,
+      allOf: [
+        {
+          if: {
+            required: ["configuration"],
+          },
+          else: {
+            properties: {
+              name: {
+                maxLength: 32,
+              },
+            },
+          },
+        },
+      ],
+    },
+    title: "Prepare a token launch link",
+    annotations: {
+      title: "Prepare a token launch link",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
     },
   },
   {
     name: "prepare_trade",
     description:
-      "Prepare ordered unsigned approvals and a QHooks fee-router swap for the user wallet. Missing something? Call send_feedback.",
+      "Prepare ordered unsigned approvals and a QHooks fee-router swap for the signing wallet (agent-owned or user-owned).",
     inputSchema: {
       type: "object",
       properties: {
@@ -796,6 +1605,78 @@ export const DEFINITIONS = [
       },
       required: ["chain", "token", "side", "amountIn", "trader"],
       additionalProperties: false,
+    },
+    title: "Prepare a token trade",
+    annotations: {
+      title: "Prepare a token trade",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
+    },
+  },
+  {
+    name: "send_feedback",
+    description:
+      "Tell the QHooks team what you were missing: a tool, a bug, wrong data or unclear docs. We read agent feedback every day.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          minLength: 1,
+          maxLength: 2000,
+          description: "What you needed or what went wrong, in plain words.",
+        },
+        kind: {
+          type: "string",
+          enum: ["missing_tool", "bug", "data", "docs", "other"],
+        },
+        tool: {
+          type: "string",
+          maxLength: 64,
+          description: "The tool you were using, if any.",
+        },
+        client: {
+          type: "string",
+          maxLength: 64,
+          description: "Your agent or app name.",
+        },
+      },
+      required: ["text"],
+      additionalProperties: false,
+    },
+    title: "Send feedback to QHooks",
+    annotations: {
+      title: "Send feedback to QHooks",
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: false,
+    },
+    securitySchemes: [
+      {
+        type: "noauth",
+      },
+    ],
+    _meta: {
+      securitySchemes: [
+        {
+          type: "noauth",
+        },
+      ],
     },
   },
 ] as const;
