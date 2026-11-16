@@ -71,6 +71,9 @@ importers:
       '@base-org/account':
         specifier: ^2.2.0
         version: 2.2.0(bufferutil@4.0.9)(react@18.3.1)(typescript@5.8.2)(use-sync-external-store@1.4.0(react@18.3.1))(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@basedloans/sdk':
+        specifier: ^0.1.1
+        version: 0.1.1(typescript@5.8.2)(viem@2.47.4(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@4.3.6))(zod@4.3.6)
       '@coinbase/cdp-sdk':
         specifier: ^1.45.0
         version: 1.45.0(bufferutil@4.0.9)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.2)(utf-8-validate@5.0.10)
@@ -1044,6 +1047,11 @@ packages:
 
   '@base-org/account@2.2.0':
     resolution: {integrity: sha512-kuraXax6wKf1YF9n2SGxzQuYDLxvojo4RVElCo+/lbRtWPB3jlKXXczDPm4ngRcfwxKkxKfS2a5BJVuROuPJwQ==}
+
+  '@basedloans/sdk@0.1.1':
+    resolution: {integrity: sha512-sQqc17zNboymRmOtmbn4kfMG8JEfQBbu6HKsjU6fU35IgwFLt++AswY0NPYUe+mUDJbhZaxfsuFPXsEn85uIkg==}
+    peerDependencies:
+      viem: ^2.21.0
 
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
@@ -8942,6 +8950,14 @@ snapshots:
       - typescript
       - use-sync-external-store
       - utf-8-validate
+      - zod
+
+  '@basedloans/sdk@0.1.1(typescript@5.8.2)(viem@2.47.4(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@4.3.6))(zod@4.3.6)':
+    dependencies:
+      ox: 0.14.5(typescript@5.8.2)(zod@4.3.6)
+      viem: 2.47.4(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@4.3.6)
+    transitivePeerDependencies:
+      - typescript
       - zod
 
   '@bcoe/v8-coverage@0.2.3': {}
