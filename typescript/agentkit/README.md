@@ -555,6 +555,27 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>SODAX</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_supported_tokens</code></td>
+    <td width="768">Lists the tokens SODAX can swap on a network, or on every supported network.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_quote</code></td>
+    <td width="768">Fetches a SODAX quote for a same-network or cross-network swap, e.g. Base USDC to Solana USDC.</td>
+</tr>
+<tr>
+    <td width="200"><code>swap</code></td>
+    <td width="768">Creates a SODAX swap intent from the current EVM network (approving the input token if needed) and submits it for solver execution.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_swap_status</code></td>
+    <td width="768">Checks whether a SODAX swap is in progress, solved or failed.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Superfluid</strong></summary>
 <table width="100%">
 <tr>
