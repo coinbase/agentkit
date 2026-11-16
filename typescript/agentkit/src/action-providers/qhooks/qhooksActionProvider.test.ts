@@ -1,3 +1,4 @@
+import { validTrade } from "./trade-fixture.cjs";
 // SPDX-License-Identifier: Apache-2.0
 import { QHooksActionProvider } from "./qhooksActionProvider";
 import { QHooksError } from "./client";
@@ -24,16 +25,12 @@ function fixture(options: { referrer?: string } = { referrer: address(4) }) {
       params: { name: string; arguments: Record<string, unknown> };
     };
   }[] = [];
-  const result = {
-    amountIn: request.amountIn,
-    minOut: "9007199254740993000",
-    transactions: [{ to: address(3), data: "0xf5ec7c4b", value: request.amountIn }],
-    partial: true,
-    costUsd: null,
-  };
+  const result = validTrade({ ...request, referrer: options.referrer });
   const fetchImpl = jest.fn(async (url: string | URL | Request, init?: RequestInit) => {
     const body = JSON.parse(init!.body as string);
     calls.push({ url: String(url), body });
+    if (body.params.name === "prepare_trade")
+      Object.assign(result, validTrade(body.params.arguments));
     return Response.json({
       jsonrpc: "2.0",
       id: body.id,

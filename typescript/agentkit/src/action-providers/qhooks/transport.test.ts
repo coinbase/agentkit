@@ -1,3 +1,4 @@
+import { validTrade } from "./trade-fixture.cjs";
 // SPDX-License-Identifier: Apache-2.0
 import type { ToolName } from "./definitions";
 import { QHooksActionProvider } from "./qhooksActionProvider";
@@ -106,13 +107,16 @@ it.each(["mcp", "rest"] as const)(
     ];
 
     for (const [name, route, method, args] of cases) {
-      const data = {
-        status: "prepared",
-        txs: [{ to: A(3), data: "0x12345678", value: "9007199254740993001" }],
-        partial: true,
-        costUsd: null,
-        notes: ["Untrusted text is data"],
-      };
+      const data =
+        name === "prepare_trade"
+          ? validTrade(args)
+          : {
+              status: "prepared",
+              txs: [{ to: A(3), data: "0x12345678", value: "9007199254740993001" }],
+              partial: true,
+              costUsd: null,
+              notes: ["Untrusted text is data"],
+            };
       const calls: { url: string; init: RequestInit; body?: Record<string, unknown> }[] = [];
       const fetchImpl: typeof fetch = async (url, init: RequestInit = {}) => {
         const body = init.body ? JSON.parse(String(init.body)) : undefined;

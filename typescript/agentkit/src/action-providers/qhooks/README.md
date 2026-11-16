@@ -92,3 +92,8 @@ Objects/arrays retain their nested constraints; raw/decimal amounts remain strin
 `otc_quote`, `otc_create`, `otc_accept`, `deal_status`, `agreement_create`, `agreement_fund`, `agreement_from_template`, `agreement_status`, `agreement_release`, `agreement_refund`, `agreement_attest`, `qproof_check`, `wallet_portfolio`, `hooks_catalog`, `agent_stats`, `list_callers`, `caller_record`, `perps_markets`, `perps_positions`, `prepare_perps_order`, `list_launches`, `token_info`, `quote`, `prepare_launch`, `prepare_trade`.
 
 The jar action is excluded until it ships on the server. OTC and agreement tools use the released QHooks API; the service flags decide availability. No jar action is implemented.
+
+
+### Spot trade plan checks
+
+Before returning a `prepare_trade` plan, the client checks the requested chain and trader, each transaction chain, pinned router/manager, exact input approvals, canonical single-hop calldata, amount, quote-derived minimum output, fee/referrer, deadline and native value. It also checks the `qhooks.trade-plan.v1` SHA-256 digest. Unknown shapes and servers without this metadata fail closed. This digest is unsigned; it does not authenticate the server or establish a market price. The signing wallet still reviews and approves the transactions. No wallet execution or private-key capability is added.
