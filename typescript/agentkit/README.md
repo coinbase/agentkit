@@ -195,6 +195,67 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Based Loans</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_protocol_info</code></td>
+    <td width="768">Gets Based Loans' live loan fee, loan terms, buyback costs and size limits.</td>
+</tr>
+<tr>
+    <td width="200"><code>list_markets</code></td>
+    <td width="768">Lists tokens accepted as collateral with price, max loan-to-value and USDC available to borrow.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_risk_report</code></td>
+    <td width="768">Gets a token's price sources, pool history and the trading needed to move its price, with plain-language flags.</td>
+</tr>
+<tr>
+    <td width="200"><code>quote_borrow</code></td>
+    <td width="768">Quotes the USDC received, fixed buyback cost and due date for a loan, without sending anything.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_my_loans</code></td>
+    <td width="768">Lists the wallet's loans with status, buyback remaining and due date.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_my_lending</code></td>
+    <td width="768">Gets the wallet's deposit, USDC in active loans, per-token limits and anything ready to claim.</td>
+</tr>
+<tr>
+    <td width="200"><code>request_token_listing</code></td>
+    <td width="768">Checks whether a token is accepted and, if not, returns a link to request it.</td>
+</tr>
+<tr>
+    <td width="200"><code>borrow</code></td>
+    <td width="768">Deposits a token as collateral and receives USDC, with no liquidations, approving the token first if needed.</td>
+</tr>
+<tr>
+    <td width="200"><code>buyback</code></td>
+    <td width="768">Pays USDC on a loan to get collateral back, in full or in part.</td>
+</tr>
+<tr>
+    <td width="200"><code>lend</code></td>
+    <td width="768">Deposits USDC to lend, optionally setting per-token lending limits.</td>
+</tr>
+<tr>
+    <td width="200"><code>set_lending_limits</code></td>
+    <td width="768">Adds, changes or removes per-token lending limits.</td>
+</tr>
+<tr>
+    <td width="200"><code>withdraw</code></td>
+    <td width="768">Withdraws USDC that is not in active loans.</td>
+</tr>
+<tr>
+    <td width="200"><code>claim_proceeds</code></td>
+    <td width="768">Claims repaid USDC from funded loans, or puts it back into lending.</td>
+</tr>
+<tr>
+    <td width="200"><code>claim_collateral</code></td>
+    <td width="768">Claims collateral from funded loans that passed their due date without a buyback.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Basename</strong></summary>
 <table width="100%">
 <tr>

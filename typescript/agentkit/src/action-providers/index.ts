@@ -6,6 +6,7 @@ export * from "./customActionProvider";
 export * from "./across";
 export * from "./alchemy";
 export * from "./baseAccount";
+export * from "./basedloans";
 export * from "./basename";
 export * from "./cdp";
 export * from "./clanker";
