@@ -756,6 +756,19 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>RugRadar</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>check_solana_token_risk</code></td>
+    <td width="768">Read-only rug and scam risk check for a Solana token (mint, pump.fun/DexScreener link or $TICKER): 0-100 risk score, red flags and a report link.</td>
+</tr>
+<tr>
+    <td width="200"><code>scan_link_for_drainer</code></td>
+    <td width="768">Scans a URL or post text for wallet-drainer and phishing patterns and returns a danger score with reasons.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>SPL</strong></summary>
 <table width="100%">
 <tr>
