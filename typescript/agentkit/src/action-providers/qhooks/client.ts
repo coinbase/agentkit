@@ -1,3 +1,4 @@
+import { QHOOKS_SECURITY } from "./plan-security";
 import { validateTradePlan } from "./trade-plan";
 // SPDX-License-Identifier: Apache-2.0
 import { z } from "zod";
@@ -453,11 +454,46 @@ export class QHooksClient {
       );
     if (name === "prepare_trade") {
       try {
-        validateTradePlan(data, input);
-      } catch {
+        const evidence = await QHOOKS_SECURITY.readTrade(input, (tool, args) =>
+          this.call(tool, args),
+        );
+        validateTradePlan(data, input, { evidence });
+      } catch (error) {
+        if (error instanceof QHooksError) throw error;
         throw new QHooksError(
           "unsafe_trade_plan",
           "The unsigned trade plan does not match this request. Prepare it again before wallet review.",
+        );
+      }
+    }
+    if (
+      [
+        "otc_create",
+        "otc_accept",
+        "agreement_create",
+        "agreement_fund",
+        "agreement_from_template",
+        "agreement_attest",
+        "agreement_release",
+        "agreement_refund",
+      ].includes(name) &&
+      ("transactions" in data ||
+        "txs" in data ||
+        data.unsigned === true ||
+        ["prepared", "approval_required", "unfunded_creation_prepared"].includes(
+          String(data.status),
+        ))
+    ) {
+      try {
+        const expected = await QHOOKS_SECURITY.contractIntent(name, input, (tool, args) =>
+          this.call(tool, args),
+        );
+        QHOOKS_SECURITY.checkContract(data, input, expected);
+      } catch (error) {
+        if (error instanceof QHooksError) throw error;
+        throw new QHooksError(
+          "unsafe_contract_plan",
+          "The unsigned contract plan does not match the request or pinned RH contract.",
         );
       }
     }

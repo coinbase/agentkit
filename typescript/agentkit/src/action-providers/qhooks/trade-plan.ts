@@ -1,3 +1,4 @@
+import { QHOOKS_SECURITY } from "./plan-security";
 // SPDX-License-Identifier: MIT
 import { createHash } from "node:crypto";
 
@@ -155,11 +156,12 @@ export function tradePlanHash(value: unknown): string {
  * @param originalRequest - Locally retained request after referrer defaults.
  * @param options - Clock override for deterministic verification.
  * @param options.now - Current time in milliseconds.
+ * @param options.evidence - Independently read market identity and raw quote.
  */
 export function validateTradePlan(
   value: unknown,
   originalRequest: unknown,
-  { now = Date.now() }: { now?: number } = {},
+  { now = Date.now(), evidence }: { now?: number; evidence?: unknown } = {},
 ): void {
   const input = row(originalRequest),
     plan = row(value);
@@ -289,6 +291,19 @@ export function validateTradePlan(
     valueOf(swap.value) !== (inputCurrency === ZERO ? amount : 0n)
   )
     fail();
+
+  QHOOKS_SECURITY.checkTrade(
+    plan,
+    input,
+    {
+      currency0,
+      currency1,
+      fee: Number(number(w[13])),
+      tickSpacing: Number(signed24(w[14])),
+      hooks: wordAddress(w[15]),
+    },
+    evidence,
+  );
   // swap outputs to msg.sender; no encoded trader/recipient is fabricated.
   const integrity = row(plan.integrity);
   if (

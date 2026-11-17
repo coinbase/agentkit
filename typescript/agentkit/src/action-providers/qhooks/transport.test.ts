@@ -1,4 +1,4 @@
-import { validTrade } from "./trade-fixture.cjs";
+import { validTrade, independentRead } from "./trade-fixture.cjs";
 // SPDX-License-Identifier: Apache-2.0
 import type { ToolName } from "./definitions";
 import { QHooksActionProvider } from "./qhooksActionProvider";
@@ -111,8 +111,8 @@ it.each(["mcp", "rest"] as const)(
         name === "prepare_trade"
           ? validTrade(args)
           : {
-              status: "prepared",
-              txs: [{ to: A(3), data: "0x12345678", value: "9007199254740993001" }],
+              status: "partial",
+              note: "Non-executable partial fixture",
               partial: true,
               costUsd: null,
               notes: ["Untrusted text is data"],
@@ -121,24 +121,40 @@ it.each(["mcp", "rest"] as const)(
       const fetchImpl: typeof fetch = async (url, init: RequestInit = {}) => {
         const body = init.body ? JSON.parse(String(init.body)) : undefined;
         calls.push({ url: String(url), init, body });
+        const readName =
+          body?.params?.name ??
+          { token: "token_info", quote: "quote" }[new URL(String(url)).pathname.split("/").at(-1)!];
+        const responseData =
+          name === "prepare_trade" && ["token_info", "quote"].includes(readName)
+            ? independentRead(args)(
+                readName,
+                body?.params?.arguments ??
+                  Object.fromEntries(
+                    [...new URL(String(url)).searchParams].map(([k, v]) => [
+                      k,
+                      k === "zeroForOne" ? v === "true" : v,
+                    ]),
+                  ),
+              )
+            : data;
         return Response.json(
           transport === "mcp"
             ? {
                 jsonrpc: "2.0",
                 id: body.id,
                 result: {
-                  structuredContent: data,
-                  content: [{ type: "text", text: JSON.stringify(data) }],
+                  structuredContent: responseData,
+                  content: [{ type: "text", text: JSON.stringify(responseData) }],
                 },
               }
-            : data,
+            : responseData,
         );
       };
       const native = new QHooksActionProvider({ transport, fetchImpl }).getActions();
       const tool = native.find(t => t.name === `qhooks_${name}`);
       if (!tool) throw new Error(`Missing native tool ${name}`);
       expect(JSON.parse(await tool.invoke(args))).toEqual(data);
-      expect(calls).toHaveLength(1);
+      expect(calls).toHaveLength(name === "prepare_trade" ? 3 : 1);
       const call = calls[0];
       if (transport === "mcp") {
         expect(call.body?.params).toEqual({ name, arguments: args });

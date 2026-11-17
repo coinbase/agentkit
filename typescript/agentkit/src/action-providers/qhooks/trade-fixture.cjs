@@ -147,6 +147,14 @@ function tamperedTrades(input) {
   add("different encoded amount", p => setWord(p, 2, BigInt(input.amountIn) + 1n));
   add("different encoded minimum", p => setWord(p, 3, 1));
   add("zero net quote", p => (p.quote.netAmountOut = "0"));
+  add("changed hook rehashed", p => setWord(p, 15, 9));
+  add("changed fee rehashed", p => setWord(p, 13, 500));
+  add("changed tickSpacing rehashed", p => setWord(p, 14, 200));
+  add("lower quote and minimum rehashed", p => {
+    for (const k of ["amountOut", "grossAmountOut", "netAmountOut"]) p.quote[k] = "1000000";
+    p.minOut = "990000";
+    setWord(p, 3, 990000);
+  });
   add("changed platform fee", p => setWord(p, 6, 101));
   add("different manager", p => setWord(p, 0, 1));
   add("different referral", p => setWord(p, 8, 7));
@@ -185,4 +193,74 @@ function tamperedTrades(input) {
   }
   return cases;
 }
-module.exports = { validTrade, tamperedTrades, rehash };
+function independentRead(input, options = {}) {
+  // Always derive from the original local request, never from the returned plan.
+  const good = validTrade(input, options),
+    tx = good.transactions.at(-1);
+  const words = tx.data.slice(10).match(/.{64}/g),
+    a = i => "0x" + words[i].slice(24);
+  const meta = {
+    chainId: String(input.chain),
+    token: input.token.toLowerCase(),
+    pools: [
+      {
+        label: "launch",
+        id: good.quote.poolId,
+        key: { currency0: a(11), currency1: a(12), fee: 3000, tickSpacing: 60, hooks: a(15) },
+      },
+    ],
+  };
+  return (name, args) => {
+    if (name === "token_info") return { meta };
+    if (name === "quote") {
+      if (
+        args.pool !== good.quote.poolId ||
+        args.amountIn !== good.quote.amountIn ||
+        args.zeroForOne !== good.quote.zeroForOne
+      )
+        throw Error("Unexpected independent quote request");
+      return { ...good.quote };
+    }
+    throw Error("Unexpected independent read: " + name);
+  };
+}
+function fixtureFetch(plan, input, transport, onCall = () => {}) {
+  const read = independentRead(input);
+  return async (url, init) => {
+    const body = init?.body ? JSON.parse(String(init.body)) : {};
+    const route = new URL(url).pathname.split("/").at(-1),
+      name =
+        transport === "mcp"
+          ? body.params.name
+          : ({ token: "token_info", quote: "quote" }[route] ?? route),
+      args = transport === "mcp" ? body.params.arguments : body;
+    const data =
+      name === "prepare_trade" || name === "prepare-trade"
+        ? plan
+        : read(
+            name,
+            transport === "rest"
+              ? Object.fromEntries(
+                  [...new URL(url).searchParams].map(([k, v]) => [
+                    k,
+                    k === "zeroForOne" ? v === "true" : v,
+                  ]),
+                )
+              : args,
+          );
+    onCall(name, args);
+    return Response.json(
+      transport === "mcp"
+        ? {
+            jsonrpc: "2.0",
+            id: body.id,
+            result: {
+              structuredContent: data,
+              content: [{ type: "text", text: JSON.stringify(data) }],
+            },
+          }
+        : data,
+    );
+  };
+}
+module.exports = { validTrade, tamperedTrades, rehash, independentRead, fixtureFetch };

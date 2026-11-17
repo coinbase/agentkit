@@ -1,4 +1,4 @@
-import { validTrade } from "./trade-fixture.cjs";
+import { validTrade, independentRead } from "./trade-fixture.cjs";
 // SPDX-License-Identifier: Apache-2.0
 import { QHooksActionProvider } from "./qhooksActionProvider";
 import { QHooksError } from "./client";
@@ -25,18 +25,24 @@ function fixture(options: { referrer?: string } = { referrer: address(4) }) {
       params: { name: string; arguments: Record<string, unknown> };
     };
   }[] = [];
+  let tradeInput: Record<string, unknown>;
   const result = validTrade({ ...request, referrer: options.referrer });
   const fetchImpl = jest.fn(async (url: string | URL | Request, init?: RequestInit) => {
     const body = JSON.parse(init!.body as string);
     calls.push({ url: String(url), body });
-    if (body.params.name === "prepare_trade")
-      Object.assign(result, validTrade(body.params.arguments));
+    if (body.params.name === "prepare_trade") {
+      tradeInput = body.params.arguments;
+      Object.assign(result, validTrade(tradeInput));
+    }
+    const data = ["token_info", "quote"].includes(body.params.name)
+      ? independentRead(tradeInput)(body.params.name, body.params.arguments)
+      : result;
     return Response.json({
       jsonrpc: "2.0",
       id: body.id,
       result: {
-        structuredContent: result,
-        content: [{ type: "text", text: JSON.stringify(result) }],
+        structuredContent: data,
+        content: [{ type: "text", text: JSON.stringify(data) }],
       },
     });
   }) as jest.MockedFunction<typeof fetch>;
@@ -113,7 +119,7 @@ describe("QHooksActionProvider", () => {
     expect(JSON.parse(await f.action.invoke(request))).toEqual(f.result);
     expect(f.calls[0].body.params.arguments.referrer).toBe(address(4));
     await f.action.invoke({ ...request, referrer: address(5) });
-    expect(f.calls[1].body.params.arguments.referrer).toBe(address(5));
+    expect(f.calls[3].body.params.arguments.referrer).toBe(address(5));
     expect(f.calls.every(c => c.url === "https://qhooks.com/mcp")).toBe(true);
   });
   it("refuses invalid arguments/referral before transport", async () => {

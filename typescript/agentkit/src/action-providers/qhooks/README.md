@@ -28,9 +28,7 @@ Leave `QHOOKS_REFERRER` unset, or set it to your own **public** nonzero EVM addr
 ## Prepare only when the user asks
 
 ```ts
-const prepare = provider
-  .getActions()
-  .find((a) => a.name === "qhooks_prepare_trade")!;
+const prepare = provider.getActions().find(a => a.name === "qhooks_prepare_trade")!;
 const plan = JSON.parse(
   await prepare.invoke({
     chain: "4663",
@@ -93,7 +91,6 @@ Objects/arrays retain their nested constraints; raw/decimal amounts remain strin
 
 The jar action is excluded until it ships on the server. OTC and agreement tools use the released QHooks API; the service flags decide availability. No jar action is implemented.
 
-
 ### Spot trade plan checks
 
 Before returning a `prepare_trade` plan, the client checks the requested chain and trader, each transaction chain, pinned router/manager, exact input approvals, canonical single-hop calldata, amount, quote-derived minimum output, fee/referrer, deadline and native value. It also checks the `qhooks.trade-plan.v1` SHA-256 digest. Unknown shapes and servers without this metadata fail closed. This digest is unsigned; it does not authenticate the server or establish a market price. The signing wallet still reviews and approves the transactions. No wallet execution or private-key capability is added.
@@ -105,3 +102,13 @@ Optional feedback sends text to the QHooks team only after separate host opt-in.
 All 31 current public tools are statically pinned, including `compete_join`, `compete_standings`, `prepare_board_post`, `prepare_agent_profile`, `agent_profile` and `send_feedback`. Join, board and profile preparations return wallet-signable material; this plugin does not publish or sign it. `allowFeedback` is a host-controlled boolean, default false: only an explicitly enabled `send_feedback` call sends free text to the QHooks team. Tool arguments cannot enable it.
 
 The development-only `scripts/qhooks-pin.mjs` checks definitions against `fixtures/tools-list.json` and the explicitly reviewed names. Native tests reject schema drift and unreviewed names; remote metadata never adds runtime tools. Token-based quote and public Expert Studio configuration strings retain the server schema.
+
+## Independent plan checks
+
+Before a spot plan is returned, the adapter separately reads `token_info` and `quote` through the same configured public transport. It selects the listed launch pool (otherwise the first listed pool), binds the decoded currencies, hook, fee and tick spacing to that independent metadata, and computes the minimum from the independent raw quote, the original slippage and the router fee. Changing both the returned plan quote and its minimum, even with a recomputed digest, is refused. Missing or stale independent quote evidence stops preparation; there is no wallet call or automatic retry. This adds two bounded read calls per spot preparation.
+
+The SHA-256 integrity value detects inconsistency; it is not a server signature or a price guarantee. Independent reads must come from the adapter's own transport, never model-supplied evidence or fields copied from the plan. Wallet review and signing remain outside the adapter.
+
+OTC and agreement transaction plans are limited to Robinhood Chain (4663). Their only contract destinations are QOtcEscrow `0xbea24499f82f1e018a4dff5607b7c54141cbfbf8` and QAgreements `0x9b6e579dd876c364bf232d2958d7cc45937809bf`, respectively. A separate approval can target only the original funding token, with the exact original amount and the relevant contract as spender; unlimited approvals, other spenders, extra native value and extra wallet-operation fields are refused. OTC acceptance reads the selected deal and its terms hash independently. Agreement amounts use known asset decimals or independently returned token metadata, never guessed precision.
+
+These checks bound destinations, funding amounts and supported action selectors. They do not authenticate a server or replace review of agreement conditions, expiry and counterparty terms. Unavailable/non-plan records are data, not executable calls.
