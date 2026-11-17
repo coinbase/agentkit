@@ -21,6 +21,7 @@ export * from "./jupiter";
 export * from "./messari";
 export * from "./pyth";
 export * from "./moonwell";
+export * from "./moneytools";
 export * from "./morpho";
 export * from "./opensea";
 export * from "./spl";

@@ -494,6 +494,23 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>MoneyTools</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>wallet_risk_card</code></td>
+    <td width="768">Returns a 0-100 risk score, A-F grade, OFAC SDN match, address checks (contract, EIP-7702 delegation), and an open ERC-20 approvals summary (0.02 USDC over x402 on Base).</td>
+</tr>
+<tr>
+    <td width="200"><code>token_safety_check</code></td>
+    <td width="768">Simulates a USDC to token to USDC round-trip with live DEX quotes, plus owner, proxy, and paused flags for honeypot and sell-tax checks (free daily tier, then 0.005 USDC).</td>
+</tr>
+<tr>
+    <td width="200"><code>token_contract_info</code></td>
+    <td width="768">Returns ERC-20 name, symbol, decimals, supply, owner, paused, and upgradeable proxy info (free daily tier, then 0.005 USDC).</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Moonwell</strong></summary>
 <table width="100%">
 <tr>
