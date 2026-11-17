@@ -44,7 +44,7 @@ This tool will create a new Zora coin.
 It takes the following parameters:
 - name: The name of the coin
 - symbol: The symbol of the coin
-- image: Local image file path or URI (ipfs:// or https://)
+- image: Image URI for the coin (ipfs:// or https://)
 - description: The description of the coin
 - payoutRecipient: The address that will receive creator earnings (optional, defaults to the wallet address)
 - platformReferrer: The address that will receive platform referrer fees (optional, defaults to 0x0000000000000000000000000000000000000000)
@@ -59,7 +59,7 @@ The action will return the transaction hash, coin address, and deployment detail
     args: z.infer<typeof CreateCoinSchema>,
   ): Promise<string> {
     try {
-      // Generate token URI from local file or URI
+      // Generate token URI from a remote URI or data URI
       const { uri, imageUri } = await generateZoraTokenUri({
         name: args.name,
         symbol: args.symbol,

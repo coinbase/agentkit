@@ -244,6 +244,30 @@ describe("FlaunchActionProvider", () => {
       expect(parseResult.success).toBe(false);
     });
 
+    it.each(["/root/.env", "/proc/self/environ", "../../etc/passwd", "./logo.png", "logo.png"])(
+      "should reject local file path %s as an image",
+      path => {
+        const parseResult = FlaunchSchema.safeParse({
+          name: "Test Token",
+          symbol: "TEST",
+          image: path,
+          description: "A test token",
+          websiteUrl: null,
+          discordUrl: null,
+          twitterUrl: null,
+          telegramUrl: null,
+          fairLaunchPercent: null,
+          fairLaunchDuration: null,
+          initialMarketCapUSD: null,
+          creatorFeeAllocationPercent: null,
+          creatorSplitPercent: null,
+          splitReceivers: null,
+          preminePercent: null,
+        });
+        expect(parseResult.success).toBe(false);
+      },
+    );
+
     it("should validate buyCoinWithETHInput schema", () => {
       const validInput = {
         coinAddress: "0x1234567890123456789012345678901234567890",

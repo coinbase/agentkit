@@ -23,7 +23,7 @@ zora/
   - `name`: The name of the coin to create
   - `symbol`: The symbol of the coin to create
   - `description`: The description of the coin
-  - `image`: Local image file path or URI (ipfs:// or https://)
+  - `image`: Image URI for the coin (`ipfs://` or `https://`)
   - `category` (optional): The category of the coin, defaults to 'social'
   - `payoutRecipient` (optional): The address that will receive creator earnings, defaults to wallet address
   - `platformReferrer` (optional): Platform referrer address that earns referral fees
@@ -50,5 +50,14 @@ The Zora provider supports the following networks:
 - Base Sepolia
 
 ## Notes
+
+Coin images must be given as an `https://` URL or an `ipfs://` URI. Local filesystem paths are
+not supported: the image is uploaded to Pinata and pinned to public IPFS, so reading
+caller-supplied paths would let an agent exfiltrate arbitrary files from the host. To publish a
+local file, read it yourself and pass a `data:` URI:
+
+```typescript
+image: `data:image/png;base64,${fs.readFileSync("./logo.png", "base64")}`;
+```
 
 For more information on the **Zora protocol**, visit [Zora Documentation](https://docs.zora.co/coins). 

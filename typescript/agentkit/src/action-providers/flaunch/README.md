@@ -32,7 +32,7 @@ flaunch/
   - **Input**:
     - `name` (string): The name of the token
     - `symbol` (string): The symbol of the token
-    - `image` (string): Local image file path or URL to the token image
+    - `image` (string): HTTP(S) URL of the token image (a `data:` URI is also accepted)
     - `description` (string): Description of the token
     - `fairLaunchPercent` (number, optional): The percentage of tokens for fair launch (defaults to 60%)
     - `fairLaunchDuration` (number, optional): The duration of the fair launch in minutes (defaults to 30 minutes)
@@ -134,4 +134,10 @@ The provider interacts with several key contracts:
 - Fee allocation can be split between creator and additional recipients
 - Premine percentage cannot exceed the fair launch percentage
 - Initial market cap is set in USD and converted to appropriate token pricing
-- The provider supports both local image files and URLs for token images
+- Token images must be given as an `http(s)://` URL. Local filesystem paths are not supported:
+  the image is uploaded to a third-party API and pinned to public IPFS, so reading
+  caller-supplied paths would let an agent exfiltrate arbitrary files from the host. To
+  publish a local file, read it yourself and pass a `data:` URI:
+  ```typescript
+  image: `data:image/png;base64,${fs.readFileSync("./logo.png", "base64")}`;
+  ```

@@ -1,6 +1,3 @@
-import fs from "fs";
-import path from "path";
-
 /**
  * Upload response from Flaunch API
  */
@@ -41,37 +38,6 @@ interface TokenUriParams {
     twitterUrl?: string;
     telegramUrl?: string;
   };
-}
-
-/**
- * Reads a local file and converts it to base64
- *
- * @param imageFileName - Path to the local file
- * @returns Base64 encoded file and mime type
- */
-async function readFileAsBase64(
-  imageFileName: string,
-): Promise<{ base64: string; mimeType: string }> {
-  return new Promise((resolve, reject) => {
-    fs.readFile(imageFileName, (err, data) => {
-      if (err) {
-        reject(new Error(`Failed to read file: ${err.message}`));
-        return;
-      }
-
-      // Determine mime type based on file extension
-      const extension = path.extname(imageFileName).toLowerCase();
-      let mimeType = "application/octet-stream"; // default
-
-      if (extension === ".png") mimeType = "image/png";
-      else if (extension === ".jpg" || extension === ".jpeg") mimeType = "image/jpeg";
-      else if (extension === ".gif") mimeType = "image/gif";
-      else if (extension === ".svg") mimeType = "image/svg+xml";
-
-      const base64 = data.toString("base64");
-      resolve({ base64, mimeType });
-    });
-  });
 }
 
 /**
@@ -248,16 +214,24 @@ const generateTokenUriBase64Image = async (name: string, symbol: string, params:
 };
 
 export const generateTokenUri = async (name: string, symbol: string, params: TokenUriParams) => {
-  // 1. get base64Image from image (url or local path)
+  // 1. get base64Image from image (remote url or data uri)
   let base64Image: string;
   const image = params.metadata.image;
 
   if (image.startsWith("https://") || image.startsWith("http://")) {
     base64Image = await convertImageUrlToBase64(image);
+  } else if (image.startsWith("data:")) {
+    base64Image = image;
   } else {
-    // assume local file
-    const { base64, mimeType } = await readFileAsBase64(image);
-    base64Image = `data:${mimeType};base64,${base64}`;
+    // Local filesystem paths are intentionally not supported: the image is uploaded to a
+    // third party and pinned to public IPFS, so reading caller-supplied paths here would
+    // let an agent exfiltrate arbitrary host files. Callers that want to publish a local
+    // file must read it themselves and pass a data URI.
+    throw new Error(
+      "Invalid image: expected an http(s):// URL or a data: URI. Reading images from the " +
+        "local filesystem is not supported. To publish a local file, read it yourself and " +
+        'pass a data URI, e.g. `data:image/png;base64,${fs.readFileSync(path, "base64")}`.',
+    );
   }
 
   // 2. generate token uri

@@ -27,6 +27,7 @@ import {
 import { BuySwapAmounts, SellSwapAmounts, PermitSingle, PoolSwapEventArgs } from "./types";
 import { EvmWalletProvider } from "../../wallet-providers";
 import { NETWORK_ID_TO_VIEM_CHAIN } from "../../network";
+import { sanitizeOnchainMetadata } from "../../utils";
 import { formatEther } from "viem";
 
 export const getAmountWithSlippage = (
@@ -621,11 +622,13 @@ export async function buyFlaunchCoin(
       chainId: Number(chainId),
     }) as BuySwapAmounts;
 
-    const coinSymbol = await walletProvider.readContract({
-      address: coinAddress as Address,
-      abi: ERC20_ABI,
-      functionName: "symbol",
-    });
+    const coinSymbol = sanitizeOnchainMetadata(
+      await walletProvider.readContract({
+        address: coinAddress as Address,
+        abi: ERC20_ABI,
+        functionName: "symbol",
+      }),
+    );
 
     return `Bought ${formatEther(swapAmounts.coinsBought)} $${coinSymbol} for ${formatEther(swapAmounts.ethSold)} ETH\n
       Tx hash: [${hash}](${NETWORK_ID_TO_VIEM_CHAIN[networkId].blockExplorers?.default.url}/tx/${hash})`;

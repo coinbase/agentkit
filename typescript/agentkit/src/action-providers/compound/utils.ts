@@ -5,6 +5,7 @@ import { EvmWalletProvider } from "../../wallet-providers";
 import { ERC20_ABI, COMET_ABI, PRICE_FEED_ABI } from "./constants";
 import { Network } from "../../network";
 import { COMET_ADDRESSES, ASSET_ADDRESSES } from "./constants";
+import { sanitizeOnchainMetadata } from "../../utils";
 
 /**
  * Get token decimals from contract
@@ -43,7 +44,7 @@ export const getTokenSymbol = async (
     functionName: "symbol",
   });
 
-  return symbol;
+  return sanitizeOnchainMetadata(symbol);
 };
 
 /**

@@ -5,7 +5,10 @@ import { COMET_ABI, COMET_ADDRESSES, ASSET_ADDRESSES } from "./constants";
 import { Network } from "../../network";
 import { approve } from "../../utils";
 
-jest.mock("../../utils");
+jest.mock("../../utils", () => ({
+  ...jest.requireActual("../../utils"),
+  approve: jest.fn(),
+}));
 const mockApprove = approve as jest.MockedFunction<typeof approve>;
 
 describe("Compound Action Provider", () => {

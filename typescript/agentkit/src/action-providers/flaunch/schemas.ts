@@ -14,7 +14,13 @@ export const FlaunchSchema = z
   .object({
     name: z.string().min(1).describe("The name of the token to flaunch"),
     symbol: z.string().min(1).describe("The symbol of the token to flaunch"),
-    image: z.string().describe("Local image file path or URL to the token image"),
+    image: z
+      .string()
+      .refine(val => /^https?:\/\//.test(val) || val.startsWith("data:"), {
+        message:
+          "image must be an http(s):// URL or a data: URI. Local file paths are not supported.",
+      })
+      .describe("HTTP(S) URL of the token image"),
     description: z.string().describe("Description of the token"),
     websiteUrl: z.string().nullable().describe("URL to the token website"),
     discordUrl: z.string().nullable().describe("URL to the token Discord"),

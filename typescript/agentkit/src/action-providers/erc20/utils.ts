@@ -1,5 +1,6 @@
 import { Hex, erc20Abi, formatUnits } from "viem";
 import { EvmWalletProvider } from "../../wallet-providers";
+import { sanitizeOnchainMetadata } from "../../utils";
 
 /**
  * Interface for token details
@@ -48,14 +49,15 @@ export async function getTokenDetails(
       ],
     });
 
-    const name = results[0].result;
+    const rawName = results[0].result;
     const decimals = results[1]?.result;
     const balance = results[2]?.result;
 
-    if (balance === undefined || decimals === undefined || name === undefined) {
+    if (balance === undefined || decimals === undefined || rawName === undefined) {
       return null;
     }
 
+    const name = sanitizeOnchainMetadata(rawName);
     const formattedBalance = formatUnits(BigInt(balance), decimals);
 
     return {

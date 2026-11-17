@@ -3,6 +3,7 @@ import { ActionProvider } from "../actionProvider";
 import { Network, NETWORK_ID_TO_VIEM_CHAIN } from "../../network";
 import { CreateAction } from "../actionDecorator";
 import { EvmWalletProvider } from "../../wallet-providers";
+import { sanitizeOnchainMetadata } from "../../utils";
 import {
   encodeFunctionData,
   parseEther,
@@ -81,7 +82,7 @@ This tool allows launching a new memecoin using the flaunch protocol.
 It takes:
 - name: The name of the token
 - symbol: The symbol of the token
-- image: Local image file path or URL to the token image
+- image: HTTP(S) URL of the token image
 - description: Description of the token
 - fairLaunchPercent: The percentage of tokens for fair launch (defaults to 60%)
 - fairLaunchDuration: The duration of the fair launch in minutes (defaults to 30 minutes)
@@ -499,11 +500,13 @@ It takes:
         chainId: Number(chainId),
       }) as SellSwapAmounts;
 
-      const coinSymbol = await walletProvider.readContract({
-        address: args.coinAddress as Address,
-        abi: ERC20_ABI,
-        functionName: "symbol",
-      });
+      const coinSymbol = sanitizeOnchainMetadata(
+        await walletProvider.readContract({
+          address: args.coinAddress as Address,
+          abi: ERC20_ABI,
+          functionName: "symbol",
+        }),
+      );
 
       return `Sold ${formatEther(swapAmounts.coinsSold)} $${coinSymbol} for ${formatEther(swapAmounts.ethBought)} ETH\n
         Tx hash: [${hash}](${NETWORK_ID_TO_VIEM_CHAIN[networkId].blockExplorers?.default.url}/tx/${hash})`;
