@@ -17,6 +17,28 @@ export const TerenoCheckContractSchema = z
   .strict();
 
 /**
+ * Input schema for Tereno token launch guard check (exit simulation & LP depth).
+ */
+export const TerenoCheckTokenLaunchSchema = z
+  .object({
+    address: addressSchema.describe(
+      "Base ERC-20 token address to simulate buy/sell exit, LP reserve depth, and owner powers",
+    ),
+  })
+  .strict();
+
+/**
+ * Input schema for Tereno token holders guard check (top-10 concentration & deployer funding clusters).
+ */
+export const TerenoCheckTokenHoldersSchema = z
+  .object({
+    address: addressSchema.describe(
+      "Base ERC-20 token address to inspect for top-10 holder concentration and deployer-funded Sybil clusters",
+    ),
+  })
+  .strict();
+
+/**
  * Input schema for Tereno token metadata query.
  */
 export const TerenoGetTokenMetadataSchema = z

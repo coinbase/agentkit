@@ -612,6 +612,14 @@ const agent = createAgent({
 <summary><strong>Tereno</strong></summary>
 <table width="100%">
 <tr>
+    <td width="200"><code>tereno_check_token_launch</code></td>
+    <td width="768">Simulates buy/sell exit via eth_call, inspects DEX LP reserve depth, liquidity lock/burn status, and owner powers on Base.</td>
+</tr>
+<tr>
+    <td width="200"><code>tereno_check_token_holders</code></td>
+    <td width="768">Analyzes top-10 holder concentration, ETH funding-origin graph, and deployer-funded Sybil clusters on Base.</td>
+</tr>
+<tr>
     <td width="200"><code>tereno_check_contract</code></td>
     <td width="768">Pre-action smart contract risk and safety verification on Base (bytecode, proxy implementation, pause status, verdict).</td>
 </tr>

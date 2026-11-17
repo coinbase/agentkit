@@ -1,5 +1,7 @@
 import {
   TerenoCheckContractSchema,
+  TerenoCheckTokenLaunchSchema,
+  TerenoCheckTokenHoldersSchema,
   TerenoGetTokenMetadataSchema,
   TerenoGetPredictionEvidenceSchema,
   TerenoListBountiesSchema,
@@ -42,6 +44,22 @@ describe("TerenoActionProvider Schemas", () => {
     it("should parse valid token address", () => {
       const validInput = { address: MOCK_CONTRACT };
       const result = TerenoGetTokenMetadataSchema.safeParse(validInput);
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe("TerenoCheckTokenLaunchSchema", () => {
+    it("should parse valid token launch address", () => {
+      const validInput = { address: MOCK_CONTRACT };
+      const result = TerenoCheckTokenLaunchSchema.safeParse(validInput);
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe("TerenoCheckTokenHoldersSchema", () => {
+    it("should parse valid token holders address", () => {
+      const validInput = { address: MOCK_CONTRACT };
+      const result = TerenoCheckTokenHoldersSchema.safeParse(validInput);
       expect(result.success).toBe(true);
     });
   });

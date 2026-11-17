@@ -7,6 +7,8 @@ import { createTerenoClient } from "tereno-client";
 import type { ClientEvmSigner } from "@x402/evm";
 import {
   TerenoCheckContractSchema,
+  TerenoCheckTokenLaunchSchema,
+  TerenoCheckTokenHoldersSchema,
   TerenoGetTokenMetadataSchema,
   TerenoGetChainSnapshotSchema,
   TerenoGetPredictionEvidenceSchema,
@@ -22,7 +24,7 @@ export interface TerenoActionProviderConfig {
    */
   baseUrl?: string;
   /**
-   * Maximum price in USDC the agent is willing to pay per capability call (default: $0.05).
+   * Maximum price in USDC the agent is willing to pay per capability call (default: $0.10).
    */
   maxPriceUsd?: number;
   /**
@@ -37,7 +39,8 @@ export interface TerenoActionProviderConfig {
 
 /**
  * TerenoActionProvider gives AI agents on Base sub-second, pre-action verification,
- * contract risk auditing, token metadata, and prediction evidence over x402 micropayments.
+ * exit simulation, holder cluster analysis, contract risk auditing, token metadata,
+ * and prediction evidence over x402 micropayments.
  */
 export class TerenoActionProvider extends ActionProvider<EvmWalletProvider> {
   private readonly config: Required<Pick<TerenoActionProviderConfig, "baseUrl" | "maxPriceUsd">> &
@@ -52,10 +55,76 @@ export class TerenoActionProvider extends ActionProvider<EvmWalletProvider> {
     super("tereno", []);
     this.config = {
       baseUrl: config.baseUrl ?? "https://www.tereno.xyz",
-      maxPriceUsd: config.maxPriceUsd ?? 0.05,
+      maxPriceUsd: config.maxPriceUsd ?? 0.1,
       rpcUrl: config.rpcUrl,
       builderCode: config.builderCode,
     };
+  }
+
+  /**
+   * Simulate buy/sell exit, LP reserve depth, and owner powers for a Base token launch.
+   *
+   * @param walletProvider - The wallet provider executing the action.
+   * @param args - The input arguments with the target token address.
+   * @returns JSON string containing verdict (allow/review/block), exit simulation results, and LP status.
+   */
+  @CreateAction({
+    name: "check_token_launch",
+    description: `Simulate buy/sell exit via eth_call, inspect DEX LP reserve depth, liquidity lock/burn status,
+    and owner powers for a Base token before swapping. Returns a deterministic verdict ('allow', 'review', or 'block')
+    and reason codes. Settles via x402 in USDC ($0.02 on cache hit / $0.04-$0.07 fresh).`,
+    schema: TerenoCheckTokenLaunchSchema,
+  })
+  async checkTokenLaunch(
+    walletProvider: EvmWalletProvider,
+    args: z.infer<typeof TerenoCheckTokenLaunchSchema>,
+  ): Promise<string> {
+    try {
+      const client = this.getClient(walletProvider);
+      const result = await client.invokeCapability({
+        capabilityId: "token.launch.guard" as never,
+        address: args.address,
+      } as never);
+      return JSON.stringify(result, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        error:
+          error instanceof Error ? error.message : "Failed to verify token launch with Tereno",
+      });
+    }
+  }
+
+  /**
+   * Analyze top-10 holder concentration and deployer-funded Sybil clusters for a Base token.
+   *
+   * @param walletProvider - The wallet provider executing the action.
+   * @param args - The input arguments with the target token address.
+   * @returns JSON string containing verdict (allow/review/block), top holder distribution, and funding cluster graph.
+   */
+  @CreateAction({
+    name: "check_token_holders",
+    description: `Inspect top-10 holder concentration, ETH funding-origin graph, and deployer-funded cabal/Sybil clusters
+    for a Base ERC-20 token before trading. Returns a deterministic verdict ('allow', 'review', or 'block')
+    and reason codes. Settles via x402 in USDC ($0.01 on cache hit / $0.02-$0.04 fresh).`,
+    schema: TerenoCheckTokenHoldersSchema,
+  })
+  async checkTokenHolders(
+    walletProvider: EvmWalletProvider,
+    args: z.infer<typeof TerenoCheckTokenHoldersSchema>,
+  ): Promise<string> {
+    try {
+      const client = this.getClient(walletProvider);
+      const result = await client.invokeCapability({
+        capabilityId: "token.holders.guard" as never,
+        address: args.address,
+      } as never);
+      return JSON.stringify(result, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        error:
+          error instanceof Error ? error.message : "Failed to verify token holders with Tereno",
+      });
+    }
   }
 
   /**
