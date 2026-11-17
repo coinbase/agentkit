@@ -55,16 +55,18 @@ export class AgentDataApisActionProvider extends ActionProvider<EvmWalletProvide
     name: "check_token_risk",
     description: `
 This tool checks an ERC-20 token for scams BEFORE the agent buys, swaps into, or accepts it.
-It simulates a real buy and sell through Uniswap V2 (Base, Ethereum) to detect honeypots
-(tokens that cannot be sold) and the actual buy/sell tax, and checks owner powers (mint, pause,
-blacklist, fee changes, trading switch), upgradeable proxies, liquidity depth and sanctioned owners.
+It simulates a real buy and sell on the token's deepest ETH/WETH pool (Uniswap V2, V3 and V4 plus
+Aerodrome on Base; Uniswap V2, V3 and V4 on Ethereum) to detect honeypots (tokens that cannot be sold,
+including Uniswap V4 hooks that confiscate sells), the actual buy/sell tax and the round-trip cost, and
+checks owner powers (mint, pause, blacklist, fee changes, trading switch), upgradeable proxies,
+liquidity depth and sanctioned owners.
 
 Inputs:
 - tokenAddress: the token contract address (0x...)
 - chain: base (default), ethereum, arbitrum, optimism or polygon
 
 Output: verdict "avoid", "caution" or "ok", a list of signals with severity, simulation details
-(buy_tax_pct, sell_tax_pct) and a signed receipt.
+(venue, buy_tax_pct, sell_tax_pct, round_trip_loss_pct) and a signed receipt.
 
 Important:
 - If the verdict is "avoid", do NOT trade the token; tell the user why.

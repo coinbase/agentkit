@@ -17,7 +17,7 @@ agentDataApis/
 
 | Action | Use it | Returns | Price |
 |---|---|---|---|
-| `check_token_risk` | Before buying, swapping into or accepting a token | `avoid` / `caution` / `ok`, buy/sell tax from a simulated trade (Uniswap V2 on Base and Ethereum), owner powers (mint, pause, blacklist, fee changes, trading switch), proxy, liquidity, sanctioned owner, signed receipt | ~$0.01 |
+| `check_token_risk` | Before buying, swapping into or accepting a token | `avoid` / `caution` / `ok`; buy/sell tax and round-trip cost from a simulated buy then sell on the token's deepest ETH/WETH pool (Uniswap V2, V3 and V4 plus Aerodrome on Base; Uniswap V2, V3 and V4 on Ethereum), catching honeypots including V4 hooks that confiscate sells; owner powers (mint, pause, blacklist, fee changes, trading switch); proxy; liquidity; sanctioned owner; signed receipt | ~$0.01 |
 | `check_payment_counterparty` | Before sending funds to an address (including x402 payTo addresses) | `block` / `review` / `clear`, sanctioned crypto address match (OFAC, UK, EU), x402 seller reputation, live on-chain facts, optional name screening, signed receipt | ~$0.005 |
 | `screen_sanctions` | KYC/KYB-style name checks | Scored candidate matches against OFAC (SDN + Consolidated), UN, EU and UK lists | ~$0.01 |
 
