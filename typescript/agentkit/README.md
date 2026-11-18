@@ -178,6 +178,51 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Aerodrome</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>aerodrome_get_quote</code></td>
+    <td width="768">Gets a swap quote from Aerodrome Finance on Base.</td>
+</tr>
+<tr>
+    <td width="200"><code>aerodrome_swap</code></td>
+    <td width="768">Swaps tokens on Aerodrome with slippage protection.</td>
+</tr>
+<tr>
+    <td width="200"><code>aerodrome_add_liquidity</code></td>
+    <td width="768">Adds liquidity to an Aerodrome pool and receives LP tokens.</td>
+</tr>
+<tr>
+    <td width="200"><code>aerodrome_remove_liquidity</code></td>
+    <td width="768">Removes liquidity from an Aerodrome pool with slippage protection.</td>
+</tr>
+<tr>
+    <td width="200"><code>aerodrome_create_lock</code></td>
+    <td width="768">Locks AERO tokens to create a veAERO NFT for governance voting.</td>
+</tr>
+<tr>
+    <td width="200"><code>aerodrome_vote</code></td>
+    <td width="768">Votes with a veAERO NFT to direct AERO emissions to pools.</td>
+</tr>
+<tr>
+    <td width="200"><code>aerodrome_increase_amount</code></td>
+    <td width="768">Adds more AERO to an existing veAERO lock.</td>
+</tr>
+<tr>
+    <td width="200"><code>aerodrome_increase_unlock_time</code></td>
+    <td width="768">Extends the lock duration of a veAERO position.</td>
+</tr>
+<tr>
+    <td width="200"><code>aerodrome_withdraw</code></td>
+    <td width="768">Withdraws AERO from an expired veAERO lock.</td>
+</tr>
+<tr>
+    <td width="200"><code>aerodrome_claim_rewards</code></td>
+    <td width="768">Claims trading fees and bribes earned from veAERO voting.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Base Account</strong></summary>
 <table width="100%">
 <tr>
