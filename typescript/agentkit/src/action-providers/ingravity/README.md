@@ -1,36 +1,34 @@
-# 🛡️ Ingravity Security Action Provider for Coinbase AgentKit
+# Ingravity Security Action Provider
 
-Official Community Action Provider for **Coinbase AgentKit** delivering autonomous pre-flight Web3 security, drainer interception, token honeypot scanning, and atomic EIP-5792 Safe-Harbor rescue for AI agents across 5 EVM networks (**Base**, Arbitrum, Optimism, Polygon, and Ethereum).
+This directory contains the **Ingravity Security** action provider for Coinbase AgentKit, enabling autonomous AI agents to run deterministic 5-EVM pre-flight transaction firewall checks, live RPC ERC-20 honeypot/rugpull disassembly, exact BigInt AMM MEV slippage math, and Solidity security audits settled gaslessly via native **x402 v2** Base USDC micropayments (`@x402/fetch` + `@x402/evm`).
 
-## Overview
+## Supported Networks
 
-As autonomous AI agents manage increasing treasury balances on Base Mainnet (`eip155:8453`), signing transactions without pre-flight security exposes agents to malicious drainers, infinite token approvals (`0xfff...`), fake proxies, and liquidity honeypot traps.
+- **Settlement Network:** Base Mainnet (`eip155:8453`, Native USDC `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`)
+- **Inspected EVM Chains:** Base (`8453`), Arbitrum (`42161`), Optimism (`10`), Polygon (`137`), Ethereum (`1`)
 
-The **Ingravity Security Action Provider** equips AgentKit agents with autonomous, zero-custody security tools settled via native **HTTP 402 (x402 v2)** micropayments in Base USDC (`0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`).
+## Actions
 
----
+| Action | Route | Price (Base USDC) | Description |
+| :-- | :-- | :-- | :-- |
+| `ingravity_fast_ping` | `GET /api/v1/fast-ping` | `$0.01` | Binary `SAFE`/`DANGER` address gate for high-frequency bots. |
+| `ingravity_tx_firewall` | `POST /api/v1/tx-firewall` | `$0.10` | Pre-sign calldata simulation, EIP-1967/1167 proxy inspection & drainer guard. |
+| `ingravity_token_rug_scanner` | `POST /api/v1/token-rug-scanner` | `$0.12` / `$0.04` | Live RPC ERC-20 bytecode disassembly & honeypot scanner (no `.sol` required). |
+| `ingravity_defi_math_guard` | `POST /api/v1/defi-math-guard` | `$0.10` / `$0.04` | Exact 18-decimal BigInt AMM slippage, MEV sandwich & liquidation limits. |
+| `ingravity_audit_solidity` | `POST /api/v1/audit-solidity` | `$0.85` / `$0.35` | Deterministic 24-vector Solidity static audit with 4-gate anti-noise filter. |
+| `ingravity_protocol_dossier` | `POST /api/v1/protocol-dossier` | `$12.00` / `$3.50` | Multi-contract (1-20 files) cross-reentrancy & ERC-4626/oracle invariants. |
+| `ingravity_deep_exploit_bounty` | `POST /api/v1/deep-exploit-bounty` | `$45.00` / `$9.50` | Institutional flash-loan simulation & unsigned Safe-Harbor rescue planner. |
 
-## Key Capabilities & Actions
-
-| Action Name | Default Price | Description |
-| :--- | :--- | :--- |
-| `ingravity_fast_ping` | **$0.01 USDC** | Ultra-low-cost binary `SAFE`/`DANGER` address gate for high-frequency bots. |
-| `ingravity_tx_firewall` | **$0.10 USDC** | Pre-flight transaction simulator, proxy inspection, and drainer blocking. |
-| `ingravity_token_rug_scanner`| **$0.12 / $0.04** | Live RPC token disassembly, honeypot detection & proxy storage check without source code. |
-| `ingravity_defi_math_guard` | **$0.10 / $0.04** | Exact BigInt AMM slippage & MEV anti-sandwich bounds on Uniswap v3 & Aerodrome. |
-| `ingravity_audit_solidity` | **$0.85 / $0.35** | 24-vector static security audit with Anti-Bypass critical remediation seal. |
-| `ingravity_protocol_dossier` | **$12.00 / $3.50** | Multi-contract cross-reentrancy and oracle invariant graph. |
-| `ingravity_deep_exploit_bounty` | **$45.00 / $9.50** | Institutional flash-loan simulation + EIP-5792 atomic Safe-Harbor rescue split. |
-
----
-
-## Quickstart
+## Usage
 
 ```typescript
-import { AgentKit, CdpEvmWalletProvider } from "@coinbase/agentkit";
-import { ingravityActionProvider } from "./action-providers/ingravity";
+import {
+  AgentKit,
+  CdpEvmWalletProvider,
+  ingravityActionProvider,
+} from "@coinbase/agentkit";
 
-const walletProvider = new CdpEvmWalletProvider({
+const walletProvider = await CdpEvmWalletProvider.configureWithWallet({
   networkId: "base-mainnet",
 });
 
@@ -38,22 +36,16 @@ const agentKit = await AgentKit.from({
   walletProvider,
   actionProviders: [
     ingravityActionProvider({
-      maxSpendUsdc: 0.10, // Spending cap for auto-negotiated security checks
-      enableReceiptCache: true, // Reuses session tokens to prevent double payment
+      maxSpendUsdc: 0.1,
+      enableReceiptCache: true,
     }),
   ],
 });
 ```
 
----
+## Security & Budget Guardrails
 
-## Settlement & Security Model
-
-1. **Zero-Custody (x402 v2):**  
-   Never requests token allowances (`approve()`). Micropayments execute strictly per-call directly on Base Mainnet to the verified recipient wallet.
-2. **Base Builder Attribution (ERC-8021):**  
-   All generated rescue transactions automatically carry the builder attribution code `bc_i26d7owr` appended to execution calldata.
-3. **Budget Guardrail (`maxSpendUsdc`):**  
-   Agents enforce client-side budget caps. If an action exceeds `maxSpendUsdc`, the provider auto-negotiates to the `ESSENTIAL` tier or aborts execution cleanly.
-4. **Receipt Caching:**  
-   Subsequent identical queries in the same agent session reuse cryptographic `X-Ingravity-Receipt-Token` headers, preventing duplicate charges.
+- **Gasless Zero-Custody x402 v2:** Uses `@x402/fetch` and `@x402/evm` EIP-3009 `PAYMENT-SIGNATURE` via `walletProvider.toSigner()`. Never requests ERC-20 `approve()`.
+- **Pre-Sign Spending Cap (`maxSpendUsdc`):** Validates atomic `accepts[0].amount` from the `PAYMENT-REQUIRED` / 402 response before signing any authorization.
+- **Session Receipt Reuse:** Caches `X-Ingravity-Receipt-Token` headers so identical checks in the same session are not billed twice.
+- **ERC-8021 Attribution:** Exports `encodeErc8021Calldata` carrying Base Builder Code `bc_i26d7owr`.

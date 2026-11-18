@@ -1,42 +1,51 @@
-/**
- * @file ingravityActionProvider.ts
- * @description Coinbase AgentKit Action Provider for Ingravity Autonomous 5-EVM Web3 Security.
- * Integrates $0.01 Fast-Ping, Pre-Flight Transaction Firewall, Token Rugpull Scanner,
- * DeFi Math Slippage Guard, Solidity Audit, Protocol Dossier, and Deep Exploit Bounties with x402 v2 payments.
- */
-
 import { z } from "zod";
+import { x402Client, wrapFetchWithPayment } from "@x402/fetch";
+import { registerExactEvmScheme } from "@x402/evm/exact/client";
 import { ActionProvider } from "../actionProvider";
 import { CreateAction } from "../actionDecorator";
 import { EvmWalletProvider } from "../../wallet-providers";
 import { Network } from "../../network";
-
 import {
-  INGRAVITY_WORKER_URL,
-  INGRAVITY_PAY_TO_WALLET,
-  BASE_USDC_CONTRACT,
+  BASE_CAIP2_NETWORK,
   BASE_CHAIN_ID,
-  ERC8021_BUILDER_CODE,
+  BASE_USDC_CONTRACT,
   ERC8021_SUFFIX_HEX,
   INGRAVITY_ACTION_PROVIDER_NAME,
+  INGRAVITY_ROUTES,
+  INGRAVITY_SDK_VERSION,
+  INGRAVITY_WORKER_URL,
+  USDC_DECIMALS,
 } from "./constants";
-
 import {
-  FastPingSchema,
-  TxFirewallSchema,
-  TokenRugScannerSchema,
-  DefiMathGuardSchema,
   AuditSoliditySchema,
-  ProtocolDossierSchema,
   DeepExploitBountySchema,
+  DefiMathGuardSchema,
+  FastPingSchema,
+  ProtocolDossierSchema,
+  TokenRugScannerSchema,
+  TxFirewallSchema,
 } from "./schemas";
+import {
+  IngravityActionProviderConfig,
+  IngravityExecutionOptions,
+  X402AcceptOption,
+  X402ChallengePayload,
+} from "./types";
 
-import { IngravityActionProviderConfig } from "./types";
+interface ResolvedIngravityConfig {
+  workerUrl: string;
+  maxSpendUsdc: number | null;
+  capitalAtRiskUsd: number | null;
+  enableReceiptCache: boolean;
+}
 
 /**
- * Appends the Base Builder Code (ERC-8021) suffix to transaction calldata.
+ * Appends the Base ERC-8021 builder attribution suffix to hexadecimal transaction calldata.
+ *
+ * @param calldataHex - Hex-encoded EVM calldata (defaults to "0x")
+ * @returns Calldata with the ERC-8021 attribution suffix appended once
  */
-export function encodeErc8021Calldata(calldataHex: string = "0x"): string {
+export function encodeErc8021Calldata(calldataHex = "0x"): string {
   const clean = String(calldataHex || "0x").trim();
   const normalized = clean.startsWith("0x") || clean.startsWith("0X") ? clean.slice(2) : clean;
   if (!/^[0-9a-fA-F]*$/.test(normalized) || normalized.length % 2 !== 0) {
@@ -44,358 +53,538 @@ export function encodeErc8021Calldata(calldataHex: string = "0x"): string {
   }
   const lower = normalized.toLowerCase();
   if (lower.endsWith(ERC8021_SUFFIX_HEX.toLowerCase())) {
-    return "0x" + lower;
+    return `0x${lower}`;
   }
-  return "0x" + lower + ERC8021_SUFFIX_HEX;
+  return `0x${lower}${ERC8021_SUFFIX_HEX}`;
 }
 
 /**
- * IngravitySecurityActionProvider
- *
- * Implements deterministic EVM pre-flight security tools with autonomous x402 v2 micropayment settlement.
- * Protects autonomous AI agents against drainers, malicious proxies, and honeypots on Base and peer EVMs.
+ * IngravityActionProvider provides 5-EVM pre-flight security, honeypot forensics,
+ * exact BigInt DeFi MEV protection, and Solidity auditing settled via native x402 v2 USDC on Base.
  */
 export class IngravityActionProvider extends ActionProvider<EvmWalletProvider> {
-  private readonly config: Required<Omit<IngravityActionProviderConfig, "maxSpendUsdc" | "capitalAtRiskUsd">> & {
-    maxSpendUsdc: number | null;
-    capitalAtRiskUsd: number | null;
-  };
+  private readonly config: ResolvedIngravityConfig;
   private readonly receiptCache: Map<string, string>;
 
+  /**
+   * Creates a new instance of IngravityActionProvider.
+   *
+   * @param config - Optional gateway, spending cap, and session receipt cache configuration
+   */
   constructor(config: IngravityActionProviderConfig = {}) {
     super(INGRAVITY_ACTION_PROVIDER_NAME, []);
     this.config = {
-      workerUrl: (config.workerUrl || INGRAVITY_WORKER_URL).replace(/\/$/, ""),
-      payToWallet: config.payToWallet || INGRAVITY_PAY_TO_WALLET,
+      workerUrl: (config.workerUrl ?? INGRAVITY_WORKER_URL).replace(/\/$/, ""),
       maxSpendUsdc: config.maxSpendUsdc != null ? Number(config.maxSpendUsdc) : null,
       capitalAtRiskUsd: config.capitalAtRiskUsd != null ? Number(config.capitalAtRiskUsd) : null,
       enableReceiptCache: config.enableReceiptCache !== false,
     };
-    this.receiptCache = new Map();
+    this.receiptCache = new Map<string, string>();
   }
 
   /**
-   * Supports any EVM-compatible network.
+   * Checks whether this action provider supports the given network.
+   *
+   * @param network - The target blockchain network
+   * @returns True if the network uses the EVM protocol family
    */
   supportsNetwork = (network: Network): boolean => {
     return network.protocolFamily === "evm";
   };
 
   /**
-   * Action 1: ingravity_fast_ping
-   * $0.01 USDC binary SAFE/DANGER address gate.
+   * Executes a $0.01 USDC binary SAFE/DANGER address gate across 5 EVM chains.
+   *
+   * @param walletProvider - The EVM wallet provider used for gasless x402 EIP-3009 settlement
+   * @param args - Target EVM address and optional chainId
+   * @returns JSON string with the binary SAFE/DANGER verdict
    */
   @CreateAction({
     name: "ingravity_fast_ping",
     description:
-      "Ultra-low-cost binary SAFE/DANGER address gate across 5 EVM chains ($0.01 USDC flat via x402). " +
-      "Built for high-frequency bots with strict <=$0.05 auto-pay limits. Returns boolean SAFE/DANGER only (zero forensic leaks).",
+      "Ultra-low-cost binary SAFE/DANGER address gate across 5 EVM chains ($0.01 USDC flat via x402 v2 on Base). Built for high-frequency bots with strict <=$0.05 auto-pay limits.",
     schema: FastPingSchema,
   })
   async fastPing(
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof FastPingSchema>,
   ): Promise<string> {
-    const chainId = args.chainId || BASE_CHAIN_ID;
-    const path = `/fast-ping?address=${encodeURIComponent(args.address)}&chainId=${chainId}`;
+    const chainId = args.chainId ?? BASE_CHAIN_ID;
+    const encodedAddr = encodeURIComponent(args.address);
+    const path = `${INGRAVITY_ROUTES.FAST_PING}?address=${encodedAddr}&chainId=${chainId}`;
     const result = await this.executeX402Request(walletProvider, "GET", path, null, {
-      tier: "ESSENTIAL",
-      ticketId: args.address,
+      cacheTarget: `${args.address}:${chainId}`,
     });
     return JSON.stringify(result, null, 2);
   }
 
   /**
-   * Action 2: ingravity_tx_firewall
-   * Pre-flight simulation, drainer interception & EIP-5792 rescue bundle ($0.10 USDC + 0.15% pre-flight).
+   * Inspects EVM transaction calldata before signing to block drainers and infinite approvals.
+   *
+   * @param walletProvider - The EVM wallet provider used for gasless x402 settlement
+   * @param args - Destination address, calldata, optional sender, value, chainId, and risk metadata
+   * @returns JSON string with firewall verdict, decoded action, and unsigned revocation calldata
    */
   @CreateAction({
     name: "ingravity_tx_firewall",
     description:
-      "Pre-flight transaction firewall and anti-drainer simulator ($0.10 USDC). " +
-      "Simulates execution before signing, checks EIP-1967/1167 proxy storage, blocks infinite approvals, and generates EIP-5792 rescue bundles.",
+      "Pre-flight EVM transaction firewall and anti-drainer simulator ($0.10 USDC via x402 v2 on Base). Decodes calldata, inspects live EIP-1967/1167 proxy slots across 5 EVMs, blocks Permit2/drainer sweeps, and returns unsigned revocation bundles.",
     schema: TxFirewallSchema,
   })
   async txFirewall(
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof TxFirewallSchema>,
   ): Promise<string> {
-    const payload = {
+    const payload: Record<string, unknown> = {
       to: args.to,
-      data: args.data || "0x",
-      value: args.value || "0",
-      chainId: args.chainId || BASE_CHAIN_ID,
-      victimWallet: args.victimWallet || (await walletProvider.getAddress()),
-      capitalAtRiskUsd: args.capitalAtRiskUsd || this.config.capitalAtRiskUsd || undefined,
+      data: args.data ?? "0x",
+      from: args.from ?? walletProvider.getAddress(),
+      value: args.value ?? "0",
+      chainId: args.chainId ?? BASE_CHAIN_ID,
     };
+    if (args.ticketId) {
+      payload.ticketId = args.ticketId;
+    }
+    const capital = args.capitalAtRiskUsd ?? this.config.capitalAtRiskUsd;
+    if (capital != null) {
+      payload.capitalAtRiskUsd = capital;
+    }
 
     const result = await this.executeX402Request(
       walletProvider,
       "POST",
-      "/tx-firewall",
+      INGRAVITY_ROUTES.TX_FIREWALL,
       payload,
-      { ticketId: args.to },
+      { cacheTarget: `${args.to}:${payload.data}:${payload.chainId}` },
     );
-
-    // If a rescue calldata was emitted, ensure ERC-8021 builder attribution is attached
-    if (result && typeof result === "object" && result.safeHarborRescueBundle?.calldata) {
-      result.safeHarborRescueBundle.calldata = encodeErc8021Calldata(
-        result.safeHarborRescueBundle.calldata,
-      );
-      result.safeHarborRescueBundle.builderAttribution = ERC8021_BUILDER_CODE;
-    }
-
     return JSON.stringify(result, null, 2);
   }
 
   /**
-   * Action 3: ingravity_token_rug_scanner
-   * Live EVM RPC ERC-20 honeypot and rugpull analysis ($0.12 / $0.04 USDC).
+   * Scans an ERC-20 token for honeypots, abusive taxes, blacklists, and hidden proxies via live RPC.
+   *
+   * @param walletProvider - The EVM wallet provider used for gasless x402 settlement
+   * @param args - Deployed tokenAddress and/or Solidity code, chainId, tokenName, and tier
+   * @returns JSON string with sellability verdict, rug probability score, and forensic evidence
    */
   @CreateAction({
     name: "ingravity_token_rug_scanner",
     description:
-      "Audits EVM ERC-20 tokens directly by address across 5 chains ($0.12 Full / $0.04 Essential). " +
-      "Disassembles bytecode via live RPC, scans proxy implementations, owner privileges, and honeypot traps without source code.",
+      "Audits EVM ERC-20 tokens for honeypots, hidden mints, blacklists, and EIP-1967/1167 proxies via live 5-EVM RPC bytecode disassembly ($0.12 Full / $0.04 Essential USDC via x402 v2). No Solidity source required.",
     schema: TokenRugScannerSchema,
   })
   async tokenRugScanner(
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof TokenRugScannerSchema>,
   ): Promise<string> {
-    const payload = {
-      tokenAddress: args.tokenAddress,
-      chainId: args.chainId || BASE_CHAIN_ID,
-      tier: args.tier || "FULL",
+    const payload: Record<string, unknown> = {
+      chainId: args.chainId ?? BASE_CHAIN_ID,
+      tier: args.tier ?? "FULL",
     };
+    if (args.tokenAddress) {
+      payload.tokenAddress = args.tokenAddress;
+    }
+    if (args.code) {
+      payload.code = args.code;
+    }
+    if (args.tokenName) {
+      payload.tokenName = args.tokenName;
+    }
 
     const result = await this.executeX402Request(
       walletProvider,
       "POST",
-      "/token-rug-scanner",
+      INGRAVITY_ROUTES.TOKEN_RUG_SCANNER,
       payload,
-      { tier: args.tier, ticketId: args.tokenAddress },
+      {
+        tier: args.tier ?? "FULL",
+        cacheTarget: `${args.tokenAddress ?? "code"}:${payload.chainId}:${payload.tier}`,
+      },
     );
     return JSON.stringify(result, null, 2);
   }
 
   /**
-   * Action 4: ingravity_defi_math_guard
-   * Exact BigInt AMM slippage, MEV sandwich guard, and liquidity calculation ($0.10 / $0.04 USDC).
+   * Computes exact 18-decimal BigInt AMM slippage, MEV sandwich bounds, and liquidation thresholds.
+   *
+   * @param walletProvider - The EVM wallet provider used for gasless x402 settlement
+   * @param args - AMM reserve/swap inputs and/or perpetual leverage parameters plus tier
+   * @returns JSON string with exact BigInt swap metrics, MEV risk, and liquidation limits
    */
   @CreateAction({
     name: "ingravity_defi_math_guard",
     description:
-      "Computes exact BigInt AMM slippage and MEV anti-sandwich bounds on Uniswap v3 & Aerodrome ($0.10 Full / $0.04 Essential). " +
-      "Verifies execution boundaries to guarantee the agent is not frontrun or exploited.",
+      "Computes deterministic BigInt AMM slippage, 48-step MEV anti-sandwich bounds, and perpetual liquidation prices ($0.10 Full / $0.04 Essential USDC via x402 v2).",
     schema: DefiMathGuardSchema,
   })
   async defiMathGuard(
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof DefiMathGuardSchema>,
   ): Promise<string> {
-    const payload = {
-      poolAddress: args.poolAddress,
-      tokenIn: args.tokenIn,
-      tokenOut: args.tokenOut,
-      amountIn: args.amountIn,
-      chainId: args.chainId || BASE_CHAIN_ID,
-      tier: args.tier || "FULL",
+    const payload: Record<string, unknown> = {
+      tier: args.tier ?? "FULL",
     };
+    if (args.amm) {
+      payload.amm = args.amm;
+    }
+    if (args.leverage) {
+      payload.leverage = args.leverage;
+    }
+
+    const cacheKey = args.amm
+      ? `${args.amm.reserveIn}:${args.amm.reserveOut}:${args.amm.amountIn}:${payload.tier}`
+      : `${args.leverage?.entryPrice ?? "lev"}:${args.leverage?.leverage ?? "1"}:${payload.tier}`;
 
     const result = await this.executeX402Request(
       walletProvider,
       "POST",
-      "/defi-math-guard",
+      INGRAVITY_ROUTES.DEFI_MATH_GUARD,
       payload,
-      { tier: args.tier, ticketId: args.poolAddress },
+      { tier: args.tier ?? "FULL", cacheTarget: cacheKey },
     );
     return JSON.stringify(result, null, 2);
   }
 
   /**
-   * Action 5: ingravity_audit_solidity
-   * Deterministic 24-vector static security audit ($0.85 / $0.35 USDC).
+   * Runs a deterministic 24-vector static security audit on a Solidity smart contract.
+   *
+   * @param walletProvider - The EVM wallet provider used for gasless x402 settlement
+   * @param args - Raw Solidity source code, optional contract metadata, deployed address, and tier
+   * @returns JSON string with security score, grade, severity counts, and audit findings
    */
   @CreateAction({
     name: "ingravity_audit_solidity",
     description:
-      "Deterministic 24-vector static security audit for Solidity smart contracts ($0.85 Full / $0.35 Essential). " +
-      "Applies Anti-Bypass critical fix sealing and live TVL Safe-Harbor split calculations.",
+      "Deterministic 24-vector static security audit for Solidity smart contracts with 4-gate anti-noise filtering and optional live TVL verification ($0.85 Full / $0.35 Essential USDC via x402 v2).",
     schema: AuditSoliditySchema,
   })
   async auditSolidity(
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof AuditSoliditySchema>,
   ): Promise<string> {
-    const payload = {
-      sourceCode: args.sourceCode,
-      contractAddress: args.contractAddress,
-      tier: args.tier || "FULL",
+    const payload: Record<string, unknown> = {
+      code: args.code,
+      chainId: args.chainId ?? BASE_CHAIN_ID,
+      tier: args.tier ?? "FULL",
     };
+    if (args.contractName) {
+      payload.contractName = args.contractName;
+    }
+    if (args.contractAddress) {
+      payload.contractAddress = args.contractAddress;
+    }
+    if (args.ownerTreasury) {
+      payload.ownerTreasury = args.ownerTreasury;
+    }
 
+    const solLabel = args.contractAddress ?? args.contractName ?? "sol";
     const result = await this.executeX402Request(
       walletProvider,
       "POST",
-      "/audit-solidity",
+      INGRAVITY_ROUTES.AUDIT_SOLIDITY,
       payload,
-      { tier: args.tier, ticketId: args.contractAddress || "solidity_source" },
+      {
+        tier: args.tier ?? "FULL",
+        cacheTarget: `${solLabel}:${args.code.length}:${payload.tier}`,
+      },
     );
     return JSON.stringify(result, null, 2);
   }
 
   /**
-   * Action 6: ingravity_protocol_dossier
-   * Multi-contract cross-reentrancy graph ($12.00 / $3.50 USDC).
+   * Generates a multi-contract cross-reentrancy and ERC-4626/oracle invariant audit dossier.
+   *
+   * @param walletProvider - The EVM wallet provider used for gasless x402 settlement
+   * @param args - Array of 1-20 Solidity contracts, protocol name, TVL target, and tier
+   * @returns JSON string with protocol security score, call graph, invariants, and findings
    */
   @CreateAction({
     name: "ingravity_protocol_dossier",
     description:
-      "Multi-contract cross-reentrancy and oracle invariant graph ($12.00 Full / $3.50 Essential). " +
-      "Audits cross-contract call graphs and flash-loan vulnerability vectors across multiple protocol contracts.",
+      "Audits 1-20 interdependent Solidity contracts for cross-contract read-only reentrancy and ERC-4626/oracle invariants ($12.00 Full / $3.50 Essential USDC via x402 v2).",
     schema: ProtocolDossierSchema,
   })
   async protocolDossier(
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof ProtocolDossierSchema>,
   ): Promise<string> {
-    const payload = {
-      targetId: args.targetId,
+    const payload: Record<string, unknown> = {
       contracts: args.contracts,
-      tier: args.tier || "FULL",
+      chainId: args.chainId ?? BASE_CHAIN_ID,
+      tier: args.tier ?? "FULL",
     };
+    if (args.protocolName) {
+      payload.protocolName = args.protocolName;
+    }
+    if (args.tvlTargetUsd != null) {
+      payload.tvlTargetUsd = args.tvlTargetUsd;
+    }
+    if (args.contractAddress) {
+      payload.contractAddress = args.contractAddress;
+    }
+    if (args.ownerTreasury) {
+      payload.ownerTreasury = args.ownerTreasury;
+    }
 
     const result = await this.executeX402Request(
       walletProvider,
       "POST",
-      "/protocol-dossier",
+      INGRAVITY_ROUTES.PROTOCOL_DOSSIER,
       payload,
-      { tier: args.tier, ticketId: args.targetId },
+      {
+        tier: args.tier ?? "FULL",
+        cacheTarget: `${args.protocolName ?? "protocol"}:${args.contracts.length}:${payload.tier}`,
+      },
     );
     return JSON.stringify(result, null, 2);
   }
 
   /**
-   * Action 7: ingravity_deep_exploit_bounty
-   * Institutional flash-loan simulation + Safe-Harbor rescue ($45.00 / $9.50 USDC).
+   * Simulates institutional flash-loan exploit vectors and computes Safe-Harbor rescue plans.
+   *
+   * @param walletProvider - The EVM wallet provider used for gasless x402 settlement
+   * @param args - Target protocolName, optional poolAddress, chainId, TVL, code, and tier
+   * @returns JSON string with exploit immunity score, live TVL forensics, and Safe-Harbor plan
    */
   @CreateAction({
     name: "ingravity_deep_exploit_bounty",
     description:
-      "Institutional flash-loan simulation + EIP-5792 atomic Safe-Harbor whitehat rescue split ($45.00 Full / $9.50 Essential). " +
-      "90%-95% owner recovery, 5%-10% automated bounty execution calldata.",
+      "Institutional flash-loan exploit simulation, live 5-EVM TVL verification, and unsigned EIP-5792 Safe-Harbor rescue bundle planner ($45.00 Full / $9.50 Essential USDC via x402 v2).",
     schema: DeepExploitBountySchema,
   })
   async deepExploitBounty(
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof DeepExploitBountySchema>,
   ): Promise<string> {
-    const payload = {
-      targetId: args.targetId,
-      contracts: args.contracts,
-      simulateRescue: args.simulateRescue !== false,
-      tier: args.tier || "FULL",
+    const payload: Record<string, unknown> = {
+      protocolName: args.protocolName,
+      chainId: args.chainId ?? BASE_CHAIN_ID,
+      tier: args.tier ?? "FULL",
     };
+    if (args.poolAddress) {
+      payload.poolAddress = args.poolAddress;
+    }
+    if (args.ownerTreasury) {
+      payload.ownerTreasury = args.ownerTreasury;
+    }
+    if (args.tvlUsd != null) {
+      payload.tvlUsd = args.tvlUsd;
+    }
+    if (args.code) {
+      payload.code = args.code;
+    }
 
     const result = await this.executeX402Request(
       walletProvider,
       "POST",
-      "/deep-exploit-bounty",
+      INGRAVITY_ROUTES.DEEP_EXPLOIT_BOUNTY,
       payload,
-      { tier: args.tier, ticketId: args.targetId },
+      {
+        tier: args.tier ?? "FULL",
+        cacheTarget: `${args.protocolName}:${args.poolAddress ?? "default"}:${payload.tier}`,
+      },
     );
-
-    if (result && typeof result === "object" && result.rescueCalldata) {
-      result.rescueCalldata = encodeErc8021Calldata(result.rescueCalldata);
-      result.builderAttribution = ERC8021_BUILDER_CODE;
-    }
-
     return JSON.stringify(result, null, 2);
   }
 
-  // ==========================================================================
-  // INTERNAL X402 PROTOCOL CLIENT & SETTLEMENT ENGINE
-  // ==========================================================================
+  /**
+   * Clears all cached X-Ingravity-Receipt-Token session entries.
+   *
+   * @returns Void after clearing the local receipt cache
+   */
+  clearReceiptCache(): void {
+    this.receiptCache.clear();
+  }
 
+  /**
+   * Creates an x402 client bound to the EVM wallet provider for gasless EIP-3009 signing.
+   *
+   * @param walletProvider - The EVM wallet provider
+   * @returns Configured x402Client instance registered with the exact EVM scheme
+   */
+  private createX402Client(walletProvider: EvmWalletProvider): x402Client {
+    const client = new x402Client();
+    const account = walletProvider.toSigner();
+    const signer = {
+      ...account,
+      readContract: (args: {
+        address: `0x${string}`;
+        abi: readonly unknown[];
+        functionName: string;
+        args?: readonly unknown[];
+      }) =>
+        walletProvider.readContract({
+          address: args.address,
+          abi: args.abi as never,
+          functionName: args.functionName as never,
+          args: args.args as never,
+        }),
+    };
+    registerExactEvmScheme(client, { signer });
+    return client;
+  }
+
+  /**
+   * Executes an Ingravity API call with receipt reuse, budget enforcement, and native x402 v2 payment.
+   *
+   * @param walletProvider - The EVM wallet provider used to sign EIP-3009 x402 payments
+   * @param method - HTTP method ("GET" or "POST")
+   * @param path - Endpoint path including /api/v1/ prefix and optional query string
+   * @param body - Optional JSON request payload for POST requests
+   * @param options - Optional tier and receipt cache key metadata
+   * @returns Parsed JSON response from the Ingravity gateway
+   */
   private async executeX402Request(
     walletProvider: EvmWalletProvider,
     method: "GET" | "POST",
     path: string,
-    body: any,
-    options: { tier?: string; ticketId?: string } = {},
-  ): Promise<any> {
+    body: Record<string, unknown> | null,
+    options: IngravityExecutionOptions = {},
+  ): Promise<unknown> {
     const url = `${this.config.workerUrl}${path}`;
-    const cacheKey = `${path}::${options.ticketId || ""}`.toLowerCase();
+    const cacheKey = `${path.split("?")[0]}::${options.cacheTarget ?? ""}`.toLowerCase();
 
     const headers: Record<string, string> = {
       Accept: "application/json",
-      "User-Agent": "coinbase-agentkit-ingravity/1.3.0",
+      "User-Agent": `coinbase-agentkit-ingravity/${INGRAVITY_SDK_VERSION}`,
     };
 
-    if (options.tier) {
-      headers["X-Agent-Budget"] = options.tier;
+    if (this.config.maxSpendUsdc != null) {
+      headers["X-Agent-Budget"] = String(this.config.maxSpendUsdc);
     }
 
-    // Check session receipt cache
     if (this.config.enableReceiptCache && this.receiptCache.has(cacheKey)) {
-      headers["X-Ingravity-Receipt-Token"] = this.receiptCache.get(cacheKey)!;
+      headers["X-Ingravity-Receipt-Token"] = this.receiptCache.get(cacheKey) as string;
     }
 
-    let requestInit: RequestInit = {
+    const requestInit: RequestInit = {
       method,
       headers: { ...headers },
     };
 
     if (method === "POST" && body) {
-      headers["Content-Type"] = "application/json";
+      (requestInit.headers as Record<string, string>)["Content-Type"] = "application/json";
       requestInit.body = JSON.stringify(body);
     }
 
-    // Initial Probe Request
-    let response = await fetch(url, requestInit);
+    // Step 1: Probe request (succeeds immediately if cached receipt is valid; otherwise returns 402)
+    const probeResponse = await fetch(url, requestInit);
 
-    // If 200 OK directly (e.g. cached receipt was accepted)
-    if (response.ok) {
-      const data = await response.json();
-      return data;
+    if (probeResponse.ok) {
+      return this.finalizeSuccessResponse(probeResponse, cacheKey);
     }
 
-    // If not 402 Payment Required, throw error with server details
-    if (response.status !== 402) {
-      const errText = await response.text();
-      throw new Error(`Ingravity gateway returned status ${response.status}: ${errText}`);
+    if (probeResponse.status !== 402) {
+      const errText = await probeResponse.text();
+      throw new Error(`Ingravity gateway returned status ${probeResponse.status}: ${errText}`);
     }
 
-    // Process HTTP 402 Payment Challenge
-    const paymentReq = await this.parse402Challenge(response);
+    // Step 2: Inspect x402 v2 challenge (atomic accepts[0].amount) and enforce maxSpendUsdc cap
+    const acceptOption = await this.parseX402V2Accept(probeResponse);
+    this.validatePaymentOption(acceptOption);
 
-    // Enforce maxSpendUsdc guardrail
-    const requiredAmountNum = parseFloat(paymentReq.amount);
-    if (this.config.maxSpendUsdc != null && requiredAmountNum > this.config.maxSpendUsdc) {
+    // Step 3: Settle gaslessly via Coinbase's native @x402/fetch + @x402/evm (PAYMENT-SIGNATURE)
+    const client = this.createX402Client(walletProvider);
+    const fetchWithPayment = wrapFetchWithPayment(fetch, client);
+
+    const paidResponse = await fetchWithPayment(url, requestInit);
+    if (!paidResponse.ok) {
+      const errText = await paidResponse.text();
       throw new Error(
-        `Action requires $${paymentReq.amount} USDC, exceeding configured maxSpendUsdc limit of $${this.config.maxSpendUsdc} USDC.`,
+        `Ingravity gateway rejected x402 payment (${paidResponse.status}): ${errText}`,
       );
     }
 
-    // Execute On-Chain Settlement on Base Mainnet
-    const paymentProof = await this.settlePayment(walletProvider, paymentReq);
+    return this.finalizeSuccessResponse(paidResponse, cacheKey);
+  }
 
-    // Resend Request with Authorization Header
-    headers["Authorization"] = `x402 ${paymentProof}`;
-    requestInit.headers = { ...headers };
+  /**
+   * Parses the x402 v2 payment requirement option from PAYMENT-REQUIRED header or JSON body.
+   *
+   * @param response - HTTP 402 Response from the Ingravity gateway
+   * @returns The primary Base USDC accept option from accepts[0]
+   */
+  private async parseX402V2Accept(response: Response): Promise<X402AcceptOption> {
+    let challenge: X402ChallengePayload | null = null;
 
-    response = await fetch(url, requestInit);
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Ingravity gateway rejected payment authorization (${response.status}): ${errText}`);
+    const paymentRequiredHeader = response.headers.get("PAYMENT-REQUIRED");
+    if (paymentRequiredHeader) {
+      try {
+        const decoded = Buffer.from(paymentRequiredHeader, "base64").toString("utf8");
+        challenge = JSON.parse(decoded) as X402ChallengePayload;
+      } catch {
+        challenge = null;
+      }
     }
 
-    const payload = await response.json();
+    if (!challenge || !Array.isArray(challenge.accepts) || challenge.accepts.length === 0) {
+      try {
+        challenge = (await response.json()) as X402ChallengePayload;
+      } catch {
+        challenge = null;
+      }
+    }
 
-    // Cache receipt token if emitted
-    const receiptToken =
-      response.headers.get("X-Ingravity-Receipt-Token") ||
-      (payload && typeof payload === "object" ? payload.receiptToken : null);
+    const accepts = Array.isArray(challenge?.accepts) ? challenge.accepts : [];
+    const baseUsdcAccept =
+      accepts.find(
+        opt =>
+          opt.network === BASE_CAIP2_NETWORK &&
+          String(opt.asset ?? "").toLowerCase() === BASE_USDC_CONTRACT.toLowerCase(),
+      ) ?? accepts[0];
+
+    if (!baseUsdcAccept) {
+      throw new Error("Ingravity 402 response missing valid x402 v2 accepts payment option.");
+    }
+
+    return baseUsdcAccept;
+  }
+
+  /**
+   * Validates the x402 payment asset, network, and atomic amount against configured maxSpendUsdc.
+   *
+   * @param option - Parsed x402 v2 accept option containing atomic USDC units
+   * @returns Void if valid; throws an error if network, asset, or budget limit fails
+   */
+  private validatePaymentOption(option: X402AcceptOption): void {
+    const rawAtomic = option.amount ?? option.maxAmountRequired;
+    if (!rawAtomic || !/^\d+$/.test(String(rawAtomic))) {
+      throw new Error("Invalid atomic payment amount in Ingravity x402 v2 challenge.");
+    }
+
+    if (option.network && option.network !== BASE_CAIP2_NETWORK) {
+      throw new Error(
+        `Unexpected x402 settlement network "${option.network}"; expected "${BASE_CAIP2_NETWORK}".`,
+      );
+    }
+
+    if (option.asset && option.asset.toLowerCase() !== BASE_USDC_CONTRACT.toLowerCase()) {
+      throw new Error(
+        `Unexpected x402 settlement asset "${option.asset}"; expected Base USDC (${BASE_USDC_CONTRACT}).`,
+      );
+    }
+
+    const amountUsdc = Number(rawAtomic) / 10 ** USDC_DECIMALS;
+    if (this.config.maxSpendUsdc != null && amountUsdc > this.config.maxSpendUsdc) {
+      throw new Error(
+        `Action requires $${amountUsdc.toFixed(2)} USDC (${rawAtomic} atomic units), exceeding configured maxSpendUsdc limit of $${this.config.maxSpendUsdc} USDC.`,
+      );
+    }
+  }
+
+  /**
+   * Parses a successful 200 OK gateway response and caches any issued receipt token.
+   *
+   * @param response - HTTP 200 Response from the Ingravity gateway
+   * @param cacheKey - Normalized cache key for session receipt reuse
+   * @returns Parsed JSON body from the response
+   */
+  private async finalizeSuccessResponse(response: Response, cacheKey: string): Promise<unknown> {
+    const payload = (await response.json()) as Record<string, unknown>;
+    const headerReceipt = response.headers.get("X-Ingravity-Receipt-Token");
+    const bodyReceipt =
+      payload && typeof payload.receiptToken === "string" ? payload.receiptToken : null;
+    const receiptToken = headerReceipt ?? bodyReceipt;
 
     if (this.config.enableReceiptCache && receiptToken) {
       this.receiptCache.set(cacheKey, receiptToken);
@@ -403,96 +592,13 @@ export class IngravityActionProvider extends ActionProvider<EvmWalletProvider> {
 
     return payload;
   }
-
-  private async parse402Challenge(response: Response): Promise<{
-    network: string;
-    asset: string;
-    payTo: string;
-    amount: string;
-    facilitator?: string;
-  }> {
-    let authHeader = response.headers.get("WWW-Authenticate") || "";
-    let bodyData: any = {};
-    try {
-      bodyData = await response.json();
-    } catch (_) {}
-
-    const amount =
-      bodyData.amountRequired ||
-      bodyData.amount ||
-      this.extractHeaderParam(authHeader, "amount") ||
-      "0.01";
-
-    const payTo =
-      bodyData.payTo ||
-      this.extractHeaderParam(authHeader, "payTo") ||
-      this.config.payToWallet;
-
-    const asset =
-      bodyData.asset ||
-      this.extractHeaderParam(authHeader, "asset") ||
-      BASE_USDC_CONTRACT;
-
-    const network =
-      bodyData.network ||
-      this.extractHeaderParam(authHeader, "network") ||
-      "eip155:8453";
-
-    return {
-      network,
-      asset,
-      payTo,
-      amount: String(amount),
-      facilitator: bodyData.facilitator,
-    };
-  }
-
-  private extractHeaderParam(header: string, param: string): string | null {
-    const regex = new RegExp(`${param}=["']?([^"',\\s]+)["']?`, "i");
-    const match = header.match(regex);
-    return match ? match[1] : null;
-  }
-
-  /**
-   * Executes micropayment in Base USDC via EvmWalletProvider.
-   * Encodes standard ERC-20 transfer(address to, uint256 amount) with 6 decimals.
-   */
-  private async settlePayment(
-    walletProvider: EvmWalletProvider,
-    paymentReq: { asset: string; payTo: string; amount: string; network: string },
-  ): Promise<string> {
-    const rawUnits = Math.round(parseFloat(paymentReq.amount) * 1_000_000);
-    const amountHex = rawUnits.toString(16).padStart(64, "0");
-    const cleanPayTo = paymentReq.payTo.replace(/^0x/i, "").padStart(64, "0");
-
-    // ERC-20 transfer(address,uint256) selector: 0xa9059cbb
-    const transferCalldata = `0xa9059cbb${cleanPayTo}${amountHex}`;
-
-    // Append Base Builder Code attribution
-    const finalCalldata = encodeErc8021Calldata(transferCalldata);
-
-    const txHash = await walletProvider.sendTransaction({
-      to: paymentReq.asset as `0x${string}`,
-      data: finalCalldata as `0x${string}`,
-      value: BigInt(0),
-    });
-
-    await walletProvider.waitForTransactionReceipt(txHash);
-
-    return JSON.stringify({
-      scheme: "erc20_transfer",
-      txHash,
-      payer: await walletProvider.getAddress(),
-      payTo: paymentReq.payTo,
-      amount: paymentReq.amount,
-      network: paymentReq.network,
-      builderCode: ERC8021_BUILDER_CODE,
-    });
-  }
 }
 
 /**
- * Factory function for convenient instantiation.
+ * Factory function to instantiate IngravityActionProvider.
+ *
+ * @param config - Optional gateway, spending cap, and receipt cache configuration
+ * @returns A new IngravityActionProvider instance
  */
 export const ingravityActionProvider = (config?: IngravityActionProviderConfig) =>
   new IngravityActionProvider(config);
