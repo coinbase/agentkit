@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10, <4"
 
 [[package]]
@@ -540,6 +540,7 @@ dependencies = [
     { name = "jsonschema" },
     { name = "nilql" },
     { name = "paramiko" },
+    { name = "paxiom-receipts" },
     { name = "pydantic" },
     { name = "pyjwt", extra = ["crypto"] },
     { name = "python-dotenv" },
@@ -557,6 +558,7 @@ requires-dist = [
     { name = "jsonschema", specifier = ">=4.23.0,<5" },
     { name = "nilql", specifier = ">=0.0.0a12,<0.0.1" },
     { name = "paramiko", specifier = ">=3.5.1,<4" },
+    { name = "paxiom-receipts", specifier = ">=0.3.0,<1" },
     { name = "pydantic", specifier = "~=2.0" },
     { name = "pyjwt", extras = ["crypto"], specifier = ">=2.12.0,<3" },
     { name = "python-dotenv", specifier = ">=1.0.1,<2" },
@@ -1439,6 +1441,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/7b/91/abdc50c4ef06fdf8d047f60ee777ca9b2a7885e1a9cea81343fbecda52d7/parsimonious-0.10.0.tar.gz", hash = "sha256:8281600da180ec8ae35427a4ab4f7b82bfec1e3d1e52f80cb60ea82b9512501c", size = 52172, upload-time = "2022-09-03T17:01:17.004Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/aa/0f/c8b64d9b54ea631fcad4e9e3c8dbe8c11bb32a623be94f22974c88e71eaf/parsimonious-0.10.0-py3-none-any.whl", hash = "sha256:982ab435fabe86519b57f6b35610aa4e4e977e9f02a14353edf4bbc75369fc0f", size = 48427, upload-time = "2022-09-03T17:01:13.814Z" },
+]
+
+[[package]]
+name = "paxiom-receipts"
+version = "0.3.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/16/36/603e37b7ca5e45be334a11dec40346f9c7b26a9d608962c40da16c41a555/paxiom_receipts-0.3.0.tar.gz", hash = "sha256:5b332ba5bb592339b2df864cc27d20a0f38b5a45a2df14a0ce39f2aee1dc83e2", size = 42384, upload-time = "2026-11-18T18:18:06.652Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/85/52/5d842afecce2e155b6efc017e3b189651c50306f5565bd665b0738143e60/paxiom_receipts-0.3.0-py3-none-any.whl", hash = "sha256:5f47f571e50c74e96fa2fccddd78d81187472d10d744f96fdfa51cda81c82418", size = 37472, upload-time = "2026-11-18T18:18:05.72Z" },
 ]
 
 [[package]]
