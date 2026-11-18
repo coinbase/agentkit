@@ -1,5 +1,11 @@
 # AgentKit Changelog
 
+## Unreleased
+
+### Minor Changes
+
+- [#1257](https://github.com/coinbase/agentkit/pull/1257) Thanks [@ValoremFoundation](https://github.com/ValoremFoundation)! - Added `mevIntelligenceActionProvider` for real-time Ethereum liquidation intelligence. Provides four actions: `get_liquidation_waves`, `get_searcher_leaderboard`, `get_builder_recommendation`, and `get_mev_feed`. Free preview tier requires no API key; paid tier uses x402 micropayments (USDC on Base). Covers Aave V3, Spark, and Morpho Blue across L1 and L2.
+
 ## 0.11.0
 
 ### Minor Changes
