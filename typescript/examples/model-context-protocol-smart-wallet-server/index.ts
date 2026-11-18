@@ -72,7 +72,7 @@ async function initializeServer() {
 
     if (!process.env.PRIVATE_KEY || !process.env.SMART_WALLET_ADDRESS) {
       console.log("Save your private key and smart wallet address to the environment variables");
-      console.log("PRIVATE_KEY=" + privateKey);
+      console.log("PRIVATE_KEY=" + privateKey.slice(0, 6) + "...");
       console.log("SMART_WALLET_ADDRESS=" + walletProvider.getAddress());
     }
 
