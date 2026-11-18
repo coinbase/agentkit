@@ -24,8 +24,7 @@ import { x402ActionProvider, X402Config } from "@coinbase/cdp-agentkit";
 const config: X402Config = {
   // Service URLs the agent can call (whitelist)
   registeredServices: [
-    "https://api.example.com",
-    "https://weather.x402.io"
+    "https://agent-scrape.healingsunhaven.workers.dev"
   ],
   
   // Allow agent to register new services at runtime
@@ -337,6 +336,26 @@ The following environment variables can be used to configure the provider:
 - `X402_MAX_PAYMENT_USDC`: Set the maximum payment limit in USDC (e.g., `"0.5"`)
 
 Configuration object values take precedence over environment variables.
+
+## Real-World Example Services
+
+The x402 ecosystem includes live, production agent-native services you can use as references when learning the protocol. The following service implements the full x402 v2 specification on Base mainnet and serves as a useful reference for AgentKit users:
+
+- **[AgentScrape](https://agent-scrape.healingsunhaven.workers.dev)** — Pay-per-call web scraping for AI agents. Six tools (scrape, extract, screenshot, metadata, session, workflow). MIT licensed open source. Live on Base mainnet with a 10-call free tier per wallet.
+  - x402 manifest: `https://agent-scrape.healingsunhaven.workers.dev/.well-known/x402.json`
+  - A2A Agent Card: `https://agent-scrape.healingsunhaven.workers.dev/.well-known/agent.json`
+  - Source: https://github.com/hshintelligence/agent-scrape
+
+To call it from AgentKit:
+
+```typescript
+const provider = x402ActionProvider({
+  registeredServices: [
+    "https://agent-scrape.healingsunhaven.workers.dev"
+  ],
+  maxPaymentUsdc: 0.01,
+});
+```
 
 ### Additional Resources
 
