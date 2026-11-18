@@ -58,7 +58,7 @@ dev = [
     "prompt-toolkit>=3.0.50,<4",
     "questionary>=2.1.0,<3",
     "rich>=13.7.1,<14",
-    "pillow>=11.1.0,<12",
+    "pillow>=12.3.0,<13",
 ]
 
 [tool.hatch.build.targets.sdist]
