@@ -1,0 +1,49 @@
+{
+  "name": "@coinbase/agentkit-mastra",
+  "version": "0.1.0",
+  "description": "Mastra framework extension of CDP Agentkit",
+  "repository": "https://github.com/coinbase/agentkit",
+  "author": "Coinbase Inc.",
+  "license": "Apache-2.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint -c .eslintrc.json \"src/**/*.ts\"",
+    "lint:fix": "eslint -c .eslintrc.json \"src/**/*.ts\" --fix",
+    "format": "prettier -c .prettierrc --write \"**/*.{ts,js,cjs,json,md}\"",
+    "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\"",
+    "check": "tsc --noEmit",
+    "test": "jest --no-cache --testMatch='**/*.test.ts'",
+    "clean": "rm -rf dist/*",
+    "prepack": "tsc",
+    "docs": "typedoc --entryPoints ./src --entryPointStrategy expand --exclude ./src/tests/**/*.ts",
+    "docs:serve": "http-server ./docs",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "coinbase",
+    "sdk",
+    "crypto",
+    "cdp",
+    "agentkit",
+    "ai",
+    "agent",
+    "nodejs",
+    "typescript",
+    "mastra"
+  ],
+  "dependencies": {
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@coinbase/agentkit": "workspace:*"
+  },
+  "peerDependencies": {
+    "@coinbase/agentkit": ">=0.1.0",
+    "@mastra/core": ">=1.0.0"
+  }
+}
