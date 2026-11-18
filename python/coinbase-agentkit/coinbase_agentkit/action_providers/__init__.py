@@ -2,6 +2,7 @@
 
 from .aave.aave_action_provider import AaveActionProvider, aave_action_provider
 from .action_decorator import create_action
+from .ai2human.ai2human_action_provider import AI2HumanActionProvider, ai2human_action_provider
 from .action_provider import Action, ActionProvider
 from .basename.basename_action_provider import (
     BasenameActionProvider,
@@ -40,6 +41,7 @@ from .x402.schemas import X402Config
 from .x402.x402_action_provider import x402_action_provider, x402ActionProvider
 
 __all__ = [
+    "AI2HumanActionProvider",
     "AaveActionProvider",
     "Action",
     "ActionProvider",
@@ -63,6 +65,7 @@ __all__ = [
     "WowActionProvider",
     "X402Config",
     "aave_action_provider",
+    "ai2human_action_provider",
     "basename_action_provider",
     "cdp_api_action_provider",
     "cdp_evm_wallet_action_provider",
