@@ -1,10 +1,13 @@
 """Test fixtures for x402 action provider tests."""
 
+import base64
+import json
 from unittest.mock import Mock, patch
 
 import pytest
 import requests
 
+from coinbase_agentkit.network import Network
 from coinbase_agentkit.wallet_providers.evm_wallet_provider import EvmWalletProvider
 
 # Mock data constants
@@ -28,17 +31,19 @@ MOCK_PAYMENT_PROOF = {
     "payer": MOCK_ADDRESS,
 }
 
+# Pre-encoded payment proof header matching the provider's base64+JSON decode path.
+MOCK_PAYMENT_PROOF_HEADER = base64.b64encode(json.dumps(MOCK_PAYMENT_PROOF).encode()).decode()
+
 
 @pytest.fixture
 def mock_wallet():
-    """Create a mock wallet provider."""
+    """Create a mock wallet provider with a base-sepolia network."""
     mock = Mock(spec=EvmWalletProvider)
     mock.get_address.return_value = MOCK_ADDRESS
-
-    # Mock the signer
-    mock_signer = Mock()
-    mock.to_signer.return_value = mock_signer
-
+    mock.get_network.return_value = Network(
+        chain_id="84532", network_id="base-sepolia", protocol_family="evm"
+    )
+    mock.to_signer.return_value = Mock()
     return mock
 
 
@@ -85,28 +90,29 @@ def mock_requests():
 
 
 @pytest.fixture
-def mock_x402_requests():
-    """Create a mock for x402_requests session."""
-    with patch("x402.clients.requests.x402_requests", autospec=True) as mock_x402:
+def mock_x402_session():
+    """Patch x402_requests at the provider module path and return the mock session.
+
+    Patching at the provider's own module is important: the provider imports
+    ``x402_requests`` directly (``from x402.http.clients.requests import x402_requests``),
+    so tests must patch the reference attached to the provider module rather than the
+    upstream package. Patching the upstream symbol would not affect the already-bound
+    reference and fails inconsistently across environments.
+    """
+    with patch(
+        "coinbase_agentkit.action_providers.x402.x402_action_provider.x402_requests"
+    ) as mock_factory:
         mock_session = Mock()
-        mock_x402.return_value = mock_session
-
-        # Create a successful paid response
-        paid_response = Mock(spec=requests.Response)
-        paid_response.status_code = 200
-        paid_response.headers = {
-            "content-type": "application/json",
-            "x-payment-response": "mock_payment_response",
-        }
-        paid_response.json.return_value = {"data": "paid_success"}
-        mock_session.request.return_value = paid_response
-
-        yield mock_x402
+        mock_factory.return_value = mock_session
+        yield mock_session
 
 
 @pytest.fixture
-def mock_decode_payment():
-    """Create a mock for decode_x_payment_response."""
-    with patch("x402.clients.base.decode_x_payment_response", autospec=True) as mock_decode:
-        mock_decode.return_value = MOCK_PAYMENT_PROOF
-        yield mock_decode
+def patch_x402_client():
+    """Bypass real x402 client construction (which needs a signable wallet)."""
+    with patch(
+        "coinbase_agentkit.action_providers.x402.x402_action_provider."
+        "x402ActionProvider._create_x402_client"
+    ) as patched:
+        patched.return_value = Mock()
+        yield patched
