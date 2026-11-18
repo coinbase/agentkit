@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "coinbase-agentkit-gpubridge"
+version = "0.1.0"
+description = "GPU-Bridge action provider for Coinbase AgentKit — 30 AI services"
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "coinbase-agentkit>=0.1.0",
+    "requests>=2.28.0",
+    "pydantic>=2.0.0",
+]
