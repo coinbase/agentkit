@@ -1,2 +1,2 @@
 export * from "./x402ActionProvider";
-export type { X402Config } from "./schemas";
+export type { BuyerFirewallPolicy, SpendLedger, X402Config } from "./schemas";

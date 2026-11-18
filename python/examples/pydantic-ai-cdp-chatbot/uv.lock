@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10, <4"
 resolution-markers = [
     "python_full_version >= '3.14' and platform_python_implementation != 'PyPy'",
@@ -859,6 +859,7 @@ dependencies = [
     { name = "jsonschema" },
     { name = "nilql" },
     { name = "paramiko" },
+    { name = "paxiom-receipts" },
     { name = "pydantic" },
     { name = "pyjwt", extra = ["crypto"] },
     { name = "python-dotenv" },
@@ -876,6 +877,7 @@ requires-dist = [
     { name = "jsonschema", specifier = ">=4.23.0,<5" },
     { name = "nilql", specifier = ">=0.0.0a12,<0.0.1" },
     { name = "paramiko", specifier = ">=3.5.1,<4" },
+    { name = "paxiom-receipts", specifier = ">=0.3.0,<1" },
     { name = "pydantic", specifier = "~=2.0" },
     { name = "pyjwt", extras = ["crypto"], specifier = ">=2.12.0,<3" },
     { name = "python-dotenv", specifier = ">=1.0.1,<2" },
@@ -1787,6 +1789,7 @@ wheels = [
 name = "griffelib"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ad/06/eccbd311c9e2b3ca45dbc063b93134c57a1ccc7607c5e545264ad092c4a9/griffelib-2.0.0.tar.gz", hash = "sha256:e504d637a089f5cab9b5daf18f7645970509bf4f53eda8d79ed71cce8bd97934", size = 166312, upload-time = "2026-03-23T21:06:55.954Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4d/51/c936033e16d12b627ea334aaaaf42229c37620d0f15593456ab69ab48161/griffelib-2.0.0-py3-none-any.whl", hash = "sha256:01284878c966508b6d6f1dbff9b6fa607bc062d8261c5c7253cb285b06422a7f", size = 142004, upload-time = "2026-02-09T19:09:40.561Z" },
 ]
@@ -2744,6 +2747,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/72/55/b748445cb4ea6b125626f15379be7c96d1035d4fa3e8fee362fa92298abf/pathable-0.5.0.tar.gz", hash = "sha256:d81938348a1cacb525e7c75166270644782c0fb9c8cecc16be033e71427e0ef1", size = 16655, upload-time = "2026-02-20T08:47:00.748Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/52/96/5a770e5c461462575474468e5af931cff9de036e7c2b4fea23c1c58d2cbe/pathable-0.5.0-py3-none-any.whl", hash = "sha256:646e3d09491a6351a0c82632a09c02cdf70a252e73196b36d8a15ba0a114f0a6", size = 16867, upload-time = "2026-02-20T08:46:59.536Z" },
+]
+
+[[package]]
+name = "paxiom-receipts"
+version = "0.3.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/16/36/603e37b7ca5e45be334a11dec40346f9c7b26a9d608962c40da16c41a555/paxiom_receipts-0.3.0.tar.gz", hash = "sha256:5b332ba5bb592339b2df864cc27d20a0f38b5a45a2df14a0ce39f2aee1dc83e2", size = 42384, upload-time = "2026-11-18T18:18:06.652Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/85/52/5d842afecce2e155b6efc017e3b189651c50306f5565bd665b0738143e60/paxiom_receipts-0.3.0-py3-none-any.whl", hash = "sha256:5f47f571e50c74e96fa2fccddd78d81187472d10d744f96fdfa51cda81c82418", size = 37472, upload-time = "2026-11-18T18:18:05.72Z" },
 ]
 
 [[package]]

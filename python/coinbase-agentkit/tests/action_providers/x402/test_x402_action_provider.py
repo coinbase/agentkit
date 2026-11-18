@@ -289,3 +289,205 @@ def test_supports_network():
     provider = x402_action_provider()
     for network, expected in test_cases:
         assert provider.supports_network(network) is expected
+
+
+# =========================================================
+# Pre-Sign Spend Policy & Delivery Receipt Verification Tests
+# =========================================================
+
+
+def test_spend_policy_blocks_unauthorized_pay_to_before_signing(mock_wallet, monkeypatch):
+    """Test that live 402 pre-sign policy blocks unauthorized payTo before signing."""
+    import importlib
+    from types import SimpleNamespace
+
+    from coinbase_agentkit.action_providers.x402.schemas import X402Config
+
+    mod = importlib.import_module("coinbase_agentkit.action_providers.x402.x402_action_provider")
+
+    captured_hook = {}
+
+    class DummyClient:
+        def on_before_payment_creation(self, fn):
+            captured_hook["fn"] = fn
+            return self
+
+    monkeypatch.setattr(mod, "x402ClientSync", DummyClient)
+    monkeypatch.setattr(mod, "register_exact_evm_client", lambda *_a, **_k: None)
+    monkeypatch.setattr(mod, "EthAccountSigner", lambda s: s)
+
+    def fake_x402_requests(_client):
+        class FakeSession:
+            def request(self, **_kwargs):
+                ctx = SimpleNamespace(
+                    payment_required={},
+                    selected_requirements={
+                        "scheme": "exact",
+                        "network": "base-sepolia",
+                        "asset": MOCK_PAYMENT_REQUIREMENTS["asset"],
+                        "amount": "10000",
+                        "payTo": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+                    },
+                )
+                res = captured_hook["fn"](ctx)
+                if res is not None:
+                    raise RuntimeError(res.reason)
+                raise AssertionError("Expected pre-sign policy abort")
+
+        return FakeSession()
+
+    monkeypatch.setattr(mod, "x402_requests", fake_x402_requests)
+    mock_wallet.get_network.return_value = Network(
+        chain_id="84532", network_id="base-sepolia", protocol_family="evm"
+    )
+
+    provider = x402_action_provider(
+        X402Config(
+            registered_services=[MOCK_URL],
+            spend_policy={
+                "allowedPayTo": [MOCK_PAYMENT_REQUIREMENTS["payTo"]],
+                "maxPerCallAtomic": 50_000,
+            },
+        )
+    )
+    out = json.loads(provider.make_http_request_with_x402(mock_wallet, {"url": MOCK_URL}))
+    assert out["error"] is True
+    assert out["message"] == "Payment blocked by policy"
+    assert "untrusted_pay_to" in out["details"]
+
+
+def test_delivery_receipt_capture_void_and_standalone_verify(mock_wallet, monkeypatch):
+    """Test post-delivery Payment-Receipt verification, MemorySpendLedger commit, and tampering detection."""
+    import base64
+    import importlib
+    from types import SimpleNamespace
+
+    from paxiom_receipts import MemorySpendLedger, generate_receipt_keypair, issue_receipt
+
+    from coinbase_agentkit.action_providers.x402.schemas import PaymentOptionSchema, X402Config
+
+    mod = importlib.import_module("coinbase_agentkit.action_providers.x402.x402_action_provider")
+
+    kp = generate_receipt_keypair("py-agentkit-seller-1")
+    ledger = MemorySpendLedger()
+    good_body = {"weather": "sunny", "tempF": 72}
+    pay_to = MOCK_PAYMENT_REQUIREMENTS["payTo"]
+    usdc = MOCK_PAYMENT_REQUIREMENTS["asset"]
+
+    issued = issue_receipt(
+        private_key=kp["privateKeyPem"],
+        issuer={"name": "Seller", "keyId": kp["keyId"], "payTo": pay_to},
+        service={"name": "Weather", "resource": MOCK_URL, "method": "GET"},
+        request={"method": "GET", "resource": MOCK_URL, "body": ""},
+        payment={
+            "scheme": "exact",
+            "network": "eip155:84532",
+            "asset": usdc,
+            "amountAtomic": "10000",
+            "payTo": pay_to,
+            "settlement": {"status": "verify_only", "transactionHash": None},
+        },
+        output=good_body,
+    )
+
+    captured_hook = {}
+
+    class DummyClient:
+        def on_before_payment_creation(self, fn):
+            captured_hook["fn"] = fn
+            return self
+
+    monkeypatch.setattr(mod, "x402ClientSync", DummyClient)
+    monkeypatch.setattr(mod, "register_exact_evm_client", lambda *_a, **_k: None)
+    monkeypatch.setattr(mod, "EthAccountSigner", lambda s: s)
+
+    next_body = {"value": good_body}
+
+    def fake_x402_requests(_client):
+        class FakeSession:
+            def request(self, **_kwargs):
+                ctx = SimpleNamespace(
+                    payment_required={},
+                    selected_requirements={
+                        "scheme": "exact",
+                        "network": "base-sepolia",
+                        "asset": usdc,
+                        "amount": "10000",
+                        "payTo": pay_to,
+                    },
+                )
+                abort = captured_hook["fn"](ctx)
+                assert abort is None
+                resp = Mock(spec=requests.Response)
+                resp.status_code = 200
+                resp.text = json.dumps(next_body["value"])
+                resp.headers = {
+                    "content-type": "application/json",
+                    "payment-response": base64.b64encode(
+                        json.dumps({"transaction": "0xabc", "network": "base-sepolia"}).encode()
+                    ).decode(),
+                    "payment-receipt": issued["receiptHeader"],
+                }
+                return resp
+
+        return FakeSession()
+
+    monkeypatch.setattr(mod, "x402_requests", fake_x402_requests)
+    mock_wallet.get_network.return_value = Network(
+        chain_id="84532", network_id="base-sepolia", protocol_family="evm"
+    )
+
+    provider = x402_action_provider(
+        X402Config(
+            registered_services=[MOCK_URL],
+            spend_policy={"allowedPayTo": [pay_to], "maxSessionAtomic": 100_000},
+            spend_ledger=ledger,
+            require_delivery_receipt=True,
+            expected_issuer_public_keys=[kp["publicKey"]],
+        )
+    )
+
+    selected = PaymentOptionSchema(
+        scheme="exact",
+        network="base-sepolia",
+        asset=usdc,
+        max_amount_required="10000",
+        pay_to=pay_to,
+    )
+    ok_res = json.loads(
+        provider.retry_with_x402(
+            mock_wallet, {"url": MOCK_URL, "method": "GET", "selected_payment_option": selected}
+        )
+    )
+    assert ok_res["status"] == "success"
+    assert ok_res["details"]["deliveryReceipt"]["valid"] is True
+    assert ok_res["details"]["deliveryReceipt"]["action"] == "CAPTURE"
+    assert ledger.snapshot()["committedSessionAtomic"] == 10_000
+
+    # Tampered body fails closed with VOID
+    next_body["value"] = {"weather": "tampered", "tempF": -99}
+    bad_res = json.loads(
+        provider.retry_with_x402(
+            mock_wallet, {"url": MOCK_URL, "method": "GET", "selected_payment_option": selected}
+        )
+    )
+    assert bad_res["status"] == "error"
+    assert bad_res["error"] is True
+    assert bad_res["details"]["deliveryReceipt"]["action"] == "VOID"
+    assert bad_res["details"]["deliveryReceipt"]["reasonCode"] == "receipt_output_hash_mismatch"
+
+    # Standalone offline verify_x402_delivery_receipt action
+    standalone = json.loads(
+        provider.verify_x402_delivery_receipt(
+            mock_wallet,
+            {
+                "receipt_or_header": issued["receiptHeader"],
+                "response_body": good_body,
+                "expected_pay_to": pay_to,
+                "expected_issuer_public_keys": [kp["publicKey"]],
+            },
+        )
+    )
+    assert standalone["valid"] is True
+    assert standalone["trustState"] == "verified"
+    assert standalone["arbiter"]["action"] == "CAPTURE"

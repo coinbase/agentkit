@@ -1,5 +1,8 @@
 import { z } from "zod";
+import type { BuyerFirewallPolicy, SpendLedger } from "@paxiom/receipts/guard";
 import { DEFAULT_FACILITATOR } from "./constants";
+
+export type { BuyerFirewallPolicy, SpendLedger };
 
 /**
  * Schema for listing registered services/facilitators (no parameters required).
@@ -8,7 +11,6 @@ export const EmptySchema = z.object({}).describe("No parameters required");
 
 /**
  * Configuration options for X402ActionProvider.
- 
  */
 export interface X402Config {
   /** Service URLs the agent can call. Only these services will be allowed for HTTP requests. */
@@ -32,6 +34,31 @@ export interface X402Config {
    * Default: 1.0 (or X402_MAX_PAYMENT_USDC env var)
    */
   maxPaymentUsdc?: number;
+
+  /**
+   * Optional deterministic pre-sign buyer firewall policy evaluated against the live 402
+   * challenge before any wallet signature is created (payTo allowlists/pinning, rolling
+   * per-origin and session atomic caps, allowed schemes/networks/assets, and escrow terms).
+   */
+  spendPolicy?: BuyerFirewallPolicy;
+
+  /**
+   * Optional reservation-safe spend and circuit-breaker ledger shared across calls.
+   * Automatically initialized in memory when `spendPolicy` is configured.
+   */
+  spendLedger?: SpendLedger;
+
+  /**
+   * Require paid x402 responses to carry a cryptographically valid `Payment-Receipt`
+   * (`paxiom.receipt.v0`) bound to the delivered response payload. Default: false.
+   */
+  requireDeliveryReceipt?: boolean;
+
+  /**
+   * Optional pinned Ed25519 seller public keys (base64) for `Payment-Receipt` verification,
+   * specified either as a global list or mapped by lowercase service origin.
+   */
+  expectedIssuerPublicKeys?: string[] | Record<string, string[]>;
 }
 
 /**
@@ -204,3 +231,30 @@ export const DirectX402RequestSchema = z
   .describe(
     "Instructions for making an HTTP request with automatic x402 payment handling. WARNING: This bypasses user confirmation - only use when explicitly told to skip confirmation!",
   );
+
+/**
+ * Schema for verifying an Ed25519-signed x402 delivery receipt offline.
+ */
+export const VerifyDeliveryReceiptSchema = z
+  .object({
+    receiptOrHeader: z
+      .string()
+      .describe(
+        "Base64url Payment-Receipt / X-Paxiom-Receipt header value or serialized JSON receipt object",
+      ),
+    responseBody: z
+      .any()
+      .nullable()
+      .describe(
+        "Optional delivered response body (JSON object or raw string) to verify outputHash payload binding",
+      ),
+    expectedPayTo: z
+      .string()
+      .nullable()
+      .describe("Optional expected recipient wallet address to verify payTo authorization"),
+    expectedIssuerPublicKeys: z
+      .array(z.string())
+      .nullable()
+      .describe("Optional allowed Ed25519 seller public keys (base64)"),
+  })
+  .describe("Parameters for offline verification of an x402 delivery receipt");

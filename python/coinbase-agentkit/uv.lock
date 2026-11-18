@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10, <4"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -589,6 +589,7 @@ dependencies = [
     { name = "jsonschema" },
     { name = "nilql" },
     { name = "paramiko" },
+    { name = "paxiom-receipts" },
     { name = "pydantic" },
     { name = "pyjwt", extra = ["crypto"] },
     { name = "python-dotenv" },
@@ -630,6 +631,7 @@ requires-dist = [
     { name = "jsonschema", specifier = ">=4.23.0,<5" },
     { name = "nilql", specifier = ">=0.0.0a12,<0.0.1" },
     { name = "paramiko", specifier = ">=3.5.1,<4" },
+    { name = "paxiom-receipts", specifier = ">=0.3.0,<1" },
     { name = "pydantic", specifier = "~=2.0" },
     { name = "pyjwt", extras = ["crypto"], specifier = ">=2.12.0,<3" },
     { name = "python-dotenv", specifier = ">=1.0.1,<2" },
@@ -1599,6 +1601,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/66/94/68e2e17afaa9169cf6412ab0f28623903be73d1b32e208d9e8e541bb086d/parso-0.8.4.tar.gz", hash = "sha256:eb3a7b58240fb99099a345571deecc0f9540ea5f4dd2fe14c2a99d6b281ab92d", size = 400609, upload-time = "2024-04-05T09:43:55.897Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c6/ac/dac4a63f978e4dcb3c6d3a78c4d8e0192a113d288502a1216950c41b1027/parso-0.8.4-py2.py3-none-any.whl", hash = "sha256:a418670a20291dacd2dddc80c377c5c3791378ee1e8d12bffc35420643d43f18", size = 103650, upload-time = "2024-04-05T09:43:53.299Z" },
+]
+
+[[package]]
+name = "paxiom-receipts"
+version = "0.3.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/16/36/603e37b7ca5e45be334a11dec40346f9c7b26a9d608962c40da16c41a555/paxiom_receipts-0.3.0.tar.gz", hash = "sha256:5b332ba5bb592339b2df864cc27d20a0f38b5a45a2df14a0ce39f2aee1dc83e2", size = 42384, upload-time = "2026-11-18T18:18:06.652Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/85/52/5d842afecce2e155b6efc017e3b189651c50306f5565bd665b0738143e60/paxiom_receipts-0.3.0-py3-none-any.whl", hash = "sha256:5f47f571e50c74e96fa2fccddd78d81187472d10d744f96fdfa51cda81c82418", size = 37472, upload-time = "2026-11-18T18:18:05.72Z" },
 ]
 
 [[package]]

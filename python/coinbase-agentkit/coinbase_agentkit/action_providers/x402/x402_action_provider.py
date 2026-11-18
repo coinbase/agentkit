@@ -5,13 +5,24 @@ from __future__ import annotations
 import base64
 import json
 import os
+from collections.abc import Callable
 from typing import Any
+from urllib.parse import urlparse
 
 import requests
+from paxiom_receipts import (
+    MemorySpendLedger,
+    decode_receipt_header,
+    evaluate_delivery_arbiter,
+    evaluate_pre_sign_policy,
+    explain,
+    verify_receipt,
+)
 from x402 import x402ClientSync
 from x402.http.clients.requests import x402_requests
 from x402.mechanisms.evm import EthAccountSigner
 from x402.mechanisms.evm.exact.register import register_exact_evm_client
+from x402.schemas import AbortResult, PaymentCreationContext
 
 from ...network import Network
 from ...wallet_providers.evm_wallet_provider import EvmWalletProvider
@@ -24,8 +35,10 @@ from .schemas import (
     EmptySchema,
     HttpRequestSchema,
     ListX402ServicesSchema,
+    PaymentOptionSchema,
     RegisterServiceSchema,
     RetryWithX402Schema,
+    VerifyDeliveryReceiptSchema,
     X402Config,
 )
 from .utils import (
@@ -80,9 +93,18 @@ class x402ActionProvider(ActionProvider[WalletProvider]):  # noqa: N801
                 if config.max_payment_usdc != 1.0
                 else float(os.getenv("X402_MAX_PAYMENT_USDC", "1.0"))
             ),
+            spend_policy=config.spend_policy,
+            spend_ledger=config.spend_ledger,
+            require_delivery_receipt=config.require_delivery_receipt,
+            expected_issuer_public_keys=config.expected_issuer_public_keys,
         )
 
         self._registered_services: set[str] = set(self._config.registered_services)
+        self._spend_ledger: MemorySpendLedger | None = (
+            config.spend_ledger
+            if config.spend_ledger is not None
+            else (MemorySpendLedger() if config.spend_policy is not None else None)
+        )
 
     @create_action(
         name="discover_x402_services",
@@ -467,9 +489,6 @@ DO NOT use this action directly without first trying make_http_request!""",
                     indent=2,
                 )
 
-            # Create x402 client with appropriate signer
-            client = self._create_x402_client(wallet_provider)
-
             # Build URL with query params and determine if body is allowed
             final_url = build_url_with_params(url, args.get("query_params"))
             method = args.get("method") or "GET"
@@ -478,19 +497,65 @@ DO NOT use this action directly without first trying make_http_request!""",
             # Build headers, adding Content-Type for JSON body
             headers: dict[str, str] = dict(args.get("headers") or {})
             body = args.get("body")
-            if can_have_body and body:
+            serialized_body = json.dumps(body) if can_have_body and body else None
+            if serialized_body is not None:
                 headers["Content-Type"] = "application/json"
+
+            active_reservation: dict[str, Any] | None = None
+            policy_abort_reason: str | None = None
+
+            def _record_reservation(res_state: dict[str, Any]) -> None:
+                nonlocal active_reservation
+                active_reservation = res_state
+
+            def _record_abort(reason: str) -> None:
+                nonlocal policy_abort_reason
+                policy_abort_reason = reason
+
+            # Create x402 client with appropriate signer and live pre-sign guardrails
+            client = self._create_x402_client(
+                wallet_provider,
+                request_url=final_url,
+                expected_option=selected_payment_option,
+                on_reservation=_record_reservation,
+                on_abort=_record_abort,
+            )
 
             # Make the request with payment handling
             session = x402_requests(client)
-            response = session.request(
-                method=method,
-                url=final_url,
-                headers=headers,
-                json=body if can_have_body and body else None,
-            )
+            try:
+                response = session.request(
+                    method=method,
+                    url=final_url,
+                    headers=headers,
+                    json=body if can_have_body and body else None,
+                )
+            except Exception as req_err:
+                if (
+                    active_reservation
+                    and active_reservation.get("reservationId")
+                    and self._spend_ledger is not None
+                ):
+                    scheme = (active_reservation.get("challenge") or {}).get("scheme")
+                    self._spend_ledger.release(
+                        active_reservation["reservationId"],
+                        record_failure=True,
+                        failure_reason="network_error_after_sign",
+                        retain_outlay_in_budget=(scheme == "exact"),
+                    )
+                if policy_abort_reason:
+                    return json.dumps(
+                        {
+                            "error": True,
+                            "message": "Payment blocked by policy",
+                            "details": policy_abort_reason,
+                            "url": final_url,
+                        },
+                        indent=2,
+                    )
+                raise req_err
 
-            data = self._parse_response_data(response)
+            data, raw_body_text = self._read_response_data_and_raw_text(response)
 
             # Check for payment proof in headers (v2: payment-response, v1: x-payment-response)
             payment_response_header = response.headers.get(
@@ -505,6 +570,17 @@ DO NOT use this action directly without first trying make_http_request!""",
                     # If parsing fails, include raw header
                     payment_proof = {"raw": payment_response_header}
 
+            delivery_receipt = self._evaluate_delivery_receipt(
+                final_url=final_url,
+                method=method,
+                request_body=serialized_body,
+                response=response,
+                raw_body_text=raw_body_text,
+                payment_occurred=True,
+                expected_pay_to=selected_payment_option.pay_to,
+                reservation=active_reservation,
+            )
+
             # Get the amount used (supports both v1 and v2 formats)
             amount_used = (
                 selected_payment_option.max_amount_required
@@ -515,35 +591,68 @@ DO NOT use this action directly without first trying make_http_request!""",
             # Check if the response was successful
             # Payment is only settled on 200 status
             if response.status_code != 200:
+                err_details: dict[str, Any] = {
+                    "url": final_url,
+                    "method": method,
+                }
+                if delivery_receipt is not None:
+                    err_details["deliveryReceipt"] = delivery_receipt
                 return json.dumps(
                     {
                         "status": "error",
                         "message": f"Request failed with status {response.status_code}. Payment was not settled.",
                         "httpStatus": response.status_code,
                         "data": data,
+                        "details": err_details,
+                    },
+                    indent=2,
+                )
+
+            if (
+                self._config.require_delivery_receipt
+                and delivery_receipt is not None
+                and not delivery_receipt.get("valid")
+            ):
+                return json.dumps(
+                    {
+                        "status": "error",
+                        "error": True,
+                        "message": "Delivery receipt verification failed",
+                        "data": data,
                         "details": {
                             "url": final_url,
                             "method": method,
+                            "paymentUsed": {
+                                "network": selected_payment_option.network,
+                                "asset": selected_payment_option.asset,
+                                "amount": amount_used,
+                            },
+                            "paymentProof": payment_proof,
+                            "deliveryReceipt": delivery_receipt,
                         },
                     },
                     indent=2,
                 )
+
+            ok_details: dict[str, Any] = {
+                "url": final_url,
+                "method": method,
+                "paymentUsed": {
+                    "network": selected_payment_option.network,
+                    "asset": selected_payment_option.asset,
+                    "amount": amount_used,
+                },
+                "paymentProof": payment_proof,
+            }
+            if delivery_receipt is not None:
+                ok_details["deliveryReceipt"] = delivery_receipt
 
             return json.dumps(
                 {
                     "status": "success",
                     "data": data,
                     "message": "Request completed successfully with payment",
-                    "details": {
-                        "url": final_url,
-                        "method": method,
-                        "paymentUsed": {
-                            "network": selected_payment_option.network,
-                            "asset": selected_payment_option.asset,
-                            "amount": amount_used,
-                        },
-                        "paymentProof": payment_proof,
-                    },
+                    "details": ok_details,
                 },
                 indent=2,
             )
@@ -618,9 +727,6 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
                     indent=2,
                 )
 
-            # Create x402 client with appropriate signer
-            client = self._create_x402_client(wallet_provider)
-
             # Build URL with query params and determine if body is allowed
             final_url = build_url_with_params(url, args.get("query_params"))
             method = args.get("method") or "GET"
@@ -629,18 +735,63 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
             # Build headers, adding Content-Type for JSON body
             headers: dict[str, str] = dict(args.get("headers") or {})
             body = args.get("body")
-            if can_have_body and body:
+            serialized_body = json.dumps(body) if can_have_body and body else None
+            if serialized_body is not None:
                 headers["Content-Type"] = "application/json"
 
-            session = x402_requests(client)
-            response = session.request(
-                method=method,
-                url=final_url,
-                headers=headers,
-                json=body if can_have_body and body else None,
+            active_reservation: dict[str, Any] | None = None
+            policy_abort_reason: str | None = None
+
+            def _record_reservation(res_state: dict[str, Any]) -> None:
+                nonlocal active_reservation
+                active_reservation = res_state
+
+            def _record_abort(reason: str) -> None:
+                nonlocal policy_abort_reason
+                policy_abort_reason = reason
+
+            # Create x402 client with appropriate signer and live pre-sign guardrails
+            client = self._create_x402_client(
+                wallet_provider,
+                request_url=final_url,
+                on_reservation=_record_reservation,
+                on_abort=_record_abort,
             )
 
-            data = self._parse_response_data(response)
+            session = x402_requests(client)
+            try:
+                response = session.request(
+                    method=method,
+                    url=final_url,
+                    headers=headers,
+                    json=body if can_have_body and body else None,
+                )
+            except Exception as req_err:
+                if (
+                    active_reservation
+                    and active_reservation.get("reservationId")
+                    and self._spend_ledger is not None
+                ):
+                    scheme = (active_reservation.get("challenge") or {}).get("scheme")
+                    self._spend_ledger.release(
+                        active_reservation["reservationId"],
+                        record_failure=True,
+                        failure_reason="network_error_after_sign",
+                        retain_outlay_in_budget=(scheme == "exact"),
+                    )
+                if policy_abort_reason:
+                    return json.dumps(
+                        {
+                            "error": True,
+                            "message": "Payment blocked by policy",
+                            "details": policy_abort_reason,
+                            "url": final_url,
+                        },
+                        indent=2,
+                    )
+                raise req_err
+
+            data, raw_body_text = self._read_response_data_and_raw_text(response)
 
             # Check for payment proof in headers (v2: payment-response, v1: x-payment-response)
             payment_response_header = response.headers.get(
@@ -655,36 +806,143 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
                     # If parsing fails, include raw header
                     payment_proof = {"raw": payment_response_header}
 
+            payment_occurred = bool(payment_response_header or active_reservation)
+            delivery_receipt = self._evaluate_delivery_receipt(
+                final_url=final_url,
+                method=method,
+                request_body=serialized_body,
+                response=response,
+                raw_body_text=raw_body_text,
+                payment_occurred=payment_occurred,
+                reservation=active_reservation,
+            )
+
             # Check if the response was successful
             # Payment is only settled on 200 status
             if response.status_code != 200:
-                return json.dumps(
-                    {
-                        "success": False,
-                        "message": f"Request failed with status {response.status_code}. Payment was not settled.",
-                        "url": final_url,
-                        "method": method,
-                        "status": response.status_code,
-                        "data": data,
-                    },
-                    indent=2,
-                )
-
-            return json.dumps(
-                {
-                    "success": True,
-                    "message": "Request completed successfully (payment handled automatically if required)",
+                err_payload: dict[str, Any] = {
+                    "success": False,
+                    "message": f"Request failed with status {response.status_code}. Payment was not settled.",
                     "url": final_url,
                     "method": method,
                     "status": response.status_code,
                     "data": data,
-                    "paymentProof": payment_proof,
-                },
-                indent=2,
-            )
+                }
+                if delivery_receipt is not None:
+                    err_payload["deliveryReceipt"] = delivery_receipt
+                return json.dumps(err_payload, indent=2)
+
+            if (
+                payment_occurred
+                and self._config.require_delivery_receipt
+                and delivery_receipt is not None
+                and not delivery_receipt.get("valid")
+            ):
+                return json.dumps(
+                    {
+                        "success": False,
+                        "error": True,
+                        "message": "Delivery receipt verification failed",
+                        "url": final_url,
+                        "method": method,
+                        "status": response.status_code,
+                        "data": data,
+                        "paymentProof": payment_proof,
+                        "deliveryReceipt": delivery_receipt,
+                    },
+                    indent=2,
+                )
+
+            ok_payload: dict[str, Any] = {
+                "success": True,
+                "message": "Request completed successfully (payment handled automatically if required)",
+                "url": final_url,
+                "method": method,
+                "status": response.status_code,
+                "data": data,
+                "paymentProof": payment_proof,
+            }
+            if delivery_receipt is not None:
+                ok_payload["deliveryReceipt"] = delivery_receipt
+
+            return json.dumps(ok_payload, indent=2)
 
         except Exception as error:
             return handle_http_error(error, args["url"])
+
+    @create_action(
+        name="verify_x402_delivery_receipt",
+        description="Verify an Ed25519-signed x402 delivery receipt (Payment-Receipt / paxiom.receipt.v0) offline against an optional response body, expected payTo address, or seller public keys, returning deterministic trust state and AuthCaptureEscrow CAPTURE/VOID verdict.",
+        schema=VerifyDeliveryReceiptSchema,
+    )
+    def verify_x402_delivery_receipt(
+        self, wallet_provider: WalletProvider, args: dict[str, Any]
+    ) -> str:
+        """Verify an x402 delivery receipt offline without network calls.
+
+        Args:
+            wallet_provider: The wallet provider (unused for offline verification).
+            args: Receipt header or JSON string, optional response body, and optional pins.
+
+        Returns:
+            str: JSON string containing verification checks, explanation, and arbiter verdict.
+
+        """
+        try:
+            raw = str(args["receipt_or_header"]).strip()
+            receipt = json.loads(raw) if raw.startswith("{") else decode_receipt_header(raw)
+            response_body = args.get("response_body")
+            has_body = response_body is not None
+
+            verification = verify_receipt(
+                receipt,
+                output=response_body if has_body else None,
+                expected_pay_to=args.get("expected_pay_to"),
+                expected_issuer_public_keys=args.get("expected_issuer_public_keys"),
+            )
+
+            arbiter_summary: dict[str, Any] | None = None
+            if has_body:
+                serialized_body = (
+                    response_body if isinstance(response_body, str) else json.dumps(response_body)
+                )
+                arbiter = evaluate_delivery_arbiter(
+                    {"receipt": receipt, "body": serialized_body},
+                    expected_pay_to=args.get("expected_pay_to"),
+                    expected_issuer_public_keys=args.get("expected_issuer_public_keys"),
+                )
+                arbiter_summary = {
+                    "action": arbiter["action"],
+                    "ok": arbiter["ok"],
+                    "reasonCode": arbiter["reasonCode"],
+                    "reason": arbiter["reason"],
+                    "settlementFinality": arbiter["settlementFinality"],
+                    "captureAmountAtomic": str(arbiter["captureAmountAtomic"]),
+                    "fraudEvidence": arbiter["fraudEvidence"],
+                }
+
+            return json.dumps(
+                {
+                    "valid": verification["valid"],
+                    "trustState": verification["trustState"],
+                    "receiptHash": verification["receiptHash"],
+                    "checks": verification["checks"],
+                    "summary": verification["summary"],
+                    "explanation": explain(verification),
+                    "arbiter": arbiter_summary,
+                },
+                indent=2,
+            )
+        except Exception as error:
+            return json.dumps(
+                {
+                    "error": True,
+                    "valid": False,
+                    "message": "Failed to verify x402 delivery receipt",
+                    "details": str(error),
+                },
+                indent=2,
+            )
 
     @create_action(
         name="register_x402_service",
@@ -720,9 +978,6 @@ If disabled, services must be pre-registered by the agent administrator.""",
 
         try:
             url = args["url"]
-
-            # Validate URL format
-            from urllib.parse import urlparse
 
             parsed = urlparse(url)
             if not parsed.scheme or not parsed.netloc:
@@ -852,20 +1107,247 @@ These are the only services that can be called using make_http_request or make_h
 
         return False
 
-    def _create_x402_client(self, wallet_provider: EvmWalletProvider) -> x402ClientSync:
-        """Create an x402 client configured for the given wallet provider.
+    def _create_x402_client(
+        self,
+        wallet_provider: EvmWalletProvider,
+        *,
+        request_url: str | None = None,
+        expected_option: PaymentOptionSchema | None = None,
+        on_reservation: Callable[[dict[str, Any]], None] | None = None,
+        on_abort: Callable[[str], None] | None = None,
+    ) -> x402ClientSync:
+        """Create an x402 client configured for the given wallet provider and pre-sign hooks.
 
         Args:
-            wallet_provider: The wallet provider to configure the client for
+            wallet_provider: The wallet provider to configure the client for.
+            request_url: Target request URL for live 402 pre-sign validation.
+            expected_option: Optional pre-approved payment option from retry flow.
+            on_reservation: Optional callback invoked when spend budget is reserved.
+            on_abort: Optional callback invoked when pre-sign policy aborts signing.
 
         Returns:
-            Configured x402ClientSync
+            Configured x402ClientSync.
 
         """
         client = x402ClientSync()
         signer = wallet_provider.to_signer()
         register_exact_evm_client(client, EthAccountSigner(signer))
+
+        if request_url and hasattr(client, "on_before_payment_creation"):
+
+            def _before_hook(context: PaymentCreationContext) -> AbortResult | None:
+                def _abort(reason: str) -> AbortResult:
+                    if on_abort is not None:
+                        on_abort(reason)
+                    return AbortResult(reason=reason)
+
+                sel = context.selected_requirements
+                req_dict: dict[str, Any] = (
+                    sel.model_dump(by_alias=True) if hasattr(sel, "model_dump") else dict(sel)  # type: ignore[arg-type]
+                )
+                live_asset = str(req_dict.get("asset") or "")
+                live_network = str(req_dict.get("network") or "")
+                live_pay_to = req_dict.get("payTo") or req_dict.get("pay_to")
+                live_amount = str(
+                    req_dict.get("maxAmountRequired")
+                    or req_dict.get("max_amount_required")
+                    or req_dict.get("amount")
+                    or "0"
+                )
+
+                if not is_usdc_asset(live_asset, wallet_provider):
+                    return _abort(
+                        f'Only USDC payments are supported; live 402 challenge requested asset "{live_asset}".'
+                    )
+
+                limit_check = validate_payment_limit(live_amount, self._config.max_payment_usdc)
+                if not limit_check["is_valid"]:
+                    return _abort(
+                        f'Live 402 payment of {limit_check["requested_amount"]} USDC exceeds max_payment_usdc ({limit_check["max_amount"]} USDC).'
+                    )
+
+                wallet_networks = get_x402_networks(wallet_provider.get_network())
+                if live_network not in wallet_networks:
+                    return _abort(
+                        f'Live 402 network "{live_network}" does not match wallet networks ({", ".join(wallet_networks)}).'
+                    )
+
+                if expected_option is not None:
+                    if (
+                        expected_option.asset
+                        and live_asset.lower() != expected_option.asset.lower()
+                    ):
+                        return _abort(
+                            f'Live 402 asset "{live_asset}" does not match approved asset "{expected_option.asset}".'
+                        )
+                    if expected_option.pay_to and isinstance(live_pay_to, str):
+                        matches_pay_to = (
+                            live_pay_to.lower() == expected_option.pay_to.lower()
+                            if expected_option.pay_to.startswith("0x")
+                            else live_pay_to == expected_option.pay_to
+                        )
+                        if not matches_pay_to:
+                            return _abort(
+                                f'Live 402 payTo "{live_pay_to}" does not match approved payTo "{expected_option.pay_to}".'
+                            )
+                    exp_max = expected_option.max_amount_required or expected_option.amount
+                    if (
+                        exp_max
+                        and exp_max.isdigit()
+                        and live_amount.isdigit()
+                        and int(live_amount) > int(exp_max)
+                    ):
+                        return _abort(
+                            f"Live 402 amount ({live_amount}) exceeds approved amount ({exp_max})."
+                        )
+
+                if self._config.spend_policy is not None:
+                    eff_policy = {"allowLoopbackHttp": True, **self._config.spend_policy}
+                    decision = evaluate_pre_sign_policy(
+                        {"url": request_url, "challenge": req_dict},
+                        eff_policy,
+                        self._spend_ledger,
+                    )
+                    if not decision["allow"]:
+                        return _abort(f'[{decision["code"]}] {decision["reason"]}')
+                    if on_reservation is not None:
+                        on_reservation(
+                            {
+                                "reservationId": decision["reservationId"],
+                                "challenge": decision["challenge"],
+                                "origin": decision["origin"],
+                            }
+                        )
+                return None
+
+            client.on_before_payment_creation(_before_hook)
+
         return client
+
+    def _resolve_expected_issuer_keys(self, url: str) -> list[str] | None:
+        """Resolve pinned Ed25519 seller public keys for a service URL.
+
+        Args:
+            url: Target service URL.
+
+        Returns:
+            List of base64 public keys if configured, otherwise None.
+
+        """
+        configured = self._config.expected_issuer_public_keys
+        if configured is None:
+            return None
+        if isinstance(configured, list):
+            return configured
+        parsed = urlparse(url)
+        origin = f"{parsed.scheme}://{parsed.netloc}".lower()
+        for key_origin, keys in configured.items():
+            if key_origin.lower() == origin:
+                return keys
+        return None
+
+    def _evaluate_delivery_receipt(
+        self,
+        *,
+        final_url: str,
+        method: str,
+        request_body: str | None,
+        response: requests.Response,
+        raw_body_text: str | None,
+        payment_occurred: bool,
+        expected_pay_to: str | None = None,
+        reservation: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
+        """Evaluate post-delivery Payment-Receipt headers and update the spend ledger.
+
+        Args:
+            final_url: Final request URL including query params.
+            method: HTTP method.
+            request_body: Optional serialized request body.
+            response: HTTP response object.
+            raw_body_text: Optional raw UTF-8 response body text.
+            payment_occurred: True if payment was made or reserved on this request.
+            expected_pay_to: Optional expected payTo address.
+            reservation: Optional active spend ledger reservation.
+
+        Returns:
+            Structured delivery receipt verdict dictionary, or None.
+
+        """
+        raw_hdr = response.headers.get("payment-receipt") or response.headers.get(
+            "x-paxiom-receipt"
+        )
+        should_verify = bool(raw_hdr) or (
+            payment_occurred and self._config.require_delivery_receipt
+        )
+
+        if not should_verify:
+            if reservation and reservation.get("reservationId") and self._spend_ledger is not None:
+                if response.status_code == 200:
+                    self._spend_ledger.commit(reservation["reservationId"])
+                else:
+                    self._spend_ledger.release(
+                        reservation["reservationId"],
+                        record_failure=True,
+                        failure_reason=f"http_{response.status_code}",
+                    )
+            return None
+
+        policy = self._config.spend_policy or {}
+        arbiter = evaluate_delivery_arbiter(
+            {
+                "origin": (reservation or {}).get("origin"),
+                "reservationId": (reservation or {}).get("reservationId"),
+                "challenge": (reservation or {}).get("challenge"),
+                "request": {
+                    "url": final_url,
+                    "method": method,
+                    "body": request_body or "",
+                },
+                "response": response,
+                "body": raw_body_text or "",
+            },
+            ledger=self._spend_ledger,
+            expected_issuer_public_keys=self._resolve_expected_issuer_keys(final_url),
+            expected_pay_to=expected_pay_to,
+            require_receipt=self._config.require_delivery_receipt or bool(raw_hdr),
+            max_consecutive_failures=int(policy.get("maxConsecutiveFailures", 3)),
+            cooldown_ms=int(policy.get("cooldownMs", 300_000)),
+        )
+        return {
+            "valid": arbiter["ok"],
+            "action": arbiter["action"],
+            "reasonCode": arbiter["reasonCode"],
+            "reason": arbiter["reason"],
+            "settlementFinality": arbiter["settlementFinality"],
+            "receiptHash": arbiter["receiptHash"],
+            "paymentInfoHash": arbiter["paymentInfoHash"],
+            "captureAmountAtomic": str(arbiter["captureAmountAtomic"]),
+            "fraudEvidence": arbiter["fraudEvidence"],
+        }
+
+    def _read_response_data_and_raw_text(
+        self, response: requests.Response
+    ) -> tuple[Any, str | None]:
+        """Read raw response text and parse JSON when applicable.
+
+        Args:
+            response: The requests Response object.
+
+        Returns:
+            Tuple of parsed data and raw UTF-8 text (if available).
+
+        """
+        raw_text = getattr(response, "text", None)
+        content_type = response.headers.get("content-type", "")
+        if isinstance(raw_text, str):
+            if "application/json" in content_type:
+                try:
+                    return json.loads(raw_text), raw_text
+                except Exception:
+                    return raw_text, raw_text
+            return raw_text, raw_text
+        return self._parse_response_data(response), None
 
     def _parse_response_data(self, response: requests.Response) -> Any:
         """Parse response data based on content type.
