@@ -22,7 +22,8 @@ Set the following environment variables:
 ```bash
 export OPENAI_API_KEY=<your-openai-api-key>
 export CDP_API_KEY_ID=<your-cdp-api-key-id>
-export CDP_API_KEY_PRIVATE=<your-cdp-api-key-private>
+export CDP_API_KEY_SECRET=<your-cdp-api-key-secret>
+export CDP_WALLET_SECRET=<your-cdp-wallet-secret>
 ```
 
 ## Usage

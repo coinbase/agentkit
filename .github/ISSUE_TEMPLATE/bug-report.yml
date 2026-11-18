@@ -28,17 +28,17 @@ body:
       from coinbase_agentkit import (
           AgentKit, 
           AgentKitConfig, 
-          CdpWalletProvider,
-          CdpWalletProviderConfig,
+          CdpEvmWalletProvider,
+          CdpEvmWalletProviderConfig,
           erc20_action_provider
       )
       from coinbase_agentkit_langchain import get_langchain_tools
 
       # A succinct reproducing example trimmed down to the essential parts:
-      cdp_config = CdpWalletProviderConfig(
+      cdp_config = CdpEvmWalletProviderConfig(
           network_id="base-sepolia"
       )
-      wallet_provider = CdpWalletProvider(cdp_config)
+      wallet_provider = CdpEvmWalletProvider(cdp_config)
       agentkit = AgentKit(AgentKitConfig(
           wallet_provider=wallet_provider,
           action_providers=[
@@ -49,20 +49,20 @@ body:
       ```
 
       ```typescript
-      # All necessary imports at the beginning
-      import { AgentKit, CdpWalletProvider, cdpWalletActionProvider } from '@coinbase/agentkit';
+      // All necessary imports at the beginning
+      import { AgentKit, CdpEvmWalletProvider, walletActionProvider } from '@coinbase/agentkit';
       import { getLangChainTools } from '@coinbase/agentkit-langchain';
 
-      # A succinct reproducing example trimmed down to the essential parts:
+      // A succinct reproducing example trimmed down to the essential parts:
       const config = {
         networkId: "base-sepolia"
       };
 
-      const walletProvider = await CdpWalletProvider.configureWithWallet(config);
+      const walletProvider = await CdpEvmWalletProvider.configureWithWallet(config);
       const agentkit = await AgentKit.from({
         walletProvider,
         actionProviders: [
-          cdpWalletActionProvider()
+          walletActionProvider()
         ]
       });
 
