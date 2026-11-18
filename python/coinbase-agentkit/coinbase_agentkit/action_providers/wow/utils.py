@@ -63,18 +63,21 @@ def get_buy_quote(
     amount_eth_in_wei_int = int(amount_eth_in_wei)
     has_graduated = get_has_graduated(wallet_provider, token_address)
 
-    token_quote = (
-        has_graduated
-        and (
-            get_uniswap_quote(wallet_provider, token_address, amount_eth_in_wei_int, "buy")
-        ).amount_out
-    ) or wallet_provider.read_contract(
+    if has_graduated:
+        quote = get_uniswap_quote(
+            wallet_provider, token_address, amount_eth_in_wei_int, "buy"
+        )
+        # Quoter failures used to yield amount_out=0 → min_tokens=0 on buy.
+        if quote.error or not quote.amount_out or quote.amount_out <= 0:
+            raise ValueError(quote.error or "Failed fetching buy quote")
+        return int(quote.amount_out)
+
+    return wallet_provider.read_contract(
         contract_address=token_address,
         abi=WOW_ABI,
         function_name="getEthBuyQuote",
         args=[amount_eth_in_wei_int],
     )
-    return token_quote
 
 
 def get_sell_quote(
@@ -94,15 +97,18 @@ def get_sell_quote(
     amount_tokens_in_wei_int = int(amount_tokens_in_wei)
     has_graduated = get_has_graduated(wallet_provider, token_address)
 
-    token_quote = (
-        has_graduated
-        and (
-            get_uniswap_quote(wallet_provider, token_address, amount_tokens_in_wei_int, "sell")
-        ).amount_out
-    ) or wallet_provider.read_contract(
+    if has_graduated:
+        quote = get_uniswap_quote(
+            wallet_provider, token_address, amount_tokens_in_wei_int, "sell"
+        )
+        # Quoter failures used to yield amount_out=0 → min_eth=0 on sell.
+        if quote.error or not quote.amount_out or quote.amount_out <= 0:
+            raise ValueError(quote.error or "Failed fetching sell quote")
+        return int(quote.amount_out)
+
+    return wallet_provider.read_contract(
         contract_address=token_address,
         abi=WOW_ABI,
         function_name="getTokenSellQuote",
         args=[amount_tokens_in_wei_int],
     )
-    return token_quote

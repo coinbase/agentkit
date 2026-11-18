@@ -38,16 +38,21 @@ export async function getBuyQuote(
 ): Promise<string> {
   const hasGraduated = await getHasGraduated(wallet, tokenAddress);
 
-  const tokenQuote = (
-    hasGraduated
-      ? (await getUniswapQuote(wallet, tokenAddress, Number(amountEthInWei), "buy")).amountOut
-      : await wallet.readContract({
-          address: tokenAddress as `0x${string}`,
-          abi: WOW_ABI,
-          functionName: "getEthBuyQuote",
-          args: [amountEthInWei],
-        })
-  ) as string | number;
+  if (hasGraduated) {
+    const quote = await getUniswapQuote(wallet, tokenAddress, Number(amountEthInWei), "buy");
+    // Quoter failures used to return amountOut=0, which became minOut=0 on buy().
+    if (quote.error || !quote.amountOut || quote.amountOut <= 0) {
+      throw new Error(quote.error || "Failed fetching buy quote");
+    }
+    return quote.amountOut.toString();
+  }
+
+  const tokenQuote = (await wallet.readContract({
+    address: tokenAddress as `0x${string}`,
+    abi: WOW_ABI,
+    functionName: "getEthBuyQuote",
+    args: [amountEthInWei],
+  })) as string | number | bigint;
 
   return tokenQuote.toString();
 }
@@ -67,16 +72,21 @@ export async function getSellQuote(
 ): Promise<string> {
   const hasGraduated = await getHasGraduated(wallet, tokenAddress);
 
-  const tokenQuote = (
-    hasGraduated
-      ? (await getUniswapQuote(wallet, tokenAddress, Number(amountTokensInWei), "sell")).amountOut
-      : await wallet.readContract({
-          address: tokenAddress as `0x${string}`,
-          abi: WOW_ABI,
-          functionName: "getTokenSellQuote",
-          args: [amountTokensInWei],
-        })
-  ) as string | number;
+  if (hasGraduated) {
+    const quote = await getUniswapQuote(wallet, tokenAddress, Number(amountTokensInWei), "sell");
+    // Quoter failures used to return amountOut=0, which became minEth=0 on sell().
+    if (quote.error || !quote.amountOut || quote.amountOut <= 0) {
+      throw new Error(quote.error || "Failed fetching sell quote");
+    }
+    return quote.amountOut.toString();
+  }
+
+  const tokenQuote = (await wallet.readContract({
+    address: tokenAddress as `0x${string}`,
+    abi: WOW_ABI,
+    functionName: "getTokenSellQuote",
+    args: [amountTokensInWei],
+  })) as string | number | bigint;
 
   return tokenQuote.toString();
 }
