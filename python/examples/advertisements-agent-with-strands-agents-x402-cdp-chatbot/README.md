@@ -50,7 +50,7 @@ The sample demonstrates integration between multiple systems:
    uv sync
    ```
 
-3. **Start the payment server on a seperate terminal:**
+3. **Start the payment server on a separate terminal:**
    ```bash
    uv run paid_server.py
    ```
