@@ -1,0 +1,1 @@
+Added a Prism Network action provider for renting real NVIDIA GPUs onchain: `wallet`, `list_gpus`, `lease_and_run`, `run`, and `end_lease`. The provider carries its own funded wallet and settles in USDG, so it composes with any AgentKit wallet provider.
