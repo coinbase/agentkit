@@ -217,24 +217,33 @@ If you receive a 402 Payment Required response, use retry_http_request_with_x402
       }
 
       const finalUrl = buildUrlWithParams(args.url, args.queryParams);
-      let method = args.method;
-      let canHaveBody = ["POST", "PUT", "PATCH"].includes(method);
+      const method = args.method;
+      const canHaveBody = ["POST", "PUT", "PATCH"].includes(method);
 
-      let response = await fetch(finalUrl, {
+      const response = await fetch(finalUrl, {
         method,
         headers: args.headers ?? undefined,
         body: canHaveBody && args.body ? JSON.stringify(args.body) : undefined,
       });
 
-      // Retry with other http method for 404 status code
+      // Never silently retry with a different HTTP method: flipping GET to
+      // POST turns an intended read into a possible write on services that
+      // map both methods to the same path. Surface the 404 with a hint and
+      // let the agent choose explicitly.
       if (response.status === 404) {
-        method = method === "GET" ? "POST" : "GET";
-        canHaveBody = ["POST", "PUT", "PATCH"].includes(method);
-        response = await fetch(finalUrl, {
-          method,
-          headers: args.headers ?? undefined,
-          body: canHaveBody && args.body ? JSON.stringify(args.body) : undefined,
-        });
+        const data = await this.parseResponseData(response);
+        return JSON.stringify(
+          {
+            success: false,
+            url: finalUrl,
+            method,
+            status: 404,
+            data,
+            hint: `The service returned 404 for ${method}. If it expects a different method, call this action again with that method explicitly.`,
+          },
+          null,
+          2,
+        );
       }
 
       if (response.status !== 402) {
