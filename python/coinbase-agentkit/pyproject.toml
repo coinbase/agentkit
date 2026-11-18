@@ -27,6 +27,7 @@ dependencies = [
     "pyjwt[crypto]>=2.12.0,<3",
     "jsonschema>=4.23.0,<5",
     "x402[requests]>=2.4.0",
+    "paxiom-receipts>=0.3.0,<1",
     "solana>=0.36.6",
     "solders>=0.26.0"
 ]

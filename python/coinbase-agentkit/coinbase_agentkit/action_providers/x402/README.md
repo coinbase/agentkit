@@ -39,15 +39,29 @@ config = X402Config(
     
     # Maximum payment per request in USDC
     # Default: 1.0 (or X402_MAX_PAYMENT_USDC env var)
-    max_payment_usdc=0.5
+    max_payment_usdc=0.5,
+
+    # Optional deterministic pre-sign buyer firewall policy (evaluated against live 402 challenges)
+    spend_policy={
+        "allowedPayTo": ["0x209693Bc6afc0C5328bA36FaF03C514EF312287C"],
+        "maxPerCallAtomic": 500_000,
+        "maxSessionAtomic": 2_000_000,
+    },
+
+    # Optional: require cryptographically valid Ed25519 Payment-Receipt headers on paid responses
+    require_delivery_receipt=False,
+    expected_issuer_public_keys={
+        "https://api.example.com": ["<seller-ed25519-pubkey-base64>"],
+    },
 )
 
 provider = x402_action_provider(config)
 ```
 
 - **Service Whitelisting**: Only registered service URLs can be called
-- **USDC-Only Payments**: All payments are restricted to USDC assets only
-- **Payment Limits**: Enforces maximum payment amount per request (default: 1.0 USDC)
+- **USDC-Only Payments**: All payments are restricted to USDC assets only (enforced against live 402 challenges)
+- **Payment Limits & Pre-Sign Spend Policy**: Enforces `max_payment_usdc`, bait-and-switch protection, and optional rolling `MemorySpendLedger` / `payTo` pinning before signing
+- **Delivery Receipt & Escrow Verification**: Automatically verifies `Payment-Receipt` (`paxiom.receipt.v0`) headers and computes `AuthCaptureEscrow` `CAPTURE`/`VOID` verdicts offline
 - **Dynamic Registration Control**: Optional runtime service registration via agent
 
 ## Actions
@@ -67,6 +81,7 @@ provider = x402_action_provider(config)
 
 - `make_http_request_with_x402`: Direct payment-enabled requests (skips confirmation flow)
 - `discover_x402_services`: Discover available x402 services (filter by price, keyword, etc.)
+- `verify_x402_delivery_receipt`: Offline verification of an Ed25519 `Payment-Receipt` header or JSON receipt against delivered response output
 
 ## Overview
 

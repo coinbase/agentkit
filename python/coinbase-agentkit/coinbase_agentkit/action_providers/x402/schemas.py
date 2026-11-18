@@ -28,6 +28,18 @@ class X402Config:
     # Default: 1.0 (or X402_MAX_PAYMENT_USDC env var)
     max_payment_usdc: float = 1.0
 
+    # Optional deterministic pre-sign buyer firewall policy evaluated against live 402 challenges
+    spend_policy: dict[str, Any] | None = None
+
+    # Optional shared MemorySpendLedger instance (auto-created when spend_policy is set)
+    spend_ledger: Any | None = None
+
+    # Require paid x402 responses to carry a cryptographically valid Payment-Receipt header
+    require_delivery_receipt: bool = False
+
+    # Optional pinned Ed25519 seller public keys (global list or map keyed by origin)
+    expected_issuer_public_keys: list[str] | dict[str, list[str]] | None = None
+
 
 class EmptySchema(BaseModel):
     """Schema for listing registered services/facilitators (no parameters required)."""
@@ -215,3 +227,29 @@ class DirectX402RequestSchema(BaseModel):
             "Instructions for making an HTTP request with automatic x402 payment handling. "
             "WARNING: This bypasses user confirmation - only use when explicitly told to skip confirmation!"
         )
+
+
+class VerifyDeliveryReceiptSchema(BaseModel):
+    """Schema for offline verification of an Ed25519-signed x402 delivery receipt."""
+
+    receipt_or_header: str = Field(
+        ...,
+        description="Base64url Payment-Receipt / X-Paxiom-Receipt header value or serialized JSON receipt object",
+    )
+    response_body: Any | None = Field(
+        default=None,
+        description="Optional delivered response body (JSON object or raw string) to verify outputHash payload binding",
+    )
+    expected_pay_to: str | None = Field(
+        default=None,
+        description="Optional expected recipient wallet address to verify payTo authorization",
+    )
+    expected_issuer_public_keys: list[str] | None = Field(
+        default=None,
+        description="Optional allowed Ed25519 seller public keys (base64)",
+    )
+
+    class Config:
+        """Pydantic config."""
+
+        title = "Parameters for offline verification of an x402 delivery receipt"
