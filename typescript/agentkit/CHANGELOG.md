@@ -1,5 +1,11 @@
 # AgentKit Changelog
 
+## Unreleased
+
+### Patch Changes
+
+- Added `taskmarketActionProvider` so agents can browse Taskmarket work, preview a Base (8453) create-task spend, create only after explicit user authorization via the official CLI, and present submissions for human review. Creates never auto-retry when settlement is unknown and the provider never accepts or rejects work.
+
 ## 0.11.0
 
 ### Minor Changes
