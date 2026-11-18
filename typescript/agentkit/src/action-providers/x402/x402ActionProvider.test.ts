@@ -190,6 +190,16 @@ describe("X402ActionProvider", () => {
       expect(provider.supportsNetwork(network)).toBe(true);
     });
 
+    it("should not support Solana networks with EVM protocol family", () => {
+      const network: Network = { protocolFamily: "evm", networkId: "solana-mainnet" };
+      expect(provider.supportsNetwork(network)).toBe(false);
+    });
+
+    it("should not support Base networks with SVM protocol family", () => {
+      const network: Network = { protocolFamily: "svm", networkId: "base-mainnet" };
+      expect(provider.supportsNetwork(network)).toBe(false);
+    });
+
     it("should not support non-EVM/SVM networks", () => {
       const network: Network = { protocolFamily: "bitcoin", networkId: "mainnet" };
       expect(provider.supportsNetwork(network)).toBe(false);
