@@ -58,5 +58,6 @@ The Base Account provider only supports **Base mainnet** (`base-mainnet`), as Ba
 - Permissions have time-based limits and spending allowances
 - Token amounts are automatically formatted with proper decimals and display token names
 - If no specific amount is provided, the full remaining allowance will be used
+- Permission lookup failures are retried and reported instead of being treated as no permissions
 
 For more information on **Base Account spend permissions**, visit [Base Account Documentation](https://docs.base.org/base-account).
