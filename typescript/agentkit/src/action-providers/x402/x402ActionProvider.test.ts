@@ -4,6 +4,8 @@ import { Network } from "../../network";
 import { x402Client, wrapFetchWithPayment } from "@x402/fetch";
 import { registerExactEvmScheme } from "@x402/evm/exact/client";
 import { registerExactSvmScheme } from "@x402/svm/exact/client";
+import { generateReceiptKeyPair, issueReceipt } from "@paxiom/receipts";
+import { createMemorySpendLedger } from "@paxiom/receipts/guard";
 
 import * as utils from "./utils";
 
@@ -645,6 +647,257 @@ describe("X402ActionProvider", () => {
 
       const parsedResult = JSON.parse(result);
       expect(parsedResult.error).toBe(true);
+    });
+  });
+
+  describe("pre-sign spendPolicy and delivery receipts", () => {
+    const SELLER_PAY_TO = "0x209693Bc6afc0C5328bA36FaF03C514EF312287C";
+    const USDC_SEPOLIA = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
+
+    it("blocks live 402 bait-and-switch or unauthorized payTo before signing", async () => {
+      let registeredHook:
+        | ((ctx: {
+            paymentRequired: unknown;
+            selectedRequirements: Record<string, unknown>;
+          }) => Promise<void | { abort: true; reason: string }>)
+        | undefined;
+
+      const hookableClient = {
+        registerScheme: jest.fn(),
+        onBeforePaymentCreation: jest.fn(cb => {
+          registeredHook = cb;
+          return hookableClient;
+        }),
+      };
+      jest
+        .mocked(x402Client)
+        .mockImplementationOnce(() => hookableClient as unknown as InstanceType<typeof x402Client>);
+
+      mockFetchWithPayment.mockImplementationOnce(async () => {
+        const res = await registeredHook?.({
+          paymentRequired: MOCK_PAYMENT_INFO_RESPONSE,
+          selectedRequirements: {
+            scheme: "exact",
+            network: "base-sepolia",
+            asset: USDC_SEPOLIA,
+            amount: "10000",
+            payTo: "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          },
+        });
+        if (res && "abort" in res && res.abort) {
+          throw new Error(res.reason);
+        }
+        return createMockResponse({ status: 200, data: { ok: true } });
+      });
+
+      const guardedProvider = new X402ActionProvider({
+        registeredServices: ["https://www.x402.org"],
+        spendPolicy: {
+          allowedPayTo: [SELLER_PAY_TO],
+          maxPerCallAtomic: "50000",
+        },
+      });
+
+      const raw = await guardedProvider.makeHttpRequestWithX402(
+        makeMockWalletProvider("base-sepolia"),
+        {
+          url: "https://www.x402.org/protected",
+          method: "GET",
+          headers: null,
+          queryParams: null,
+          body: null,
+        },
+      );
+
+      const parsed = JSON.parse(raw);
+      expect(parsed.error).toBe(true);
+      expect(parsed.message).toBe("Payment blocked by policy");
+      expect(parsed.details).toContain("untrusted_pay_to");
+    });
+
+    it("verifies signed Payment-Receipt headers, commits SpendLedger on CAPTURE, and rejects tampered payloads", async () => {
+      const kp = generateReceiptKeyPair({ keyId: "seller-key-1" });
+      const ledger = createMemorySpendLedger();
+      const bodyPayload = { weather: "sunny", tempF: 72 };
+
+      const { receiptHeader } = issueReceipt({
+        privateKey: kp.privateKeyPem,
+        issuer: { name: "Weather X402", keyId: kp.keyId, payTo: SELLER_PAY_TO },
+        service: { name: "Weather", resource: "/protected", method: "GET" },
+        request: { method: "GET", resource: "/protected", body: "" },
+        payment: {
+          scheme: "exact",
+          network: "eip155:84532",
+          asset: USDC_SEPOLIA,
+          amountAtomic: "10000",
+          amountDisplay: "$0.01 USDC",
+          payTo: SELLER_PAY_TO,
+          settlement: { status: "verify_only", transactionHash: null },
+        },
+        output: bodyPayload,
+      });
+
+      let registeredHook:
+        | ((ctx: {
+            paymentRequired: unknown;
+            selectedRequirements: Record<string, unknown>;
+          }) => Promise<void | { abort: true; reason: string }>)
+        | undefined;
+      const hookableClient = {
+        registerScheme: jest.fn(),
+        onBeforePaymentCreation: jest.fn(cb => {
+          registeredHook = cb;
+          return hookableClient;
+        }),
+      };
+      jest
+        .mocked(x402Client)
+        .mockImplementation(() => hookableClient as unknown as InstanceType<typeof x402Client>);
+
+      const guardedProvider = new X402ActionProvider({
+        registeredServices: ["https://www.x402.org"],
+        spendPolicy: {
+          allowedPayTo: [SELLER_PAY_TO],
+          maxSessionAtomic: "100000",
+        },
+        spendLedger: ledger,
+        requireDeliveryReceipt: true,
+        expectedIssuerPublicKeys: {
+          "https://www.x402.org": [kp.publicKey],
+        },
+      });
+
+      const encodedProof = btoa(JSON.stringify(MOCK_PAYMENT_PROOF));
+      mockFetchWithPayment.mockImplementationOnce(async () => {
+        await registeredHook?.({
+          paymentRequired: MOCK_PAYMENT_INFO_RESPONSE,
+          selectedRequirements: {
+            scheme: "exact",
+            network: "base-sepolia",
+            asset: USDC_SEPOLIA,
+            amount: "10000",
+            payTo: SELLER_PAY_TO,
+          },
+        });
+        return createMockResponse({
+          status: 200,
+          data: bodyPayload,
+          headers: {
+            "content-type": "application/json",
+            "payment-response": encodedProof,
+            "payment-receipt": receiptHeader,
+          },
+        });
+      });
+
+      const okRaw = await guardedProvider.retryWithX402(makeMockWalletProvider("base-sepolia"), {
+        url: "https://www.x402.org/protected",
+        method: "GET",
+        headers: null,
+        queryParams: null,
+        body: null,
+        selectedPaymentOption: {
+          scheme: "exact",
+          network: "base-sepolia",
+          asset: USDC_SEPOLIA,
+          maxAmountRequired: "10000",
+          amount: "10000",
+          price: null,
+          payTo: SELLER_PAY_TO,
+        },
+      });
+
+      const okParsed = JSON.parse(okRaw);
+      expect(okParsed.status).toBe("success");
+      expect(okParsed.details.deliveryReceipt.valid).toBe(true);
+      expect(okParsed.details.deliveryReceipt.action).toBe("CAPTURE");
+      expect(ledger.snapshot().committedSessionAtomic).toBe(10000n);
+
+      // Tampered payload with the same signed receipt header must fail closed (VOID)
+      mockFetchWithPayment.mockImplementationOnce(async () => {
+        await registeredHook?.({
+          paymentRequired: MOCK_PAYMENT_INFO_RESPONSE,
+          selectedRequirements: {
+            scheme: "exact",
+            network: "base-sepolia",
+            asset: USDC_SEPOLIA,
+            amount: "10000",
+            payTo: SELLER_PAY_TO,
+          },
+        });
+        return createMockResponse({
+          status: 200,
+          data: { weather: "tampered", tempF: -99 },
+          headers: {
+            "content-type": "application/json",
+            "payment-response": encodedProof,
+            "payment-receipt": receiptHeader,
+          },
+        });
+      });
+
+      const badRaw = await guardedProvider.retryWithX402(makeMockWalletProvider("base-sepolia"), {
+        url: "https://www.x402.org/protected",
+        method: "GET",
+        headers: null,
+        queryParams: null,
+        body: null,
+        selectedPaymentOption: {
+          scheme: "exact",
+          network: "base-sepolia",
+          asset: USDC_SEPOLIA,
+          maxAmountRequired: "10000",
+          amount: "10000",
+          price: null,
+          payTo: SELLER_PAY_TO,
+        },
+      });
+
+      const badParsed = JSON.parse(badRaw);
+      expect(badParsed.status).toBe("error");
+      expect(badParsed.error).toBe(true);
+      expect(badParsed.details.deliveryReceipt.action).toBe("VOID");
+      expect(badParsed.details.deliveryReceipt.reasonCode).toBe("receipt_output_hash_mismatch");
+
+      // Restore default mock implementation for any subsequent tests
+      jest
+        .mocked(x402Client)
+        .mockImplementation(() => mockX402Client as unknown as InstanceType<typeof x402Client>);
+    });
+
+    it("supports standalone offline verify_x402_delivery_receipt action", async () => {
+      const kp = generateReceiptKeyPair({ keyId: "offline-k1" });
+      const payload = { signal: "alpha" };
+      const { receiptHeader } = issueReceipt({
+        privateKey: kp.privateKeyPem,
+        issuer: { name: "Alpha", keyId: kp.keyId, payTo: SELLER_PAY_TO },
+        service: { name: "Alpha", resource: "https://example.com/alpha", method: "POST" },
+        request: { method: "POST", resource: "https://example.com/alpha", body: "{}" },
+        payment: {
+          scheme: "exact",
+          network: "eip155:84532",
+          asset: USDC_SEPOLIA,
+          amountAtomic: "5000",
+          amountDisplay: "$0.005 USDC",
+          payTo: SELLER_PAY_TO,
+          settlement: { status: "verify_only", transactionHash: null },
+        },
+        output: payload,
+      });
+
+      const verifiedRaw = await provider.verifyX402DeliveryReceipt(
+        makeMockWalletProvider("base-sepolia"),
+        {
+          receiptOrHeader: receiptHeader,
+          responseBody: payload,
+          expectedPayTo: SELLER_PAY_TO,
+          expectedIssuerPublicKeys: [kp.publicKey],
+        },
+      );
+      const verified = JSON.parse(verifiedRaw);
+      expect(verified.valid).toBe(true);
+      expect(verified.trustState).toBe("verified");
+      expect(verified.arbiter.action).toBe("CAPTURE");
     });
   });
 });

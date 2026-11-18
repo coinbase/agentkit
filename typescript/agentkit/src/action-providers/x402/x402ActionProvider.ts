@@ -1,4 +1,13 @@
 import { z } from "zod";
+import { decodeReceiptHeader, explain, verifyReceipt } from "@paxiom/receipts";
+import {
+  createMemorySpendLedger,
+  evaluateDeliveryArbiter,
+  evaluatePreSignPolicy,
+  type BuyerFirewallPolicy,
+  type NormalizedPaymentChallenge,
+  type SpendLedger,
+} from "@paxiom/receipts/guard";
 import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
@@ -8,6 +17,7 @@ import {
   DirectX402RequestSchema,
   ListX402ServicesSchema,
   RegisterServiceSchema,
+  VerifyDeliveryReceiptSchema,
   EmptySchema,
   X402Config,
 } from "./schemas";
@@ -41,6 +51,36 @@ interface ResolvedX402Config {
   allowDynamicServiceRegistration: boolean;
   registeredFacilitators: Record<string, string>;
   maxPaymentUsdc: number;
+  spendPolicy?: BuyerFirewallPolicy;
+  requireDeliveryReceipt: boolean;
+  expectedIssuerPublicKeys?: string[] | Record<string, string[]>;
+}
+
+/** Active pre-sign spend reservation tracked across a single x402 request */
+interface ActiveSpendReservation {
+  reservationId: string | null;
+  challenge: NormalizedPaymentChallenge | null;
+  origin: string | null;
+}
+
+/** Options passed into createX402Client for live 402 pre-sign enforcement */
+interface X402ClientHookOptions {
+  requestUrl: string;
+  expectedOption?: z.infer<typeof RetryWithX402Schema>["selectedPaymentOption"];
+  onReservation?: (reservation: ActiveSpendReservation) => void;
+  onAbort?: (reason: string) => void;
+}
+
+/** Options for post-delivery receipt and spend-ledger evaluation */
+interface DeliveryEvaluationOptions {
+  finalUrl: string;
+  method: string;
+  requestBody?: string;
+  response: Response;
+  rawBodyText?: string;
+  paymentOccurred: boolean;
+  expectedPayTo?: string | null;
+  reservation: ActiveSpendReservation | null;
 }
 
 /**
@@ -49,6 +89,7 @@ interface ResolvedX402Config {
 export class X402ActionProvider extends ActionProvider<WalletProvider> {
   private readonly config: ResolvedX402Config;
   private registeredServices: Set<string>;
+  private readonly spendLedger: SpendLedger | null;
 
   /**
    * Creates a new instance of X402ActionProvider.
@@ -66,8 +107,13 @@ export class X402ActionProvider extends ActionProvider<WalletProvider> {
       registeredFacilitators: config.registeredFacilitators ?? {},
       maxPaymentUsdc:
         config.maxPaymentUsdc ?? parseFloat(process.env.X402_MAX_PAYMENT_USDC ?? "1.0"),
+      spendPolicy: config.spendPolicy,
+      requireDeliveryReceipt: config.requireDeliveryReceipt ?? false,
+      expectedIssuerPublicKeys: config.expectedIssuerPublicKeys,
     };
     this.registeredServices = new Set(this.config.registeredServices);
+    this.spendLedger =
+      config.spendLedger ?? (config.spendPolicy ? createMemorySpendLedger() : null);
   }
 
   /**
@@ -460,29 +506,72 @@ DO NOT use this action directly without first trying make_http_request!`,
         );
       }
 
-      // Create x402 client with appropriate signer
-      const client = await this.createX402Client(walletProvider);
-      const fetchWithPayment = wrapFetchWithPayment(fetch, client);
-
       // Build URL with query params and determine if body is allowed
       const finalUrl = buildUrlWithParams(args.url, args.queryParams);
       const method = args.method;
       const canHaveBody = ["POST", "PUT", "PATCH"].includes(method);
+      const serializedBody = canHaveBody && args.body ? JSON.stringify(args.body) : undefined;
+
+      // Track live pre-sign reservation or policy abort across the x402 retry
+      const hookState: {
+        reservation: ActiveSpendReservation | null;
+        abortReason: string | null;
+      } = {
+        reservation: null,
+        abortReason: null,
+      };
+
+      // Create x402 client with appropriate signer and live pre-sign guardrails
+      const client = await this.createX402Client(walletProvider, {
+        requestUrl: finalUrl,
+        expectedOption: args.selectedPaymentOption,
+        onReservation: reservation => {
+          hookState.reservation = reservation;
+        },
+        onAbort: reason => {
+          hookState.abortReason = reason;
+        },
+      });
+      const fetchWithPayment = wrapFetchWithPayment(fetch, client);
 
       // Build headers, adding Content-Type for JSON body
       const headers: Record<string, string> = { ...(args.headers ?? {}) };
-      if (canHaveBody && args.body) {
+      if (serializedBody) {
         headers["Content-Type"] = "application/json";
       }
 
       // Make the request with payment handling
-      const response = await fetchWithPayment(finalUrl, {
-        method,
-        headers,
-        body: canHaveBody && args.body ? JSON.stringify(args.body) : undefined,
-      });
+      let response: Response;
+      try {
+        response = await fetchWithPayment(finalUrl, {
+          method,
+          headers,
+          body: serializedBody,
+        });
+      } catch (fetchErr) {
+        if (hookState.reservation?.reservationId && this.spendLedger) {
+          this.spendLedger.release(hookState.reservation.reservationId, {
+            recordFailure: true,
+            failureReason: "network_error_after_sign",
+            retainOutlayInBudget: hookState.reservation.challenge?.scheme === "exact",
+          });
+        }
+        if (hookState.abortReason) {
+          return JSON.stringify(
+            {
+              error: true,
+              message: "Payment blocked by policy",
+              details: hookState.abortReason,
+              url: finalUrl,
+            },
+            null,
+            2,
+          );
+        }
+        throw fetchErr;
+      }
 
-      const data = await this.parseResponseData(response);
+      const { data, rawBodyText } = await this.readResponseDataAndRawText(response);
 
       // Check for payment proof in headers (v2: payment-response, v1: x-payment-response)
       const paymentResponseHeader =
@@ -497,6 +586,17 @@ DO NOT use this action directly without first trying make_http_request!`,
           paymentProof = { raw: paymentResponseHeader };
         }
       }
+
+      const deliveryReceipt = await this.evaluateDeliveryReceipt({
+        finalUrl,
+        method,
+        requestBody: serializedBody,
+        response,
+        rawBodyText,
+        paymentOccurred: true,
+        expectedPayTo: args.selectedPaymentOption.payTo,
+        reservation: hookState.reservation,
+      });
 
       // Get the amount used (supports both v1 and v2 formats)
       const amountUsed =
@@ -515,6 +615,27 @@ DO NOT use this action directly without first trying make_http_request!`,
           details: {
             url: finalUrl,
             method,
+            ...(deliveryReceipt ? { deliveryReceipt } : {}),
+          },
+        });
+      }
+
+      if (this.config.requireDeliveryReceipt && deliveryReceipt && !deliveryReceipt.valid) {
+        return JSON.stringify({
+          status: "error",
+          error: true,
+          message: "Delivery receipt verification failed",
+          data,
+          details: {
+            url: finalUrl,
+            method,
+            paymentUsed: {
+              network: args.selectedPaymentOption.network,
+              asset: args.selectedPaymentOption.asset,
+              amount: amountUsed,
+            },
+            paymentProof,
+            deliveryReceipt,
           },
         });
       }
@@ -532,6 +653,7 @@ DO NOT use this action directly without first trying make_http_request!`,
             amount: amountUsed,
           },
           paymentProof,
+          ...(deliveryReceipt ? { deliveryReceipt } : {}),
         },
       });
     } catch (error) {
@@ -607,28 +729,69 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
         );
       }
 
-      // Create x402 client with appropriate signer
-      const client = await this.createX402Client(walletProvider);
-      const fetchWithPayment = wrapFetchWithPayment(fetch, client);
-
       // Build URL with query params and determine if body is allowed
       const finalUrl = buildUrlWithParams(args.url, args.queryParams);
       const method = args.method;
       const canHaveBody = ["POST", "PUT", "PATCH"].includes(method);
+      const serializedBody = canHaveBody && args.body ? JSON.stringify(args.body) : undefined;
+
+      const hookState: {
+        reservation: ActiveSpendReservation | null;
+        abortReason: string | null;
+      } = {
+        reservation: null,
+        abortReason: null,
+      };
+
+      // Create x402 client with appropriate signer and live pre-sign guardrails
+      const client = await this.createX402Client(walletProvider, {
+        requestUrl: finalUrl,
+        onReservation: reservation => {
+          hookState.reservation = reservation;
+        },
+        onAbort: reason => {
+          hookState.abortReason = reason;
+        },
+      });
+      const fetchWithPayment = wrapFetchWithPayment(fetch, client);
 
       // Build headers, adding Content-Type for JSON body
       const headers: Record<string, string> = { ...(args.headers ?? {}) };
-      if (canHaveBody && args.body) {
+      if (serializedBody) {
         headers["Content-Type"] = "application/json";
       }
 
-      const response = await fetchWithPayment(finalUrl, {
-        method,
-        headers,
-        body: canHaveBody && args.body ? JSON.stringify(args.body) : undefined,
-      });
+      let response: Response;
+      try {
+        response = await fetchWithPayment(finalUrl, {
+          method,
+          headers,
+          body: serializedBody,
+        });
+      } catch (fetchErr) {
+        if (hookState.reservation?.reservationId && this.spendLedger) {
+          this.spendLedger.release(hookState.reservation.reservationId, {
+            recordFailure: true,
+            failureReason: "network_error_after_sign",
+            retainOutlayInBudget: hookState.reservation.challenge?.scheme === "exact",
+          });
+        }
+        if (hookState.abortReason) {
+          return JSON.stringify(
+            {
+              error: true,
+              message: "Payment blocked by policy",
+              details: hookState.abortReason,
+              url: finalUrl,
+            },
+            null,
+            2,
+          );
+        }
+        throw fetchErr;
+      }
 
-      const data = await this.parseResponseData(response);
+      const { data, rawBodyText } = await this.readResponseDataAndRawText(response);
 
       // Check for payment proof in headers (v2: payment-response, v1: x-payment-response)
       const paymentResponseHeader =
@@ -644,6 +807,17 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
         }
       }
 
+      const paymentOccurred = Boolean(paymentResponseHeader || hookState.reservation);
+      const deliveryReceipt = await this.evaluateDeliveryReceipt({
+        finalUrl,
+        method,
+        requestBody: serializedBody,
+        response,
+        rawBodyText,
+        paymentOccurred,
+        reservation: hookState.reservation,
+      });
+
       // Check if the response was successful
       // Payment is only settled on 200 status
       if (response.status !== 200) {
@@ -655,6 +829,30 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
             method,
             status: response.status,
             data,
+            ...(deliveryReceipt ? { deliveryReceipt } : {}),
+          },
+          null,
+          2,
+        );
+      }
+
+      if (
+        paymentOccurred &&
+        this.config.requireDeliveryReceipt &&
+        deliveryReceipt &&
+        !deliveryReceipt.valid
+      ) {
+        return JSON.stringify(
+          {
+            success: false,
+            error: true,
+            message: "Delivery receipt verification failed",
+            url: finalUrl,
+            method,
+            status: response.status,
+            data,
+            paymentProof,
+            deliveryReceipt,
           },
           null,
           2,
@@ -670,12 +868,102 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
           status: response.status,
           data,
           paymentProof,
+          ...(deliveryReceipt ? { deliveryReceipt } : {}),
         },
         null,
         2,
       );
     } catch (error) {
       return handleHttpError(error, args.url);
+    }
+  }
+
+  /**
+   * Verifies an Ed25519-signed x402 delivery receipt (`Payment-Receipt` / `paxiom.receipt.v0`) offline.
+   *
+   * @param _walletProvider - The wallet provider (unused for offline verification)
+   * @param args - Receipt header or JSON string, optional response body, and optional signer/payTo pins
+   * @returns A JSON string with deterministic verification checks, explanation, and CAPTURE/VOID arbiter verdict
+   */
+  @CreateAction({
+    name: "verify_x402_delivery_receipt",
+    description:
+      "Verify an Ed25519-signed x402 delivery receipt (Payment-Receipt / paxiom.receipt.v0) offline against an optional response body, expected payTo address, or seller public keys, returning deterministic trust state and AuthCaptureEscrow CAPTURE/VOID verdict.",
+    schema: VerifyDeliveryReceiptSchema,
+  })
+  async verifyX402DeliveryReceipt(
+    _walletProvider: WalletProvider,
+    args: z.infer<typeof VerifyDeliveryReceiptSchema>,
+  ): Promise<string> {
+    try {
+      const trimmed = args.receiptOrHeader.trim();
+      const receipt = trimmed.startsWith("{")
+        ? (JSON.parse(trimmed) as Awaited<ReturnType<typeof decodeReceiptHeader>>)
+        : decodeReceiptHeader(trimmed);
+
+      const hasBody = args.responseBody !== null && args.responseBody !== undefined;
+      const verification = verifyReceipt(receipt, {
+        ...(hasBody ? { output: args.responseBody } : {}),
+        ...(args.expectedPayTo ? { expectedPayTo: args.expectedPayTo } : {}),
+        ...(args.expectedIssuerPublicKeys
+          ? { expectedIssuerPublicKeys: args.expectedIssuerPublicKeys }
+          : {}),
+      });
+
+      let arbiterSummary: Record<string, unknown> | null = null;
+      if (hasBody) {
+        const serializedOutput =
+          typeof args.responseBody === "string"
+            ? args.responseBody
+            : JSON.stringify(args.responseBody);
+        const arbiter = await evaluateDeliveryArbiter(
+          {
+            receipt,
+            body: serializedOutput,
+          },
+          {
+            expectedPayTo: args.expectedPayTo ?? undefined,
+            expectedIssuerPublicKeys: args.expectedIssuerPublicKeys ?? undefined,
+            enforceRequestBinding: false,
+            enforcePaymentBinding: false,
+          },
+        );
+        arbiterSummary = {
+          action: arbiter.action,
+          ok: arbiter.ok,
+          reasonCode: arbiter.reasonCode,
+          reason: arbiter.reason,
+          settlementFinality: arbiter.settlementFinality,
+          captureAmountAtomic: arbiter.captureAmountAtomic.toString(),
+          fraudEvidence: arbiter.fraudEvidence,
+        };
+      }
+
+      return JSON.stringify(
+        {
+          valid: verification.valid,
+          trustState: verification.trustState,
+          receiptHash: verification.receiptHash,
+          checks: verification.checks,
+          summary: verification.summary,
+          explanation: explain(verification),
+          arbiter: arbiterSummary,
+        },
+        null,
+        2,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return JSON.stringify(
+        {
+          error: true,
+          valid: false,
+          message: "Failed to verify x402 delivery receipt",
+          details: message,
+        },
+        null,
+        2,
+      );
     }
   }
 
@@ -836,12 +1124,16 @@ These are the only services that can be called using make_http_request or make_h
     (SUPPORTED_NETWORKS as readonly string[]).includes(network.networkId!);
 
   /**
-   * Creates an x402 client configured for the given wallet provider.
+   * Creates an x402 client configured for the given wallet provider and live pre-sign guardrails.
    *
    * @param walletProvider - The wallet provider to configure the client for
+   * @param hookOptions - Optional request context for live 402 pre-sign validation
    * @returns Configured x402Client
    */
-  private async createX402Client(walletProvider: WalletProvider): Promise<x402Client> {
+  private async createX402Client(
+    walletProvider: WalletProvider,
+    hookOptions?: X402ClientHookOptions,
+  ): Promise<x402Client> {
     const client = new x402Client();
 
     if (walletProvider instanceof EvmWalletProvider) {
@@ -867,7 +1159,211 @@ These are the only services that can be called using make_http_request or make_h
       registerExactSvmScheme(client, { signer });
     }
 
+    if (hookOptions && typeof client.onBeforePaymentCreation === "function") {
+      client.onBeforePaymentCreation(async context => {
+        const abortWith = (reason: string) => {
+          hookOptions.onAbort?.(reason);
+          return { abort: true as const, reason };
+        };
+
+        const req = context.selectedRequirements as unknown as Record<string, unknown>;
+        const liveAsset = String(req.asset ?? "");
+        const liveNetwork = String(req.network ?? "");
+        const livePayTo = typeof req.payTo === "string" ? req.payTo : null;
+        const liveAmount = String(req.maxAmountRequired ?? req.amount ?? "0");
+
+        if (!isUsdcAsset(liveAsset, walletProvider)) {
+          return abortWith(
+            `Only USDC payments are supported; live 402 challenge requested asset "${liveAsset}".`,
+          );
+        }
+
+        const limitCheck = validatePaymentLimit(liveAmount, this.config.maxPaymentUsdc);
+        if (!limitCheck.isValid) {
+          return abortWith(
+            `Live 402 payment of ${limitCheck.requestedAmount} USDC exceeds maxPaymentUsdc (${limitCheck.maxAmount} USDC).`,
+          );
+        }
+
+        const walletNetworks = getX402Networks(walletProvider.getNetwork());
+        if (!walletNetworks.includes(liveNetwork)) {
+          return abortWith(
+            `Live 402 network "${liveNetwork}" does not match wallet networks (${walletNetworks.join(", ")}).`,
+          );
+        }
+
+        if (hookOptions.expectedOption) {
+          const exp = hookOptions.expectedOption;
+          if (exp.asset && liveAsset.toLowerCase() !== exp.asset.toLowerCase()) {
+            return abortWith(
+              `Live 402 asset "${liveAsset}" does not match approved asset "${exp.asset}".`,
+            );
+          }
+          if (exp.payTo && livePayTo) {
+            const matchesPayTo = exp.payTo.startsWith("0x")
+              ? livePayTo.toLowerCase() === exp.payTo.toLowerCase()
+              : livePayTo === exp.payTo;
+            if (!matchesPayTo) {
+              return abortWith(
+                `Live 402 payTo "${livePayTo}" does not match approved payTo "${exp.payTo}".`,
+              );
+            }
+          }
+          const expMax = exp.maxAmountRequired ?? exp.amount;
+          if (expMax && /^\d+$/.test(expMax) && /^\d+$/.test(liveAmount)) {
+            if (BigInt(liveAmount) > BigInt(expMax)) {
+              return abortWith(
+                `Live 402 amount (${liveAmount}) exceeds approved amount (${expMax}).`,
+              );
+            }
+          }
+        }
+
+        if (this.config.spendPolicy) {
+          const effectivePolicy: BuyerFirewallPolicy = {
+            allowLoopbackHttp: true,
+            ...this.config.spendPolicy,
+          };
+          const decision = evaluatePreSignPolicy(
+            {
+              url: hookOptions.requestUrl,
+              challenge: req,
+            },
+            effectivePolicy,
+            this.spendLedger,
+          );
+          if (!decision.allow) {
+            return abortWith(`[${decision.code}] ${decision.reason}`);
+          }
+          hookOptions.onReservation?.({
+            reservationId: decision.reservationId,
+            challenge: decision.challenge,
+            origin: decision.origin,
+          });
+        }
+      });
+    }
+
     return client;
+  }
+
+  /**
+   * Resolves pinned Ed25519 seller public keys for a given service URL.
+   *
+   * @param url - Target service URL
+   * @returns Array of expected seller public keys, if configured
+   */
+  private resolveExpectedIssuerKeys(url: string): string[] | undefined {
+    const configured = this.config.expectedIssuerPublicKeys;
+    if (!configured) {
+      return undefined;
+    }
+    if (Array.isArray(configured)) {
+      return configured;
+    }
+    try {
+      const origin = new URL(url).origin.toLowerCase();
+      for (const [keyOrigin, keys] of Object.entries(configured)) {
+        if (keyOrigin.toLowerCase() === origin) {
+          return keys;
+        }
+      }
+    } catch {
+      return undefined;
+    }
+    return undefined;
+  }
+
+  /**
+   * Evaluates post-delivery `Payment-Receipt` / `X-Paxiom-Receipt` headers and updates the spend ledger.
+   *
+   * @param options - Request, response, raw body text, and reservation context
+   * @returns Structured delivery receipt evaluation when applicable, or null
+   */
+  private async evaluateDeliveryReceipt(
+    options: DeliveryEvaluationOptions,
+  ): Promise<Record<string, unknown> | null> {
+    const rawHeader =
+      options.response.headers.get("payment-receipt") ??
+      options.response.headers.get("x-paxiom-receipt");
+    const shouldVerifyReceipt =
+      Boolean(rawHeader) || (options.paymentOccurred && this.config.requireDeliveryReceipt);
+
+    if (!shouldVerifyReceipt) {
+      if (options.reservation?.reservationId && this.spendLedger) {
+        if (options.response.status === 200) {
+          this.spendLedger.commit(options.reservation.reservationId);
+        } else {
+          this.spendLedger.release(options.reservation.reservationId, {
+            recordFailure: true,
+            failureReason: `http_${options.response.status}`,
+          });
+        }
+      }
+      return null;
+    }
+
+    const arbiter = await evaluateDeliveryArbiter(
+      {
+        origin: options.reservation?.origin ?? undefined,
+        reservationId: options.reservation?.reservationId ?? undefined,
+        challenge: options.reservation?.challenge ?? undefined,
+        request: {
+          url: options.finalUrl,
+          method: options.method,
+          body: options.requestBody ?? "",
+        },
+        response: options.response,
+        body: options.rawBodyText ?? "",
+      },
+      {
+        ledger: this.spendLedger,
+        expectedIssuerPublicKeys: this.resolveExpectedIssuerKeys(options.finalUrl),
+        expectedPayTo: options.expectedPayTo ?? undefined,
+        requireReceipt: this.config.requireDeliveryReceipt || Boolean(rawHeader),
+        maxConsecutiveFailures: this.config.spendPolicy?.maxConsecutiveFailures,
+        cooldownMs: this.config.spendPolicy?.cooldownMs,
+      },
+    );
+
+    return {
+      valid: arbiter.ok,
+      action: arbiter.action,
+      reasonCode: arbiter.reasonCode,
+      reason: arbiter.reason,
+      settlementFinality: arbiter.settlementFinality,
+      receiptHash: arbiter.receiptHash,
+      paymentInfoHash: arbiter.paymentInfoHash,
+      captureAmountAtomic: arbiter.captureAmountAtomic.toString(),
+      fraudEvidence: arbiter.fraudEvidence,
+    };
+  }
+
+  /**
+   * Reads response body once as raw text (when supported) and parses JSON based on content type.
+   *
+   * @param response - The fetch Response object
+   * @returns Object with parsed data and optional raw UTF-8 body string
+   */
+  private async readResponseDataAndRawText(
+    response: Response,
+  ): Promise<{ data: unknown; rawBodyText?: string }> {
+    const contentType = response.headers.get("content-type") ?? "";
+    if (typeof response.text === "function") {
+      const rawBodyText = await response.text();
+      if (typeof rawBodyText === "string") {
+        if (contentType.includes("application/json")) {
+          try {
+            return { data: JSON.parse(rawBodyText), rawBodyText };
+          } catch {
+            return { data: rawBodyText, rawBodyText };
+          }
+        }
+        return { data: rawBodyText, rawBodyText };
+      }
+    }
+    const data = await this.parseResponseData(response);
+    return { data };
   }
 
   /**
