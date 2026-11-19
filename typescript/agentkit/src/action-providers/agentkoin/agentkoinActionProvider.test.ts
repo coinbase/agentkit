@@ -8,11 +8,11 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import { EvmWalletProvider } from "../../wallet-providers";
 import {
-  agentcoinActionProvider,
-  AgentCoinActionProvider,
+  agentkoinActionProvider,
+  AgentKoinActionProvider,
   canonicalJson,
-  verifyAgentCoinSignature,
-} from "./agentcoinActionProvider";
+  verifyAgentKoinSignature,
+} from "./agentkoinActionProvider";
 import {
   FindServiceSchema,
   PlaceOrderSchema,
@@ -20,7 +20,7 @@ import {
   RouteTaskSchema,
   VerifySchema,
 } from "./schemas";
-import { AGENTCOIN_ESCROW, AGENTCOIN_USDC, ERC20_APPROVE_ABI, ESCROW_ABI } from "./constants";
+import { AGENTKOIN_ESCROW, AGENTKOIN_USDC, ERC20_APPROVE_ABI, ESCROW_ABI } from "./constants";
 
 const BUYER = "0x78e2C0164A80F3e337AE17e3bA4b8EA2C0Fa488e";
 const PROVIDER = "0x6A32bC3Bb5eA1dc814f14E29e6f026535129A84f";
@@ -43,8 +43,8 @@ const escrowOrder = (overrides: Record<string, unknown> = {}) => ({
   mode: "escrow",
   escrow: {
     chainId: 84532,
-    contract: AGENTCOIN_ESCROW,
-    token: AGENTCOIN_USDC,
+    contract: AGENTKOIN_ESCROW,
+    token: AGENTKOIN_USDC,
     amount: "10000",
     provider: PROVIDER,
     evaluator: EVALUATOR,
@@ -53,18 +53,18 @@ const escrowOrder = (overrides: Record<string, unknown> = {}) => ({
     {
       label: "approve",
       chainId: 84532,
-      to: AGENTCOIN_USDC,
+      to: AGENTKOIN_USDC,
       value: "0",
       data: encodeFunctionData({
         abi: ERC20_APPROVE_ABI,
         functionName: "approve",
-        args: [AGENTCOIN_ESCROW, 10000n],
+        args: [AGENTKOIN_ESCROW, 10000n],
       }),
     },
     {
       label: "createAndFundFor",
       chainId: 84532,
-      to: AGENTCOIN_ESCROW,
+      to: AGENTKOIN_ESCROW,
       value: "0",
       data: encodeFunctionData({
         abi: ESCROW_ABI,
@@ -78,7 +78,7 @@ const escrowOrder = (overrides: Record<string, unknown> = {}) => ({
 });
 
 const jobCreatedLog = () => ({
-  address: AGENTCOIN_ESCROW,
+  address: AGENTKOIN_ESCROW,
   topics: encodeEventTopics({
     abi: ESCROW_ABI,
     eventName: "JobCreated",
@@ -96,7 +96,7 @@ const jobCreatedLog = () => ({
   ),
 });
 
-describe("AgentCoin schemas", () => {
+describe("AgentKoin schemas", () => {
   it("accepts a valid search", () => {
     expect(FindServiceSchema.safeParse({ q: "notary", maxPrice: "10000" }).success).toBe(true);
   });
@@ -130,7 +130,7 @@ describe("canonicalJson", () => {
   });
 });
 
-describe("verifyAgentCoinSignature", () => {
+describe("verifyAgentKoinSignature", () => {
   const account = privateKeyToAccount(`0x${"11".repeat(32)}`);
 
   const sign = async (doc: Record<string, unknown>) => {
@@ -143,7 +143,7 @@ describe("verifyAgentCoinSignature", () => {
   };
 
   it("accepts a valid signature", async () => {
-    const result = await verifyAgentCoinSignature(await sign({ v: "x", n: 1 }));
+    const result = await verifyAgentKoinSignature(await sign({ v: "x", n: 1 }));
     expect(result.valid).toBe(true);
     expect(result.signer).toBe(account.address);
     expect(result.signerIsOperator).toBe(false);
@@ -151,22 +151,22 @@ describe("verifyAgentCoinSignature", () => {
 
   it("rejects a modified document", async () => {
     const doc = await sign({ v: "x", n: 1 });
-    const result = await verifyAgentCoinSignature({ ...doc, n: 2 });
+    const result = await verifyAgentKoinSignature({ ...doc, n: 2 });
     expect(result.valid).toBe(false);
   });
 
   it("reports a missing signature", async () => {
-    expect((await verifyAgentCoinSignature({ v: "x" })).valid).toBe(false);
+    expect((await verifyAgentKoinSignature({ v: "x" })).valid).toBe(false);
   });
 });
 
-describe("AgentCoinActionProvider", () => {
-  let provider: AgentCoinActionProvider;
+describe("AgentKoinActionProvider", () => {
+  let provider: AgentKoinActionProvider;
   let wallet: jest.Mocked<EvmWalletProvider>;
   let fetchMock: jest.SpyInstance;
 
   beforeEach(() => {
-    provider = agentcoinActionProvider({ baseUrl: "https://router.example/" });
+    provider = agentkoinActionProvider({ baseUrl: "https://router.example/" });
     wallet = {
       getAddress: jest.fn().mockReturnValue(BUYER),
       getNetwork: jest
@@ -322,7 +322,7 @@ describe("AgentCoinActionProvider", () => {
     });
 
     it("respects allowedServiceIds", async () => {
-      const limited = agentcoinActionProvider({ allowedServiceIds: ["svc_a"] });
+      const limited = agentkoinActionProvider({ allowedServiceIds: ["svc_a"] });
       const out = JSON.parse(await limited.placeOrder(wallet, { serviceId: "svc_b" }));
       expect(out.success).toBe(false);
       expect(fetchMock).not.toHaveBeenCalled();

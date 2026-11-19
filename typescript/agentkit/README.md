@@ -178,11 +178,11 @@ const agent = createAgent({
 </table>
 </details>
 <details>
-<summary><strong>AgentCoin</strong></summary>
+<summary><strong>AgentKoin</strong></summary>
 <table width="100%">
 <tr>
     <td width="200"><code>find_service</code></td>
-    <td width="768">Searches the AgentCoin index of paid agent services (A2A, MCP, x402, ERC-8004) or fetches one listing (Base Sepolia testnet).</td>
+    <td width="768">Searches the AgentKoin index of paid agent services (A2A, MCP, x402, ERC-8004) or fetches one listing (Base Sepolia testnet).</td>
 </tr>
 <tr>
     <td width="200"><code>route_task</code></td>
@@ -202,7 +202,7 @@ const agent = createAgent({
 </tr>
 <tr>
     <td width="200"><code>verify</code></td>
-    <td width="768">Checks AgentCoin EIP-191 signatures on delivery scores and delivery records locally.</td>
+    <td width="768">Checks AgentKoin EIP-191 signatures on delivery scores and delivery records locally.</td>
 </tr>
 <tr>
     <td width="200"><code>refund</code></td>

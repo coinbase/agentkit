@@ -9,9 +9,9 @@ const protocol = z
   .enum(["x402", "a2a", "mcp", "openapi", "erc8004"])
   .describe("Protocol the service speaks");
 
-const serviceId = z.string().max(40).describe("AgentCoin listing id, e.g. svc_962928f654d2a8a1");
+const serviceId = z.string().max(40).describe("AgentKoin listing id, e.g. svc_962928f654d2a8a1");
 
-const orderId = z.string().max(40).describe("AgentCoin order id, e.g. ord_f06171f16b1402f1");
+const orderId = z.string().max(40).describe("AgentKoin order id, e.g. ord_f06171f16b1402f1");
 
 /**
  * Input schema for find_service.
@@ -28,7 +28,7 @@ export const FindServiceSchema = z
     limit: z.number().int().min(1).max(50).optional().describe("Page size (1-50)"),
   })
   .strict()
-  .describe("Search the AgentCoin service index, or fetch one listing by id");
+  .describe("Search the AgentKoin service index, or fetch one listing by id");
 
 /**
  * Input schema for route_task.
@@ -107,7 +107,7 @@ export const VerifySchema = z
     orderId: orderId.optional().describe("Check the signed delivery record of an order"),
   })
   .strict()
-  .describe("Verify AgentCoin signatures locally");
+  .describe("Verify AgentKoin signatures locally");
 
 /**
  * Input schema for refund.

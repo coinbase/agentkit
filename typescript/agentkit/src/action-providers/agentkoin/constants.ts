@@ -1,42 +1,42 @@
 /**
- * Default AgentCoin router URL (Base Sepolia testnet deployment).
+ * Default AgentKoin router URL (Base Sepolia testnet deployment).
  */
-export const AGENTCOIN_DEFAULT_URL = "https://agentcoinhq.com";
+export const AGENTKOIN_DEFAULT_URL = "https://agentcoinhq.com";
 
 /**
- * Networks supported by the AgentCoin action provider. Testnet only.
+ * Networks supported by the AgentKoin action provider. Testnet only.
  */
-export const AGENTCOIN_SUPPORTED_NETWORKS = ["base-sepolia"] as const;
+export const AGENTKOIN_SUPPORTED_NETWORKS = ["base-sepolia"] as const;
 
 /**
  * Base Sepolia chain id.
  */
-export const AGENTCOIN_CHAIN_ID = 84532;
+export const AGENTKOIN_CHAIN_ID = 84532;
 
 /**
  * CAIP-2 identifier for Base Sepolia.
  */
-export const AGENTCOIN_CAIP2 = "eip155:84532";
+export const AGENTKOIN_CAIP2 = "eip155:84532";
 
 /**
  * Circle test USDC on Base Sepolia.
  */
-export const AGENTCOIN_USDC = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
+export const AGENTKOIN_USDC = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
 
 /**
- * AgentCoin JobEscrow contract on Base Sepolia.
+ * AgentKoin JobEscrow contract on Base Sepolia.
  */
-export const AGENTCOIN_ESCROW = "0x4EaF6d09F8C22980Bb16E719779ACe73A7b1CB3D";
+export const AGENTKOIN_ESCROW = "0x4EaF6d09F8C22980Bb16E719779ACe73A7b1CB3D";
 
 /**
- * Address of the AgentCoin operator key that signs scores and delivery records (EIP-191).
+ * Address of the AgentKoin operator key that signs scores and delivery records (EIP-191).
  */
-export const AGENTCOIN_OPERATOR_SIGNER = "0xf1b27b5Bd659D9Bfb4835777E64B8F8e5C3eCf68";
+export const AGENTKOIN_OPERATOR_SIGNER = "0xf1b27b5Bd659D9Bfb4835777E64B8F8e5C3eCf68";
 
 /**
  * Default per-order payment ceiling in USDC base units (0.05 test USDC).
  */
-export const AGENTCOIN_DEFAULT_MAX_PAYMENT = 50_000n;
+export const AGENTKOIN_DEFAULT_MAX_PAYMENT = 50_000n;
 
 /**
  * JobEscrow job states, indexed by the on-chain enum value.

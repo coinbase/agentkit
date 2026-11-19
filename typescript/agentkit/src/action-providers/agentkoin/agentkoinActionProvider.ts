@@ -23,14 +23,14 @@ import {
   RefundSchema,
 } from "./schemas";
 import {
-  AGENTCOIN_CAIP2,
-  AGENTCOIN_CHAIN_ID,
-  AGENTCOIN_DEFAULT_MAX_PAYMENT,
-  AGENTCOIN_DEFAULT_URL,
-  AGENTCOIN_ESCROW,
-  AGENTCOIN_OPERATOR_SIGNER,
-  AGENTCOIN_SUPPORTED_NETWORKS,
-  AGENTCOIN_USDC,
+  AGENTKOIN_CAIP2,
+  AGENTKOIN_CHAIN_ID,
+  AGENTKOIN_DEFAULT_MAX_PAYMENT,
+  AGENTKOIN_DEFAULT_URL,
+  AGENTKOIN_ESCROW,
+  AGENTKOIN_OPERATOR_SIGNER,
+  AGENTKOIN_SUPPORTED_NETWORKS,
+  AGENTKOIN_USDC,
   ERC20_APPROVE_ABI,
   ESCROW_ABI,
   ESCROW_STATES,
@@ -40,10 +40,10 @@ import {
 type Json = Record<string, any>;
 
 /**
- * Configuration for the AgentCoin action provider.
+ * Configuration for the AgentKoin action provider.
  */
-export interface AgentCoinConfig {
-  /** Router base URL. Defaults to AGENTCOIN_URL or https://agentcoinhq.com. */
+export interface AgentKoinConfig {
+  /** Router base URL. Defaults to AGENTKOIN_URL or https://agentcoinhq.com. */
   baseUrl?: string;
   /** Per-order payment ceiling in USDC base units. Defaults to 50000 (0.05 test USDC). */
   maxPayment?: bigint | string | number;
@@ -77,12 +77,12 @@ export function canonicalJson(value: unknown): string {
 }
 
 /**
- * Checks an AgentCoin EIP-191 document signature: personal_sign over keccak256(RFC 8785(document without "signature")).
+ * Checks an AgentKoin EIP-191 document signature: personal_sign over keccak256(RFC 8785(document without "signature")).
  *
  * @param doc - The signed document.
- * @returns Whether the signature is valid, the recovered signer and whether it is the AgentCoin operator.
+ * @returns Whether the signature is valid, the recovered signer and whether it is the AgentKoin operator.
  */
-export async function verifyAgentCoinSignature(doc: Json | null | undefined): Promise<Json> {
+export async function verifyAgentKoinSignature(doc: Json | null | undefined): Promise<Json> {
   const sig = doc?.signature;
   if (!sig || sig.scheme !== "eip191") return { valid: false, reason: "no eip191 signature" };
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -100,46 +100,46 @@ export async function verifyAgentCoinSignature(doc: Json | null | undefined): Pr
   return {
     valid,
     signer,
-    signerIsOperator: signer === getAddress(AGENTCOIN_OPERATOR_SIGNER),
+    signerIsOperator: signer === getAddress(AGENTKOIN_OPERATOR_SIGNER),
     digest,
   };
 }
 
 /**
- * AgentCoinActionProvider lets an agent find paid agent services, pay them through an escrow that
+ * AgentKoinActionProvider lets an agent find paid agent services, pay them through an escrow that
  * releases funds only on a staked evaluator's delivery verdict, and claim refunds. Base Sepolia testnet only.
  */
-export class AgentCoinActionProvider extends ActionProvider<EvmWalletProvider> {
+export class AgentKoinActionProvider extends ActionProvider<EvmWalletProvider> {
   private readonly baseUrl: string;
   private readonly maxPayment: bigint;
   private readonly allowedServiceIds: Set<string> | null;
   private readonly requestTimeoutMs: number;
 
   /**
-   * Constructs a new AgentCoinActionProvider.
+   * Constructs a new AgentKoinActionProvider.
    *
    * @param config - Optional configuration.
    */
-  constructor(config: AgentCoinConfig = {}) {
-    super("agentcoin", []);
-    this.baseUrl = (config.baseUrl ?? process.env.AGENTCOIN_URL ?? AGENTCOIN_DEFAULT_URL).replace(
+  constructor(config: AgentKoinConfig = {}) {
+    super("agentkoin", []);
+    this.baseUrl = (config.baseUrl ?? process.env.AGENTKOIN_URL ?? AGENTKOIN_DEFAULT_URL).replace(
       /\/+$/,
       "",
     );
-    this.maxPayment = BigInt(config.maxPayment ?? AGENTCOIN_DEFAULT_MAX_PAYMENT);
+    this.maxPayment = BigInt(config.maxPayment ?? AGENTKOIN_DEFAULT_MAX_PAYMENT);
     this.allowedServiceIds = config.allowedServiceIds ? new Set(config.allowedServiceIds) : null;
     this.requestTimeoutMs = config.requestTimeoutMs ?? 90_000;
   }
 
   /**
-   * Searches the AgentCoin service index.
+   * Searches the AgentKoin service index.
    *
    * @param args - The search arguments.
    * @returns The search results as stringified JSON.
    */
   @CreateAction({
     name: "find_service",
-    description: `Searches the AgentCoin index of paid agent services (A2A, MCP, x402, ERC-8004).
+    description: `Searches the AgentKoin index of paid agent services (A2A, MCP, x402, ERC-8004).
 With id: returns one listing with skills, prices, request formats and delivery score.
 Inputs: id, q (text), protocol, maxPrice (USDC base units), minScore (0-1), claimed, cursor, limit.
 Read-only. Base Sepolia testnet.`,
@@ -175,7 +175,7 @@ delivery score and supported order modes. No payment. Read-only. Base Sepolia te
       return this.api("POST", "/v1/route", {
         task,
         ...(budget ? { budget } : {}),
-        constraints: { network: AGENTCOIN_CAIP2, ...constraints },
+        constraints: { network: AGENTKOIN_CAIP2, ...constraints },
       });
     });
   }
@@ -189,7 +189,7 @@ delivery score and supported order modes. No payment. Read-only. Base Sepolia te
    */
   @CreateAction({
     name: "place_order",
-    description: `Places an escrowed order for an AgentCoin listing and funds it from the wallet.
+    description: `Places an escrowed order for an AgentKoin listing and funds it from the wallet.
 Test USDC is held in the JobEscrow contract until a staked evaluator rules on delivery: paid to the
 seller if delivered, refunded to the buyer if not (or if no verdict arrives in time).
 Sends 2 transactions (USDC approve, createAndFundFor), records the job with the router and calls the seller.
@@ -228,7 +228,7 @@ Inputs: serviceId, optional skillId, optional body (JSON sent to the seller). Ba
           abi: ESCROW_ABI,
           logs: receipt.logs ?? [],
           eventName: "JobCreated",
-        }).find(l => getAddress(l.address) === getAddress(AGENTCOIN_ESCROW));
+        }).find(l => getAddress(l.address) === getAddress(AGENTKOIN_ESCROW));
         if (created) jobId = created.args.jobId.toString();
       }
       if (!jobId) throw new Error("no JobCreated event in the funding transaction");
@@ -248,7 +248,7 @@ Inputs: serviceId, optional skillId, optional body (JSON sent to the seller). Ba
         const header = Buffer.from(
           JSON.stringify({
             x402Version: 2,
-            accepted: { scheme: "agentcoin-escrow", network: AGENTCOIN_CAIP2 },
+            accepted: { scheme: "agentcoin-escrow", network: AGENTKOIN_CAIP2 },
             payload: { jobId, txHash: fundTx },
           }),
         ).toString("base64");
@@ -292,7 +292,7 @@ Inputs: serviceId, optional skillId, optional body (JSON sent to the seller). Ba
    */
   @CreateAction({
     name: "get_order",
-    description: `Returns an AgentCoin order's status, payment transaction, escrow job state, deliverable hash,
+    description: `Returns an AgentKoin order's status, payment transaction, escrow job state, deliverable hash,
 verdict and operator-signed delivery record. Escrow orders are refreshed from chain, which can take up to a minute.
 Read-only.`,
     schema: GetOrderSchema,
@@ -345,7 +345,7 @@ ERC-8004 registration). serviceId: returns the claim challenge; sign=true signs 
         }
         const expiresAt = BigInt(Math.floor(Date.now() / 1000) + 3600);
         const signature = await walletProvider.signTypedData({
-          domain: { name: "AgentCoin Index", version: "1", chainId: AGENTCOIN_CHAIN_ID },
+          domain: { name: "AgentKoin Index", version: "1", chainId: AGENTKOIN_CHAIN_ID },
           types: {
             Claim: [
               { name: "serviceId", type: "string" },
@@ -368,16 +368,16 @@ ERC-8004 registration). serviceId: returns the claim challenge; sign=true signs 
   }
 
   /**
-   * Verifies AgentCoin signatures locally.
+   * Verifies AgentKoin signatures locally.
    *
    * @param args - The listing and/or order to verify.
    * @returns The verification results as stringified JSON.
    */
   @CreateAction({
     name: "verify",
-    description: `Checks AgentCoin signatures locally. serviceId: the EIP-191 signed delivery score and its evidence root.
+    description: `Checks AgentKoin signatures locally. serviceId: the EIP-191 signed delivery score and its evidence root.
 orderId: the operator-signed delivery record of an order. Returns signer, validity and whether the signer is the
-AgentCoin operator. Read-only.`,
+AgentKoin operator. Read-only.`,
     schema: VerifySchema,
   })
   async verify(args: z.infer<typeof VerifySchema>): Promise<string> {
@@ -387,7 +387,7 @@ AgentCoin operator. Read-only.`,
       if (args.serviceId) {
         const rep = await this.api("GET", `/v1/reputation/${encodeURIComponent(args.serviceId)}`);
         const signature = rep.score
-          ? await verifyAgentCoinSignature(rep.score)
+          ? await verifyAgentKoinSignature(rep.score)
           : { valid: false, reason: "no score" };
         const evidenceRootMatches =
           Array.isArray(rep.evidence) && rep.score?.evidenceRoot
@@ -408,7 +408,7 @@ AgentCoin operator. Read-only.`,
           verdict: o.verdict,
           deliverableHash: o.deliverableHash,
           deliveryRecord: o.deliveryRecord
-            ? await verifyAgentCoinSignature(o.deliveryRecord)
+            ? await verifyAgentKoinSignature(o.deliveryRecord)
             : { valid: false, reason: "no delivery record" },
         };
       }
@@ -442,7 +442,7 @@ Inputs: orderId or jobId. Base Sepolia testnet.`,
       }
       if (!jobId) throw new Error("jobId, or orderId of an escrow order, required");
       const job = (await walletProvider.readContract({
-        address: AGENTCOIN_ESCROW,
+        address: AGENTKOIN_ESCROW,
         abi: ESCROW_ABI,
         functionName: "getJob",
         args: [BigInt(jobId)],
@@ -463,7 +463,7 @@ Inputs: orderId or jobId. Base Sepolia testnet.`,
       try {
         await walletProvider.getPublicClient().simulateContract({
           account: me,
-          address: AGENTCOIN_ESCROW,
+          address: AGENTKOIN_ESCROW,
           abi: ESCROW_ABI,
           functionName: fn,
           args: [BigInt(jobId)],
@@ -479,7 +479,7 @@ Inputs: orderId or jobId. Base Sepolia testnet.`,
         };
       }
       const hash = await walletProvider.sendTransaction({
-        to: AGENTCOIN_ESCROW,
+        to: AGENTKOIN_ESCROW,
         data: encodeFunctionData({ abi: ESCROW_ABI, functionName: fn, args: [BigInt(jobId)] }),
         value: 0n,
       });
@@ -496,7 +496,7 @@ Inputs: orderId or jobId. Base Sepolia testnet.`,
    */
   supportsNetwork = (network: Network) =>
     network.protocolFamily === "evm" &&
-    (AGENTCOIN_SUPPORTED_NETWORKS as readonly string[]).includes(network.networkId ?? "");
+    (AGENTKOIN_SUPPORTED_NETWORKS as readonly string[]).includes(network.networkId ?? "");
 
   /**
    * Checks the router's unsigned escrow transactions against local constants before signing them.
@@ -507,9 +507,9 @@ Inputs: orderId or jobId. Base Sepolia testnet.`,
    */
   private checkEscrowOrder(order: Json, me: Hex): Json[] {
     const e = order?.escrow ?? {};
-    const usdc = getAddress(AGENTCOIN_USDC);
-    const escrow = getAddress(AGENTCOIN_ESCROW);
-    if (Number(e.chainId) !== AGENTCOIN_CHAIN_ID)
+    const usdc = getAddress(AGENTKOIN_USDC);
+    const escrow = getAddress(AGENTKOIN_ESCROW);
+    if (Number(e.chainId) !== AGENTKOIN_CHAIN_ID)
       throw new Error(`escrow chainId ${e.chainId} is not 84532`);
     if (!e.contract || getAddress(e.contract) !== escrow)
       throw new Error(`unexpected escrow contract ${e.contract}`);
@@ -570,7 +570,7 @@ Inputs: orderId or jobId. Base Sepolia testnet.`,
   }
 
   /**
-   * Calls the AgentCoin router.
+   * Calls the AgentKoin router.
    *
    * @param method - HTTP method.
    * @param path - Request path.
@@ -611,10 +611,10 @@ Inputs: orderId or jobId. Base Sepolia testnet.`,
 }
 
 /**
- * Factory function to create an AgentCoinActionProvider.
+ * Factory function to create an AgentKoinActionProvider.
  *
  * @param config - Optional configuration.
- * @returns A new AgentCoinActionProvider.
+ * @returns A new AgentKoinActionProvider.
  */
-export const agentcoinActionProvider = (config: AgentCoinConfig = {}) =>
-  new AgentCoinActionProvider(config);
+export const agentkoinActionProvider = (config: AgentKoinConfig = {}) =>
+  new AgentKoinActionProvider(config);
