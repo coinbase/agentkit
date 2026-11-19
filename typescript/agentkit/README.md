@@ -359,6 +359,15 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Edge Signals</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_token_verdict</code></td>
+    <td width="768">Fetches an optional pre-trade Token Verdict for an ERC-20 (grade, band, score, reasons). Costs $0.01 USDC on Base via x402, paid from the agent's wallet. Built by Edge Signals; not financial advice.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Enso</strong></summary>
 <table width="100%">
 <tr>

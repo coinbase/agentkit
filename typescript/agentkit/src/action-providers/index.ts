@@ -12,6 +12,7 @@ export * from "./clanker";
 export * from "./compound";
 export * from "./defillama";
 export * from "./dtelecom";
+export * from "./edgesignals";
 export * from "./enso";
 export * from "./erc20";
 export * from "./erc721";
