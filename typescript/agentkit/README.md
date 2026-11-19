@@ -520,6 +520,31 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>NullClear</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>preflight_guard</code></td>
+    <td width="768">Runs a 1-call Pre-Sign Firewall check across 7 chains (Base, Ethereum, Arbitrum, Optimism, Polygon, BSC, Solana), unwrapping nested calldata, auditing EIP-712 Permits, simulating asset diffs, and scanning touched tokens before signing.</td>
+</tr>
+<tr>
+    <td width="200"><code>scan_token</code></td>
+    <td width="768">Audits ERC-20, SPL, and Token-2022 tokens for honeypots, hidden sell taxes, mutable proxies, and blacklist hooks.</td>
+</tr>
+<tr>
+    <td width="200"><code>inspect_contract</code></td>
+    <td width="768">Inspects EVM contract proxy slots, verified Sourcify ABIs, and dangerous bytecode control-flow patterns.</td>
+</tr>
+<tr>
+    <td width="200"><code>decode_calldata</code></td>
+    <td width="768">Recursively unwraps nested Multicall3, Universal Router, and Safe calldata and translates revert errors.</td>
+</tr>
+<tr>
+    <td width="200"><code>simulate_tx</code></td>
+    <td width="768">Runs stateful EVM eth_simulateV1 or Solana simulateTransaction preflight checks before broadcast.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Onramp</strong></summary>
 <table width="100%">
 <tr>
