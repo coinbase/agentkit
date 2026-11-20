@@ -21,6 +21,7 @@ const mockFetchWithPayment = jest.fn();
 // Mock x402 client
 const mockX402Client = {
   registerScheme: jest.fn(),
+  onBeforePaymentCreation: jest.fn(),
 };
 
 // Mock utils functions
@@ -600,6 +601,56 @@ describe("X402ActionProvider", () => {
       expect(parsedResult.success).toBe(true);
       expect(parsedResult.data).toEqual({ message: "Paid content" });
       expect(parsedResult.paymentProof).toEqual(MOCK_PAYMENT_PROOF);
+    });
+
+    it("should enforce maxPaymentUsdc before signing a payment", async () => {
+      mockFetchWithPayment.mockResolvedValue(
+        createMockResponse({
+          status: 200,
+          data: { message: "Paid content" },
+          headers: { "content-type": "application/json" },
+        }),
+      );
+
+      await provider.makeHttpRequestWithX402(makeMockWalletProvider("base-sepolia"), {
+        url: "https://www.x402.org/protected",
+        method: "GET",
+        headers: null,
+        queryParams: null,
+        body: null,
+      });
+
+      expect(mockX402Client.onBeforePaymentCreation).toHaveBeenCalledTimes(1);
+      const hook = mockX402Client.onBeforePaymentCreation.mock.calls[0][0];
+
+      // v2 requirements carry `amount`
+      mockValidatePaymentLimit.mockReturnValueOnce({
+        isValid: false,
+        requestedAmount: "2",
+        maxAmount: "1",
+      });
+      const aborted = await hook({
+        paymentRequired: {},
+        selectedRequirements: { amount: "2000000" },
+      });
+      expect(mockValidatePaymentLimit).toHaveBeenLastCalledWith("2000000", 1);
+      expect(aborted).toEqual({
+        abort: true,
+        reason: "The requested payment of 2 USDC exceeds the maximum spending limit of 1 USDC.",
+      });
+
+      // v1 requirements carry `maxAmountRequired`
+      mockValidatePaymentLimit.mockReturnValueOnce({
+        isValid: true,
+        requestedAmount: "0.01",
+        maxAmount: "1",
+      });
+      const allowed = await hook({
+        paymentRequired: {},
+        selectedRequirements: { maxAmountRequired: "10000" },
+      });
+      expect(mockValidatePaymentLimit).toHaveBeenLastCalledWith("10000", 1);
+      expect(allowed).toBeUndefined();
     });
 
     it("should handle successful non-payment requests", async () => {
