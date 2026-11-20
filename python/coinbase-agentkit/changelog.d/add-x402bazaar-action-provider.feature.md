@@ -1,0 +1,1 @@
+Added the x402 Bazaar action provider with a `token_verdict_check` action returning a pre-trade SAFE / CAUTION / AVOID / UNKNOWN safety verdict for Base ERC-20 tokens (honeypot, sell-tax, owner powers, exit-liquidity, freeze/seize), using a free daily tier by default and an optional x402 paid path when payment is enabled.
