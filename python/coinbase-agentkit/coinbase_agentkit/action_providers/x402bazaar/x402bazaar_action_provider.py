@@ -16,7 +16,7 @@ from ...wallet_providers.evm_wallet_provider import EvmWalletProvider
 from ...wallet_providers.wallet_provider import WalletProvider
 from ..action_decorator import create_action
 from ..action_provider import ActionProvider
-from .constants import SUPPORTED_NETWORKS, TOKEN_VERDICT_URL
+from .constants import API_BASE_URL, CHAIN_ENDPOINTS, SUPPORTED_NETWORKS
 from .schemas import TokenVerdictSchema
 
 
@@ -41,18 +41,21 @@ class X402BazaarActionProvider(ActionProvider[WalletProvider]):
 
     @create_action(
         name="token_verdict_check",
-        description="""Pre-trade safety check for a Base (eip155:8453) ERC-20 token before buying or approving it.
+        description="""Pre-trade safety check for a Base, Arbitrum or Solana token before buying or approving it.
 
 Returns a SAFE / CAUTION / AVOID / UNKNOWN verdict with a confidence score, a one-line headline,
 the reasons behind the verdict, and a recommended maximum position size in USD. Covers honeypot
-behavior, sell-tax, owner powers, exit-liquidity, and freeze/seize controls.
+behavior, sell-tax, mint/freeze/owner powers, LP-lock, holder concentration, and (on Base) B20
+freeze/seize controls.
 
 Inputs:
-- address: The Base ERC-20 token contract address (0x + 40 hex chars).
+- address: The token to screen — a Base/Arbitrum 0x… address or a Solana base58 mint.
+- chain: (optional) 'base' (default), 'arbitrum', or 'solana'. A base58 token implies solana.
 - amount_usd: (optional) Intended trade size in USD; tunes the recommended max safe size.
 
-Use this before any action that buys, swaps into, or approves an unfamiliar Base token.
-Powered by x402 Bazaar: a free daily call by default, or $0.03 USDC/call over x402 when payment is enabled.
+Use this before any action that buys, swaps into, or approves an unfamiliar token.
+Powered by x402 Bazaar: a free daily call by default, or $0.03 USDC/call over x402 (settles on
+Base for any chain) when payment is enabled.
 """,
         schema=TokenVerdictSchema,
     )
@@ -70,17 +73,25 @@ Powered by x402 Bazaar: a free daily call by default, or $0.03 USDC/call over x4
         try:
             validated_args = TokenVerdictSchema(**args)
 
-            params: dict[str, str] = {"address": validated_args.address}
+            # Default base; a base58 (non-0x) token implies Solana. Every chain's
+            # verdict settles in USDC on Base, so the EVM paid path covers all three.
+            chain = validated_args.chain or (
+                "base" if validated_args.address.startswith("0x") else "solana"
+            )
+            endpoint, param = CHAIN_ENDPOINTS[chain]
+            url = f"{API_BASE_URL}/{endpoint}"
+
+            params: dict[str, str] = {param: validated_args.address}
             if validated_args.amount_usd is not None:
                 params["amountUsd"] = str(validated_args.amount_usd)
 
             if self._enable_payment and isinstance(wallet_provider, EvmWalletProvider):
                 client = self._create_x402_client(wallet_provider)
                 session = x402_requests(client)
-                response = session.get(TOKEN_VERDICT_URL, params=params)
+                response = session.get(url, params=params)
             else:
                 params["free"] = "1"
-                response = requests.get(TOKEN_VERDICT_URL, params=params)
+                response = requests.get(url, params=params)
 
             if response.status_code == 402:
                 return json.dumps(

@@ -109,6 +109,41 @@ describe("X402BazaarActionProvider", () => {
     });
   });
 
+  describe("multi-chain routing", () => {
+    const okFetch = () =>
+      jest.spyOn(global, "fetch").mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ data: MOCK_VERDICT }),
+      } as Response);
+
+    it("routes an Arbitrum token to arb-token-verdict", async () => {
+      const fetchMock = okFetch();
+      await provider.tokenVerdictCheck({} as never, { address: MOCK_TOKEN, chain: "arbitrum" });
+      const url = fetchMock.mock.calls[0][0] as string;
+      expect(url).toContain("arb-token-verdict");
+      expect(url).toContain(`address=${MOCK_TOKEN}`);
+    });
+
+    it("routes a Solana mint to sol-token-verdict with mint=", async () => {
+      const fetchMock = okFetch();
+      const mint = "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263";
+      await provider.tokenVerdictCheck({} as never, { address: mint });
+      const url = fetchMock.mock.calls[0][0] as string;
+      expect(url).toContain("sol-token-verdict");
+      expect(url).toContain(`mint=${mint}`);
+    });
+
+    it("defaults a 0x token to Base token-verdict", async () => {
+      const fetchMock = okFetch();
+      await provider.tokenVerdictCheck({} as never, { address: MOCK_TOKEN });
+      const url = fetchMock.mock.calls[0][0] as string;
+      expect(url).toContain("/token-verdict");
+      expect(url).not.toContain("arb-token-verdict");
+      expect(url).not.toContain("sol-token-verdict");
+    });
+  });
+
   describe("supportsNetwork", () => {
     it("supports Base mainnet (evm)", () => {
       expect(

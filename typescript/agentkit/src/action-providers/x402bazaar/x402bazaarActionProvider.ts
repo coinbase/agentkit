@@ -6,7 +6,7 @@ import { EvmWalletProvider, WalletProvider } from "../../wallet-providers";
 import { x402Client, wrapFetchWithPayment } from "@x402/fetch";
 import { registerExactEvmScheme } from "@x402/evm/exact/client";
 import { TokenVerdictSchema, X402BazaarConfig } from "./schemas";
-import { TOKEN_VERDICT_URL, SUPPORTED_NETWORKS } from "./constants";
+import { API_BASE_URL, CHAIN_ENDPOINTS, SUPPORTED_NETWORKS } from "./constants";
 
 /**
  * X402BazaarActionProvider screens Base ERC-20 tokens before an agent buys or
@@ -40,19 +40,21 @@ export class X402BazaarActionProvider extends ActionProvider<WalletProvider> {
   @CreateAction({
     name: "token_verdict_check",
     description: `
-Pre-trade safety check for a Base (eip155:8453) ERC-20 token before buying or approving it.
+Pre-trade safety check for a Base, Arbitrum or Solana token before buying or approving it.
 
 Returns a SAFE / CAUTION / AVOID / UNKNOWN verdict with a confidence score, a one-line
 headline, the reasons behind the verdict, and a recommended maximum position size in USD.
-Covers honeypot behavior, sell-tax, owner powers, exit-liquidity, and freeze/seize controls.
+Covers honeypot behavior, sell-tax, mint/freeze/owner powers, LP-lock, holder concentration,
+and (on Base) B20 freeze/seize controls.
 
 Inputs:
-- address: The Base ERC-20 token contract address (0x + 40 hex chars).
+- address: The token to screen — a Base/Arbitrum 0x… address or a Solana base58 mint.
+- chain: (optional) 'base' (default), 'arbitrum', or 'solana'. A base58 token implies solana.
 - amountUsd: (optional) Intended trade size in USD; tunes the recommended max safe size.
 
-Use this before any action that buys, swaps into, or approves an unfamiliar Base token.
-Powered by x402 Bazaar: a free daily call by default, or $0.03 USDC/call over x402 when
-payment is enabled on the provider.
+Use this before any action that buys, swaps into, or approves an unfamiliar token.
+Powered by x402 Bazaar: a free daily call by default, or $0.03 USDC/call over x402 (settles
+on Base for any chain) when payment is enabled on the provider.
 `,
     schema: TokenVerdictSchema,
   })
@@ -61,7 +63,12 @@ payment is enabled on the provider.
     args: z.infer<typeof TokenVerdictSchema>,
   ): Promise<string> {
     try {
-      const params = new URLSearchParams({ address: args.address });
+      // Default base; a base58 (non-0x) token implies Solana. Every chain's
+      // verdict settles in USDC on Base, so the EVM paid path covers all three.
+      const chain = args.chain ?? (args.address.startsWith("0x") ? "base" : "solana");
+      const { endpoint, param } = CHAIN_ENDPOINTS[chain];
+      const url = `${API_BASE_URL}/${endpoint}`;
+      const params = new URLSearchParams({ [param]: args.address });
       if (args.amountUsd !== undefined) {
         params.set("amountUsd", String(args.amountUsd));
       }
@@ -72,13 +79,13 @@ payment is enabled on the provider.
         // Paid path: pay $0.03 USDC/call over x402 using the agent's wallet.
         const client = this.createX402Client(walletProvider);
         const fetchWithPayment = wrapFetchWithPayment(fetch, client);
-        response = await fetchWithPayment(`${TOKEN_VERDICT_URL}?${params.toString()}`, {
+        response = await fetchWithPayment(`${url}?${params.toString()}`, {
           method: "GET",
         });
       } else {
         // Free tier (default): one full call per day per IP, no payment.
         params.set("free", "1");
-        response = await fetch(`${TOKEN_VERDICT_URL}?${params.toString()}`, { method: "GET" });
+        response = await fetch(`${url}?${params.toString()}`, { method: "GET" });
       }
 
       if (response.status === 402) {

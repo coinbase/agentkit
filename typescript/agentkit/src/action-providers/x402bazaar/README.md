@@ -1,6 +1,6 @@
 # x402 Bazaar Action Provider
 
-This directory contains the **X402BazaarActionProvider**, which screens Base ERC-20 tokens for safety before an agent buys or approves them, using the [x402 Bazaar](https://402.com.tr) token-verdict API.
+This directory contains the **X402BazaarActionProvider**, which screens Base, Arbitrum and Solana tokens for safety before an agent buys or approves them, using the [x402 Bazaar](https://402.com.tr) token-verdict API.
 
 ## Overview
 
@@ -10,13 +10,13 @@ By default it uses the free daily tier (1 full call/day per IP, no wallet needed
 
 ## Actions
 
-- `token_verdict_check`: Pre-trade safety check for a Base ERC-20 token.
+- `token_verdict_check`: Pre-trade safety check for a Base, Arbitrum or Solana token (via the `chain` input).
   - **address** (string, required): The token contract address (`0x` + 40 hex chars).
   - **amountUsd** (number, optional): Intended trade size in USD; tunes the recommended max safe size.
 
 ## Network Support
 
-Base mainnet (`base-mainnet`, eip155:8453) only.
+Agent wallet: Base or Arbitrum. Token screening works for Base, Arbitrum and Solana tokens via the `chain` input (all settle in USDC on Base).
 
 ## Usage
 

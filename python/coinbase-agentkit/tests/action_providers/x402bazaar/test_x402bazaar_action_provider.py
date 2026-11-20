@@ -65,6 +65,33 @@ def test_token_verdict_check_includes_amount_usd():
         assert kwargs["params"]["amountUsd"] == "500.0"
 
 
+def test_token_verdict_check_routes_arbitrum():
+    """An Arbitrum token routes to the arb-token-verdict endpoint."""
+    with patch("requests.get") as mock_get:
+        mock_get.return_value = _MockResponse(json_body={"data": MOCK_VERDICT})
+
+        x402bazaar_action_provider().token_verdict_check(
+            {}, {"address": MOCK_TOKEN, "chain": "arbitrum"}
+        )
+
+        args, kwargs = mock_get.call_args
+        assert "arb-token-verdict" in args[0]
+        assert kwargs["params"]["address"] == MOCK_TOKEN
+
+
+def test_token_verdict_check_routes_solana():
+    """A base58 mint routes to sol-token-verdict with a mint= param."""
+    mint = "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"
+    with patch("requests.get") as mock_get:
+        mock_get.return_value = _MockResponse(json_body={"data": MOCK_VERDICT})
+
+        x402bazaar_action_provider().token_verdict_check({}, {"address": mint})
+
+        args, kwargs = mock_get.call_args
+        assert "sol-token-verdict" in args[0]
+        assert kwargs["params"]["mint"] == mint
+
+
 def test_token_verdict_check_unwrapped_response():
     """A raw (unwrapped) verdict body is returned directly."""
     with patch("requests.get") as mock_get:
