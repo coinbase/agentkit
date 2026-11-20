@@ -1,7 +1,7 @@
 """Tests for the x402 action provider."""
 
 import json
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 import requests
@@ -289,3 +289,44 @@ def test_supports_network():
     provider = x402_action_provider()
     for network, expected in test_cases:
         assert provider.supports_network(network) is expected
+
+
+# =========================================================
+# Payment limit enforcement in the x402 client
+# =========================================================
+
+
+def test_x402_client_enforces_max_payment_usdc(mock_wallet):
+    """The client used by make_http_request_with_x402 must refuse payments above the limit."""
+    from types import SimpleNamespace
+
+    from x402 import AbortResult, PaymentCreationContext
+
+    from coinbase_agentkit.action_providers.x402.schemas import X402Config
+
+    provider = x402_action_provider(X402Config(max_payment_usdc=0.5))
+    with (
+        patch(
+            "coinbase_agentkit.action_providers.x402.x402_action_provider.register_exact_evm_client"
+        ),
+        patch("coinbase_agentkit.action_providers.x402.x402_action_provider.EthAccountSigner"),
+    ):
+        client = provider._create_x402_client(mock_wallet)
+
+    def run_hooks(requirements):
+        context = PaymentCreationContext(
+            payment_required=Mock(), selected_requirements=requirements
+        )
+        return [hook(context) for hook in client._before_payment_creation_hooks]
+
+    # v2 requirements carry `amount`, v1 requirements carry `max_amount_required`
+    over_limit = run_hooks(SimpleNamespace(amount="1000000"))
+    assert any(isinstance(result, AbortResult) for result in over_limit)
+    assert "exceeds the maximum spending limit of 0.5 USDC" in next(
+        result.reason for result in over_limit if isinstance(result, AbortResult)
+    )
+    over_limit_v1 = run_hooks(SimpleNamespace(max_amount_required="600000"))
+    assert any(isinstance(result, AbortResult) for result in over_limit_v1)
+
+    within_limit = run_hooks(SimpleNamespace(amount="500000"))
+    assert not any(isinstance(result, AbortResult) for result in within_limit)
