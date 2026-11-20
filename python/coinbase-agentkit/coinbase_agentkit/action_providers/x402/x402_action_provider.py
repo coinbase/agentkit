@@ -8,7 +8,7 @@ import os
 from typing import Any
 
 import requests
-from x402 import x402ClientSync
+from x402 import AbortResult, PaymentCreationContext, x402ClientSync
 from x402.http.clients.requests import x402_requests
 from x402.mechanisms.evm import EthAccountSigner
 from x402.mechanisms.evm.exact.register import register_exact_evm_client
@@ -865,6 +865,26 @@ These are the only services that can be called using make_http_request or make_h
         client = x402ClientSync()
         signer = wallet_provider.to_signer()
         register_exact_evm_client(client, EthAccountSigner(signer))
+
+        # Enforce the configured spending limit on every payment this client signs,
+        # including the automatic flow of make_http_request_with_x402.
+        max_payment_usdc = self._config.max_payment_usdc
+
+        def enforce_payment_limit(context: PaymentCreationContext) -> AbortResult | None:
+            requirements = context.selected_requirements
+            payment_amount = (
+                getattr(requirements, "amount", None)
+                or getattr(requirements, "max_amount_required", None)
+                or "0"
+            )
+            payment_validation = validate_payment_limit(payment_amount, max_payment_usdc)
+            if not payment_validation["is_valid"]:
+                return AbortResult(
+                    reason=f'The requested payment of {payment_validation["requested_amount"]} USDC exceeds the maximum spending limit of {payment_validation["max_amount"]} USDC.'
+                )
+            return None
+
+        client.on_before_payment_creation(enforce_payment_limit)
         return client
 
     def _parse_response_data(self, response: requests.Response) -> Any:
