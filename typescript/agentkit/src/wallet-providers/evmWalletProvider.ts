@@ -2,7 +2,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { toAccount } from "viem/accounts";
-import { WalletProvider } from "./walletProvider";
+import {
+  WalletProvider,
+  assertDacsSpendMandate,
+  type DacsMandateMeta,
+} from "./walletProvider";
 import {
   TransactionRequest,
   ReadContractParameters,
@@ -15,6 +19,10 @@ import {
   LocalAccount,
   numberToHex,
 } from "viem";
+
+export { assertDacsSpendMandate, type DacsMandateMeta };
+
+export type DacsTransactionRequest = TransactionRequest & DacsMandateMeta;
 
 /**
  * Minimal EIP-1193 provider interface.
@@ -45,6 +53,8 @@ export abstract class EvmWalletProvider extends WalletProvider {
         return this.signMessage(message as string | Uint8Array);
       },
       signTransaction: async transaction => {
+        const dacsTx = transaction as DacsTransactionRequest;
+        assertDacsSpendMandate(dacsTx.value ?? 0n, dacsTx);
         return this.signTransaction(transaction as TransactionRequest);
       },
       signTypedData: async typedData => {
@@ -70,7 +80,8 @@ export abstract class EvmWalletProvider extends WalletProvider {
             return numberToHex(Number(this.getNetwork().chainId));
 
           case "eth_sendTransaction": {
-            const txParams = (args.params as any[])?.[0] ?? {};
+            const txParams = ((args.params as any[])?.[0] ?? {}) as DacsTransactionRequest;
+            assertDacsSpendMandate(txParams.value ?? 0n, txParams);
             const hash = await this.sendTransaction(txParams);
             // Wait for the transaction receipt so that a userOpHash is resolved to a real transaction hash for CDP smart wallets.
             const receipt = await this.waitForTransactionReceipt(hash);
