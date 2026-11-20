@@ -867,6 +867,20 @@ These are the only services that can be called using make_http_request or make_h
       registerExactSvmScheme(client, { signer });
     }
 
+    // Enforce the configured spending limit on every payment this client signs,
+    // including the automatic flow of make_http_request_with_x402.
+    client.onBeforePaymentCreation(async ({ selectedRequirements }) => {
+      const requirements = selectedRequirements as { amount?: string; maxAmountRequired?: string };
+      const paymentAmount = requirements.amount ?? requirements.maxAmountRequired ?? "0";
+      const paymentValidation = validatePaymentLimit(paymentAmount, this.config.maxPaymentUsdc);
+      if (!paymentValidation.isValid) {
+        return {
+          abort: true,
+          reason: `The requested payment of ${paymentValidation.requestedAmount} USDC exceeds the maximum spending limit of ${paymentValidation.maxAmount} USDC.`,
+        };
+      }
+    });
+
     return client;
   }
 
