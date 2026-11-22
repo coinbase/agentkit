@@ -28,7 +28,18 @@ export async function getMcpTools(agentKit: AgentKit): Promise<AgentKitMcpTools>
       return {
         name: action.name,
         description: action.description,
-        inputSchema: z.toJSONSchema(action.schema),
+        inputSchema: z.toJSONSchema(action.schema, {
+          // Describe what the caller sends. The default ("output") throws on schemas that use .transform()
+          io: "input",
+          // Describe types JSON Schema can't express (z.custom) as {} instead of throwing; invoke still validates them
+          unrepresentable: "any",
+          // Keep objects closed, as the "output" conversion did
+          override: ({ jsonSchema }) => {
+            if (jsonSchema.type === "object" && jsonSchema.additionalProperties === undefined) {
+              jsonSchema.additionalProperties = false;
+            }
+          },
+        }),
       } as Tool;
     }),
     toolHandler: async (name: string, args: unknown) => {
