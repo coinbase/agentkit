@@ -29,6 +29,26 @@ describe("PythActionProvider", () => {
       expect(parsed.priceFeedID).toEqual("some-price-feed-id");
     });
 
+    it("should match on the symbol when Hermes returns no base attribute", async () => {
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [
+          { id: "wbtc-usd-id", attributes: { quote_currency: "USD", symbol: "Crypto.WBTC/USD" } },
+          { id: "eth-btc-id", attributes: { quote_currency: "BTC", symbol: "Crypto.ETH/BTC" } },
+          { id: "btc-usd-id", attributes: { quote_currency: "USD", symbol: "Crypto.BTC/USD" } },
+        ],
+      });
+
+      const result = await provider.fetchPriceFeed({
+        tokenSymbol: "btc",
+        assetType: "crypto",
+        quoteCurrency: "USD",
+      });
+      const parsed = JSON.parse(result);
+      expect(parsed.success).toBe(true);
+      expect(parsed.priceFeedID).toEqual("btc-usd-id");
+    });
+
     it("should return the first price feed ID that matches the input token symbol for metals", async () => {
       fetchMock.mockResolvedValueOnce({
         ok: true,

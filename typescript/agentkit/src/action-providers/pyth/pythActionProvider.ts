@@ -59,9 +59,15 @@ export class PythActionProvider extends ActionProvider {
 
     const filteredData = data.filter(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (item: any) =>
-        item.attributes.base.toLowerCase() === args.tokenSymbol.toLowerCase() &&
-        item.attributes.quote_currency.toLowerCase() === args.quoteCurrency.toLowerCase(),
+      (item: any) => {
+        // Hermes no longer returns attributes.base, so fall back to the base in the symbol
+        // ("Crypto.BTC/USD", "Equity.US.AAPL/USD.PRE")
+        const base = item.attributes.base ?? item.attributes.symbol?.split("/")[0].split(".").pop();
+        return (
+          base?.toLowerCase() === args.tokenSymbol.toLowerCase() &&
+          item.attributes.quote_currency.toLowerCase() === args.quoteCurrency.toLowerCase()
+        );
+      },
     );
 
     if (filteredData.length === 0) {

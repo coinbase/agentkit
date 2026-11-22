@@ -41,6 +41,49 @@ def test_pyth_fetch_price_feed_success():
         )
 
 
+def test_pyth_fetch_price_feed_without_base_attribute():
+    """Test that the feed is matched on its symbol when Hermes returns no base attribute."""
+    mock_response = [
+        {
+            "id": "wbtc-usd-id",
+            "attributes": {
+                "quote_currency": "USD",
+                "symbol": "Crypto.WBTC/USD",
+                "display_symbol": "WBTCUSD",
+            },
+        },
+        {
+            "id": "eth-btc-id",
+            "attributes": {
+                "quote_currency": "BTC",
+                "symbol": "Crypto.ETH/BTC",
+                "display_symbol": "ETHBTC",
+            },
+        },
+        {
+            "id": "btc-usd-id",
+            "attributes": {
+                "quote_currency": "USD",
+                "symbol": "Crypto.BTC/USD",
+                "display_symbol": "BTCUSD",
+            },
+        },
+    ]
+
+    with patch("requests.get") as mock_get:
+        mock_get.return_value.json.return_value = mock_response
+        mock_get.return_value.ok = True
+
+        result = pyth_action_provider().fetch_price_feed(
+            {"token_symbol": "btc", "quote_currency": "USD", "asset_type": "crypto"}
+        )
+
+        parsed_result = json.loads(result)
+        assert parsed_result["success"] is True
+        assert parsed_result["priceFeedID"] == "btc-usd-id"
+        assert parsed_result["feedType"] == "BTCUSD"
+
+
 def test_pyth_fetch_price_feed_empty_response():
     """Test pyth fetch price feed error with empty response for ticker symbol."""
     with patch("requests.get") as mock_get:
