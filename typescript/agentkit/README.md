@@ -485,6 +485,19 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>HelmSwap</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_swap_quote_from_helmswap</code></td>
+    <td width="768">Fetches a swap quote (expected output, minimum output, price impact and disclosed fee) from the HelmSwap API.</td>
+</tr>
+<tr>
+    <td width="200"><code>execute_swap_on_helmswap</code></td>
+    <td width="768">Executes a token swap by signing and sending the unsigned transaction built by the HelmSwap API.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Messari</strong></summary>
 <table width="100%">
 <tr>
