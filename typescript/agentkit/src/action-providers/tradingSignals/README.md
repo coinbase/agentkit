@@ -18,7 +18,7 @@ tradingSignals/
 
 | Action | Price | What it returns |
 | --- | --- | --- |
-| `token_risk_verdict` | 0.01 USDC | `safe` / `caution` / `avoid` with an A-F grade and reasons: mint and freeze authority, honeypot or sell-tax test, LP lock, top-holder concentration, sniper and bundled wallets, contract flags. |
+| `token_risk_verdict` | 0.01 USDC | green light (passed our check, not a promise) / `caution` / `avoid` with an A-F grade and reasons: mint and freeze authority, honeypot or sell-tax test, LP lock, top-holder concentration, sniper and bundled wallets, contract flags. |
 | `token_pre_trade_pack` | 0.015 USDC | One `GO` / `CAUTION` / `STOP` decision combining the token verdict, an OFAC sanctions screen of the token's authorities and an optional counterparty wallet, and that wallet's USDC pay-readiness. |
 | `token_whale_flow` | 0.02 USDC | Whale buys vs sells in USD over 1-24h, net flow and % of liquidity, an accumulation / distribution signal, hourly flow, largest trades, top accumulators and distributors. |
 
@@ -50,10 +50,10 @@ const agentkit = await AgentKit.from({
 ## Example
 
 ```
-Prompt: Before I buy it, is DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263 safe? And are whales buying it?
+Prompt: Before I swap into DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263, does it pass the risk check? And what are whales doing with it?
 
 -------------------
-token_risk_verdict -> { "status": "success", "summary": "Bonk: SAFE (grade A)", "priceUsdc": 0.01, "paidWith": "x402", ... }
+token_risk_verdict -> { "status": "success", "summary": "Bonk: GREEN LIGHT: passed our check, not a promise (grade A)", "priceUsdc": 0.01, "paidWith": "x402", ... }
 token_whale_flow   -> { "status": "success", "summary": "Whale signal: neutral; 2 buys ($18232) vs 2 sells ($16078), net $2154", "priceUsdc": 0.02, ... }
 -------------------
 ```

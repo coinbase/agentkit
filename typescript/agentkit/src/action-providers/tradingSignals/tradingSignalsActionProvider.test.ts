@@ -138,7 +138,8 @@ describe("TradingSignalsActionProvider", () => {
       const [url] = mockFetchWithPayment.mock.calls[0];
       expect(url).toBe(`https://signals.incomefather.com/base/token-verdict?address=${BASE_TOKEN}`);
       expect(result.status).toBe("success");
-      expect(result.summary).toBe("TOSHI: SAFE (grade A)");
+      expect(result.summary).toBe("TOSHI: GREEN LIGHT: passed our check, not a promise (grade A)");
+      expect(result.data.verdict.rating).toBe("safe");
       expect(result.paidWith).toBe("x402");
       expect(result.priceUsdc).toBe(0.01);
       expect(result.payment.explorerUrl).toBe("https://basescan.org/tx/0xtx");

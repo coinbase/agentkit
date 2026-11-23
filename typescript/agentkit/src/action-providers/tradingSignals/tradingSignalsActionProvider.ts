@@ -24,6 +24,19 @@ import {
 } from "./schemas";
 
 /**
+ * The API's rating value "safe" is shown to users as a green light; the raw value stays unchanged in `data`.
+ *
+ * @param rating - The rating value from the API
+ * @returns The green-light label, or null for any other rating
+ */
+function greenLightLabel(rating: unknown): string | null {
+  const r = String(rating ?? "").toLowerCase();
+  return r === "safe" || r === "green_light"
+    ? "GREEN LIGHT: passed our check, not a promise"
+    : null;
+}
+
+/**
  * Configuration options for the TradingSignalsActionProvider.
  */
 export interface TradingSignalsActionProviderConfig {
@@ -90,7 +103,7 @@ export class TradingSignalsActionProvider extends ActionProvider<WalletProvider>
   }
 
   /**
-   * Gets a safe / caution / avoid risk verdict for a Base or Solana token.
+   * Gets a green light / caution / avoid risk verdict for a Base or Solana token.
    *
    * @param walletProvider - The wallet provider used to pay for the call
    * @param args - The token address and optional chain
@@ -99,13 +112,13 @@ export class TradingSignalsActionProvider extends ActionProvider<WalletProvider>
   @CreateAction({
     name: "token_risk_verdict",
     description: `
-This tool checks whether a Base ERC-20 or Solana SPL / Token-2022 token is safe to buy, swap into, or accept, using the Trading Signals Toolkit.
+This tool runs a risk check on a Base ERC-20 or Solana SPL / Token-2022 token before an agent swaps into it or accepts it, using the Trading Signals Toolkit.
 
 It takes the following inputs:
 - token: the token address (Base 0x... contract or Solana base58 mint)
 - chain: optional, 'base' or 'solana' (detected from the address format when omitted)
 
-It returns a rating of safe, caution, or avoid with an A-F grade and the reasons behind it (mint and freeze authority, honeypot or sell-tax test, LP lock, top-holder concentration, sniper and bundled wallets, contract flags).
+It returns a rating of green light (passed our check, not a promise), caution, or avoid with an A-F grade and the reasons behind it (mint and freeze authority, honeypot or sell-tax test, LP lock, top-holder concentration, sniper and bundled wallets, contract flags).
 
 Important notes:
 - Costs 0.01 USDC per call, paid over x402 from the agent's wallet on Base mainnet or Solana mainnet. The wallet needs a small USDC balance on that network.
@@ -511,7 +524,8 @@ Important notes:
     const verdict = (d.verdict ?? {}) as Record<string, unknown>;
     const token = (d.token ?? {}) as Record<string, unknown>;
     const name = token.symbol ?? token.name ?? "token";
-    const rating = String(verdict.rating ?? "unknown").toUpperCase();
+    const rating =
+      greenLightLabel(verdict.rating) ?? String(verdict.rating ?? "unknown").toUpperCase();
     const grade = verdict.grade ? ` (grade ${verdict.grade})` : "";
     return `${name}: ${rating}${grade}`;
   }
@@ -526,7 +540,8 @@ Important notes:
     const token = (d.token ?? {}) as Record<string, unknown>;
     const verdict = (token.verdict ?? {}) as Record<string, unknown>;
     const parts = [`Decision: ${d.decision ?? "unknown"}`];
-    if (verdict.rating) parts.push(`token verdict ${verdict.rating}`);
+    if (verdict.rating)
+      parts.push(`token verdict ${greenLightLabel(verdict.rating) ?? verdict.rating}`);
     return parts.join(", ");
   }
 

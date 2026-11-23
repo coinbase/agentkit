@@ -638,7 +638,7 @@ const agent = createAgent({
 <table width="100%">
 <tr>
     <td width="200"><code>token_risk_verdict</code></td>
-    <td width="768">Returns a safe / caution / avoid verdict with an A-F grade and reasons for a Base or Solana token (0.01 USDC per call over x402).</td>
+    <td width="768">Returns a green light (passed our check, not a promise) / caution / avoid verdict with an A-F grade and reasons for a Base or Solana token (0.01 USDC per call over x402).</td>
 </tr>
 <tr>
     <td width="200"><code>token_pre_trade_pack</code></td>
