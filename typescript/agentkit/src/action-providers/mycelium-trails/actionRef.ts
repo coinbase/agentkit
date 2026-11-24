@@ -59,9 +59,14 @@ export function validateDomain(
     }
   }
   if (scope.length === 0) {
-    throw new OutOfProfileDomainError("scope", 'must be a non-empty string -- no "not applicable" exception');
+    throw new OutOfProfileDomainError(
+      "scope",
+      'must be a non-empty string -- no "not applicable" exception',
+    );
   }
-  if (typeof timestamp !== "string") throw new OutOfProfileDomainError("timestamp", "must be a string");
+  if (typeof timestamp !== "string") {
+    throw new OutOfProfileDomainError("timestamp", "must be a string");
+  }
   const m = TIMESTAMP_RE.exec(timestamp);
   if (!m) {
     throw new OutOfProfileDomainError(

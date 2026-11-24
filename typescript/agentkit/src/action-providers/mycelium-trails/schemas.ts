@@ -23,7 +23,11 @@ const ASCII_MESSAGE = "ASCII only (action_ref v1 domain)";
 
 export const ComputeActionRefSchema = z
   .object({
-    agent_id: z.string().min(1).regex(ASCII, ASCII_MESSAGE).describe("The agent identifier (ASCII)."),
+    agent_id: z
+      .string()
+      .min(1)
+      .regex(ASCII, ASCII_MESSAGE)
+      .describe("The agent identifier (ASCII)."),
     action_type: z
       .string()
       .min(1)

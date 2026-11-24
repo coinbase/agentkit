@@ -7,25 +7,20 @@ import { computeActionRef, OutOfProfileDomainError } from "./actionRef";
 
 const MYCELIUM_API_BASE = "https://argentum.rgiskard.xyz";
 
+// Shape of GET /trails/verify: { verified: false } or { verified: true, trail: {...} }.
 interface TrailVerifyResult {
   verified: boolean;
-  trail_id: string | null;
-  tx_hash: string | null;
-  timestamp: string | null;
-  service: string | null;
-  operation: string | null;
+  trail?: Record<string, unknown>;
 }
 
 /**
- * MyceliumTrailsActionProvider — post-execution accountability for AI agents.
+ * MyceliumTrailsActionProvider — read-only lookups of Mycelium Trails.
  *
- * Each Mycelium Trail is an on-chain record (Arbitrum One + Base mainnet) of a completed
- * agent action, anchored via payment_hash as a cross-surface key.
+ * A Mycelium Trail is a record of an action an agent reported. agent_id is declared by the
+ * caller that recorded the trail, and a trail is not proof that the action happened. A trail
+ * may be anchored on-chain; when it is, its tx_hash is the anchoring transaction.
  *
  * All actions are read-only. No API key required.
- *
- * External integration: aeoess/agent-passport-system uses Mycelium TrailRecords as the
- * on-chain persistence layer for APS receipts (PR #24, dual-chain anchored).
  */
 export class MyceliumTrailsActionProvider extends ActionProvider {
   constructor() {
@@ -34,21 +29,17 @@ export class MyceliumTrailsActionProvider extends ActionProvider {
 
   @CreateAction({
     name: "verify_trail",
-    description: `Verifies whether an agent has a confirmed Mycelium Trail for a given action.
+    description: `Checks whether a Mycelium Trail exists for an agent_id and an action_ref.
 
-A Mycelium Trail is an on-chain record (Arbitrum One + Base mainnet) of a completed agent action,
-anchored by payment_hash as a cross-surface key linking payments, executions, and proofs.
+A trail is a record of an action an agent reported; agent_id is declared by whoever recorded it.
+A match does not prove the action happened.
 
-Use this after an agent claims to have executed an action to verify it actually happened.
-Pair with compute_action_ref to generate the canonical reference before verifying.
+Pair with compute_action_ref to generate the action_ref before checking.
 
 Returns:
-- verified: true if the trail exists and is confirmed
-- tx_hash: on-chain transaction hash (if anchored)
-- timestamp: ISO 8601 timestamp of when the trail was recorded
-- trail_id: internal trail identifier
-- service: which Mycelium service recorded the trail (e.g. giskard-oasis)
-- operation: the operation type (e.g. enter_oasis, agent_trail)
+- verified: true if a trail exists for that agent_id and action_ref
+- trail (only when verified): the trail record, including trail_id, service, operation,
+  action_ref, timestamp (Unix seconds), success and tx_hash (the anchoring transaction, if anchored)
 `,
     schema: VerifyTrailSchema,
   })
@@ -61,14 +52,7 @@ Returns:
       const resp = await fetch(url, { signal: AbortSignal.timeout(10_000) });
 
       if (resp.status === 404) {
-        return JSON.stringify({
-          verified: false,
-          trail_id: null,
-          tx_hash: null,
-          timestamp: null,
-          service: null,
-          operation: null,
-        });
+        return JSON.stringify({ verified: false });
       }
       if (!resp.ok) {
         return JSON.stringify({ error: `API error: ${resp.status}`, verified: false });
@@ -104,7 +88,12 @@ Example: compute_action_ref("giskard-self", "trail.anchor", "mycelium:baseline",
     args: z.infer<typeof ComputeActionRefSchema>,
   ): Promise<string> {
     try {
-      const action_ref = computeActionRef(args.agent_id, args.action_type, args.scope, args.timestamp);
+      const action_ref = computeActionRef(
+        args.agent_id,
+        args.action_type,
+        args.scope,
+        args.timestamp,
+      );
       const canonical = JSON.stringify({
         action_type: args.action_type,
         agent_id: args.agent_id,
@@ -114,7 +103,11 @@ Example: compute_action_ref("giskard-self", "trail.anchor", "mycelium:baseline",
       return JSON.stringify({ action_ref, canonical });
     } catch (err) {
       if (err instanceof OutOfProfileDomainError) {
-        return JSON.stringify({ error: "OUT_OF_PROFILE_DOMAIN", field: err.field, reason: err.reason });
+        return JSON.stringify({
+          error: "OUT_OF_PROFILE_DOMAIN",
+          field: err.field,
+          reason: err.reason,
+        });
       }
       return JSON.stringify({ error: String(err) });
     }
@@ -122,15 +115,11 @@ Example: compute_action_ref("giskard-self", "trail.anchor", "mycelium:baseline",
 
   @CreateAction({
     name: "get_trails",
-    description: `Lists recent Mycelium Trails for a given agent.
+    description: `Lists recent Mycelium Trails recorded for a given agent_id.
 
-Returns the agent's verified action history — on-chain records of completed
-interactions in the Mycelium ecosystem (payments, swaps, knowledge queries).
-
-Use this to assess an agent's track record before trusting its claims.
-
-Each trail includes: service, operation, timestamp, karma_at_time, success,
-and bridge_tx_hash if a cross-chain swap was part of the action.
+Each trail is a record of an action the agent reported; it does not prove the action happened.
+A trail includes service, operation, timestamp (Unix seconds), success, karma_at_time,
+action_ref and tx_hash (the anchoring transaction, if anchored).
 `,
     schema: GetTrailsSchema,
   })

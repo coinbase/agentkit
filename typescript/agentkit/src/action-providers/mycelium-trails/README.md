@@ -1,22 +1,22 @@
 # Mycelium Trails — AgentKit Action Provider
 
 > **Disclaimer:** This is an unofficial, community-built AgentKit action provider.
-> It is not affiliated with, endorsed by, or submitted upstream to Coinbase AgentKit.
-> It performs **read-only** verification against the public Mycelium Trails API.
+> It is not affiliated with or endorsed by Coinbase.
+> It performs **read-only** lookups against the public Mycelium Trails API.
 > It does **not** execute transactions, sign messages, or provide security guarantees.
 > Not audited. Use at your own risk.
 
 ---
 
-Post-execution reputation layer for AI agents. Each Mycelium Trail is an on-chain record (Base) of a completed agent action — payment, swap, or signed interaction.
+A Mycelium Trail is a record of an action an agent reported, with an `action_ref` derived from the action's inputs. A trail may be anchored on-chain; when it is, `tx_hash` is the anchoring transaction.
 
-Use this provider to verify that an agent actually did what it claims.
+`agent_id` is declared by whoever recorded the trail, and a trail is not proof that the action happened. Use this provider to look trails up, not to confirm that an action took place.
 
 ## Actions
 
 ### `verify_trail`
 
-Check if an agent has a verified trail for a given `action_ref`.
+Check whether a trail exists for an `agent_id` and an `action_ref`.
 
 ```typescript
 const result = await agentkit.run(
@@ -24,7 +24,7 @@ const result = await agentkit.run(
 );
 ```
 
-Returns: `{ verified, trail_id, tx_hash, timestamp, service, operation }`
+Returns what `GET /trails/verify` returns: `{ verified, trail }`, where `trail` holds `trail_id`, `service`, `operation`, `action_ref`, `timestamp` (Unix seconds), `success`, `tx_hash` (if anchored) and the other trail fields. `trail` is absent when `verified` is false.
 
 ### `compute_action_ref`
 
@@ -47,48 +47,16 @@ List recent trails for an agent.
 const result = await agentkit.run("get trails for pioneer-agent-001");
 ```
 
-## Setup
-
-```bash
-npm install
-npm run demo   # runs against live Mycelium API, no API key needed
-```
-
-## Demo
-
-```bash
-npm run demo
-```
-
-Output:
-```
-=== Mycelium Trails AgentKit Provider Demo ===
-
-1. compute_action_ref()
-   inputs: { agent_id: 'giskard-self', action_type: 'trail.anchor', ... }
-   result: { action_ref: 'f4ebda73...', canonical: '...' }
-   matches known ref: true
-
-2. verify_trail()
-   result: { verified: true, tx_hash: null, timestamp: '2026-05-05T14:36:50+00:00', ... }
-
-3. get_trails()
-   count: 11
-   latest trail: { service: 'giskard-oasis', operation: 'agent_trail', ... }
-```
-
-Live dashboard: https://argentum.rgiskard.xyz/trails/demo
-
 ## Integration
 
 ```typescript
 import { AgentKit } from "@coinbase/agentkit";
-import { myceliumTrailsProvider } from "./src";
+import { myceliumTrailsActionProvider } from "@coinbase/agentkit";
 
 const agentkit = await AgentKit.from({
   walletProvider,
   actionProviders: [
-    myceliumTrailsProvider(),
+    myceliumTrailsActionProvider(),
     // ... other providers
   ],
 });
