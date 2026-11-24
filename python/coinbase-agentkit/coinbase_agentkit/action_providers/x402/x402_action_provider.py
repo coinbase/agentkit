@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import base64
 import json
+import math
 import os
+import re
 from typing import Any
 
 import requests
@@ -24,6 +26,7 @@ from .schemas import (
     EmptySchema,
     HttpRequestSchema,
     ListX402ServicesSchema,
+    PaymentOptionSchema,
     RegisterServiceSchema,
     RetryWithX402Schema,
     X402Config,
@@ -421,7 +424,8 @@ DO NOT use this action directly without first trying make_http_request!""",
                     indent=2,
                 )
 
-            # Validate payment amount against limit
+            # Early check on the caller-declared option; the signed amount comes from the server's 402
+            # and is capped by x402 spend controls (see `_create_x402_client`).
             payment_amount = (
                 selected_payment_option.max_amount_required
                 or selected_payment_option.amount
@@ -468,7 +472,7 @@ DO NOT use this action directly without first trying make_http_request!""",
                 )
 
             # Create x402 client with appropriate signer
-            client = self._create_x402_client(wallet_provider)
+            client = self._create_x402_client(wallet_provider, selected_payment_option)
 
             # Build URL with query params and determine if body is allowed
             final_url = build_url_with_params(url, args.get("query_params"))
@@ -488,6 +492,7 @@ DO NOT use this action directly without first trying make_http_request!""",
                 url=final_url,
                 headers=headers,
                 json=body if can_have_body and body else None,
+                allow_redirects=False,
             )
 
             data = self._parse_response_data(response)
@@ -638,6 +643,7 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
                 url=final_url,
                 headers=headers,
                 json=body if can_have_body and body else None,
+                allow_redirects=False,
             )
 
             data = self._parse_response_data(response)
@@ -852,17 +858,68 @@ These are the only services that can be called using make_http_request or make_h
 
         return False
 
-    def _create_x402_client(self, wallet_provider: EvmWalletProvider) -> x402ClientSync:
+    def _create_x402_client(
+        self,
+        wallet_provider: EvmWalletProvider,
+        selected_payment_option: PaymentOptionSchema | None = None,
+    ) -> x402ClientSync:
         """Create an x402 client configured for the given wallet provider.
 
         Args:
             wallet_provider: The wallet provider to configure the client for
+            selected_payment_option: Approved option to bind to fresh 402 requirements, if any
 
         Returns:
-            Configured x402ClientSync
+            Configured x402ClientSync, capped at max_payment_usdc per payment
+
+        Raises:
+            ValueError: If max_payment_usdc is not a non-negative finite number
 
         """
+        max_payment_usdc = self._config.max_payment_usdc
+        if not math.isfinite(max_payment_usdc) or max_payment_usdc < 0:
+            raise ValueError(
+                f"Invalid max_payment_usdc {max_payment_usdc!r}: must be a non-negative finite number"
+            )
+
         client = x402ClientSync()
+        # Enforced by x402 against the requirements the server returns (the ones actually signed).
+        # By default this also restricts payments to recognized default assets (e.g. USDC).
+        client.set_spend_controls({"max_amount_per_payment": max_payment_usdc})
+
+        wallet_networks = get_x402_networks(wallet_provider.get_network())
+
+        def payment_policy(version: int, requirements: list[Any]) -> list[Any]:
+            filtered = []
+            expected_amount = None
+            if selected_payment_option is not None:
+                expected_amount = (
+                    selected_payment_option.max_amount_required or selected_payment_option.amount
+                )
+
+            for requirement in requirements:
+                if requirement.network not in wallet_networks:
+                    continue
+                if selected_payment_option is not None:
+                    actual_amount = (
+                        requirement.max_amount_required if version == 1 else requirement.amount
+                    )
+                    if (
+                        requirement.scheme != selected_payment_option.scheme
+                        or requirement.network != selected_payment_option.network
+                        or requirement.asset != selected_payment_option.asset
+                        or requirement.pay_to != selected_payment_option.pay_to
+                        or expected_amount is None
+                        or actual_amount is None
+                        or re.fullmatch(r"[0-9]+", expected_amount) is None
+                        or re.fullmatch(r"[0-9]+", actual_amount) is None
+                        or int(actual_amount) != int(expected_amount)
+                    ):
+                        continue
+                filtered.append(requirement)
+            return filtered
+
+        client.register_policy(payment_policy)
         signer = wallet_provider.to_signer()
         register_exact_evm_client(client, EthAccountSigner(signer))
         return client

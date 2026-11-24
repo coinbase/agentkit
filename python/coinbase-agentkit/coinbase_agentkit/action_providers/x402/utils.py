@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from typing import TYPE_CHECKING, Any
-from urllib.parse import urlencode, urlparse
+from urllib.parse import unquote, urlencode, urlsplit
 
 import requests
 
@@ -660,10 +661,46 @@ def build_url_with_params(
     return f"{base_url}{separator}{urlencode(query_params)}"
 
 
+_DEFAULT_PORTS = {"http": 80, "https": 443}
+_UNSAFE_URL_CHARS = re.compile(r"[\x00-\x20\x7f\\]")
+
+
+def _parse_service_url(value: str) -> tuple[str, str, int, str] | None:
+    """Parse an http(s) URL into a strictly normalized (scheme, host, port, path) tuple.
+
+    Returns None for anything ambiguous or unsafe: non-http(s) schemes, userinfo, missing host,
+    invalid ports, whitespace/control characters/backslashes, and dot-segments in the path
+    (including percent-encoded ones). Dot-segments are rejected instead of normalized so that
+    this check cannot disagree with how an HTTP client resolves the path.
+    """
+    if not isinstance(value, str) or _UNSAFE_URL_CHARS.search(value):
+        return None
+
+    try:
+        parsed = urlsplit(value)
+        scheme = parsed.scheme.lower()
+        host = parsed.hostname
+        port = parsed.port
+    except ValueError:
+        return None
+
+    if scheme not in _DEFAULT_PORTS or not host:
+        return None
+    if "@" in parsed.netloc or parsed.username is not None or parsed.password is not None:
+        return None
+
+    path = parsed.path
+    if any(unquote(segment) in (".", "..") for segment in path.split("/")):
+        return None
+
+    return scheme, host.lower(), port if port is not None else _DEFAULT_PORTS[scheme], path
+
+
 def is_service_registered(url: str, registered_services: set[str]) -> bool:
     """Check if a URL is registered for x402 requests.
 
-    Matches by origin (protocol + hostname + port) or prefix.
+    The URL must have the same scheme, host and port as a registered entry. If the registered
+    entry has a path, the URL path must equal it or be nested beneath it on a "/" boundary.
 
     Args:
         url: The URL to check
@@ -676,17 +713,25 @@ def is_service_registered(url: str, registered_services: set[str]) -> bool:
     if not registered_services:
         return False
 
-    try:
-        parsed = urlparse(url)
-        origin = f"{parsed.scheme}://{parsed.netloc}"
+    target = _parse_service_url(url)
+    if target is None:
+        return False
+    scheme, host, port, path = target
 
-        for registered in registered_services:
-            # Check if origin matches or URL starts with registered prefix
-            if origin == registered or url.startswith(registered):
-                return True
-        return False
-    except Exception:
-        return False
+    for registered_url in registered_services:
+        registered = _parse_service_url(registered_url)
+        if registered is None or registered[:3] != (scheme, host, port):
+            continue
+
+        registered_path = registered[3]
+        if registered_path in ("", "/"):
+            return True
+        if registered_path.endswith("/"):
+            registered_path = registered_path[:-1]
+        if path == registered_path or path.startswith(registered_path + "/"):
+            return True
+
+    return False
 
 
 def is_url_allowed(url: str, registered_services: set[str]) -> bool:

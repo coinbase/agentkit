@@ -17,10 +17,13 @@ jest.mock("./utils");
 // Create mock functions
 const mockFetch = jest.fn();
 const mockFetchWithPayment = jest.fn();
+const mockNoRedirectFetch = jest.fn();
 
 // Mock x402 client
 const mockX402Client = {
   registerScheme: jest.fn(),
+  setSpendControls: jest.fn(),
+  registerPolicy: jest.fn(),
 };
 
 // Mock utils functions
@@ -68,6 +71,9 @@ jest.mocked(utils.isUsdcAsset).mockImplementation(mockIsUsdcAsset);
 jest.mocked(utils.validatePaymentLimit).mockImplementation(mockValidatePaymentLimit);
 jest.mocked(utils.filterUsdcPaymentOptions).mockImplementation(mockFilterUsdcPaymentOptions);
 jest.mocked(utils.isUrlAllowed).mockImplementation(mockIsUrlAllowed);
+jest
+  .mocked(utils.createNoRedirectFetch)
+  .mockReturnValue(mockNoRedirectFetch as unknown as typeof fetch);
 jest.mocked(utils.validateFacilitator).mockImplementation(mockValidateFacilitator);
 
 // Mock global fetch
@@ -508,15 +514,106 @@ describe("X402ActionProvider", () => {
           asset: "0x456",
           amount: null,
           price: null,
-          payTo: null,
+          payTo: "0xrecipient",
         },
       });
 
-      expect(wrapFetchWithPayment).toHaveBeenCalledWith(fetch, mockX402Client);
+      expect(wrapFetchWithPayment).toHaveBeenCalledWith(mockNoRedirectFetch, mockX402Client);
+      expect(mockX402Client.setSpendControls).toHaveBeenCalledWith({ maxAmountPerPayment: 1.0 });
+      const paymentPolicy = mockX402Client.registerPolicy.mock.calls[0][0];
+      const v1Requirement = {
+        scheme: "exact",
+        network: "base-sepolia",
+        asset: "0x456",
+        amount: "10000",
+        maxAmountRequired: "10000",
+        payTo: "0xrecipient",
+        maxTimeoutSeconds: 60,
+        extra: {},
+      };
+      expect(paymentPolicy(1, [v1Requirement])).toEqual([v1Requirement]);
+      expect(paymentPolicy(1, [{ ...v1Requirement, network: "eip155:84532" }])).toEqual([]);
+      expect(paymentPolicy(1, [{ ...v1Requirement, asset: "0x999" }])).toEqual([]);
+      expect(paymentPolicy(1, [{ ...v1Requirement, maxAmountRequired: "10001" }])).toEqual([]);
+      expect(paymentPolicy(1, [{ ...v1Requirement, payTo: "0xattacker" }])).toEqual([]);
+
+      const v2Requirement = {
+        scheme: "exact",
+        network: "base-sepolia",
+        asset: "0x456",
+        amount: "10000",
+        payTo: "0xrecipient",
+        maxTimeoutSeconds: 60,
+        extra: {},
+      };
+      expect(paymentPolicy(2, [v2Requirement])).toEqual([v2Requirement]);
+      expect(paymentPolicy(2, [{ ...v2Requirement, amount: "10001" }])).toEqual([]);
 
       const parsedResult = JSON.parse(result);
       expect(parsedResult.status).toBe("success");
       expect(parsedResult.details.paymentProof).toEqual(MOCK_PAYMENT_PROOF);
+    });
+
+    it("should configure x402 spend controls from a custom maxPaymentUsdc", async () => {
+      const customProvider = new X402ActionProvider({
+        registeredServices: ["https://www.x402.org"],
+        maxPaymentUsdc: 0.25,
+      });
+      mockGetX402Networks.mockReturnValue(["base-sepolia"]);
+      mockFetchWithPayment.mockResolvedValue(
+        createMockResponse({
+          status: 200,
+          data: {},
+          headers: { "content-type": "application/json" },
+        }),
+      );
+
+      await customProvider.retryWithX402(makeMockWalletProvider("base-sepolia"), {
+        url: "https://www.x402.org/protected",
+        method: "GET",
+        headers: null,
+        queryParams: null,
+        body: null,
+        selectedPaymentOption: {
+          scheme: "exact",
+          network: "base-sepolia",
+          maxAmountRequired: "10000",
+          asset: "0x456",
+          amount: null,
+          price: null,
+          payTo: null,
+        },
+      });
+
+      expect(mockX402Client.setSpendControls).toHaveBeenCalledWith({ maxAmountPerPayment: 0.25 });
+    });
+
+    it("should fail closed without paying when maxPaymentUsdc is invalid", async () => {
+      const invalidProvider = new X402ActionProvider({
+        registeredServices: ["https://www.x402.org"],
+        maxPaymentUsdc: Number.NaN,
+      });
+      mockGetX402Networks.mockReturnValue(["base-sepolia"]);
+
+      const result = await invalidProvider.retryWithX402(makeMockWalletProvider("base-sepolia"), {
+        url: "https://www.x402.org/protected",
+        method: "GET",
+        headers: null,
+        queryParams: null,
+        body: null,
+        selectedPaymentOption: {
+          scheme: "exact",
+          network: "base-sepolia",
+          maxAmountRequired: "10000",
+          asset: "0x456",
+          amount: null,
+          price: null,
+          payTo: null,
+        },
+      });
+
+      expect(JSON.parse(result).error).toBe(true);
+      expect(mockFetchWithPayment).not.toHaveBeenCalled();
     });
 
     it("should handle network errors during payment", async () => {
@@ -594,7 +691,20 @@ describe("X402ActionProvider", () => {
         },
       );
 
-      expect(wrapFetchWithPayment).toHaveBeenCalledWith(fetch, mockX402Client);
+      expect(wrapFetchWithPayment).toHaveBeenCalledWith(mockNoRedirectFetch, mockX402Client);
+      expect(mockX402Client.setSpendControls).toHaveBeenCalledWith({ maxAmountPerPayment: 1.0 });
+      const paymentPolicy = mockX402Client.registerPolicy.mock.calls[0][0];
+      const v2Requirement = {
+        scheme: "exact",
+        network: "base-sepolia",
+        asset: "0x456",
+        amount: "10000",
+        payTo: "0xrecipient",
+        maxTimeoutSeconds: 60,
+        extra: {},
+      };
+      expect(paymentPolicy(2, [v2Requirement])).toEqual([v2Requirement]);
+      expect(paymentPolicy(2, [{ ...v2Requirement, network: "eip155:84532" }])).toEqual([]);
 
       const parsedResult = JSON.parse(result);
       expect(parsedResult.success).toBe(true);
