@@ -1,9 +1,9 @@
-import { createHash } from "crypto";
 import { z } from "zod";
 import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
 import { VerifyTrailSchema, ComputeActionRefSchema, GetTrailsSchema } from "./schemas";
+import { computeActionRef, OutOfProfileDomainError } from "./actionRef";
 
 const MYCELIUM_API_BASE = "https://argentum.rgiskard.xyz";
 
@@ -83,13 +83,19 @@ Returns:
 
   @CreateAction({
     name: "compute_action_ref",
-    description: `Computes the canonical Mycelium action_ref for a given action.
+    description: `Computes the Mycelium action_ref (v1) for a given action.
 
-The action_ref is SHA-256(agent_id:action_type:scope:timestamp) — a deterministic
-content-addressed reference used to link external records to Mycelium Trails.
+The action_ref is SHA-256 of the RFC 8785 (JCS) serialization of
+{agent_id, action_type, scope, timestamp} -- a deterministic content-addressed
+reference used to link external records to Mycelium Trails.
+
+The timestamp is a STRING, exactly YYYY-MM-DDTHH:MM:SS.mmmZ (UTC, three fractional
+digits). agent_id, action_type and scope must be ASCII and scope must not be empty.
+Inputs outside that domain return an error instead of a hash.
 
 Use this before verify_trail when you have the inputs but not the hash.
-The same algorithm is used by the Mycelium Python SDK (argentum/trails.py).
+
+Example: compute_action_ref("giskard-self", "trail.anchor", "mycelium:baseline", "2026-05-23T00:00:00.000Z")
 `,
     schema: ComputeActionRefSchema,
   })
@@ -97,9 +103,21 @@ The same algorithm is used by the Mycelium Python SDK (argentum/trails.py).
     _walletProvider: unknown,
     args: z.infer<typeof ComputeActionRefSchema>,
   ): Promise<string> {
-    const payload = `${args.agent_id}:${args.action_type}:${args.scope}:${args.timestamp}`;
-    const hash = createHash("sha256").update(payload, "utf8").digest("hex");
-    return JSON.stringify({ action_ref: hash, payload });
+    try {
+      const action_ref = computeActionRef(args.agent_id, args.action_type, args.scope, args.timestamp);
+      const canonical = JSON.stringify({
+        action_type: args.action_type,
+        agent_id: args.agent_id,
+        scope: args.scope,
+        timestamp: args.timestamp,
+      });
+      return JSON.stringify({ action_ref, canonical });
+    } catch (err) {
+      if (err instanceof OutOfProfileDomainError) {
+        return JSON.stringify({ error: "OUT_OF_PROFILE_DOMAIN", field: err.field, reason: err.reason });
+      }
+      return JSON.stringify({ error: String(err) });
+    }
   }
 
   @CreateAction({
