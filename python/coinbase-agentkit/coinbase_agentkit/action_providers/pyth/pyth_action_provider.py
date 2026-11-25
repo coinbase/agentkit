@@ -72,12 +72,20 @@ class PythActionProvider(ActionProvider[WalletProvider]):
                     }
                 )
 
-            # Filter data by token symbol and quote currency
+            # Filter data by token symbol and quote currency. Hermes no longer returns
+            # attributes.base, so fall back to the base in the symbol
+            # ("Crypto.BTC/USD", "Equity.US.AAPL/USD.PRE")
+            def base_of(attributes: dict) -> str:
+                return (
+                    attributes.get("base")
+                    or attributes.get("symbol", "").split("/")[0].split(".")[-1]
+                )
+
             filtered_data = [
                 item
                 for item in data
                 if (
-                    item["attributes"]["base"].lower() == token_symbol.lower()
+                    base_of(item["attributes"]).lower() == token_symbol.lower()
                     and item["attributes"]["quote_currency"].lower() == quote_currency.lower()
                 )
             ]
