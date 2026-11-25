@@ -38,7 +38,7 @@ const CHECK_TERMS = {
     {
       scheme: "exact",
       network: "eip155:8453",
-      amount: "1000",
+      amount: "10000",
       asset: BASE_USDC,
       payTo: BOTSRATED_PAY_TO,
       maxTimeoutSeconds: 300,
@@ -63,6 +63,9 @@ const jsonResponse = (body: unknown, status = 200, headers: Record<string, strin
     status,
     headers: { "content-type": "application/json", ...headers },
   });
+
+const pricingJson = (amount = "10000") =>
+  jsonResponse({ routes: { check: { amount_atomic: amount } } });
 
 const quote402 = (terms = CHECK_TERMS) =>
   jsonResponse({}, 402, { "payment-required": btoa(JSON.stringify(terms)) });
@@ -208,7 +211,7 @@ describe("BotsRatedActionProvider", () => {
         ...CHECK_TERMS,
         accepts: [{ ...CHECK_TERMS.accepts[0], payTo: SELLER_PAY_TO }],
       };
-      fetchMock.mockResolvedValue(quote402(bad));
+      fetchMock.mockResolvedValueOnce(quote402(bad)).mockResolvedValueOnce(pricingJson());
       const out = JSON.parse(
         await botsratedActionProvider({ maxSpendUsdc: 0.01 }).paidCheck(wallet, {
           host: "blockrun.ai",
@@ -219,12 +222,14 @@ describe("BotsRatedActionProvider", () => {
     });
 
     it("pays once, tracks spend and stops at the limit", async () => {
-      fetchMock.mockImplementation(async () => quote402());
+      fetchMock.mockImplementation(async (url: string) =>
+        url.endsWith("/pricing.json") ? pricingJson() : quote402(),
+      );
       paidFetch.mockImplementation(async () => jsonResponse({ host: "blockrun.ai", measured: {} }));
-      const provider = botsratedActionProvider({ maxSpendUsdc: 0.0015 });
+      const provider = botsratedActionProvider({ maxSpendUsdc: 0.015 });
 
       const first = JSON.parse(await provider.paidCheck(wallet, { host: "blockrun.ai" }));
-      expect(first).toMatchObject({ success: true, paidUsdc: 0.001, remainingUsdc: 0.0005 });
+      expect(first).toMatchObject({ success: true, paidUsdc: 0.01, remainingUsdc: 0.005 });
       expect(paidFetch).toHaveBeenCalledWith(
         "https://botsrated.com/v1/check?host=blockrun.ai",
         expect.anything(),
@@ -236,12 +241,14 @@ describe("BotsRatedActionProvider", () => {
     });
 
     it("keeps the reservation when a signed payment's request fails", async () => {
-      fetchMock.mockImplementation(async () => quote402());
+      fetchMock.mockImplementation(async (url: string) =>
+        url.endsWith("/pricing.json") ? pricingJson() : quote402(),
+      );
       paidFetch.mockImplementationOnce(async () => {
         await afterHook!(); // the payment was signed and may settle
         return jsonResponse({}, 500);
       });
-      const provider = botsratedActionProvider({ maxSpendUsdc: 0.001 });
+      const provider = botsratedActionProvider({ maxSpendUsdc: 0.01 });
       const first = JSON.parse(await provider.paidCheck(wallet, { host: "blockrun.ai" }));
       expect(first).toMatchObject({ error: true, mayHaveBeenCharged: true, remainingUsdc: 0 });
       const second = JSON.parse(await provider.paidCheck(wallet, { host: "blockrun.ai" }));
@@ -250,21 +257,25 @@ describe("BotsRatedActionProvider", () => {
     });
 
     it("keeps the reservation when a signed payment's request throws", async () => {
-      fetchMock.mockImplementation(async () => quote402());
+      fetchMock.mockImplementation(async (url: string) =>
+        url.endsWith("/pricing.json") ? pricingJson() : quote402(),
+      );
       paidFetch.mockImplementationOnce(async () => {
         await afterHook!();
         throw new Error("socket hang up");
       });
-      const provider = botsratedActionProvider({ maxSpendUsdc: 0.001 });
+      const provider = botsratedActionProvider({ maxSpendUsdc: 0.01 });
       const out = JSON.parse(await provider.paidCheck(wallet, { host: "blockrun.ai" }));
       expect(out).toMatchObject({ error: true, mayHaveBeenCharged: true, remainingUsdc: 0 });
     });
 
     it("releases the reservation when the request fails before any payment is signed", async () => {
-      fetchMock.mockImplementation(async () => quote402());
+      fetchMock.mockImplementation(async (url: string) =>
+        url.endsWith("/pricing.json") ? pricingJson() : quote402(),
+      );
       paidFetch.mockResolvedValueOnce(jsonResponse({}, 500));
       paidFetch.mockResolvedValueOnce(jsonResponse({ host: "blockrun.ai" }));
-      const provider = botsratedActionProvider({ maxSpendUsdc: 0.001 });
+      const provider = botsratedActionProvider({ maxSpendUsdc: 0.01 });
       const first = JSON.parse(await provider.paidCheck(wallet, { host: "blockrun.ai" }));
       expect(first).toMatchObject({ error: true, mayHaveBeenCharged: false });
       expect(JSON.parse(await provider.paidCheck(wallet, { host: "blockrun.ai" })).success).toBe(
@@ -274,9 +285,11 @@ describe("BotsRatedActionProvider", () => {
 
     it("rejects a quote that also offers any other payment option", async () => {
       const foreign = { ...CHECK_TERMS.accepts[0], amount: "500000", payTo: SELLER_PAY_TO };
-      fetchMock.mockResolvedValue(
-        quote402({ ...CHECK_TERMS, accepts: [foreign, CHECK_TERMS.accepts[0]] }),
-      );
+      fetchMock
+        .mockResolvedValueOnce(
+          quote402({ ...CHECK_TERMS, accepts: [foreign, CHECK_TERMS.accepts[0]] }),
+        )
+        .mockResolvedValueOnce(pricingJson());
       const out = JSON.parse(
         await botsratedActionProvider({ maxSpendUsdc: 1 }).paidCheck(wallet, {
           host: "blockrun.ai",
@@ -287,7 +300,9 @@ describe("BotsRatedActionProvider", () => {
     });
 
     it("does not follow redirects on the quote or the paid request", async () => {
-      fetchMock.mockImplementation(async () => quote402());
+      fetchMock.mockImplementation(async (url: string) =>
+        url.endsWith("/pricing.json") ? pricingJson() : quote402(),
+      );
       paidFetch.mockImplementation(async () => jsonResponse({ host: "blockrun.ai" }));
       await botsratedActionProvider({ maxSpendUsdc: 0.01 }).paidCheck(wallet, {
         host: "blockrun.ai",
@@ -301,24 +316,38 @@ describe("BotsRatedActionProvider", () => {
         jsonResponse({
           host: "blockrun.ai",
           charged: false,
-          free_quota: { route: "check", used: 1, limit: 100, remaining: 99 },
+          free_quota: { route: "check", used: 1, limit: 5, remaining: 4 },
         }),
       );
-      const provider = botsratedActionProvider({ maxSpendUsdc: 0.001 });
+      const provider = botsratedActionProvider({ maxSpendUsdc: 0.01 });
       const out = JSON.parse(await provider.paidCheck(wallet, { host: "blockrun.ai" }));
       expect(out).toMatchObject({
         success: true,
         paidUsdc: 0,
         charged: false,
-        remainingUsdc: 0.001,
+        remainingUsdc: 0.01,
       });
       expect(paidFetch).not.toHaveBeenCalled();
     });
 
-    it("refuses a quote above the published $0.001 price", async () => {
-      fetchMock.mockResolvedValue(
-        quote402({ ...CHECK_TERMS, accepts: [{ ...CHECK_TERMS.accepts[0], amount: "2000" }] }),
+    it("fails closed when /pricing.json is unavailable", async () => {
+      fetchMock.mockResolvedValueOnce(quote402()).mockResolvedValueOnce(jsonResponse({}, 503));
+      const out = JSON.parse(
+        await botsratedActionProvider({ maxSpendUsdc: 0.05 }).paidCheck(wallet, {
+          host: "blockrun.ai",
+        }),
       );
+      expect(out.error).toBe(true);
+      expect(out.message).toContain("/pricing.json");
+      expect(paidFetch).not.toHaveBeenCalled();
+    });
+
+    it("refuses a quote above the published /pricing.json price", async () => {
+      fetchMock
+        .mockResolvedValueOnce(
+          quote402({ ...CHECK_TERMS, accepts: [{ ...CHECK_TERMS.accepts[0], amount: "20000" }] }),
+        )
+        .mockResolvedValueOnce(pricingJson("10000"));
       const out = JSON.parse(
         await botsratedActionProvider({ maxSpendUsdc: 0.01 }).paidCheck(wallet, {
           host: "blockrun.ai",
@@ -329,7 +358,9 @@ describe("BotsRatedActionProvider", () => {
     });
 
     it("registers a hook that refuses any payment other than the validated quote", async () => {
-      fetchMock.mockImplementation(async () => quote402());
+      fetchMock.mockImplementation(async (url: string) =>
+        url.endsWith("/pricing.json") ? pricingJson() : quote402(),
+      );
       paidFetch.mockImplementation(async () => jsonResponse({}));
       await botsratedActionProvider({ maxSpendUsdc: 0.01 }).paidCheck(wallet, {
         host: "blockrun.ai",
@@ -341,7 +372,7 @@ describe("BotsRatedActionProvider", () => {
         selectedRequirements: r,
       });
       expect(await hook!(ctx(ok))).toBeUndefined();
-      expect(await hook!(ctx({ ...ok, amount: "1001" }))).toMatchObject({ abort: true });
+      expect(await hook!(ctx({ ...ok, amount: "10001" }))).toMatchObject({ abort: true });
       expect(await hook!(ctx({ ...ok, payTo: SELLER_PAY_TO }))).toMatchObject({ abort: true });
       // A re-served 402 is checked again in full before the scheme signs anything.
       expect(await hook!(ctx(PERMIT2_TERMS.accepts[0], PERMIT2_TERMS))).toMatchObject({
@@ -373,7 +404,9 @@ describe("BotsRatedActionProvider", () => {
       ["x402 v1", { ...CHECK_TERMS, x402Version: 1 }],
     ];
     it.each(cases)("rejects %s before any payment", async (_name, terms) => {
-      fetchMock.mockResolvedValue(quote402(terms as typeof CHECK_TERMS));
+      fetchMock
+        .mockResolvedValueOnce(quote402(terms as typeof CHECK_TERMS))
+        .mockResolvedValueOnce(pricingJson());
       const provider = botsratedActionProvider({ maxSpendUsdc: 1 });
       const out = JSON.parse(await provider.paidCheck(wallet, { host: "blockrun.ai" }));
       expect(out.message).toContain("quote rejected");
@@ -382,9 +415,15 @@ describe("BotsRatedActionProvider", () => {
     });
 
     it("accepts BotsRated's real 402 shape (EIP-3009 extra, bazaar discovery extension)", async () => {
-      fetchMock.mockResolvedValue(
-        quote402({ ...CHECK_TERMS, accepts: [ok], extensions: { bazaar: { info: {} } } } as never),
-      );
+      fetchMock
+        .mockResolvedValueOnce(
+          quote402({
+            ...CHECK_TERMS,
+            accepts: [ok],
+            extensions: { bazaar: { info: {} } },
+          } as never),
+        )
+        .mockResolvedValueOnce(pricingJson());
       paidFetch.mockResolvedValue(jsonResponse({ host: "blockrun.ai" }));
       const out = JSON.parse(
         await botsratedActionProvider({ maxSpendUsdc: 1 }).paidCheck(wallet, {
@@ -410,9 +449,12 @@ describe("BotsRatedActionProvider", () => {
       wallet.toSigner = jest.fn().mockReturnValue(signer);
       wallet.readContract = jest.fn();
       // First (validated) quote is clean; the client's own fetch then gets the Permit2 quote.
-      fetchMock
-        .mockResolvedValueOnce(quote402())
-        .mockImplementation(async () => quote402(PERMIT2_TERMS));
+      let checkCalls = 0;
+      fetchMock.mockImplementation(async (url: string) => {
+        if (url.endsWith("/pricing.json")) return pricingJson();
+        checkCalls += 1;
+        return checkCalls === 1 ? quote402() : quote402(PERMIT2_TERMS);
+      });
       const provider = botsratedActionProvider({ maxSpendUsdc: 1 });
       const out = JSON.parse(await provider.paidCheck(wallet, { host: "blockrun.ai" }));
       expect(out).toMatchObject({ error: true, mayHaveBeenCharged: false, remainingUsdc: 1 });

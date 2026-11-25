@@ -31,7 +31,7 @@ export const BotsRatedPaidCheckSchema = z
   })
   .strip()
   .describe(
-    "Instructions for a paid ($0.001, first 100 per day free) BotsRated check of an x402 seller",
+    "Instructions for a paid BotsRated check of an x402 seller (free daily quota applies; see https://botsrated.com/pricing.json)",
   );
 
 /**
@@ -41,7 +41,7 @@ export interface BotsRatedConfig {
   /** Defaults to https://botsrated.com */
   baseUrl?: string;
   /**
-   * Total USDC the provider may spend on paid BotsRated checks ($0.001 each; the first 100 per day are free and not counted).
+   * Total USDC the provider may spend on paid BotsRated checks (free daily quota answers are not counted; see https://botsrated.com/pricing.json).
    * Paid checks are disabled unless this is set (or BOTSRATED_MAX_SPEND_USDC is set).
    */
   maxSpendUsdc?: number;
