@@ -542,6 +542,27 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Predge</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_settlement_risk</code></td>
+    <td width="768">Fetches a free, ed25519-signed settlement-risk record for a Polymarket market, read live from UMA on Polygon, and verifies the signature.</td>
+</tr>
+<tr>
+    <td width="200"><code>verify_predge_record</code></td>
+    <td width="768">Verifies a Predge signed record offline against Predge's published key.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_settlement_estimate</code></td>
+    <td width="768">Buys a signed settlement-risk record with settlement_estimate for a disputed Polymarket market over x402 ($0.02 USDC).</td>
+</tr>
+<tr>
+    <td width="200"><code>get_whale_trades</code></td>
+    <td width="768">Buys the latest Polymarket whale trades ($10,000+ notional, 15 min delay) over x402 ($0.005 USDC).</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Pyth</strong></summary>
 <table width="100%">
 <tr>
