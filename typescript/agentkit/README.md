@@ -178,6 +178,27 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Agent-Mediate</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>check_honours</code></td>
+    <td width="768">Verifies a counterparty domain, did:web, or did:key on the Agent-Mediate Settlement Honours Roll ($0.00).</td>
+</tr>
+<tr>
+    <td width="200"><code>file_escrow_dispute</code></td>
+    <td width="768">Binds an x402r AuthCaptureEscrow payment or JCS contractHash and files a non-custodial sealed-offer dispute on Agent-Mediate.</td>
+</tr>
+<tr>
+    <td width="200"><code>submit_offer</code></td>
+    <td width="768">Submits a monotone sealed offer (with private Round-1 weights and walkaway) for an open Agent-Mediate bargaining round.</td>
+</tr>
+<tr>
+    <td width="200"><code>verify_outcome</code></td>
+    <td width="768">Fail-closed verifies an Agent-Mediate Ed25519Signature2026 settlement instruction and computes exact x402r escrow refund and release amounts.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Base Account</strong></summary>
 <table width="100%">
 <tr>
