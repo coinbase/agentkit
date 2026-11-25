@@ -19,6 +19,7 @@ from .cdp.cdp_smart_wallet_action_provider import (
 from .compound.compound_action_provider import CompoundActionProvider, compound_action_provider
 from .erc20.erc20_action_provider import ERC20ActionProvider, erc20_action_provider
 from .erc721.erc721_action_provider import Erc721ActionProvider, erc721_action_provider
+from .foundry import FoundryActionProvider, foundry_action_provider
 from .hyperboliclabs.hyperbolic_action_provider import (
     HyperbolicActionProvider,
     hyperbolic_action_provider,
@@ -82,6 +83,8 @@ __all__ = [
     "wallet_action_provider",
     "weth_action_provider",
     "wow_action_provider",
+    "FoundryActionProvider",
+    "foundry_action_provider",
     "x402ActionProvider",
     "x402_action_provider",
 ]
