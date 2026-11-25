@@ -26,7 +26,7 @@ dependencies = [
     "ecdsa>=0.19.0,<0.20",
     "pyjwt[crypto]>=2.12.0,<3",
     "jsonschema>=4.23.0,<5",
-    "x402[requests]>=2.4.0",
+    "x402[requests]>=2.20.0",
     "solana>=0.36.6",
     "solders>=0.26.0"
 ]

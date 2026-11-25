@@ -31,6 +31,7 @@ import {
   validatePaymentLimit,
   isUsdcAsset,
   isUrlAllowed,
+  createNoRedirectFetch,
   validateFacilitator,
 } from "./utils";
 import { SUPPORTED_NETWORKS, KNOWN_FACILITATORS } from "./constants";
@@ -407,7 +408,8 @@ DO NOT use this action directly without first trying make_http_request!`,
         );
       }
 
-      // Validate payment amount against limit
+      // Early check on the caller-declared option; the signed amount comes from the server's 402
+      // and is capped by x402 `spendControls` (see `createX402Client`).
       const paymentAmount =
         args.selectedPaymentOption.maxAmountRequired ??
         args.selectedPaymentOption.amount ??
@@ -461,8 +463,8 @@ DO NOT use this action directly without first trying make_http_request!`,
       }
 
       // Create x402 client with appropriate signer
-      const client = await this.createX402Client(walletProvider);
-      const fetchWithPayment = wrapFetchWithPayment(fetch, client);
+      const client = await this.createX402Client(walletProvider, args.selectedPaymentOption);
+      const fetchWithPayment = wrapFetchWithPayment(createNoRedirectFetch(), client);
 
       // Build URL with query params and determine if body is allowed
       const finalUrl = buildUrlWithParams(args.url, args.queryParams);
@@ -609,7 +611,7 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
 
       // Create x402 client with appropriate signer
       const client = await this.createX402Client(walletProvider);
-      const fetchWithPayment = wrapFetchWithPayment(fetch, client);
+      const fetchWithPayment = wrapFetchWithPayment(createNoRedirectFetch(), client);
 
       // Build URL with query params and determine if body is allowed
       const finalUrl = buildUrlWithParams(args.url, args.queryParams);
@@ -839,10 +841,55 @@ These are the only services that can be called using make_http_request or make_h
    * Creates an x402 client configured for the given wallet provider.
    *
    * @param walletProvider - The wallet provider to configure the client for
-   * @returns Configured x402Client
+   * @returns Configured x402Client, capped at maxPaymentUsdc per payment
+   * @param selectedPaymentOption - The approved payment option for a retry; omitted for direct payments
    */
-  private async createX402Client(walletProvider: WalletProvider): Promise<x402Client> {
+  private async createX402Client(
+    walletProvider: WalletProvider,
+    selectedPaymentOption?: z.infer<typeof RetryWithX402Schema>["selectedPaymentOption"],
+  ): Promise<x402Client> {
+    const { maxPaymentUsdc } = this.config;
+    if (!Number.isFinite(maxPaymentUsdc) || maxPaymentUsdc < 0) {
+      throw new Error(
+        `Invalid maxPaymentUsdc "${maxPaymentUsdc}": must be a non-negative finite number`,
+      );
+    }
+
     const client = new x402Client();
+    // Enforced by x402 against the requirements the server returns (the ones actually signed).
+    // By default this also restricts payments to recognized default assets (e.g. USDC).
+    client.setSpendControls({ maxAmountPerPayment: maxPaymentUsdc });
+
+    const walletNetworks = getX402Networks(walletProvider.getNetwork());
+    client.registerPolicy((x402Version, paymentRequirements) =>
+      paymentRequirements.filter(paymentRequirement => {
+        if (!walletNetworks.includes(paymentRequirement.network)) {
+          return false;
+        }
+        if (!selectedPaymentOption) {
+          return true;
+        }
+
+        const expectedAmount =
+          selectedPaymentOption.maxAmountRequired ?? selectedPaymentOption.amount;
+        const actualAmount =
+          x402Version === 1
+            ? (paymentRequirement as unknown as { maxAmountRequired?: string }).maxAmountRequired
+            : paymentRequirement.amount;
+        return (
+          paymentRequirement.scheme === selectedPaymentOption.scheme &&
+          paymentRequirement.network === selectedPaymentOption.network &&
+          paymentRequirement.asset === selectedPaymentOption.asset &&
+          paymentRequirement.payTo === selectedPaymentOption.payTo &&
+          expectedAmount !== null &&
+          expectedAmount !== undefined &&
+          actualAmount !== undefined &&
+          /^\d+$/.test(expectedAmount) &&
+          /^\d+$/.test(actualAmount) &&
+          BigInt(actualAmount) === BigInt(expectedAmount)
+        );
+      }),
+    );
 
     if (walletProvider instanceof EvmWalletProvider) {
       const account = walletProvider.toSigner();
