@@ -56,7 +56,17 @@ Important notes:
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: `{"query":"query { tokenList(chainId: ${chainId}, first: 10, search: \\"${args.search}\\") { address symbol name decimals } }"}`,
+        body: JSON.stringify({
+          query: `query FindToken($chainId: Int!, $search: String!) {
+  tokenList(chainId: $chainId, first: 10, search: $search) {
+    address
+    symbol
+    name
+    decimals
+  }
+}`,
+          variables: { chainId, search: args.search },
+        }),
       });
 
       const response = await request.json();
