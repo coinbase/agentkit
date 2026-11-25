@@ -1,7 +1,7 @@
 """Tests for the x402 action provider."""
 
 import json
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 import requests
@@ -413,3 +413,29 @@ def test_client_signs_within_cap(signing_wallet):
     payload = client.create_payment_payload(_payment_required("10000"))
 
     assert payload.accepted.amount == "10000"
+
+
+@patch("coinbase_agentkit.action_providers.x402.x402_action_provider.register_exact_evm_client")
+@patch("coinbase_agentkit.action_providers.x402.x402_action_provider.x402ClientSync")
+def test_before_payment_hook_registered(mock_client_cls, _mock_register, mock_wallet):
+    """The before_payment hook is passed to the x402 client the provider builds."""
+    hook = lambda context: None  # noqa: E731
+
+    provider = x402_action_provider(X402Config(before_payment=hook))
+
+    provider._create_x402_client(mock_wallet)
+
+    mock_client_cls.return_value.on_before_payment_creation.assert_called_once_with(hook)
+
+
+@patch("coinbase_agentkit.action_providers.x402.x402_action_provider.register_exact_evm_client")
+@patch("coinbase_agentkit.action_providers.x402.x402_action_provider.x402ClientSync")
+def test_before_payment_hook_not_registered_by_default(
+    mock_client_cls, _mock_register, mock_wallet
+):
+    """Without before_payment, no hook is registered."""
+    provider = x402_action_provider()
+
+    provider._create_x402_client(mock_wallet)
+
+    mock_client_cls.return_value.on_before_payment_creation.assert_not_called()
