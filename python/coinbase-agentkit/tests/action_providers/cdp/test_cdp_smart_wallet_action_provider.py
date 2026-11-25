@@ -491,7 +491,7 @@ class TestCdpSmartWalletActionProvider:
         mock_smart_wallet_provider._get_smart_account.return_value = mock_smart_account
         mock_smart_wallet_provider.send_transaction.return_value = MOCK_APPROVAL_TX_HASH
         mock_smart_wallet_provider.wait_for_transaction_receipt.return_value = Mock(
-            status="complete"
+            status=1  # web3.py transaction receipt success
         )
 
         mock_get_token_details.return_value = {
@@ -559,6 +559,63 @@ class TestCdpSmartWalletActionProvider:
         assert parsed_result["success"] is True
         assert parsed_result["approvalTxHash"] == MOCK_APPROVAL_TX_HASH
         assert parsed_result["transactionHash"] == MOCK_SWAP_USER_OP_HASH
+
+    @patch("coinbase_agentkit.action_providers.cdp.swap_utils.get_token_details")
+    @patch("web3.Web3")
+    def test_swap_approval_receipt_revert_reports_failure(
+        self,
+        mock_web3,
+        mock_get_token_details,
+        action_provider,
+        mock_smart_wallet_provider,
+        mock_cdp_client,
+        mock_smart_account,
+        mock_swap_quote,
+    ):
+        """web3 approval receipts use status 1/0, not the CDP user-op string 'complete'."""
+        mock_smart_wallet_provider.get_network.return_value = Network(
+            protocol_family="evm", network_id="base-mainnet"
+        )
+        mock_smart_wallet_provider.get_client.return_value = mock_cdp_client
+        mock_smart_wallet_provider._get_smart_account.return_value = mock_smart_account
+        mock_smart_wallet_provider.send_transaction.return_value = MOCK_APPROVAL_TX_HASH
+        # Reverted eth_getTransactionReceipt status
+        mock_smart_wallet_provider.wait_for_transaction_receipt.return_value = Mock(status=0)
+
+        mock_get_token_details.return_value = {
+            "from_token_decimals": 6,
+            "to_token_decimals": 18,
+            "from_token_name": "USDC",
+            "to_token_name": "ETH",
+        }
+
+        mock_contract = Mock()
+        mock_contract.encodeABI.return_value = "0xapprovaldata"
+        mock_web3_instance = Mock()
+        mock_web3_instance.eth.contract.return_value = mock_contract
+        mock_web3.return_value = mock_web3_instance
+
+        mock_allowance_issue = Mock()
+        mock_allowance_issue.required_allowance = "100000000000000000"
+        mock_allowance_issue.current_allowance = "0"
+        mock_issues = Mock()
+        mock_issues.allowance = mock_allowance_issue
+        mock_issues.balance = None
+        mock_swap_quote.issues = mock_issues
+        mock_smart_account.quote_swap.return_value = mock_swap_quote
+
+        args = {
+            "from_token": MOCK_USDC_ADDRESS,
+            "to_token": MOCK_ETH_ADDRESS,
+            "from_amount": "100",
+        }
+
+        result = action_provider.swap(mock_smart_wallet_provider, args)
+        parsed_result = json.loads(result)
+
+        assert parsed_result["success"] is False
+        assert "Approval transaction failed" in parsed_result["error"]
+        mock_swap_quote.execute.assert_not_called()
 
     @patch("coinbase_agentkit.action_providers.cdp.swap_utils.get_token_details")
     def test_swap_execution_error(

@@ -299,9 +299,12 @@ Important notes:
                             }
                         )
 
-                        # Wait for approval transaction receipt and check if it was successful
+                        # Wait for approval transaction receipt and check if it was successful.
+                        # wait_for_transaction_receipt returns a web3.py receipt whose status is
+                        # the integer 1 on success / 0 on revert — not the CDP user-op string
+                        # "complete" used below for wait_for_user_operation.
                         receipt = wallet_provider.wait_for_transaction_receipt(approval_tx_hash)
-                        if receipt.status != "complete":
+                        if receipt.status != 1:
                             return {"success": False, "error": "Approval transaction failed"}
 
                     # Execute swap using the all-in-one pattern with retry logic
