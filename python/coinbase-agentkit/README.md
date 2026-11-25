@@ -544,6 +544,16 @@ This section provides a detailed list of all available action providers and thei
 </details>
 
 <details>
+<summary><strong>Token Verdict</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>token_verdict</code></td>
+    <td width="768">Gets a risk verdict for a token before buying, swapping, or routing funds into it. Pays $0.02 USDC on Base to the Token Verdict x402 service and returns a SOLID / CAUTION / DANGER verdict with a 0-100 score, six weighted market-structure signals, and an analyst take.</td>
+</tr>
+</table>
+</details>
+
+<details>
 <summary><strong>Twitter</strong></summary>
 <table width="100%">
 <tr>

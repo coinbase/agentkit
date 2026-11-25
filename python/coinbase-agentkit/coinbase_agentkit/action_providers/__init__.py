@@ -32,6 +32,10 @@ from .superfluid.superfluid_action_provider import (
     SuperfluidActionProvider,
     superfluid_action_provider,
 )
+from .token_verdict.token_verdict_action_provider import (
+    TokenVerdictActionProvider,
+    token_verdict_action_provider,
+)
 from .twitter.twitter_action_provider import TwitterActionProvider, twitter_action_provider
 from .wallet.wallet_action_provider import WalletActionProvider, wallet_action_provider
 from .weth.weth_action_provider import WethActionProvider, weth_action_provider
@@ -57,6 +61,7 @@ __all__ = [
     "PythActionProvider",
     "SshActionProvider",
     "SuperfluidActionProvider",
+    "TokenVerdictActionProvider",
     "TwitterActionProvider",
     "WalletActionProvider",
     "WethActionProvider",
@@ -78,6 +83,7 @@ __all__ = [
     "pyth_action_provider",
     "ssh_action_provider",
     "superfluid_action_provider",
+    "token_verdict_action_provider",
     "twitter_action_provider",
     "wallet_action_provider",
     "weth_action_provider",
