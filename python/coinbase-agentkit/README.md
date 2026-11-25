@@ -262,6 +262,24 @@ This section provides a detailed list of all available action providers and thei
 </details>
 
 <details>
+<summary><strong>BotsRated</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>preflight</code></td>
+    <td width="768">Free, unlimited lookup of an x402 seller or MCP server before paying it: latest signed probe, quoted price and payTo vs listing, freshness. Never pays.</td>
+</tr>
+<tr>
+    <td width="200"><code>check_host</code></td>
+    <td width="768">Detailed measured facts for one host from BotsRated's free daily quota. Returns paymentRequired instead of paying once the quota is used up.</td>
+</tr>
+<tr>
+    <td width="200"><code>find_services</code></td>
+    <td width="768">Finds x402 sellers and MCP servers for a need that passed a recent check, with a factual reason, price and latency. Never pays.</td>
+</tr>
+</table>
+</details>
+
+<details>
 <summary><strong>CDP API</strong></summary>
 <table width="100%">
 <tr>
