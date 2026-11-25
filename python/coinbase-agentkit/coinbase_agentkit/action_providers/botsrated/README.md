@@ -1,8 +1,8 @@
 # BotsRated Action Provider
 
-This directory contains the **BotsRatedActionProvider** implementation, which provides read-only actions to look up paid AI-agent services measured by [BotsRated](https://botsrated.com) (beta): x402 sellers on Base and remote MCP servers.
+This directory contains the **BotsRatedActionProvider** implementation, which provides read-only actions to look up paid AI-agent services measured by [BotsRated](https://botsrated.com): x402 sellers (Base and Solana), MPP endpoints, and remote MCP servers.
 
-BotsRated sends signed, unpaid probes to x402 seller hosts listed in the Coinbase CDP Bazaar, Agentic.Market, 402index and x402-list, and runs login-free MCP handshakes against remote MCP servers listed in the Official MCP Registry. Each probe is an ed25519-signed receipt.
+BotsRated sends signed, unpaid probes to x402 seller hosts and MPP catalog services, and runs login-free MCP handshakes against remote MCP servers listed in the Official MCP Registry. Each probe is an ed25519-signed receipt.
 
 **These actions never make a payment.** They only send unpaid `GET` requests with no x402 payment header, so they need no wallet, API key or account, and they work with any wallet provider and network.
 
@@ -27,7 +27,7 @@ tests/action_providers/botsrated/
 - `preflight`: Look up an x402 seller or MCP server before paying it (`GET /v1/preflight`, free and unlimited).
   - Optionally pass the `pay_to` and `network` of the x402 payment option you are about to pay. `payToCheck` is `matches_observed` only when BotsRated's own probe saw that payTo on that network; `listing_only` and `not_seen` tell the agent to ask the user first.
   - Uncovered hosts return `covered: false`, which is not a judgment of the seller.
-- `check_host`: Detailed measured facts for one host (`GET /v1/check`), served from BotsRated's free daily quota (100 per client per UTC day). Once the quota is used up, BotsRated answers with an x402 `402` ($0.001 USDC on Base); this action does **not** pay and returns `paymentRequired: true` instead.
+- `check_host`: Detailed measured facts for one host (`GET /v1/check`), served from BotsRated's free daily quota (see [botsrated.com/pricing.json](https://botsrated.com/pricing.json)). Once the quota is used up, BotsRated answers with an x402 `402` (USDC on Base); this action does **not** pay and returns `paymentRequired: true` with the quoted price instead.
 - `find_services`: Find x402 sellers and MCP servers for a need (`GET /v1/find`), limited to services that passed a recent check, each with a one-line factual reason, quoted price, median latency and page URL. Uses the same free daily quota.
 
 ## Usage
