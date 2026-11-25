@@ -1,0 +1,1 @@
+Added new Pendle V2 action provider for buying and selling Principal Tokens (PT) via the Pendle hosted SDK. The provider supports `swap_exact_token_for_pt`, `swap_exact_pt_for_token`, and `get_pendle_market_info` on Base, Ethereum, and Arbitrum mainnets.
