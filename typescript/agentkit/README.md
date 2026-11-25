@@ -204,6 +204,19 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>BrainChain</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>post_task</code></td>
+    <td width="768">Pays 1 USDC over x402 for a task that a frontier model does and Jev grades; work that is not accepted is refunded.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_task</code></td>
+    <td width="768">Reads a BrainChain order: its status, whether the work was accepted, and the result text once it was.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Clanker</strong></summary>
 <table width="100%">
 <tr>
