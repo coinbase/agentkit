@@ -1,5 +1,6 @@
 """Schemas for x402 action providers."""
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -27,6 +28,11 @@ class X402Config:
     # Maximum payment per request in USDC whole units.
     # Default: 1.0 (or X402_MAX_PAYMENT_USDC env var)
     max_payment_usdc: float = 1.0
+
+    # Optional hook called right before each payment is signed, for example to screen the
+    # payTo address or apply a spend policy. Return an x402 AbortResult(reason=...) to block
+    # the payment. Passed to x402ClientSync.on_before_payment_creation.
+    before_payment: Callable[[Any], Any] | None = None
 
 
 class EmptySchema(BaseModel):

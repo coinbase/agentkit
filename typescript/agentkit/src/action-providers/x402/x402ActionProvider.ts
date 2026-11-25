@@ -42,6 +42,7 @@ interface ResolvedX402Config {
   allowDynamicServiceRegistration: boolean;
   registeredFacilitators: Record<string, string>;
   maxPaymentUsdc: number;
+  beforePayment?: X402Config["beforePayment"];
 }
 
 /**
@@ -67,6 +68,7 @@ export class X402ActionProvider extends ActionProvider<WalletProvider> {
       registeredFacilitators: config.registeredFacilitators ?? {},
       maxPaymentUsdc:
         config.maxPaymentUsdc ?? parseFloat(process.env.X402_MAX_PAYMENT_USDC ?? "1.0"),
+      beforePayment: config.beforePayment,
     };
     this.registeredServices = new Set(this.config.registeredServices);
   }
@@ -890,6 +892,10 @@ These are the only services that can be called using make_http_request or make_h
         );
       }),
     );
+
+    if (this.config.beforePayment) {
+      client.onBeforePaymentCreation(this.config.beforePayment);
+    }
 
     if (walletProvider instanceof EvmWalletProvider) {
       const account = walletProvider.toSigner();
