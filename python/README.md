@@ -28,6 +28,12 @@ Strands Agents extension of AgentKit. Enables agentic workflows to interact with
 
 See [AgentKit Strands Agents](./framework-extensions/strands-agents/README.md) to get started!
 
+#### `coinbase-agentkit-crewai`
+
+CrewAI extension of AgentKit. Enables CrewAI agents to interact with onchain actions.
+
+See [AgentKit CrewAI](./framework-extensions/crewai/README.md) to get started!
+
 #### `coinbase-agentkit-pydantic-ai`
 
 PydanticAI extension of AgentKit. Enables agentic workflows to interact with onchain actions.
