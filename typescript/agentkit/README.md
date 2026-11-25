@@ -520,6 +520,23 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>ncrypted</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>create_secret</code></td>
+    <td width="768">Encrypts a password, API key or note locally and returns a one-time link that self-destructs after one read. 3 free per day, then 0.005 USDC on Base via x402.</td>
+</tr>
+<tr>
+    <td width="200"><code>read_secret</code></td>
+    <td width="768">Opens an ncrypted one-time link and returns the secret, destroying it. Free.</td>
+</tr>
+<tr>
+    <td width="200"><code>secret_status</code></td>
+    <td width="768">Checks whether a secret you created has been read (pending, read, burned or expired). Free.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Onramp</strong></summary>
 <table width="100%">
 <tr>
