@@ -634,6 +634,15 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Token Verdict</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>token_verdict</code></td>
+    <td width="768">Gets a pay-per-call token risk verdict (SOLID / CAUTION / DANGER, 0-100 score, six market-structure signals, analyst take) for $0.02 USDC on Base via x402.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>TrueMarkets</strong></summary>
 <table width="100%">
 <tr>
