@@ -162,7 +162,7 @@ importers:
         specifier: ^1.18.2
         version: 1.22.0
       viem:
-        specifier: 2.47.4
+        specifier: ^2.47.4
         version: 2.47.4(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@4.3.6)
       zod:
         specifier: ^4.3.6

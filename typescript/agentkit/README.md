@@ -1183,6 +1183,8 @@ const walletData = await walletProvider.exportWallet();
 
 The `ViemWalletProvider` is a wallet provider that uses the [Viem library](https://viem.sh/docs/getting-started). It is useful for interacting with any EVM-compatible chain.
 
+Install viem `^2.47.4` (2.47.4 or any newer 2.x) in the same project. AgentKit depends on that range, so a package manager can install a single shared copy of viem. A project below 2.47.4 gets a separate copy. A wallet client from the shared copy typechecks as the `ViemWalletProvider` argument, and viem values AgentKit returns (`getPublicClient()`, `toSigner()`, `NETWORK_ID_TO_VIEM_CHAIN`) match the project's viem types.
+
 ```typescript
 import { ViemWalletProvider } from "@coinbase/agentkit";
 import { privateKeyToAccount } from "viem/accounts";
