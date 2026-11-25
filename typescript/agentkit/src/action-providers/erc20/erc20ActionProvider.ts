@@ -126,7 +126,20 @@ Important notes:
         }),
       });
 
-      await walletProvider.waitForTransactionReceipt(hash);
+      // Receipt lookup is separate from send: if the tx went out but the RPC
+      // fails to return a receipt, surface the hash so the agent does not retry
+      // and double-pay (see #1547). Viem resolves reverted receipts with
+      // status "reverted" without throwing, so check status explicitly (#1558).
+      let receipt;
+      try {
+        receipt = await walletProvider.waitForTransactionReceipt(hash);
+      } catch (receiptError) {
+        return `Error fetching transfer receipt: ${receiptError}. The transfer may have been sent. Transaction hash: ${hash}`;
+      }
+
+      if (receipt?.status === "reverted" || receipt?.status === "failed" || receipt?.status === 0) {
+        return `Error: Transfer transaction reverted. Transaction hash: ${hash}`;
+      }
 
       return `Transferred ${args.amount} of ${tokenDetails?.name} (${args.tokenAddress}) to ${
         args.destinationAddress

@@ -112,7 +112,7 @@ describe("Transfer Action", () => {
     } as unknown as jest.Mocked<EvmWalletProvider>;
 
     mockWallet.sendTransaction.mockResolvedValue(TRANSACTION_HASH);
-    mockWallet.waitForTransactionReceipt.mockResolvedValue({});
+    mockWallet.waitForTransactionReceipt.mockResolvedValue({ status: "success" });
   });
 
   it("should successfully respond", async () => {
@@ -137,6 +137,48 @@ describe("Transfer Action", () => {
       `Transferred ${MOCK_AMOUNT} of MockToken (${MOCK_CONTRACT_ADDRESS}) to ${MOCK_DESTINATION}`,
     );
     expect(response).toContain(`Transaction hash for the transfer: ${TRANSACTION_HASH}`);
+  });
+
+  it("should report reverted when the transfer receipt status is reverted", async () => {
+    mockMulticall.mockResolvedValueOnce([
+      { result: "MockToken" },
+      { result: MOCK_DECIMALS },
+      { result: BigInt(100000 * 10 ** MOCK_DECIMALS) },
+    ]);
+    mockWallet.waitForTransactionReceipt.mockResolvedValue({ status: "reverted" });
+
+    const args = {
+      amount: MOCK_AMOUNT.toString(),
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      destinationAddress: MOCK_DESTINATION,
+    };
+
+    const response = await actionProvider.transfer(mockWallet, args);
+
+    expect(response).toContain("Transfer transaction reverted");
+    expect(response).toContain(TRANSACTION_HASH);
+    expect(response).not.toContain("Transferred");
+  });
+
+  it("should surface the hash when receipt lookup fails after send", async () => {
+    mockMulticall.mockResolvedValueOnce([
+      { result: "MockToken" },
+      { result: MOCK_DECIMALS },
+      { result: BigInt(100000 * 10 ** MOCK_DECIMALS) },
+    ]);
+    mockWallet.waitForTransactionReceipt.mockRejectedValue(new Error("RPC timeout"));
+
+    const args = {
+      amount: MOCK_AMOUNT.toString(),
+      tokenAddress: MOCK_CONTRACT_ADDRESS,
+      destinationAddress: MOCK_DESTINATION,
+    };
+
+    const response = await actionProvider.transfer(mockWallet, args);
+
+    expect(response).toContain("Error fetching transfer receipt");
+    expect(response).toContain(TRANSACTION_HASH);
+    expect(response).not.toContain("Error transferring the asset");
   });
 
   it("should fail with an error", async () => {
@@ -301,7 +343,7 @@ describe("Approve Action", () => {
     } as unknown as jest.Mocked<EvmWalletProvider>;
 
     mockWallet.sendTransaction.mockResolvedValue(TRANSACTION_HASH);
-    mockWallet.waitForTransactionReceipt.mockResolvedValue({});
+    mockWallet.waitForTransactionReceipt.mockResolvedValue({ status: "success" });
   });
 
   it("should successfully approve tokens", async () => {
