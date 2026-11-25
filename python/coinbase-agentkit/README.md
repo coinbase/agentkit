@@ -428,6 +428,20 @@ This section provides a detailed list of all available action providers and thei
 </details>
 
 <details>
+<summary><strong>Hyperlane</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>transfer_remote</code></td>
+    <td width="768">Bridges an ERC-20 token to a recipient on another chain via a Hyperlane Warp Route.</td>
+</tr>
+<tr>
+    <td width="200"><code>quote_transfer_remote</code></td>
+    <td width="768">Previews the interchain gas payment for a Hyperlane Warp Route transfer to a destination chain.</td>
+</tr>
+</table>
+</details>
+
+<details>
 <summary><strong>Morpho</strong></summary>
 <table width="100%">
 <tr>

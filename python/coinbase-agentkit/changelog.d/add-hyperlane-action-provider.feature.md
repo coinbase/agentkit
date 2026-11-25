@@ -1,0 +1,1 @@
+Added new Hyperlane action provider for cross-chain ERC-20 transfers via Hyperlane Warp Routes. The provider supports `transfer_remote` and `quote_transfer_remote` from Base, Ethereum, Optimism, and Arbitrum mainnets.
