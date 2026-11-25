@@ -634,6 +634,23 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Trading Signals</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>token_risk_verdict</code></td>
+    <td width="768">Returns a green light (passed our check, not a promise) / caution / avoid verdict with an A-F grade and reasons for a Base or Solana token (0.01 USDC per call over x402).</td>
+</tr>
+<tr>
+    <td width="200"><code>token_pre_trade_pack</code></td>
+    <td width="768">Returns one GO / CAUTION / STOP decision combining the token verdict, an OFAC sanctions screen and optional counterparty wallet pay-readiness (0.015 USDC per call over x402).</td>
+</tr>
+<tr>
+    <td width="200"><code>token_whale_flow</code></td>
+    <td width="768">Returns large-wallet DEX buy / sell flow, net flow and an accumulation / distribution signal for a Base or Solana token over 1-24h (0.02 USDC per call over x402).</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>TrueMarkets</strong></summary>
 <table width="100%">
 <tr>
