@@ -178,6 +178,27 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Agentic Finance Graph</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>check_agent</code></td>
+    <td width="768">Checks an ERC-8004 agent on Base before trusting or paying it: liveness level from observed payments, bound wallet, counted payments, open incidents and recent detections.</td>
+</tr>
+<tr>
+    <td width="200"><code>check_payee</code></td>
+    <td width="768">Checks a payment destination on Base (an address or an x402 resource URL): how many registered and ranked agents have paid it, when, and whether it is a listed x402 seller.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_agent_economy_overview</code></td>
+    <td width="768">Returns the headline figures of AI-agent money on Base, each with its measurement time and definition.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_agent_statement</code></td>
+    <td width="768">Fetches an agent's latest signed 3-hour statement with a check-before-you-pay result and a Merkle proof that can be verified independently.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Base Account</strong></summary>
 <table width="100%">
 <tr>
