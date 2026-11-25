@@ -17,6 +17,10 @@ from .cdp.cdp_smart_wallet_action_provider import (
     cdp_smart_wallet_action_provider,
 )
 from .compound.compound_action_provider import CompoundActionProvider, compound_action_provider
+from .degenscan_intel.degenscan_intel_action_provider import (
+    DegenscanIntelActionProvider,
+    degenscan_intel_action_provider,
+)
 from .erc20.erc20_action_provider import ERC20ActionProvider, erc20_action_provider
 from .erc721.erc721_action_provider import Erc721ActionProvider, erc721_action_provider
 from .hyperboliclabs.hyperbolic_action_provider import (
@@ -76,6 +80,8 @@ __all__ = [
     "nillion_action_provider",
     "onramp_action_provider",
     "pyth_action_provider",
+    "DegenscanIntelActionProvider",
+    "degenscan_intel_action_provider",
     "ssh_action_provider",
     "superfluid_action_provider",
     "twitter_action_provider",
