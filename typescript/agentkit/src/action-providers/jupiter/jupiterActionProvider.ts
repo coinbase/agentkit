@@ -7,6 +7,7 @@ import { SwapTokenSchema } from "./schemas";
 import { PublicKey, VersionedTransaction } from "@solana/web3.js";
 import { createJupiterApiClient, SwapRequest } from "@jup-ag/api";
 import { getMint } from "@solana/spl-token";
+import { checkSwapBeforeSigning } from "./swapCheck";
 
 /**
  * JupiterActionProvider handles token swaps using Jupiter's API.
@@ -81,6 +82,17 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
 
       const transactionBuffer = Buffer.from(swapResponse.swapTransaction, "base64");
       const tx = VersionedTransaction.deserialize(transactionBuffer);
+
+      // Simulate before signing: the wallet must give up no more than the quote says and receive at least its minimum.
+      const problem = await checkSwapBeforeSigning(
+        walletProvider.getConnection(),
+        userPublicKey,
+        tx,
+        quoteResponse,
+      );
+      if (problem) {
+        return `Refused to sign the swap transaction: ${problem}`;
+      }
 
       const signature = await walletProvider.signAndSendTransaction(tx);
 
