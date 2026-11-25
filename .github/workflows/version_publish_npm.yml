@@ -40,7 +40,7 @@ jobs:
           commit: "chore: version typescript packages"
           title: "chore: version typescript packages"
           version: pnpm run changeset:version
-          publish: pnpm run publish
+          publish: pnpm run changeset:publish
           cwd: ./typescript
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
