@@ -634,6 +634,15 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>Token Safety</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>check_token_safety</code></td>
+    <td width="768">Rug checks a token on Base, Ethereum, Arbitrum, Optimism, Polygon or Solana: a 0-100 risk score with reasons, paid $0.01 in USDC per check via x402.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>TrueMarkets</strong></summary>
 <table width="100%">
 <tr>
