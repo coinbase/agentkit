@@ -542,6 +542,31 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>PayPerScreen</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>screen_name</code></td>
+    <td width="768">Screens a person or company against official sanctions and export-control lists ($0.02 in USDC via x402).</td>
+</tr>
+<tr>
+    <td width="200"><code>screen_wallet</code></td>
+    <td width="768">Checks a wallet address against sanctioned, issuer-frozen and hack-linked addresses ($0.02).</td>
+</tr>
+<tr>
+    <td width="200"><code>check_email</code></td>
+    <td width="768">Checks an email address for fraud and trust signals ($0.02).</td>
+</tr>
+<tr>
+    <td width="200"><code>check_ip</code></td>
+    <td width="768">Checks an IP address for sanctioned-country, VPN, proxy and Tor signals ($0.02).</td>
+</tr>
+<tr>
+    <td width="200"><code>screening_lists_coverage</code></td>
+    <td width="768">Lists the screening sources, record counts and last refresh (free).</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Pyth</strong></summary>
 <table width="100%">
 <tr>
