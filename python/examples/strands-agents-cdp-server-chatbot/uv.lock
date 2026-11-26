@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 5
 requires-python = ">=3.10, <4"
 
 [manifest]
@@ -663,7 +663,7 @@ requires-dist = [
     { name = "solana", specifier = ">=0.36.6" },
     { name = "solders", specifier = ">=0.26.0" },
     { name = "web3", specifier = ">=7.6.0,<8" },
-    { name = "x402", extras = ["requests"], specifier = ">=2.4.0" },
+    { name = "x402", extras = ["requests"], specifier = ">=2.20.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -2268,7 +2268,7 @@ wheels = [
 
 [[package]]
 name = "requests"
-version = "2.32.3"
+version = "2.34.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
@@ -2276,9 +2276,9 @@ dependencies = [
     { name = "idna" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/63/70/2bf7780ad2d390a8d301ad0b550f1581eadbd9a20f896afe06353c2a2913/requests-2.32.3.tar.gz", hash = "sha256:55365417734eb18255590a9ff9eb97e9e1da868d4ccd6402399eaf68af20a760", size = 131218, upload-time = "2024-05-29T15:37:49.536Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ac/c3/e2a2b89f2d3e2179abd6d00ebd70bff6273f37fb3e0cc209f48b39d00cbf/requests-2.34.2.tar.gz", hash = "sha256:f288924cae4e29463698d6d60bc6a4da69c89185ad1e0bcc4104f584e960b9ed", size = 142856, upload-time = "2026-05-14T19:25:27.735Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f9/9b/335f9764261e915ed497fcdeb11df5dfd6f7bf257d4a6a2a686d80da4d54/requests-2.32.3-py3-none-any.whl", hash = "sha256:70761cfe03c773ceb22aa2f671b4757976145175cdfca038c02654d061d6dcc6", size = 64928, upload-time = "2024-05-29T15:37:47.027Z" },
+    { url = "https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl", hash = "sha256:2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0", size = 73075, upload-time = "2026-05-14T19:25:26.443Z" },
 ]
 
 [[package]]
@@ -2960,16 +2960,16 @@ wheels = [
 
 [[package]]
 name = "x402"
-version = "2.4.0"
+version = "2.29.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "nest-asyncio" },
     { name = "pydantic" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7a/22/e164ff15035bf5c30922af144d1f4be7d7e8a5a230bb82368d02e4a9dc7d/x402-2.4.0.tar.gz", hash = "sha256:59bc446906c1699099d023aa294ae0e60e3bffac7c2c8d855d299716456ebfdf", size = 1256891, upload-time = "2026-03-16T15:08:03.988Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/dd/0a/08b2c39850154eec663a8dd8c1eeb6fbfa5fc2f5cc87b7984c8f384b0ddf/x402-2.29.0.tar.gz", hash = "sha256:ae0ba001864ba32351529df33005db84a59e5a4524b95d2e6efdd7077d719a66", size = 2413599, upload-time = "2026-11-20T19:01:30.107Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c3/0c/1d09cadf11bba9d6b6a484c7b006df67e8aefbe2ea51df0d8d2611b94400/x402-2.4.0-py3-none-any.whl", hash = "sha256:2d8b9dbedc139145103560a2e0c39b9ab0da96cbe9fee1cbc0fe03c56b42f353", size = 1318729, upload-time = "2026-03-16T15:08:02.489Z" },
+    { url = "https://files.pythonhosted.org/packages/b3/05/931ea60707895e4a1d3cc831245fb345f4eafba67bd2b5f5808cc25eee8b/x402-2.29.0-py3-none-any.whl", hash = "sha256:9b9a45384f6e008f73279f61c81d3885eaf17e1183ac51e5b7fb3c7e98fcb76e", size = 2577383, upload-time = "2026-11-20T19:01:27.946Z" },
 ]
 
 [package.optional-dependencies]

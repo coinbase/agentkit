@@ -1,0 +1,1 @@
+Made the x402 action provider match registered services on exact origin and path boundary, and enforce `max_payment_usdc` through x402 spend controls for both `retry_http_request_with_x402` and `make_http_request_with_x402`. Requires `x402>=2.20.0`.
