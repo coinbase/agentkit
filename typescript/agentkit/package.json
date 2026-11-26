@@ -71,6 +71,7 @@
     "opensea-js": "^7.1.18",
     "reflect-metadata": "^0.2.2",
     "sushi": "6.2.1",
+    "tereno-client": "^0.4.0",
     "twitter-api-v2": "^1.18.2",
     "viem": "2.47.4",
     "zod": "^4.3.6"
