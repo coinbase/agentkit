@@ -18,7 +18,6 @@ from .swap_utils import (
     format_units,
     get_token_details,
     parse_units,
-    retry_with_exponential_backoff,
 )
 
 TWalletProvider = TypeVar("TWalletProvider", bound=CdpEvmWalletProvider)
@@ -161,7 +160,7 @@ It takes the following inputs:
 - slippage_bps: (Optional) Maximum allowed slippage in basis points (100 = 1%)
 Important notes:
 - The contract address for native ETH is "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-- If needed, it will automatically approve the permit2 contract to spend the fromToken
+- If needed, it will automatically approve the permit2 contract for this from_amount only (not unlimited)
 - Use from_amount units exactly as provided, do not convert to wei or any other units.
 """,
         schema=SwapSchema,
@@ -210,13 +209,15 @@ Important notes:
                     # Get the account
                     account = await cdp.evm.get_account(address=wallet_provider.get_address())
 
+                    from_amount_atomic = parse_units(
+                        validated_args.from_amount, from_token_decimals
+                    )
+
                     # Estimate swap price first to check liquidity, token balance and permit2 approval status
                     swap_quote = await account.quote_swap(
                         from_token=validated_args.from_token,
                         to_token=validated_args.to_token,
-                        from_amount=str(
-                            parse_units(validated_args.from_amount, from_token_decimals)
-                        ),
+                        from_amount=str(from_amount_atomic),
                         network=cdp_network,
                     )
 
@@ -238,20 +239,20 @@ Important notes:
                             "error": f"Balance is not enough to perform swap. Required: {validated_args.from_amount} {from_token_name}, but only have {format_units(swap_quote.issues.balance.current_balance, from_token_decimals)} {from_token_name} ({validated_args.from_token})",
                         }
 
-                    # Check if allowance is enough
+                    # Approve only this swap's from_amount (never max uint256) so a later
+                    # compromised path cannot inherit an unlimited Permit2 allowance.
                     approval_tx_hash = None
                     if (
                         hasattr(swap_quote, "issues")
                         and swap_quote.issues
                         and hasattr(swap_quote.issues, "allowance")
                     ):
-                        # Send approval transaction
                         approve_data = (
                             Web3()
                             .eth.contract(abi=ERC20_ABI)
                             .encodeABI(
                                 fn_name="approve",
-                                args=[PERMIT2_ADDRESS, 2**256 - 1],  # Max uint256
+                                args=[PERMIT2_ADDRESS, from_amount_atomic],
                             )
                         )
 
@@ -273,15 +274,9 @@ Important notes:
                         if receipt.status != "success":
                             return {"success": False, "error": "Approval transaction failed"}
 
-                    # Execute swap using the all-in-one pattern with retry logic
-                    async def _perform_swap():
-                        return await swap_quote.execute()
-
-                    swap_result = await retry_with_exponential_backoff(
-                        _perform_swap,
-                        max_retries=3,
-                        base_delay=5.0,
-                    )
+                    # Submit swap once. Do not retry submission: a throw after broadcast can
+                    # cause a second unintended swap (same class as false-failure retries).
+                    swap_result = await swap_quote.execute()
 
                     receipt = await wallet_provider.wait_for_transaction_receipt(
                         swap_result.transaction_hash
