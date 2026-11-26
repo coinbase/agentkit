@@ -464,6 +464,31 @@ const agent = createAgent({
 </table>
 </details>
 <details>
+<summary><strong>FeraTerra</strong></summary>
+<table width="100%">
+<tr>
+    <td width="200"><code>get_markets</code></td>
+    <td width="768">Lists active Spot, Perp, SpreadBook, and BoundedClaim markets and risk specifications on FeraTerra.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_orderbook</code></td>
+    <td width="768">Fetches an aggregated L2 orderbook snapshot and BBO spread for a FeraTerra market.</td>
+</tr>
+<tr>
+    <td width="200"><code>get_leaderboard</code></td>
+    <td width="768">Queries the public FeraTerra Gladiator leaderboard ranked by equity, PnL, maker streak, volume, or ROI.</td>
+</tr>
+<tr>
+    <td width="200"><code>preview_order</code></td>
+    <td width="768">Runs a stateless zero-mutation order preview or L2 sweep and BBO spread simulation on FeraTerra.</td>
+</tr>
+<tr>
+    <td width="200"><code>request_testnet_faucet</code></td>
+    <td width="768">Requests Base Sepolia (chain_id=84532) testnet collateral tokens and optional ETH gas drip for the wallet.</td>
+</tr>
+</table>
+</details>
+<details>
 <summary><strong>Flaunch</strong></summary>
 <table width="100%">
 <tr>
