@@ -49,6 +49,22 @@ For AgentKit configuration options, see the [Coinbase Agentkit README](https://g
 
 For a full example, see the [chatbot example](https://github.com/coinbase/agentkit/blob/main/python/examples/langchain-cdp-smart-wallet-chatbot/chatbot.py).
 
+### Async applications and custom event loops
+
+Standard asyncio loops retain support for synchronous actions that run nested
+coroutines. Third-party loops such as uvloop are left unpatched because
+`nest-asyncio` does not support them. The extension requires CDP SDK 1.42.0 or
+newer to avoid the same import-time patch in older SDK releases.
+
+In an async application, use LangChain's asynchronous tool interface:
+
+```python
+result = await tools[0].ainvoke({"argument": "value"})
+```
+
+Replace the example arguments with the selected tool's input schema. LangChain
+runs synchronous tools in an executor, allowing the event loop to keep running.
+
 ## Contributing
 
 See [CONTRIBUTING.md](https://github.com/coinbase/agentkit/blob/master/CONTRIBUTING.md) for detailed setup instructions and contribution guidelines.

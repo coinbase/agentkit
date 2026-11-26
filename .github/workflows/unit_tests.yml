@@ -31,6 +31,35 @@ jobs:
       - name: Run tests
         run: make test
 
+  test-agentkit-langchain-python:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./python/framework-extensions/langchain
+    strategy:
+      matrix:
+        python: ["3.10", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "python/framework-extensions/langchain/uv.lock"
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Run LangChain extension tests
+        run: uv run --no-sync pytest tests
+
   test-agentkit-typescript:
     runs-on: ubuntu-latest
     strategy:

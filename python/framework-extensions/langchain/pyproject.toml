@@ -18,6 +18,8 @@ keywords = [
 ]
 dependencies = [
     "coinbase-agentkit>=0.7.2,<0.8",
+    # Earlier CDP SDKs also patch event loops unconditionally during import.
+    "cdp-sdk>=1.42.0,<2",
     "langchain>=0.3.4,<0.4",
     "python-dotenv>=1.0.1,<2",
     "nest-asyncio>=1.5.8,<2",
