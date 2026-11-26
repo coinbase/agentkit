@@ -356,6 +356,31 @@ describe("Sushi Action Provider", () => {
       expect(result).toContain(`on ${getEvmChainById(chainId).shortName}`);
     });
 
+    it("should treat a mixed-case native address as native", async () => {
+      const args: Parameters<(typeof actionProvider)["swap"]>[1] = {
+        amount: formatUnits(amountIn, tokenIn.decimals),
+        fromAssetAddress: nativeAddress.toUpperCase().replace("0X", "0x") as Address,
+        toAssetAddress: tokenOut.address,
+        maxSlippage: 0.005,
+      };
+
+      mockWallet.getBalance.mockResolvedValue(amountIn);
+      mockWallet.sendTransaction.mockResolvedValue(txHash);
+      mockWallet.waitForTransactionReceipt.mockResolvedValueOnce({
+        status: "success",
+        logs: getRouteLog({ tokenIn: nativeToken, tokenOut, amountIn, amountOut }),
+      });
+      mockedGetSwap.mockReturnValue(
+        getSuccessfullSwapResponse({ tokenIn: nativeToken, amountIn, tokenOut, amountOut }),
+      );
+
+      const result = await actionProvider.swap(mockWallet, args);
+
+      // No decimals lookup: the native asset has no ERC20 contract to read it from
+      expect(mockWallet.readContract).toHaveBeenCalledTimes(0);
+      expect(result).toContain("Swapped");
+    });
+
     it("should fail if there isn't enough balance (native)", async () => {
       const args: Parameters<(typeof actionProvider)["swap"]>[1] = {
         amount: formatUnits(amountIn, tokenIn.decimals),

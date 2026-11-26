@@ -270,7 +270,7 @@ async function fetchDecimals({
     };
   }
 
-  if (token === nativeAddress) {
+  if (token.toLowerCase() === nativeAddress) {
     return { success: true, decimals: EvmNative.fromChainId(chainId).decimals };
   }
 
