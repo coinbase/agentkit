@@ -10,6 +10,7 @@ import { CdpSmartWalletProvider } from "./cdpSmartWalletProvider";
 const mockPublicClient = {
   readContract: jest.fn(),
   getBalance: jest.fn(),
+  waitForTransactionReceipt: jest.fn(),
 } as unknown as jest.Mocked<PublicClient>;
 
 // =========================================================
@@ -28,6 +29,7 @@ jest.mock("viem", () => {
   return {
     createPublicClient: jest.fn(() => mockPublicClient),
     http: jest.fn(),
+    toEventSelector: jest.requireActual("viem").toEventSelector,
   };
 });
 
@@ -322,6 +324,120 @@ describe("CdpSmartWalletProvider", () => {
         "1000000000000000000",
       );
       expect(userOpHash).toBe(MOCK_USER_OP_HASH);
+    });
+  });
+
+  // =========================================================
+  // transaction receipt tests
+  // =========================================================
+
+  describe("transaction receipts", () => {
+    // derived from the EntryPoint ABI, independently of the provider, so a wrong topic in the
+    // provider fails these tests by name instead of passing while production never matches
+    const { toEventSelector } = jest.requireActual<typeof import("viem")>("viem");
+    const USER_OPERATION_EVENT_TOPIC = toEventSelector(
+      "event UserOperationEvent(bytes32 indexed userOpHash, address indexed sender, address indexed paymaster, uint256 nonce, bool success, uint256 actualGasCost, uint256 actualGasUsed)",
+    );
+    const MOCK_TX_HASH = "0x9999999999999999999999999999999999999999999999999999999999999999";
+    const word = (n: number) => n.toString(16).padStart(64, "0");
+    const userOpEvent = (userOpHash: string, success: boolean) => ({
+      topics: [
+        USER_OPERATION_EVENT_TOPIC,
+        userOpHash,
+        "0x" + word(0),
+        "0x" + word(0),
+      ] as `0x${string}`[],
+      data: ("0x" + word(7) + word(success ? 1 : 0) + word(1000) + word(50000)) as `0x${string}`,
+    });
+    const transferLog = {
+      topics: [
+        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+      ] as `0x${string}`[],
+      data: ("0x" + word(1000000)) as `0x${string}`,
+    };
+    const setUserOperation = (receipt: Record<string, unknown>) => {
+      (mockCdpClient.evm as unknown as { waitForUserOperation: jest.Mock }).waitForUserOperation =
+        jest.fn().mockResolvedValue(receipt);
+    };
+
+    beforeEach(() => {
+      setUserOperation({
+        status: "complete",
+        transactionHash: MOCK_TX_HASH,
+        userOpHash: MOCK_USER_OP_HASH,
+      });
+    });
+
+    it("should keep the complete status and attach the logs when the operation succeeded", async () => {
+      const logs = [transferLog, userOpEvent(MOCK_USER_OP_HASH, true)];
+      mockPublicClient.waitForTransactionReceipt.mockResolvedValue({
+        status: "success",
+        logs,
+      } as never);
+
+      const receipt = await provider.waitForTransactionReceipt(MOCK_USER_OP_HASH);
+
+      expect(receipt.status).toBe("complete");
+      expect(receipt.logs).toEqual(logs);
+    });
+
+    it("should report failed when the bundle was mined but the operation reverted", async () => {
+      const logs = [userOpEvent(MOCK_USER_OP_HASH, false)];
+      mockPublicClient.waitForTransactionReceipt.mockResolvedValue({
+        status: "success",
+        logs,
+      } as never);
+
+      const receipt = await provider.waitForTransactionReceipt(MOCK_USER_OP_HASH);
+
+      expect(receipt.status).toBe("failed");
+      expect(receipt.transactionHash).toBe(MOCK_TX_HASH);
+      expect(receipt.logs).toEqual(logs);
+    });
+
+    it("should use the UserOperationEvent topic the EntryPoint emits", () => {
+      expect(USER_OPERATION_EVENT_TOPIC).toBe(
+        "0x49628fd1471006c1482da88028e9ce4dbb080b815c9b0344d39e5a8e6ec1419f",
+      );
+    });
+
+    it("should leave the status alone when the logs hold no event for this operation", async () => {
+      const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+      const otherHash = "0x1111111111111111111111111111111111111111111111111111111111111111";
+      mockPublicClient.waitForTransactionReceipt.mockResolvedValue({
+        status: "success",
+        logs: [transferLog, userOpEvent(otherHash, false)],
+      } as never);
+
+      const receipt = await provider.waitForTransactionReceipt(MOCK_USER_OP_HASH);
+
+      expect(receipt.status).toBe("complete");
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("No UserOperationEvent for"));
+      warn.mockRestore();
+    });
+
+    it("should report failed when the bundle transaction itself reverted", async () => {
+      const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+      // a reverted transaction keeps no logs, so there is no UserOperationEvent to read
+      mockPublicClient.waitForTransactionReceipt.mockResolvedValue({
+        status: "reverted",
+        logs: [],
+      } as never);
+
+      const receipt = await provider.waitForTransactionReceipt(MOCK_USER_OP_HASH);
+
+      expect(receipt.status).toBe("failed");
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
+    });
+
+    it("should return a receipt that is not complete without reading the bundle transaction", async () => {
+      setUserOperation({ status: "failed", userOpHash: MOCK_USER_OP_HASH });
+
+      const receipt = await provider.waitForTransactionReceipt(MOCK_USER_OP_HASH);
+
+      expect(receipt.status).toBe("failed");
+      expect(mockPublicClient.waitForTransactionReceipt).not.toHaveBeenCalled();
     });
   });
 
