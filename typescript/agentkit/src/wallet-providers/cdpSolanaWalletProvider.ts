@@ -117,6 +117,7 @@ export class CdpSolanaWalletProvider extends SvmWalletProvider implements Wallet
       apiKeyId,
       apiKeySecret,
       walletSecret,
+      basePath: config.basePath,
     });
 
     const connection = new Connection(rpcUrl);

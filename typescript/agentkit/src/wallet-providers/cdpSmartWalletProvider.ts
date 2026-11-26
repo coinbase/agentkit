@@ -122,6 +122,7 @@ export class CdpSmartWalletProvider extends EvmWalletProvider implements WalletP
       apiKeyId,
       apiKeySecret,
       walletSecret,
+      basePath: config.basePath,
     });
 
     // Create or get the owner account

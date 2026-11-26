@@ -107,6 +107,7 @@ export class CdpEvmWalletProvider extends EvmWalletProvider implements WalletPro
       apiKeyId,
       apiKeySecret,
       walletSecret,
+      basePath: config.basePath,
     });
 
     const serverAccount = await (config.address

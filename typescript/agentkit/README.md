@@ -999,6 +999,26 @@ const walletProvider = await CdpEvmWalletProvider.configureWithWallet({
 });
 ```
 
+#### Custom CDP API URL
+
+Set `basePath` to connect to a local CDP API test server or a proxy. Include the
+API path prefix, such as `/platform`:
+
+```typescript
+const walletProvider = await CdpEvmWalletProvider.configureWithWallet({
+  apiKeyId: "CDP_API_KEY_ID",
+  apiKeySecret: "CDP_API_KEY_SECRET",
+  walletSecret: "CDP_WALLET_SECRET",
+  networkId: "base-sepolia",
+  basePath: "http://127.0.0.1:4010/platform",
+});
+```
+
+This option is also available on `CdpSmartWalletProvider` and
+`CdpSolanaWalletProvider`. When omitted, the CDP SDK uses its default production
+API URL. `basePath` configures CDP API requests; `rpcUrl` configures the chain RPC
+connection separately.
+
 #### Using an Existing Wallet
 
 You can configure the provider with an existing wallet by providing the wallet's address:
@@ -1057,6 +1077,8 @@ const walletData = await walletProvider.exportWallet();
 ### CdpSmartWalletProvider
 
 The `CdpSmartWalletProvider` is a wallet provider that uses the Coinbase Developer Platform (CDP) [Smart Wallets](https://docs.cdp.coinbase.com/wallet-api/docs/smart-wallets). Smart wallets are ERC-4337 compliant smart contract wallets that provide enhanced features like gasless transactions, batch operations, and account recovery.
+
+Use the optional [`basePath` configuration](#custom-cdp-api-url) to connect to a custom CDP API URL.
 
 **Note:** Smart wallets are currently only supported on Base networks (base-sepolia and base-mainnet).
 
@@ -1430,6 +1452,8 @@ SVM:
 ### CdpV2SolanaWalletProvider
 
 The `CdpV2SolanaWalletProvider` is a wallet provider that uses the Coinbase Developer Platform (CDP) V2 API for Solana. It provides a more modern and streamlined interface for interacting with CDP wallets on the Solana network.
+
+Use the optional [`basePath` configuration](#custom-cdp-api-url) to connect to a custom CDP API URL.
 
 #### Basic Configuration
 

@@ -173,6 +173,27 @@ describe("CdpSmartWalletProvider", () => {
   // =========================================================
 
   describe("initialization", () => {
+    it.each([undefined, "http://127.0.0.1:4010/platform"])(
+      "should configure the CDP API with basePath %s",
+      async basePath => {
+        const provider = await CdpSmartWalletProvider.configureWithWallet({
+          apiKeyId: "test-key-id",
+          apiKeySecret: "test-key-secret",
+          walletSecret: "test-wallet-secret",
+          networkId: MOCK_NETWORK_ID,
+          basePath,
+        });
+
+        expect(CdpClient).toHaveBeenLastCalledWith({
+          apiKeyId: "test-key-id",
+          apiKeySecret: "test-key-secret",
+          walletSecret: "test-wallet-secret",
+          basePath,
+        });
+        expect(provider.getAddress()).toBe(MOCK_SMART_ADDRESS);
+      },
+    );
+
     it("should initialize with API keys", async () => {
       const provider = await CdpSmartWalletProvider.configureWithWallet({
         apiKeyId: "test-key-id",
