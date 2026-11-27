@@ -50,6 +50,7 @@ AgentKit is a framework for easily enabling AI agents to take actions onchain. I
       - [Configuring from CdpWalletProvider](#configuring-from-cdpwalletprovider)
       - [Configuring from PrivyWalletProvider](#configuring-from-privywalletprovider)
       - [Configuring from ViemWalletProvider](#configuring-from-viemwalletprovider)
+    - [WaapWalletProvider](#waapwalletprovider)
   - [SVM Wallet Providers](#svm-wallet-providers)
     - [CdpV2SolanaWalletProvider](#cdpv2solanawalletprovider)
       - [Basic Configuration](#basic-configuration-2)
@@ -981,6 +982,7 @@ EVM:
 - [ViemWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/viemWalletProvider.ts)
 - [PrivyWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/privyWalletProvider.ts)
 - [ZeroDevWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/zeroDevWalletProvider.ts)
+- [WaapWalletProvider](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/src/wallet-providers/waapWalletProvider.ts)
 
 ### CdpEvmWalletProvider
 
@@ -1414,6 +1416,23 @@ const walletProvider = await ZeroDevWalletProvider.configureWithWallet({
   projectId: "ZERODEV_PROJECT_ID",
   entryPointVersion: "0.7" as const,
   networkId: "base-mainnet",
+});
+```
+
+### WaapWalletProvider
+
+The `WaapWalletProvider` is an EVM wallet provider that uses the `waap-cli` binary. WaaP (Wallet as a Protocol) manages your private keys securely using two-party computation on the server-side, meaning that raw private keys never hit your local environment. The provider shells out to the `waap-cli` executable for all signing operations.
+
+```typescript
+import { WaapWalletProvider } from "@coinbase/agentkit";
+
+// Configures the wallet synchronously and logs in the CLI.
+// Requires waap-cli to be installed and available in the local PATH.
+const walletProvider = WaapWalletProvider.configureWithWallet({
+  email: "your_email@example.com",     // Optional, for auto-login
+  password: "password",      // Optional, for auto-login
+  chainId: "11155111",       // e.g., Ethereum Sepolia (11155111)
+  rpcUrl: "https://ethereum-sepolia-rpc.publicnode.com",  // Optional overridable RPC node URL
 });
 ```
 
