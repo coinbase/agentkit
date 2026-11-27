@@ -168,8 +168,14 @@ export function validateTradePlan(
   const chain = typeof input.chain === "string" ? input.chain : fail();
   const policy = POLICIES[chain];
   if (!policy?.feeRouter) fail();
-  const router = policy.feeRouter,
-    trader = addr(input.trader),
+  const transactions = Array.isArray(plan.transactions) ? plan.transactions : fail();
+  const destination = addr(row(transactions[transactions.length - 1]).to);
+  const router =
+    destination === policy.feeRouter ||
+    (chain === "4663" && destination === "0x352a4a1d927ed21bddf5e22b1eed728714438bcd")
+      ? destination
+      : fail();
+  const trader = addr(input.trader),
     token = addr(input.token);
   const amount = uint(input.amountIn, U128),
     slippage = input.slippageBps === undefined ? 100 : input.slippageBps;

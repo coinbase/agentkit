@@ -112,3 +112,9 @@ The SHA-256 integrity value detects inconsistency; it is not a server signature 
 OTC and agreement transaction plans are limited to Robinhood Chain (4663). Their only contract destinations are QOtcEscrow `0xbea24499f82f1e018a4dff5607b7c54141cbfbf8` and QAgreements `0x9b6e579dd876c364bf232d2958d7cc45937809bf`, respectively. A separate approval can target only the original funding token, with the exact original amount and the relevant contract as spender; unlimited approvals, other spenders, extra native value and extra wallet-operation fields are refused. OTC acceptance reads the selected deal and its terms hash independently. Agreement amounts use known asset decimals or independently returned token metadata, never guessed precision.
 
 These checks bound destinations, funding amounts and supported action selectors. They do not authenticate a server or replace review of agreement conditions, expiry and counterparty terms. Unavailable/non-plan records are data, not executable calls.
+
+## Robinhood router migration (2026-11-27)
+
+Robinhood Chain accepts the pinned QFeeRouterV2 `0x352a4a1d927ed21bddf5e22b1eed728714438bcd` alongside the previous router. Other chains keep their own pinned deployment. Exact approvals, independent pool/quote checks, calldata, chain, amount, deadline and integrity checks still apply. This provider remains unsigned-only and exposes its reviewed 31-tool subset; the hosted MCP has additional tools. The local signing bridge is available as `npx -y @qhooks/mcp@0.2.2`.
+
+Canonical service documentation: https://qhooks.com/skill.md (9.7 series).
