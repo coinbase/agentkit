@@ -614,8 +614,31 @@ export function buildUrlWithParams(
 }
 
 /**
+ * Parses an http(s) URL without userinfo. Returns null for anything else.
+ *
+ * @param value - The URL string to parse
+ * @returns The parsed URL, or null if it is invalid or not a plain http(s) URL
+ */
+function parseHttpUrl(value: string): URL | null {
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return null;
+    }
+    if (parsed.username !== "" || parsed.password !== "") {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Checks if a URL is registered for x402 requests.
- * Matches by origin (protocol + hostname + port) or prefix.
+ * The URL must have the same origin (protocol + hostname + port) as a registered entry.
+ * If the registered entry has a path, the URL path must equal it or be nested beneath it
+ * (matched on a `/` boundary, after URL normalization so dot-segments cannot escape).
  *
  * @param url - The URL to check
  * @param registeredServices - Set of registered service URLs
@@ -626,20 +649,29 @@ export function isServiceRegistered(url: string, registeredServices: Set<string>
     return false;
   }
 
-  try {
-    const parsed = new URL(url);
-    const origin = parsed.origin;
-
-    for (const registered of registeredServices) {
-      // Check if origin matches or URL starts with registered prefix
-      if (origin === registered || url.startsWith(registered)) {
-        return true;
-      }
-    }
-    return false;
-  } catch {
+  const parsed = parseHttpUrl(url);
+  if (!parsed) {
     return false;
   }
+
+  for (const registeredUrl of registeredServices) {
+    const registered = parseHttpUrl(registeredUrl);
+    if (!registered || parsed.origin !== registered.origin) {
+      continue;
+    }
+
+    const registeredPath =
+      registered.pathname === "/" ? "" : registered.pathname.replace(/\/$/, "");
+    if (registeredPath === "") {
+      return true;
+    }
+
+    if (parsed.pathname === registeredPath || parsed.pathname.startsWith(`${registeredPath}/`)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -694,6 +726,16 @@ export function validatePaymentLimit(
  */
 export function isUrlAllowed(url: string, registeredServices: Set<string>): boolean {
   return isServiceRegistered(url, registeredServices);
+}
+
+/**
+ * Wraps fetch so paid requests return redirects without following them.
+ *
+ * @param fetchImpl - The fetch implementation to wrap
+ * @returns A fetch implementation that returns redirect responses without following them
+ */
+export function createNoRedirectFetch(fetchImpl: typeof fetch = fetch): typeof fetch {
+  return (input, init) => fetchImpl(input, { ...init, redirect: "manual" });
 }
 
 /**

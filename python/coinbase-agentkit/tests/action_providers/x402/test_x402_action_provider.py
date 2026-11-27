@@ -5,12 +5,17 @@ from unittest.mock import Mock
 
 import pytest
 import requests
+from eth_account import Account
 from pydantic import ValidationError
+from x402.schemas import PaymentRequired, PaymentRequirements
+from x402.schemas.errors import NoMatchingRequirementsError
 
 from coinbase_agentkit.action_providers.x402.schemas import (
     DirectX402RequestSchema,
     HttpRequestSchema,
+    PaymentOptionSchema,
     RetryWithX402Schema,
+    X402Config,
 )
 from coinbase_agentkit.action_providers.x402.x402_action_provider import x402_action_provider
 from coinbase_agentkit.network import Network
@@ -289,3 +294,122 @@ def test_supports_network():
     provider = x402_action_provider()
     for network, expected in test_cases:
         assert provider.supports_network(network) is expected
+
+
+# =========================================================
+# Spend Controls Tests
+# =========================================================
+
+
+def _payment_required(
+    amount: str,
+    asset: str = MOCK_PAYMENT_REQUIREMENTS["asset"],
+    network: str = "eip155:84532",
+    pay_to: str = MOCK_PAYMENT_REQUIREMENTS["payTo"],
+    scheme: str = "exact",
+):
+    """Build a v2 PaymentRequired for base-sepolia."""
+    return PaymentRequired(
+        x402_version=2,
+        accepts=[
+            PaymentRequirements(
+                scheme=scheme,
+                network=network,
+                asset=asset,
+                amount=amount,
+                pay_to=pay_to,
+                max_timeout_seconds=300,
+                extra={"name": "USDC", "version": "2"},
+            )
+        ],
+    )
+
+
+@pytest.fixture
+def signing_wallet(mock_wallet):
+    """Wallet whose signer is a real eth_account key, so x402 can actually sign."""
+    mock_wallet.to_signer.return_value = Account.from_key("0x" + "11" * 32)
+    mock_wallet.get_network.return_value = Network(
+        chain_id="84532", network_id="base-sepolia", protocol_family="evm"
+    )
+    return mock_wallet
+
+
+def test_create_client_sets_spend_cap_from_config(signing_wallet):
+    """The x402 client is created with max_amount_per_payment = max_payment_usdc."""
+    provider = x402_action_provider(X402Config(max_payment_usdc=0.25))
+    client = provider._create_x402_client(signing_wallet)
+
+    assert client._spend_controls == {"max_amount_per_payment": 0.25}
+
+
+@pytest.mark.parametrize("bad_cap", [float("nan"), float("inf"), -1.0])
+def test_create_client_rejects_invalid_cap(signing_wallet, bad_cap):
+    """An invalid max_payment_usdc fails closed instead of leaving the client uncapped."""
+    provider = x402_action_provider(X402Config(max_payment_usdc=bad_cap))
+
+    with pytest.raises(ValueError, match="max_payment_usdc"):
+        provider._create_x402_client(signing_wallet)
+
+
+def test_client_refuses_to_sign_over_cap_requirements(signing_wallet):
+    """Server requirements above the cap are rejected by x402, so nothing is signed."""
+    provider = x402_action_provider(X402Config(max_payment_usdc=1.0))
+    client = provider._create_x402_client(signing_wallet)
+
+    with pytest.raises(Exception, match="spend_controls"):
+        client.create_payment_payload(_payment_required("5000000"))
+
+
+def test_client_refuses_to_sign_non_default_asset(signing_wallet):
+    """Non-default assets are rejected by x402 even when the amount is tiny."""
+    provider = x402_action_provider(X402Config(max_payment_usdc=1.0))
+    client = provider._create_x402_client(signing_wallet)
+
+    with pytest.raises(Exception, match="spend_controls"):
+        client.create_payment_payload(
+            _payment_required("100", asset="0x1111111111111111111111111111111111111111")
+        )
+
+
+def _selected_payment_option(amount: str = "10000") -> PaymentOptionSchema:
+    return PaymentOptionSchema(
+        scheme="exact",
+        network="eip155:84532",
+        asset=MOCK_PAYMENT_REQUIREMENTS["asset"],
+        max_amount_required=amount,
+        pay_to=MOCK_PAYMENT_REQUIREMENTS["payTo"],
+    )
+
+
+def test_retry_client_rejects_server_terms_not_in_selected_option(signing_wallet):
+    """A fresh 402 cannot change the amount or recipient approved by the caller."""
+    provider = x402_action_provider(X402Config(max_payment_usdc=1.0))
+    client = provider._create_x402_client(signing_wallet, _selected_payment_option())
+
+    with pytest.raises(NoMatchingRequirementsError):
+        client.create_payment_payload(_payment_required("20000"))
+
+    with pytest.raises(NoMatchingRequirementsError):
+        client.create_payment_payload(
+            _payment_required("10000", pay_to="0x2222222222222222222222222222222222222222")
+        )
+
+
+def test_retry_client_rejects_network_outside_wallet(signing_wallet):
+    """A fresh 402 cannot move a payment to a network outside the wallet's network."""
+    provider = x402_action_provider(X402Config(max_payment_usdc=1.0))
+    client = provider._create_x402_client(signing_wallet)
+
+    with pytest.raises(NoMatchingRequirementsError):
+        client.create_payment_payload(_payment_required("10000", network="eip155:1"))
+
+
+def test_client_signs_within_cap(signing_wallet):
+    """Requirements within the cap on the default asset are signed."""
+    provider = x402_action_provider(X402Config(max_payment_usdc=1.0))
+    client = provider._create_x402_client(signing_wallet, _selected_payment_option())
+
+    payload = client.create_payment_payload(_payment_required("10000"))
+
+    assert payload.accepted.amount == "10000"
