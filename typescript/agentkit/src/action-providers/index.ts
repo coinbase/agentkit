@@ -8,6 +8,7 @@ export * from "./alchemy";
 export * from "./baseAccount";
 export * from "./basename";
 export * from "./cdp";
+export * from "./chitin";
 export * from "./clanker";
 export * from "./compound";
 export * from "./defillama";
