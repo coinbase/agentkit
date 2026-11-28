@@ -1,3 +1,4 @@
+import { Decimal } from "decimal.js";
 import { encodeFunctionData } from "viem";
 import { EvmWalletProvider } from "./wallet-providers";
 import { erc20Abi } from "viem";
@@ -120,3 +121,27 @@ export async function retryWithExponentialBackoff<T>(
 
   throw lastError!;
 }
+
+/**
+ * Convert a human-readable token amount to base units without floating-point drift.
+ *
+ * JS binary floats cannot represent many decimal fractions exactly, so
+ * `amount * 10 ** decimals` often yields values like `2009999.9999999998` for
+ * `2.01` at 6 decimals. Those break `BigInt(...)` and Jupiter's integer amount API.
+ *
+ * @param amount - Whole-unit amount (e.g. 2.01 USDC)
+ * @param decimals - Token decimals
+ * @returns Base-unit amount as bigint
+ */
+export function toTokenBaseUnits(amount: number | string, decimals: number): bigint {
+  // Prefer a decimal string so we do not re-introduce binary float noise.
+  const asDecimal = new Decimal(typeof amount === "number" ? String(amount) : amount);
+  const scaled = asDecimal.mul(new Decimal(10).pow(decimals));
+  if (!scaled.isInteger()) {
+    // Round half-up to the nearest atomic unit when the input carries more
+    // fractional digits than the mint supports.
+    return BigInt(scaled.toDecimalPlaces(0, Decimal.ROUND_HALF_UP).toFixed(0));
+  }
+  return BigInt(scaled.toFixed(0));
+}
+

@@ -1,6 +1,6 @@
 import { encodeFunctionData } from "viem";
 import { EvmWalletProvider } from "./wallet-providers";
-import { approve, sanitizeOnchainMetadata } from "./utils";
+import { approve, sanitizeOnchainMetadata, toTokenBaseUnits } from "./utils";
 
 const MOCK_TOKEN_ADDRESS = "0x1234567890123456789012345678901234567890";
 const MOCK_SPENDER_ADDRESS = "0x9876543210987654321098765432109876543210";
@@ -100,5 +100,18 @@ describe("utils", () => {
     it("strips surrounding whitespace", () => {
       expect(sanitizeOnchainMetadata("  Wrapped Ether  ")).toBe("Wrapped Ether");
     });
+  });
+});
+
+describe("toTokenBaseUnits", () => {
+  it("converts fractional amounts that break binary float Math.pow", () => {
+    // 2.01 * 10**6 === 2009999.9999999998 in IEEE-754
+    expect(toTokenBaseUnits(2.01, 6)).toBe(2010000n);
+    expect(toTokenBaseUnits("2.01", 6)).toBe(2010000n);
+  });
+
+  it("handles whole amounts and high decimals", () => {
+    expect(toTokenBaseUnits(1, 9)).toBe(1_000_000_000n);
+    expect(toTokenBaseUnits(0.000001, 6)).toBe(1n);
   });
 });

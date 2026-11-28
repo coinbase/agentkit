@@ -18,6 +18,7 @@ import {
   createAssociatedTokenAccountInstruction,
   createTransferCheckedInstruction,
 } from "@solana/spl-token";
+import { toTokenBaseUnits } from "../../utils";
 
 /**
  * SplActionProvider serves as a provider for SPL token actions.
@@ -120,7 +121,7 @@ export class SplActionProvider extends ActionProvider<SvmWalletProvider> {
       } catch (error) {
         return `Failed to fetch mint info for mint address ${args.mintAddress}. Error: ${error}`;
       }
-      const adjustedAmount = args.amount * Math.pow(10, mintInfo.decimals);
+      const adjustedAmount = toTokenBaseUnits(args.amount, mintInfo.decimals);
 
       const sourceAta = await getAssociatedTokenAddress(mintPubkey, fromPubkey);
       const destinationAta = await getAssociatedTokenAddress(mintPubkey, toPubkey);
@@ -128,7 +129,7 @@ export class SplActionProvider extends ActionProvider<SvmWalletProvider> {
       const instructions: TransactionInstruction[] = [];
 
       const sourceAccount = await getAccount(connection, sourceAta);
-      if (sourceAccount.amount < BigInt(adjustedAmount)) {
+      if (sourceAccount.amount < adjustedAmount) {
         throw new Error(
           `Insufficient token balance. Have ${sourceAccount.amount}, need ${adjustedAmount}`,
         );
