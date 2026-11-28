@@ -1,5 +1,19 @@
 # AgentKit Changelog
 
+## 0.12.0
+
+### Minor Changes
+
+- [#1432](https://github.com/coinbase/agentkit/pull/1432) [`455a6c5`](https://github.com/coinbase/agentkit/commit/455a6c5a29375de290da0f3b440119ec7f511440) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Removed local filesystem reads from the flaunch and zora action providers. The `image` parameter previously treated any non-URL string as a local file path, read it off the agent host, and uploaded the contents to a third-party IPFS pinning service. It now accepts only remote URLs (`http(s)://` for flaunch, `https://` or `ipfs://` for zora) or a `data:` URI. To publish a local file, read it yourself and pass a data URI: `` image: `data:image/png;base64,${fs.readFileSync(path, "base64")}` ``
+
+### Patch Changes
+
+- [#1408](https://github.com/coinbase/agentkit/pull/1408) [`f2f3e8c`](https://github.com/coinbase/agentkit/commit/f2f3e8c11a91d56a17979a229a172ba6e61a85c2) Thanks [@shlee-lab](https://github.com/shlee-lab)! - Fixed a crash on wallet provider initialization when the analytics request fails
+
+- [#1480](https://github.com/coinbase/agentkit/pull/1480) [`2e6dbaf`](https://github.com/coinbase/agentkit/commit/2e6dbaf725b9ec5f3b53003278100b0e655c214d) Thanks [@CarsonRoscoe](https://github.com/CarsonRoscoe)! - Sanitized onchain token names/symbols (erc20, cdp, zeroX, flaunch, compound) before including them in agent tool output. This metadata is fully attacker-controlled by whoever deploys the contract, and was previously passed through unmodified into text returned to the agent, allowing a malicious token to attempt indirect prompt injection. Names and symbols are now stripped of control, zero-width, and other non-printable characters, and truncated to 50 characters.
+
+- [#1678](https://github.com/coinbase/agentkit/pull/1678) [`7fdeb73`](https://github.com/coinbase/agentkit/commit/7fdeb737b1c584db84fe368005b7f6630d114e3c) Thanks [@phdargen](https://github.com/phdargen)! - X402 payments now enforce the configured spend cap, match retry payments to the selected network, asset, amount, and recipient, and reject URLs outside registered origins and path scopes. Paid requests do not follow redirects. Bumped `@x402/evm`, `@x402/fetch`, and `@x402/svm` to `~2.27.0`.
+
 ## 0.11.0
 
 ### Minor Changes
