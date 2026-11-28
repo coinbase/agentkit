@@ -440,6 +440,94 @@ def format_simplified_resources(
     return simplified
 
 
+_SPEND_CONTROL_LIMIT_ERROR_PATTERN = re.compile(
+    r"rejected by spendControls\.maxAmountPerPayment|rejected by spend_controls(?:\.max_amount_per_payment)?",
+    re.IGNORECASE,
+)
+
+
+def _collect_error_messages(error: BaseException) -> list[str]:
+    messages: list[str] = []
+    current: BaseException | None = error
+    seen: set[int] = set()
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        messages.append(str(current))
+        cause = current.__cause__
+        current = cause if isinstance(cause, BaseException) else None
+    return messages
+
+
+def _try_parse_requested_payment_amount_atomic(messages: list[str]) -> str | None:
+    for message in messages:
+        for match in re.finditer(r'\{[\s\S]*?"paymentRequirements"[\s\S]*\}', message):
+            try:
+                parsed = json.loads(match.group(0))
+            except json.JSONDecodeError:
+                continue
+            requirements = parsed.get("paymentRequirements")
+            if not isinstance(requirements, list) or not requirements:
+                continue
+            requirement = requirements[0]
+            if not isinstance(requirement, dict):
+                continue
+            atomic = (
+                requirement.get("maxAmountRequired")
+                or requirement.get("max_amount_required")
+                or requirement.get("amount")
+            )
+            if isinstance(atomic, str) and atomic.isdigit():
+                return atomic
+
+        amount_match = re.search(r'"amount"\s*:\s*"(\d+)"', message)
+        if amount_match:
+            return amount_match.group(1)
+        max_amount_match = re.search(r'"maxAmountRequired"\s*:\s*"(\d+)"', message)
+        if max_amount_match:
+            return max_amount_match.group(1)
+
+    return None
+
+
+def format_spend_control_payment_limit_error(
+    error: BaseException, max_payment_usdc: float
+) -> str | None:
+    """Map x402 spend-control cap rejections to a structured payment-limit error.
+
+    Args:
+        error: Error raised during a direct-pay x402 request
+        max_payment_usdc: Configured per-request spending cap
+
+    Returns:
+        JSON string with a "Payment exceeds limit" payload, or None if unrelated
+
+    """
+    messages = _collect_error_messages(error)
+    combined = "\n".join(messages)
+    if not _SPEND_CONTROL_LIMIT_ERROR_PATTERN.search(combined):
+        return None
+
+    amount_atomic = _try_parse_requested_payment_amount_atomic(messages)
+    if amount_atomic:
+        validation = validate_payment_limit(amount_atomic, max_payment_usdc)
+        details = (
+            f'The requested payment of {validation["requested_amount"]} USDC exceeds '
+            f'the maximum spending limit of {validation["max_amount"]} USDC.'
+        )
+    else:
+        details = f"The payment exceeds the maximum spending limit of {max_payment_usdc} USDC."
+
+    return json.dumps(
+        {
+            "error": True,
+            "message": "Payment exceeds limit",
+            "details": details,
+            "maxPaymentUsdc": max_payment_usdc,
+        },
+        indent=2,
+    )
+
+
 def handle_http_error(error: Exception, url: str) -> str:
     """Handle HTTP errors consistently.
 

@@ -1,8 +1,14 @@
 """Tests for x402 service allowlist matching."""
 
+import json
+
 import pytest
 
-from coinbase_agentkit.action_providers.x402.utils import is_service_registered
+from coinbase_agentkit.action_providers.x402.utils import (
+    format_spend_control_payment_limit_error,
+    handle_http_error,
+    is_service_registered,
+)
 
 
 @pytest.mark.parametrize(
@@ -113,3 +119,28 @@ def test_matches_any_registered_entry():
     assert is_service_registered("https://a.example.com/x", registered) is True
     assert is_service_registered("https://b.example.com/api/x", registered) is True
     assert is_service_registered("https://b.example.com/other", registered) is False
+
+
+def test_format_spend_control_payment_limit_error_returns_structured_payload():
+    """Spend control refusals map to the same Payment exceeds limit payload as retry."""
+    error = RuntimeError(
+        "Failed to create payment payload: All payment requirements were rejected by "
+        "spend_controls.max_amount_per_payment (1)."
+    )
+    result = format_spend_control_payment_limit_error(error, 1.0)
+
+    assert result is not None
+    parsed = json.loads(result)
+    assert parsed["error"] is True
+    assert parsed["message"] == "Payment exceeds limit"
+    assert parsed["maxPaymentUsdc"] == 1.0
+
+
+def test_format_spend_control_payment_limit_error_ignores_unrelated_errors():
+    """Generic failures continue to use handle_http_error."""
+    assert format_spend_control_payment_limit_error(RuntimeError("fetch failed"), 1.0) is None
+
+    parsed = json.loads(
+        handle_http_error(RuntimeError("upstream unavailable"), "https://api.example.com")
+    )
+    assert parsed["message"] == "Error making request to https://api.example.com"
