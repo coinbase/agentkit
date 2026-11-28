@@ -6,6 +6,7 @@ from typing import TypedDict
 KNOWN_FACILITATORS: dict[str, str] = {
     "cdp": "https://api.cdp.coinbase.com/platform/v2/x402",
     "payai": "https://facilitator.payai.network",
+    "dexter": "https://x402.dexter.cash",
 }
 
 DEFAULT_FACILITATOR = "cdp"
