@@ -4,6 +4,8 @@ import {
   Keypair,
   PublicKey,
   VersionedTransaction,
+  MessageV0,
+  SendTransactionError,
   clusterApiUrl,
 } from "@solana/web3.js";
 import { SOLANA_DEVNET_GENESIS_BLOCK_HASH, SOLANA_NETWORKS } from "../network/svm";
@@ -271,6 +273,43 @@ describe("SolanaKeypairWalletProvider", () => {
       await expect(wallet.waitForSignatureResult("signature123")).rejects.toThrow(
         "Timed out waiting for confirmation",
       );
+    });
+
+    it.each(["sendTransaction", "signAndSendTransaction", "nativeTransfer"] as const)(
+      "rejects a confirmed execution failure from %s",
+      async method => {
+        const executionError = { InstructionError: [0, { Custom: 1 }] };
+        const connection = wallet.getConnection();
+        (connection.confirmTransaction as jest.Mock).mockResolvedValueOnce({
+          context: { slot: 123 },
+          value: { err: executionError },
+        });
+        const transaction = new VersionedTransaction(
+          MessageV0.compile({
+            payerKey: wallet.getPublicKey(),
+            instructions: [],
+            recentBlockhash: "test-blockhash",
+          }),
+        );
+        const result =
+          method === "nativeTransfer"
+            ? wallet.nativeTransfer("EQJqzeeVEnm8rKWQJ5SMTtQBD4xEgixwgzNWKkpeFRZ9", "10")
+            : wallet[method](transaction);
+
+        await expect(result).rejects.toBeInstanceOf(SendTransactionError);
+        await expect(result).rejects.toThrow("signature123");
+        await expect(result).rejects.toThrow(JSON.stringify(executionError));
+      },
+    );
+
+    it("preserves execution errors in the low-level confirmation response", async () => {
+      const response = {
+        context: { slot: 123 },
+        value: { err: { InstructionError: [0, { Custom: 1 }] } },
+      };
+      (wallet.getConnection().confirmTransaction as jest.Mock).mockResolvedValueOnce(response);
+
+      await expect(wallet.waitForSignatureResult("signature123")).resolves.toBe(response);
     });
 
     it("should handle invalid address when transferring", async () => {
