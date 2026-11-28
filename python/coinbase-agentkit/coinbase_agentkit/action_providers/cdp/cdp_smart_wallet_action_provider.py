@@ -301,7 +301,12 @@ Important notes:
 
                         # Wait for approval transaction receipt and check if it was successful
                         receipt = wallet_provider.wait_for_transaction_receipt(approval_tx_hash)
-                        if receipt.status != "complete":
+                        # web3.py receipts carry an integer status (1 success, 0 reverted);
+                        # accept the string forms too, so either receipt shape is read correctly.
+                        status = getattr(receipt, "status", None)
+                        if status is None and hasattr(receipt, "get"):
+                            status = receipt.get("status")
+                        if status not in (1, "complete", "success"):
                             return {"success": False, "error": "Approval transaction failed"}
 
                     # Execute swap using the all-in-one pattern with retry logic
