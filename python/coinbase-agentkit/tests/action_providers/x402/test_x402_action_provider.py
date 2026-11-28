@@ -1,7 +1,7 @@
 """Tests for the x402 action provider."""
 
 import json
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 import requests
@@ -413,3 +413,43 @@ def test_client_signs_within_cap(signing_wallet):
     payload = client.create_payment_payload(_payment_required("10000"))
 
     assert payload.accepted.amount == "10000"
+
+
+@patch("coinbase_agentkit.action_providers.x402.x402_action_provider.x402_requests")
+def test_make_http_request_with_x402_returns_payment_limit_error(
+    mock_x402_requests, signing_wallet
+):
+    """Direct-pay should surface spend-cap refusals as Payment exceeds limit."""
+    provider = x402_action_provider(
+        X402Config(registered_services=[MOCK_URL], max_payment_usdc=1.0)
+    )
+    mock_session = Mock()
+    mock_x402_requests.return_value = mock_session
+    mock_session.request.side_effect = RuntimeError(
+        "Failed to create payment payload: All payment requirements were rejected by "
+        "spend_controls.max_amount_per_payment (1)."
+    )
+
+    response = json.loads(
+        provider.make_http_request_with_x402(signing_wallet, {"url": MOCK_URL, "method": "GET"})
+    )
+
+    assert response["error"] is True
+    assert response["message"] == "Payment exceeds limit"
+    assert response["maxPaymentUsdc"] == 1.0
+
+
+@patch("coinbase_agentkit.action_providers.x402.x402_action_provider.x402_requests")
+def test_make_http_request_with_x402_keeps_generic_http_errors(mock_x402_requests, signing_wallet):
+    """Unrelated request failures are not misclassified as payment limit errors."""
+    provider = x402_action_provider(X402Config(registered_services=[MOCK_URL]))
+    mock_session = Mock()
+    mock_x402_requests.return_value = mock_session
+    mock_session.request.side_effect = RuntimeError("upstream unavailable")
+
+    response = json.loads(
+        provider.make_http_request_with_x402(signing_wallet, {"url": MOCK_URL, "method": "GET"})
+    )
+
+    assert response["error"] is True
+    assert response["message"] == f"Error making request to {MOCK_URL}"

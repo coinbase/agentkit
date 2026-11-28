@@ -1,4 +1,51 @@
-import { createNoRedirectFetch, isServiceRegistered } from "./utils";
+import {
+  createNoRedirectFetch,
+  formatSpendControlPaymentLimitError,
+  handleHttpError,
+  isServiceRegistered,
+} from "./utils";
+
+describe("formatSpendControlPaymentLimitError", () => {
+  const spendControlMessage =
+    "Failed to create payment payload: All payment requirements were rejected by spendControls.maxAmountPerPayment (1). Raise maxAmountPerPayment";
+
+  it("returns a structured payment limit error for spend control rejections", () => {
+    const error = new Error(spendControlMessage);
+    const result = formatSpendControlPaymentLimitError(error, 1);
+
+    expect(result).not.toBeNull();
+    const parsed = JSON.parse(result!);
+    expect(parsed.error).toBe(true);
+    expect(parsed.message).toBe("Payment exceeds limit");
+    expect(parsed.maxPaymentUsdc).toBe(1);
+    expect(parsed.details).toContain("1");
+  });
+
+  it("includes the requested amount when it is present in the error chain", () => {
+    const error = new Error(
+      `${spendControlMessage} {"paymentRequirements":[{"amount":"5000000","network":"base-sepolia"}]}`,
+    );
+    const result = formatSpendControlPaymentLimitError(error, 1);
+
+    const parsed = JSON.parse(result!);
+    expect(parsed.details).toContain("5");
+    expect(parsed.details).toContain("maximum spending limit");
+  });
+
+  it("returns null for unrelated errors", () => {
+    expect(formatSpendControlPaymentLimitError(new Error("fetch failed"), 1)).toBeNull();
+  });
+});
+
+describe("handleHttpError", () => {
+  it("keeps the generic request error format for non-spend-control failures", () => {
+    const result = handleHttpError(new Error("upstream unavailable"), "https://api.example.com");
+
+    const parsed = JSON.parse(result);
+    expect(parsed.message).toBe("Error making request to https://api.example.com");
+    expect(parsed.details).toBe("upstream unavailable");
+  });
+});
 
 describe("isServiceRegistered", () => {
   describe("origin-only registration", () => {

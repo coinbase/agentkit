@@ -392,6 +392,120 @@ export async function formatSimplifiedResources(
   return simplified;
 }
 
+const SPEND_CONTROL_LIMIT_ERROR_PATTERN =
+  /rejected by spendControls\.maxAmountPerPayment|rejected by spend_controls(?:\.max_amount_per_payment)?/i;
+
+/**
+ * Collects error messages from an error and its cause chain.
+ *
+ * @param error - The error to walk
+ * @returns Messages from the error and any nested causes
+ */
+function collectErrorMessages(error: unknown): string[] {
+  const messages: string[] = [];
+  const seen = new Set<unknown>();
+  let current: unknown = error;
+
+  while (current instanceof Error && !seen.has(current)) {
+    seen.add(current);
+    messages.push(current.message);
+    const cause =
+      "cause" in current && current.cause instanceof Error ? current.cause : undefined;
+    current = cause;
+  }
+
+  if (!(error instanceof Error)) {
+    messages.push(String(error));
+  }
+
+  return messages;
+}
+
+/**
+ * Best-effort extraction of a payment requirement amount from x402 error text.
+ *
+ * @param messages - Error messages to search
+ * @returns Atomic amount string when found
+ */
+function tryParseRequestedPaymentAmountAtomic(messages: string[]): string | undefined {
+  for (const message of messages) {
+    const jsonCandidates = message.match(/\{[\s\S]*"paymentRequirements"[\s\S]*\}/g);
+    if (jsonCandidates) {
+      for (const candidate of jsonCandidates) {
+        try {
+          const parsed = JSON.parse(candidate) as {
+            paymentRequirements?: Array<{
+              maxAmountRequired?: string;
+              max_amount_required?: string;
+              amount?: string;
+            }>;
+          };
+          const requirement = parsed.paymentRequirements?.[0];
+          const atomic =
+            requirement?.maxAmountRequired ??
+            requirement?.max_amount_required ??
+            requirement?.amount;
+          if (atomic !== undefined && /^\d+$/.test(atomic)) {
+            return atomic;
+          }
+        } catch {
+          continue;
+        }
+      }
+    }
+
+    const amountMatch = message.match(/"amount"\s*:\s*"(\d+)"/);
+    if (amountMatch?.[1]) {
+      return amountMatch[1];
+    }
+    const maxAmountMatch = message.match(/"maxAmountRequired"\s*:\s*"(\d+)"/);
+    if (maxAmountMatch?.[1]) {
+      return maxAmountMatch[1];
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Maps x402 spend-control payment cap rejections to the same structured error used by
+ * {@link validatePaymentLimit} when the caller chose a payment option manually.
+ *
+ * @param error - The error raised during a direct-pay x402 fetch
+ * @param maxPaymentUsdc - Configured per-request spending cap
+ * @returns Structured "Payment exceeds limit" JSON, or null when the error is unrelated
+ */
+export function formatSpendControlPaymentLimitError(
+  error: unknown,
+  maxPaymentUsdc: number,
+): string | null {
+  const messages = collectErrorMessages(error);
+  const combined = messages.join("\n");
+
+  if (!SPEND_CONTROL_LIMIT_ERROR_PATTERN.test(combined)) {
+    return null;
+  }
+
+  const amountAtomic = tryParseRequestedPaymentAmountAtomic(messages);
+  const details = amountAtomic
+    ? (() => {
+        const validation = validatePaymentLimit(amountAtomic, maxPaymentUsdc);
+        return `The requested payment of ${validation.requestedAmount} USDC exceeds the maximum spending limit of ${validation.maxAmount} USDC.`;
+      })()
+    : `The payment exceeds the maximum spending limit of ${maxPaymentUsdc} USDC.`;
+
+  return JSON.stringify(
+    {
+      error: true,
+      message: "Payment exceeds limit",
+      details,
+      maxPaymentUsdc,
+    },
+    null,
+    2,
+  );
+}
+
 /**
  * Helper method to handle HTTP errors consistently.
  *

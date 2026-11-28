@@ -75,6 +75,10 @@ jest
   .mocked(utils.createNoRedirectFetch)
   .mockReturnValue(mockNoRedirectFetch as unknown as typeof fetch);
 jest.mocked(utils.validateFacilitator).mockImplementation(mockValidateFacilitator);
+const actualUtils = jest.requireActual<typeof import("./utils")>("./utils");
+jest
+  .mocked(utils.formatSpendControlPaymentLimitError)
+  .mockImplementation(actualUtils.formatSpendControlPaymentLimitError);
 
 // Mock global fetch
 global.fetch = mockFetch;
@@ -755,6 +759,31 @@ describe("X402ActionProvider", () => {
 
       const parsedResult = JSON.parse(result);
       expect(parsedResult.error).toBe(true);
+      expect(mockHandleHttpError).toHaveBeenCalledWith(error, "https://api.example.com/endpoint");
+    });
+
+    it("should return a payment limit error when spend controls reject the payment", async () => {
+      const error = new Error(
+        "Failed to create payment payload: All payment requirements were rejected by spendControls.maxAmountPerPayment (1).",
+      );
+      mockFetchWithPayment.mockRejectedValue(error);
+
+      const result = await provider.makeHttpRequestWithX402(
+        makeMockWalletProvider("base-sepolia"),
+        {
+          url: "https://www.x402.org/protected",
+          method: "GET",
+          headers: null,
+          queryParams: null,
+          body: null,
+        },
+      );
+
+      const parsedResult = JSON.parse(result);
+      expect(parsedResult.error).toBe(true);
+      expect(parsedResult.message).toBe("Payment exceeds limit");
+      expect(parsedResult.maxPaymentUsdc).toBeDefined();
+      expect(mockHandleHttpError).not.toHaveBeenCalled();
     });
   });
 });

@@ -18,6 +18,7 @@ import { registerExactSvmScheme } from "@x402/svm/exact/client";
 import {
   getX402Networks,
   handleHttpError,
+  formatSpendControlPaymentLimitError,
   formatPaymentOption,
   fetchAllDiscoveryResources,
   filterByNetwork,
@@ -677,6 +678,13 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
         2,
       );
     } catch (error) {
+      const paymentLimitError = formatSpendControlPaymentLimitError(
+        error,
+        this.config.maxPaymentUsdc,
+      );
+      if (paymentLimitError) {
+        return paymentLimitError;
+      }
       return handleHttpError(error, args.url);
     }
   }

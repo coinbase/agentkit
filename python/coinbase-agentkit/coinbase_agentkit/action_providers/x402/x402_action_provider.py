@@ -42,6 +42,7 @@ from .utils import (
     filter_usdc_payment_options,
     format_payment_option,
     format_simplified_resources,
+    format_spend_control_payment_limit_error,
     get_x402_networks,
     handle_http_error,
     is_url_allowed,
@@ -690,6 +691,11 @@ Unless specifically instructed otherwise, prefer the two-step approach with make
             )
 
         except Exception as error:
+            payment_limit_error = format_spend_control_payment_limit_error(
+                error, self._config.max_payment_usdc
+            )
+            if payment_limit_error:
+                return payment_limit_error
             return handle_http_error(error, args["url"])
 
     @create_action(
